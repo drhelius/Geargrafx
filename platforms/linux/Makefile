@@ -1,0 +1,1 @@
+include ../shared/desktop/Makefile.shared

@@ -1,32 +1,75 @@
-# Prerequisites
+# Mac files
+*.DS_Store
+*.dylib
+*.app/
+
+# Visual Studio files
+.vscode/
+.vs/
+ipch/
+[Oo]bj
+[Bb]in
+*.[Cc]ache
+*.obj
+*.o
+*.dll
+*.exe
+*.exp
+*.pdb
+*.user
+*.aps
+*.pch
+*.sdf
+*.opensdf
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.ilk
+*.log
+*.zip
+*[Dd]ebug*/
+*.sbr
+*.app
+Thumbs.db
+*[Rr]elease*/
+*[Pp]rofile*/
+[Tt]est[Rr]esults/
+_UpgradeReport_Files/
+_ReSharper.*/
+desktop.ini
+
+# Misc files
+*.ini
+*.cfg
+*.pce
+*.zip
+*.geargrafx
+*.so
+*.sav
+*.tmp
+*.state*
+
+#Xcode
+*.xcuserstate
+xcuserdata/
+*.xcexplist
+*.xcsettings
+*.xccheckout
+
+#binaries
+platforms/**/geargrafx
+
+#Switch
+*.a
 *.d
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+#Android
+platforms/libretro/libs/
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+#JetBrains
+.idea
