@@ -17,9 +17,67 @@
  *
  */
 
+#include "../../../src/geargrafx.h"
+#include "application.h"
+
 int main(int argc, char* argv[])
 {
+    char* rom_file = NULL;
+    char* symbol_file = NULL;
+    bool show_usage = false;
     int ret = 0;
+
+    for (int i = 0; i < argc; i++)
+    {
+        if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "-?") == 0) ||
+            (strcmp(argv[i], "--help") == 0) || (strcmp(argv[i], "/?") == 0))
+        {
+            show_usage = true;
+            ret = 0;
+        } 
+        else if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--version") == 0))
+        {
+            printf("%s\n", GEARGRAFX_TITLE_ASCII);
+            printf("Build: %s\n", GEARGRAFX_VERSION);
+            printf("Author: Ignacio Sánchez (drhelius)\n");
+            return 0;
+        }
+        else if (argv[i][0] == '-')
+        {
+            show_usage = true;
+            ret = -1;
+        }
+    }
+
+    switch (argc)
+    {
+        case 3:
+            rom_file = argv[1];
+            symbol_file = argv[2];
+            break;
+        case 2:
+            rom_file = argv[1];
+            break;
+        case 1:
+            break;
+        default:
+            show_usage = true;
+            ret = -1;
+            break;
+    }
+
+    if (show_usage)
+    {
+        printf("Usage: %s [rom_file] [symbol_file]\n", argv[0]);
+        return ret;
+    }
+
+    ret = application_init(rom_file, symbol_file);
+
+    if (ret == 0)
+        application_mainloop();
+
+    application_destroy();
 
     return ret;
 }

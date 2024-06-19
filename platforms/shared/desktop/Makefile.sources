@@ -1,0 +1,20 @@
+SRC_DIR = ../../src
+DESKTOP_SRC_DIR=../shared/desktop
+AUDIO_SRC_DIR=../shared/audio
+
+SOURCES_C :=
+
+SOURCES_CXX := \
+    $(DESKTOP_SRC_DIR)/main.cpp \
+    $(DESKTOP_SRC_DIR)/application.cpp \
+    $(DESKTOP_SRC_DIR)/imgui/imgui_impl_sdl2.cpp \
+    $(DESKTOP_SRC_DIR)/imgui/imgui_impl_opengl2.cpp \
+    $(DESKTOP_SRC_DIR)/imgui/imgui.cpp \
+    $(DESKTOP_SRC_DIR)/imgui/imgui_draw.cpp \
+    $(DESKTOP_SRC_DIR)/imgui/imgui_widgets.cpp \
+    $(DESKTOP_SRC_DIR)/imgui/imgui_tables.cpp \
+    $(DESKTOP_SRC_DIR)/imgui/imgui_demo.cpp \
+    $(DESKTOP_SRC_DIR)/imgui/memory_editor.cpp \
+    $(SRC_DIR)/geargrafx_core.cpp \
+    
+
