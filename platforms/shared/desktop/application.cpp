@@ -76,12 +76,12 @@ int application_init(const char* rom_file, const char* symbol_file)
 
     if (IsValidPointer(rom_file) && (strlen(rom_file) > 0))
     {
-        Log ("Rom file argument: %s", rom_file);
+        Debug("Rom file argument: %s", rom_file);
         gui_load_rom(rom_file);
     }
     if (IsValidPointer(symbol_file) && (strlen(symbol_file) > 0))
     {
-        Log ("Symbol file argument: %s", symbol_file);
+        Debug("Symbol file argument: %s", symbol_file);
         // gui_debug_reset_symbols();
         // gui_debug_load_symbols_file(symbol_file);
     }
@@ -165,7 +165,7 @@ static int sdl_init(void)
 
     if (application_gamepad_mappings > 0)
     {
-        Log("Succesfuly loaded %d game controller mappings", application_gamepad_mappings);
+        Debug("Succesfuly loaded %d game controller mappings", application_gamepad_mappings);
     }
     else
     {
@@ -185,7 +185,7 @@ static int sdl_init(void)
             }
             else
             {
-                Log("Game controller %d correctly detected", i);
+                Debug("Game controller %d correctly detected", i);
                 gamepads_found++;
 
                 if (gamepads_found > 2)

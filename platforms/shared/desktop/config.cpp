@@ -101,7 +101,7 @@ void config_read(void)
         return;
     }
 
-    Log("Loading settings from %s", config_emu_file_path);
+    Debug("Loading settings from %s", config_emu_file_path);
 
     config_debug.debug = read_bool("Debug", "Debug", false);
     config_debug.show_disassembler = read_bool("Debug", "Disassembler", true);
@@ -198,12 +198,12 @@ void config_read(void)
     config_input[1].gamepad_1 = read_int("InputB", "Gamepad1", SDL_CONTROLLER_BUTTON_A);
     config_input[1].gamepad_2 = read_int("InputB", "Gamepad2", SDL_CONTROLLER_BUTTON_B);
 
-    Log("Settings loaded");
+    Debug("Settings loaded");
 }
 
 void config_write(void)
 {
-    Log("Saving settings to %s", config_emu_file_path);
+    Debug("Saving settings to %s", config_emu_file_path);
 
     write_bool("Debug", "Debug", config_debug.debug);
     write_bool("Debug", "Disassembler", config_debug.show_disassembler);
@@ -292,7 +292,7 @@ void config_write(void)
 
     if (config_ini_file->write(config_ini_data, true))
     {
-        Log("Settings saved");
+        Debug("Settings saved");
     }
 }
 
@@ -328,7 +328,7 @@ static int read_int(const char* group, const char* key, int default_value)
     else
         ret = std::stoi(value);
 
-    Log("Load setting: [%s][%s]=%d", group, key, ret);
+    Debug("Load integer setting: [%s][%s]=%d", group, key, ret);
     return ret;
 }
 
@@ -336,7 +336,7 @@ static void write_int(const char* group, const char* key, int integer)
 {
     std::string value = std::to_string(integer);
     config_ini_data[group][key] = value;
-    Log("Save setting: [%s][%s]=%s", group, key, value.c_str());
+    Debug("Save integer setting: [%s][%s]=%s", group, key, value.c_str());
 }
 
 static float read_float(const char* group, const char* key, float default_value)
@@ -350,7 +350,7 @@ static float read_float(const char* group, const char* key, float default_value)
     else
         ret = strtof(value.c_str(), NULL);
 
-    Log("Load setting: [%s][%s]=%.2f", group, key, ret);
+    Debug("Load float setting: [%s][%s]=%.2f", group, key, ret);
     return ret;
 }
 
@@ -358,7 +358,7 @@ static void write_float(const char* group, const char* key, float value)
 {
     std::string value_str = std::to_string(value);
     config_ini_data[group][key] = value_str;
-    Log("Save setting: [%s][%s]=%s", group, key, value_str.c_str());
+    Debug("Save float setting: [%s][%s]=%s", group, key, value_str.c_str());
 }
 
 static bool read_bool(const char* group, const char* key, bool default_value)
@@ -372,7 +372,7 @@ static bool read_bool(const char* group, const char* key, bool default_value)
     else
         std::istringstream(value) >> std::boolalpha >> ret;
 
-    Log("Load setting: [%s][%s]=%s", group, key, ret ? "true" : "false");
+    Debug("Load bool setting: [%s][%s]=%s", group, key, ret ? "true" : "false");
     return ret;
 }
 
@@ -383,18 +383,18 @@ static void write_bool(const char* group, const char* key, bool boolean)
     std::string value;
     value = converter.str();
     config_ini_data[group][key] = value;
-    Log("Save setting: [%s][%s]=%s", group, key, value.c_str());
+    Debug("Save bool setting: [%s][%s]=%s", group, key, value.c_str());
 }
 
 static std::string read_string(const char* group, const char* key)
 {
     std::string ret = config_ini_data[group][key];
-    Log("Load setting: [%s][%s]=%s", group, key, ret.c_str());
+    Debug("Load string setting: [%s][%s]=%s", group, key, ret.c_str());
     return ret;
 }
 
 static void write_string(const char* group, const char* key, std::string value)
 {
     config_ini_data[group][key] = value;
-    Log("Save setting: [%s][%s]=%s", group, key, value.c_str());
+    Debug("Save string setting: [%s][%s]=%s", group, key, value.c_str());
 }

@@ -76,7 +76,7 @@ void renderer_init(void)
     renderer_glew_version = (const char*)glewGetString(GLEW_VERSION);
     renderer_opengl_version = (const char*)glGetString(GL_VERSION);
 
-    Log("Using GLEW %s\n", renderer_glew_version);
+    Debug("Using GLEW %s\n", renderer_glew_version);
     
     #endif
 
