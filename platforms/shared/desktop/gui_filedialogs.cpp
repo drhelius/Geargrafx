@@ -27,7 +27,7 @@
 void gui_file_dialog_open_rom(void)
 {
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "ROM Files", "col,cv,rom,bin,zip" } };
+    nfdfilteritem_t filterItem[1] = { { "ROM Files", "pce,rom,bin,zip" } };
     nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, config_emulator.last_open_path.c_str());
     if (result == NFD_OKAY)
     {
