@@ -21,6 +21,9 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
 #include "../../../src/geargrafx.h"
+#include "config.h"
+#include "gui.h"
+#include "renderer.h"
 
 #define APPLICATION_IMPORT
 #include "application.h"
@@ -49,8 +52,8 @@ int application_init(const char* rom_file, const char* symbol_file)
     Log("%s %s Desktop App", GEARGRAFX_TITLE, GEARGRAFX_VERSION);
     Log("By Ignacio Sánchez (drhelius)");
 
-    // config_init();
-    // config_read();
+    config_init();
+    config_read();
 
     int ret = sdl_init();
     // emu_init();
@@ -60,28 +63,28 @@ int application_init(const char* rom_file, const char* symbol_file)
     // emu_savefiles_dir_option = config_emulator.savefiles_dir_option;
     // emu_savestates_dir_option = config_emulator.savestates_dir_option;
     
-    // gui_init();
+    gui_init();
 
     ImGui_ImplSDL2_InitForOpenGL(sdl_window, gl_context);
 
-    // renderer_init();
+    renderer_init();
 
-    //SDL_GL_SetSwapInterval(config_video.sync ? 1 : 0);
+    SDL_GL_SetSwapInterval(config_video.sync ? 1 : 0);
 
-    // if (config_emulator.fullscreen)
-    //     application_trigger_fullscreen(true);
+    if (config_emulator.fullscreen)
+        application_trigger_fullscreen(true);
 
-    // if (IsValidPointer(rom_file) && (strlen(rom_file) > 0))
-    // {
-    //     Log ("Rom file argument: %s", rom_file);
-    //     gui_load_rom(rom_file);
-    // }
-    // if (IsValidPointer(symbol_file) && (strlen(symbol_file) > 0))
-    // {
-    //     Log ("Symbol file argument: %s", symbol_file);
-    //     gui_debug_reset_symbols();
-    //     gui_debug_load_symbols_file(symbol_file);
-    // }
+    if (IsValidPointer(rom_file) && (strlen(rom_file) > 0))
+    {
+        Log ("Rom file argument: %s", rom_file);
+        gui_load_rom(rom_file);
+    }
+    if (IsValidPointer(symbol_file) && (strlen(symbol_file) > 0))
+    {
+        Log ("Symbol file argument: %s", symbol_file);
+        // gui_debug_reset_symbols();
+        // gui_debug_load_symbols_file(symbol_file);
+    }
 
     return ret;
 }
@@ -89,11 +92,11 @@ int application_init(const char* rom_file, const char* symbol_file)
 void application_destroy(void)
 {
     save_window_size();
-    // config_write();
-    // config_destroy();
-    // renderer_destroy();
+    config_write();
+    config_destroy();
+    renderer_destroy();
     ImGui_ImplSDL2_Shutdown();
-    // gui_destroy();
+    gui_destroy();
     // emu_destroy();
     sdl_destroy();
 }
@@ -151,7 +154,7 @@ static int sdl_init(void)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 
-    sdl_window = SDL_CreateWindow(GEARGRAFX_TITLE " " GEARGRAFX_VERSION, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 500 /*config_emulator.window_width*/, 500 /*config_emulator.window_height*/, window_flags);
+    sdl_window = SDL_CreateWindow(GEARGRAFX_TITLE " " GEARGRAFX_VERSION, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config_emulator.window_width, config_emulator.window_height, window_flags);
     gl_context = SDL_GL_CreateContext(sdl_window);
     SDL_GL_MakeCurrent(sdl_window, gl_context);
     SDL_GL_SetSwapInterval(0);
@@ -222,18 +225,16 @@ static void handle_mouse_cursor(void)
 {
     bool hide_cursor = false;
 
-    // if (gui_main_window_hovered && !config_debug.debug)
-    //     hide_cursor = true;
+    if (gui_main_window_hovered && !config_debug.debug)
+        hide_cursor = true;
 
-    // if (!config_emulator.show_menu && !config_debug.debug)
-    //     hide_cursor = true;
+    if (!config_emulator.show_menu && !config_debug.debug)
+        hide_cursor = true;
 
-    // if (hide_cursor)
-    //     ImGui::SetMouseCursor(ImGuiMouseCursor_None);
-    // else
-    //     ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
-
-    // SDL_SetRelativeMouseMode(config_emulator.capture_mouse ? SDL_TRUE : SDL_FALSE);
+    if (hide_cursor)
+        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+    else
+        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
 }
 
 static void sdl_events(void)
@@ -250,11 +251,11 @@ static void sdl_events(void)
 
         ImGui_ImplSDL2_ProcessEvent(&event);
 
-        // if (!gui_in_use)
-        // {
-        //     sdl_events_emu(&event);
-        //     sdl_shortcuts_gui(&event);
-        // }
+        if (!gui_in_use)
+        {
+            sdl_events_emu(&event);
+            sdl_shortcuts_gui(&event);
+        }
     }
 }
 
@@ -265,8 +266,8 @@ static void sdl_events_emu(const SDL_Event* event)
          case (SDL_DROPFILE):
         {
             char* dropped_filedir = event->drop.file;
-            // gui_load_rom(dropped_filedir);
-            SDL_free(dropped_filedir);    // Free dropped_filedir memory
+            gui_load_rom(dropped_filedir);
+            SDL_free(dropped_filedir);
         }
         break;
 
@@ -592,57 +593,57 @@ static void sdl_shortcuts_gui(const SDL_Event* event)
     {
         int key = event->key.keysym.scancode;
 
-    //     switch (key)
-    //     {
-    //         case SDL_SCANCODE_C:
-    //             gui_shortcut(gui_ShortcutDebugCopy);
-    //             break;
-    //         case SDL_SCANCODE_V:
-    //             gui_shortcut(gui_ShortcutDebugPaste);
-    //             break;
-    //         case SDL_SCANCODE_O:
-    //             gui_shortcut(gui_ShortcutOpenROM);
-    //             break;
-    //         case SDL_SCANCODE_R:
-    //             gui_shortcut(gui_ShortcutReset);
-    //             break;
-    //         case SDL_SCANCODE_P:
-    //             gui_shortcut(gui_ShortcutPause);
-    //             break;
-    //         case SDL_SCANCODE_F:
-    //             gui_shortcut(gui_ShortcutFFWD);
-    //             break;
-    //         case SDL_SCANCODE_L:
-    //             gui_shortcut(gui_ShortcutLoadState);
-    //             break;
-    //         case SDL_SCANCODE_S:
-    //             gui_shortcut(gui_ShortcutSaveState);
-    //             break;
-    //         case SDL_SCANCODE_X:
-    //             gui_shortcut(gui_ShortcutScreenshot);
-    //             break;
-    //         case SDL_SCANCODE_M:
-    //             gui_shortcut(gui_ShortcutShowMainMenu);
-    //             break;
-    //         case SDL_SCANCODE_F5:
-    //             gui_shortcut(gui_ShortcutDebugContinue);
-    //             break;
-    //         case SDL_SCANCODE_F6:
-    //             gui_shortcut(gui_ShortcutDebugNextFrame);
-    //             break;
-    //         case SDL_SCANCODE_F8:
-    //             gui_shortcut(gui_ShortcutDebugRuntocursor);
-    //             break;
-    //         case SDL_SCANCODE_F9:
-    //             gui_shortcut(gui_ShortcutDebugBreakpoint);
-    //             break;
-    //         case SDL_SCANCODE_F10:
-    //             gui_shortcut(gui_ShortcutDebugStep);
-    //             break;
-    //         case SDL_SCANCODE_BACKSPACE:
-    //             gui_shortcut(gui_ShortcutDebugGoBack);
-    //             break;
-    //     }
+        switch (key)
+        {
+            case SDL_SCANCODE_C:
+                gui_shortcut(gui_ShortcutDebugCopy);
+                break;
+            case SDL_SCANCODE_V:
+                gui_shortcut(gui_ShortcutDebugPaste);
+                break;
+            case SDL_SCANCODE_O:
+                gui_shortcut(gui_ShortcutOpenROM);
+                break;
+            case SDL_SCANCODE_R:
+                gui_shortcut(gui_ShortcutReset);
+                break;
+            case SDL_SCANCODE_P:
+                gui_shortcut(gui_ShortcutPause);
+                break;
+            case SDL_SCANCODE_F:
+                gui_shortcut(gui_ShortcutFFWD);
+                break;
+            case SDL_SCANCODE_L:
+                gui_shortcut(gui_ShortcutLoadState);
+                break;
+            case SDL_SCANCODE_S:
+                gui_shortcut(gui_ShortcutSaveState);
+                break;
+            case SDL_SCANCODE_X:
+                gui_shortcut(gui_ShortcutScreenshot);
+                break;
+            case SDL_SCANCODE_M:
+                gui_shortcut(gui_ShortcutShowMainMenu);
+                break;
+            case SDL_SCANCODE_F5:
+                gui_shortcut(gui_ShortcutDebugContinue);
+                break;
+            case SDL_SCANCODE_F6:
+                gui_shortcut(gui_ShortcutDebugNextFrame);
+                break;
+            case SDL_SCANCODE_F8:
+                gui_shortcut(gui_ShortcutDebugRuntocursor);
+                break;
+            case SDL_SCANCODE_F9:
+                gui_shortcut(gui_ShortcutDebugBreakpoint);
+                break;
+            case SDL_SCANCODE_F10:
+                gui_shortcut(gui_ShortcutDebugStep);
+                break;
+            case SDL_SCANCODE_BACKSPACE:
+                gui_shortcut(gui_ShortcutDebugGoBack);
+                break;
+        }
     }
 }
 
@@ -669,11 +670,11 @@ static void run_emulator(void)
 
 static void render(void)
 {
-    // renderer_begin_render();
+    renderer_begin_render();
     ImGui_ImplSDL2_NewFrame();
-    // gui_render();
-    // renderer_render();
-    // renderer_end_render();
+    gui_render();
+    renderer_render();
+    renderer_end_render();
 
     SDL_GL_SwapWindow(sdl_window);
 }
@@ -714,11 +715,11 @@ static void frame_throttle(void)
 
 static void save_window_size(void)
 {
-    // if (!config_emulator.fullscreen)
-    // {
-    //     int width, height;
-    //     SDL_GetWindowSize(sdl_window, &width, &height);
-    //     config_emulator.window_width = width;
-    //     config_emulator.window_height = height;
-    // }
+    if (!config_emulator.fullscreen)
+    {
+        int width, height;
+        SDL_GetWindowSize(sdl_window, &width, &height);
+        config_emulator.window_width = width;
+        config_emulator.window_height = height;
+    }
 }
