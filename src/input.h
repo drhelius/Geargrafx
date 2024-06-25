@@ -17,18 +17,24 @@
  *
  */
 
-#ifndef GEARGRAFX_H
-#define	GEARGRAFX_H
+#ifndef INPUT_H
+#define INPUT_H
 
 #include "common.h"
-#include "geargrafx_core.h"
-#include "input.h"
-#include "audio.h"
-#include "cartridge.h"
-#include "memory.h"
-#include "huc6270.h"
-#include "huc6280.h"
-#include "huc6280_psg.h"
-#include "huc6280_timer.h"
 
-#endif /* GEARGRAFX_H */
+class Input
+{
+public:
+    Input();
+    void Init();
+    void Reset();
+    void KeyPressed(GG_Controllers controller, GG_Keys key);
+    void KeyReleased(GG_Controllers controller, GG_Keys key);
+    // void SaveState(std::ostream& stream);
+    // void LoadState(std::istream& stream);
+
+private:
+
+};
+
+#endif /* INPUT_H */

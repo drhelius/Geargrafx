@@ -17,59 +17,34 @@
  *
  */
 
-#ifndef TYPES_H
-#define TYPES_H
+#include "input.h"
+#include "common.h"
 
-#include <stdint.h>
-
-typedef uint8_t u8;
-typedef int8_t s8;
-typedef uint16_t u16;
-typedef int16_t s16;
-typedef uint32_t u32;
-typedef int32_t s32;
-typedef uint64_t u64;
-typedef int64_t s64;
-
-struct GG_Runtime_Info
+Input::Input()
 {
-    int screen_width;
-    int screen_height;
-};
+}
 
-struct GG_Color
+void Input::Init()
 {
-    u8 red;
-    u8 green;
-    u8 blue;
-};
+    Reset();
+}
 
-enum GG_Pixel_Format
+void Input::Reset()
 {
-    GG_PIXEL_RGB565,
-    GG_PIXEL_RGB555,
-    GG_PIXEL_RGB888,
-    GG_PIXEL_BGR565,
-    GG_PIXEL_BGR555,
-    GG_PIXEL_BGR888
-};
+}
 
-enum GG_Keys
+void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
 {
-    GG_KEY_UP,
-    GG_KEY_DOWN,
-    GG_KEY_LEFT,
-    GG_KEY_RIGHT,
-    GG_KEY_1,
-    GG_KEY_2,
-    GG_KEY_RUN,
-    GG_KEY_SELECT
-};
+}
 
-enum GG_Controllers
+void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
 {
-    GG_CONTROLLER_1,
-    GG_CONTROLLER_2
-};
+}
 
-#endif /* TYPES_H */
+// void Input::SaveState(std::ostream& stream)
+// {
+// }
+
+// void Input::LoadState(std::istream& stream)
+// {
+// }

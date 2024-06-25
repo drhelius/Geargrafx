@@ -17,18 +17,28 @@
  *
  */
 
-#ifndef GEARGRAFX_H
-#define	GEARGRAFX_H
+#include "types.h"
 
-#include "common.h"
-#include "geargrafx_core.h"
-#include "input.h"
-#include "audio.h"
-#include "cartridge.h"
-#include "memory.h"
-#include "huc6270.h"
-#include "huc6280.h"
-#include "huc6280_psg.h"
-#include "huc6280_timer.h"
+class Audio
+{
+public:
+    Audio();
+    ~Audio();
+    void Init();
+    void Reset();
+    void Mute(bool mute);
+    void Tick(unsigned int clock_cycles);
+    void EndFrame(s16* sample_buffer, int* sample_count);
+    // void SaveState(std::ostream& stream);
+    // void LoadState(std::istream& stream);
 
-#endif /* GEARGRAFX_H */
+private:
+    u64 m_elapsed_cycles;
+    int m_sample_rate;
+    bool m_mute;
+};
+
+inline void Audio::Tick(unsigned int clock_cycles)
+{
+    m_elapsed_cycles += clock_cycles;
+}

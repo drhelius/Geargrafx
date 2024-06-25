@@ -17,18 +17,10 @@
  *
  */
 
-#ifndef GEARGRAFX_H
-#define	GEARGRAFX_H
+#ifndef HUC6270_H
+#define HUC6270_H
 
-#include "common.h"
-#include "geargrafx_core.h"
-#include "input.h"
-#include "audio.h"
-#include "cartridge.h"
-#include "memory.h"
-#include "huc6270.h"
-#include "huc6280.h"
-#include "huc6280_psg.h"
-#include "huc6280_timer.h"
+#define GG_RESOLUTION_WIDTH 256
+#define GG_RESOLUTION_HEIGHT 192
 
-#endif /* GEARGRAFX_H */
+#endif /* HUC6270_H */

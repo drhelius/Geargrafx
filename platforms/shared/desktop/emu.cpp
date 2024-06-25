@@ -17,18 +17,5 @@
  *
  */
 
-#ifndef GEARGRAFX_H
-#define	GEARGRAFX_H
-
-#include "common.h"
-#include "geargrafx_core.h"
-#include "input.h"
-#include "audio.h"
-#include "cartridge.h"
-#include "memory.h"
-#include "huc6270.h"
-#include "huc6280.h"
-#include "huc6280_psg.h"
-#include "huc6280_timer.h"
-
-#endif /* GEARGRAFX_H */
+#define GUI_EMU_IMPORT
+#include "emu.h"

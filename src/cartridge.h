@@ -17,18 +17,32 @@
  *
  */
 
-#ifndef GEARGRAFX_H
-#define	GEARGRAFX_H
+class Cartridge
+{
+public:
+    Cartridge();
+    ~Cartridge();
+    void Init();
+    void Reset();
+    u32 GetCRC();
+    bool IsReady();
+    int GetROMSize();
+    int GetROMBankCount();
+    const char* GetFilePath();
+    const char* GetFileName();
+    u8* GetROM();
+    bool LoadFromFile(const char* path);
+    bool LoadFromBuffer(const u8* buffer, int size);
 
-#include "common.h"
-#include "geargrafx_core.h"
-#include "input.h"
-#include "audio.h"
-#include "cartridge.h"
-#include "memory.h"
-#include "huc6270.h"
-#include "huc6280.h"
-#include "huc6280_psg.h"
-#include "huc6280_timer.h"
+private:
+    bool LoadFromZipFile(const u8* buffer, int size);
 
-#endif /* GEARGRAFX_H */
+private:
+    u8* m_pROM;
+    int m_iROMSize;
+    bool m_bReady;
+    char m_szFilePath[512];
+    char m_szFileName[512];
+    int m_iROMBankCount;
+    u32 m_iCRC;
+};

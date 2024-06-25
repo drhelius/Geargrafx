@@ -17,18 +17,48 @@
  *
  */
 
-#ifndef GEARGRAFX_H
-#define	GEARGRAFX_H
-
-#include "common.h"
-#include "geargrafx_core.h"
-#include "input.h"
+#include <istream>
+#include <ostream>
 #include "audio.h"
-#include "cartridge.h"
-#include "memory.h"
-#include "huc6270.h"
-#include "huc6280.h"
-#include "huc6280_psg.h"
-#include "huc6280_timer.h"
 
-#endif /* GEARGRAFX_H */
+Audio::Audio()
+{
+    m_elapsed_cycles = 0;
+    m_sample_rate = 44100;
+    m_mute = false;
+}
+
+Audio::~Audio()
+{
+}
+
+void Audio::Init()
+{
+    
+}
+
+void Audio::Reset()
+{
+    m_elapsed_cycles = 0;
+}
+
+void Audio::Mute(bool mute)
+{
+    m_mute = mute;
+}
+
+void Audio::EndFrame(s16* sample_buffer, int* sample_count)
+{
+    *sample_count = 0;
+    m_elapsed_cycles = 0;
+}
+
+// void Audio::SaveState(std::ostream& stream)
+// {
+//     stream.write(reinterpret_cast<const char*> (&m_elapsed_cycles), sizeof(m_ElapsedCycles));
+// }
+
+// void Audio::LoadState(std::istream& stream)
+// {
+//     stream.read(reinterpret_cast<char*> (&m_elapsed_cycles), sizeof(m_ElapsedCycles));
+// }

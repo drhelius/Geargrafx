@@ -23,5 +23,13 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/imgui/imgui_demo.cpp \
     $(DESKTOP_SRC_DIR)/imgui/memory_editor.cpp \
     $(SRC_DIR)/geargrafx_core.cpp \
-    
-
+    $(SRC_DIR)/audio.cpp \
+    $(SRC_DIR)/cartridge.cpp \
+    $(SRC_DIR)/huc6270.cpp \
+    $(SRC_DIR)/huc6280.cpp \
+    $(SRC_DIR)/huc6280_functors.cpp \
+    $(SRC_DIR)/huc6280_opcodes.cpp \
+    $(SRC_DIR)/huc6280_psg.cpp \
+    $(SRC_DIR)/huc6280_timer.cpp \
+    $(SRC_DIR)/input.cpp \
+    $(SRC_DIR)/memory.cpp \
