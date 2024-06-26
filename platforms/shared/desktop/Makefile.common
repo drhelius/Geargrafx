@@ -6,6 +6,9 @@ define HEADER
   \____|\\___|\\__,_|_|  \\__, |_|  \__,_|_| /_/\\_\\
                        |___/
 
+  ** Building for $(PLATFORM) platform ** 
+  ** Git version: $(GIT_VERSION) **
+
 endef
 export HEADER
 
