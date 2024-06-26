@@ -1,4 +1,4 @@
-name: Main Workflow
+name: Build and Release
 
 on:
   workflow_dispatch:
@@ -73,44 +73,44 @@ jobs:
   #     with:
   #       name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-libretro-linux
   #       path: platforms/libretro/${{ env.NAME_LOWER }}_libretro.so
-  # macos:
-  #   name: macOS
-  #   strategy:
-  #     matrix:
-  #       os: [macos-13, macos-14]
-  #       include:
-  #       - os: macos-13
-  #         architecture: intel
-  #       - os: macos-14
-  #         architecture: arm
-  #   runs-on: ${{ matrix.os }}
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-  #     with:
-  #       fetch-depth: 0
-  #   - name: Install dependencies
-  #     run: brew install sdl2
-  #   - name: Get build number
-  #     run: |
-  #       echo "BUILD_NUMBER=$(git describe --abbrev=7 --dirty --always --tags)" >> $GITHUB_ENV
-  #   - name: make
-  #     run: make dist
-  #     working-directory: platforms/macos
-  #   - name: Prepare artifact directory
-  #     run: |
-  #       mkdir -p artifact
-  #       cp platforms/shared/README.txt artifact
-  #       cp platforms/shared/gamecontrollerdb.txt artifact
-  #       cp -R platforms/macos/${{ env.NAME_UPPER }}.app artifact
-  #   - name: Archive binary
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-macos-${{ matrix.architecture }}
-  #       path: artifact/*
+  macos:
+    name: macOS
+    strategy:
+      matrix:
+        os: [macos-13, macos-14]
+        include:
+        - os: macos-13
+          architecture: intel
+        - os: macos-14
+          architecture: arm
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Install dependencies
+      run: brew install sdl2
+    - name: Get build number
+      run: |
+        echo "BUILD_NUMBER=$(git describe --abbrev=7 --dirty --always --tags)" >> $GITHUB_ENV
+    - name: make
+      run: make dist
+      working-directory: platforms/macos
+    - name: Prepare artifact directory
+      run: |
+        mkdir -p artifact
+        cp platforms/shared/README.txt artifact
+        cp platforms/shared/gamecontrollerdb.txt artifact
+        cp -R platforms/macos/${{ env.NAME_UPPER }}.app artifact
+    - name: Archive binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-macos-${{ matrix.architecture }}
+        path: artifact/*
   # windows:
   #   name: Windows
   #   strategy:
@@ -147,40 +147,40 @@ jobs:
   #     with:
   #       name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-windows-${{ matrix.architecture }}
   #       path: artifact/*
-  # bsd:
-  #   name: BSD
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-  #     with:
-  #       fetch-depth: 0
-  #   - name: Get build number
-  #     run: |
-  #       echo "BUILD_NUMBER=$(git describe --abbrev=7 --dirty --always --tags)" >> $GITHUB_ENV
-  #   - name: Run FreeBSD and gmake
-  #     id: test
-  #     uses: vmactions/freebsd-vm@v1
-  #     with:
-  #       usesh: true
-  #       prepare: pkg install -y git gmake pkgconf SDL2 glew lang/gcc gtk3
-  #       run: |
-  #         cd platforms/bsd
-  #         gmake
-  #   - name: Prepare artifact directory
-  #     run: |
-  #       mkdir -p artifact
-  #       cp platforms/shared/README.txt artifact
-  #       cp platforms/shared/gamecontrollerdb.txt artifact
-  #       cp platforms/bsd/${{ env.NAME_LOWER }} artifact
-  #   - name: Archive binary
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-bsd
-  #       path: artifact/*
+  bsd:
+    name: BSD
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Get build number
+      run: |
+        echo "BUILD_NUMBER=$(git describe --abbrev=7 --dirty --always --tags)" >> $GITHUB_ENV
+    - name: Run FreeBSD and gmake
+      id: test
+      uses: vmactions/freebsd-vm@v1
+      with:
+        usesh: true
+        prepare: pkg install -y git gmake pkgconf SDL2 glew lang/gcc gtk3
+        run: |
+          cd platforms/bsd
+          gmake
+    - name: Prepare artifact directory
+      run: |
+        mkdir -p artifact
+        cp platforms/shared/README.txt artifact
+        cp platforms/shared/gamecontrollerdb.txt artifact
+        cp platforms/bsd/${{ env.NAME_LOWER }} artifact
+    - name: Archive binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-bsd
+        path: artifact/*
   # release:
   #   name: Release
   #   needs: [linux, macos, windows, bsd]
