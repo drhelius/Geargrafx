@@ -1,8 +1,13 @@
 name: "CodeQL"
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '.vscode/**'
   pull_request:
     branches: [ "main" ]
 
