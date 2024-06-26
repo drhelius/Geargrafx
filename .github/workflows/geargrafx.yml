@@ -104,7 +104,6 @@ jobs:
       run: |
         mkdir -p artifact
         cp platforms/shared/README.txt artifact
-        cp platforms/shared/gamecontrollerdb.txt artifact
         cp -R platforms/macos/${{ env.NAME_UPPER }}.app artifact
     - name: Archive binary
       uses: actions/upload-artifact@v4
