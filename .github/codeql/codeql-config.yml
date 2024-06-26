@@ -1,0 +1,8 @@
+paths:
+  - src
+  - platforms/shared
+paths-ignore:
+  - platforms/shared/desktop/imgui
+  - platforms/shared/desktop/mINI
+  - platforms/shared/desktop/nfd
+  - platforms/shared/desktop/stb
