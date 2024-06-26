@@ -36,6 +36,7 @@ jobs:
       run: sudo apt-get install -y libsdl2-dev libglew-dev libgtk-3-dev
     - name: Get build number
       run: |
+        git fetch -a
         echo "BUILD_NUMBER=$(git describe --abbrev=7 --dirty --always --tags)" >> $GITHUB_ENV
     - name: make
       run: make
