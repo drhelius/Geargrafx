@@ -28,7 +28,7 @@
 #define FLAG_IRQ 0x04
 #define FLAG_DECIMAL 0x08
 #define FLAG_BRK 0x10
-#define FLAG_UNUSED 0x20
+#define FLAG_MEMORY 0x20
 #define FLAG_OVERFLOW 0x40
 #define FLAG_NEGATIVE 0x80
 

@@ -100,12 +100,13 @@ inline void HuC6280::OPCodes_BIT(u16 address)
 
 inline void HuC6280::OPCodes_BRK()
 {
+    m_PC.Increment();
     StackPush16(m_PC.GetValue());
     SetFlag(FLAG_BRK);
     StackPush8(m_P.GetValue());
     SetFlag(FLAG_IRQ);
-    m_PC.SetLow(m_memory->Read(0xFFFE));
-    m_PC.SetHigh(m_memory->Read(0xFFFF));
+    m_PC.SetLow(m_memory->Read(0xFFF6));
+    m_PC.SetHigh(m_memory->Read(0xFFF7));
 }
 
 inline void HuC6280::OPCodes_ClearFlag(u8 flag)
