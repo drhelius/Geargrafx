@@ -17,22 +17,39 @@
  *
  */
 
+#include <stdlib.h>
 #include "memory.h"
 
 Memory::Memory(Cartridge* cartridge)
 {
     m_cartridge = cartridge;
+    InitPointer(m_wram);
 }
 
 Memory::~Memory()
 {
+    SafeDeleteArray(m_wram);
 }
 
 void Memory::Init()
 {
+    m_wram = new u8[0x2000];
     Reset();
 }
 
 void Memory::Reset()
 {
+    m_mpr[7] = 0x00;
+
+    for (int i = 0; i < 7; i++)
+    {
+        m_mpr[i] = rand() & 0xFF;
+    }
+
+    for (int i = 0; i < 0x2000; i++)
+    {
+        m_wram[i] = rand() & 0xFF;
+    }
 }
+
+

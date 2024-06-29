@@ -17,6 +17,8 @@
  *
  */
 
+#include <stdlib.h>
+#include <time.h>
 #include "geargrafx_core.h"
 #include "common.h"
 #include "cartridge.h"
@@ -51,6 +53,8 @@ GeargrafxCore::~GeargrafxCore()
 void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 {
     Debug("--== %s %s by Ignacio Sanchez ==--", GEARGRAFX_TITLE, GEARGRAFX_VERSION);
+
+    srand((unsigned int)time(NULL));
 
     m_pixel_format = pixel_format;
 

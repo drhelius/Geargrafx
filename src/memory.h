@@ -33,9 +33,16 @@ public:
     void Reset();
     u8 Read(u16 address);
     void Write(u16 address, u8 value);
+    void SetMpr(u8 index, u8 value);
+    u8 GetMpr(u8 index);
 
 private:
     Cartridge* m_cartridge;
+    u8 m_mpr[8];
+    u8* m_wram;
+
+private:
+    u32 GetPhysicalAddress(u16 address);
 };
 
 #include "memory_inline.h"
