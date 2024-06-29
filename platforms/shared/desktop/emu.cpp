@@ -159,7 +159,6 @@ bool emu_is_empty(void)
     return !geargrafx->GetCartridge()->IsReady();
 }
 
-
 void emu_reset(void)
 {
     save_ram();

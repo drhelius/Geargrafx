@@ -27,7 +27,7 @@
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_opengl2.h"
-// #include "emu.h"
+#include "emu.h"
 #include "config.h"
 #include "../../../src/geargrafx.h"
 
@@ -37,7 +37,7 @@
 static uint32_t system_texture;
 static uint32_t scanlines_texture;
 static uint32_t frame_buffer_object;
-// static GC_RuntimeInfo current_runtime;
+static GG_Runtime_Info current_runtime;
 static bool first_frame;
 static u32 scanlines[16] = {
     0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -45,10 +45,8 @@ static u32 scanlines[16] = {
     0x000000FF, 0x000000FF, 0x000000FF, 0x000000FF,
     0x000000FF, 0x000000FF, 0x000000FF, 0x000000FF};
 static const int FRAME_BUFFER_SCALE = 4;
-// static const int FRAME_BUFFER_WIDTH = GC_RESOLUTION_WIDTH_WITH_OVERSCAN * FRAME_BUFFER_SCALE;
-// static const int FRAME_BUFFER_HEIGHT = GC_RESOLUTION_HEIGHT_WITH_OVERSCAN * FRAME_BUFFER_SCALE;
-static const int FRAME_BUFFER_WIDTH = 320 * FRAME_BUFFER_SCALE;
-static const int FRAME_BUFFER_HEIGHT = 240 * FRAME_BUFFER_SCALE;
+static const int FRAME_BUFFER_WIDTH = GG_MAX_RESOLUTION_WIDTH * FRAME_BUFFER_SCALE;
+static const int FRAME_BUFFER_HEIGHT = GG_MAX_RESOLUTION_HEIGHT * FRAME_BUFFER_SCALE;
 
 static void init_ogl_gui(void);
 static void init_ogl_emu(void);
@@ -69,15 +67,13 @@ void renderer_init(void)
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
-        /* Problem: glewInit failed, something is seriously wrong. */
-        Log("GLEW Error: %s\n", glewGetErrorString(err));
+        Log("GLEW Error: %s", glewGetErrorString(err));
     }
 
     renderer_glew_version = (const char*)glewGetString(GLEW_VERSION);
     renderer_opengl_version = (const char*)glGetString(GL_VERSION);
 
-    Debug("Using GLEW %s\n", renderer_glew_version);
-    
+    Debug("Using GLEW %s", renderer_glew_version);
     #endif
 
     init_ogl_gui();
@@ -106,7 +102,7 @@ void renderer_begin_render(void)
 
 void renderer_render(void)
 {
-    // emu_get_runtime(current_runtime);
+    emu_get_runtime(current_runtime);
 
     if (config_debug.debug)
     {
@@ -159,10 +155,10 @@ static void init_ogl_emu(void)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // glBindTexture(GL_TEXTURE_2D, system_texture);
-    // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, GC_RESOLUTION_WIDTH_WITH_OVERSCAN, GC_RESOLUTION_HEIGHT_WITH_OVERSCAN, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_frame_buffer);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, system_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, GG_MAX_RESOLUTION_WIDTH, GG_MAX_RESOLUTION_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_frame_buffer);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     init_scanlines_texture();
 }
@@ -255,8 +251,8 @@ static void render_emu_mix(void)
 static void update_system_texture(void)
 {
     glBindTexture(GL_TEXTURE_2D, system_texture);
-    // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, current_runtime.screen_width, current_runtime.screen_height,
-    //         GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_frame_buffer);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, current_runtime.screen_width, current_runtime.screen_height,
+            GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_frame_buffer);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -342,10 +338,8 @@ static void render_scanlines(void)
 
     glBindTexture(GL_TEXTURE_2D, scanlines_texture);
 
-    // int viewportWidth = current_runtime.screen_width * FRAME_BUFFER_SCALE;
-    // int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
-    int viewportWidth = 320 * FRAME_BUFFER_SCALE;
-    int viewportHeight = 240 * FRAME_BUFFER_SCALE;
+    int viewportWidth = current_runtime.screen_width * FRAME_BUFFER_SCALE;
+    int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -355,8 +349,7 @@ static void render_scanlines(void)
     glMatrixMode(GL_MODELVIEW);
     glViewport(0, 0, viewportWidth, viewportHeight);
 
-    // float tex_v = (float)current_runtime.screen_height;
-    float tex_v = 320.0f;
+    float tex_v = (float)current_runtime.screen_height;
 
     glBegin(GL_QUADS);
     glTexCoord2d(0.0, 0.0);
