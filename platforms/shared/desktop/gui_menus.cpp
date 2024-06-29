@@ -25,6 +25,7 @@
 #include "gui_actions.h"
 #include "config.h"
 #include "application.h"
+#include "emu.h"
 #include "../../../src/geargrafx.h"
 
 static char savefiles_path[4096] = "";
@@ -173,7 +174,7 @@ static void menu_geargrafx(void)
             std::string message("Saving state to slot ");
             message += std::to_string(config_emulator.save_slot + 1);
             gui_set_status_message(message.c_str(), 3000);
-            // emu_save_state_slot(config_emulator.save_slot + 1);
+            emu_save_state_slot(config_emulator.save_slot + 1);
         }
 
         if (ImGui::MenuItem("Load State", "Ctrl+L"))
@@ -181,7 +182,7 @@ static void menu_geargrafx(void)
             std::string message("Loading state from slot ");
             message += std::to_string(config_emulator.save_slot + 1);
             gui_set_status_message(message.c_str(), 3000);
-            // emu_load_state_slot(config_emulator.save_slot + 1);
+            emu_load_state_slot(config_emulator.save_slot + 1);
         }
 
         ImGui::Separator();
@@ -222,7 +223,7 @@ static void menu_emulator(void)
             ImGui::PushItemWidth(220.0f);
             if (ImGui::Combo("##savestate_option", &config_emulator.savestates_dir_option, "Savestates In Custom Folder\0Savestates In ROM Folder\0\0"))
             {
-                // emu_savestates_dir_option = config_emulator.savestates_dir_option;
+                emu_savestates_dir_option = config_emulator.savestates_dir_option;
             }
 
             if (config_emulator.savestates_dir_option == 0)
@@ -236,7 +237,7 @@ static void menu_emulator(void)
                 if (ImGui::InputText("##savestate_path", savestates_path, IM_ARRAYSIZE(savestates_path), ImGuiInputTextFlags_AutoSelectAll))
                 {
                     config_emulator.savestates_path.assign(savestates_path);
-                    // strcpy(emu_savestates_path, savestates_path);
+                    strcpy(emu_savestates_path, savestates_path);
                 }
                 ImGui::PopItemWidth();
             }
@@ -313,7 +314,7 @@ static void menu_video(void)
             if (config_video.sync)
             {
                 config_audio.sync = true;
-                // emu_audio_reset();
+                emu_audio_reset();
             }
         }
 
@@ -324,7 +325,7 @@ static void menu_video(void)
         ImGui::MenuItem("Bilinear Filtering", "", &config_video.bilinear);
         if (ImGui::MenuItem("Disable Sprite Limit", "", &config_video.sprite_limit))
         {
-            // emu_video_no_sprite_limit(config_video.sprite_limit);
+            emu_video_no_sprite_limit(config_video.sprite_limit);
         }
 
         if (ImGui::BeginMenu("Screen Ghosting"))
@@ -460,7 +461,7 @@ static void menu_audio(void)
 
         if (ImGui::MenuItem("Enable Audio", "", &config_audio.enable))
         {
-            // emu_audio_mute(!config_audio.enable);
+            emu_audio_mute(!config_audio.enable);
         }
 
         if (ImGui::MenuItem("Sync With Emulator", "", &config_audio.sync))
@@ -486,7 +487,7 @@ static void menu_debug(void)
 
         if (ImGui::MenuItem("Enable", "", &config_debug.debug))
         {
-            // emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
+            emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
 
             // if (config_debug.debug)
             //     emu_debug_step();

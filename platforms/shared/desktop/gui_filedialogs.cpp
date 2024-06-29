@@ -22,6 +22,7 @@
 #include "gui.h"
 #include "gui_actions.h"
 #include "config.h"
+#include "emu.h"
 #include "nfd/nfd.h"
 
 void gui_file_dialog_open_rom(void)
@@ -50,11 +51,7 @@ void gui_file_dialog_load_ram(void)
     nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, NULL);
     if (result == NFD_OKAY)
     {
-        // Cartridge::ForceConfiguration config;
-        // config.region = get_region(config_emulator.region);
-        // config.type = Cartridge::CartridgeNotSupported;
-
-        // emu_load_ram(outPath, config);
+        emu_load_ram(outPath);
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)
@@ -70,7 +67,7 @@ void gui_file_dialog_save_ram(void)
     nfdresult_t result = NFD_SaveDialog(&outPath, filterItem, 1, NULL, NULL);
     if (result == NFD_OKAY)
     {
-        // emu_save_ram(outPath);
+        emu_save_ram(outPath);
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)
@@ -89,7 +86,7 @@ void gui_file_dialog_load_state(void)
         std::string message("Loading state from ");
         message += outPath;
         gui_set_status_message(message.c_str(), 3000);
-        // emu_load_state_file(outPath);
+        emu_load_state_file(outPath);
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)
@@ -108,7 +105,7 @@ void gui_file_dialog_save_state(void)
         std::string message("Saving state to ");
         message += outPath;
         gui_set_status_message(message.c_str(), 3000);
-        // emu_save_state_file(outPath);
+        emu_save_state_file(outPath);
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)

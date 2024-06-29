@@ -17,6 +17,11 @@
  *
  */
 
+#ifndef CARTRIDGE_H
+#define CARTRIDGE_H
+
+#include "common.h"
+
 class Cartridge
 {
 public:
@@ -30,19 +35,25 @@ public:
     int GetROMBankCount();
     const char* GetFilePath();
     const char* GetFileName();
+    const char* GetFileExtension();
     u8* GetROM();
     bool LoadFromFile(const char* path);
     bool LoadFromBuffer(const u8* buffer, int size);
 
 private:
     bool LoadFromZipFile(const u8* buffer, int size);
+    void GatherROMInfo();
+    void GatherInfoFromDB();
 
 private:
-    u8* m_pROM;
-    int m_iROMSize;
-    bool m_bReady;
-    char m_szFilePath[512];
-    char m_szFileName[512];
-    int m_iROMBankCount;
-    u32 m_iCRC;
+    u8* m_rom;
+    int m_rom_size;
+    int m_rom_bank_count;
+    bool m_ready;
+    char m_file_path[512];
+    char m_file_name[512];
+    char m_file_extension[512];
+    u32 m_crc;
 };
+
+#endif /* CARTRIDGE_H */

@@ -24,6 +24,7 @@
 #include "gui.h"
 #include "config.h"
 #include "application.h"
+#include "emu.h"
 #include "license.h"
 #include "backers.h"
 
@@ -228,7 +229,7 @@ void gui_show_info(void)
     ImGui::Begin("ROM Info", &config_emulator.show_info, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize);
 
     static char info[512] = "";
-    // emu_get_info(info);
+    emu_get_info(info);
 
     ImGui::PushFont(gui_default_font);
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f,0.502f,0.957f,1.0f));

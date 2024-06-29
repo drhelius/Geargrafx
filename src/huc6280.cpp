@@ -19,9 +19,12 @@
 
 #include "huc6280.h"
 #include "huc6280_timing.h"
+#include "huc6280_names.h"
+#include "memory.h"
 
-HuC6280::HuC6280()
+HuC6280::HuC6280(Memory* memory)
 {
+    m_memory = memory;
     InitOPCodeFunctors();
     m_t_states = 0;
     m_interrupt_asserted = false;
@@ -40,8 +43,8 @@ void HuC6280::Init()
 
 void HuC6280::Reset()
 {
-    // m_PC.SetLow(memory_impl_->Read(0xFFFC));
-    // m_PC.SetHigh(memory_impl_->Read(0xFFFD));
+    m_PC.SetLow(m_memory->Read(0xFFFC));
+    m_PC.SetHigh(m_memory->Read(0xFFFD));
     m_A.SetValue(0x00);
     m_X.SetValue(0x00);
     m_Y.SetValue(0x00);
@@ -79,8 +82,8 @@ unsigned int HuC6280::Tick()
         ClearFlag(FLAG_BRK);
         StackPush8(m_P.GetValue());
         SetFlag(FLAG_IRQ);
-        // m_PC.SetLow(memory_impl_->Read(0xFFFA));
-        // m_PC.SetHigh(memory_impl_->Read(0xFFFB));
+        m_PC.SetLow(m_memory->Read(0xFFFA));
+        m_PC.SetHigh(m_memory->Read(0xFFFB));
         m_t_states += 7;
         return m_t_states;
     }
@@ -90,8 +93,8 @@ unsigned int HuC6280::Tick()
         ClearFlag(FLAG_BRK);
         StackPush8(m_P.GetValue());
         SetFlag(FLAG_IRQ);
-        // m_PC.SetLow(memory_impl_->Read(0xFFFE));
-        // m_PC.SetHigh(memory_impl_->Read(0xFFFF));
+        m_PC.SetLow(m_memory->Read(0xFFFE));
+        m_PC.SetHigh(m_memory->Read(0xFFFF));
         m_t_states += 7;
         return m_t_states;
     } 
@@ -102,9 +105,9 @@ unsigned int HuC6280::Tick()
     {
         u16 opcode_address = m_PC.GetValue() - 1;
 
-        if (!memory_impl_->IsDisassembled(opcode_address))
+        if (!m_memory->IsDisassembled(opcode_address))
         {
-            memory_impl_->Disassemble(opcode_address, kOPCodeNames[opcode]);
+            m_memory->Disassemble(opcode_address, kOPCodeNames[opcode]);
         }
     }
 #endif
@@ -127,9 +130,7 @@ unsigned int HuC6280::Tick()
 
 void HuC6280::UnofficialOPCode()
 {
-#ifdef HuC6280_DEBUG
     u16 opcode_address = m_PC.GetValue() - 1;
-    u8 opcode = memory_impl_->Read(opcode_address);
-    printf("HuC6280 --> ** UNOFFICIAL OP Code (%X) at $%.4X -- %s\n", opcode, opcode_address, kOPCodeNames[opcode]);
-#endif
+    u8 opcode = m_memory->Read(opcode_address);
+    Debug("HuC6280 --> ** UNOFFICIAL OP Code (%X) at $%.4X -- %s\n", opcode, opcode_address, k_opcode_names[opcode]);
 }

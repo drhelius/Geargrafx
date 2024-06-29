@@ -21,6 +21,7 @@
 #define HUC6280_OPCODES_INLINE_H
 
 #include "huc6280.h"
+#include "memory.h"
 
 inline void HuC6280::OPCodes_ADC(u8 value)
 {
@@ -62,9 +63,9 @@ inline void HuC6280::OPCodes_ASL_Accumulator()
 
 inline void HuC6280::OPCodes_ASL_Memory(u16 address)
 {
-    u8 value = Read(address);
+    u8 value = m_memory->Read(address);
     u8 result = static_cast<u8>(value << 1);
-    Write(address, result);
+    m_memory->Write(address, result);
     SetZeroFlagFromResult(result);
     SetNegativeFlagFromResult(result);
     if ((value & 0x80) != 0)
@@ -90,7 +91,7 @@ inline void HuC6280::OPcodes_Branch(bool condition)
 
 inline void HuC6280::OPCodes_BIT(u16 address)
 {
-    u8 value = Read(address);
+    u8 value = m_memory->Read(address);
     u8 result = m_A.GetValue() & value;
     SetZeroFlagFromResult(result);
     SetOverflowFlagFromResult(value);
@@ -103,8 +104,8 @@ inline void HuC6280::OPCodes_BRK()
     SetFlag(FLAG_BRK);
     StackPush8(m_P.GetValue());
     SetFlag(FLAG_IRQ);
-    m_PC.SetLow(Read(0xFFFE));
-    m_PC.SetHigh(Read(0xFFFF));
+    m_PC.SetLow(m_memory->Read(0xFFFE));
+    m_PC.SetHigh(m_memory->Read(0xFFFF));
 }
 
 inline void HuC6280::OPCodes_ClearFlag(u8 flag)
@@ -131,9 +132,9 @@ inline void HuC6280::OPCodes_CMP(EightBitRegister* reg, u8 value)
 
 inline void HuC6280::OPCodes_DEC_Mem(u16 address)
 {
-    u8 value = Read(address);
+    u8 value = m_memory->Read(address);
     u8 result = value - 1;
-    Write(address, result);
+    m_memory->Write(address, result);
     SetZeroFlagFromResult(result);
     SetNegativeFlagFromResult(result);
 }
@@ -157,9 +158,9 @@ inline void HuC6280::OPCodes_EOR(u8 value)
 
 inline void HuC6280::OPCodes_INC_Mem(u16 address)
 {
-    u8 value = Read(address);
+    u8 value = m_memory->Read(address);
     u8 result = value + 1;
-    Write(address, result);
+    m_memory->Write(address, result);
     SetZeroFlagFromResult(result);
     SetNegativeFlagFromResult(result);
 }
@@ -195,9 +196,9 @@ inline void HuC6280::OPCodes_LSR_Accumulator()
 
 inline void HuC6280::OPCodes_LSR_Memory(u16 address)
 {
-    u8 value = Read(address);
+    u8 value = m_memory->Read(address);
     u8 result = value >> 1;
-    Write(address, result);
+    m_memory->Write(address, result);
     SetZeroFlagFromResult(result);
     SetNegativeFlagFromResult(result);
     if ((value & 0x01) != 0)
@@ -230,10 +231,10 @@ inline void HuC6280::OPCodes_ROL_Accumulator()
 
 inline void HuC6280::OPCodes_ROL_Memory(u16 address)
 {
-    u8 value = Read(address);
+    u8 value = m_memory->Read(address);
     u8 result = static_cast<u8>(value << 1);
     result |= IsSetFlag(FLAG_CARRY) ? 0x01 : 0x00;
-    Write(address, result);
+    m_memory->Write(address, result);
     SetZeroFlagFromResult(result);
     SetNegativeFlagFromResult(result);
     if ((value & 0x80) != 0)
@@ -258,10 +259,10 @@ inline void HuC6280::OPCodes_ROR_Accumulator()
 
 inline void HuC6280::OPCodes_ROR_Memory(u16 address)
 {
-    u8 value = Read(address);
+    u8 value = m_memory->Read(address);
     u8 result = value >> 1;
     result |= IsSetFlag(FLAG_CARRY) ? 0x80 : 0x00;
-    Write(address, result);
+    m_memory->Write(address, result);
     SetZeroFlagFromResult(result);
     SetNegativeFlagFromResult(result);
     if ((value & 0x01) != 0)
@@ -290,7 +291,7 @@ inline void HuC6280::OPCodes_SBC(u8 value)
 inline void HuC6280::OPCodes_Store(EightBitRegister* reg, u16 address)
 {
     u8 value = reg->GetValue();
-    Write(address, value);
+    m_memory->Write(address, value);
 }
 
 inline void HuC6280::OPCodes_Transfer(EightBitRegister* reg, EightBitRegister* target)

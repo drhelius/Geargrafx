@@ -23,6 +23,8 @@
 #include "nfd/nfd.h"
 #include "config.h"
 #include "application.h"
+#include "emu.h"
+#include "renderer.h"
 #include "../../../src/geargrafx.h"
 
 #define GUI_IMPORT
@@ -72,11 +74,8 @@ void gui_init(void)
 
     gui_default_font = default_font[config_debug.font_size];
 
-    // emu_audio_mute(!config_audio.enable);
-
-
-
-    // emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
+    emu_audio_mute(!config_audio.enable);
+    emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
 
     gui_init_menus();
 }
@@ -97,8 +96,8 @@ void gui_render(void)
 
     gui_main_window_hovered = false;
 
-    // if((!config_debug.debug && !emu_is_empty()) || (config_debug.debug && config_debug.show_screen))
-    //     main_window();
+    if((!config_debug.debug && !emu_is_empty()) || (config_debug.debug && config_debug.show_screen))
+        main_window();
 
     // gui_debug_windows();
 
@@ -132,7 +131,7 @@ void gui_shortcut(gui_ShortCutEvent event)
         std::string message("Saving state to slot ");
         message += std::to_string(config_emulator.save_slot + 1);
         gui_set_status_message(message.c_str(), 3000);
-        // emu_save_state_slot(config_emulator.save_slot + 1);
+        emu_save_state_slot(config_emulator.save_slot + 1);
         break;
     }
     case gui_ShortcutLoadState:
@@ -140,7 +139,7 @@ void gui_shortcut(gui_ShortCutEvent event)
         std::string message("Loading state from slot ");
         message += std::to_string(config_emulator.save_slot + 1);
         gui_set_status_message(message.c_str(), 3000);
-        // emu_load_state_slot(config_emulator.save_slot + 1);
+        emu_load_state_slot(config_emulator.save_slot + 1);
         break;
     }
     case gui_ShortcutScreenshot:
@@ -190,14 +189,9 @@ void gui_load_rom(const char* path)
     message += path;
     gui_set_status_message(message.c_str(), 3000);
 
-    // Cartridge::ForceConfiguration config;
-
-    // config.region = get_region(config_emulator.region);
-    // config.type = Cartridge::CartridgeNotSupported;
-
-    // push_recent_rom(path);
-    // emu_resume();
-    // emu_load_rom(path, config);
+    push_recent_rom(path);
+    emu_resume();
+    emu_load_rom(path);
 
     // gui_debug_reset();
 
@@ -206,15 +200,15 @@ void gui_load_rom(const char* path)
     // str += ".sym";
     // gui_debug_load_symbols_file(str.c_str());
 
-    // if (config_emulator.start_paused)
-    // {
-    //     emu_pause();
+    if (config_emulator.start_paused)
+    {
+        emu_pause();
         
-    //     for (int i=0; i < (GC_RESOLUTION_WIDTH_WITH_OVERSCAN * GC_RESOLUTION_HEIGHT_WITH_OVERSCAN); i++)
-    //     {
-    //         emu_frame_buffer[i] = 0;
-    //     }
-    // }
+        for (int i=0; i < (GG_MAX_RESOLUTION_WIDTH * GG_MAX_RESOLUTION_HEIGHT); i++)
+        {
+            emu_frame_buffer[i] = 0;
+        }
+    }
 }
 
 void gui_set_status_message(const char* message, u32 milliseconds)
@@ -230,118 +224,118 @@ void gui_set_status_message(const char* message, u32 milliseconds)
 
 static void main_window(void)
 {
-    // GC_RuntimeInfo runtime;
-    // emu_get_runtime(runtime);
+    GG_Runtime_Info runtime;
+    emu_get_runtime(runtime);
 
-    // int w = (int)ImGui::GetIO().DisplaySize.x;
-    // int h = (int)ImGui::GetIO().DisplaySize.y - (config_emulator.show_menu ? main_menu_height : 0);
+    int w = (int)ImGui::GetIO().DisplaySize.x;
+    int h = (int)ImGui::GetIO().DisplaySize.y - (config_emulator.show_menu ? gui_main_menu_height : 0);
 
-    // int selected_ratio = config_debug.debug ? 0 : config_video.ratio;
-    // float ratio = 0;
+    int selected_ratio = config_debug.debug ? 0 : config_video.ratio;
+    float ratio = 0;
 
-    // switch (selected_ratio)
-    // {
-    //     case 1:
-    //         ratio = 4.0f / 3.0f;
-    //         break;
-    //     case 2:
-    //         ratio = 16.0f / 9.0f;
-    //         break;
-    //     default:
-    //         ratio = (float)runtime.screen_width / (float)runtime.screen_height;
-    // }
+    switch (selected_ratio)
+    {
+        case 1:
+            ratio = 4.0f / 3.0f;
+            break;
+        case 2:
+            ratio = 16.0f / 9.0f;
+            break;
+        default:
+            ratio = (float)runtime.screen_width / (float)runtime.screen_height;
+    }
 
-    // if (!config_debug.debug && config_video.scale == 5)
-    // {
-    //     ratio = (float)w / (float)h;
-    // }
+    if (!config_debug.debug && config_video.scale == 5)
+    {
+        ratio = (float)w / (float)h;
+    }
 
-    // int w_corrected = (int)(runtime.screen_height * ratio);
-    // int h_corrected = (int)(runtime.screen_height);
-    // int scale_multiplier = 0;
+    int w_corrected = (int)(runtime.screen_height * ratio);
+    int h_corrected = (int)(runtime.screen_height);
+    int scale_multiplier = 0;
 
-    // if (config_debug.debug)
-    // {
-    //     if ((config_video.scale > 0) && (config_video.scale < 4))
-    //         scale_multiplier = config_video.scale;
-    //     else
-    //         scale_multiplier = 1;
-    // }
-    // else
-    // {
-    //     if ((config_video.scale > 0) && (config_video.scale < 4))
-    //     {
-    //         scale_multiplier = config_video.scale;
-    //     }
-    //     else if (config_video.scale == 0)
-    //     {
-    //         int factor_w = w / w_corrected;
-    //         int factor_h = h / h_corrected;
-    //         scale_multiplier = (factor_w < factor_h) ? factor_w : factor_h;
-    //     }
-    //     else if (config_video.scale == 4)
-    //     {
-    //         scale_multiplier = 1;
-    //         h_corrected = h;
-    //         w_corrected = h * ratio;
-    //     }
-    //     else if (config_video.scale == 5)
-    //     {
-    //         scale_multiplier = 1;
-    //         w_corrected = w;
-    //         h_corrected = h;
-    //     }
-    // }
+    if (config_debug.debug)
+    {
+        if ((config_video.scale > 0) && (config_video.scale < 4))
+            scale_multiplier = config_video.scale;
+        else
+            scale_multiplier = 1;
+    }
+    else
+    {
+        if ((config_video.scale > 0) && (config_video.scale < 4))
+        {
+            scale_multiplier = config_video.scale;
+        }
+        else if (config_video.scale == 0)
+        {
+            int factor_w = w / w_corrected;
+            int factor_h = h / h_corrected;
+            scale_multiplier = (factor_w < factor_h) ? factor_w : factor_h;
+        }
+        else if (config_video.scale == 4)
+        {
+            scale_multiplier = 1;
+            h_corrected = h;
+            w_corrected = h * ratio;
+        }
+        else if (config_video.scale == 5)
+        {
+            scale_multiplier = 1;
+            w_corrected = w;
+            h_corrected = h;
+        }
+    }
 
-    // main_window_width = w_corrected * scale_multiplier;
-    // main_window_height = h_corrected * scale_multiplier;
+    gui_main_window_width = w_corrected * scale_multiplier;
+    gui_main_window_height = h_corrected * scale_multiplier;
 
-    // ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    // ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 
-    // ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
     
-    // if (config_debug.debug)
-    // {
-    //     flags |= ImGuiWindowFlags_AlwaysAutoResize;
+    if (config_debug.debug)
+    {
+        flags |= ImGuiWindowFlags_AlwaysAutoResize;
 
-    //     ImGui::SetNextWindowPos(ImVec2(568, 31), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(568, 31), ImGuiCond_FirstUseEver);
 
-    //     ImGui::Begin("Output###debug_output", &config_debug.show_screen, flags);
-    //     gui_main_window_hovered = ImGui::IsWindowHovered();
-    // }
-    // else
-    // {
-    //     int window_x = (w - (w_corrected * scale_multiplier)) / 2;
-    //     int window_y = ((h - (h_corrected * scale_multiplier)) / 2) + (config_emulator.show_menu ? main_menu_height : 0);
+        ImGui::Begin("Output###debug_output", &config_debug.show_screen, flags);
+        gui_main_window_hovered = ImGui::IsWindowHovered();
+    }
+    else
+    {
+        int window_x = (w - (w_corrected * scale_multiplier)) / 2;
+        int window_y = ((h - (h_corrected * scale_multiplier)) / 2) + (config_emulator.show_menu ? gui_main_menu_height : 0);
 
-    //     ImGui::SetNextWindowSize(ImVec2((float)main_window_width, (float)main_window_height));
-    //     ImGui::SetNextWindowPos(ImVec2((float)window_x, (float)window_y));
-    //     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::SetNextWindowSize(ImVec2((float)gui_main_window_width, (float)gui_main_window_height));
+        ImGui::SetNextWindowPos(ImVec2((float)window_x, (float)window_y));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
-    //     flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBringToFrontOnFocus;
+        flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-    //     ImGui::Begin(GEARGRAFX_TITLE, 0, flags);
-    //     gui_main_window_hovered = ImGui::IsWindowHovered();
-    // }
+        ImGui::Begin(GEARGRAFX_TITLE, 0, flags);
+        gui_main_window_hovered = ImGui::IsWindowHovered();
+    }
 
-    // float tex_h = (float)runtime.screen_width / (float)(GC_RESOLUTION_WIDTH_WITH_OVERSCAN);
-    // float tex_v = (float)runtime.screen_height / (float)(GC_RESOLUTION_HEIGHT_WITH_OVERSCAN);
+    float tex_h = (float)runtime.screen_width / (float)(GG_MAX_RESOLUTION_WIDTH);
+    float tex_v = (float)runtime.screen_height / (float)(GG_MAX_RESOLUTION_HEIGHT);
 
-    // ImGui::Image((void*)(intptr_t)renderer_emu_texture, ImVec2((float)main_window_width, (float)main_window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
+    ImGui::Image((void*)(intptr_t)renderer_emu_texture, ImVec2((float)gui_main_window_width, (float)gui_main_window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
-    // if (config_video.fps)
-    //     show_fps();
+    if (config_video.fps)
+        gui_show_fps();
 
-    // ImGui::End();
+    ImGui::End();
 
-    // ImGui::PopStyleVar();
-    // ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleVar();
 
-    // if (!config_debug.debug)
-    // {
-    //     ImGui::PopStyleVar();
-    // }
+    if (!config_debug.debug)
+    {
+        ImGui::PopStyleVar();
+    }
 }
 
 
@@ -365,16 +359,6 @@ static void main_window(void)
 //     ret.z = (1.0f / 255.0f) * color.blue;
 //     return ret;
 // }
-
-static void update_palette(void)
-{
-    // if (config_video.palette == 2)
-    // {
-    //     emu_palette(config_video.color);
-    // }
-    // else
-    //     emu_predefined_palette(config_video.palette);
-}
 
 static void push_recent_rom(std::string path)
 {

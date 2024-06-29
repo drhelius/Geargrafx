@@ -28,24 +28,24 @@
 
 GeargrafxCore::GeargrafxCore()
 {
-    // InitPointer(m_memory);
-    InitPointer(m_processor);
+    InitPointer(m_memory);
+    InitPointer(m_huc6280);
     InitPointer(m_audio);
-    // InitPointer(m_video);
+    // InitPointer(m_huc6270);
     InitPointer(m_input);
-    // InitPointer(m_cartridge);
+    InitPointer(m_cartridge);
     m_paused = true;
     m_pixel_format = GG_PIXEL_RGB888;
 }
 
 GeargrafxCore::~GeargrafxCore()
 {
-    // SafeDelete(m_cartridge);
+    SafeDelete(m_cartridge);
     SafeDelete(m_input);
-    // SafeDelete(m_video);
+    // SafeDelete(m_huc6270);
     SafeDelete(m_audio);
-    SafeDelete(m_processor);
-    // SafeDelete(m_memory);
+    SafeDelete(m_huc6280);
+    SafeDelete(m_memory);
 }
 
 void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
@@ -54,24 +54,44 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 
     m_pixel_format = pixel_format;
 
-    // m_cartridge = new Cartridge();
-    // m_memory = new Memory(m_cartridge);
-    m_processor = new HuC6280();
+    m_cartridge = new Cartridge();
+    m_memory = new Memory(m_cartridge);
+    m_huc6280 = new HuC6280(m_memory);
     m_audio = new Audio();
-    // m_video = new Video(m_memory, m_processor);
+    // m_huc6270 = new HuC6270(m_memory, m_huc6280);
     m_input = new Input();
 
-    // m_memory->Init();
-    m_processor->Init();
+    m_cartridge->Init();
+    m_memory->Init();
+    m_huc6280->Init();
     m_audio->Init();
-    // m_video->Init();
+    // m_huc6270->Init();
     m_input->Init();
-    // m_cartridge->Init();
+    
 }
 
-bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, bool step, bool stopOnBreakpoints)
+void GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count)
 {
-    bool breakpoint = false;
+    if (!m_paused && m_cartridge->IsReady())
+    {
+        bool vblank = false;
+        int totalClocks = 0;
+        while (!vblank)
+        {
+            //unsigned int clockCycles = m_huc6280->Tick();
+            unsigned int clockCycles = 1;
+            // vblank = m_huc6270->Tick(clockCycles);
+            m_audio->Tick(clockCycles);
+
+            totalClocks += clockCycles;
+
+            if (totalClocks > 702240)
+                vblank = true;
+        }
+
+        m_audio->EndFrame(sample_buffer, sample_count);
+        RenderFrameBuffer(frame_buffer);
+    }
 
     // if (!m_paused && m_cartridge->IsReady())
     // {
@@ -99,78 +119,76 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     //     m_audio->EndFrame(sample_buffer, sample_count);
     //     RenderFrameBuffer(frame_buffer);
     // }
-
-    return breakpoint;
 }
 
-bool GeargrafxCore::LoadROM(const char* szFilePath)
+bool GeargrafxCore::LoadROM(const char* file_path)
 {
-    // if (m_cartridge->LoadFromFile(szFilePath))
-    // {
-    //     Reset();
+    if (m_cartridge->LoadFromFile(file_path))
+    {
+        Reset();
 
-    //     // m_memory->ResetRomDisassembledMemory();
-    //     // m_processor->DisassembleNextOpcode();
+        // m_memory->ResetRomDisassembledMemory();
+        // m_processor->DisassembleNextOpcode();
 
-    //     return true;
-    // }
-    // else
-    //     return false;
+        return true;
+    }
+    else
+        return false;
 }
 
 bool GeargrafxCore::LoadROMFromBuffer(const u8* buffer, int size)
 {
-    // if (m_cartridge->LoadFromBuffer(buffer, size))
-    // {
-    //     Reset();
+    if (m_cartridge->LoadFromBuffer(buffer, size))
+    {
+        Reset();
 
-    //     // m_memory->ResetRomDisassembledMemory();
-    //     // m_processor->DisassembleNextOpcode();
+        // m_memory->ResetRomDisassembledMemory();
+        // m_processor->DisassembleNextOpcode();
 
-    //     return true;
-    // }
-    // else
-    //     return false;
+        return true;
+    }
+    else
+        return false;
 }
 
 bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
 {
-    runtime_info.screen_width = GG_RESOLUTION_WIDTH;
-    runtime_info.screen_height = GG_RESOLUTION_HEIGHT;
+    runtime_info.screen_width = GG_MAX_RESOLUTION_WIDTH;
+    runtime_info.screen_height = GG_MAX_RESOLUTION_HEIGHT;
 
-    // if (m_cartridge->IsReady())
-    // {
+    if (m_cartridge->IsReady())
+    {
     //     // if (m_video->GetOverscan() == Video::OverscanFull284)
     //     //     runtime_info.screen_width = GC_RESOLUTION_WIDTH + GC_RESOLUTION_SMS_OVERSCAN_H_284_L + GC_RESOLUTION_SMS_OVERSCAN_H_284_R;
     //     // if (m_video->GetOverscan() == Video::OverscanFull320)
     //     //     runtime_info.screen_width = GC_RESOLUTION_WIDTH + GC_RESOLUTION_SMS_OVERSCAN_H_320_L + GC_RESOLUTION_SMS_OVERSCAN_H_320_R;
     //     // if (m_video->GetOverscan() != Video::OverscanDisabled)
     //     //     runtime_info.screen_height = GC_RESOLUTION_HEIGHT + (2 * (m_cartridge->IsPAL() ? GC_RESOLUTION_OVERSCAN_V_PAL : GC_RESOLUTION_OVERSCAN_V));
-    //     return true;
-    // }
+        return true;
+    }
 
-    // return false;
+    return false;
 }
 
-// Memory* GeargrafxCore::GetMemory()
-// {
-//     return m_memory;
-// }
-
-// Cartridge* GeargrafxCore::GetCartridge()
-// {
-//     return m_cartridge;
-// }
-
-HuC6280* GeargrafxCore::GetProcessor()
+Memory* GeargrafxCore::GetMemory()
 {
-    return m_processor;
+    return m_memory;
 }
 
-// Audio* GeargrafxCore::GetAudio()
-// {
-//     return m_audio;
-// }
+Cartridge* GeargrafxCore::GetCartridge()
+{
+    return m_cartridge;
+}
+
+HuC6280* GeargrafxCore::GetHuC6280()
+{
+    return m_huc6280;
+}
+
+Audio* GeargrafxCore::GetAudio()
+{
+    return m_audio;
+}
 
 // Video* GeargrafxCore::GetVideo()
 // {
@@ -207,19 +225,19 @@ bool GeargrafxCore::IsPaused()
 
 void GeargrafxCore::ResetROM(bool preserve_ram)
 {
-    // if (m_cartridge->IsReady())
-    // {
-    //     Log("Geargrafx RESET");
+    if (m_cartridge->IsReady())
+    {
+        Log("Geargrafx RESET");
 
-    //     Reset();
+        Reset();
 
-    //     m_processor->DisassembleNextOpcode();
-    // }
+        // m_processor->DisassembleNextOpcode();
+    }
 }
 
 void GeargrafxCore::ResetSound()
 {
-    // m_audio->Reset(m_cartridge->IsPAL());
+    m_audio->Reset();
 }
 
 // void GeargrafxCore::SaveRam()
@@ -493,15 +511,15 @@ void GeargrafxCore::ResetSound()
 
 void GeargrafxCore::Reset()
 {
-    // m_memory->Reset();
-    m_processor->Reset();
-    // m_audio->Reset(m_cartridge->IsPAL());
+    m_memory->Reset();
+    m_huc6280->Reset();
+    m_audio->Reset();
     // m_video->Reset(m_cartridge->IsPAL());
     m_input->Reset();
     m_paused = false;
 }
 
-void GeargrafxCore::RenderFrameBuffer(u8* finalFrameBuffer)
+void GeargrafxCore::RenderFrameBuffer(u8* final_framebuffer)
 {
     // int size = GC_RESOLUTION_WIDTH_WITH_OVERSCAN * GC_RESOLUTION_HEIGHT_WITH_OVERSCAN;
     // u16* srcBuffer = (m_memory->IsBiosLoaded() ? m_video->GetFrameBuffer() : kNoBiosImage);

@@ -1,10 +1,10 @@
-include ../shared/desktop/Makefile.sources
+include ../shared/desktop/makefiles/Makefile.sources
 
 SOURCES_MM += $(DESKTOP_SRC_DIR)/nfd/nfd_cocoa.mm
 OBJECTS += $(SOURCES_MM:.mm=.o)
 LDFLAGS += -framework AppKit -framework UniformTypeIdentifiers
 
-include ../shared/desktop/Makefile.common
+include ../shared/desktop/makefiles/Makefile.common
 
 # Brew use a different path on Apple Silicon as on Intel
 UNAME_P := $(shell uname -m)

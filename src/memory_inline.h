@@ -17,32 +17,44 @@
  *
  */
 
-#include "types.h"
+#ifndef MEMORY_INLINE_H
+#define	MEMORY_INLINE_H
 
-#define GG_AUDIO_SAMPLE_RATE 44100
-#define GG_AUDIO_BUFFER_SIZE 2048
-#define GG_AUDIO_BUFFER_COUNT 3
+#include "memory.h"
+#include "cartridge.h"
 
-class Audio
+inline u8 Memory::Read(u16 address)
 {
-public:
-    Audio();
-    ~Audio();
-    void Init();
-    void Reset();
-    void Mute(bool mute);
-    void Tick(unsigned int clock_cycles);
-    void EndFrame(s16* sample_buffer, int* sample_count);
-    // void SaveState(std::ostream& stream);
-    // void LoadState(std::istream& stream);
-
-private:
-    u64 m_elapsed_cycles;
-    int m_sample_rate;
-    bool m_mute;
-};
-
-inline void Audio::Tick(unsigned int clock_cycles)
-{
-    m_elapsed_cycles += clock_cycles;
+    switch (address & 0xE000)
+    {
+        case 0x0000:
+        case 0x2000:
+        case 0x4000:
+        case 0x6000:
+        case 0x8000:
+        case 0xA000:
+        case 0xC000:
+        case 0xE000:
+        default:
+            return 0xFF;
+    }
 }
+
+inline void Memory::Write(u16 address, u8 value)
+{
+    switch (address & 0xE000)
+    {
+        case 0x0000:
+        case 0x2000:
+        case 0x4000:
+        case 0x6000:
+        case 0x8000:
+        case 0xA000:
+        case 0xC000:
+        case 0xE000:
+        default:
+            break;
+    }
+}
+
+#endif /* MEMORY_INLINE_H */

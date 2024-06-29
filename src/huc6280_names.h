@@ -19,7 +19,7 @@
 #ifndef HUC6280_NAME_H
 #define HUC6280_NAME_H
 
-static const char* kOPCodeNames[256] = {
+static const char* k_opcode_names[256] = {
     "BRK",
     "ORA $(%2%1,X)",
     "KIL",

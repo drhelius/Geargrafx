@@ -16,3 +16,23 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/
  *
  */
+
+#include "memory.h"
+
+Memory::Memory(Cartridge* cartridge)
+{
+    m_cartridge = cartridge;
+}
+
+Memory::~Memory()
+{
+}
+
+void Memory::Init()
+{
+    Reset();
+}
+
+void Memory::Reset()
+{
+}

@@ -20,4 +20,24 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include "common.h"
+
+class Cartridge;
+
+class Memory
+{
+public:
+    Memory(Cartridge* cartridge);
+    ~Memory();
+    void Init();
+    void Reset();
+    u8 Read(u16 address);
+    void Write(u16 address, u8 value);
+
+private:
+    Cartridge* m_cartridge;
+};
+
+#include "memory_inline.h"
+
 #endif /* MEMORY_H */

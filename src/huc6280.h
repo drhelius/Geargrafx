@@ -32,10 +32,12 @@
 #define FLAG_OVERFLOW 0x40
 #define FLAG_NEGATIVE 0x80
 
+class Memory;
+
 class HuC6280
 {
 public:
-    HuC6280();
+    HuC6280(Memory* memory);
     ~HuC6280();
     void Init();
     void Reset();
@@ -58,6 +60,7 @@ private:
     bool m_nmi_interrupt_requested;
     bool m_page_crossed;
     bool m_branch_taken;
+    Memory* m_memory;
 
 private:
     u8 Fetch8();
@@ -76,9 +79,6 @@ private:
     void StackPush8(u8 value);
     u16 StackPop16();
     u8 StackPop8();
-
-    u8 Read(u16 address);
-    void Write(u16 address, u8 value);
 
     u8 ImmediateAddressing();
     u16 ZeroPageAddressing();

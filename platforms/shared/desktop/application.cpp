@@ -24,6 +24,7 @@
 #include "config.h"
 #include "gui.h"
 #include "renderer.h"
+#include "emu.h"
 
 #define APPLICATION_IMPORT
 #include "application.h"
@@ -56,12 +57,12 @@ int application_init(const char* rom_file, const char* symbol_file)
     config_read();
 
     int ret = sdl_init();
-    // emu_init();
+    emu_init();
 
-    // strcpy(emu_savefiles_path, config_emulator.savefiles_path.c_str());
-    // strcpy(emu_savestates_path, config_emulator.savestates_path.c_str());
-    // emu_savefiles_dir_option = config_emulator.savefiles_dir_option;
-    // emu_savestates_dir_option = config_emulator.savestates_dir_option;
+    strcpy(emu_savefiles_path, config_emulator.savefiles_path.c_str());
+    strcpy(emu_savestates_path, config_emulator.savestates_path.c_str());
+    emu_savefiles_dir_option = config_emulator.savefiles_dir_option;
+    emu_savestates_dir_option = config_emulator.savestates_dir_option;
     
     gui_init();
 
@@ -97,7 +98,7 @@ void application_destroy(void)
     renderer_destroy();
     ImGui_ImplSDL2_Shutdown();
     gui_destroy();
-    // emu_destroy();
+    emu_destroy();
     sdl_destroy();
 }
 
@@ -134,6 +135,8 @@ void application_trigger_fit_to_content(int width, int height)
 
 static int sdl_init(void)
 {
+    Debug("Initializing SDL...");
+
 #ifdef _WIN32
     SDL_SetHint(SDL_HINT_WINDOWS_DPI_SCALING, "1");
 #endif
@@ -277,15 +280,15 @@ static void sdl_events_emu(const SDL_Event* event)
             {
                 case SDL_WINDOWEVENT_FOCUS_GAINED:
                 {
-                    // if (!paused_when_focus_lost)
-                    //     emu_resume();
+                    if (!paused_when_focus_lost)
+                        emu_resume();
                 }
                 break;
 
                 case SDL_WINDOWEVENT_FOCUS_LOST:
                 {
-                    // paused_when_focus_lost = emu_is_paused();
-                    // emu_pause();
+                    paused_when_focus_lost = emu_is_paused();
+                    emu_pause();
                 }
                 break;
             }
@@ -649,23 +652,23 @@ static void sdl_shortcuts_gui(const SDL_Event* event)
 
 static void run_emulator(void)
 {
-    // if (!emu_is_empty())
-    // {
-    //     static int i = 0;
-    //     i++;
+    if (!emu_is_empty())
+    {
+        static int i = 0;
+        i++;
 
-    //     if (i > 20)
-    //     {
-    //         i = 0;
+        if (i > 20)
+        {
+            i = 0;
 
-    //         char title[256];
-    //         sprintf(title, "%s %s - %s", GEARCOLECO_TITLE, GEARCOLECO_VERSION, emu_get_core()->GetCartridge()->GetFileName());
-    //         SDL_SetWindowTitle(sdl_window, title);
-    //     }
-    // }
-    // config_emulator.paused = emu_is_paused();
-    // emu_audio_sync = config_audio.sync;
-    // emu_update();
+            char title[256];
+            sprintf(title, "%s %s - %s", GEARGRAFX_TITLE, GEARGRAFX_VERSION, emu_get_core()->GetCartridge()->GetFileName());
+            SDL_SetWindowTitle(sdl_window, title);
+        }
+    }
+    config_emulator.paused = emu_is_paused();
+    emu_audio_sync = config_audio.sync;
+    emu_update();
 }
 
 static void render(void)
@@ -681,36 +684,36 @@ static void render(void)
 
 static void frame_throttle(void)
 {
-    // if (emu_is_empty() || emu_is_paused() || config_emulator.ffwd)
-    // {
-    //     float elapsed = (float)((frame_time_end - frame_time_start) * 1000) / SDL_GetPerformanceFrequency();
+    if (emu_is_empty() || emu_is_paused() || config_emulator.ffwd)
+    {
+        float elapsed = (float)((frame_time_end - frame_time_start) * 1000) / SDL_GetPerformanceFrequency();
 
-    //     float min = 16.666f;
+        float min = 16.666f;
 
-    //     if (config_emulator.ffwd)
-    //     {
-    //         switch (config_emulator.ffwd_speed)
-    //         {
-    //             case 0:
-    //                 min = 16.666f / 1.5f;
-    //                 break;
-    //             case 1: 
-    //                 min = 16.666f / 2.0f;
-    //                 break;
-    //             case 2:
-    //                 min = 16.666f / 2.5f;
-    //                 break;
-    //             case 3:
-    //                 min = 16.666f / 3.0f;
-    //                 break;
-    //             default:
-    //                 min = 0.0f;
-    //         }
-    //     }
+        if (config_emulator.ffwd)
+        {
+            switch (config_emulator.ffwd_speed)
+            {
+                case 0:
+                    min = 16.666f / 1.5f;
+                    break;
+                case 1: 
+                    min = 16.666f / 2.0f;
+                    break;
+                case 2:
+                    min = 16.666f / 2.5f;
+                    break;
+                case 3:
+                    min = 16.666f / 3.0f;
+                    break;
+                default:
+                    min = 0.0f;
+            }
+        }
 
-    //     if (elapsed < min)
-    //         SDL_Delay((Uint32)(min - elapsed));
-    // }
+        if (elapsed < min)
+            SDL_Delay((Uint32)(min - elapsed));
+    }
 }
 
 static void save_window_size(void)

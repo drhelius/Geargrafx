@@ -25,6 +25,8 @@
 class Audio;
 class Input;
 class HuC6280;
+class Memory;
+class Cartridge;
 
 class GeargrafxCore
 {
@@ -33,8 +35,8 @@ public:
     GeargrafxCore();
     ~GeargrafxCore();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGB888);
-    bool RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, bool step = false, bool stopOnBreakpoints = false);
-    bool LoadROM(const char* szFilePath);
+    void RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count);
+    bool LoadROM(const char* file_path);
     bool LoadROMFromBuffer(const u8* buffer, int size);
     void ResetROM(bool preserve_ram);
     void KeyPressed(GG_Controllers controller, GG_Keys key);
@@ -55,23 +57,23 @@ public:
     // bool LoadState(std::istream& stream);
     void ResetSound();
     bool GetRuntimeInfo(GG_Runtime_Info& runtime_info);
-    // Memory* GetMemory();
-    // Cartridge* GetCartridge();
-    HuC6280* GetProcessor();
+    Memory* GetMemory();
+    Cartridge* GetCartridge();
+    HuC6280* GetHuC6280();
     Audio* GetAudio();
-    // HuC6270* GetVideo();
+    // HuC6270* GetHuC6270();
 
 private:
     void Reset();
-    void RenderFrameBuffer(u8* finalFrameBuffer);
+    void RenderFrameBuffer(u8* final_framebuffer);
 
 private:
-    // Memory* m_memory;
-    HuC6280* m_processor;
+    Memory* m_memory;
+    HuC6280* m_huc6280;
     Audio* m_audio;
-    // Video* m_video;
+    // Video* m_huc6270;
     Input* m_input;
-    // Cartridge* m_cartridge;
+    Cartridge* m_cartridge;
     bool m_paused;
     GG_Pixel_Format m_pixel_format;
 };
