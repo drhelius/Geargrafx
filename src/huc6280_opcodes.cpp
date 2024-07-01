@@ -982,7 +982,8 @@ void HuC6280::OPCode0x8F()
 
 void HuC6280::OPCode0x90()
 {
-    // BCC $s
+    // OK
+    // BCC hhll
     OPcodes_Branch(!IsSetFlag(FLAG_CARRY));
 }
 
@@ -1185,7 +1186,8 @@ void HuC6280::OPCode0xAF()
 
 void HuC6280::OPCode0xB0()
 {
-    // BCS $s
+    // OK
+    // BCS hhll
     OPcodes_Branch(IsSetFlag(FLAG_CARRY));
 }
 
@@ -1591,7 +1593,8 @@ void HuC6280::OPCode0xEF()
 
 void HuC6280::OPCode0xF0()
 {
-    // BEQ $s
+    // OK
+    // BEQ hhll
     OPcodes_Branch(IsSetFlag(FLAG_ZERO));
 }
 

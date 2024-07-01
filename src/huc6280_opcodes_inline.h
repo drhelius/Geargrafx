@@ -118,7 +118,6 @@ inline void HuC6280::OPcodes_Branch(bool condition)
         u16 result = static_cast<u16>(address + displacement);
         m_PC.SetValue(result);
         m_branch_taken = true;
-        m_page_crossed = PageCrossed(address, result);
     }
     else
         m_PC.Increment();

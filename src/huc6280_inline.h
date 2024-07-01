@@ -171,7 +171,6 @@ inline u16 HuC6280::AbsoluteAddressing(EightBitRegister* reg)
 {
     u16 address = Fetch16();
     u16 result = address + reg->GetValue();
-    m_page_crossed = PageCrossed(address, result);
     return result;
 }
 
@@ -198,7 +197,6 @@ inline u16 HuC6280::IndirectIndexedAddressing()
     u8 h = m_memory->Read((address + 1) & 0x20FF);
     address = Address16(h, l);
     u16 result = address + m_Y.GetValue();
-    m_page_crossed = PageCrossed(address, result);
     return result;
 }
 
