@@ -265,7 +265,8 @@ void HuC6280::OPCode0x23()
 
 void HuC6280::OPCode0x24()
 {
-    // BIT $n
+    // OK
+    // BIT ZZ
     OPCodes_BIT(ZeroPageAddressing());
 }
 
@@ -317,7 +318,8 @@ void HuC6280::OPCode0x2B()
 
 void HuC6280::OPCode0x2C()
 {
-    // BIT $nn
+    // OK
+    // BIT hhll
     OPCodes_BIT(AbsoluteAddressing());
 }
 
@@ -370,9 +372,9 @@ void HuC6280::OPCode0x33()
 
 void HuC6280::OPCode0x34()
 {
-    // UNOFFICIAL
-    // NOP $n,X
-    UnofficialOPCode();
+    // OK
+    // BIT ZZ,X
+    OPCodes_BIT(ZeroPageAddressing(&m_X));
 }
 
 void HuC6280::OPCode0x35()
@@ -424,9 +426,9 @@ void HuC6280::OPCode0x3B()
 
 void HuC6280::OPCode0x3C()
 {
-    // UNOFFICIAL
-    // NOP $nn,X
-    UnofficialOPCode();
+    // OK
+    // BIT hhll,X
+    OPCodes_BIT(AbsoluteAddressing(&m_X));
 }
 
 void HuC6280::OPCode0x3D()
@@ -937,9 +939,10 @@ void HuC6280::OPCode0x88()
 
 void HuC6280::OPCode0x89()
 {
-    // UNOFFICIAL
-    // NOP #$n
-    UnofficialOPCode();
+    // OK
+    // BIT #nn
+    OPCodes_BIT(m_PC.GetValue());
+    m_PC.Increment();
 }
 
 void HuC6280::OPCode0x8A()
