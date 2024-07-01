@@ -60,7 +60,8 @@ void HuC6280::OPCode0x05()
 
 void HuC6280::OPCode0x06()
 {
-    // ASL $n
+    // OK
+    // ASL ZZ
     OPCodes_ASL_Memory(ZeroPageAddressing());
 }
 
@@ -87,6 +88,7 @@ void HuC6280::OPCode0x09()
 
 void HuC6280::OPCode0x0A()
 {
+    // OK
     // ASL A
     OPCodes_ASL_Accumulator();
 }
@@ -113,7 +115,8 @@ void HuC6280::OPCode0x0D()
 
 void HuC6280::OPCode0x0E()
 {
-    // ASL $nn
+    // OK
+    // ASL hhll
     OPCodes_ASL_Memory(AbsoluteAddressing());
 }
 
@@ -165,7 +168,8 @@ void HuC6280::OPCode0x15()
 
 void HuC6280::OPCode0x16()
 {
-    // ASL $n,X
+    // OK
+    // ASL ZZ,X
     OPCodes_ASL_Memory(ZeroPageAddressing(&m_X));
 }
 
@@ -217,7 +221,8 @@ void HuC6280::OPCode0x1D()
 
 void HuC6280::OPCode0x1E()
 {
-    // ASL $nn,X
+    // OK
+    // ASL hhll,X
     OPCodes_ASL_Memory(AbsoluteAddressing(&m_X));
 }
 
