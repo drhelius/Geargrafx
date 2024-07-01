@@ -184,6 +184,7 @@ void HuC6280::OPCode0x17()
 
 void HuC6280::OPCode0x18()
 {
+    // OK
     // CLC
     OPCodes_ClearFlag(FLAG_CARRY);
 }
@@ -613,6 +614,7 @@ void HuC6280::OPCode0x57()
 
 void HuC6280::OPCode0x58()
 {
+    // OK
     // CLI
     OPCodes_ClearFlag(FLAG_IRQ);
 }
@@ -900,9 +902,10 @@ void HuC6280::OPCode0x81()
 
 void HuC6280::OPCode0x82()
 {
-    // UNOFFICIAL
-    // NOP #$n
-    UnofficialOPCode();
+    // OK
+    // CLX
+    ClearFlag(FLAG_MEMORY);
+    m_X.SetValue(0x00);
 }
 
 void HuC6280::OPCode0x83()
@@ -1247,6 +1250,7 @@ void HuC6280::OPCode0xB7()
 
 void HuC6280::OPCode0xB8()
 {
+    // OK
     // CLV
     OPCodes_ClearFlag(FLAG_OVERFLOW);
 }
@@ -1309,9 +1313,10 @@ void HuC6280::OPCode0xC1()
 
 void HuC6280::OPCode0xC2()
 {
-    // UNOFFICIAL
-    // NOP #$n
-    UnofficialOPCode();
+    // OK
+    // CLY
+    ClearFlag(FLAG_MEMORY);
+    m_Y.SetValue(0x00);
 }
 
 void HuC6280::OPCode0xC3()
@@ -1451,6 +1456,7 @@ void HuC6280::OPCode0xD7()
 
 void HuC6280::OPCode0xD8()
 {
+    // OK
     // CLD
     OPCodes_ClearFlag(FLAG_DECIMAL);
 }

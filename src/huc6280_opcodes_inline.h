@@ -155,8 +155,7 @@ inline void HuC6280::OPCodes_Subroutine()
 
 inline void HuC6280::OPCodes_ClearFlag(u8 flag)
 {
-    ClearFlag(FLAG_MEMORY);
-    ClearFlag(flag);
+    ClearFlag(flag | FLAG_MEMORY);
 }
 
 inline void HuC6280::OPCodes_SetFlag(u8 flag)
