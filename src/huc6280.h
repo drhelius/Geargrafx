@@ -67,6 +67,7 @@ private:
     u16 Fetch16();
     u16 Address16(u8 high, u8 low);
     bool PageCrossed(u16 old_address, u16 new_address);
+    u16 ZeroPageX();
 
     void SetZeroFlagFromResult(u8 result);
     void SetOverflowFlagFromResult(u8 result);
@@ -83,6 +84,8 @@ private:
     u8 ImmediateAddressing();
     u16 ZeroPageAddressing();
     u16 ZeroPageAddressing(EightBitRegister* reg);
+    u16 ZeroPageInditrectAddressing();
+    u16 ZeroPageRelativeAddressing();
     s8 RelativeAddressing();
     u16 AbsoluteAddressing();
     u16 AbsoluteAddressing(EightBitRegister* reg);
@@ -92,7 +95,9 @@ private:
 
     void UnofficialOPCode();
     void OPCodes_ADC(u8 value);
+    void OPCodes_ADC_M(u8 value);
     void OPCodes_AND(u8 value);
+    void OPCodes_AND_M(u8 value);
     void OPCodes_ASL_Accumulator();
     void OPCodes_ASL_Memory(u16 address);
     void OPcodes_Branch(bool condition);
@@ -100,16 +105,19 @@ private:
     void OPCodes_BRK();
     void OPCodes_ClearFlag(u8 flag);
     void OPCodes_SetFlag(u8 flag);
+    void OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2);
     void OPCodes_CMP(EightBitRegister* reg, u8 value);
     void OPCodes_DEC_Mem(u16 address);
     void OPCodes_DEC_Reg(EightBitRegister* reg);
     void OPCodes_EOR(u8 value);
+    void OPCodes_EOR_M(u8 value);
     void OPCodes_INC_Mem(u16 address);
     void OPCodes_INC_Reg(EightBitRegister* reg);
     void OPCodes_LD(EightBitRegister* reg, u8 value);
     void OPCodes_LSR_Accumulator();
     void OPCodes_LSR_Memory(u16 address);
     void OPCodes_ORA(u8 value);
+    void OPCodes_ORA_M(u8 value);
     void OPCodes_ROL_Accumulator();
     void OPCodes_ROL_Memory(u16 address);
     void OPCodes_ROR_Accumulator();

@@ -28,21 +28,20 @@ void HuC6280::OPCode0x00()
 
 void HuC6280::OPCode0x01()
 {
-    // ORA $(nn,X)
+    // ORA (ZZ,X)
     OPCodes_ORA(m_memory->Read(IndexedIndirectAddressing()));
 }
 
 void HuC6280::OPCode0x02()
 {
-    // UNOFFICIAL
-    // KILL
-    UnofficialOPCode();
+    // SXY
+    OPCodes_Swap(&m_X, &m_Y);
 }
 
 void HuC6280::OPCode0x03()
 {
-    // UNOFFICIAL
-    // SLO $(nn,X)
+    // TODO
+    // ST1 #nn
     UnofficialOPCode();
 }
 
@@ -75,6 +74,7 @@ void HuC6280::OPCode0x07()
 void HuC6280::OPCode0x08()
 {
     // PHP
+    ClearFlag(FLAG_MEMORY);
     SetFlag(FLAG_BRK);
     StackPush8(m_P.GetValue());
 }
@@ -231,6 +231,7 @@ void HuC6280::OPCode0x1F()
 void HuC6280::OPCode0x20()
 {
     // JSR $nn
+    ClearFlag(FLAG_MEMORY);
     u16 target = AbsoluteAddressing();
     StackPush16(m_PC.GetValue() - 1);
     m_PC.SetValue(target);
@@ -516,6 +517,7 @@ void HuC6280::OPCode0x4B()
 void HuC6280::OPCode0x4C()
 {
     // JMP $nn
+    ClearFlag(FLAG_MEMORY);
     m_PC.SetValue(AbsoluteAddressing());
 }
 
@@ -645,12 +647,14 @@ void HuC6280::OPCode0x5F()
 void HuC6280::OPCode0x60()
 {
     // RTS
+    ClearFlag(FLAG_MEMORY);
     m_PC.SetValue(StackPop16() + 1);
 }
 
 void HuC6280::OPCode0x61()
 {
-    // ADC $(nn,X)
+    // OK
+    // ADC (ZZ,X)
     OPCodes_ADC(m_memory->Read(IndexedIndirectAddressing()));
 }
 
@@ -677,7 +681,8 @@ void HuC6280::OPCode0x64()
 
 void HuC6280::OPCode0x65()
 {
-    // ADC $n
+    // OK
+    // ADC ZZ
     OPCodes_ADC(m_memory->Read(ZeroPageAddressing()));
 }
 
@@ -697,6 +702,7 @@ void HuC6280::OPCode0x67()
 void HuC6280::OPCode0x68()
 {
     // PLA
+    ClearFlag(FLAG_MEMORY);
     u8 result = StackPop8();
     m_A.SetValue(result);
     SetZeroFlagFromResult(result);
@@ -705,7 +711,8 @@ void HuC6280::OPCode0x68()
 
 void HuC6280::OPCode0x69()
 {
-    // ADC #$n
+    // OK
+    // ADC #nn
     OPCodes_ADC(ImmediateAddressing());
 }
 
@@ -725,12 +732,14 @@ void HuC6280::OPCode0x6B()
 void HuC6280::OPCode0x6C()
 {
     // JMP ($nn)
+    ClearFlag(FLAG_MEMORY);
     m_PC.SetValue(IndirectAddressing());
 }
 
 void HuC6280::OPCode0x6D()
 {
-    // ADC $nn
+    // OK
+    // ADC hhll
     OPCodes_ADC(m_memory->Read(AbsoluteAddressing()));
 }
 
@@ -755,15 +764,16 @@ void HuC6280::OPCode0x70()
 
 void HuC6280::OPCode0x71()
 {
-    // ADC ($n),Y
+    // OK
+    // ADC (ZZ),Y
     OPCodes_ADC(m_memory->Read(IndirectIndexedAddressing()));
 }
 
 void HuC6280::OPCode0x72()
 {
-    // UNOFFICIAL
-    // KILL
-    UnofficialOPCode();
+    // OK
+    // ADC (ZZ)
+    OPCodes_ADC(m_memory->Read(ZeroPageInditrectAddressing()));
 }
 
 void HuC6280::OPCode0x73()
@@ -782,7 +792,8 @@ void HuC6280::OPCode0x74()
 
 void HuC6280::OPCode0x75()
 {
-    // ADC $n,X
+    // OK
+    // ADC ZZ,X
     OPCodes_ADC(m_memory->Read(ZeroPageAddressing(&m_X)));
 }
 
@@ -807,7 +818,8 @@ void HuC6280::OPCode0x78()
 
 void HuC6280::OPCode0x79()
 {
-    // ADC $nn,Y
+    // OK
+    // ADC hhll,Y
     OPCodes_ADC(m_memory->Read(AbsoluteAddressing(&m_Y)));
 }
 
@@ -834,7 +846,8 @@ void HuC6280::OPCode0x7C()
 
 void HuC6280::OPCode0x7D()
 {
-    // ADC $nn,X
+    // OK
+    // ADC hhll,X
     OPCodes_ADC(m_memory->Read(AbsoluteAddressing(&m_X)));
 }
 

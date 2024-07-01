@@ -60,12 +60,12 @@ void HuC6280::Reset()
 unsigned int HuC6280::RunFor(unsigned int t_states)
 {
     unsigned int count = 0;
-    
+
     while (count < t_states)
     {
         count += Tick();
     }
-    
+
     return count;
 }
 
@@ -130,6 +130,7 @@ unsigned int HuC6280::Tick()
 
 void HuC6280::UnofficialOPCode()
 {
+    ClearFlag(FLAG_MEMORY);
     u16 opcode_address = m_PC.GetValue() - 1;
     u8 opcode = m_memory->Read(opcode_address);
     Debug("HuC6280 --> ** UNOFFICIAL OP Code (%X) at $%.4X -- %s\n", opcode, opcode_address, k_opcode_names[opcode]);

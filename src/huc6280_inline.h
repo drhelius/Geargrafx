@@ -59,6 +59,11 @@ inline bool HuC6280::PageCrossed(u16 old_address, u16 new_address)
     return (old_address ^ new_address) > 0x00FF;
 }
 
+inline u16 HuC6280::ZeroPageX()
+{
+    return 0x2000 | m_X.GetValue();
+}
+
 inline void HuC6280::SetZeroFlagFromResult(u8 result)
 {
     if (result == 0)
@@ -94,31 +99,31 @@ inline bool HuC6280::IsSetFlag(u8 flag)
 
 inline void HuC6280::StackPush16(u16 value)
 {
-    m_memory->Write(0x0100 | m_S.GetValue(), static_cast<u8>((value >> 8) & 0x00FF));
+    m_memory->Write(0x2100 | m_S.GetValue(), static_cast<u8>((value >> 8) & 0x00FF));
     m_S.Decrement();
-    m_memory->Write(0x0100 | m_S.GetValue(), static_cast<u8>(value & 0x00FF));
+    m_memory->Write(0x2100 | m_S.GetValue(), static_cast<u8>(value & 0x00FF));
     m_S.Decrement();
 }
 
 inline void HuC6280::StackPush8(u8 value)
 {
-    m_memory->Write(0x0100 | m_S.GetValue(), value);
+    m_memory->Write(0x2100 | m_S.GetValue(), value);
     m_S.Decrement();
 }
 
 inline u16 HuC6280::StackPop16()
 {
     m_S.Increment();
-    u8 l = m_memory->Read(0x0100 | m_S.GetValue());
+    u8 l = m_memory->Read(0x2100 | m_S.GetValue());
     m_S.Increment();
-    u8 h = m_memory->Read(0x0100 | m_S.GetValue());
+    u8 h = m_memory->Read(0x2100 | m_S.GetValue());
     return Address16(h , l);
 }
 
 inline u8 HuC6280::StackPop8()
 {
     m_S.Increment();
-    u8 result = m_memory->Read(0x0100 | m_S.GetValue());
+    u8 result = m_memory->Read(0x2100 | m_S.GetValue());
     return result;
 }
 
@@ -129,12 +134,27 @@ inline u8 HuC6280::ImmediateAddressing()
 
 inline u16 HuC6280::ZeroPageAddressing()
 {
-    return 0x00FF & Fetch8();
+    return 0x2000 | Fetch8();
 }
 
 inline u16 HuC6280::ZeroPageAddressing(EightBitRegister* reg)
 {
-    return 0x00FF & (Fetch8() + reg->GetValue());
+    return (0x2000 | (Fetch8() + reg->GetValue())) & 0x20FF;
+}
+
+inline u16 HuC6280::ZeroPageRelativeAddressing()
+{
+    u16 address = ZeroPageAddressing();
+    s8 offset = static_cast<s8>(Fetch8());
+    return address + offset;
+}
+
+inline u16 HuC6280::ZeroPageInditrectAddressing()
+{
+    u16 address = ZeroPageAddressing();
+    u8 l = m_memory->Read(address);
+    u8 h = m_memory->Read(address + 1);
+    return Address16(h, l);
 }
 
 inline s8 HuC6280::RelativeAddressing()
@@ -159,23 +179,23 @@ inline u16 HuC6280::IndirectAddressing()
 {
     u16 address = Fetch16();
     u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read((address & 0xFF00) | ((address + 1) & 0x00FF));
+    u8 h = m_memory->Read(address + 1);
     return Address16(h, l);
 }
 
 inline u16 HuC6280::IndexedIndirectAddressing()
 {
-    u16 address = Fetch8() + m_X.GetValue();
-    u8 l = m_memory->Read(address & 0x00FF);
-    u8 h = m_memory->Read((address + 1) & 0x00FF);
+    u16 address = (ZeroPageAddressing() + m_X.GetValue()) & 0x20FF;
+    u8 l = m_memory->Read(address);
+    u8 h = m_memory->Read((address + 1) & 0x20FF);
     return Address16(h, l);
 }
 
 inline u16 HuC6280::IndirectIndexedAddressing()
 {
-    u16 address = Fetch8();
+    u16 address = ZeroPageAddressing();
     u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read(address+1);
+    u8 h = m_memory->Read((address + 1) & 0x20FF);
     address = Address16(h, l);
     u16 result = address + m_Y.GetValue();
     m_page_crossed = PageCrossed(address, result);
