@@ -122,9 +122,9 @@ void HuC6280::OPCode0x0E()
 
 void HuC6280::OPCode0x0F()
 {
-    // UNOFFICIAL
-    // SLO $nn
-    UnofficialOPCode();
+    // OK
+    // BBR0 ZZ,hhll
+    OPcodes_Branch(!IsSetBit(0, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0x10()
@@ -228,9 +228,9 @@ void HuC6280::OPCode0x1E()
 
 void HuC6280::OPCode0x1F()
 {
-    // UNOFFICIAL
-    // SLO $nn,X
-    UnofficialOPCode();
+    // OK
+    // BBR1 ZZ,hhll
+    OPcodes_Branch(!IsSetBit(1, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0x20()
@@ -336,9 +336,9 @@ void HuC6280::OPCode0x2E()
 
 void HuC6280::OPCode0x2F()
 {
-    // UNOFFICIAL
-    // RLA $nn
-    UnofficialOPCode();
+    // OK
+    // BBR2 ZZ,hhll
+    OPcodes_Branch(!IsSetBit(2, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0x30()
@@ -444,9 +444,9 @@ void HuC6280::OPCode0x3E()
 
 void HuC6280::OPCode0x3F()
 {
-    // UNOFFICIAL
-    // RLA $nn,X
-    UnofficialOPCode();
+    // OK
+    // BBR3 ZZ,hhll
+    OPcodes_Branch(!IsSetBit(3, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0x40()
@@ -548,9 +548,9 @@ void HuC6280::OPCode0x4E()
 
 void HuC6280::OPCode0x4F()
 {
-    // UNOFFICIAL
-    // SRE $nn
-    UnofficialOPCode();
+    // OK
+    // BBR4 ZZ,hhll
+    OPcodes_Branch(!IsSetBit(4, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0x50()
@@ -652,9 +652,9 @@ void HuC6280::OPCode0x5E()
 
 void HuC6280::OPCode0x5F()
 {
-    // UNOFFICIAL
-    // SRE $nn,X
-    UnofficialOPCode();
+    // OK
+    // BBR5 ZZ,hhll
+    OPcodes_Branch(!IsSetBit(5, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0x60()
@@ -764,9 +764,9 @@ void HuC6280::OPCode0x6E()
 
 void HuC6280::OPCode0x6F()
 {
-    // UNOFFICIAL
-    // RRA $nn
-    UnofficialOPCode();
+    // OK
+    // BBR6 ZZ,hhll
+    OPcodes_Branch(!IsSetBit(6, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0x70()
@@ -872,9 +872,9 @@ void HuC6280::OPCode0x7E()
 
 void HuC6280::OPCode0x7F()
 {
-    // UNOFFICIAL
-    // RRA $nn,X
-    UnofficialOPCode();
+    // OK
+    // BBR7 ZZ,hhll
+    OPcodes_Branch(!IsSetBit(7, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0x80()
@@ -975,9 +975,9 @@ void HuC6280::OPCode0x8E()
 
 void HuC6280::OPCode0x8F()
 {
-    // UNOFFICIAL
-    // SAX $nn
-    UnofficialOPCode();
+    // OK
+    // BBS0 ZZ,hhll
+    OPcodes_Branch(IsSetBit(0, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0x90()
@@ -1078,9 +1078,9 @@ void HuC6280::OPCode0x9E()
 
 void HuC6280::OPCode0x9F()
 {
-    // UNOFFICIAL
-    // AHX $nn,Y
-    UnofficialOPCode();
+    // OK
+    // BBS1 ZZ,hhll
+    OPcodes_Branch(IsSetBit(1, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0xA0()
@@ -1178,9 +1178,9 @@ void HuC6280::OPCode0xAE()
 
 void HuC6280::OPCode0xAF()
 {
-    // UNOFFICIAL
-    // LAX $nn
-    UnofficialOPCode();
+    // OK
+    // BBS2 ZZ,hhll
+    OPcodes_Branch(IsSetBit(2, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0xB0()
@@ -1279,9 +1279,9 @@ void HuC6280::OPCode0xBE()
 
 void HuC6280::OPCode0xBF()
 {
-    // UNOFFICIAL
-    // LAX $nn,Y
-    UnofficialOPCode();
+    // OK
+    // BBS3 ZZ,hhll
+    OPcodes_Branch(IsSetBit(3, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0xC0()
@@ -1380,9 +1380,9 @@ void HuC6280::OPCode0xCE()
 
 void HuC6280::OPCode0xCF()
 {
-    // UNOFFICIAL
-    // DCP $nn
-    UnofficialOPCode();
+    // OK
+    // BBS4 ZZ,hhll
+    OPcodes_Branch(IsSetBit(4, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0xD0()
@@ -1484,9 +1484,9 @@ void HuC6280::OPCode0xDE()
 
 void HuC6280::OPCode0xDF()
 {
-    // UNOFFICIAL
-    // DCP $nn,X
-    UnofficialOPCode();
+    // OK
+    // BBS5 ZZ,hhll
+    OPcodes_Branch(IsSetBit(5, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0xE0()
@@ -1584,9 +1584,9 @@ void HuC6280::OPCode0xEE()
 
 void HuC6280::OPCode0xEF()
 {
-    // UNOFFICIAL
-    // ISC $nn
-    UnofficialOPCode();
+    // OK
+    // BBS6 ZZ,hhll
+    OPcodes_Branch(IsSetBit(6, m_memory->Read(ZeroPageAddressing())));
 }
 
 void HuC6280::OPCode0xF0()
@@ -1688,7 +1688,7 @@ void HuC6280::OPCode0xFE()
 
 void HuC6280::OPCode0xFF()
 {
-    // UNOFFICIAL
-    // ISC $nn,X
-    UnofficialOPCode();
+    // OK
+    // BBS7 ZZ,hhll
+    OPcodes_Branch(IsSetBit(7, m_memory->Read(ZeroPageAddressing())));
 }

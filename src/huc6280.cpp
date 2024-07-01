@@ -123,7 +123,7 @@ unsigned int HuC6280::Tick()
 
     m_t_states += k_opcode_tstates[opcode];
     m_t_states += m_page_crossed ? k_opcode_tstates_cross_paged[opcode] : 0;
-    m_t_states += m_branch_taken ? 1 : 0;
+    m_t_states += m_branch_taken ? 2 : 0;
 
     return m_t_states;
 }

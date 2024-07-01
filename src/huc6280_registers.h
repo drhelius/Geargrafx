@@ -29,7 +29,9 @@ public:
     u8 GetValue() const;
     void SetValue(u8 value);
     void Increment();
+    void Increment(u8 value);
     void Decrement();
+    void Decrement(u8 value);
 
 private:
     u8 m_value;
@@ -50,9 +52,19 @@ inline void EightBitRegister::Increment()
     m_value++;
 }
 
+inline void EightBitRegister::Increment(u8 value)
+{
+    m_value += value;
+}
+
 inline void EightBitRegister::Decrement()
 {
     m_value--;
+}
+
+inline void EightBitRegister::Decrement(u8 value)
+{
+    m_value -= value;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -68,7 +80,9 @@ public:
     void SetHigh(u8 high);
     void SetValue(u16 value);
     void Increment();
+    void Increment(u16 value);
     void Decrement();
+    void Decrement(u16 value);
 
 private:
     u16 m_value;
@@ -109,9 +123,19 @@ inline void SixteenBitRegister::Increment()
     m_value++;
 }
 
+inline void SixteenBitRegister::Increment(u16 value)
+{
+    m_value += value;
+}
+
 inline void SixteenBitRegister::Decrement()
 {
     m_value--;
+}
+
+inline void SixteenBitRegister::Decrement(u16 value)
+{
+    m_value -= value;
 }
 
 #endif /* HUC6280_REGISTERS_H */
