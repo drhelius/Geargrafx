@@ -103,6 +103,7 @@ private:
     void OPcodes_Branch(bool condition);
     void OPCodes_BIT(u16 address);
     void OPCodes_BRK();
+    void OPCodes_Subroutine();
     void OPCodes_ClearFlag(u8 flag);
     void OPCodes_SetFlag(u8 flag);
     void OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2);

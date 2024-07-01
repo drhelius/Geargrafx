@@ -145,6 +145,14 @@ inline void HuC6280::OPCodes_BRK()
     m_PC.SetHigh(m_memory->Read(0xFFF7));
 }
 
+inline void HuC6280::OPCodes_Subroutine()
+{
+    ClearFlag(FLAG_MEMORY);
+    StackPush16(m_PC.GetValue());
+    s8 displacement = RelativeAddressing();
+    m_PC.SetValue(static_cast<u16>(m_PC.GetValue() + displacement));
+}
+
 inline void HuC6280::OPCodes_ClearFlag(u8 flag)
 {
     ClearFlag(FLAG_MEMORY);

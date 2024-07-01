@@ -22,6 +22,7 @@
 
 void HuC6280::OPCode0x00()
 {
+    // OK
     // BRK
     OPCodes_BRK();
 }
@@ -129,7 +130,8 @@ void HuC6280::OPCode0x0F()
 
 void HuC6280::OPCode0x10()
 {
-    // BPL $s
+    // OK
+    // BPL hhll
     OPcodes_Branch(!IsSetFlag(FLAG_NEGATIVE));
 }
 
@@ -345,7 +347,8 @@ void HuC6280::OPCode0x2F()
 
 void HuC6280::OPCode0x30()
 {
-    // BMI $s
+    // OKI
+    // BMI hhll
     OPcodes_Branch(IsSetFlag(FLAG_NEGATIVE));
 }
 
@@ -480,9 +483,9 @@ void HuC6280::OPCode0x43()
 
 void HuC6280::OPCode0x44()
 {
-    // UNOFFICIAL
-    // NOP $n
-    UnofficialOPCode();
+    // OK
+    // BSR hhll
+    OPCodes_Subroutine();
 }
 
 void HuC6280::OPCode0x45()
@@ -557,7 +560,8 @@ void HuC6280::OPCode0x4F()
 
 void HuC6280::OPCode0x50()
 {
-    // BVC $s
+    // OK
+    // BVC hhll
     OPcodes_Branch(!IsSetFlag(FLAG_OVERFLOW));
 }
 
@@ -675,9 +679,10 @@ void HuC6280::OPCode0x61()
 
 void HuC6280::OPCode0x62()
 {
-    // UNOFFICIAL
-    // KILL
-    UnofficialOPCode();
+    // OK
+    // CLA
+    ClearFlag(FLAG_MEMORY);
+    m_A.SetValue(0x00);
 }
 
 void HuC6280::OPCode0x63()
@@ -773,7 +778,8 @@ void HuC6280::OPCode0x6F()
 
 void HuC6280::OPCode0x70()
 {
-    // BVS $s
+    // OK
+    // BVS hhll
     OPcodes_Branch(IsSetFlag(FLAG_OVERFLOW));
 }
 
@@ -881,9 +887,9 @@ void HuC6280::OPCode0x7F()
 
 void HuC6280::OPCode0x80()
 {
-    // UNOFFICIAL
-    // NOP #$n
-    UnofficialOPCode();
+    // OK
+    // BRA hhll
+    OPcodes_Branch(true);
 }
 
 void HuC6280::OPCode0x81()
@@ -1392,7 +1398,8 @@ void HuC6280::OPCode0xCF()
 
 void HuC6280::OPCode0xD0()
 {
-    // BNE $s
+    // OK
+    // BNE hhll
     OPcodes_Branch(!IsSetFlag(FLAG_ZERO));
 }
 
