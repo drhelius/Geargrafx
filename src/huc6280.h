@@ -86,12 +86,13 @@ private:
     u16 ZeroPageAddressing(EightBitRegister* reg);
     u16 ZeroPageIndirectAddressing();
     u16 ZeroPageRelativeAddressing();
+    u16 ZeroPageIndexedIndirectAddressing();
+    u16 ZeroPageIndirectIndexedAddressing();
     s8 RelativeAddressing();
     u16 AbsoluteAddressing();
     u16 AbsoluteAddressing(EightBitRegister* reg);
-    u16 IndirectAddressing();
-    u16 IndexedIndirectAddressing();
-    u16 IndirectIndexedAddressing();
+    u16 AbsoluteIndirectAddressing();
+    u16 AbsoluteIndexedIndirectAddressing();
 
     void UnofficialOPCode();
     void OPCodes_ADC(u8 value);

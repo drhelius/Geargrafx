@@ -157,6 +157,24 @@ inline u16 HuC6280::ZeroPageIndirectAddressing()
     return Address16(h, l);
 }
 
+inline u16 HuC6280::ZeroPageIndexedIndirectAddressing()
+{
+    u16 address = (ZeroPageAddressing() + m_X.GetValue()) & 0x20FF;
+    u8 l = m_memory->Read(address);
+    u8 h = m_memory->Read((address + 1) & 0x20FF);
+    return Address16(h, l);
+}
+
+inline u16 HuC6280::ZeroPageIndirectIndexedAddressing()
+{
+    u16 address = ZeroPageAddressing();
+    u8 l = m_memory->Read(address);
+    u8 h = m_memory->Read((address + 1) & 0x20FF);
+    address = Address16(h, l);
+    u16 result = address + m_Y.GetValue();
+    return result;
+}
+
 inline s8 HuC6280::RelativeAddressing()
 {
     return static_cast<s8>(Fetch8());
@@ -174,7 +192,7 @@ inline u16 HuC6280::AbsoluteAddressing(EightBitRegister* reg)
     return result;
 }
 
-inline u16 HuC6280::IndirectAddressing()
+inline u16 HuC6280::AbsoluteIndirectAddressing()
 {
     u16 address = Fetch16();
     u8 l = m_memory->Read(address);
@@ -182,22 +200,12 @@ inline u16 HuC6280::IndirectAddressing()
     return Address16(h, l);
 }
 
-inline u16 HuC6280::IndexedIndirectAddressing()
+inline u16 HuC6280::AbsoluteIndexedIndirectAddressing()
 {
-    u16 address = (ZeroPageAddressing() + m_X.GetValue()) & 0x20FF;
+    u16 address = Fetch16() + m_X.GetValue();
     u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read((address + 1) & 0x20FF);
+    u8 h = m_memory->Read(address + 1);
     return Address16(h, l);
-}
-
-inline u16 HuC6280::IndirectIndexedAddressing()
-{
-    u16 address = ZeroPageAddressing();
-    u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read((address + 1) & 0x20FF);
-    address = Address16(h, l);
-    u16 result = address + m_Y.GetValue();
-    return result;
 }
 
 #endif /* HUC6280_INLINE_H */
