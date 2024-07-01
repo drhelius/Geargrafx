@@ -32,6 +32,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
     {
         address = ZeroPageX();
         a = m_memory->Read(address);
+        m_t_states += 3;
     }
     else
         a = m_A.GetValue();
@@ -50,15 +51,31 @@ inline void HuC6280::OPCodes_ADC(u8 value)
         ClearFlag(FLAG_OVERFLOW);
 
     if (IsSetFlag(FLAG_MEMORY))
+    {
         m_memory->Write(address, final_result);
+        ClearFlag(FLAG_MEMORY);
+    }
     else
         m_A.SetValue(final_result);
 }
 
 inline void HuC6280::OPCodes_AND(u8 value)
 {
-    u8 result = m_A.GetValue() & value;
-    m_A.SetValue(result);
+    u8 result;
+    if (IsSetFlag(FLAG_MEMORY))
+    {
+        u16 address = ZeroPageX();
+        u8 a = m_memory->Read(address);
+        result = a & value;
+        m_memory->Write(address, result);
+        m_t_states += 3;
+        ClearFlag(FLAG_MEMORY);
+    }
+    else
+    {
+        result = m_A.GetValue() & value;
+        m_A.SetValue(result);
+    }
     SetZeroFlagFromResult(result);
     SetNegativeFlagFromResult(result);
 }

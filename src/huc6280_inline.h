@@ -149,7 +149,7 @@ inline u16 HuC6280::ZeroPageRelativeAddressing()
     return address + offset;
 }
 
-inline u16 HuC6280::ZeroPageInditrectAddressing()
+inline u16 HuC6280::ZeroPageIndirectAddressing()
 {
     u16 address = ZeroPageAddressing();
     u8 l = m_memory->Read(address);

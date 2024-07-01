@@ -84,7 +84,7 @@ private:
     u8 ImmediateAddressing();
     u16 ZeroPageAddressing();
     u16 ZeroPageAddressing(EightBitRegister* reg);
-    u16 ZeroPageInditrectAddressing();
+    u16 ZeroPageIndirectAddressing();
     u16 ZeroPageRelativeAddressing();
     s8 RelativeAddressing();
     u16 AbsoluteAddressing();
