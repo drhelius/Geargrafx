@@ -33,8 +33,8 @@ DEBUG ?= 0
 ifeq ($(DEBUG), 1)
     CPPFLAGS +=-DDEBUG -g3
 else
-    CPPFLAGS +=-DNDEBUG -O3 -flto
-    LDFLAGS += -flto
+    CPPFLAGS +=-DNDEBUG -O3 -flto=auto
+    LDFLAGS += -O3 -flto=auto
 endif
 
 SANITIZE ?= 0
