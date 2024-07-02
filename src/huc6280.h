@@ -122,6 +122,7 @@ private:
     void OPCodes_ROR_Accumulator();
     void OPCodes_ROR_Memory(u16 address);
     void OPCodes_SBC(u8 value);
+    void OPCodes_SMB(int bit, u16 address);
     void OPCodes_Store(EightBitRegister* reg, u16 address);
     void OPCodes_Transfer(EightBitRegister* reg, EightBitRegister* target);
 

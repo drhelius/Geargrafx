@@ -420,6 +420,7 @@ void HuC6280::OPCode0x37()
 
 void HuC6280::OPCode0x38()
 {
+    // OK
     // SEC
     OPCodes_SetFlag(FLAG_CARRY);
 }
@@ -879,6 +880,7 @@ void HuC6280::OPCode0x77()
 
 void HuC6280::OPCode0x78()
 {
+    // OK
     // SEI
     OPCodes_SetFlag(FLAG_IRQ);
 }
@@ -985,9 +987,9 @@ void HuC6280::OPCode0x86()
 
 void HuC6280::OPCode0x87()
 {
-    // UNOFFICIAL
-    // SAX $n
-    UnofficialOPCode();
+    // OK
+    // SMB0 ZZ
+    OPCodes_SMB(0, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x88()
@@ -1090,9 +1092,9 @@ void HuC6280::OPCode0x96()
 
 void HuC6280::OPCode0x97()
 {
-    // UNOFFICIAL
-    // SAX $n,Y
-    UnofficialOPCode();
+    // OK
+    // SMB1 ZZ
+    OPCodes_SMB(1, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x98()
@@ -1198,9 +1200,9 @@ void HuC6280::OPCode0xA6()
 
 void HuC6280::OPCode0xA7()
 {
-    // UNOFFICIAL
-    // LAX $n
-    UnofficialOPCode();
+    // OK
+    // SMB2 ZZ
+    OPCodes_SMB(2, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0xA8()
@@ -1308,9 +1310,9 @@ void HuC6280::OPCode0xB6()
 
 void HuC6280::OPCode0xB7()
 {
-    // UNOFFICIAL
-    // LAX $n,Y
-    UnofficialOPCode();
+    // OK
+    // SMB3 ZZ
+    OPCodes_SMB(3, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0xB8()
@@ -1420,9 +1422,9 @@ void HuC6280::OPCode0xC6()
 
 void HuC6280::OPCode0xC7()
 {
-    // UNOFFICIAL
-    // DCP $n
-    UnofficialOPCode();
+    // OK
+    // SMB4 ZZ
+    OPCodes_SMB(4, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0xC8()
@@ -1532,9 +1534,9 @@ void HuC6280::OPCode0xD6()
 
 void HuC6280::OPCode0xD7()
 {
-    // UNOFFICIAL
-    // DCP $n,X
-    UnofficialOPCode();
+    // OK
+    // SMB5 ZZ
+    OPCodes_SMB(5, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0xD8()
@@ -1643,9 +1645,9 @@ void HuC6280::OPCode0xE6()
 
 void HuC6280::OPCode0xE7()
 {
-    // UNOFFICIAL
-    // ISC $n
-    UnofficialOPCode();
+    // OK
+    // SMB6 ZZ
+    OPCodes_SMB(6, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0xE8()
@@ -1729,9 +1731,9 @@ void HuC6280::OPCode0xF3()
 
 void HuC6280::OPCode0xF4()
 {
-    // UNOFFICIAL
-    // NOP $n,X
-    UnofficialOPCode();
+    // OK
+    // SET
+    OPCodes_SetFlag(FLAG_MEMORY);
 }
 
 void HuC6280::OPCode0xF5()
@@ -1749,13 +1751,14 @@ void HuC6280::OPCode0xF6()
 
 void HuC6280::OPCode0xF7()
 {
-    // UNOFFICIAL
-    // ISC $n,X
-    UnofficialOPCode();
+    // OK
+    // SMB7 ZZ
+    OPCodes_SMB(7, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0xF8()
 {
+    // OK
     // SED
     OPCodes_SetFlag(FLAG_DECIMAL);
 }

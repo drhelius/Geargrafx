@@ -449,6 +449,13 @@ inline void HuC6280::OPCodes_SBC(u8 value)
     }
 }
 
+inline void HuC6280::OPCodes_SMB(int bit, u16 address)
+{
+    ClearFlag(FLAG_MEMORY);
+    u8 result = SetBit(m_memory->Read(address), bit);
+    m_memory->Write(address, result);
+}
+
 inline void HuC6280::OPCodes_Store(EightBitRegister* reg, u16 address)
 {
     ClearFlag(FLAG_MEMORY);
