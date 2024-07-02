@@ -70,9 +70,9 @@ void HuC6280::OPCode0x06()
 
 void HuC6280::OPCode0x07()
 {
-    // UNOFFICIAL
-    // SLO $n
-    UnofficialOPCode();
+    // OK
+    // RMB0 ZZ
+    OPCodes_RMB(0, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x08()
@@ -184,9 +184,9 @@ void HuC6280::OPCode0x16()
 
 void HuC6280::OPCode0x17()
 {
-    // UNOFFICIAL
-    // SLO $n,X
-    UnofficialOPCode();
+    // OK
+    // RMB1 ZZ
+    OPCodes_RMB(1, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x18()
@@ -292,15 +292,16 @@ void HuC6280::OPCode0x25()
 
 void HuC6280::OPCode0x26()
 {
-    // ROL $n
+    // OK
+    // ROL ZZ
     OPCodes_ROL_Memory(ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x27()
 {
-    // UNOFFICIAL
-    // RLA $n
-    UnofficialOPCode();
+    // OK
+    // RMB2 ZZ
+    OPCodes_RMB(2, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x28()
@@ -308,7 +309,8 @@ void HuC6280::OPCode0x28()
     // OK
     // PLP
     // TODO
-    m_P.SetValue((StackPop8() & 0xCF) | (m_P.GetValue() & 0x30));
+    //m_P.SetValue((StackPop8() & 0xCF) | (m_P.GetValue() & 0x30));
+    m_P.SetValue(StackPop8());
 }
 
 void HuC6280::OPCode0x29()
@@ -320,7 +322,8 @@ void HuC6280::OPCode0x29()
 
 void HuC6280::OPCode0x2A()
 {
-    // ROL
+    // OK
+    // ROL A
     OPCodes_ROL_Accumulator();
 }
 
@@ -347,7 +350,8 @@ void HuC6280::OPCode0x2D()
 
 void HuC6280::OPCode0x2E()
 {
-    // ROL $nn
+    // OK
+    // ROL hhll
     OPCodes_ROL_Memory(AbsoluteAddressing());
 }
 
@@ -402,15 +406,16 @@ void HuC6280::OPCode0x35()
 
 void HuC6280::OPCode0x36()
 {
-    // ROL $n,X
+    // OK
+    // ROL ZZ,X
     OPCodes_ROL_Memory(ZeroPageAddressing(&m_X));
 }
 
 void HuC6280::OPCode0x37()
 {
-    // UNOFFICIAL
-    // RLA $n,X
-    UnofficialOPCode();
+    // OK
+    // RMB3 ZZ
+    OPCodes_RMB(3, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x38()
@@ -456,7 +461,8 @@ void HuC6280::OPCode0x3D()
 
 void HuC6280::OPCode0x3E()
 {
-    // ROL $nn,X
+    // OK
+    // ROL hhll,X
     OPCodes_ROL_Memory(AbsoluteAddressing(&m_X));
 }
 
@@ -518,9 +524,9 @@ void HuC6280::OPCode0x46()
 
 void HuC6280::OPCode0x47()
 {
-    // UNOFFICIAL
-    // SRE $n
-    UnofficialOPCode();
+    // OK
+    // RMB4 ZZ
+    OPCodes_RMB(4, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x48()
@@ -631,9 +637,9 @@ void HuC6280::OPCode0x56()
 
 void HuC6280::OPCode0x57()
 {
-    // UNOFFICIAL
-    // SRE $n,X
-    UnofficialOPCode();
+    // OK
+    // RMB5 ZZ
+    OPCodes_RMB(5, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x58()
@@ -738,15 +744,16 @@ void HuC6280::OPCode0x65()
 
 void HuC6280::OPCode0x66()
 {
-    // ROR $n
+    // OK
+    // ROR ZZ
     OPCodes_ROR_Memory(ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x67()
 {
-    // UNOFFICIAL
-    // RRA $n
-    UnofficialOPCode();
+    // OK
+    // RMB6 ZZ
+    OPCodes_RMB(6, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x68()
@@ -769,7 +776,8 @@ void HuC6280::OPCode0x69()
 
 void HuC6280::OPCode0x6A()
 {
-    // ROR
+    // OK
+    // ROR A
     OPCodes_ROR_Accumulator();
 }
 
@@ -797,7 +805,8 @@ void HuC6280::OPCode0x6D()
 
 void HuC6280::OPCode0x6E()
 {
-    // ROR $nn
+    // OK
+    // ROR hhll
     OPCodes_ROR_Memory(AbsoluteAddressing());
 }
 
@@ -852,15 +861,16 @@ void HuC6280::OPCode0x75()
 
 void HuC6280::OPCode0x76()
 {
-    // ROR $n,X
+    // OK
+    // ROR ZZ,X
     OPCodes_ROR_Memory(ZeroPageAddressing(&m_X));
 }
 
 void HuC6280::OPCode0x77()
 {
-    // UNOFFICIAL
-    // RRA $n,X
-    UnofficialOPCode();
+    // OK
+    // RMB7 ZZ
+    OPCodes_RMB(7, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x78()
@@ -911,7 +921,8 @@ void HuC6280::OPCode0x7D()
 
 void HuC6280::OPCode0x7E()
 {
-    // ROR $nn,X
+    // OK
+    // ROR hhll,X
     OPCodes_ROR_Memory(AbsoluteAddressing(&m_X));
 }
 

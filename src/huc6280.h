@@ -96,9 +96,7 @@ private:
 
     void UnofficialOPCode();
     void OPCodes_ADC(u8 value);
-    void OPCodes_ADC_M(u8 value);
     void OPCodes_AND(u8 value);
-    void OPCodes_AND_M(u8 value);
     void OPCodes_ASL_Accumulator();
     void OPCodes_ASL_Memory(u16 address);
     void OPcodes_Branch(bool condition);
@@ -112,14 +110,13 @@ private:
     void OPCodes_DEC_Mem(u16 address);
     void OPCodes_DEC_Reg(EightBitRegister* reg);
     void OPCodes_EOR(u8 value);
-    void OPCodes_EOR_M(u8 value);
     void OPCodes_INC_Mem(u16 address);
     void OPCodes_INC_Reg(EightBitRegister* reg);
     void OPCodes_LD(EightBitRegister* reg, u8 value);
     void OPCodes_LSR_Accumulator();
     void OPCodes_LSR_Memory(u16 address);
     void OPCodes_ORA(u8 value);
-    void OPCodes_ORA_M(u8 value);
+    void OPCodes_RMB(int bit, u16 address);
     void OPCodes_ROL_Accumulator();
     void OPCodes_ROL_Memory(u16 address);
     void OPCodes_ROR_Accumulator();

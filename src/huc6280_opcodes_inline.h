@@ -303,6 +303,13 @@ inline void HuC6280::OPCodes_ORA(u8 value)
     SetNegativeFlagFromResult(result);
 }
 
+inline void HuC6280::OPCodes_RMB(int bit, u16 address)
+{
+    ClearFlag(FLAG_MEMORY);
+    u8 result = UnsetBit(m_memory->Read(address), bit);
+    m_memory->Write(address, result);
+}
+
 inline void HuC6280::OPCodes_ROL_Accumulator()
 {
     ClearFlag(FLAG_MEMORY);
