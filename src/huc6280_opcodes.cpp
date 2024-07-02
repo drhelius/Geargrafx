@@ -43,8 +43,9 @@ void HuC6280::OPCode0x02()
 void HuC6280::OPCode0x03()
 {
     // TODO
-    // ST1 #nn
-    UnofficialOPCode();
+    // ST0 #nn
+    u8 nn = Fetch8();
+    Debug("ST0 %02X", nn);
 }
 
 void HuC6280::OPCode0x04()
@@ -157,9 +158,10 @@ void HuC6280::OPCode0x12()
 
 void HuC6280::OPCode0x13()
 {
-    // UNOFFICIAL
-    // SLO ($n),Y
-    UnofficialOPCode();
+    // TODO
+    // ST1 #nn
+    u8 nn = Fetch8();
+    Debug("ST1 %02X", nn);
 }
 
 void HuC6280::OPCode0x14()
@@ -271,9 +273,10 @@ void HuC6280::OPCode0x22()
 
 void HuC6280::OPCode0x23()
 {
-    // UNOFFICIAL
-    // RLA $(nn,X)
-    UnofficialOPCode();
+    // TODO
+    // ST2 #nn
+    u8 nn = Fetch8();
+    Debug("ST2 %02X", nn);
 }
 
 void HuC6280::OPCode0x24()
