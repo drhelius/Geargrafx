@@ -951,7 +951,8 @@ void HuC6280::OPCode0x80()
 
 void HuC6280::OPCode0x81()
 {
-    // STA $(nn,X)
+    // OK
+    // STA (ZZ,X)
     OPCodes_Store(&m_A, ZeroPageIndexedIndirectAddressing());
 }
 
@@ -972,19 +973,22 @@ void HuC6280::OPCode0x83()
 
 void HuC6280::OPCode0x84()
 {
-    // STY $n
+    // OK
+    // STY ZZ
     OPCodes_Store(&m_Y, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x85()
 {
-    // STA $n
+    // OK
+    // STA ZZ
     OPCodes_Store(&m_A, ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x86()
 {
-    // STX $n
+    // OK
+    // STX ZZ
     OPCodes_Store(&m_X, ZeroPageAddressing());
 }
 
@@ -1025,19 +1029,22 @@ void HuC6280::OPCode0x8B()
 
 void HuC6280::OPCode0x8C()
 {
-    // STY $nn
+    // OK
+    // STY hhll
     OPCodes_Store(&m_Y, AbsoluteAddressing());
 }
 
 void HuC6280::OPCode0x8D()
 {
-    // STA $nn
+    // OK
+    // STA hhll
     OPCodes_Store(&m_A, AbsoluteAddressing());
 }
 
 void HuC6280::OPCode0x8E()
 {
-    // STX $nn
+    // OK
+    // STX hhll
     OPCodes_Store(&m_X, AbsoluteAddressing());
 }
 
@@ -1057,15 +1064,16 @@ void HuC6280::OPCode0x90()
 
 void HuC6280::OPCode0x91()
 {
-    // STA ($n),Y
+    // OK
+    // STA (ZZ),Y
     OPCodes_Store(&m_A, ZeroPageIndirectIndexedAddressing());
 }
 
 void HuC6280::OPCode0x92()
 {
-    // UNOFFICIAL
-    // KILL
-    UnofficialOPCode();
+    // OK
+    // STA (ZZ)
+    OPCodes_Store(&m_A, ZeroPageIndirectAddressing());
 }
 
 void HuC6280::OPCode0x93()
@@ -1077,19 +1085,22 @@ void HuC6280::OPCode0x93()
 
 void HuC6280::OPCode0x94()
 {
-    // STY $n,X
+    // OK
+    // STY ZZ,X
     OPCodes_Store(&m_Y, ZeroPageAddressing(&m_X));
 }
 
 void HuC6280::OPCode0x95()
 {
-    // STA $n,X
+    // OK
+    // STA ZZ,X
     OPCodes_Store(&m_A, ZeroPageAddressing(&m_X));
 }
 
 void HuC6280::OPCode0x96()
 {
-    // STX $n,Y
+    // OK
+    // STX ZZ,Y
     OPCodes_Store(&m_X, ZeroPageAddressing(&m_Y));
 }
 
@@ -1108,7 +1119,8 @@ void HuC6280::OPCode0x98()
 
 void HuC6280::OPCode0x99()
 {
-    // STA $nn,Y
+    // OK
+    // STA hhll,Y
     OPCodes_Store(&m_A, AbsoluteAddressing(&m_Y));
 }
 
@@ -1134,7 +1146,8 @@ void HuC6280::OPCode0x9C()
 
 void HuC6280::OPCode0x9D()
 {
-    // STA $nn,X
+    // OK
+    // STA hhll,X
     OPCodes_Store(&m_A, AbsoluteAddressing(&m_X));
 }
 
