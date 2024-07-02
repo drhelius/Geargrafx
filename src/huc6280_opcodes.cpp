@@ -475,8 +475,11 @@ void HuC6280::OPCode0x3F()
 
 void HuC6280::OPCode0x40()
 {
+    // OK
     // RTI
-    m_P.SetValue((StackPop8() & 0xCF) | (m_P.GetValue() & 0x30));
+    // TODO
+    // m_P.SetValue((StackPop8() & 0xCF) | (m_P.GetValue() & 0x30));
+    m_P.SetValue(StackPop8());
     m_PC.SetValue(StackPop16());
 }
 
@@ -701,6 +704,7 @@ void HuC6280::OPCode0x5F()
 
 void HuC6280::OPCode0x60()
 {
+    // OK
     // RTS
     ClearFlag(FLAG_MEMORY);
     m_PC.SetValue(StackPop16() + 1);
