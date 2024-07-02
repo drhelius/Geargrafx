@@ -264,9 +264,9 @@ void HuC6280::OPCode0x21()
 
 void HuC6280::OPCode0x22()
 {
-    // UNOFFICIAL
-    // KILL
-    UnofficialOPCode();
+    // OK
+    // SAX
+    OPCodes_Swap(&m_A, &m_X);
 }
 
 void HuC6280::OPCode0x23()
@@ -492,9 +492,9 @@ void HuC6280::OPCode0x41()
 
 void HuC6280::OPCode0x42()
 {
-    // UNOFFICIAL
-    // KILL
-    UnofficialOPCode();
+    // OK
+    // SAY
+    OPCodes_Swap(&m_A, &m_Y);
 }
 
 void HuC6280::OPCode0x43()
