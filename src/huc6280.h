@@ -125,7 +125,12 @@ private:
     void OPCodes_Store(EightBitRegister* reg, u16 address);
     void OPCodes_STZ(u16 address);
     void OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2);
+    void OPCodes_TAM();
+    void OPCodes_TMA();
     void OPCodes_Transfer(EightBitRegister* source, EightBitRegister* dest);
+    void OPCodes_TRB(u16 address);
+    void OPCodes_TSB(u16 address);
+    void OPCodes_TST(u8 value, u16 address);
 
     void InitOPCodeFunctors();
 

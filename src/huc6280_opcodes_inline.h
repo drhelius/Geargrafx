@@ -469,6 +469,48 @@ inline void HuC6280::OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2
     reg2->SetValue(temp);
 }
 
+inline void HuC6280::OPCodes_TAM()
+{
+    // TODO
+    ClearFlag(FLAG_MEMORY);
+    u8 bit = Fetch8();
+    int index = 0;
+    if (bit != 0)
+    {
+        while ((bit & 1) == 0)
+        {
+            bit >>= 1;
+            index++;
+        }
+        m_memory->SetMpr(index, m_A.GetValue());
+    }
+    else
+    {
+        Debug("Invalid TAM bit: %02X", bit);
+    }
+}
+
+inline void HuC6280::OPCodes_TMA()
+{
+    // TODO
+    ClearFlag(FLAG_MEMORY);
+    u8 bit = Fetch8();
+    int index = 0;
+    if (bit != 0)
+    {
+        while ((bit & 1) == 0)
+        {
+            bit >>= 1;
+            index++;
+        }
+        m_A.SetValue(m_memory->GetMpr(index));
+    }
+    else
+    {
+        Debug("Invalid TMA bit: %02X", bit);
+    }
+}
+
 inline void HuC6280::OPCodes_Transfer(EightBitRegister* source, EightBitRegister* dest)
 {
     ClearFlag(FLAG_MEMORY);
@@ -476,6 +518,40 @@ inline void HuC6280::OPCodes_Transfer(EightBitRegister* source, EightBitRegister
     dest->SetValue(value);
     SetZeroFlagFromResult(value);
     SetNegativeFlagFromResult(value);
+}
+
+inline void HuC6280::OPCodes_TRB(u16 address)
+{
+    // TODO
+    ClearFlag(FLAG_MEMORY);
+    u8 value = m_memory->Read(address);
+    u8 result = ~m_A.GetValue() & value;
+    SetZeroFlagFromResult(result);
+    SetNegativeFlagFromResult(result);
+    SetOverflowFlagFromResult(result);
+    m_memory->Write(address, result);
+}
+
+inline void HuC6280::OPCodes_TSB(u16 address)
+{
+    // TODO
+    ClearFlag(FLAG_MEMORY);
+    u8 value = m_memory->Read(address);
+    u8 result = m_A.GetValue() | value;
+    SetZeroFlagFromResult(result);
+    SetNegativeFlagFromResult(result);
+    SetOverflowFlagFromResult(result);
+    m_memory->Write(address, result);
+}
+
+inline void HuC6280::OPCodes_TST(u8 value, u16 address)
+{
+    ClearFlag(FLAG_MEMORY);
+    u8 mem = m_memory->Read(address);
+    u8 result = value & mem;
+    SetZeroFlagFromResult(result);
+    SetNegativeFlagFromResult(result);
+    SetOverflowFlagFromResult(result);
 }
 
 #endif /* HUC6280_OPCODES_INLINE_H */

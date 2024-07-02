@@ -51,9 +51,9 @@ void HuC6280::OPCode0x03()
 
 void HuC6280::OPCode0x04()
 {
-    // UNOFFICIAL
-    // NOP $n
-    UnofficialOPCode();
+    // OK
+    // TSB ZZ
+    OPCodes_TSB(ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x05()
@@ -110,9 +110,9 @@ void HuC6280::OPCode0x0B()
 
 void HuC6280::OPCode0x0C()
 {
-    // UNOFFICIAL
-    // NOP $nn
-    UnofficialOPCode();
+    // OK
+    // TSB hhll
+    OPCodes_TSB(AbsoluteAddressing());
 }
 
 void HuC6280::OPCode0x0D()
@@ -167,9 +167,9 @@ void HuC6280::OPCode0x13()
 
 void HuC6280::OPCode0x14()
 {
-    // UNOFFICIAL
-    // NOP $n,X
-    UnofficialOPCode();
+    // OK
+    // TRB ZZ
+    OPCodes_TRB(ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x15()
@@ -222,9 +222,9 @@ void HuC6280::OPCode0x1B()
 
 void HuC6280::OPCode0x1C()
 {
-    // UNOFFICIAL
-    // NOP $nn,X
-    UnofficialOPCode();
+    // OK
+    // TRB hhll
+    OPCodes_TRB(AbsoluteAddressing());
 }
 
 void HuC6280::OPCode0x1D()
@@ -504,9 +504,9 @@ void HuC6280::OPCode0x42()
 
 void HuC6280::OPCode0x43()
 {
-    // UNOFFICIAL
-    // SRE $(nn,X);
-    UnofficialOPCode();
+    // OK
+    // TMA
+    OPCodes_TMA();
 }
 
 void HuC6280::OPCode0x44()
@@ -617,9 +617,9 @@ void HuC6280::OPCode0x52()
 
 void HuC6280::OPCode0x53()
 {
-    // UNOFFICIAL
-    // SRE ($n),Y
-    UnofficialOPCode();
+    // OK
+    // TAM
+    OPCodes_TAM();
 }
 
 void HuC6280::OPCode0x54()
@@ -967,9 +967,10 @@ void HuC6280::OPCode0x82()
 
 void HuC6280::OPCode0x83()
 {
-    // UNOFFICIAL
-    // SAX $(nn,X)
-    UnofficialOPCode();
+    // OK
+    // TST #nn,ZZ
+    u8 nn = Fetch8();
+    OPCodes_TST(nn, m_memory->Read(ZeroPageAddressing()));
 }
 
 void HuC6280::OPCode0x84()
@@ -1080,9 +1081,10 @@ void HuC6280::OPCode0x92()
 
 void HuC6280::OPCode0x93()
 {
-    // UNOFFICIAL
-    // AHX ($n),Y
-    UnofficialOPCode();
+    // OK
+    // TST #nn,hhll
+    u8 nn = Fetch8();
+    OPCodes_TST(nn, m_memory->Read(AbsoluteAddressing()));
 }
 
 void HuC6280::OPCode0x94()
@@ -1192,9 +1194,10 @@ void HuC6280::OPCode0xA2()
 
 void HuC6280::OPCode0xA3()
 {
-    // UNOFFICIAL
-    // LAX $(nn,X)
-    UnofficialOPCode();
+    // OK
+    // TST #nn,ZZ,X
+    u8 nn = Fetch8();
+    OPCodes_TST(nn, m_memory->Read(ZeroPageAddressing(&m_X)));
 }
 
 void HuC6280::OPCode0xA4()
@@ -1304,9 +1307,10 @@ void HuC6280::OPCode0xB2()
 
 void HuC6280::OPCode0xB3()
 {
-    // UNOFFICIAL
-    // LAX ($n),Y
-    UnofficialOPCode();
+    // OK
+    // TST #nn,hhll,X
+    u8 nn = Fetch8();
+    OPCodes_TST(nn, m_memory->Read(AbsoluteAddressing(&m_X)));
 }
 
 void HuC6280::OPCode0xB4()

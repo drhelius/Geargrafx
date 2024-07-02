@@ -166,12 +166,12 @@ inline void Memory::Write(u16 address, u8 value)
 
 inline void Memory::SetMpr(u8 index, u8 value)
 {
-    m_mpr[index] = value;
+    m_mpr[index & 0x07] = value;
 }
 
 inline u8 Memory::GetMpr(u8 index)
 {
-    return m_mpr[index];
+    return m_mpr[index & 0x07];
 }
 
 inline u32 Memory::GetPhysicalAddress(u16 address)
