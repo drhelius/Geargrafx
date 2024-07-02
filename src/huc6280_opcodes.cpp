@@ -849,9 +849,9 @@ void HuC6280::OPCode0x72()
 
 void HuC6280::OPCode0x73()
 {
-    // UNOFFICIAL
-    // RRA ($n),Y
-    UnofficialOPCode();
+    // OK
+    // TII
+    OPCodes_TII();
 }
 
 void HuC6280::OPCode0x74()
@@ -1421,9 +1421,9 @@ void HuC6280::OPCode0xC2()
 
 void HuC6280::OPCode0xC3()
 {
-    // UNOFFICIAL
-    // DCP $(nn,X)
-    UnofficialOPCode();
+    // OK
+    // TDD
+    OPCodes_TDD();
 }
 
 void HuC6280::OPCode0xC4()
@@ -1533,9 +1533,9 @@ void HuC6280::OPCode0xD2()
 
 void HuC6280::OPCode0xD3()
 {
-    // UNOFFICIAL
-    // DCP ($n),Y
-    UnofficialOPCode();
+    // OK
+    // TIN
+    OPCodes_TIN();
 }
 
 void HuC6280::OPCode0xD4()
@@ -1645,9 +1645,9 @@ void HuC6280::OPCode0xE2()
 
 void HuC6280::OPCode0xE3()
 {
-    // UNOFFICIAL
-    // ISC $(nn,X)
-    UnofficialOPCode();
+    // OK
+    // TIA
+    OPCodes_TIA();
 }
 
 void HuC6280::OPCode0xE4()
@@ -1751,9 +1751,9 @@ void HuC6280::OPCode0xF2()
 
 void HuC6280::OPCode0xF3()
 {
-    // UNOFFICIAL
-    // ISC ($n),Y
-    UnofficialOPCode();
+    // OK
+    // TAI
+    OPCodes_TAI();
 }
 
 void HuC6280::OPCode0xF4()

@@ -554,4 +554,79 @@ inline void HuC6280::OPCodes_TST(u8 value, u16 address)
     SetOverflowFlagFromResult(result);
 }
 
+inline void HuC6280::OPCodes_TAI()
+{
+    // TODO
+    u16 source = Fetch16();
+    u16 dest = Fetch16();
+    u16 length = Fetch16();
+
+    for (u16 i = 0; i < length; i++)
+    {
+        u8 value = m_memory->Read(source + i);
+        m_memory->Write(dest + i, value);
+        m_t_states += 6;
+    }
+}
+
+inline void HuC6280::OPCodes_TDD()
+{
+    // TODO
+    u16 source = Fetch16();
+    u16 dest = Fetch16();
+    u16 length = Fetch16();
+
+    for (u16 i = 0; i < length; i++)
+    {
+        u8 value = m_memory->Read(source + i);
+        m_memory->Write(dest + i, value);
+        m_t_states += 6;
+    }
+}
+
+inline void HuC6280::OPCodes_TIA()
+{
+    // TODO
+    u16 source = Fetch16();
+    u16 dest = Fetch16();
+    u16 length = Fetch16();
+
+    for (u16 i = 0; i < length; i++)
+    {
+        u8 value = m_memory->Read(source + i);
+        m_memory->Write(dest + i, value);
+        m_t_states += 6;
+    }
+}
+
+inline void HuC6280::OPCodes_TII()
+{
+    // TODO
+    u16 source = Fetch16();
+    u16 dest = Fetch16();
+    u16 length = Fetch16();
+
+    for (u16 i = 0; i < length; i++)
+    {
+        u8 value = m_memory->Read(source + i);
+        m_memory->Write(dest + i, value);
+        m_t_states += 6;
+    }
+}
+
+inline void HuC6280::OPCodes_TIN()
+{
+    // TODO
+    u16 source = Fetch16();
+    u16 dest = Fetch16();
+    u16 length = Fetch16();
+
+    for (u16 i = 0; i < length; i++)
+    {
+        u8 value = m_memory->Read(source + i);
+        m_memory->Write(dest + i, value);
+        m_t_states += 6;
+    }
+}
+
 #endif /* HUC6280_OPCODES_INLINE_H */

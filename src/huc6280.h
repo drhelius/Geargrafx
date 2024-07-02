@@ -131,6 +131,11 @@ private:
     void OPCodes_TRB(u16 address);
     void OPCodes_TSB(u16 address);
     void OPCodes_TST(u8 value, u16 address);
+    void OPCodes_TAI();
+    void OPCodes_TDD();
+    void OPCodes_TIA();
+    void OPCodes_TII();
+    void OPCodes_TIN();
 
     void InitOPCodeFunctors();
 
