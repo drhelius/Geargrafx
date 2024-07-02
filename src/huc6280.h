@@ -105,7 +105,6 @@ private:
     void OPCodes_Subroutine();
     void OPCodes_ClearFlag(u8 flag);
     void OPCodes_SetFlag(u8 flag);
-    void OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2);
     void OPCodes_CMP(EightBitRegister* reg, u8 value);
     void OPCodes_DEC_Mem(u16 address);
     void OPCodes_DEC_Reg(EightBitRegister* reg);
@@ -124,6 +123,8 @@ private:
     void OPCodes_SBC(u8 value);
     void OPCodes_SMB(int bit, u16 address);
     void OPCodes_Store(EightBitRegister* reg, u16 address);
+    void OPCodes_STZ(u16 address);
+    void OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2);
     void OPCodes_Transfer(EightBitRegister* reg, EightBitRegister* target);
 
     void InitOPCodeFunctors();

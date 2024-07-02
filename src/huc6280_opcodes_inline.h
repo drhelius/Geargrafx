@@ -189,14 +189,6 @@ inline void HuC6280::OPCodes_SetFlag(u8 flag)
     SetFlag(flag);
 }
 
-inline void HuC6280::OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2)
-{
-    ClearFlag(FLAG_MEMORY);
-    u8 temp = reg1->GetValue();
-    reg1->SetValue(reg2->GetValue());
-    reg2->SetValue(temp);
-}
-
 inline void HuC6280::OPCodes_CMP(EightBitRegister* reg, u8 value)
 {
     ClearFlag(FLAG_MEMORY);
@@ -461,6 +453,20 @@ inline void HuC6280::OPCodes_Store(EightBitRegister* reg, u16 address)
     ClearFlag(FLAG_MEMORY);
     u8 value = reg->GetValue();
     m_memory->Write(address, value);
+}
+
+inline void HuC6280::OPCodes_STZ(u16 address)
+{
+    ClearFlag(FLAG_MEMORY);
+    m_memory->Write(address, 0x00);
+}
+
+inline void HuC6280::OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2)
+{
+    ClearFlag(FLAG_MEMORY);
+    u8 temp = reg1->GetValue();
+    reg1->SetValue(reg2->GetValue());
+    reg2->SetValue(temp);
 }
 
 inline void HuC6280::OPCodes_Transfer(EightBitRegister* reg, EightBitRegister* target)

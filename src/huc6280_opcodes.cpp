@@ -36,6 +36,7 @@ void HuC6280::OPCode0x01()
 
 void HuC6280::OPCode0x02()
 {
+    // OK
     // SXY
     OPCodes_Swap(&m_X, &m_Y);
 }
@@ -738,9 +739,9 @@ void HuC6280::OPCode0x63()
 
 void HuC6280::OPCode0x64()
 {
-    // UNOFFICIAL
-    // NOP $n
-    UnofficialOPCode();
+    // OK
+    // STZ ZZ
+    OPCodes_STZ(ZeroPageAddressing());
 }
 
 void HuC6280::OPCode0x65()
@@ -855,9 +856,9 @@ void HuC6280::OPCode0x73()
 
 void HuC6280::OPCode0x74()
 {
-    // UNOFFICIAL
-    // NOP $n,X
-    UnofficialOPCode();
+    // OK
+    // STZ ZZ,X
+    OPCodes_STZ(ZeroPageAddressing(&m_X));
 }
 
 void HuC6280::OPCode0x75()
@@ -1139,9 +1140,9 @@ void HuC6280::OPCode0x9B()
 
 void HuC6280::OPCode0x9C()
 {
-    // UNOFFICIAL
-    // SHY $nn,X
-    UnofficialOPCode();
+    // OK
+    // STZ hhll
+    OPCodes_STZ(AbsoluteAddressing());
 }
 
 void HuC6280::OPCode0x9D()
@@ -1153,9 +1154,9 @@ void HuC6280::OPCode0x9D()
 
 void HuC6280::OPCode0x9E()
 {
-    // UNOFFICIAL
-    // SHX $nn,Y
-    UnofficialOPCode();
+    // OK
+    // STZ hhll,X
+    OPCodes_STZ(AbsoluteAddressing(&m_X));
 }
 
 void HuC6280::OPCode0x9F()
