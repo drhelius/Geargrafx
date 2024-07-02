@@ -1111,19 +1111,22 @@ void HuC6280::OPCode0x9F()
 
 void HuC6280::OPCode0xA0()
 {
-    // LDY #$n
+    // OK
+    // LDY #nn
     OPCodes_LD(&m_Y, ImmediateAddressing());
 }
 
 void HuC6280::OPCode0xA1()
 {
-    // LDA $(nn,X)
+    // OK
+    // LDA $(ZZ,X)
     OPCodes_LD(&m_A, m_memory->Read(ZeroPageIndexedIndirectAddressing()));
 }
 
 void HuC6280::OPCode0xA2()
 {
-    // LDX #$n
+    // OK
+    // LDX #nn
     OPCodes_LD(&m_X, ImmediateAddressing());
 }
 
@@ -1136,19 +1139,22 @@ void HuC6280::OPCode0xA3()
 
 void HuC6280::OPCode0xA4()
 {
-    // LDY $n
+    // OK
+    // LDY ZZ
     OPCodes_LD(&m_Y, m_memory->Read(ZeroPageAddressing()));
 }
 
 void HuC6280::OPCode0xA5()
 {
-    // LDA $n
+    // OK
+    // LDA ZZ
     OPCodes_LD(&m_A, m_memory->Read(ZeroPageAddressing()));
 }
 
 void HuC6280::OPCode0xA6()
 {
-    // LDX $n
+    // OK
+    // LDX ZZ
     OPCodes_LD(&m_X, m_memory->Read(ZeroPageAddressing()));
 }
 
@@ -1167,7 +1173,8 @@ void HuC6280::OPCode0xA8()
 
 void HuC6280::OPCode0xA9()
 {
-    // LDA #$n
+    // OK
+    // LDA #nn
     OPCodes_LD(&m_A, ImmediateAddressing());
 }
 
@@ -1186,19 +1193,22 @@ void HuC6280::OPCode0xAB()
 
 void HuC6280::OPCode0xAC()
 {
-    // LDY $nn
+    // OK
+    // LDY hhll
     OPCodes_LD(&m_Y, m_memory->Read(AbsoluteAddressing()));
 }
 
 void HuC6280::OPCode0xAD()
 {
-    // LDA $nn
+    // OK
+    // LDA hhll
     OPCodes_LD(&m_A, m_memory->Read(AbsoluteAddressing()));
 }
 
 void HuC6280::OPCode0xAE()
 {
-    // LDX $nn
+    // OK
+    // LDX hhll
     OPCodes_LD(&m_X, m_memory->Read(AbsoluteAddressing()));
 }
 
@@ -1218,15 +1228,16 @@ void HuC6280::OPCode0xB0()
 
 void HuC6280::OPCode0xB1()
 {
+    // OK
     // LDA ($n),Y
     OPCodes_LD(&m_A, m_memory->Read(ZeroPageIndirectIndexedAddressing()));
 }
 
 void HuC6280::OPCode0xB2()
 {
-    // UNOFFICIAL
-    // KILL
-    UnofficialOPCode();
+    // OK
+    // LDA (ZZ)
+    OPCodes_LD(&m_A, m_memory->Read(ZeroPageIndirectAddressing()));
 }
 
 void HuC6280::OPCode0xB3()
@@ -1238,19 +1249,22 @@ void HuC6280::OPCode0xB3()
 
 void HuC6280::OPCode0xB4()
 {
-    // LDY $n,X
+    // OK
+    // LDY ZZ,X
     OPCodes_LD(&m_Y, m_memory->Read(ZeroPageAddressing(&m_X)));
 }
 
 void HuC6280::OPCode0xB5()
 {
-    // LDA $n,X
+    // OK
+    // LDA ZZ,X
     OPCodes_LD(&m_A, m_memory->Read(ZeroPageAddressing(&m_X)));
 }
 
 void HuC6280::OPCode0xB6()
 {
-    // LDX $n,Y
+    // OK
+    // LDX ZZ,Y
     OPCodes_LD(&m_X, m_memory->Read(ZeroPageAddressing(&m_Y)));
 }
 
@@ -1270,7 +1284,8 @@ void HuC6280::OPCode0xB8()
 
 void HuC6280::OPCode0xB9()
 {
-    // LDA $nn,Y
+    // OK
+    // LDA hhll,Y
     OPCodes_LD(&m_A, m_memory->Read(AbsoluteAddressing(&m_Y)));
 }
 
@@ -1289,19 +1304,22 @@ void HuC6280::OPCode0xBB()
 
 void HuC6280::OPCode0xBC()
 {
-    // LDY $nn,X
+    // OK
+    // LDY hhll,X
     OPCodes_LD(&m_Y, m_memory->Read(AbsoluteAddressing(&m_X)));
 }
 
 void HuC6280::OPCode0xBD()
 {
-    // LDA $nn,X
+    // OK
+    // LDA hhll,X
     OPCodes_LD(&m_A, m_memory->Read(AbsoluteAddressing(&m_X)));
 }
 
 void HuC6280::OPCode0xBE()
 {
-    // LDX $nn,Y
+    // OK
+    // LDX hhll,Y
     OPCodes_LD(&m_X, m_memory->Read(AbsoluteAddressing(&m_Y)));
 }
 
