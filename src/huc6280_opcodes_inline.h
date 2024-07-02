@@ -469,11 +469,11 @@ inline void HuC6280::OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2
     reg2->SetValue(temp);
 }
 
-inline void HuC6280::OPCodes_Transfer(EightBitRegister* reg, EightBitRegister* target)
+inline void HuC6280::OPCodes_Transfer(EightBitRegister* source, EightBitRegister* dest)
 {
     ClearFlag(FLAG_MEMORY);
-    u8 value = reg->GetValue();
-    target->SetValue(value);
+    u8 value = source->GetValue();
+    dest->SetValue(value);
     SetZeroFlagFromResult(value);
     SetNegativeFlagFromResult(value);
 }

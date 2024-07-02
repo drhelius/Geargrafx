@@ -1017,6 +1017,7 @@ void HuC6280::OPCode0x89()
 
 void HuC6280::OPCode0x8A()
 {
+    // OK
     // TXA
     OPCodes_Transfer(&m_X, &m_A);
 }
@@ -1114,6 +1115,7 @@ void HuC6280::OPCode0x97()
 
 void HuC6280::OPCode0x98()
 {
+    // OK
     // TYA
     OPCodes_Transfer(&m_Y, &m_A);
 }
@@ -1127,6 +1129,7 @@ void HuC6280::OPCode0x99()
 
 void HuC6280::OPCode0x9A()
 {
+    // OK
     // TXS
     OPCodes_Transfer(&m_X, &m_S);
 }
@@ -1224,6 +1227,7 @@ void HuC6280::OPCode0xA7()
 
 void HuC6280::OPCode0xA8()
 {
+    // OK
     // TAY
     OPCodes_Transfer(&m_A, &m_Y);
 }
@@ -1237,6 +1241,7 @@ void HuC6280::OPCode0xA9()
 
 void HuC6280::OPCode0xAA()
 {
+    // OK
     // TAX
     OPCodes_Transfer(&m_A, &m_X);
 }
@@ -1348,6 +1353,7 @@ void HuC6280::OPCode0xB9()
 
 void HuC6280::OPCode0xBA()
 {
+    // OK
     // TSX
     OPCodes_Transfer(&m_S, &m_X);
 }
