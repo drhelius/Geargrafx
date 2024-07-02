@@ -29,6 +29,7 @@ void HuC6280::OPCode0x00()
 
 void HuC6280::OPCode0x01()
 {
+    // OK
     // ORA (ZZ,X)
     OPCodes_ORA(m_memory->Read(ZeroPageIndexedIndirectAddressing()));
 }
@@ -55,7 +56,8 @@ void HuC6280::OPCode0x04()
 
 void HuC6280::OPCode0x05()
 {
-    // ORA $n
+    // OK
+    // ORA ZZ
     OPCodes_ORA(m_memory->Read(ZeroPageAddressing()));
 }
 
@@ -75,15 +77,18 @@ void HuC6280::OPCode0x07()
 
 void HuC6280::OPCode0x08()
 {
+    // OK
     // PHP
     ClearFlag(FLAG_MEMORY);
-    SetFlag(FLAG_BRK);
+    // TODO
+    // SetFlag(FLAG_BRK);
     StackPush8(m_P.GetValue());
 }
 
 void HuC6280::OPCode0x09()
 {
-    // ORA #$n
+    // OK
+    // ORA #nn
     OPCodes_ORA(ImmediateAddressing());
 }
 
@@ -110,7 +115,8 @@ void HuC6280::OPCode0x0C()
 
 void HuC6280::OPCode0x0D()
 {
-    // ORA $nn
+    // OK
+    // ORA hhll
     OPCodes_ORA(m_memory->Read(AbsoluteAddressing()));
 }
 
@@ -137,15 +143,16 @@ void HuC6280::OPCode0x10()
 
 void HuC6280::OPCode0x11()
 {
-    // ORA ($n),Y
+    // OK
+    // ORA (ZZ),Y
     OPCodes_ORA(m_memory->Read(ZeroPageIndirectIndexedAddressing()));
 }
 
 void HuC6280::OPCode0x12()
 {
-    // UNOFFICIAL
-    // KILL
-    UnofficialOPCode();
+    // OK
+    // ORA (ZZ)
+    OPCodes_ORA(m_memory->Read(ZeroPageIndirectAddressing()));
 }
 
 void HuC6280::OPCode0x13()
@@ -164,7 +171,7 @@ void HuC6280::OPCode0x14()
 
 void HuC6280::OPCode0x15()
 {
-    // ORA $n,X
+    // ORA ZZ,X
     OPCodes_ORA(m_memory->Read(ZeroPageAddressing(&m_X)));
 }
 
@@ -191,7 +198,8 @@ void HuC6280::OPCode0x18()
 
 void HuC6280::OPCode0x19()
 {
-    // ORA $nn,Y
+    // OK
+    // ORA hhll,Y
     OPCodes_ORA(m_memory->Read(AbsoluteAddressing(&m_Y)));
 }
 
@@ -218,7 +226,8 @@ void HuC6280::OPCode0x1C()
 
 void HuC6280::OPCode0x1D()
 {
-    // ORA $nn,X
+    // OK
+    // ORA hhll,X
     OPCodes_ORA(m_memory->Read(AbsoluteAddressing(&m_X)));
 }
 
@@ -296,7 +305,9 @@ void HuC6280::OPCode0x27()
 
 void HuC6280::OPCode0x28()
 {
+    // OK
     // PLP
+    // TODO
     m_P.SetValue((StackPop8() & 0xCF) | (m_P.GetValue() & 0x30));
 }
 
@@ -500,7 +511,8 @@ void HuC6280::OPCode0x45()
 
 void HuC6280::OPCode0x46()
 {
-    // LSR $n
+    // OK
+    // LSR ZZ
     OPCodes_LSR_Memory(ZeroPageAddressing());
 }
 
@@ -513,6 +525,7 @@ void HuC6280::OPCode0x47()
 
 void HuC6280::OPCode0x48()
 {
+    // OK
     // PHA
     StackPush8(m_A.GetValue());
 }
@@ -526,7 +539,8 @@ void HuC6280::OPCode0x49()
 
 void HuC6280::OPCode0x4A()
 {
-    // LSR
+    // OK
+    // LSR A
     OPCodes_LSR_Accumulator();
 }
 
@@ -554,7 +568,8 @@ void HuC6280::OPCode0x4D()
 
 void HuC6280::OPCode0x4E()
 {
-    // LSR $nn
+    // OK
+    // LSR hhll
     OPCodes_LSR_Memory(AbsoluteAddressing());
 }
 
@@ -609,7 +624,8 @@ void HuC6280::OPCode0x55()
 
 void HuC6280::OPCode0x56()
 {
-    // LSR $n,X
+    // OK
+    // LSR ZZ,X
     OPCodes_LSR_Memory(ZeroPageAddressing(&m_X));
 }
 
@@ -636,9 +652,10 @@ void HuC6280::OPCode0x59()
 
 void HuC6280::OPCode0x5A()
 {
-    // UNOFFICIAL
-    // NOP
-    UnofficialOPCode();
+    // OK
+    // PHY
+    ClearFlag(FLAG_MEMORY);
+    StackPush8(m_Y.GetValue());
 }
 
 void HuC6280::OPCode0x5B()
@@ -664,7 +681,8 @@ void HuC6280::OPCode0x5D()
 
 void HuC6280::OPCode0x5E()
 {
-    // LSR $nn,X
+    // OK
+    // LSR hhll,X
     OPCodes_LSR_Memory(AbsoluteAddressing(&m_X));
 }
 
@@ -733,6 +751,7 @@ void HuC6280::OPCode0x67()
 
 void HuC6280::OPCode0x68()
 {
+    // OK
     // PLA
     ClearFlag(FLAG_MEMORY);
     u8 result = StackPop8();
@@ -859,9 +878,13 @@ void HuC6280::OPCode0x79()
 
 void HuC6280::OPCode0x7A()
 {
-    // UNOFFICIAL
-    // NOP
-    UnofficialOPCode();
+    // OK
+    // PLY
+    ClearFlag(FLAG_MEMORY);
+    u8 result = StackPop8();
+    m_Y.SetValue(result);
+    SetZeroFlagFromResult(result);
+    SetNegativeFlagFromResult(result);
 }
 
 void HuC6280::OPCode0x7B()
@@ -1515,9 +1538,10 @@ void HuC6280::OPCode0xD9()
 
 void HuC6280::OPCode0xDA()
 {
-    // UNOFFICIAL
-    // NOP
-    UnofficialOPCode();
+    // OK
+    // PHX
+    ClearFlag(FLAG_MEMORY);
+    StackPush8(m_X.GetValue());
 }
 
 void HuC6280::OPCode0xDB()
@@ -1729,9 +1753,13 @@ void HuC6280::OPCode0xF9()
 
 void HuC6280::OPCode0xFA()
 {
-    // UNOFFICIAL
-    // NOP
-    UnofficialOPCode();
+    // OK
+    // PLX
+    ClearFlag(FLAG_MEMORY);
+    u8 result = StackPop8();
+    m_X.SetValue(result);
+    SetZeroFlagFromResult(result);
+    SetNegativeFlagFromResult(result);
 }
 
 void HuC6280::OPCode0xFB()
