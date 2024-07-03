@@ -21,6 +21,7 @@
 #include "huc6280_timing.h"
 #include "huc6280_names.h"
 #include "memory.h"
+#include <stdlib.h>
 
 HuC6280::HuC6280(Memory* memory)
 {
@@ -29,8 +30,7 @@ HuC6280::HuC6280(Memory* memory)
     m_t_states = 0;
     m_interrupt_asserted = false;
     m_nmi_interrupt_requested = false;
-    m_page_crossed = false;
-    m_branch_taken = false;
+    m_high_speed = false;
 }
 
 HuC6280::~HuC6280()
@@ -48,13 +48,12 @@ void HuC6280::Reset()
     m_A.SetValue(0x00);
     m_X.SetValue(0x00);
     m_Y.SetValue(0x00);
-    m_S.SetValue(0xFD);
+    m_S.SetValue(rand() & 0xFF);
     m_P.SetValue(0x34);
     m_t_states = 0;
     m_interrupt_asserted = false;
     m_nmi_interrupt_requested = false;
-    m_page_crossed = false;
-    m_branch_taken = false;
+    m_high_speed = false;
 }
 
 unsigned int HuC6280::RunFor(unsigned int t_states)
@@ -72,9 +71,7 @@ unsigned int HuC6280::RunFor(unsigned int t_states)
 unsigned int HuC6280::Tick()
 {
     m_t_states = 0;
-    m_page_crossed = false;
-    m_branch_taken = false;
-    
+
     if (m_nmi_interrupt_requested)
     {
         m_nmi_interrupt_requested = false;
@@ -122,16 +119,6 @@ unsigned int HuC6280::Tick()
     (this->*m_opcodes[opcode])();
 
     m_t_states += k_opcode_tstates[opcode];
-    m_t_states += m_page_crossed ? k_opcode_tstates_cross_paged[opcode] : 0;
-    m_t_states += m_branch_taken ? 2 : 0;
 
     return m_t_states;
-}
-
-void HuC6280::UnofficialOPCode()
-{
-    ClearFlag(FLAG_MEMORY);
-    u16 opcode_address = m_PC.GetValue() - 1;
-    u8 opcode = m_memory->Read(opcode_address);
-    Debug("HuC6280 --> ** UNOFFICIAL OP Code (%X) at $%.4X -- %s\n", opcode, opcode_address, k_opcode_names[opcode]);
 }

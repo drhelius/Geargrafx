@@ -33,6 +33,16 @@ inline void HuC6280::RequestNMI()
     m_nmi_interrupt_requested = true;
 }
 
+void HuC6280::SerHighSpeed(bool high_speed)
+{
+    m_high_speed = high_speed;
+}
+
+bool HuC6280::IsHighSpeed()
+{
+    return m_high_speed;
+}
+
 inline u8 HuC6280::Fetch8()
 {
     u8 value = m_memory->Read(m_PC.GetValue());

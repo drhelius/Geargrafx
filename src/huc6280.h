@@ -23,14 +23,14 @@
 #include "common.h"
 #include "huc6280_registers.h"
 
-#define FLAG_CARRY 0x01
-#define FLAG_ZERO 0x02
-#define FLAG_IRQ 0x04
-#define FLAG_DECIMAL 0x08
-#define FLAG_BRK 0x10
-#define FLAG_MEMORY 0x20
-#define FLAG_OVERFLOW 0x40
-#define FLAG_NEGATIVE 0x80
+#define FLAG_CARRY      0x01
+#define FLAG_ZERO       0x02
+#define FLAG_IRQ        0x04
+#define FLAG_DECIMAL    0x08
+#define FLAG_BRK        0x10
+#define FLAG_TRANSFER   0x20
+#define FLAG_OVERFLOW   0x40
+#define FLAG_NEGATIVE   0x80
 
 class Memory;
 
@@ -45,6 +45,8 @@ public:
     unsigned int Tick();
     void AssertIRQ(bool asserted);
     void RequestNMI();
+    void SerHighSpeed(bool high_speed);
+    bool IsHighSpeed();
 
 private:
     typedef void (HuC6280::*opcodeptr) (void);
@@ -58,8 +60,7 @@ private:
     unsigned int m_t_states;
     bool m_interrupt_asserted;
     bool m_nmi_interrupt_requested;
-    bool m_page_crossed;
-    bool m_branch_taken;
+    bool m_high_speed;
     Memory* m_memory;
 
 private:
