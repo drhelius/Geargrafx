@@ -33,12 +33,12 @@ inline void HuC6280::RequestNMI()
     m_nmi_interrupt_requested = true;
 }
 
-void HuC6280::SerHighSpeed(bool high_speed)
+inline void HuC6280::SetHighSpeed(bool high_speed)
 {
     m_high_speed = high_speed;
 }
 
-bool HuC6280::IsHighSpeed()
+inline bool HuC6280::IsHighSpeed()
 {
     return m_high_speed;
 }

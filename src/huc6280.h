@@ -45,7 +45,7 @@ public:
     unsigned int Tick();
     void AssertIRQ(bool asserted);
     void RequestNMI();
-    void SerHighSpeed(bool high_speed);
+    void SetHighSpeed(bool high_speed);
     bool IsHighSpeed();
 
 private:
