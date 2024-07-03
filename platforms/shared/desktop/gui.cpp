@@ -32,6 +32,8 @@
 #include "gui_menus.h"
 #include "gui_popups.h"
 #include "gui_actions.h"
+#include "gui_debug.h"
+#include "gui_debug_disassembler.h"
 
 static ImFont* default_font[4];
 static bool status_message_active = false;
@@ -99,7 +101,7 @@ void gui_render(void)
     if((!config_debug.debug && !emu_is_empty()) || (config_debug.debug && config_debug.show_screen))
         main_window();
 
-    // gui_debug_windows();
+    gui_debug_windows();
 
     if (config_emulator.show_info)
         gui_show_info();
@@ -169,12 +171,12 @@ void gui_shortcut(gui_ShortCutEvent event)
     //     if (config_debug.debug)
     //         gui_debug_go_back();
     //     break;
-    // case gui_ShortcutDebugCopy:
-    //     gui_debug_copy_memory();
-    //     break;
-    // case gui_ShortcutDebugPaste:
-    //     gui_debug_paste_memory();
-    //     break;
+    case gui_ShortcutDebugCopy:
+        gui_debug_copy_memory();
+        break;
+    case gui_ShortcutDebugPaste:
+        gui_debug_paste_memory();
+        break;
     case gui_ShortcutShowMainMenu:
         config_emulator.show_menu = !config_emulator.show_menu;
         break;
@@ -193,12 +195,12 @@ void gui_load_rom(const char* path)
     emu_resume();
     emu_load_rom(path);
 
-    // gui_debug_reset();
+    gui_debug_reset();
 
-    // std::string str(path);
-    // str = str.substr(0, str.find_last_of("."));
-    // str += ".sym";
-    // gui_debug_load_symbols_file(str.c_str());
+    std::string str(path);
+    str = str.substr(0, str.find_last_of("."));
+    str += ".sym";
+    gui_debug_load_symbols_file(str.c_str());
 
     if (config_emulator.start_paused)
     {

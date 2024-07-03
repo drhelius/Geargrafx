@@ -37,6 +37,18 @@ class Memory;
 class HuC6280
 {
 public:
+    struct Processor_State
+    {
+        SixteenBitRegister* PC;
+        EightBitRegister* A;
+        EightBitRegister* X;
+        EightBitRegister* Y;
+        EightBitRegister* S;
+        EightBitRegister* P;
+        bool* SPEED;
+    };
+
+public:
     HuC6280(Memory* memory);
     ~HuC6280();
     void Init();
@@ -47,6 +59,7 @@ public:
     void RequestNMI();
     void SetHighSpeed(bool high_speed);
     bool IsHighSpeed();
+    Processor_State* GetState();
 
 private:
     typedef void (HuC6280::*opcodeptr) (void);
@@ -62,6 +75,7 @@ private:
     bool m_nmi_interrupt_requested;
     bool m_high_speed;
     Memory* m_memory;
+    Processor_State m_processor_state;
 
 private:
     u8 Fetch8();

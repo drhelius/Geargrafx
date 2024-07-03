@@ -14,6 +14,9 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_popups.cpp \
     $(DESKTOP_SRC_DIR)/gui_actions.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_huc6280.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_huc6270.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_disassembler.cpp \
     $(DESKTOP_SRC_DIR)/renderer.cpp \
     $(DESKTOP_SRC_DIR)/emu.cpp \
     $(DESKTOP_SRC_DIR)/imgui/imgui_impl_sdl2.cpp \

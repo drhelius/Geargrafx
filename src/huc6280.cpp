@@ -31,6 +31,13 @@ HuC6280::HuC6280(Memory* memory)
     m_interrupt_asserted = false;
     m_nmi_interrupt_requested = false;
     m_high_speed = false;
+    m_processor_state.A = &m_A;
+    m_processor_state.X = &m_X;
+    m_processor_state.Y = &m_Y;
+    m_processor_state.S = &m_S;
+    m_processor_state.P = &m_P;
+    m_processor_state.PC = &m_PC;
+    m_processor_state.SPEED = &m_high_speed;
 }
 
 HuC6280::~HuC6280()
@@ -121,4 +128,9 @@ unsigned int HuC6280::Tick()
     m_t_states += k_opcode_tstates[opcode];
 
     return m_t_states;
+}
+
+HuC6280::Processor_State* HuC6280::GetState()
+{
+    return &m_processor_state;
 }

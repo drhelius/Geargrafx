@@ -17,17 +17,14 @@
  *
  */
 
-#ifndef GUI_DEBUG_H
-#define	GUI_DEBUG_H
+#ifndef GUI_DEBUG_HUC6280_H
+#define	GUI_DEBUG_HUC6280_H
 
-#ifdef GUI_DEBUG_IMPORT
+#ifdef GUI_DEBUG_HUC6280_IMPORT
     #define EXTERN
 #else
     #define EXTERN extern
 #endif
 
-EXTERN void gui_debug_windows(void);
-EXTERN void gui_debug_copy_memory(void);
-EXTERN void gui_debug_paste_memory(void);
 
-#endif /* GUI_DEBUG_H */
+#endif /* GUI_DEBUG_HUC6280_H */
