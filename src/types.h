@@ -74,20 +74,14 @@ enum GG_Controllers
 
 enum GG_OPCode_Type
 {
-    GG_OPCode_Type_Unknown,
     GG_OPCode_Type_Implied,
-    GG_OPCode_Type_Accumulator,
-    GG_OPCode_Type_Immediate,
-    GG_OPCode_Type_ZeroPage,
-    GG_OPCode_Type_ZeroPage_X,
-    GG_OPCode_Type_ZeroPage_Y,
-    GG_OPCode_Type_Absolute,
-    GG_OPCode_Type_Absolute_X,
-    GG_OPCode_Type_Absolute_Y,
-    GG_OPCode_Type_Indirect,
-    GG_OPCode_Type_Indirect_X,
-    GG_OPCode_Type_Indirect_Y,
-    GG_OPCode_Type_Relative
+    GG_OPCode_Type_1b,
+    GG_OPCode_Type_1b_1b,
+    GG_OPCode_Type_1b_2b,
+    GG_OPCode_Type_2b,
+    GG_OPCode_Type_2b_2b_2b,
+    GG_OPCode_Type_1b_Relative,
+    GG_OPCode_Type_1b_1b_Relative,
 };
 
 struct GG_OPCode_Info
