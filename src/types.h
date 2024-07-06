@@ -72,4 +72,28 @@ enum GG_Controllers
     GG_CONTROLLER_2
 };
 
+enum GG_OPCode_Type
+{
+    GG_OPCode_Type_Unknown,
+    GG_OPCode_Type_Implied,
+    GG_OPCode_Type_Accumulator,
+    GG_OPCode_Type_Immediate,
+    GG_OPCode_Type_ZeroPage,
+    GG_OPCode_Type_ZeroPage_X,
+    GG_OPCode_Type_ZeroPage_Y,
+    GG_OPCode_Type_Absolute,
+    GG_OPCode_Type_Absolute_X,
+    GG_OPCode_Type_Absolute_Y,
+    GG_OPCode_Type_Indirect,
+    GG_OPCode_Type_Indirect_X,
+    GG_OPCode_Type_Indirect_Y,
+    GG_OPCode_Type_Relative
+};
+
+struct GG_OPCode_Info
+{
+    const char* name;
+    GG_OPCode_Type type;
+};
+
 #endif /* TYPES_H */
