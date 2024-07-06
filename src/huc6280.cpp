@@ -22,6 +22,7 @@
 #include "huc6280_names.h"
 #include "memory.h"
 #include <stdlib.h>
+#include <string.h>
 
 HuC6280::HuC6280(Memory* memory)
 {
@@ -50,8 +51,8 @@ void HuC6280::Init()
 
 void HuC6280::Reset()
 {
-    m_PC.SetLow(m_memory->Read(0x1FFE));
-    m_PC.SetHigh(m_memory->Read(0x1FFF));
+    m_PC.SetLow(m_memory->Read(0xFFFE));
+    m_PC.SetHigh(m_memory->Read(0xFFFF));
     m_A.SetValue(0x00);
     m_X.SetValue(0x00);
     m_Y.SetValue(0x00);
@@ -89,6 +90,7 @@ unsigned int HuC6280::Tick()
         m_PC.SetLow(m_memory->Read(0xFFFA));
         m_PC.SetHigh(m_memory->Read(0xFFFB));
         m_t_states += 7;
+        DisassembleNextOPCode();
         return m_t_states;
     }
     else if (!IsSetFlag(FLAG_IRQ) && m_interrupt_asserted)
@@ -100,30 +102,13 @@ unsigned int HuC6280::Tick()
         m_PC.SetLow(m_memory->Read(0xFFFE));
         m_PC.SetHigh(m_memory->Read(0xFFFF));
         m_t_states += 7;
+        DisassembleNextOPCode();
         return m_t_states;
     } 
 
     u8 opcode = Fetch8();
-
-#ifdef HuC6280_DISASM
-    {
-        u16 opcode_address = m_PC.GetValue() - 1;
-
-        if (!m_memory->IsDisassembled(opcode_address))
-        {
-            m_memory->Disassemble(opcode_address, kOPCodeNames[opcode]);
-        }
-    }
-#endif
-
-#ifdef HuC6280_DEBUG
-    {
-        u16 opcode_address = m_PC.GetValue() - 1;
-        printf("HuC6280 -->  $%.4X  %s\n", opcode_address, kOPCodeNames[opcode]);
-    }
-#endif
-
     (this->*m_opcodes[opcode])();
+    DisassembleNextOPCode();
 
     m_t_states += k_opcode_tstates[opcode];
 
@@ -133,4 +118,107 @@ unsigned int HuC6280::Tick()
 HuC6280::Processor_State* HuC6280::GetState()
 {
     return &m_processor_state;
+}
+
+void HuC6280::DisassembleNextOPCode()
+{
+#ifndef GG_DISABLE_DISASSEMBLER
+
+    u16 address = m_PC.GetValue();
+    Memory::GG_Disassembler_Record* record = m_memory->GetOrCreatDisassemblerRecord(address);
+
+    if (!IsValidPointer(record))
+    {
+        return;
+    }
+
+    u8 opcode = m_memory->Read(address);
+    u8 opcode_size = k_opcode_sizes[opcode];
+
+    bool changed = false;
+
+    for (int i = 0; i < opcode_size; i++)
+    {
+        u8 mem_byte = m_memory->Read(address + i);
+
+        if (record->opcodes[i] != mem_byte)
+        {
+            changed = true;
+            record->opcodes[i] = mem_byte;
+        }
+    }
+
+    if (changed || record->size == 0)
+    {
+        record->size = opcode_size;
+        record->name[0] = 0;
+        record->bytes[0] = 0;
+        record->jump = false;
+        record->jump_address = 0;
+
+        for (int i = 0; i < opcode_size; i++)
+        {
+            char value[4];
+            snprintf(value, 4, "%02X", record->opcodes[i]);
+            strncat(record->bytes, value, 20);
+            strncat(record->bytes, " ", 20);
+        }
+
+        switch (k_opcode_names[opcode].type)
+        {
+            case GG_OPCode_Type_Implied:
+            {
+                snprintf(record->name, 64, "%s", k_opcode_names[opcode].name);
+                break;
+            }
+            case GG_OPCode_Type_1b:
+            {
+                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1));
+                break;
+            }
+            case GG_OPCode_Type_1b_1b:
+            {
+                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2));
+                break;
+            }
+            case GG_OPCode_Type_1b_2b:
+            {
+                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2) | (m_memory->Read(address + 3) << 8));
+                break;
+            }
+            case GG_OPCode_Type_2b:
+            {
+                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8));
+                break;
+            }
+            case GG_OPCode_Type_2b_2b_2b:
+            {
+                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8), m_memory->Read(address + 3) | (m_memory->Read(address + 4) << 8), m_memory->Read(address + 5) | (m_memory->Read(address + 6) << 8));
+                break;
+            }
+            case GG_OPCode_Type_1b_Relative:
+            {
+                s8 rel = m_memory->Read(address + 1);
+                u16 jump_address = address + 2 + rel;
+                snprintf(record->name, 64, k_opcode_names[opcode].name, jump_address, rel);
+                break;
+            }
+            case GG_OPCode_Type_1b_1b_Relative:
+            {
+                u8 zero_page = m_memory->Read(address + 1);
+                s8 rel = m_memory->Read(address + 2);
+                u16 jump_address = address + 3 + rel;
+                snprintf(record->name, 64, k_opcode_names[opcode].name, zero_page, jump_address, rel);
+                break;
+            }
+            default:
+            {
+                break;
+            }   
+        }
+    }
+
+    Debug("--> PC: %04X %s %s", address, record->bytes, record->name);
+
+#endif
 }

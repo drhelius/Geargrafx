@@ -81,13 +81,21 @@ enum GG_OPCode_Type
     GG_OPCode_Type_2b,
     GG_OPCode_Type_2b_2b_2b,
     GG_OPCode_Type_1b_Relative,
-    GG_OPCode_Type_1b_1b_Relative,
+    GG_OPCode_Type_1b_1b_Relative
 };
 
 struct GG_OPCode_Info
 {
     const char* name;
     GG_OPCode_Type type;
+};
+
+enum GG_Debugger_Command
+{
+    GG_Debugger_Command_Continue,
+    GG_Debugger_Command_StepInto,
+    GG_Debugger_Command_StepOver,
+    GG_Debugger_Command_StepOut
 };
 
 #endif /* TYPES_H */

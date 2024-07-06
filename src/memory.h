@@ -27,6 +27,18 @@ class Cartridge;
 class Memory
 {
 public:
+    struct GG_Disassembler_Record
+    {
+        u32 address;
+        char name[64];
+        char bytes[20];
+        int size;
+        u8 opcodes[7];
+        bool jump;
+        u16 jump_address;
+    };
+
+public:
     Memory(Cartridge* cartridge);
     ~Memory();
     void Init();
@@ -35,11 +47,13 @@ public:
     void Write(u16 address, u8 value);
     void SetMpr(u8 index, u8 value);
     u8 GetMpr(u8 index);
+    GG_Disassembler_Record* GetOrCreatDisassemblerRecord(u16 address);
 
 private:
     Cartridge* m_cartridge;
     u8 m_mpr[8];
     u8* m_wram;
+    GG_Disassembler_Record** m_disassemblerMemoryMap;
 
 private:
     u32 GetPhysicalAddress(u16 address);

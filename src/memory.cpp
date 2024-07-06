@@ -24,16 +24,34 @@ Memory::Memory(Cartridge* cartridge)
 {
     m_cartridge = cartridge;
     InitPointer(m_wram);
+    InitPointer(m_disassemblerMemoryMap);
 }
 
 Memory::~Memory()
 {
     SafeDeleteArray(m_wram);
+    if (IsValidPointer(m_disassemblerMemoryMap))
+    {
+        for (int i = 0; i < 0x200000; i++)
+        {
+            SafeDelete(m_disassemblerMemoryMap[i]);
+        }
+        SafeDeleteArray(m_disassemblerMemoryMap);
+    }
 }
 
 void Memory::Init()
 {
     m_wram = new u8[0x2000];
+
+#ifndef GG_DISABLE_DISASSEMBLER
+    m_disassemblerMemoryMap = new GG_Disassembler_Record*[0x200000];
+    for (int i = 0; i < 0x200000; i++)
+    {
+        InitPointer(m_disassemblerMemoryMap[i]);
+    }
+#endif
+
     Reset();
 }
 
@@ -52,4 +70,25 @@ void Memory::Reset()
     }
 }
 
+Memory::GG_Disassembler_Record* Memory::GetOrCreatDisassemblerRecord(u16 address)
+{
+    u32 physical_address = GetPhysicalAddress(address);
 
+    GG_Disassembler_Record* record = m_disassemblerMemoryMap[physical_address];
+
+    if (!IsValidPointer(record))
+    {
+        record = new GG_Disassembler_Record();
+        record->address = physical_address;
+        record->name[0] = 0;
+        record->bytes[0] = 0;
+        record->size = 0;
+        for (int i = 0; i < 7; i++) record->opcodes[i] = 0;
+        record->jump = false;
+        record->jump_address = 0;
+        m_disassemblerMemoryMap[physical_address] = record;
+    }
+
+    return record;
+
+}

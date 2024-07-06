@@ -60,6 +60,7 @@ public:
     void SetHighSpeed(bool high_speed);
     bool IsHighSpeed();
     Processor_State* GetState();
+    void DisassembleNextOPCode();
 
 private:
     typedef void (HuC6280::*opcodeptr) (void);

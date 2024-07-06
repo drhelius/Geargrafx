@@ -82,8 +82,7 @@ void GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         int totalClocks = 0;
         while (!vblank)
         {
-            //unsigned int clockCycles = m_huc6280->Tick();
-            unsigned int clockCycles = 1;
+            unsigned int clockCycles = m_huc6280->Tick();
             // vblank = m_huc6270->Tick(clockCycles);
             m_audio->Tick(clockCycles);
 
@@ -96,33 +95,49 @@ void GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         m_audio->EndFrame(sample_buffer, sample_count);
         RenderFrameBuffer(frame_buffer);
     }
+}
 
-    // if (!m_paused && m_cartridge->IsReady())
-    // {
-    //     bool vblank = false;
-    //     int totalClocks = 0;
-    //     while (!vblank)
-    //     {
-    //         unsigned int clockCycles = m_processor->RunFor(1);
-    //         // vblank = m_video->Tick(clockCycles);
-    //         m_audio->Tick(clockCycles);
+bool GeargrafxCore::DebugRun(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debugger_Command command)
+{
+    bool breakpoint = false;
 
-    //         totalClocks += clockCycles;
+    if (!m_paused && m_cartridge->IsReady())
+    {
+        bool vblank = false;
+        int totalClocks = 0;
+        while (!vblank)
+        {
+            unsigned int clockCycles = m_huc6280->Tick();
+            // vblank = m_huc6270->Tick(clockCycles);
+            m_audio->Tick(clockCycles);
+            totalClocks += clockCycles;
 
-    //         // if ((step || (stopOnBreakpoints && m_processor->BreakpointHit())) && !m_processor->DuringInputOpcode())
-    //         // {
-    //         //     vblank = true;
-    //         //     if (m_processor->BreakpointHit())
-    //         //         breakpoint = true;
-    //         // }
+            switch (command)
+            {
+                case GG_Debugger_Command_Continue:
+                    break;
+                case GG_Debugger_Command_StepInto:
+                    vblank = true;
+                    break;
+                case GG_Debugger_Command_StepOver:
+                    vblank = true;
+                    break;
+                case GG_Debugger_Command_StepOut:
+                    break;
+            }
 
-    //         if (totalClocks > 702240)
-    //             vblank = true;
-    //     }
+            // if (m_processor->BreakpointHit())
+            //     breakpoint = true;
 
-    //     m_audio->EndFrame(sample_buffer, sample_count);
-    //     RenderFrameBuffer(frame_buffer);
-    // }
+            if (totalClocks > 702240)
+                vblank = true;
+        }
+
+        m_audio->EndFrame(sample_buffer, sample_count);
+        RenderFrameBuffer(frame_buffer);
+    }
+
+    return breakpoint;
 }
 
 bool GeargrafxCore::LoadROM(const char* file_path)

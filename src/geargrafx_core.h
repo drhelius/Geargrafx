@@ -36,6 +36,7 @@ public:
     ~GeargrafxCore();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGB888);
     void RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count);
+    bool DebugRun(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debugger_Command command);
     bool LoadROM(const char* file_path);
     bool LoadROMFromBuffer(const u8* buffer, int size);
     void ResetROM(bool preserve_ram);
