@@ -20,7 +20,10 @@
 #define GUI_DEBUG_DISASSEMBLER_IMPORT
 #include "gui_debug_disassembler.h"
 
+#include "gui.h"
+#include "config.h"
 #include "../../../src/geargrafx.h"
+#include "imgui/imgui.h"
 
 // struct DebugSymbol
 // {
@@ -37,19 +40,22 @@
 //     std::string symbol;
 // };
 
-// static std::vector<DebugSymbol> symbols;
-// static Memory::stDisassembleRecord* selected_record = NULL;
+//static std::vector<DebugSymbol> symbols;
+static Memory::GG_Disassembler_Record* selected_record = NULL;
 static char brk_address_cpu[5] = "";
 static char brk_address_mem[10] = "";
 static bool brk_new_mem_read = true;
 static bool brk_new_mem_write = true;
+static bool brk_new_mem_execute = true;
 static char goto_address[5] = "";
 static bool goto_address_requested = false;
 static u16 goto_address_target = 0;
 static bool goto_back_requested = false;
 static int goto_back = 0;
 
-static void debug_window_disassembler(void);
+static void show_controls(void);
+static void show_breakpoints(void);
+static void show_disassembly(void);
 static void add_symbol(const char* line);
 static void add_breakpoint_cpu(void);
 static void add_breakpoint_mem(void);
@@ -58,10 +64,10 @@ static bool is_return_instruction(u8 opcode1, u8 opcode2);
 
 void gui_debug_reset(void)
 {
-    // gui_debug_reset_breakpoints_cpu();
-    // gui_debug_reset_breakpoints_mem();
-    // gui_debug_reset_symbols();
-    // selected_record = NULL;
+    gui_debug_reset_breakpoints_cpu();
+    gui_debug_reset_breakpoints_mem();
+    gui_debug_reset_symbols();
+    selected_record = NULL;
 }
 
 void gui_debug_reset_symbols(void)
@@ -158,236 +164,353 @@ void gui_debug_go_back(void)
     goto_back_requested = true;
 }
 
-static void debug_window_disassembler(void)
+void gui_debug_window_disassembler(void)
 {
-    // ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    // ImGui::SetNextWindowPos(ImVec2(159, 31), ImGuiCond_FirstUseEver);
-    // ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::SetNextWindowPos(ImVec2(159, 31), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
 
-    // ImGui::Begin("Disassembler", &config_debug.show_disassembler);
+    ImGui::Begin("Disassembler", &config_debug.show_disassembler);
 
-    // GearcolecoCore* core = emu_get_core();
-    // Processor* processor = core->GetProcessor();
-    // Processor::ProcessorState* proc_state = processor->GetState();
-    // Memory* memory = core->GetMemory();
-    // std::vector<Memory::stDisassembleRecord*>* breakpoints_cpu = memory->GetBreakpointsCPU();
-    // std::vector<Memory::stMemoryBreakpoint>* breakpoints_mem = memory->GetBreakpointsMem();
+    show_controls();
+    ImGui::Separator();
+    show_breakpoints();
+    show_disassembly();
 
-    // int pc = proc_state->PC->GetValue();
+    ImGui::End();
+    ImGui::PopStyleVar();
+}
 
-    // if (ImGui::Button("Step Over"))
-    //     emu_debug_step();
-    // ImGui::SameLine();
-    // if (ImGui::Button("Step Frame"))
-    //     emu_debug_next_frame();
-    // ImGui::SameLine();
-    // if (ImGui::Button("Continue"))
-    //     emu_debug_continue(); 
-    // ImGui::SameLine();
-    // if (ImGui::Button("Run To Cursor"))
-    //     gui_debug_runtocursor();
+static void show_controls(void)
+{
+    if (ImGui::Button("Step Over"))
+    {
+        //emu_debug_step();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Step Into"))
+    {
+        //emu_debug_next_frame();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Step Out"))
+    {
+        //emu_debug_continue();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Step Frame"))
+    {
+        //emu_debug_continue();
+    }
+    if (ImGui::Button("Pause"))
+    {
+        //emu_debug_continue();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Continue"))
+    {
+        //emu_debug_continue();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Run To Cursor"))
+    {
+        gui_debug_runtocursor();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Reset"))
+    {
+        //emu_debug_continue();
+    }
 
-    // static bool follow_pc = true;
-    // static bool show_mem = true;
-    // static bool show_symbols = true;
-    // static bool show_segment = true;
+    static bool follow_pc = true;
+    static bool show_mem = true;
+    static bool show_symbols = true;
+    static bool show_segment = true;
 
-    // ImGui::Checkbox("Follow PC", &follow_pc); ImGui::SameLine();
-    // ImGui::Checkbox("Opcodes", &show_mem);  ImGui::SameLine();
-    // ImGui::Checkbox("Symbols", &show_symbols);  ImGui::SameLine();
-    // ImGui::Checkbox("Segments", &show_segment);
+    ImGui::Checkbox("Follow PC", &follow_pc); ImGui::SameLine();
+    ImGui::Checkbox("Opcodes", &show_mem);  ImGui::SameLine();
+    ImGui::Checkbox("Symbols", &show_symbols);  ImGui::SameLine();
+    ImGui::Checkbox("Segments", &show_segment);
 
-    // ImGui::Separator();
+    ImGui::Separator();
 
-    // ImGui::Text("Go To Address: ");
-    // ImGui::SameLine();
-    // ImGui::PushItemWidth(45);
-    // if (ImGui::InputTextWithHint("##goto_address", "XXXX", goto_address, IM_ARRAYSIZE(goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
-    // {
-    //     try
-    //     {
-    //         request_goto_address((u16)std::stoul(goto_address, 0, 16));
-    //         follow_pc = false;
-    //     }
-    //     catch(const std::invalid_argument&)
-    //     {
-    //     }
-    //     goto_address[0] = 0;
-    // }
-    // ImGui::PopItemWidth();
-    // ImGui::SameLine();
-    // if (ImGui::Button("Go", ImVec2(30, 0)))
-    // {
-    //     try
-    //     {
-    //         request_goto_address((u16)std::stoul(goto_address, 0, 16));
-    //         follow_pc = false;
-    //     }
-    //     catch(const std::invalid_argument&)
-    //     {
-    //     }
-    //     goto_address[0] = 0;
-    // }
+    ImGui::Text("Go To Address: ");
+    ImGui::SameLine();
+    ImGui::PushItemWidth(45);
+    if (ImGui::InputTextWithHint("##goto_address", "XXXX", goto_address, IM_ARRAYSIZE(goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+        try
+        {
+            request_goto_address((u16)std::stoul(goto_address, 0, 16));
+            follow_pc = false;
+        }
+        catch(const std::invalid_argument&)
+        {
+        }
+        goto_address[0] = 0;
+    }
+    ImGui::PopItemWidth();
+    ImGui::SameLine();
+    if (ImGui::Button("Go", ImVec2(30, 0)))
+    {
+        try
+        {
+            request_goto_address((u16)std::stoul(goto_address, 0, 16));
+            follow_pc = false;
+        }
+        catch(const std::invalid_argument&)
+        {
+        }
+        goto_address[0] = 0;
+    }
 
-    // ImGui::SameLine();
-    // if (ImGui::Button("Back", ImVec2(50, 0)))
-    // {
-    //     goto_back_requested = true;
-    //     follow_pc = false;
-    // }
+    ImGui::SameLine();
+    if (ImGui::Button("Back", ImVec2(50, 0)))
+    {
+        goto_back_requested = true;
+        follow_pc = false;
+    }
+}
 
-    // ImGui::Separator();
+static void show_breakpoints(void)
+{
+    if (ImGui::CollapsingHeader("Breakpoints"))
+    {
+        bool placeholder = false;
+        //ImGui::Checkbox("Disable All##diable_all_mem", &emu_debug_disable_breakpoints_mem);
+        ImGui::Checkbox("Disable All##diable_all_mem", &placeholder);
 
-    // if (ImGui::CollapsingHeader("Processor Breakpoints"))
-    // {
-    //     ImGui::Checkbox("Disable All##disable_all_cpu", &emu_debug_disable_breakpoints_cpu);
+        ImGui::Columns(2, "breakpoints");
+        ImGui::SetColumnOffset(1, 100);
 
-    //     ImGui::Columns(2, "breakpoints_cpu");
-    //     ImGui::SetColumnOffset(1, 85);
+        ImGui::Separator();
 
-    //     ImGui::Separator();
+        ImGui::PushItemWidth(85);
+        if (ImGui::InputTextWithHint("##add_breakpoint", "XXXX-XXXX", brk_address_mem, IM_ARRAYSIZE(brk_address_mem), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            //add_breakpoint_mem();
+        }
+        ImGui::PopItemWidth();
 
-    //     if (IsValidPointer(selected_record))
-    //         sprintf(brk_address_cpu, "%04X", selected_record->address);
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Use XXXX format for single addresses or XXXX-XXXX for address ranges");
 
-    //     ImGui::PushItemWidth(70);
-    //     if (ImGui::InputTextWithHint("##add_breakpoint_cpu", "XXXX", brk_address_cpu, IM_ARRAYSIZE(brk_address_cpu), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
-    //     {
-    //         add_breakpoint_cpu();
-    //     }
-    //     ImGui::PopItemWidth();
+        ImGui::Checkbox("Read", &brk_new_mem_read);
+        ImGui::Checkbox("Write", &brk_new_mem_write);
+        ImGui::Checkbox("Execute", &brk_new_mem_execute);
+
+        if (ImGui::Button("Add##add", ImVec2(85, 0)))
+        {
+            //add_breakpoint_mem();
+        }
+
+        if (ImGui::Button("Clear All##clear_all", ImVec2(85, 0)))
+        {
+            //gui_debug_reset_breakpoints_mem();
+        }
+
+        ImGui::NextColumn();
+
+        ImGui::BeginChild("breakpoints", ImVec2(0, 130), false);
+
+        int remove = -1;
+
+        // for (long unsigned int b = 0; b < breakpoints_mem->size(); b++)
+        // {
+        //     ImGui::PushID(10000 + b);
+        //     if (ImGui::SmallButton("X"))
+        //     {
+        //        remove = b;
+        //        ImGui::PopID();
+        //        continue;
+        //     }
+
+        //     ImGui::PopID();
+
+        //     ImGui::PushFont(gui_default_font);
+        //     ImGui::SameLine();
+        //     if ((*breakpoints_mem)[b].range)
+        //         ImGui::TextColored(red, "%04X-%04X", (*breakpoints_mem)[b].address1, (*breakpoints_mem)[b].address2);
+        //     else
+        //         ImGui::TextColored(red, "%04X", (*breakpoints_mem)[b].address1);
+        //     if ((*breakpoints_mem)[b].read)
+        //     {
+        //         ImGui::SameLine(); ImGui::TextColored(gray, "R");
+        //     }
+        //     if ((*breakpoints_mem)[b].write)
+        //     {
+        //         ImGui::SameLine(); ImGui::TextColored(gray, "W");
+        //     }
+        //     ImGui::PopFont();
+        // }
+
+        if (remove >= 0)
+        {
+            //breakpoints_mem->erase(breakpoints_mem->begin() + remove);
+        }
+
+        ImGui::EndChild();
+        ImGui::Columns(1);
+        ImGui::Separator();
+    }
+
+    if (false)
+    {
+        bool placeholder = false;
+        //ImGui::Checkbox("Disable All##disable_all_cpu", &emu_debug_disable_breakpoints_cpu);
+        ImGui::Checkbox("Disable All##disable_all_cpu", &placeholder);
+
+        ImGui::Columns(2, "breakpoints_cpu");
+        ImGui::SetColumnOffset(1, 85);
+
+        ImGui::Separator();
+
+        if (IsValidPointer(selected_record))
+            sprintf(brk_address_cpu, "%04X", selected_record->address);
+
+        ImGui::PushItemWidth(70);
+        if (ImGui::InputTextWithHint("##add_breakpoint_cpu", "XXXX", brk_address_cpu, IM_ARRAYSIZE(brk_address_cpu), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            add_breakpoint_cpu();
+        }
+        ImGui::PopItemWidth();
 
 
-    //     if (ImGui::Button("Add##add_cpu", ImVec2(70, 0)))
-    //     {
-    //         add_breakpoint_cpu();
-    //     }
+        if (ImGui::Button("Add##add_cpu", ImVec2(70, 0)))
+        {
+            add_breakpoint_cpu();
+        }
 
-    //     if (ImGui::Button("Clear All##clear_all_cpu", ImVec2(70, 0)))
-    //     {
-    //         gui_debug_reset_breakpoints_cpu();
-    //     }
+        if (ImGui::Button("Clear All##clear_all_cpu", ImVec2(70, 0)))
+        {
+            gui_debug_reset_breakpoints_cpu();
+        }
 
-    //     ImGui::NextColumn();
+        ImGui::NextColumn();
 
-    //     ImGui::BeginChild("breakpoints_cpu", ImVec2(0, 80), false);
+        ImGui::BeginChild("breakpoints_cpu", ImVec2(0, 80), false);
 
-    //     int remove = -1;
+        int remove = -1;
 
-    //     for (long unsigned int b = 0; b < breakpoints_cpu->size(); b++)
-    //     {
-    //         if (!IsValidPointer((*breakpoints_cpu)[b]))
-    //             continue;
+        // for (long unsigned int b = 0; b < breakpoints_cpu->size(); b++)
+        // {
+        //     if (!IsValidPointer((*breakpoints_cpu)[b]))
+        //         continue;
 
-    //         ImGui::PushID(b);
-    //         if (ImGui::SmallButton("X"))
-    //         {
-    //            remove = b;
-    //            ImGui::PopID();
-    //            continue;
-    //         }
+        //     ImGui::PushID(b);
+        //     if (ImGui::SmallButton("X"))
+        //     {
+        //        remove = b;
+        //        ImGui::PopID();
+        //        continue;
+        //     }
 
-    //         ImGui::PopID();
+        //     ImGui::PopID();
 
-    //         ImGui::PushFont(gui_default_font);
-    //         ImGui::SameLine();
-    //         ImGui::TextColored(red, "%04X", (*breakpoints_cpu)[b]->address);
-    //         ImGui::SameLine();
-    //         ImGui::TextColored(gray, "%s", (*breakpoints_cpu)[b]->name);
-    //         ImGui::PopFont();
-    //     }
+        //     ImGui::PushFont(gui_default_font);
+        //     ImGui::SameLine();
+        //     ImGui::TextColored(red, "%04X", (*breakpoints_cpu)[b]->address);
+        //     ImGui::SameLine();
+        //     ImGui::TextColored(gray, "%s", (*breakpoints_cpu)[b]->name);
+        //     ImGui::PopFont();
+        // }
 
-    //     if (remove >= 0)
-    //     {
-    //         breakpoints_cpu->erase(breakpoints_cpu->begin() + remove);
-    //     }
+        if (remove >= 0)
+        {
+            //breakpoints_cpu->erase(breakpoints_cpu->begin() + remove);
+        }
 
-    //     ImGui::EndChild();
-    //     ImGui::Columns(1);
-    //     ImGui::Separator();
+        ImGui::EndChild();
+        ImGui::Columns(1);
+        ImGui::Separator();
 
-    // }
+    }
 
-    // if (ImGui::CollapsingHeader("Memory Breakpoints"))
-    // {
-    //     ImGui::Checkbox("Disable All##diable_all_mem", &emu_debug_disable_breakpoints_mem);
+    if (false)
+    {
+        bool placeholder = false;
+        //ImGui::Checkbox("Disable All##diable_all_mem", &emu_debug_disable_breakpoints_mem);
+        ImGui::Checkbox("Disable All##diable_all_mem", &placeholder);
 
-    //     ImGui::Columns(2, "breakpoints_mem");
-    //     ImGui::SetColumnOffset(1, 100);
+        ImGui::Columns(2, "breakpoints_mem");
+        ImGui::SetColumnOffset(1, 100);
 
-    //     ImGui::Separator();
+        ImGui::Separator();
 
-    //     ImGui::PushItemWidth(85);
-    //     if (ImGui::InputTextWithHint("##add_breakpoint_mem", "XXXX-XXXX", brk_address_mem, IM_ARRAYSIZE(brk_address_mem), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
-    //     {
-    //         add_breakpoint_mem();
-    //     }
-    //     ImGui::PopItemWidth();
+        ImGui::PushItemWidth(85);
+        if (ImGui::InputTextWithHint("##add_breakpoint_mem", "XXXX-XXXX", brk_address_mem, IM_ARRAYSIZE(brk_address_mem), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            add_breakpoint_mem();
+        }
+        ImGui::PopItemWidth();
 
-    //     if (ImGui::IsItemHovered())
-    //         ImGui::SetTooltip("Use XXXX format for single addresses or XXXX-XXXX for address ranges");
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Use XXXX format for single addresses or XXXX-XXXX for address ranges");
 
-    //     ImGui::Checkbox("Read", &brk_new_mem_read);
-    //     ImGui::Checkbox("Write", &brk_new_mem_write);
+        ImGui::Checkbox("Read", &brk_new_mem_read);
+        ImGui::Checkbox("Write", &brk_new_mem_write);
 
-    //     if (ImGui::Button("Add##add_mem", ImVec2(85, 0)))
-    //     {
-    //         add_breakpoint_mem();
-    //     }
+        if (ImGui::Button("Add##add_mem", ImVec2(85, 0)))
+        {
+            add_breakpoint_mem();
+        }
 
-    //     if (ImGui::Button("Clear All##clear_all_mem", ImVec2(85, 0)))
-    //     {
-    //         gui_debug_reset_breakpoints_mem();
-    //     }
+        if (ImGui::Button("Clear All##clear_all_mem", ImVec2(85, 0)))
+        {
+            gui_debug_reset_breakpoints_mem();
+        }
 
-    //     ImGui::NextColumn();
+        ImGui::NextColumn();
 
-    //     ImGui::BeginChild("breakpoints_mem", ImVec2(0, 130), false);
+        ImGui::BeginChild("breakpoints_mem", ImVec2(0, 130), false);
 
-    //     int remove = -1;
+        int remove = -1;
 
-    //     for (long unsigned int b = 0; b < breakpoints_mem->size(); b++)
-    //     {
-    //         ImGui::PushID(10000 + b);
-    //         if (ImGui::SmallButton("X"))
-    //         {
-    //            remove = b;
-    //            ImGui::PopID();
-    //            continue;
-    //         }
+        // for (long unsigned int b = 0; b < breakpoints_mem->size(); b++)
+        // {
+        //     ImGui::PushID(10000 + b);
+        //     if (ImGui::SmallButton("X"))
+        //     {
+        //        remove = b;
+        //        ImGui::PopID();
+        //        continue;
+        //     }
 
-    //         ImGui::PopID();
+        //     ImGui::PopID();
 
-    //         ImGui::PushFont(gui_default_font);
-    //         ImGui::SameLine();
-    //         if ((*breakpoints_mem)[b].range)
-    //             ImGui::TextColored(red, "%04X-%04X", (*breakpoints_mem)[b].address1, (*breakpoints_mem)[b].address2);
-    //         else
-    //             ImGui::TextColored(red, "%04X", (*breakpoints_mem)[b].address1);
-    //         if ((*breakpoints_mem)[b].read)
-    //         {
-    //             ImGui::SameLine(); ImGui::TextColored(gray, "R");
-    //         }
-    //         if ((*breakpoints_mem)[b].write)
-    //         {
-    //             ImGui::SameLine(); ImGui::TextColored(gray, "W");
-    //         }
-    //         ImGui::PopFont();
-    //     }
+        //     ImGui::PushFont(gui_default_font);
+        //     ImGui::SameLine();
+        //     if ((*breakpoints_mem)[b].range)
+        //         ImGui::TextColored(red, "%04X-%04X", (*breakpoints_mem)[b].address1, (*breakpoints_mem)[b].address2);
+        //     else
+        //         ImGui::TextColored(red, "%04X", (*breakpoints_mem)[b].address1);
+        //     if ((*breakpoints_mem)[b].read)
+        //     {
+        //         ImGui::SameLine(); ImGui::TextColored(gray, "R");
+        //     }
+        //     if ((*breakpoints_mem)[b].write)
+        //     {
+        //         ImGui::SameLine(); ImGui::TextColored(gray, "W");
+        //     }
+        //     ImGui::PopFont();
+        // }
 
-    //     if (remove >= 0)
-    //     {
-    //         breakpoints_mem->erase(breakpoints_mem->begin() + remove);
-    //     }
+        if (remove >= 0)
+        {
+            //breakpoints_mem->erase(breakpoints_mem->begin() + remove);
+        }
 
-    //     ImGui::EndChild();
-    //     ImGui::Columns(1);
-    //     ImGui::Separator();
-    // }
+        ImGui::EndChild();
+        ImGui::Columns(1);
+        ImGui::Separator();
+    }
+}
 
-    // ImGui::PushFont(gui_default_font);
+static void show_disassembly(void)
+{
+    ImGui::PushFont(gui_default_font);
 
-    // bool window_visible = ImGui::BeginChild("##dis", ImVec2(ImGui::GetContentRegionAvail().x, 0), true, 0);
+    bool window_visible = ImGui::BeginChild("##dis", ImVec2(ImGui::GetContentRegionAvail().x, 0), true, 0);
     
     // if (window_visible)
     // {
@@ -544,13 +667,9 @@ static void debug_window_disassembler(void)
     //     }
     // }
 
-    // ImGui::EndChild();
+    ImGui::EndChild();
     
-    // ImGui::PopFont();
-
-    // ImGui::End();
-
-    // ImGui::PopStyleVar();
+    ImGui::PopFont();
 }
 
 static void add_symbol(const char* line)

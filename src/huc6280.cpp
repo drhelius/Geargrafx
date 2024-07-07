@@ -53,6 +53,7 @@ void HuC6280::Reset()
 {
     m_PC.SetLow(m_memory->Read(0xFFFE));
     m_PC.SetHigh(m_memory->Read(0xFFFF));
+    DisassembleNextOPCode();
     m_A.SetValue(0x00);
     m_X.SetValue(0x00);
     m_Y.SetValue(0x00);

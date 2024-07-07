@@ -47,8 +47,8 @@ void gui_debug_windows(void)
             debug_window_processor();
         if (config_debug.show_memory)
             debug_window_memory();
-        // if (config_debug.show_disassembler)
-        //     debug_window_disassembler();
+        if (config_debug.show_disassembler)
+            gui_debug_window_disassembler();
         // if (config_debug.show_video)
         //     debug_window_vram();
         // if (config_debug.show_video_registers)
