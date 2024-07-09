@@ -1,5 +1,27 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "build": {
+        "dockerfile": "./Dockerfile",
+        "context": "."
+    },
   "features": {
-  }
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "username": "codespace",
+            "userUid": "1000",
+            "userGid": "1000"
+        }
+  },
+  "remoteUser": "codespace",
+  "containerUser": "codespace",
+  "customizations": {
+        // Configure properties specific to VS Code.
+        "vscode": {
+            // Set *default* container specific settings.json values on container create.
+            "settings": {
+            },
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                "GitHub.vscode-pull-request-github"
+            ]
+        }
+    }
 }
