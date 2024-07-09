@@ -22,11 +22,6 @@ RUN apt-get update \
         libglew-dev \
         libgtk-3-dev \
         gdb \
-    && rm -rf /var/lib/apt/lists/* \
-    # This is the folder containing 'links' to benv and build script generator
-    && apt-get update \
-    && apt-get upgrade -y \
-    && add-apt-repository universe \
     && rm -rf /var/lib/apt/lists/*
 
 # Verify expected build and debug tools are present
