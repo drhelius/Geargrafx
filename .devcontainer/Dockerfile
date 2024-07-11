@@ -16,7 +16,7 @@ RUN apt-get update \
         gdb \
         vim \
         cmake \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
     && apt-get autoremove -y && apt-get clean -y
 
 # Default to bash shell (other shells available at /usr/bin/fish and /usr/bin/zsh)
