@@ -8,6 +8,7 @@ on:
       - '**.md'
       - '.github/**'
       - '.vscode/**'
+      - '.devcontainer/**'
   pull_request:
     branches: [ "main" ]
 
