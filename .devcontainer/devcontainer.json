@@ -8,7 +8,14 @@
           "username": "codespace",
           "userUid": "1000",
           "userGid": "1000"
-        }
+        },
+        "ghcr.io/devcontainers/features/desktop-lite:1": {}
+  },
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "desktop"
+    }
   },
   "remoteUser": "codespace",
   "containerUser": "codespace",
