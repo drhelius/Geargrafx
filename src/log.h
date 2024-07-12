@@ -40,20 +40,20 @@ inline void Log_func(bool debug, const char* const msg, ...)
 {
     static int count = 1;
     char buffer[512];
-
     va_list args;
     va_start(args, msg);
     vsnprintf(buffer, 512, msg, args);
     va_end(args);
 
     if (debug)
+    {
         printf("%d: [DEBUG] %s\n", count, buffer);
+        count++;
+    }
     else
         printf("%s\n", buffer);
-
+    
     fflush(stdout);
-
-    count++;
 }
 
 #endif /* LOG_H */
