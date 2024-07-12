@@ -25,14 +25,11 @@
 #include "defines.h"
 
 #ifdef GEARGRAFX_DEBUG
-
 #ifdef __ANDROID__
 #include <android/log.h>
 #define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "GEARGRAFX", __VA_ARGS__);
 #endif
-
 #define Debug(msg, ...) (Log_func(true, msg, ##__VA_ARGS__))
-
 #else
 #define Debug(msg, ...)
 #endif
@@ -42,17 +39,17 @@
 inline void Log_func(bool debug, const char* const msg, ...)
 {
     static int count = 1;
-    char szBuf[512];
+    char buffer[512];
 
     va_list args;
     va_start(args, msg);
-    vsprintf(szBuf, msg, args);
+    vsnprintf(buffer, 512, msg, args);
     va_end(args);
 
     if (debug)
-        printf("%d: [DEBUG] %s\n", count, szBuf);
+        printf("%d: [DEBUG] %s\n", count, buffer);
     else
-        printf("%d: %s\n", count, szBuf);
+        printf("%s\n", buffer);
 
     fflush(stdout);
 
