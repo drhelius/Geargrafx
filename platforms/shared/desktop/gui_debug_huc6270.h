@@ -27,4 +27,6 @@
 #endif
 
 
+#undef GUI_DEBUG_HUC6270_IMPORT
+#undef EXTERN
 #endif /* GUI_DEBUG_HUC6270_H */

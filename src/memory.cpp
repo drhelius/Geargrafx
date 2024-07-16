@@ -70,7 +70,12 @@ void Memory::Reset()
     }
 }
 
-Memory::GG_Disassembler_Record* Memory::GetOrCreatDisassemblerRecord(u16 address)
+Memory::GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address)
+{
+    return m_disassemblerMemoryMap[GetPhysicalAddress(address)];
+}
+
+Memory::GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
 {
     u32 physical_address = GetPhysicalAddress(address);
 
@@ -80,6 +85,8 @@ Memory::GG_Disassembler_Record* Memory::GetOrCreatDisassemblerRecord(u16 address
     {
         record = new GG_Disassembler_Record();
         record->address = physical_address;
+        record->bank = GetBank(address);
+        record->segment[0] = 0;
         record->name[0] = 0;
         record->bytes[0] = 0;
         record->size = 0;
@@ -90,5 +97,4 @@ Memory::GG_Disassembler_Record* Memory::GetOrCreatDisassemblerRecord(u16 address
     }
 
     return record;
-
 }

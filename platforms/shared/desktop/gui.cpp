@@ -33,6 +33,7 @@
 #include "gui_popups.h"
 #include "gui_actions.h"
 #include "gui_debug.h"
+#include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
 
 static ImFont* default_font[4];

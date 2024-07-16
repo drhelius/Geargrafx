@@ -36,4 +36,6 @@ EXTERN void gui_debug_runtocursor(void);
 EXTERN void gui_debug_go_back(void);
 EXTERN void gui_debug_window_disassembler(void);
 
+#undef GUI_DEBUG_DISASSEMBLER_IMPORT
+#undef EXTERN
 #endif /* GUI_DEBUG_DISASSEMBLER_H */

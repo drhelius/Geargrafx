@@ -27,7 +27,7 @@
 #endif
 
 EXTERN void gui_debug_windows(void);
-EXTERN void gui_debug_copy_memory(void);
-EXTERN void gui_debug_paste_memory(void);
 
+#undef GUI_DEBUG_IMPORT
+#undef EXTERN
 #endif /* GUI_DEBUG_H */

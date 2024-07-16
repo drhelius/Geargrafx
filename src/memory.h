@@ -36,6 +36,8 @@ public:
         u8 opcodes[7];
         bool jump;
         u16 jump_address;
+        u8 bank;
+        char segment[5];
     };
 
 public:
@@ -47,16 +49,16 @@ public:
     void Write(u16 address, u8 value);
     void SetMpr(u8 index, u8 value);
     u8 GetMpr(u8 index);
-    GG_Disassembler_Record* GetOrCreatDisassemblerRecord(u16 address);
+    u32 GetPhysicalAddress(u16 address);
+    u8 GetBank(u16 address);
+    GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
+    GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
 
 private:
     Cartridge* m_cartridge;
     u8 m_mpr[8];
     u8* m_wram;
     GG_Disassembler_Record** m_disassemblerMemoryMap;
-
-private:
-    u32 GetPhysicalAddress(u16 address);
 };
 
 #include "memory_inline.h"

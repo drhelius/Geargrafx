@@ -26,5 +26,8 @@
     #define EXTERN extern
 #endif
 
+EXTERN void gui_debug_window_huc6280(void);
 
+#undef GUI_DEBUG_HUC6280_IMPORT
+#undef EXTERN
 #endif /* GUI_DEBUG_HUC6280_H */

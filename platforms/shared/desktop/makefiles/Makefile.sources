@@ -14,9 +14,11 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_popups.cpp \
     $(DESKTOP_SRC_DIR)/gui_actions.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug.cpp \
-    $(DESKTOP_SRC_DIR)/gui_debug_huc6280.cpp \
-    $(DESKTOP_SRC_DIR)/gui_debug_huc6270.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_disassembler.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_huc6270.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_huc6280.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_memeditor.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_memory.cpp \
     $(DESKTOP_SRC_DIR)/renderer.cpp \
     $(DESKTOP_SRC_DIR)/emu.cpp \
     $(DESKTOP_SRC_DIR)/imgui/imgui_impl_sdl2.cpp \
@@ -26,7 +28,6 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/imgui/imgui_widgets.cpp \
     $(DESKTOP_SRC_DIR)/imgui/imgui_tables.cpp \
     $(DESKTOP_SRC_DIR)/imgui/imgui_demo.cpp \
-    $(DESKTOP_SRC_DIR)/imgui/memory_editor.cpp \
     $(AUDIO_SRC_DIR)/sound_queue.cpp \
     $(SRC_DIR)/geargrafx_core.cpp \
     $(SRC_DIR)/audio.cpp \

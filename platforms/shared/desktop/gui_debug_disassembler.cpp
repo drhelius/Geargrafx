@@ -20,10 +20,12 @@
 #define GUI_DEBUG_DISASSEMBLER_IMPORT
 #include "gui_debug_disassembler.h"
 
+#include "imgui/imgui.h"
+#include "imgui/colors.h"
+#include "../../../src/geargrafx.h"
 #include "gui.h"
 #include "config.h"
-#include "../../../src/geargrafx.h"
-#include "imgui/imgui.h"
+#include "emu.h"
 
 // struct DebugSymbol
 // {
@@ -32,15 +34,17 @@
 //     std::string text;
 // };
 
-// struct DisassmeblerLine
-// {
-//     bool is_symbol;
-//     bool is_breakpoint;
-//     Memory::stDisassembleRecord* record;
-//     std::string symbol;
-// };
+struct DisassmeblerLine
+{
+    u16 address;
+    bool is_symbol;
+    bool is_breakpoint;
+    Memory::GG_Disassembler_Record* record;
+    std::string symbol;
+};
 
 //static std::vector<DebugSymbol> symbols;
+static std::vector<DisassmeblerLine> disassembler_lines(0x10000);
 static Memory::GG_Disassembler_Record* selected_record = NULL;
 static char brk_address_cpu[5] = "";
 static char brk_address_mem[10] = "";
@@ -52,6 +56,11 @@ static bool goto_address_requested = false;
 static u16 goto_address_target = 0;
 static bool goto_back_requested = false;
 static int goto_back = 0;
+static bool follow_pc = true;
+static bool show_mem = true;
+static bool show_symbols = true;
+static bool show_segment = true;
+static bool show_bank = true;
 
 static void show_controls(void);
 static void show_breakpoints(void);
@@ -60,7 +69,7 @@ static void add_symbol(const char* line);
 static void add_breakpoint_cpu(void);
 static void add_breakpoint_mem(void);
 static void request_goto_address(u16 addr);
-static bool is_return_instruction(u8 opcode1, u8 opcode2);
+static bool is_return_instruction(u8 opcode);
 
 void gui_debug_reset(void)
 {
@@ -173,7 +182,9 @@ void gui_debug_window_disassembler(void)
     ImGui::Begin("Disassembler", &config_debug.show_disassembler);
 
     show_controls();
+
     ImGui::Separator();
+
     show_breakpoints();
     show_disassembly();
 
@@ -511,161 +522,173 @@ static void show_disassembly(void)
     ImGui::PushFont(gui_default_font);
 
     bool window_visible = ImGui::BeginChild("##dis", ImVec2(ImGui::GetContentRegionAvail().x, 0), true, 0);
-    
-    // if (window_visible)
-    // {
-    //     int dis_size = 0;
-    //     int pc_pos = 0;
-    //     int goto_address_pos = 0;
-        
-    //     std::vector<DisassmeblerLine> vec(0x10000);
-        
-    //     for (int i = 0; i < 0x10000; i++)
-    //     {
-    //         Memory::stDisassembleRecord* record = memory->GetDisassembleRecord(i, false);
 
-    //         if (IsValidPointer(record) && (record->name[0] != 0))
-    //         {
-    //             for (long unsigned int s = 0; s < symbols.size(); s++)
-    //             {
-    //                 if ((symbols[s].bank == record->bank) && (symbols[s].address == i) && show_symbols)
-    //                 {
-    //                     vec[dis_size].is_symbol = true;
-    //                     vec[dis_size].symbol = symbols[s].text;
-    //                     dis_size ++;
-    //                 }
-    //             }
+    if (window_visible)
+    {
+        GeargrafxCore* core = emu_get_core();
+        Memory* memory = core->GetMemory();
+        HuC6280* processor = core->GetHuC6280();
+        HuC6280::Processor_State* proc_state = processor->GetState();
+        int pc = proc_state->PC->GetValue();
 
-    //             vec[dis_size].is_symbol = false;
-    //             vec[dis_size].record = record;
+        int pc_pos = 0;
+        int goto_address_pos = 0;
 
-    //             if (vec[dis_size].record->address == pc)
-    //                 pc_pos = dis_size;
+        disassembler_lines.clear();
 
-    //             if (goto_address_requested && (vec[dis_size].record->address <= goto_address_target))
-    //                 goto_address_pos = dis_size;
+        for (int i = 0; i < 0x10000; i++)
+        {
+            Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
 
-    //             vec[dis_size].is_breakpoint = false;
+            if (IsValidPointer(record) && (record->name[0] != 0))
+            {
+                // for (long unsigned int s = 0; s < symbols.size(); s++)
+                // {
+                //     if ((symbols[s].bank == record->bank) && (symbols[s].address == i) && show_symbols)
+                //     {
+                //         vec[dis_size].is_symbol = true;
+                //         vec[dis_size].symbol = symbols[s].text;
+                //         dis_size ++;
+                //     }
+                // }
 
-    //             for (long unsigned int b = 0; b < breakpoints_cpu->size(); b++)
-    //             {
-    //                 if ((*breakpoints_cpu)[b] == vec[dis_size].record)
-    //                 {
-    //                     vec[dis_size].is_breakpoint = true;
-    //                     break;
-    //                 }
-    //             }
+                DisassmeblerLine line;
+                line.address = (u16)i;
+                line.is_symbol = false;
+                line.is_breakpoint = false;
+                line.record = record;
 
-    //             dis_size++;
-    //         }
-    //     }
+                // for (long unsigned int b = 0; b < breakpoints_cpu->size(); b++)
+                // {
+                //     if ((*breakpoints_cpu)[b] == vec[dis_size].record)
+                //     {
+                //         vec[dis_size].is_breakpoint = true;
+                //         break;
+                //     }
+                // }
 
-    //     if (follow_pc)
-    //     {
-    //         float window_offset = ImGui::GetWindowHeight() / 2.0f;
-    //         float offset = window_offset - (ImGui::GetTextLineHeightWithSpacing() - 2.0f);
-    //         ImGui::SetScrollY((pc_pos * ImGui::GetTextLineHeightWithSpacing()) - offset);
-    //     }
+                if (i == pc)
+                    pc_pos = disassembler_lines.size();
 
-    //     if (goto_address_requested)
-    //     {
-    //         goto_address_requested = false;
-    //         goto_back = (int)ImGui::GetScrollY();
-    //         ImGui::SetScrollY((goto_address_pos * ImGui::GetTextLineHeightWithSpacing()) + 2);
-    //     }
+                // if (goto_address_requested && (vec[dis_size].record->address <= goto_address_target))
+                //     goto_address_pos = dis_size;
 
-    //     if (goto_back_requested)
-    //     {
-    //         goto_back_requested = false;
-    //         ImGui::SetScrollY((float)goto_back);
-    //     }
+                disassembler_lines.push_back(line);
+            }
+        }
 
-    //     ImGuiListClipper clipper;
-    //     clipper.Begin(dis_size, ImGui::GetTextLineHeightWithSpacing());
+        if (follow_pc)
+        {
+            float window_offset = ImGui::GetWindowHeight() / 2.0f;
+            float offset = window_offset - (ImGui::GetTextLineHeightWithSpacing() - 2.0f);
+            ImGui::SetScrollY((pc_pos * ImGui::GetTextLineHeightWithSpacing()) - offset);
+        }
 
-    //     while (clipper.Step())
-    //     {
-    //         for (int item = clipper.DisplayStart; item < clipper.DisplayEnd; item++)
-    //         {
-    //             if (vec[item].is_symbol)
-    //             {
-    //                 ImGui::TextColored(green, "%s:", vec[item].symbol.c_str());
-    //                 continue;
-    //             }
+        if (goto_address_requested)
+        {
+            goto_address_requested = false;
+            goto_back = (int)ImGui::GetScrollY();
+            ImGui::SetScrollY((goto_address_pos * ImGui::GetTextLineHeightWithSpacing()) + 2);
+        }
 
-    //             ImGui::PushID(item);
+        if (goto_back_requested)
+        {
+            goto_back_requested = false;
+            ImGui::SetScrollY((float)goto_back);
+        }
 
-    //             bool is_selected = (selected_record == vec[item].record);
+        ImGuiListClipper clipper;
+        clipper.Begin(disassembler_lines.size(), ImGui::GetTextLineHeightWithSpacing());
 
-    //             if (ImGui::Selectable("", is_selected, ImGuiSelectableFlags_AllowDoubleClick))
-    //             {
-    //                 if (ImGui::IsMouseDoubleClicked(0) && vec[item].record->jump)
-    //                 {
-    //                     follow_pc = false;
-    //                     request_goto_address(vec[item].record->jump_address);
-    //                 }
-    //                 else if (is_selected)
-    //                 {
-    //                     InitPointer(selected_record);
-    //                     brk_address_cpu[0] = 0;
-    //                 }
-    //                 else
-    //                     selected_record = vec[item].record;
-    //             }
+        while (clipper.Step())
+        {
+            for (int item = clipper.DisplayStart; item < clipper.DisplayEnd; item++)
+            {
+                DisassmeblerLine line = disassembler_lines[item];
 
-    //             if (is_selected)
-    //                 ImGui::SetItemDefaultFocus();
+                if (line.is_symbol)
+                {
+                    ImGui::TextColored(green, "%s:", line.symbol.c_str());
+                    continue;
+                }
 
-    //             ImVec4 color_segment = vec[item].is_breakpoint ? red : magenta;
-    //             ImVec4 color_addr = vec[item].is_breakpoint ? red : cyan;
-    //             ImVec4 color_opcodes = vec[item].is_breakpoint ? red : gray;
-    //             ImVec4 color_name = vec[item].is_breakpoint ? red : white;
+                ImGui::PushID(item);
 
-    //             if (show_segment)
-    //             {
-    //                 ImGui::SameLine();
-    //                 ImGui::TextColored(color_segment, "%s", vec[item].record->segment);
-    //             }
+                bool is_selected = (selected_record == line.record);
 
-    //             ImGui::SameLine();
-    //             if (strcmp(vec[item].record->segment, "ROM") == 0)
-    //                 ImGui::TextColored(color_addr, "%02X:%04X ", vec[item].record->bank, vec[item].record->address);
-    //             else
-    //                 ImGui::TextColored(color_addr, "  %04X ", vec[item].record->address);
+                if (ImGui::Selectable("", is_selected, ImGuiSelectableFlags_AllowDoubleClick))
+                {
+                    if (ImGui::IsMouseDoubleClicked(0) && line.record->jump)
+                    {
+                        follow_pc = false;
+                        request_goto_address(line.record->jump_address);
+                    }
+                    else if (is_selected)
+                    {
+                        InitPointer(selected_record);
+                        brk_address_cpu[0] = 0;
+                    }
+                    else
+                        selected_record = line.record;
+                }
 
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
 
-    //             if (show_mem)
-    //             {
-    //                 ImGui::SameLine();
-    //                 ImGui::TextColored(color_opcodes, "%s ", vec[item].record->bytes);
-    //             }
+                ImVec4 color_segment = line.is_breakpoint ? red : magenta;
+                ImVec4 color_bank = line.is_breakpoint ? red : dark_cyan;
+                ImVec4 color_addr = line.is_breakpoint ? red : cyan;
+                ImVec4 color_mem = line.is_breakpoint ? red : gray;
+                ImVec4 color_name = line.is_breakpoint ? red : white;
 
-    //             ImGui::SameLine();
-    //             if (vec[item].record->address == pc)
-    //             {
-    //                 ImGui::TextColored(yellow, "->");
-    //                 color_name = yellow;
-    //             }
-    //             else
-    //             {
-    //                 ImGui::TextColored(yellow, "  ");
-    //             }
+                if (show_segment)
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(color_segment, "%s", line.record->segment);
+                }
 
-    //             ImGui::SameLine();
-    //             ImGui::TextColored(color_name, "%s", vec[item].record->name);
+                if (show_segment)
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(color_bank, "%02X", line.record->bank);
+                }
 
-    //             bool is_ret = is_return_instruction(vec[item].record->opcodes[0], vec[item].record->opcodes[1]);
-    //             if (is_ret)
-    //             {
-    //                 ImGui::PushStyleColor(ImGuiCol_Separator, (vec[item].record->opcodes[0] == 0xC9) ? gray : dark_gray);
-    //                 ImGui::Separator();
-    //                 ImGui::PopStyleColor();
-    //             }
+                ImGui::SameLine();
+                ImGui::TextColored(color_addr, "%04X:", line.address);
 
-    //             ImGui::PopID();
-    //         }
-    //     }
-    // }
+                ImGui::SameLine();
+                if (line.address == pc)
+                {
+                    ImGui::TextColored(yellow, " ->");
+                    color_name = yellow;
+                }
+                else
+                {
+                    ImGui::TextColored(yellow, "   ");
+                }
+
+                ImGui::SameLine();
+                ImGui::TextColored(color_name, "%s", line.record->name);
+
+                if (show_mem)
+                {
+                    ImGui::SameLine();
+                    ImGui::SetCursorPosX(300.0f);
+                    ImGui::TextColored(color_mem, ";%s", line.record->bytes);
+                }
+
+                bool is_ret = is_return_instruction(line.record->opcodes[0]);
+                if (is_ret)
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Separator, gray);
+                    ImGui::Separator();
+                    ImGui::PopStyleColor();
+                }
+
+                ImGui::PopID();
+            }
+        }
+    }
 
     ImGui::EndChild();
     
@@ -860,7 +883,7 @@ static void request_goto_address(u16 address)
     goto_address_target = address;
 }
 
-static bool is_return_instruction(u8 opcode1, u8 opcode2)
+static bool is_return_instruction(u8 opcode)
 {
     return false;
     // switch (opcode1)

@@ -17,10 +17,10 @@
  *
  */
 
-#include "memory_editor.h"
+#include "gui_debug_memeditor.h"
 #include <string>
 #include <stdexcept>
-#include "colors.h"
+#include "gui_debug_constants.h"
 
 MemEditor::MemEditor()
 {

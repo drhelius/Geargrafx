@@ -176,9 +176,12 @@ inline u8 Memory::GetMpr(u8 index)
 
 inline u32 Memory::GetPhysicalAddress(u16 address)
 {
-    u8 mpr_index = (address >> 13) & 0x07;
-    u8 mpr_value = m_mpr[mpr_index];
-    return (mpr_value << 13) | (address & 0x1FFF);
+    return (GetBank(address) << 13) | (address & 0x1FFF);
+}
+
+inline u8 Memory::GetBank(u16 address)
+{
+    return m_mpr[(address >> 13) & 0x07];
 }
 
 #endif /* MEMORY_INLINE_H */

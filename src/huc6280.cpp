@@ -126,7 +126,7 @@ void HuC6280::DisassembleNextOPCode()
 #ifndef GG_DISABLE_DISASSEMBLER
 
     u16 address = m_PC.GetValue();
-    Memory::GG_Disassembler_Record* record = m_memory->GetOrCreatDisassemblerRecord(address);
+    Memory::GG_Disassembler_Record* record = m_memory->GetOrCreateDisassemblerRecord(address);
 
     if (!IsValidPointer(record))
     {
@@ -152,6 +152,8 @@ void HuC6280::DisassembleNextOPCode()
     if (changed || record->size == 0)
     {
         record->size = opcode_size;
+        record->address = m_memory->GetPhysicalAddress(address);
+        record->bank = m_memory->GetBank(address);
         record->name[0] = 0;
         record->bytes[0] = 0;
         record->jump = false;
@@ -216,6 +218,19 @@ void HuC6280::DisassembleNextOPCode()
             {
                 break;
             }   
+        }
+
+        if (record->bank < 0x80)
+        {
+            strncpy(record->segment, "ROM ", 5);
+        }
+        else if (record->bank < 0xFC && record->bank >= 0xF8)
+        {
+            strncpy(record->segment, "WRAM", 5);
+        }
+        else
+        {
+            strncpy(record->segment, "????", 5);
         }
     }
 

@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef MEM_EDITOR_H
-#define	MEM_EDITOR_H
+#ifndef GUI_DEBUG_MEMEDITOR_H
+#define	GUI_DEBUG_MEMEDITOR_H
 
 #include <stdint.h>
 #include <stdio.h>
-#include "imgui.h"
+#include "imgui/imgui.h"
 
 class MemEditor
 {
@@ -68,4 +68,4 @@ private:
     int m_mem_base_addr;
 };
 
-#endif	/* MEM_EDITOR_H */
+#endif /* GUI_DEBUG_MEMEDITOR_H */
