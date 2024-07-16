@@ -196,31 +196,31 @@ static void show_controls(void)
 {
     if (ImGui::Button("Step Over"))
     {
-        //emu_debug_step();
+        emu_debug_step_over();
     }
     ImGui::SameLine();
     if (ImGui::Button("Step Into"))
     {
-        //emu_debug_next_frame();
+        emu_debug_step_into();
     }
     ImGui::SameLine();
     if (ImGui::Button("Step Out"))
     {
-        //emu_debug_continue();
+        emu_debug_step_out();
     }
     ImGui::SameLine();
     if (ImGui::Button("Step Frame"))
     {
-        //emu_debug_continue();
+        emu_debug_step_frame();
     }
-    if (ImGui::Button("Pause"))
+    if (ImGui::Button("Break"))
     {
-        //emu_debug_continue();
+        emu_debug_break();
     }
     ImGui::SameLine();
     if (ImGui::Button("Continue"))
     {
-        //emu_debug_continue();
+        emu_debug_continue();
     }
     ImGui::SameLine();
     if (ImGui::Button("Run To Cursor"))
@@ -233,15 +233,11 @@ static void show_controls(void)
         //emu_debug_continue();
     }
 
-    static bool follow_pc = true;
-    static bool show_mem = true;
-    static bool show_symbols = true;
-    static bool show_segment = true;
-
     ImGui::Checkbox("Follow PC", &follow_pc); ImGui::SameLine();
     ImGui::Checkbox("Opcodes", &show_mem);  ImGui::SameLine();
     ImGui::Checkbox("Symbols", &show_symbols);  ImGui::SameLine();
-    ImGui::Checkbox("Segments", &show_segment);
+    ImGui::Checkbox("Segment", &show_segment); ImGui::SameLine();
+    ImGui::Checkbox("Bank", &show_bank);
 
     ImGui::Separator();
 
@@ -636,9 +632,9 @@ static void show_disassembly(void)
                     ImGui::SetItemDefaultFocus();
 
                 ImVec4 color_segment = line.is_breakpoint ? red : magenta;
-                ImVec4 color_bank = line.is_breakpoint ? red : dark_cyan;
+                ImVec4 color_bank = line.is_breakpoint ? red : violet;
                 ImVec4 color_addr = line.is_breakpoint ? red : cyan;
-                ImVec4 color_mem = line.is_breakpoint ? red : gray;
+                ImVec4 color_mem = line.is_breakpoint ? red : mid_gray;
                 ImVec4 color_name = line.is_breakpoint ? red : white;
 
                 if (show_segment)
@@ -647,7 +643,7 @@ static void show_disassembly(void)
                     ImGui::TextColored(color_segment, "%s", line.record->segment);
                 }
 
-                if (show_segment)
+                if (show_bank)
                 {
                     ImGui::SameLine();
                     ImGui::TextColored(color_bank, "%02X", line.record->bank);
@@ -673,14 +669,14 @@ static void show_disassembly(void)
                 if (show_mem)
                 {
                     ImGui::SameLine();
-                    ImGui::SetCursorPosX(300.0f);
+                    ImGui::SetCursorPosX(310.0f);
                     ImGui::TextColored(color_mem, ";%s", line.record->bytes);
                 }
 
                 bool is_ret = is_return_instruction(line.record->opcodes[0]);
                 if (is_ret)
                 {
-                    ImGui::PushStyleColor(ImGuiCol_Separator, gray);
+                    ImGui::PushStyleColor(ImGuiCol_Separator, dark_cyan);
                     ImGui::Separator();
                     ImGui::PopStyleColor();
                 }
@@ -885,25 +881,12 @@ static void request_goto_address(u16 address)
 
 static bool is_return_instruction(u8 opcode)
 {
-    return false;
-    // switch (opcode1)
-    // {
-    //     case 0xC9: // RET
-    //     case 0xC0: // RET NZ
-    //     case 0xC8: // RET Z
-    //     case 0xD0: // RET NC
-    //     case 0xD8: // RET C
-    //     case 0xE0: // RET PO
-    //     case 0xE8: // RET PE
-    //     case 0xF0: // RET P
-    //     case 0xF8: // RET M
-    //         return true;
-    //     case 0xED: // Extended instructions
-    //         if (opcode2 == 0x45 || opcode2 == 0x4D) // RETN, RETI
-    //             return true;
-    //         else
-    //             return false;
-    //     default:
-    //         return false;
-    // }
+    switch (opcode)
+    {
+        case 0x60: // RTS
+        case 0x40: // RTI
+            return true;
+        default:
+            return false;
+    }
 }

@@ -65,9 +65,13 @@ EXTERN void emu_load_state_file(const char* file_path);
 EXTERN void emu_get_runtime(GG_Runtime_Info& runtime);
 EXTERN void emu_get_info(char* info);
 EXTERN GeargrafxCore* emu_get_core(void);
-// EXTERN void emu_debug_step(void);
-// EXTERN void emu_debug_continue(void);
-// EXTERN void emu_debug_next_frame(void);
+EXTERN void emu_debug_step_over(void);
+EXTERN void emu_debug_step_into(void);
+EXTERN void emu_debug_step_out(void);
+EXTERN void emu_debug_step_frame(void);
+EXTERN void emu_debug_break(void);
+EXTERN void emu_debug_continue(void);
+
 EXTERN void emu_video_no_sprite_limit(bool enabled);
 EXTERN void emu_set_overscan(int overscan);
 EXTERN void emu_save_screenshot(const char* file_path);

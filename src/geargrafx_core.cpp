@@ -117,9 +117,11 @@ bool GeargrafxCore::DebugRun(u8* frame_buffer, s16* sample_buffer, int* sample_c
                 case GG_Debugger_Command_Continue:
                     break;
                 case GG_Debugger_Command_StepInto:
+                    breakpoint = true;
                     vblank = true;
                     break;
                 case GG_Debugger_Command_StepOver:
+                    breakpoint = true;
                     vblank = true;
                     break;
                 case GG_Debugger_Command_StepOut:

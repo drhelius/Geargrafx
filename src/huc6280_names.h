@@ -94,7 +94,7 @@ static const GG_OPCode_Info k_opcode_names[256] = {
     { "EOR $(%02X,X)", GG_OPCode_Type_1b },
     { "SAY", GG_OPCode_Type_Implied },
     { "TMA #$%02X", GG_OPCode_Type_1b },
-    { "BSR $%04X", GG_OPCode_Type_2b },
+    { "BSR $%04X  [%+d]", GG_OPCode_Type_1b_Relative },
     { "EOR $%02X", GG_OPCode_Type_1b },
     { "LSR $%02X", GG_OPCode_Type_1b },
     { "RMB 4,$%02X", GG_OPCode_Type_1b },

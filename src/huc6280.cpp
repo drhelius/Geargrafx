@@ -233,8 +233,5 @@ void HuC6280::DisassembleNextOPCode()
             strncpy(record->segment, "????", 5);
         }
     }
-
-    Debug("--> PC: %04X %s %s", address, record->bytes, record->name);
-
 #endif
 }

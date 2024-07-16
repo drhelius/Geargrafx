@@ -33,9 +33,9 @@ static GeargrafxCore* geargrafx;
 static SoundQueue* sound_queue;
 static s16* audio_buffer;
 static bool audio_enabled;
-static bool debugging = false;
-static bool debug_step = false;
-static bool debug_next_frame = false;
+static bool debug_break = false;
+static bool debug_command_pending = false;
+static GG_Debugger_Command debug_command = GG_Debugger_Command::GG_Debugger_Command_StepOver;
 
 static void save_ram(void);
 static void load_ram(void);
@@ -105,7 +105,17 @@ void emu_update(void)
     if (!emu_is_empty())
     {
         int sampleCount = 0;
-        geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
+
+        if (!debug_break)
+        {        
+            if (debug_command_pending)
+            {
+                debug_break = geargrafx->DebugRun(emu_frame_buffer, audio_buffer, &sampleCount, debug_command);
+                debug_command_pending = false;
+            }
+            else
+                geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
+        }
 
         // if (!debugging || debug_step || debug_next_frame)
         // {
@@ -262,6 +272,48 @@ void emu_get_info(char* info)
 GeargrafxCore* emu_get_core(void)
 {
     return geargrafx;
+}
+
+void emu_debug_step_over(void)
+{
+    geargrafx->Pause(false);
+    debug_break = false;
+    debug_command_pending = true;
+    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepOver;
+}
+void emu_debug_step_into(void)
+{
+    geargrafx->Pause(false);
+    debug_break = false;
+    debug_command_pending = true;
+    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepInto;
+}
+
+void emu_debug_step_out(void)
+{
+    geargrafx->Pause(false);
+    debug_break = false;
+    debug_command_pending = true;
+    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepOut;
+}
+
+void emu_debug_step_frame(void)
+{
+    geargrafx->Pause(false);
+    debug_command_pending = true;
+    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepFrame;
+}
+
+void emu_debug_break(void)
+{
+    geargrafx->Pause(false);
+    debug_command_pending = true;
+    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepOver; 
+}
+
+void emu_debug_continue(void)
+{
+
 }
 
 // void emu_debug_step(void)

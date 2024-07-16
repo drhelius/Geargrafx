@@ -95,7 +95,8 @@ enum GG_Debugger_Command
     GG_Debugger_Command_Continue,
     GG_Debugger_Command_StepInto,
     GG_Debugger_Command_StepOver,
-    GG_Debugger_Command_StepOut
+    GG_Debugger_Command_StepOut,
+    GG_Debugger_Command_StepFrame
 };
 
 #endif /* TYPES_H */

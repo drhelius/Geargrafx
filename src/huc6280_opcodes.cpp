@@ -437,7 +437,7 @@ void HuC6280::OPCode0x43()
 
 void HuC6280::OPCode0x44()
 {
-    // BSR hhll
+    // BSR rr
     OPCodes_Subroutine();
 }
 

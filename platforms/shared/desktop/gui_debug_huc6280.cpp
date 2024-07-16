@@ -70,45 +70,45 @@ void gui_debug_window_huc6280(void)
 
     ImGui::NextColumn();
     ImGui::Separator();
-    ImGui::TextColored(cyan, "MPR0"); ImGui::SameLine();
+    ImGui::TextColored(violet, "MPR0"); ImGui::SameLine();
     ImGui::Text("$%02X", memory->GetMpr(0));
     ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(0)));
 
     ImGui::NextColumn();
-    ImGui::TextColored(cyan, "MPR1"); ImGui::SameLine();
+    ImGui::TextColored(violet, "MPR1"); ImGui::SameLine();
     ImGui::Text("$%02X", memory->GetMpr(1));
     ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(1)));
 
     ImGui::NextColumn();
     ImGui::Separator();
-    ImGui::TextColored(cyan, "MPR2"); ImGui::SameLine();
+    ImGui::TextColored(violet, "MPR2"); ImGui::SameLine();
     ImGui::Text("$%02X", memory->GetMpr(2));
     ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(2)));
 
     ImGui::NextColumn();
-    ImGui::TextColored(cyan, "MPR3"); ImGui::SameLine();
+    ImGui::TextColored(violet, "MPR3"); ImGui::SameLine();
     ImGui::Text("$%02X", memory->GetMpr(3));
     ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(3)));
 
     ImGui::NextColumn();
     ImGui::Separator();
-    ImGui::TextColored(cyan, "MPR4"); ImGui::SameLine();
+    ImGui::TextColored(violet, "MPR4"); ImGui::SameLine();
     ImGui::Text("$%02X", memory->GetMpr(4));
     ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(4)));
 
     ImGui::NextColumn();
-    ImGui::TextColored(cyan, "MPR5"); ImGui::SameLine();
+    ImGui::TextColored(violet, "MPR5"); ImGui::SameLine();
     ImGui::Text("$%02X", memory->GetMpr(5));
     ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(5)));
 
     ImGui::NextColumn();
     ImGui::Separator();
-    ImGui::TextColored(cyan, "MPR6"); ImGui::SameLine();
+    ImGui::TextColored(violet, "MPR6"); ImGui::SameLine();
     ImGui::Text("$%02X", memory->GetMpr(6));
     ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(6)));
 
     ImGui::NextColumn();
-    ImGui::TextColored(cyan, "MPR7"); ImGui::SameLine();
+    ImGui::TextColored(violet, "MPR7"); ImGui::SameLine();
     ImGui::Text("$%02X", memory->GetMpr(7));
     ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(7)));
 
