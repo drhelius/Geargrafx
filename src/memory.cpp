@@ -98,3 +98,8 @@ Memory::GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 addres
 
     return record;
 }
+
+u8* Memory::GetWram()
+{
+    return m_wram;
+}

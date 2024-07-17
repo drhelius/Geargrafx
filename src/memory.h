@@ -53,6 +53,7 @@ public:
     u8 GetBank(u16 address);
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
     GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
+    u8* GetWram();
 
 private:
     Cartridge* m_cartridge;

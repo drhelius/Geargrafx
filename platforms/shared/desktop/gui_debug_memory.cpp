@@ -20,10 +20,12 @@
 #define GUI_DEBUG_MEMORY_IMPORT
 #include "gui_debug_memory.h"
 
+#include "../../../src/geargrafx.h"
 #include "imgui/imgui.h"
 #include "gui_debug_memeditor.h"
 #include "config.h"
 #include "gui.h"
+#include "emu.h"
 
 static MemEditor mem_edit[5];
 static int mem_edit_select = -1;
@@ -37,9 +39,9 @@ void gui_debug_window_memory(void)
 
     ImGui::Begin("Memory Editor", &config_debug.show_memory);
 
-    // GearcolecoCore* core = emu_get_core();
-    // Memory* memory = core->GetMemory();
-    // Cartridge* cart = core->GetCartridge();
+    GeargrafxCore* core = emu_get_core();
+    Memory* memory = core->GetMemory();
+    Cartridge* cart = core->GetCartridge();
     // Video* video = core->GetVideo();
 
     ImGui::PushFont(gui_default_font);
@@ -55,60 +57,27 @@ void gui_debug_window_memory(void)
 
     if (ImGui::BeginTabBar("##memory_tabs", ImGuiTabBarFlags_None))
     {
-        // if (ImGui::BeginTabItem("BIOS", NULL, mem_edit_select == 0 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        // {
-        //     ImGui::PushFont(gui_default_font);
-        //     if (mem_edit_select == 0)
-        //         mem_edit_select = -1;
-        //     current_mem_edit = 0;
-        //     mem_edit[current_mem_edit].Draw(memory->GetBios(), 0x2000, 0);
-        //     ImGui::PopFont();
-        //     ImGui::EndTabItem();
-        // }
+        if (ImGui::BeginTabItem("WRAM", NULL, mem_edit_select == 0 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        {
+            ImGui::PushFont(gui_default_font);
+             if (mem_edit_select == 0)
+                mem_edit_select = -1;
+            current_mem_edit = 0;
+            mem_edit[current_mem_edit].Draw(memory->GetWram(), 0x2000);
+            ImGui::PopFont();
+            ImGui::EndTabItem();
+        }
 
-        // if (ImGui::BeginTabItem("RAM", NULL, mem_edit_select == 1 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        // {
-        //     ImGui::PushFont(gui_default_font);
-        //      if (mem_edit_select == 1)
-        //         mem_edit_select = -1;
-        //     current_mem_edit = 1;
-        //     mem_edit[current_mem_edit].Draw(memory->GetRam(), 0x400, 0x7000);
-        //     ImGui::PopFont();
-        //     ImGui::EndTabItem();
-        // }
-
-        // if (ImGui::BeginTabItem("SGM RAM", NULL, mem_edit_select == 2 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        // {
-        //     ImGui::PushFont(gui_default_font);
-        //     if (mem_edit_select == 2)
-        //         mem_edit_select = -1;
-        //     current_mem_edit = 2;
-        //     mem_edit[current_mem_edit].Draw(memory->GetSGMRam(), 0x8000, 0x0000);
-        //     ImGui::PopFont();
-        //     ImGui::EndTabItem();
-        // }
-
-        // if (IsValidPointer(cart->GetROM()) && ImGui::BeginTabItem("ROM", NULL, mem_edit_select == 3 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        // {
-        //     ImGui::PushFont(gui_default_font);
-        //     if (mem_edit_select == 3)
-        //         mem_edit_select = -1;
-        //     current_mem_edit = 3;
-        //     mem_edit[current_mem_edit].Draw(cart->GetROM(), cart->GetROMSize(), 0x0000);
-        //     ImGui::PopFont();
-        //     ImGui::EndTabItem();
-        // }
-
-        // if (ImGui::BeginTabItem("VRAM", NULL, mem_edit_select == 4 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        // {
-        //     ImGui::PushFont(gui_default_font);
-        //     if (mem_edit_select == 4)
-        //         mem_edit_select = -1;
-        //     current_mem_edit = 4;
-        //     mem_edit[current_mem_edit].Draw(video->GetVRAM(), 0x4000, 0);
-        //     ImGui::PopFont();
-        //     ImGui::EndTabItem();
-        // }
+        if (IsValidPointer(cart->GetROM()) && ImGui::BeginTabItem("ROM", NULL, mem_edit_select == 1 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        {
+            ImGui::PushFont(gui_default_font);
+            if (mem_edit_select == 1)
+                mem_edit_select = -1;
+            current_mem_edit = 1;
+            mem_edit[current_mem_edit].Draw(cart->GetROM(), cart->GetROMSize());
+            ImGui::PopFont();
+            ImGui::EndTabItem();
+        }
 
         ImGui::EndTabBar();
     }

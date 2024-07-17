@@ -16,13 +16,11 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/
  *
  */
-
-#include "../../../src/geargrafx.h"
-#include "../audio/sound_queue.h"
-
 #define EMU_IMPORT
 #include "emu.h"
 
+#include "../../../src/geargrafx.h"
+#include "../audio/sound_queue.h"
 #include "config.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
