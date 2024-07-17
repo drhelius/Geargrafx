@@ -101,39 +101,48 @@ bool GeargrafxCore::DebugRun(u8* frame_buffer, s16* sample_buffer, int* sample_c
 {
     bool breakpoint = false;
 
-    if (!m_paused && m_cartridge->IsReady())
+    if (command == GG_Debugger_Command_None)
+        return false;
+
+    if (m_paused || !m_cartridge->IsReady())
+        return false;
+
+    bool stop = false;
+    int clocks = 0;
+    bool high_speed = m_huc6280->IsHighSpeed();
+
+    while (!stop)
     {
-        bool vblank = false;
-        int totalClocks = 0;
-        while (!vblank)
+        unsigned int cpu_clocks = m_huc6280->Tick();
+        unsigned int timer_clocks = high_speed ? cpu_clocks : cpu_clocks << 2;
+        unsigned int audio_clocks = high_speed ? cpu_clocks << 1 : cpu_clocks >> 1;
+        unsigned int video_clocks = high_speed ? cpu_clocks : cpu_clocks << 2;
+
+        // stop = m_huc6270->Tick(clockCycles);
+        m_audio->Tick(audio_clocks);
+
+        switch (command)
         {
-            unsigned int clockCycles = m_huc6280->Tick();
-            // vblank = m_huc6270->Tick(clockCycles);
-            m_audio->Tick(clockCycles);
-            totalClocks += clockCycles;
-
-            switch (command)
-            {
-                case GG_Debugger_Command_Continue:
-                    break;
-                case GG_Debugger_Command_StepInto:
-                    breakpoint = true;
-                    vblank = true;
-                    break;
-                case GG_Debugger_Command_StepOver:
-                    breakpoint = true;
-                    vblank = true;
-                    break;
-                case GG_Debugger_Command_StepOut:
-                    break;
-            }
-
-            // if (m_processor->BreakpointHit())
-            //     breakpoint = true;
-
-            if (totalClocks > 702240)
-                vblank = true;
+            case GG_Debugger_Command_StepInto:
+                stop = true;
+                break;
+            case GG_Debugger_Command_StepOver:
+                stop = true;
+                break;
+            case GG_Debugger_Command_StepOut:
+                stop = true;
+                break;
+            default:
+                break;
         }
+
+        // if (m_processor->BreakpointHit())
+        //     breakpoint = true;
+
+        clocks += video_clocks;
+
+        if (clocks > 72240)
+            stop = true;
 
         m_audio->EndFrame(sample_buffer, sample_count);
         RenderFrameBuffer(frame_buffer);
