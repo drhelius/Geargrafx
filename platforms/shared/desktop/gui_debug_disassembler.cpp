@@ -629,7 +629,15 @@ static void show_disassembly(void)
                 }
 
                 if (is_selected)
+                {
                     ImGui::SetItemDefaultFocus();
+                }
+                else if ((line.address == pc) && !ImGui::IsItemHovered())
+                {
+                    ImVec2 p_min = ImGui::GetItemRectMin();
+                    ImVec2 p_max = ImGui::GetItemRectMax();
+                    ImGui::GetWindowDrawList()->AddRectFilled(p_min, p_max, ImGui::GetColorU32(dark_yellow));
+                }
 
                 ImVec4 color_segment = line.is_breakpoint ? red : magenta;
                 ImVec4 color_bank = line.is_breakpoint ? red : violet;
