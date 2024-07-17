@@ -53,6 +53,16 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
     m_mem_size = mem_size;
     m_mem_base_addr = base_display_addr;
 
+    int hex_digits = 1;
+    int size = mem_size;
+
+    while (size >>= 4)
+    {   
+        hex_digits++;
+    }
+
+    snprintf(m_hex_mem_format, 6, "%%0%dX", hex_digits);
+
     ImVec4 addr_color = cyan;
     ImVec4 ascii_color = magenta;
     ImVec4 column_color = yellow;
@@ -64,6 +74,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
     int separator_count = (m_bytes_per_row - 1) / 4;
     int byte_column_count = 2 + m_bytes_per_row + separator_count + 2;
     int byte_cell_padding = 0;
+    int ascii_padding = 4;
     int character_cell_padding = 0;
     int max_chars_per_cell = 2;
     ImVec2 character_size = ImGui::CalcTextSize("0");
@@ -76,7 +87,10 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
 
         if (ImGui::BeginTable("##header", byte_column_count, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoKeepColumnsVisible))
         {
-            ImGui::TableSetupColumn("ADDR   ");
+            char addr_spaces[32];
+            int addr_padding = hex_digits - 2;
+            snprintf(addr_spaces, 32, "ADDR %*s", addr_padding, "");
+            ImGui::TableSetupColumn(addr_spaces);
             ImGui::TableSetupColumn("");
 
             for (int i = 0; i < m_bytes_per_row; i++) {
@@ -88,7 +102,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
                 ImGui::TableSetupColumn(buf, ImGuiTableColumnFlags_WidthFixed, character_size.x * max_chars_per_cell + (6 + byte_cell_padding) * 1);
             }
 
-            ImGui::TableSetupColumn("");
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, character_size.x * ascii_padding);
             ImGui::TableSetupColumn("ASCII", ImGuiTableColumnFlags_WidthFixed, (character_size.x + character_cell_padding * 1) * m_bytes_per_row);
 
             ImGui::TableNextRow();
@@ -124,7 +138,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
                 ImGui::TableSetupColumn(buf, ImGuiTableColumnFlags_WidthFixed, character_size.x * max_chars_per_cell + (6 + byte_cell_padding) * 1);
             }
 
-            ImGui::TableSetupColumn("  ");
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, character_size.x * ascii_padding);
             ImGui::TableSetupColumn("ASCII", ImGuiTableColumnFlags_WidthFixed, (character_size.x + character_cell_padding * 1) * m_bytes_per_row);
 
             ImGuiListClipper clipper;
@@ -138,7 +152,9 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
                     int address = (row * m_bytes_per_row);
 
                     ImGui::TableNextColumn();
-                    ImGui::Text("%04X:  ", address + base_display_addr);
+                    char single_addr[32];
+                    snprintf(single_addr, 32, "%s:  ", m_hex_mem_format);                    
+                    ImGui::Text(single_addr, address + base_display_addr);
                     ImGui::TableNextColumn();
 
                     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(2.75f, 0.0f));
@@ -227,6 +243,11 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
                     ImGui::PopStyleVar();
 
                     ImGui::TableNextColumn();
+                    float column_x = ImGui::GetCursorPosX() + (ImGui::GetColumnWidth() / 2.0f);
+                    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                    ImVec2 window_pos = ImGui::GetWindowPos();
+                    draw_list->AddLine(ImVec2(window_pos.x + column_x, window_pos.y), ImVec2(window_pos.x + column_x, window_pos.y + 9999), ImGui::GetColorU32(dark_magenta));
+
                     ImGui::TableNextColumn();
 
                     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0, 0));
@@ -393,17 +414,21 @@ void MemEditor::HandleSelection(int address, int row)
 void MemEditor::DrawCursors()
 {
     ImVec4 color = ImVec4(0.1f,0.9f,0.9f,1.0f);
+    char range_addr[32];
+    char single_addr[32];
+    snprintf(range_addr, 32, "%s-%s", m_hex_mem_format, m_hex_mem_format);
+    snprintf(single_addr, 32, "%s", m_hex_mem_format);
 
     ImGui::TextColored(color, "REGION:");
     ImGui::SameLine();
-    ImGui::Text("%04X-%04X", m_mem_base_addr, m_mem_base_addr + m_mem_size);
+    ImGui::Text(range_addr, m_mem_base_addr, m_mem_base_addr + m_mem_size);
     ImGui::SameLine();
     ImGui::TextColored(color, " SELECTION:");
     ImGui::SameLine();
     if (m_selection_start == m_selection_end)
-        ImGui::Text("%04X", m_mem_base_addr + m_selection_start);
+        ImGui::Text(single_addr, m_mem_base_addr + m_selection_start);
     else
-        ImGui::Text("%04X-%04X", m_mem_base_addr + m_selection_start, m_mem_base_addr + m_selection_end);
+        ImGui::Text(range_addr, m_mem_base_addr + m_selection_start, m_mem_base_addr + m_selection_end);
     ImGui::Separator();
 }
 
@@ -517,32 +542,32 @@ void MemEditor::DrawDataPreviewAsDec(int address)
     {
         case 0:
         {
-            ImGui::Text("%u", (uint8_t)data);
+            ImGui::Text("%u (Uint8)", (uint8_t)data);
             break;
         }
         case 1:
         {
-            ImGui::Text("%d", (int8_t)data);
+            ImGui::Text("%d (Int8)", (int8_t)data);
             break;
         }
         case 2:
         {
-            ImGui::Text("%u", (uint16_t)data);
+            ImGui::Text("%u (Uint16)", (uint16_t)data);
             break;
         }
         case 3:
         {
-            ImGui::Text("%d", (int16_t)data);
+            ImGui::Text("%d (Int16)", (int16_t)data);
             break;
         }
         case 4:
         {
-            ImGui::Text("%u", (uint32_t)data);
+            ImGui::Text("%u (Uint32)", (uint32_t)data);
             break;
         }
         case 5:
         {
-            ImGui::Text("%d", (int32_t)data);
+            ImGui::Text("%d (Int32)", (int32_t)data);
             break;
         }
     }

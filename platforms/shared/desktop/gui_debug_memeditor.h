@@ -66,6 +66,7 @@ private:
     uint8_t* m_mem_data;
     int m_mem_size;
     int m_mem_base_addr;
+    char m_hex_mem_format[6];
 };
 
 #endif /* GUI_DEBUG_MEMEDITOR_H */
