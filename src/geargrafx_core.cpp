@@ -71,47 +71,20 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_audio->Init();
     // m_huc6270->Init();
     m_input->Init();
-    
 }
 
-void GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count)
-{
-    if (!m_paused && m_cartridge->IsReady())
-    {
-        bool vblank = false;
-        int totalClocks = 0;
-        while (!vblank)
-        {
-            unsigned int clockCycles = m_huc6280->Tick();
-            // vblank = m_huc6270->Tick(clockCycles);
-            m_audio->Tick(clockCycles);
-
-            totalClocks += clockCycles;
-
-            if (totalClocks > 702240)
-                vblank = true;
-        }
-
-        m_audio->EndFrame(sample_buffer, sample_count);
-        RenderFrameBuffer(frame_buffer);
-    }
-}
-
-bool GeargrafxCore::DebugRun(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debugger_Command command)
+bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, bool step_debugger)
 {
     bool breakpoint = false;
-
-    if (command == GG_Debugger_Command_None)
-        return false;
 
     if (m_paused || !m_cartridge->IsReady())
         return false;
 
-    bool stop = false;
+    bool stop = step_debugger;
     int clocks = 0;
     bool high_speed = m_huc6280->IsHighSpeed();
 
-    while (!stop)
+    do
     {
         unsigned int cpu_clocks = m_huc6280->Tick();
         unsigned int timer_clocks = high_speed ? cpu_clocks : cpu_clocks << 2;
@@ -120,21 +93,6 @@ bool GeargrafxCore::DebugRun(u8* frame_buffer, s16* sample_buffer, int* sample_c
 
         // stop = m_huc6270->Tick(clockCycles);
         m_audio->Tick(audio_clocks);
-
-        switch (command)
-        {
-            case GG_Debugger_Command_StepInto:
-                stop = true;
-                break;
-            case GG_Debugger_Command_StepOver:
-                stop = true;
-                break;
-            case GG_Debugger_Command_StepOut:
-                stop = true;
-                break;
-            default:
-                break;
-        }
 
         // if (m_processor->BreakpointHit())
         //     breakpoint = true;
@@ -147,6 +105,7 @@ bool GeargrafxCore::DebugRun(u8* frame_buffer, s16* sample_buffer, int* sample_c
         m_audio->EndFrame(sample_buffer, sample_count);
         RenderFrameBuffer(frame_buffer);
     }
+    while (!stop);
 
     return breakpoint;
 }

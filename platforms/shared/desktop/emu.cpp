@@ -31,11 +31,21 @@
 #endif
 #include "stb/stb_image_write.h"
 
+enum Debugger_Command
+{
+    Debugger_Command_Continue,
+    Debugger_Command_StepInto,
+    Debugger_Command_StepOver,
+    Debugger_Command_StepOut,
+    Debugger_Command_StepFrame,
+    Debugger_Command_None
+};
+
 static GeargrafxCore* geargrafx;
 static SoundQueue* sound_queue;
 static s16* audio_buffer;
 static bool audio_enabled;
-static GG_Debugger_Command debug_command = GG_Debugger_Command::GG_Debugger_Command_None;
+static Debugger_Command debugger_command = Debugger_Command_None;
 
 static void save_ram(void);
 static void load_ram(void);
@@ -102,39 +112,42 @@ void emu_load_rom(const char* file_path)
 
 void emu_update(void)
 {
-    if (!emu_is_empty())
+    if (emu_is_empty())
+        return;
+
+    int sampleCount = 0;
+
+    if (config_debug.debug)
     {
-        int sampleCount = 0;
+        bool step = false;
 
-        if (config_debug.debug)
+        switch (debugger_command)
         {
-            geargrafx->DebugRun(emu_frame_buffer, audio_buffer, &sampleCount, debug_command);
-            if (debug_command != GG_Debugger_Command::GG_Debugger_Command_Continue)
-                debug_command = GG_Debugger_Command::GG_Debugger_Command_None;
+            case Debugger_Command_StepInto:
+            case Debugger_Command_StepOver:
+            case Debugger_Command_StepOut:
+                step = true;
+                break;
+            default:
+                break;
         }
-        else
-            geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
 
-        // if (!debugging || debug_step || debug_next_frame)
-        // {
-        //     bool breakpoints = (!emu_debug_disable_breakpoints_cpu && !emu_debug_disable_breakpoints_mem) || IsValidPointer(geargrafx->GetMemory()->GetRunToBreakpoint());
+        if (debugger_command != Debugger_Command_None)
+            geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, step);
 
-        //     if (geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, debug_step, breakpoints))
-        //     {
-        //         debugging = true;
-        //     }
-
-        //     debug_next_frame = false;
-        //     debug_step = false;
-        // }
-
-        // update_debug();
-
-        if ((sampleCount > 0) && !geargrafx->IsPaused())
-        {
-            sound_queue->Write(audio_buffer, sampleCount, emu_audio_sync);
-        }
+        if (debugger_command != Debugger_Command_Continue)
+            debugger_command = Debugger_Command_None;
     }
+    else
+        geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
+
+    // update_debug();
+
+    if ((sampleCount > 0) && !geargrafx->IsPaused())
+    {
+        sound_queue->Write(audio_buffer, sampleCount, emu_audio_sync);
+    }
+
 }
 
 void emu_key_pressed(GG_Controllers controller, GG_Keys key)
@@ -275,36 +288,36 @@ GeargrafxCore* emu_get_core(void)
 void emu_debug_step_over(void)
 {
     geargrafx->Pause(false);
-    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepOver;
+    debugger_command = Debugger_Command_StepOver;
 }
 void emu_debug_step_into(void)
 {
     geargrafx->Pause(false);
-    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepInto;
+    debugger_command = Debugger_Command_StepInto;
 }
 
 void emu_debug_step_out(void)
 {
     geargrafx->Pause(false);
-    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepOut;
+    debugger_command = Debugger_Command_StepOut;
 }
 
 void emu_debug_step_frame(void)
 {
     geargrafx->Pause(false);
-    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepFrame;
+    debugger_command = Debugger_Command_StepFrame;
 }
 
 void emu_debug_break(void)
 {
     geargrafx->Pause(false);
-    debug_command = GG_Debugger_Command::GG_Debugger_Command_StepInto; 
+    debugger_command = Debugger_Command_StepInto; 
 }
 
 void emu_debug_continue(void)
 {
     geargrafx->Pause(false);
-    debug_command = GG_Debugger_Command::GG_Debugger_Command_Continue; 
+    debugger_command = Debugger_Command_Continue; 
 }
 
 // void emu_debug_step(void)
