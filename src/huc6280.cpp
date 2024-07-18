@@ -54,11 +54,15 @@ void HuC6280::Reset()
     m_PC.SetLow(m_memory->Read(0xFFFE));
     m_PC.SetHigh(m_memory->Read(0xFFFF));
     DisassembleNextOPCode();
-    m_A.SetValue(0x00);
-    m_X.SetValue(0x00);
-    m_Y.SetValue(0x00);
+    m_A.SetValue(rand() & 0xFF);
+    m_X.SetValue(rand() & 0xFF);
+    m_Y.SetValue(rand() & 0xFF);
     m_S.SetValue(rand() & 0xFF);
-    m_P.SetValue(0x34);
+    m_P.SetValue(rand() & 0xFF);
+    ClearFlag(FLAG_TRANSFER);
+    ClearFlag(FLAG_DECIMAL);
+    SetFlag(FLAG_INTERRUPT);
+    SetFlag(FLAG_BREAK);
     m_t_states = 0;
     m_interrupt_asserted = false;
     m_nmi_interrupt_requested = false;
@@ -85,21 +89,21 @@ unsigned int HuC6280::Tick()
     {
         m_nmi_interrupt_requested = false;
         StackPush16(m_PC.GetValue());
-        ClearFlag(FLAG_BRK);
+        ClearFlag(FLAG_BREAK);
         StackPush8(m_P.GetValue());
-        SetFlag(FLAG_IRQ);
+        SetFlag(FLAG_INTERRUPT);
         m_PC.SetLow(m_memory->Read(0xFFFA));
         m_PC.SetHigh(m_memory->Read(0xFFFB));
         m_t_states += 7;
         DisassembleNextOPCode();
         return m_t_states;
     }
-    else if (!IsSetFlag(FLAG_IRQ) && m_interrupt_asserted)
+    else if (!IsSetFlag(FLAG_INTERRUPT) && m_interrupt_asserted)
     { 
         StackPush16(m_PC.GetValue());
-        ClearFlag(FLAG_BRK);
+        ClearFlag(FLAG_BREAK);
         StackPush8(m_P.GetValue());
-        SetFlag(FLAG_IRQ);
+        SetFlag(FLAG_INTERRUPT);
         m_PC.SetLow(m_memory->Read(0xFFFE));
         m_PC.SetHigh(m_memory->Read(0xFFFF));
         m_t_states += 7;

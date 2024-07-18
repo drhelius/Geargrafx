@@ -89,7 +89,7 @@ inline u8 Memory::Read(u16 address)
                 return 0x00;
             case 0x1400:
                 // CD-ROM
-                Debug("CD-ROM read at %06X", physical_address);
+                Debug("Interrupt req / CD-ROM read at %06X", physical_address);
                 return 0xFF;
             case 0x1800:
                 // Unused
@@ -166,7 +166,7 @@ inline void Memory::Write(u16 address, u8 value)
                 break;
             case 0x1400:
                 // CD-ROM
-                Debug("CD-ROM write at %06X", physical_address);
+                Debug("Interrupt req / CD-ROM write at %06X", physical_address);
                 break;
             case 0x1800:
                 // Unused

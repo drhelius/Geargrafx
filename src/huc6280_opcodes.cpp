@@ -74,7 +74,7 @@ void HuC6280::OPCode0x08()
 {
     // PHP
     ClearFlag(FLAG_TRANSFER);
-    SetFlag(FLAG_BRK);
+    SetFlag(FLAG_BREAK);
     StackPush8(m_P.GetValue());
 }
 
@@ -558,7 +558,7 @@ void HuC6280::OPCode0x57()
 void HuC6280::OPCode0x58()
 {
     // CLI
-    OPCodes_ClearFlag(FLAG_IRQ);
+    OPCodes_ClearFlag(FLAG_INTERRUPT);
 }
 
 void HuC6280::OPCode0x59()
@@ -754,7 +754,7 @@ void HuC6280::OPCode0x77()
 void HuC6280::OPCode0x78()
 {
     // SEI
-    OPCodes_SetFlag(FLAG_IRQ);
+    OPCodes_SetFlag(FLAG_INTERRUPT);
 }
 
 void HuC6280::OPCode0x79()

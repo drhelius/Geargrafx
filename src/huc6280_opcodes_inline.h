@@ -164,9 +164,9 @@ inline void HuC6280::OPCodes_BRK()
     ClearFlag(FLAG_TRANSFER);
     m_PC.Increment();
     StackPush16(m_PC.GetValue());
-    SetFlag(FLAG_BRK);
+    SetFlag(FLAG_BREAK);
     StackPush8(m_P.GetValue());
-    SetFlag(FLAG_IRQ);
+    SetFlag(FLAG_INTERRUPT);
     ClearFlag(FLAG_DECIMAL);
     m_PC.SetLow(m_memory->Read(0xFFF6));
     m_PC.SetHigh(m_memory->Read(0xFFF7));
