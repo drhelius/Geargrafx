@@ -47,7 +47,7 @@ inline u8 Memory::Read(u16 address)
     // 0xF8 - 0xFB
     else if (mpr_value < 0xFC)
     {
-        // Work RAM
+        // BRAM
         if (mpr_value > 0xF8)
         {
             Debug("SGX RAM read at %06X", physical_address);
@@ -126,7 +126,7 @@ inline void Memory::Write(u16 address, u8 value)
     // 0xF8 - 0xFB
     else if (mpr_value < 0xFC)
     {
-        // Work RAM
+        // BRAM
         if (mpr_value > 0xF8)
         {
             Debug("SGX RAM write at %06X", physical_address);

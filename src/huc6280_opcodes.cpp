@@ -43,7 +43,7 @@ void HuC6280::OPCode0x03()
     // TODO
     // ST0 #nn
     u8 nn = Fetch8();
-    Debug("ST0 %02X", nn);
+    Debug("ST0 %02X (HuC6270 0x1FE000)", nn);
 }
 
 void HuC6280::OPCode0x04()
@@ -142,7 +142,7 @@ void HuC6280::OPCode0x13()
     // TODO
     // ST1 #nn
     u8 nn = Fetch8();
-    Debug("ST1 %02X", nn);
+    Debug("ST1 %02X (HuC6270 0x1FE002)", nn);
 }
 
 void HuC6280::OPCode0x14()
@@ -242,7 +242,7 @@ void HuC6280::OPCode0x23()
     // TODO
     // ST2 #nn
     u8 nn = Fetch8();
-    Debug("ST2 %02X", nn);
+    Debug("ST2 %02X (HuC6270 0x1FE000)", nn);
 }
 
 void HuC6280::OPCode0x24()

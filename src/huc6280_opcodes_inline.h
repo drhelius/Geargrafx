@@ -563,7 +563,7 @@ inline void HuC6280::OPCodes_TAI()
     for (int i = 0; i < length; i++)
     {
         m_memory->Write(dest, m_memory->Read(source));
-        source += (i & 1) ? 1 : -1;
+        source += (i & 1) ? -1 : 1;
         dest++;
         m_t_states += 6;
     }
@@ -598,7 +598,7 @@ inline void HuC6280::OPCodes_TIA()
     {
         m_memory->Write(dest, m_memory->Read(source));
         source++;
-        dest += (i & 1) ? 1 : -1;
+        dest += (i & 1) ? -1 : 1;
         m_t_states += 6;
     }
 }

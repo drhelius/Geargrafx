@@ -225,13 +225,13 @@ void HuC6280::DisassembleNextOPCode()
         }   
     }
 
-    if (record->bank < 0x80)
+    if (record->bank < 0xF7)
     {
         strncpy(record->segment, "ROM ", 5);
     }
-    else if (record->bank < 0xFC && record->bank >= 0xF8)
+    else if (record->bank >= 0xF8 && record->bank < 0xFC)
     {
-        strncpy(record->segment, "WRAM", 5);
+        strncpy(record->segment, "BRAM", 5);
     }
     else
     {
