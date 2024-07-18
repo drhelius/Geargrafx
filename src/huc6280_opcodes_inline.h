@@ -554,75 +554,84 @@ inline void HuC6280::OPCodes_TST(u8 value, u16 address)
 
 inline void HuC6280::OPCodes_TAI()
 {
-    // TODO
+    ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    u16 length = Fetch16();
+    int length = Fetch16();
+    length = (length == 0) ? 0x10000 : length;
 
-    for (u16 i = 0; i < length; i++)
+    for (int i = 0; i < length; i++)
     {
-        u8 value = m_memory->Read(source + i);
-        m_memory->Write(dest + i, value);
+        m_memory->Write(dest, m_memory->Read(source));
+        source += (i & 1) ? 1 : -1;
+        dest++;
         m_t_states += 6;
     }
 }
 
 inline void HuC6280::OPCodes_TDD()
 {
-    // TODO
+    ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    u16 length = Fetch16();
+    int length = Fetch16();
+    length = (length == 0) ? 0x10000 : length;
 
-    for (u16 i = 0; i < length; i++)
+    for (int i = 0; i < length; i++)
     {
-        u8 value = m_memory->Read(source + i);
-        m_memory->Write(dest + i, value);
+        m_memory->Write(dest, m_memory->Read(source));
+        source--;
+        dest--;
         m_t_states += 6;
     }
 }
 
 inline void HuC6280::OPCodes_TIA()
 {
-    // TODO
+    ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    u16 length = Fetch16();
+    int length = Fetch16();
+    length = (length == 0) ? 0x10000 : length;
 
-    for (u16 i = 0; i < length; i++)
+    for (int i = 0; i < length; i++)
     {
-        u8 value = m_memory->Read(source + i);
-        m_memory->Write(dest + i, value);
+        m_memory->Write(dest, m_memory->Read(source));
+        source++;
+        dest += (i & 1) ? 1 : -1;
         m_t_states += 6;
     }
 }
 
 inline void HuC6280::OPCodes_TII()
 {
-    // TODO
+    ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    u16 length = Fetch16();
+    int length = Fetch16();
+    length = (length == 0) ? 0x10000 : length;
 
-    for (u16 i = 0; i < length; i++)
+    for (int i = 0; i < length; i++)
     {
-        u8 value = m_memory->Read(source + i);
-        m_memory->Write(dest + i, value);
+        m_memory->Write(dest, m_memory->Read(source));
+        source++;
+        dest++;
         m_t_states += 6;
     }
 }
 
 inline void HuC6280::OPCodes_TIN()
 {
-    // TODO
+    ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    u16 length = Fetch16();
+    int length = Fetch16();
+    length = (length == 0) ? 0x10000 : length;
 
-    for (u16 i = 0; i < length; i++)
+    for (int i = 0; i < length; i++)
     {
-        u8 value = m_memory->Read(source + i);
-        m_memory->Write(dest + i, value);
+        m_memory->Write(dest, m_memory->Read(source));
+        source++;
         m_t_states += 6;
     }
 }

@@ -153,89 +153,89 @@ void HuC6280::DisassembleNextOPCode()
         }
     }
 
-    if (changed || record->size == 0)
+    if (!changed && record->size != 0)
+        return;
+
+    record->size = opcode_size;
+    record->address = m_memory->GetPhysicalAddress(address);
+    record->bank = m_memory->GetBank(address);
+    record->name[0] = 0;
+    record->bytes[0] = 0;
+    record->jump = false;
+    record->jump_address = 0;
+
+    for (int i = 0; i < opcode_size; i++)
     {
-        record->size = opcode_size;
-        record->address = m_memory->GetPhysicalAddress(address);
-        record->bank = m_memory->GetBank(address);
-        record->name[0] = 0;
-        record->bytes[0] = 0;
-        record->jump = false;
-        record->jump_address = 0;
+        char value[4];
+        snprintf(value, 4, "%02X", record->opcodes[i]);
+        strncat(record->bytes, value, 20);
+        strncat(record->bytes, " ", 20);
+    }
 
-        for (int i = 0; i < opcode_size; i++)
+    switch (k_opcode_names[opcode].type)
+    {
+        case GG_OPCode_Type_Implied:
         {
-            char value[4];
-            snprintf(value, 4, "%02X", record->opcodes[i]);
-            strncat(record->bytes, value, 20);
-            strncat(record->bytes, " ", 20);
+            snprintf(record->name, 64, "%s", k_opcode_names[opcode].name);
+            break;
         }
+        case GG_OPCode_Type_1b:
+        {
+            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1));
+            break;
+        }
+        case GG_OPCode_Type_1b_1b:
+        {
+            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2));
+            break;
+        }
+        case GG_OPCode_Type_1b_2b:
+        {
+            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2) | (m_memory->Read(address + 3) << 8));
+            break;
+        }
+        case GG_OPCode_Type_2b:
+        {
+            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8));
+            break;
+        }
+        case GG_OPCode_Type_2b_2b_2b:
+        {
+            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8), m_memory->Read(address + 3) | (m_memory->Read(address + 4) << 8), m_memory->Read(address + 5) | (m_memory->Read(address + 6) << 8));
+            break;
+        }
+        case GG_OPCode_Type_1b_Relative:
+        {
+            s8 rel = m_memory->Read(address + 1);
+            u16 jump_address = address + 2 + rel;
+            snprintf(record->name, 64, k_opcode_names[opcode].name, jump_address, rel);
+            break;
+        }
+        case GG_OPCode_Type_1b_1b_Relative:
+        {
+            u8 zero_page = m_memory->Read(address + 1);
+            s8 rel = m_memory->Read(address + 2);
+            u16 jump_address = address + 3 + rel;
+            snprintf(record->name, 64, k_opcode_names[opcode].name, zero_page, jump_address, rel);
+            break;
+        }
+        default:
+        {
+            break;
+        }   
+    }
 
-        switch (k_opcode_names[opcode].type)
-        {
-            case GG_OPCode_Type_Implied:
-            {
-                snprintf(record->name, 64, "%s", k_opcode_names[opcode].name);
-                break;
-            }
-            case GG_OPCode_Type_1b:
-            {
-                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1));
-                break;
-            }
-            case GG_OPCode_Type_1b_1b:
-            {
-                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2));
-                break;
-            }
-            case GG_OPCode_Type_1b_2b:
-            {
-                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2) | (m_memory->Read(address + 3) << 8));
-                break;
-            }
-            case GG_OPCode_Type_2b:
-            {
-                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8));
-                break;
-            }
-            case GG_OPCode_Type_2b_2b_2b:
-            {
-                snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8), m_memory->Read(address + 3) | (m_memory->Read(address + 4) << 8), m_memory->Read(address + 5) | (m_memory->Read(address + 6) << 8));
-                break;
-            }
-            case GG_OPCode_Type_1b_Relative:
-            {
-                s8 rel = m_memory->Read(address + 1);
-                u16 jump_address = address + 2 + rel;
-                snprintf(record->name, 64, k_opcode_names[opcode].name, jump_address, rel);
-                break;
-            }
-            case GG_OPCode_Type_1b_1b_Relative:
-            {
-                u8 zero_page = m_memory->Read(address + 1);
-                s8 rel = m_memory->Read(address + 2);
-                u16 jump_address = address + 3 + rel;
-                snprintf(record->name, 64, k_opcode_names[opcode].name, zero_page, jump_address, rel);
-                break;
-            }
-            default:
-            {
-                break;
-            }   
-        }
-
-        if (record->bank < 0x80)
-        {
-            strncpy(record->segment, "ROM ", 5);
-        }
-        else if (record->bank < 0xFC && record->bank >= 0xF8)
-        {
-            strncpy(record->segment, "WRAM", 5);
-        }
-        else
-        {
-            strncpy(record->segment, "????", 5);
-        }
+    if (record->bank < 0x80)
+    {
+        strncpy(record->segment, "ROM ", 5);
+    }
+    else if (record->bank < 0xFC && record->bank >= 0xF8)
+    {
+        strncpy(record->segment, "WRAM", 5);
+    }
+    else
+    {
+        strncpy(record->segment, "????", 5);
     }
 #endif
 }
