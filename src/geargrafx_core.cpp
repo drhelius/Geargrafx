@@ -59,15 +59,15 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_pixel_format = pixel_format;
 
     m_cartridge = new Cartridge();
-    m_memory = new Memory(m_cartridge);
-    m_huc6280 = new HuC6280(m_memory);
+    m_huc6280 = new HuC6280();
+    m_input = new Input();
+    m_memory = new Memory(m_huc6280, m_cartridge, m_input);
     m_audio = new Audio();
     // m_huc6270 = new HuC6270(m_memory, m_huc6280);
-    m_input = new Input();
 
     m_cartridge->Init();
     m_memory->Init();
-    m_huc6280->Init();
+    m_huc6280->Init(m_memory);
     m_audio->Init();
     // m_huc6270->Init();
     m_input->Init();
@@ -88,9 +88,10 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     {
         unsigned int cpu_clocks = m_huc6280->Tick();
         unsigned int timer_clocks = high_speed ? cpu_clocks : cpu_clocks << 2;
-        unsigned int audio_clocks = high_speed ? cpu_clocks << 1 : cpu_clocks >> 1;
         unsigned int video_clocks = high_speed ? cpu_clocks : cpu_clocks << 2;
+        unsigned int audio_clocks = high_speed ? cpu_clocks << 1 : cpu_clocks >> 1;
 
+        m_huc6280->TickTimer(timer_clocks);
         // stop = m_huc6270->Tick(clockCycles);
         m_audio->Tick(audio_clocks);
 
@@ -196,14 +197,10 @@ void GeargrafxCore::KeyReleased(GG_Controllers controller, GG_Keys key)
 
 void GeargrafxCore::Pause(bool paused)
 {
-    if (paused)
-    {
+    if (!m_paused && paused)
         Log("Geargrafx PAUSED");
-    }
-    else
-    {
+    else if (m_paused && !paused)
         Log("Geargrafx RESUMED");
-    }
     m_paused = paused;
 }
 

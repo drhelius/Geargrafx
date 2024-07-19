@@ -46,19 +46,33 @@ public:
         EightBitRegister* S;
         EightBitRegister* P;
         bool* SPEED;
+        bool* TIMER;
+        bool* TIMER_IRQ;
+        u8* TIMER_COUNTER;
+        u8* TIMER_RELOAD;
+        bool* IRQ1;
+        bool* IRQ2;
+        bool* NMI;
     };
 
 public:
-    HuC6280(Memory* memory);
+    HuC6280();
     ~HuC6280();
-    void Init();
+    void Init(Memory* memory);
     void Reset();
-    unsigned int RunFor(unsigned int t_states);
+    unsigned int RunFor(unsigned int cycles);
     unsigned int Tick();
-    void AssertIRQ(bool asserted);
+    void TickTimer(unsigned int cycles);
+    void AssertIRQ1(bool asserted);
+    void AssertIRQ2(bool asserted);
     void RequestNMI();
     void SetHighSpeed(bool high_speed);
     bool IsHighSpeed();
+    u8 ReadTimerControl();
+    void WriteTimerControl(u8 value);
+    u8 ReadTimerCounter();
+    u8 ReadTimerReload();
+    void WriteTimerReload(u8 value);
     Processor_State* GetState();
     void DisassembleNextOPCode();
 
@@ -71,12 +85,18 @@ private:
     EightBitRegister m_Y;
     EightBitRegister m_S;
     EightBitRegister m_P;
-    unsigned int m_t_states;
-    bool m_interrupt_asserted;
-    bool m_nmi_interrupt_requested;
+    unsigned int m_cycles;
+    bool m_irq1_asserted;
+    bool m_irq2_asserted;
+    bool m_nmi_requested;
     bool m_high_speed;
     Memory* m_memory;
     Processor_State m_processor_state;
+    bool m_timer_enabled;
+    unsigned int m_timer_cycles;
+    u8 m_timer_counter;
+    u8 m_timer_reload;
+    bool m_timer_irq;
 
 private:
     u8 Fetch8();

@@ -22,7 +22,7 @@
 
 #include "common.h"
 
-const u8 k_opcode_tstates[256] =
+const u8 k_opcode_cycles[256] =
 {
 /*          0  1  2  3   4  5  6  7  8  9  A  B  C  D  E  F */
 /* 0x00 */  8, 7, 3, 8,  6, 4, 6, 7, 3, 2, 2, 2, 7, 5, 7, 6,

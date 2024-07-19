@@ -22,6 +22,8 @@
 
 #include "memory.h"
 #include "cartridge.h"
+#include "huc6280.h"
+#include "input.h"
 
 inline u8 Memory::Read(u16 address)
 {
@@ -47,7 +49,7 @@ inline u8 Memory::Read(u16 address)
     // 0xF8 - 0xFB
     else if (mpr_value < 0xFC)
     {
-        // BRAM
+        // RAM
         if (mpr_value > 0xF8)
         {
             Debug("SGX RAM read at %06X", physical_address);
@@ -80,16 +82,29 @@ inline u8 Memory::Read(u16 address)
                 Debug("PSG read at %06X", physical_address);
                 return 0xFF;
             case 0x0C00:
-                // Timer
-                Debug("Timer read at %06X", physical_address);
-                return 0xFF;
+                // Timer Counter
+                Debug("Timer Counter read at %06X", physical_address);
+                return m_huc6280->ReadTimerCounter();
             case 0x1000:
                 // I/O
                 Debug("I/O read at %06X", physical_address);
-                return 0x00;
+                return m_input->ReadK();
             case 0x1400:
-                // CD-ROM
-                Debug("Interrupt req / CD-ROM read at %06X", physical_address);
+                if (physical_address == 0x1FF402)
+                {
+                    // Interrupt disable register
+                    Debug("Interrupt disable read at %06X", physical_address);
+                }
+                else if (physical_address == 0x1FF403)
+                {
+                    // Interrupt request register
+                    Debug("Interrupt request read at %06X", physical_address);
+                }
+                else
+                {
+                    // CD-ROM read
+                    Debug("CD-ROM read at %06X", physical_address);
+                }
                 return 0xFF;
             case 0x1800:
                 // Unused
@@ -115,21 +130,21 @@ inline void Memory::Write(u16 address, u8 value)
     if (mpr_value < 0xF7)
     {
         // HuCard ROM
-        Debug("Attempted write to HuCard ROM at %06X", physical_address);
+        Debug("Attempted write to HuCard ROM at %06X, value=%02X", physical_address, value);
     }
     // 0xF7
     else if (mpr_value < 0xF8)
     {
         // Savegame RAM
-        Debug("Savegame RAM write at %06X", physical_address);
+        Debug("Savegame RAM write at %06X, value=%02X", physical_address, value);
     }
     // 0xF8 - 0xFB
     else if (mpr_value < 0xFC)
     {
-        // BRAM
+        // RAM
         if (mpr_value > 0xF8)
         {
-            Debug("SGX RAM write at %06X", physical_address);
+            Debug("SGX RAM write at %06X, value=%02X", physical_address, value);
         }
         m_wram[physical_address & 0x1FFF] = value;
     }
@@ -137,7 +152,7 @@ inline void Memory::Write(u16 address, u8 value)
     else if (mpr_value < 0xFF)
     {
         // Unused
-        Debug("Unused write at %06X", physical_address);
+        Debug("Unused write at %06X, value=%02X", physical_address, value);
     }
     else
     {
@@ -146,35 +161,60 @@ inline void Memory::Write(u16 address, u8 value)
         {
             case 0x0000:
                 // HuC6270
-                Debug("HuC6270 write at %06X", physical_address);
+                Debug("HuC6270 write at %06X, value=%02X", physical_address, value);
                 break;
             case 0x0400:
                 // HuC6260
-                Debug("HuC6260 write at %06X", physical_address);
+                Debug("HuC6260 write at %06X, value=%02X", physical_address, value);
                 break;
             case 0x0800:
                 // PSG
-                Debug("PSG write at %06X", physical_address);
+                Debug("PSG write at %06X, value=%02X", physical_address, value);
                 break;
             case 0x0C00:
                 // Timer
-                Debug("Timer write at %06X", physical_address);
+                if (physical_address & 1)
+                {
+                    // Timer Control
+                    Debug("Timer Control write at %06X, value=%02X", physical_address, value);
+                    m_huc6280->WriteTimerControl(value);
+                }
+                else
+                {
+                    // Timer Reload
+                    Debug("Timer Reload write at %06X, value=%02X", physical_address, value);
+                    m_huc6280->WriteTimerReload(value);
+                }
                 break;
             case 0x1000:
                 // I/O
-                Debug("I/O write at %06X", physical_address);
+                Debug("I/O write at %06X, value=%02X", physical_address, value);
+                m_input->WriteO(value);
                 break;
             case 0x1400:
-                // CD-ROM
-                Debug("Interrupt req / CD-ROM write at %06X", physical_address);
+                if (physical_address == 0x1FF402)
+                {
+                    // Interrupt disable register
+                    Debug("Interrupt disable write at %06X, value=%02X", physical_address, value);
+                }
+                else if (physical_address == 0x1FF403)
+                {
+                    // Interrupt request register
+                    Debug("Interrupt request write at %06X, value=%02X", physical_address, value);
+                }
+                else
+                {
+                    // CD-ROM write
+                    Debug("CD-ROM write at %06X, value=%02X", physical_address, value);
+                }
                 break;
             case 0x1800:
                 // Unused
-                Debug("Unused hardware write at %06X", physical_address);
+                Debug("Unused hardware write at %06X, value=%02X", physical_address, value);
                 break;
             case 0x1C00:
                 // Unused
-                Debug("Unused hardware write at %06X", physical_address);
+                Debug("Unused hardware write at %06X, value=%02X", physical_address, value);
                 break;
             default:
                 break;

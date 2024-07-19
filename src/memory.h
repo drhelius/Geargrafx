@@ -23,6 +23,8 @@
 #include "common.h"
 
 class Cartridge;
+class HuC6280;
+class Input;
 
 class Memory
 {
@@ -41,7 +43,7 @@ public:
     };
 
 public:
-    Memory(Cartridge* cartridge);
+    Memory(HuC6280* huc6280, Cartridge* cartridge, Input* input);
     ~Memory();
     void Init();
     void Reset();
@@ -56,7 +58,9 @@ public:
     u8* GetWram();
 
 private:
+    HuC6280* m_huc6280;
     Cartridge* m_cartridge;
+    Input* m_input;
     u8 m_mpr[8];
     u8* m_wram;
     GG_Disassembler_Record** m_disassemblerMemoryMap;

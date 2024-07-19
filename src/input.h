@@ -30,11 +30,23 @@ public:
     void Reset();
     void KeyPressed(GG_Controllers controller, GG_Keys key);
     void KeyReleased(GG_Controllers controller, GG_Keys key);
+    u8 ReadK();
+    void WriteO(u8 value);
     // void SaveState(std::ostream& stream);
     // void LoadState(std::istream& stream);
 
 private:
 
 };
+
+inline u8 Input::ReadK()
+{
+    return 0;
+}
+
+inline void Input::WriteO(u8 value)
+{
+
+}
 
 #endif /* INPUT_H */

@@ -57,7 +57,7 @@ void gui_debug_window_memory(void)
 
     if (ImGui::BeginTabBar("##memory_tabs", ImGuiTabBarFlags_None))
     {
-        if (ImGui::BeginTabItem("BRAM", NULL, mem_edit_select == 0 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        if (ImGui::BeginTabItem("RAM", NULL, mem_edit_select == 0 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
         {
             ImGui::PushFont(gui_default_font);
              if (mem_edit_select == 0)
@@ -68,12 +68,23 @@ void gui_debug_window_memory(void)
             ImGui::EndTabItem();
         }
 
-        if (IsValidPointer(cart->GetROM()) && ImGui::BeginTabItem("ROM", NULL, mem_edit_select == 1 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        if (ImGui::BeginTabItem("ZERO PAGE", NULL, mem_edit_select == 1 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
         {
             ImGui::PushFont(gui_default_font);
-            if (mem_edit_select == 1)
+             if (mem_edit_select == 1)
                 mem_edit_select = -1;
             current_mem_edit = 1;
+            mem_edit[current_mem_edit].Draw(memory->GetWram(), 0x100);
+            ImGui::PopFont();
+            ImGui::EndTabItem();
+        }
+
+        if (IsValidPointer(cart->GetROM()) && ImGui::BeginTabItem("ROM", NULL, mem_edit_select == 2 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        {
+            ImGui::PushFont(gui_default_font);
+            if (mem_edit_select == 2)
+                mem_edit_select = -1;
+            current_mem_edit = 2;
             mem_edit[current_mem_edit].Draw(cart->GetROM(), cart->GetROMSize());
             ImGui::PopFont();
             ImGui::EndTabItem();

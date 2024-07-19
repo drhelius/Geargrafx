@@ -19,10 +19,15 @@
 
 #include <stdlib.h>
 #include "memory.h"
+#include "huc6280.h"
+#include "cartridge.h"
+#include "input.h"
 
-Memory::Memory(Cartridge* cartridge)
+Memory::Memory(HuC6280* huc6280, Cartridge* cartridge, Input* input)
 {
+    m_huc6280 = huc6280;
     m_cartridge = cartridge;
+    m_input = input;
     InitPointer(m_wram);
     InitPointer(m_disassemblerMemoryMap);
 }

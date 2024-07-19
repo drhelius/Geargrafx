@@ -42,104 +42,146 @@ void gui_debug_window_huc6280(void)
     HuC6280::Processor_State* proc_state = processor->GetState();
     Memory* memory = core->GetMemory();
 
-    ImGui::TextColored(cyan, "      STATUS");
-    ImGui::TextColored(orange, "  N V T B D I Z C");
-    ImGui::Text("  " BYTE_TO_BINARY_PATTERN_ALL_SPACED, BYTE_TO_BINARY(proc_state->P->GetValue()));
+    if (ImGui::BeginTable("huc6280", 1, ImGuiTableFlags_BordersInnerH))
+    {
+        ImGui::TableNextColumn();
+        ImGui::TextColored(cyan, "      STATUS");
+        ImGui::TextColored(orange, "  N V T B D I Z C");
+        ImGui::Text("  " BYTE_TO_BINARY_PATTERN_ALL_SPACED, BYTE_TO_BINARY(proc_state->P->GetValue()));
 
-    ImGui::Columns(2, "registers");
-    ImGui::Separator();
-    ImGui::TextColored(cyan, "  A"); ImGui::SameLine();
-    ImGui::Text(" $%02X", proc_state->A->GetValue());
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+        ImGui::TableNextColumn();
+        ImGui::TextColored(yellow, "    PC"); ImGui::SameLine();
+        ImGui::Text("= $%04X", proc_state->PC->GetValue());
+        ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->PC->GetHigh()), BYTE_TO_BINARY(proc_state->PC->GetLow()));
 
-    ImGui::NextColumn();
-    ImGui::TextColored(cyan, "  S"); ImGui::SameLine();
-    ImGui::Text(" $%02X", proc_state->S->GetValue());
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->S->GetValue()));
+        ImGui::TableNextColumn();
+        ImGui::TextColored(yellow, " PHYS PC"); ImGui::SameLine();
+        ImGui::Text("= $%06X", memory->GetPhysicalAddress(proc_state->PC->GetValue()));
 
-    ImGui::NextColumn();
-    ImGui::Separator();
-    ImGui::TextColored(cyan, "  X"); ImGui::SameLine();
-    ImGui::Text(" $%02X", proc_state->X->GetValue());
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->X->GetValue()));
+        ImGui::TableNextColumn();
+        ImGui::TextColored(yellow, "    SP"); ImGui::SameLine();
+        ImGui::Text("= $%04X", 0x2100 | proc_state->S->GetValue());
+        ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(0x21), BYTE_TO_BINARY(proc_state->S->GetValue()));
 
-    ImGui::NextColumn();
-    ImGui::TextColored(cyan, "  Y"); ImGui::SameLine();
-    ImGui::Text(" $%02X", proc_state->Y->GetValue());
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->Y->GetValue()));
+        ImGui::TableNextColumn();
 
-    ImGui::NextColumn();
-    ImGui::Separator();
-    ImGui::TextColored(violet, "MPR0"); ImGui::SameLine();
-    ImGui::Text("$%02X", memory->GetMpr(0));
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(0)));
+        ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(2.0f, 2.0f));
 
-    ImGui::NextColumn();
-    ImGui::TextColored(violet, "MPR1"); ImGui::SameLine();
-    ImGui::Text("$%02X", memory->GetMpr(1));
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(1)));
+        if (ImGui::BeginTable("regs", 2, ImGuiTableFlags_BordersInnerH |ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_NoPadOuterX))
+        {
+            ImGui::TableNextColumn();
+            ImGui::TextColored(cyan, " A"); ImGui::SameLine();
+            ImGui::Text("   $%02X", proc_state->A->GetValue());
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
 
-    ImGui::NextColumn();
-    ImGui::Separator();
-    ImGui::TextColored(violet, "MPR2"); ImGui::SameLine();
-    ImGui::Text("$%02X", memory->GetMpr(2));
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(2)));
+            ImGui::TableNextColumn();
+            ImGui::TextColored(cyan, " S"); ImGui::SameLine();
+            ImGui::Text("   $%02X", proc_state->S->GetValue());
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->S->GetValue()));
 
-    ImGui::NextColumn();
-    ImGui::TextColored(violet, "MPR3"); ImGui::SameLine();
-    ImGui::Text("$%02X", memory->GetMpr(3));
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(3)));
+            ImGui::TableNextColumn();
+            ImGui::TextColored(cyan, " X"); ImGui::SameLine();
+            ImGui::Text("   $%02X", proc_state->X->GetValue());
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->X->GetValue()));
 
-    ImGui::NextColumn();
-    ImGui::Separator();
-    ImGui::TextColored(violet, "MPR4"); ImGui::SameLine();
-    ImGui::Text("$%02X", memory->GetMpr(4));
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(4)));
+            ImGui::TableNextColumn();
+            ImGui::TextColored(cyan, " Y"); ImGui::SameLine();
+            ImGui::Text("   $%02X", proc_state->Y->GetValue());
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->Y->GetValue()));
 
-    ImGui::NextColumn();
-    ImGui::TextColored(violet, "MPR5"); ImGui::SameLine();
-    ImGui::Text("$%02X", memory->GetMpr(5));
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(5)));
+            ImGui::TableNextColumn();
+            ImGui::TextColored(violet, "MPR0"); ImGui::SameLine();
+            ImGui::Text(" $%02X", memory->GetMpr(0));
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(0)));
 
-    ImGui::NextColumn();
-    ImGui::Separator();
-    ImGui::TextColored(violet, "MPR6"); ImGui::SameLine();
-    ImGui::Text("$%02X", memory->GetMpr(6));
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(6)));
-
-    ImGui::NextColumn();
-    ImGui::TextColored(violet, "MPR7"); ImGui::SameLine();
-    ImGui::Text("$%02X", memory->GetMpr(7));
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(7)));
-
-    ImGui::NextColumn();
-    ImGui::Columns(1);
-
-    ImGui::Separator();
-    ImGui::TextColored(yellow, "    SP"); ImGui::SameLine();
-    ImGui::Text("= $%04X", 0x2100 | proc_state->S->GetValue());
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(0x21), BYTE_TO_BINARY(proc_state->S->GetValue()));
-
-    ImGui::Separator();
-    ImGui::TextColored(yellow, "    PC"); ImGui::SameLine();
-    ImGui::Text("= $%04X", proc_state->PC->GetValue());
-    ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->PC->GetHigh()), BYTE_TO_BINARY(proc_state->PC->GetLow()));
-
-    ImGui::Separator();
-    ImGui::TextColored(yellow, " PHYS PC"); ImGui::SameLine();
-    ImGui::Text("= $%06X", memory->GetPhysicalAddress(proc_state->PC->GetValue()));
-
-    ImGui::Separator();
-
-    ImGui::TextColored(!*proc_state->SPEED ? green : gray, " 1.79 MHz"); ImGui::SameLine();
-    ImGui::TextColored(*proc_state->SPEED ? green : gray, "7.16 MHz");
-
-    // ImGui::TextColored(*proc_state->IFF1 ? green : gray, " IFF1"); ImGui::SameLine();
-    // ImGui::TextColored(*proc_state->IFF2 ? green : gray, " IFF2"); ImGui::SameLine();
-    // ImGui::TextColored(*proc_state->Halt ? green : gray, " HALT");
+            ImGui::TableNextColumn();
+            ImGui::TextColored(violet, "MPR1"); ImGui::SameLine();
+            ImGui::Text(" $%02X", memory->GetMpr(1));
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(1)));
     
-    // ImGui::TextColored(*proc_state->INT ? green : gray, "    INT"); ImGui::SameLine();
-    // ImGui::TextColored(*proc_state->NMI ? green : gray, "  NMI");
+            ImGui::TableNextColumn();
+            ImGui::TextColored(violet, "MPR2"); ImGui::SameLine();
+            ImGui::Text(" $%02X", memory->GetMpr(2));
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(2)));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(violet, "MPR3"); ImGui::SameLine();
+            ImGui::Text(" $%02X", memory->GetMpr(3));
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(3)));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(violet, "MPR4"); ImGui::SameLine();
+            ImGui::Text(" $%02X", memory->GetMpr(4));
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(4)));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(violet, "MPR5"); ImGui::SameLine();
+            ImGui::Text(" $%02X", memory->GetMpr(5));
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(5)));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(violet, "MPR6"); ImGui::SameLine();
+            ImGui::Text(" $%02X", memory->GetMpr(6));
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(6)));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(violet, "MPR7"); ImGui::SameLine();
+            ImGui::Text(" $%02X", memory->GetMpr(7));
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(7)));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(red, "I/O "); ImGui::SameLine();
+            ImGui::Text(" $%02X", proc_state->A->GetValue());
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(blue, "TIM  "); ImGui::SameLine();
+            ImGui::Text("$%02X", *proc_state->TIMER ? 1 : 0);
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->TIMER ? 1 : 0));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(blue, "TIMC"); ImGui::SameLine();
+            ImGui::Text(" $%02X", *proc_state->TIMER_COUNTER);
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->TIMER_COUNTER));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(blue, "TIMR"); ImGui::SameLine();
+            ImGui::Text(" $%02X", *proc_state->TIMER_RELOAD);
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->TIMER_RELOAD));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(magenta, "IDR "); ImGui::SameLine();
+            ImGui::Text(" $%02X", proc_state->A->GetValue());
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(magenta, "IRR "); ImGui::SameLine();
+            ImGui::Text(" $%02X", proc_state->A->GetValue());
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+
+            ImGui::EndTable();
+        }
+
+        ImGui::PopStyleVar();
+
+        ImGui::TableNextColumn();
+        ImGui::TextColored(*proc_state->IRQ1 ? green : gray, "  IRQ1"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IRQ2 ? green : gray, " IRQ2"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->TIMER_IRQ ? green : gray, " TIQ "); 
+
+        ImGui::TableNextColumn();
+        ImGui::TextColored(!*proc_state->SPEED ? green : gray, " 1.79 MHz"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->SPEED ? green : gray, "7.16 MHz");
+
+        // ImGui::TextColored(*proc_state->IFF1 ? green : gray, " IFF1"); ImGui::SameLine();
+        // ImGui::TextColored(*proc_state->IFF2 ? green : gray, " IFF2"); ImGui::SameLine();
+        // ImGui::TextColored(*proc_state->Halt ? green : gray, " HALT");
+
+        // ImGui::TextColored(*proc_state->INT ? green : gray, "    INT"); ImGui::SameLine();
+        // ImGui::TextColored(*proc_state->NMI ? green : gray, "  NMI");
+
+        ImGui::EndTable();
+    }
 
     ImGui::PopFont();
 

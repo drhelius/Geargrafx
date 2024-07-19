@@ -31,7 +31,7 @@ public:
     void Init();
     void Reset();
     void Mute(bool mute);
-    void Tick(unsigned int clock_cycles);
+    void Tick(unsigned int cycles);
     void EndFrame(s16* sample_buffer, int* sample_count);
     // void SaveState(std::ostream& stream);
     // void LoadState(std::istream& stream);
@@ -42,7 +42,7 @@ private:
     bool m_mute;
 };
 
-inline void Audio::Tick(unsigned int clock_cycles)
+inline void Audio::Tick(unsigned int cycles)
 {
-    m_elapsed_cycles += clock_cycles;
+    m_elapsed_cycles += cycles;
 }

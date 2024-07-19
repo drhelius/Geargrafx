@@ -23,14 +23,19 @@
 #include "huc6280.h"
 #include "memory.h"
 
-inline void HuC6280::AssertIRQ(bool asserted)
+inline void HuC6280::AssertIRQ1(bool asserted)
 {
-    m_interrupt_asserted = asserted;
+    m_irq1_asserted = asserted;
+}
+
+inline void HuC6280::AssertIRQ2(bool asserted)
+{
+    m_irq2_asserted = asserted;
 }
 
 inline void HuC6280::RequestNMI()
 {
-    m_nmi_interrupt_requested = true;
+    m_nmi_requested = true;
 }
 
 inline void HuC6280::SetHighSpeed(bool high_speed)
@@ -41,6 +46,35 @@ inline void HuC6280::SetHighSpeed(bool high_speed)
 inline bool HuC6280::IsHighSpeed()
 {
     return m_high_speed;
+}
+
+inline u8 HuC6280::ReadTimerControl()
+{
+    return m_timer_enabled ? 0x01 : 0x00;
+}
+inline void HuC6280::WriteTimerControl(u8 value)
+{
+    bool enabled = (value &= 0x01);
+    if (!m_timer_enabled && enabled)
+    {
+        m_timer_counter = m_timer_reload;
+    }
+    m_timer_enabled = enabled;
+}
+
+inline u8 HuC6280::ReadTimerCounter()
+{
+    return m_timer_counter;
+}
+
+inline u8 HuC6280::ReadTimerReload()
+{
+    return m_timer_reload;
+}
+
+inline void HuC6280::WriteTimerReload(u8 value)
+{
+    m_timer_reload = value & 0x7F;
 }
 
 inline u8 HuC6280::Fetch8()

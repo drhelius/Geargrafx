@@ -35,7 +35,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
     {
         address = ZeroPageX();
         a = m_memory->Read(address);
-        m_t_states += 3;
+        m_cycles += 3;
     }
     else
         a = m_A.GetValue();
@@ -94,7 +94,7 @@ inline void HuC6280::OPCodes_AND(u8 value)
         u8 a = m_memory->Read(address);
         result = a & value;
         m_memory->Write(address, result);
-        m_t_states += 3;
+        m_cycles += 3;
         ClearFlag(FLAG_TRANSFER);
     }
     else
@@ -143,7 +143,7 @@ inline void HuC6280::OPcodes_Branch(bool condition)
         u16 address = m_PC.GetValue();
         u16 result = static_cast<u16>(address + displacement);
         m_PC.SetValue(result);
-        m_t_states += 2;
+        m_cycles += 2;
     }
     else
         m_PC.Increment();
@@ -233,7 +233,7 @@ inline void HuC6280::OPCodes_EOR(u8 value)
         u8 a = m_memory->Read(address);
         result = a ^ value;
         m_memory->Write(address, result);
-        m_t_states += 3;
+        m_cycles += 3;
         ClearFlag(FLAG_TRANSFER);
     }
     else
@@ -310,7 +310,7 @@ inline void HuC6280::OPCodes_ORA(u8 value)
         u8 a = m_memory->Read(address);
         result = a | value;
         m_memory->Write(address, result);
-        m_t_states += 3;
+        m_cycles += 3;
         ClearFlag(FLAG_TRANSFER);
     }
     else
@@ -565,7 +565,7 @@ inline void HuC6280::OPCodes_TAI()
         m_memory->Write(dest, m_memory->Read(source));
         source += (i & 1) ? -1 : 1;
         dest++;
-        m_t_states += 6;
+        m_cycles += 6;
     }
 }
 
@@ -582,7 +582,7 @@ inline void HuC6280::OPCodes_TDD()
         m_memory->Write(dest, m_memory->Read(source));
         source--;
         dest--;
-        m_t_states += 6;
+        m_cycles += 6;
     }
 }
 
@@ -599,7 +599,7 @@ inline void HuC6280::OPCodes_TIA()
         m_memory->Write(dest, m_memory->Read(source));
         source++;
         dest += (i & 1) ? -1 : 1;
-        m_t_states += 6;
+        m_cycles += 6;
     }
 }
 
@@ -616,7 +616,7 @@ inline void HuC6280::OPCodes_TII()
         m_memory->Write(dest, m_memory->Read(source));
         source++;
         dest++;
-        m_t_states += 6;
+        m_cycles += 6;
     }
 }
 
@@ -632,7 +632,7 @@ inline void HuC6280::OPCodes_TIN()
     {
         m_memory->Write(dest, m_memory->Read(source));
         source++;
-        m_t_states += 6;
+        m_cycles += 6;
     }
 }
 

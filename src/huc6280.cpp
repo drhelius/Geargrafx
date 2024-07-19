@@ -24,14 +24,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-HuC6280::HuC6280(Memory* memory)
+HuC6280::HuC6280()
 {
-    m_memory = memory;
     InitOPCodeFunctors();
-    m_t_states = 0;
-    m_interrupt_asserted = false;
-    m_nmi_interrupt_requested = false;
+    m_cycles = 0;
+    m_irq1_asserted = false;
+    m_irq2_asserted = false;
+    m_nmi_requested = false;
     m_high_speed = false;
+    m_timer_cycles = 0;
+    m_timer_enabled = false;
+    m_timer_counter = 0;
+    m_timer_reload = 0;
+    m_timer_irq = false;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
     m_processor_state.Y = &m_Y;
@@ -39,14 +44,22 @@ HuC6280::HuC6280(Memory* memory)
     m_processor_state.P = &m_P;
     m_processor_state.PC = &m_PC;
     m_processor_state.SPEED = &m_high_speed;
+    m_processor_state.TIMER = &m_timer_enabled;
+    m_processor_state.TIMER_IRQ = &m_timer_irq;
+    m_processor_state.TIMER_COUNTER = &m_timer_counter;
+    m_processor_state.TIMER_RELOAD = &m_timer_reload;
+    m_processor_state.IRQ1 = &m_irq1_asserted;
+    m_processor_state.IRQ2 = &m_irq2_asserted;
+    m_processor_state.NMI = &m_nmi_requested;
 }
 
 HuC6280::~HuC6280()
 {
 }
 
-void HuC6280::Init()
+void HuC6280::Init(Memory* memory)
 {
+    m_memory = memory;
 }
 
 void HuC6280::Reset()
@@ -63,17 +76,23 @@ void HuC6280::Reset()
     ClearFlag(FLAG_DECIMAL);
     SetFlag(FLAG_INTERRUPT);
     SetFlag(FLAG_BREAK);
-    m_t_states = 0;
-    m_interrupt_asserted = false;
-    m_nmi_interrupt_requested = false;
+    m_cycles = 0;
+    m_irq1_asserted = false;
+    m_irq2_asserted = false;
+    m_nmi_requested = false;
     m_high_speed = false;
+    m_timer_cycles = 0;
+    m_timer_enabled = false;
+    m_timer_counter = 0;
+    m_timer_reload = 0;
+    m_timer_irq = false;
 }
 
-unsigned int HuC6280::RunFor(unsigned int t_states)
+unsigned int HuC6280::RunFor(unsigned int cycles)
 {
     unsigned int count = 0;
 
-    while (count < t_states)
+    while (count < cycles)
     {
         count += Tick();
     }
@@ -83,41 +102,82 @@ unsigned int HuC6280::RunFor(unsigned int t_states)
 
 unsigned int HuC6280::Tick()
 {
-    m_t_states = 0;
+    m_cycles = 0;
+    bool irq = false;
+    u16 irq_low = 0;
+    u16 irq_high = 0;
 
-    if (m_nmi_interrupt_requested)
+    // NMI
+    if (m_nmi_requested)
     {
-        m_nmi_interrupt_requested = false;
-        StackPush16(m_PC.GetValue());
-        ClearFlag(FLAG_BREAK);
-        StackPush8(m_P.GetValue());
-        SetFlag(FLAG_INTERRUPT);
-        m_PC.SetLow(m_memory->Read(0xFFFA));
-        m_PC.SetHigh(m_memory->Read(0xFFFB));
-        m_t_states += 7;
-        DisassembleNextOPCode();
-        return m_t_states;
+        irq = true;
+        irq_low = 0xFFFC;
+        irq_high = 0xFFFD;
+        m_nmi_requested = false;
     }
-    else if (!IsSetFlag(FLAG_INTERRUPT) && m_interrupt_asserted)
-    { 
+    // Timer
+    else if (m_timer_irq && !IsSetFlag(FLAG_INTERRUPT))
+    {
+        irq = true;
+        irq_low = 0xFFFA;
+        irq_high = 0xFFFB;
+    }
+    // IRQ1
+    else if (m_irq1_asserted && !IsSetFlag(FLAG_INTERRUPT))
+    {
+        irq = true;
+        irq_low = 0xFFF8;
+        irq_high = 0xFFF9;
+    }
+    // IRQ2
+    else if (m_irq2_asserted && !IsSetFlag(FLAG_INTERRUPT))
+    {
+        irq = true;
+        irq_low = 0xFFF6;
+        irq_high = 0xFFF7;
+    }
+
+    if (irq)
+    {
         StackPush16(m_PC.GetValue());
         ClearFlag(FLAG_BREAK);
         StackPush8(m_P.GetValue());
         SetFlag(FLAG_INTERRUPT);
-        m_PC.SetLow(m_memory->Read(0xFFFE));
-        m_PC.SetHigh(m_memory->Read(0xFFFF));
-        m_t_states += 7;
+        m_PC.SetLow(m_memory->Read(irq_low));
+        m_PC.SetHigh(m_memory->Read(irq_high));
+        m_cycles += 7;
         DisassembleNextOPCode();
-        return m_t_states;
-    } 
+        return m_cycles;
+    }
 
     u8 opcode = Fetch8();
     (this->*m_opcodes[opcode])();
     DisassembleNextOPCode();
 
-    m_t_states += k_opcode_tstates[opcode];
+    m_cycles += k_opcode_cycles[opcode];
 
-    return m_t_states;
+    return m_cycles;
+}
+
+void HuC6280::TickTimer(unsigned int cycles)
+{
+    m_timer_cycles += cycles;
+
+    if (m_timer_cycles >= 1024)
+    {
+        m_timer_cycles -= 1024;
+
+        if (m_timer_enabled)
+        {
+            m_timer_counter = (m_timer_counter - 1) & 0x7F;
+
+            if (m_timer_counter == 0x7F)
+            {
+                m_timer_counter = m_timer_reload;
+                m_timer_irq = true;
+            }
+        }
+    }
 }
 
 HuC6280::Processor_State* HuC6280::GetState()

@@ -318,26 +318,6 @@ void emu_debug_continue(void)
     debugger_command = Debugger_Command_Continue; 
 }
 
-// void emu_debug_step(void)
-// {
-//     debugging = debug_step = true;
-//     debug_next_frame = false;
-//     geargrafx->Pause(false);
-// }
-
-// void emu_debug_continue(void)
-// {
-//     debugging = debug_step = debug_next_frame = false;
-//     geargrafx->Pause(false);
-// }
-
-// void emu_debug_next_frame(void)
-// {
-//     debugging = debug_next_frame = true;
-//     debug_step = false;
-//     geargrafx->Pause(false);
-// }
-
 void emu_video_no_sprite_limit(bool enabled)
 {
     // geargrafx->GetVideo()->SetNoSpriteLimit(enabled);

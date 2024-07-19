@@ -54,7 +54,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
     m_mem_base_addr = base_display_addr;
 
     int hex_digits = 1;
-    int size = mem_size;
+    int size = mem_size - 1;
 
     while (size >>= 4)
     {   
