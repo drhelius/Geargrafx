@@ -176,6 +176,11 @@ Audio* GeargrafxCore::GetAudio()
     return m_audio;
 }
 
+Input* GeargrafxCore::GetInput()
+{
+    return m_input;
+}
+
 // Video* GeargrafxCore::GetVideo()
 // {
 //     return m_video;

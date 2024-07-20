@@ -84,7 +84,7 @@ inline u8 Memory::Read(u16 address)
             case 0x0C00:
                 // Timer Counter
                 Debug("Timer Counter read at %06X", physical_address);
-                m_io_buffer = (m_huc6280->ReadTimerCounter() & 0x7F) | (m_io_buffer & 0x80);
+                m_io_buffer = (m_huc6280->ReadTimerRegister() & 0x7F) | (m_io_buffer & 0x80);
                 return m_io_buffer;
             case 0x1000:
                 // I/O
@@ -92,17 +92,12 @@ inline u8 Memory::Read(u16 address)
                 m_io_buffer = m_input->ReadK();
                 return m_io_buffer;
             case 0x1400:
-                if (physical_address == 0x1FF402)
+                if (physical_address == 0x1FF402 || physical_address == 0x1FF403)
                 {
-                    // Interrupt disable register
-                    Debug("Interrupt disable read at %06X", physical_address);
-                    return m_io_buffer & 0xF8;
-                }
-                else if (physical_address == 0x1FF403)
-                {
-                    // Interrupt request register
-                    Debug("Interrupt request read at %06X", physical_address);
-                    return m_io_buffer & 0xF8;
+                    // Interrupt registers
+                    Debug("Interrupt register read at %06X", physical_address);
+                    m_io_buffer = m_huc6280->ReadInterruptRegister(physical_address) & 0x07 | (m_io_buffer & 0xF8);
+                    return m_io_buffer;
                 }
                 else
                 {
@@ -178,18 +173,8 @@ inline void Memory::Write(u16 address, u8 value)
                 break;
             case 0x0C00:
                 // Timer
-                if (physical_address & 1)
-                {
-                    // Timer Control
-                    Debug("Timer Control write at %06X, value=%02X", physical_address, value);
-                    m_huc6280->WriteTimerControl(value);
-                }
-                else
-                {
-                    // Timer Reload
-                    Debug("Timer Reload write at %06X, value=%02X", physical_address, value);
-                    m_huc6280->WriteTimerReload(value);
-                }
+                Debug("Timer register write at %06X, value=%02X", physical_address, value);
+                m_huc6280->WriteTimerRegister(physical_address, value);
                 m_io_buffer = value;
                 break;
             case 0x1000:
@@ -199,15 +184,11 @@ inline void Memory::Write(u16 address, u8 value)
                 m_io_buffer = value;
                 break;
             case 0x1400:
-                if (physical_address == 0x1FF402)
+                if (physical_address == 0x1FF402 || physical_address == 0x1FF403)
                 {
-                    // Interrupt disable register
-                    Debug("Interrupt disable write at %06X, value=%02X", physical_address, value);
-                }
-                else if (physical_address == 0x1FF403)
-                {
-                    // Interrupt request register
-                    Debug("Interrupt request write at %06X, value=%02X", physical_address, value);
+                    // Interrupt registers
+                    Debug("Interrupt register write at %06X, value=%02X", physical_address, value);
+                    m_huc6280->WriteInterruptRegister(physical_address, value);
                 }
                 else
                 {

@@ -41,6 +41,7 @@ void gui_debug_window_huc6280(void)
     HuC6280* processor = core->GetHuC6280();
     HuC6280::Processor_State* proc_state = processor->GetState();
     Memory* memory = core->GetMemory();
+    Input* input = core->GetInput();
 
     if (ImGui::BeginTable("huc6280", 1, ImGuiTableFlags_BordersInnerH))
     {
@@ -131,8 +132,8 @@ void gui_debug_window_huc6280(void)
 
             ImGui::TableNextColumn();
             ImGui::TextColored(red, "I/O "); ImGui::SameLine();
-            ImGui::Text(" $%02X", proc_state->A->GetValue());
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+            ImGui::Text(" $%02X", input->GetIORegister());
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(input->GetIORegister()));
 
             ImGui::TableNextColumn();
             ImGui::TextColored(blue, "TIM  "); ImGui::SameLine();
@@ -151,13 +152,13 @@ void gui_debug_window_huc6280(void)
 
             ImGui::TableNextColumn();
             ImGui::TextColored(magenta, "IDR "); ImGui::SameLine();
-            ImGui::Text(" $%02X", proc_state->A->GetValue());
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+            ImGui::Text(" $%02X", *proc_state->IDR);
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->IDR));
 
             ImGui::TableNextColumn();
             ImGui::TextColored(magenta, "IRR "); ImGui::SameLine();
-            ImGui::Text(" $%02X", proc_state->A->GetValue());
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+            ImGui::Text(" $%02X", *proc_state->IRR);
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->IRR));
 
             ImGui::EndTable();
         }
@@ -165,9 +166,10 @@ void gui_debug_window_huc6280(void)
         ImGui::PopStyleVar();
 
         ImGui::TableNextColumn();
-        ImGui::TextColored(*proc_state->IRQ1 ? green : gray, "  IRQ1"); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->IRQ2 ? green : gray, " IRQ2"); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->TIMER_IRQ ? green : gray, " TIQ "); 
+        ImGui::TextColored(*proc_state->NMI ? green : gray, " NMI"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->TIMER_IRQ ? green : gray, "TIQ"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IRQ1 ? green : gray, "IRQ1"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IRQ2 ? green : gray, "IRQ2"); 
 
         ImGui::TableNextColumn();
         ImGui::TextColored(!*proc_state->SPEED ? green : gray, " 1.79 MHz"); ImGui::SameLine();
@@ -188,5 +190,3 @@ void gui_debug_window_huc6280(void)
     ImGui::End();
     ImGui::PopStyleVar();
 }
-
-#include "../../../src/geargrafx.h"

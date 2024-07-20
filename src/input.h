@@ -32,6 +32,7 @@ public:
     void KeyReleased(GG_Controllers controller, GG_Keys key);
     u8 ReadK();
     void WriteO(u8 value);
+    u8 GetIORegister();
     // void SaveState(std::ostream& stream);
     // void LoadState(std::istream& stream);
 
@@ -47,6 +48,11 @@ inline u8 Input::ReadK()
 inline void Input::WriteO(u8 value)
 {
 
+}
+
+inline u8 Input::GetIORegister()
+{
+    return 0;
 }
 
 #endif /* INPUT_H */

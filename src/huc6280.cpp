@@ -37,6 +37,8 @@ HuC6280::HuC6280()
     m_timer_counter = 0;
     m_timer_reload = 0;
     m_timer_irq = false;
+    m_interrupt_disable_register = 0;
+    m_interrupt_request_register = 0;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
     m_processor_state.Y = &m_Y;
@@ -51,6 +53,8 @@ HuC6280::HuC6280()
     m_processor_state.IRQ1 = &m_irq1_asserted;
     m_processor_state.IRQ2 = &m_irq2_asserted;
     m_processor_state.NMI = &m_nmi_requested;
+    m_processor_state.IDR = &m_interrupt_disable_register;
+    m_processor_state.IRR = &m_interrupt_request_register;
 }
 
 HuC6280::~HuC6280()
@@ -86,6 +90,8 @@ void HuC6280::Reset()
     m_timer_counter = 0;
     m_timer_reload = 0;
     m_timer_irq = false;
+    m_interrupt_disable_register = 0;
+    m_interrupt_request_register = 0;
 }
 
 unsigned int HuC6280::RunFor(unsigned int cycles)
@@ -115,26 +121,29 @@ unsigned int HuC6280::Tick()
         irq_high = 0xFFFD;
         m_nmi_requested = false;
     }
-    // Timer
-    else if (m_timer_irq && !IsSetFlag(FLAG_INTERRUPT))
+    else if (!IsSetFlag(FLAG_INTERRUPT))
     {
-        irq = true;
-        irq_low = 0xFFFA;
-        irq_high = 0xFFFB;
-    }
-    // IRQ1
-    else if (m_irq1_asserted && !IsSetFlag(FLAG_INTERRUPT))
-    {
-        irq = true;
-        irq_low = 0xFFF8;
-        irq_high = 0xFFF9;
-    }
-    // IRQ2
-    else if (m_irq2_asserted && !IsSetFlag(FLAG_INTERRUPT))
-    {
-        irq = true;
-        irq_low = 0xFFF6;
-        irq_high = 0xFFF7;
+        // TIQ
+        if (m_timer_irq && !IsSetBit(m_interrupt_disable_register, 2))
+        {
+            irq = true;
+            irq_low = 0xFFFA;
+            irq_high = 0xFFFB;
+        }
+        // IRQ1
+        else if (m_irq1_asserted && !IsSetBit(m_interrupt_disable_register, 1))
+        {
+            irq = true;
+            irq_low = 0xFFF8;
+            irq_high = 0xFFF9;
+        }
+        // IRQ2
+        else if (m_irq2_asserted && !IsSetBit(m_interrupt_disable_register, 0))
+        {
+            irq = true;
+            irq_low = 0xFFF6;
+            irq_high = 0xFFF7;
+        }
     }
 
     if (irq)
@@ -175,6 +184,7 @@ void HuC6280::TickTimer(unsigned int cycles)
             {
                 m_timer_counter = m_timer_reload;
                 m_timer_irq = true;
+                SetBit(m_interrupt_request_register, 2);
             }
         }
     }

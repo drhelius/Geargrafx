@@ -53,6 +53,8 @@ public:
         bool* IRQ1;
         bool* IRQ2;
         bool* NMI;
+        u8* IDR;
+        u8* IRR;
     };
 
 public:
@@ -68,11 +70,10 @@ public:
     void RequestNMI();
     void SetHighSpeed(bool high_speed);
     bool IsHighSpeed();
-    u8 ReadTimerControl();
-    void WriteTimerControl(u8 value);
-    u8 ReadTimerCounter();
-    u8 ReadTimerReload();
-    void WriteTimerReload(u8 value);
+    u8 ReadInterruptRegister(u32 address);
+    void WriteInterruptRegister(u32 address, u8 value);
+    u8 ReadTimerRegister();
+    void WriteTimerRegister(u32 address, u8 value);
     Processor_State* GetState();
     void DisassembleNextOPCode();
 
@@ -97,6 +98,8 @@ private:
     u8 m_timer_counter;
     u8 m_timer_reload;
     bool m_timer_irq;
+    u8 m_interrupt_disable_register;
+    u8 m_interrupt_request_register;
 
 private:
     u8 Fetch8();

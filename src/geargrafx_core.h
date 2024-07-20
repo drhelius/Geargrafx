@@ -61,6 +61,7 @@ public:
     Cartridge* GetCartridge();
     HuC6280* GetHuC6280();
     Audio* GetAudio();
+    Input* GetInput();
     // HuC6270* GetHuC6270();
 
 private:
