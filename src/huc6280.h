@@ -68,7 +68,6 @@ public:
     void AssertIRQ1(bool asserted);
     void AssertIRQ2(bool asserted);
     void RequestNMI();
-    void SetHighSpeed(bool high_speed);
     bool IsHighSpeed();
     u8 ReadInterruptRegister(u32 address);
     void WriteInterruptRegister(u32 address, u8 value);

@@ -41,12 +41,6 @@ inline void HuC6280::RequestNMI()
     m_nmi_requested = true;
 }
 
-inline void HuC6280::SetHighSpeed(bool high_speed)
-{
-    Debug("High speed: %s", high_speed ? "true" : "false");
-    m_high_speed = high_speed;
-}
-
 inline bool HuC6280::IsHighSpeed()
 {
     return m_high_speed;
