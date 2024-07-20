@@ -25,21 +25,25 @@
 
 inline void HuC6280::AssertIRQ1(bool asserted)
 {
+    Debug("IRQ1 asserted: %s", asserted ? "true" : "false");
     m_irq1_asserted = asserted;
 }
 
 inline void HuC6280::AssertIRQ2(bool asserted)
 {
+    Debug("IRQ2 asserted: %s", asserted ? "true" : "false");
     m_irq2_asserted = asserted;
 }
 
 inline void HuC6280::RequestNMI()
 {
+    Debug("NMI requested");
     m_nmi_requested = true;
 }
 
 inline void HuC6280::SetHighSpeed(bool high_speed)
 {
+    Debug("High speed: %s", high_speed ? "true" : "false");
     m_high_speed = high_speed;
 }
 
@@ -48,14 +52,17 @@ inline bool HuC6280::IsHighSpeed()
     return m_high_speed;
 }
 
-inline u8 HuC6280::ReadInterruptRegister(u32 address)
+inline u8 HuC6280:: ReadInterruptRegister(u32 address)
 {
+    Debug("Interrupt register read at %06X", address);
     if (address == 0x1FF402)
     {
+        Debug("Interrupt disable register: %02X", m_interrupt_disable_register);
         return m_interrupt_disable_register;
     }
     else if (address == 0x1FF403)
     {
+        Debug("Interrupt request register: %02X", m_interrupt_request_register);
         return m_interrupt_request_register;
     }
     else
@@ -67,15 +74,18 @@ inline u8 HuC6280::ReadInterruptRegister(u32 address)
 
 inline void HuC6280::WriteInterruptRegister(u32 address, u8 value)
 {
+    Debug("Interrupt register write at %06X, value=%02X", address, value);
     if (address == 0x1FF402)
     {
         m_interrupt_disable_register = value & 0x07;
+        Debug("Interrupt disable register: %02X", m_interrupt_disable_register);
     }
     else if (address == 0x1FF403)
     {
         // Acknowledge TIQ
         UnsetBit(m_interrupt_request_register, 2);
         m_timer_irq = false;
+        Debug("Interrupt request register: %02X", m_interrupt_request_register);
     }
     else
     {
@@ -85,14 +95,17 @@ inline void HuC6280::WriteInterruptRegister(u32 address, u8 value)
 
 inline u8 HuC6280::ReadTimerRegister()
 {
+    Debug("Timer register read (counter): %02X", m_timer_counter);
     return m_timer_counter;
 }
 
 inline void HuC6280::WriteTimerRegister(u32 address, u8 value)
 {
+    Debug("Timer register write at %06X, value=%02X", address, value);
     if (address == 0x1FEC00)
     {
         m_timer_reload = value & 0x7F;
+        Debug("Timer reload: %02X", m_timer_reload);
     }
     else if (address == 0x1FEC01)
     {
@@ -100,8 +113,10 @@ inline void HuC6280::WriteTimerRegister(u32 address, u8 value)
         if (!m_timer_enabled && enabled)
         {
             m_timer_counter = m_timer_reload;
+            Debug("Timer reload when enabled: %02X", m_timer_reload);
         }
         m_timer_enabled = enabled;
+        Debug("Timer enabled: %s", m_timer_enabled ? "true" : "false");
     }
     else
     {

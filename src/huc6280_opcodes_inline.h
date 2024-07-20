@@ -562,7 +562,7 @@ inline void HuC6280::OPCodes_TAI()
 
     for (int i = 0; i < length; i++)
     {
-        m_memory->Write(dest, m_memory->Read(source));
+        m_memory->Write(dest, m_memory->Read(source, true));
         source += (i & 1) ? -1 : 1;
         dest++;
         m_cycles += 6;
@@ -579,7 +579,7 @@ inline void HuC6280::OPCodes_TDD()
 
     for (int i = 0; i < length; i++)
     {
-        m_memory->Write(dest, m_memory->Read(source));
+        m_memory->Write(dest, m_memory->Read(source, true));
         source--;
         dest--;
         m_cycles += 6;
@@ -596,7 +596,7 @@ inline void HuC6280::OPCodes_TIA()
 
     for (int i = 0; i < length; i++)
     {
-        m_memory->Write(dest, m_memory->Read(source));
+        m_memory->Write(dest, m_memory->Read(source, true));
         source++;
         dest += (i & 1) ? -1 : 1;
         m_cycles += 6;
@@ -613,7 +613,7 @@ inline void HuC6280::OPCodes_TII()
 
     for (int i = 0; i < length; i++)
     {
-        m_memory->Write(dest, m_memory->Read(source));
+        m_memory->Write(dest, m_memory->Read(source, true));
         source++;
         dest++;
         m_cycles += 6;
@@ -630,7 +630,7 @@ inline void HuC6280::OPCodes_TIN()
 
     for (int i = 0; i < length; i++)
     {
-        m_memory->Write(dest, m_memory->Read(source));
+        m_memory->Write(dest, m_memory->Read(source, true));
         source++;
         m_cycles += 6;
     }

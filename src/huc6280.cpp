@@ -151,6 +151,7 @@ unsigned int HuC6280::Tick()
         StackPush16(m_PC.GetValue());
         ClearFlag(FLAG_BREAK);
         StackPush8(m_P.GetValue());
+        SetFlag(FLAG_BREAK);
         SetFlag(FLAG_INTERRUPT);
         m_PC.SetLow(m_memory->Read(irq_low));
         m_PC.SetHigh(m_memory->Read(irq_high));
@@ -185,6 +186,7 @@ void HuC6280::TickTimer(unsigned int cycles)
                 m_timer_counter = m_timer_reload;
                 m_timer_irq = true;
                 SetBit(m_interrupt_request_register, 2);
+                Debug("Timer counter underflow, IRQ, reload: %02X", m_timer_reload);
             }
         }
     }

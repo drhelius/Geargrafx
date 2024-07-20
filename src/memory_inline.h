@@ -25,7 +25,7 @@
 #include "huc6280.h"
 #include "input.h"
 
-inline u8 Memory::Read(u16 address)
+inline u8 Memory::Read(u16 address, bool block_transfer)
 {
     u8 mpr_index = (address >> 13) & 0x07;
     u8 mpr_value = m_mpr[mpr_index];
@@ -80,30 +80,42 @@ inline u8 Memory::Read(u16 address)
             case 0x0800:
                 // PSG
                 Debug("PSG read at %06X", physical_address);
-                return m_io_buffer;
+                return block_transfer ? 0x00 : m_io_buffer;
             case 0x0C00:
                 // Timer Counter
-                Debug("Timer Counter read at %06X", physical_address);
-                m_io_buffer = (m_huc6280->ReadTimerRegister() & 0x7F) | (m_io_buffer & 0x80);
-                return m_io_buffer;
+                if (block_transfer)
+                    return 0x00;
+                else
+                {
+                    m_io_buffer = (m_huc6280->ReadTimerRegister() & 0x7F) | (m_io_buffer & 0x80);
+                    return m_io_buffer;
+                }
             case 0x1000:
                 // I/O
-                Debug("I/O read at %06X", physical_address);
-                m_io_buffer = m_input->ReadK();
-                return m_io_buffer;
+                if (block_transfer)
+                    return 0x00;
+                else
+                {
+                    m_io_buffer = m_input->ReadK();
+                    return m_io_buffer;
+                }
             case 0x1400:
                 if (physical_address == 0x1FF402 || physical_address == 0x1FF403)
                 {
                     // Interrupt registers
-                    Debug("Interrupt register read at %06X", physical_address);
-                    m_io_buffer = m_huc6280->ReadInterruptRegister(physical_address) & 0x07 | (m_io_buffer & 0xF8);
-                    return m_io_buffer;
+                    if (block_transfer)
+                        return 0x00;
+                    else
+                    {
+                        m_io_buffer = (m_huc6280->ReadInterruptRegister(physical_address) & 0x07) | (m_io_buffer & 0xF8);
+                        return m_io_buffer;
+                    }
                 }
                 else
                 {
                     // CD-ROM read
                     Debug("CD-ROM read at %06X", physical_address);
-                    return m_io_buffer;
+                    return block_transfer ? 0x00 : m_io_buffer;
                 }
             case 0x1800:
                 // Unused
@@ -173,13 +185,11 @@ inline void Memory::Write(u16 address, u8 value)
                 break;
             case 0x0C00:
                 // Timer
-                Debug("Timer register write at %06X, value=%02X", physical_address, value);
                 m_huc6280->WriteTimerRegister(physical_address, value);
                 m_io_buffer = value;
                 break;
             case 0x1000:
                 // I/O
-                Debug("I/O write at %06X, value=%02X", physical_address, value);
                 m_input->WriteO(value);
                 m_io_buffer = value;
                 break;
@@ -187,7 +197,6 @@ inline void Memory::Write(u16 address, u8 value)
                 if (physical_address == 0x1FF402 || physical_address == 0x1FF403)
                 {
                     // Interrupt registers
-                    Debug("Interrupt register write at %06X, value=%02X", physical_address, value);
                     m_huc6280->WriteInterruptRegister(physical_address, value);
                 }
                 else
