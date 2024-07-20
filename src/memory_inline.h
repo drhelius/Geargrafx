@@ -80,32 +80,36 @@ inline u8 Memory::Read(u16 address)
             case 0x0800:
                 // PSG
                 Debug("PSG read at %06X", physical_address);
-                return 0xFF;
+                return m_io_buffer;
             case 0x0C00:
                 // Timer Counter
                 Debug("Timer Counter read at %06X", physical_address);
-                return m_huc6280->ReadTimerCounter();
+                m_io_buffer = (m_huc6280->ReadTimerCounter() & 0x7F) | (m_io_buffer & 0x80);
+                return m_io_buffer;
             case 0x1000:
                 // I/O
                 Debug("I/O read at %06X", physical_address);
-                return m_input->ReadK();
+                m_io_buffer = m_input->ReadK();
+                return m_io_buffer;
             case 0x1400:
                 if (physical_address == 0x1FF402)
                 {
                     // Interrupt disable register
                     Debug("Interrupt disable read at %06X", physical_address);
+                    return m_io_buffer & 0xF8;
                 }
                 else if (physical_address == 0x1FF403)
                 {
                     // Interrupt request register
                     Debug("Interrupt request read at %06X", physical_address);
+                    return m_io_buffer & 0xF8;
                 }
                 else
                 {
                     // CD-ROM read
                     Debug("CD-ROM read at %06X", physical_address);
+                    return m_io_buffer;
                 }
-                return 0xFF;
             case 0x1800:
                 // Unused
                 Debug("Unused hardware read at %06X", physical_address);
@@ -170,6 +174,7 @@ inline void Memory::Write(u16 address, u8 value)
             case 0x0800:
                 // PSG
                 Debug("PSG write at %06X, value=%02X", physical_address, value);
+                m_io_buffer = value;
                 break;
             case 0x0C00:
                 // Timer
@@ -185,11 +190,13 @@ inline void Memory::Write(u16 address, u8 value)
                     Debug("Timer Reload write at %06X, value=%02X", physical_address, value);
                     m_huc6280->WriteTimerReload(value);
                 }
+                m_io_buffer = value;
                 break;
             case 0x1000:
                 // I/O
                 Debug("I/O write at %06X, value=%02X", physical_address, value);
                 m_input->WriteO(value);
+                m_io_buffer = value;
                 break;
             case 0x1400:
                 if (physical_address == 0x1FF402)
@@ -207,6 +214,7 @@ inline void Memory::Write(u16 address, u8 value)
                     // CD-ROM write
                     Debug("CD-ROM write at %06X, value=%02X", physical_address, value);
                 }
+                m_io_buffer = value;
                 break;
             case 0x1800:
                 // Unused

@@ -55,6 +55,7 @@ public:
     u8 GetBank(u16 address);
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
     GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
+    void ResetDisassemblerRecords();
     u8* GetWram();
 
 private:
@@ -64,6 +65,7 @@ private:
     u8 m_mpr[8];
     u8* m_wram;
     GG_Disassembler_Record** m_disassemblerMemoryMap;
+    u8 m_io_buffer;
 };
 
 #include "memory_inline.h"

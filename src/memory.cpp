@@ -30,6 +30,7 @@ Memory::Memory(HuC6280* huc6280, Cartridge* cartridge, Input* input)
     m_input = input;
     InitPointer(m_wram);
     InitPointer(m_disassemblerMemoryMap);
+    m_io_buffer = 0;
 }
 
 Memory::~Memory()
@@ -62,6 +63,7 @@ void Memory::Init()
 
 void Memory::Reset()
 {
+    m_io_buffer = 0;
     m_mpr[7] = 0x00;
 
     for (int i = 0; i < 7; i++)
@@ -102,6 +104,14 @@ Memory::GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 addres
     }
 
     return record;
+}
+
+void Memory::ResetDisassemblerRecords()
+{
+    for (int i = 0; i < 0x200000; i++)
+    {
+        SafeDelete(m_disassemblerMemoryMap[i]);
+    }
 }
 
 u8* Memory::GetWram()
