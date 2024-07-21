@@ -24,6 +24,7 @@
 
 class Audio;
 class Input;
+class HuC6260;
 class HuC6280;
 class Memory;
 class Cartridge;
@@ -59,6 +60,7 @@ public:
     bool GetRuntimeInfo(GG_Runtime_Info& runtime_info);
     Memory* GetMemory();
     Cartridge* GetCartridge();
+    HuC6260* GetHuC6260();
     HuC6280* GetHuC6280();
     Audio* GetAudio();
     Input* GetInput();
@@ -70,6 +72,7 @@ private:
 
 private:
     Memory* m_memory;
+    HuC6260* m_huc6260;
     HuC6280* m_huc6280;
     Audio* m_audio;
     // Video* m_huc6270;

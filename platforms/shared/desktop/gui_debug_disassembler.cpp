@@ -524,7 +524,7 @@ static void show_disassembly(void)
         GeargrafxCore* core = emu_get_core();
         Memory* memory = core->GetMemory();
         HuC6280* processor = core->GetHuC6280();
-        HuC6280::Processor_State* proc_state = processor->GetState();
+        HuC6280::HuC6280_State* proc_state = processor->GetState();
         int pc = proc_state->PC->GetValue();
 
         int pc_pos = 0;

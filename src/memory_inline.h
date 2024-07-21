@@ -22,6 +22,7 @@
 
 #include "memory.h"
 #include "cartridge.h"
+#include "huc6260.h"
 #include "huc6280.h"
 #include "input.h"
 
@@ -75,7 +76,7 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
                 return 0xFF;
             case 0x0400:
                 // HuC6260
-                Debug("HuC6260 read at %06X", physical_address);
+                m_huc6260->ReadRegister(physical_address);
                 return 0xFF;
             case 0x0800:
                 // PSG
@@ -176,7 +177,7 @@ inline void Memory::Write(u16 address, u8 value)
                 break;
             case 0x0400:
                 // HuC6260
-                Debug("HuC6260 write at %06X, value=%02X", physical_address, value);
+                m_huc6260->WriteRegister(physical_address, value);
                 break;
             case 0x0800:
                 // PSG

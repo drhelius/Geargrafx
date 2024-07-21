@@ -23,6 +23,7 @@
 #include "common.h"
 
 class Cartridge;
+class HuC6260;
 class HuC6280;
 class Input;
 
@@ -43,7 +44,7 @@ public:
     };
 
 public:
-    Memory(HuC6280* huc6280, Cartridge* cartridge, Input* input);
+    Memory(HuC6260* huc6260, HuC6280* huc6280, Cartridge* cartridge, Input* input);
     ~Memory();
     void Init();
     void Reset();
@@ -59,6 +60,7 @@ public:
     u8* GetWram();
 
 private:
+    HuC6260* m_huc6260;
     HuC6280* m_huc6280;
     Cartridge* m_cartridge;
     Input* m_input;

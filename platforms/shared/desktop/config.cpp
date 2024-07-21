@@ -108,8 +108,7 @@ void config_read(void)
     config_debug.show_screen = read_bool("Debug", "Screen", true);
     config_debug.show_memory = read_bool("Debug", "Memory", true);
     config_debug.show_processor = read_bool("Debug", "Processor", true);
-    config_debug.show_video = read_bool("Debug", "Video", false);
-    config_debug.show_video_registers = read_bool("Debug", "VideoRegisters", false);
+    config_debug.show_huc6260 = read_bool("Debug", "HuC6260", false);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
 
     config_emulator.fullscreen = read_bool("Emulator", "FullScreen", false);
@@ -209,8 +208,7 @@ void config_write(void)
     write_bool("Debug", "Screen", config_debug.show_screen);
     write_bool("Debug", "Memory", config_debug.show_memory);
     write_bool("Debug", "Processor", config_debug.show_processor);
-    write_bool("Debug", "Video", config_debug.show_video);
-    write_bool("Debug", "VideoRegisters", config_debug.show_video_registers);
+    write_bool("Debug", "HuC6260", config_debug.show_huc6260);
     write_int("Debug", "FontSize", config_debug.font_size);
 
     write_bool("Emulator", "FullScreen", config_emulator.fullscreen);

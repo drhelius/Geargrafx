@@ -19,12 +19,14 @@
 
 #include <stdlib.h>
 #include "memory.h"
+#include "huc6260.h"
 #include "huc6280.h"
 #include "cartridge.h"
 #include "input.h"
 
-Memory::Memory(HuC6280* huc6280, Cartridge* cartridge, Input* input)
+Memory::Memory(HuC6260* huc6260, HuC6280* huc6280, Cartridge* cartridge, Input* input)
 {
+    m_huc6260 = huc6260;
     m_huc6280 = huc6280;
     m_cartridge = cartridge;
     m_input = input;

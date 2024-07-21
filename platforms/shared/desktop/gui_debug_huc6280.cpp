@@ -39,7 +39,7 @@ void gui_debug_window_huc6280(void)
 
     GeargrafxCore* core = emu_get_core();
     HuC6280* processor = core->GetHuC6280();
-    HuC6280::Processor_State* proc_state = processor->GetState();
+    HuC6280::HuC6280_State* proc_state = processor->GetState();
     Memory* memory = core->GetMemory();
     Input* input = core->GetInput();
 

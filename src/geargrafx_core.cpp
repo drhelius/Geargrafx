@@ -23,14 +23,16 @@
 #include "common.h"
 #include "cartridge.h"
 #include "memory.h"
-#include "huc6280.h"
+#include "huc6260.h"
 #include "huc6270.h"
+#include "huc6280.h"
 #include "audio.h"
 #include "input.h"
 
 GeargrafxCore::GeargrafxCore()
 {
     InitPointer(m_memory);
+    InitPointer(m_huc6260);
     InitPointer(m_huc6280);
     InitPointer(m_audio);
     // InitPointer(m_huc6270);
@@ -47,6 +49,7 @@ GeargrafxCore::~GeargrafxCore()
     // SafeDelete(m_huc6270);
     SafeDelete(m_audio);
     SafeDelete(m_huc6280);
+    SafeDelete(m_huc6260);
     SafeDelete(m_memory);
 }
 
@@ -59,14 +62,16 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_pixel_format = pixel_format;
 
     m_cartridge = new Cartridge();
+    m_huc6260 = new HuC6260();
     m_huc6280 = new HuC6280();
     m_input = new Input();
-    m_memory = new Memory(m_huc6280, m_cartridge, m_input);
+    m_memory = new Memory(m_huc6260, m_huc6280, m_cartridge, m_input);
     m_audio = new Audio();
     // m_huc6270 = new HuC6270(m_memory, m_huc6280);
 
     m_cartridge->Init();
     m_memory->Init();
+    m_huc6260->Init();
     m_huc6280->Init(m_memory);
     m_audio->Init();
     // m_huc6270->Init();
@@ -164,6 +169,11 @@ Memory* GeargrafxCore::GetMemory()
 Cartridge* GeargrafxCore::GetCartridge()
 {
     return m_cartridge;
+}
+
+HuC6260* GeargrafxCore::GetHuC6260()
+{
+    return m_huc6260;
 }
 
 HuC6280* GeargrafxCore::GetHuC6280()
@@ -497,6 +507,7 @@ void GeargrafxCore::ResetSound()
 void GeargrafxCore::Reset()
 {
     m_memory->Reset();
+    m_huc6260->Reset();
     m_huc6280->Reset();
     m_audio->Reset();
     // m_video->Reset(m_cartridge->IsPAL());

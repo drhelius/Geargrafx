@@ -192,7 +192,7 @@ void HuC6280::TickTimer(unsigned int cycles)
     }
 }
 
-HuC6280::Processor_State* HuC6280::GetState()
+HuC6280::HuC6280_State* HuC6280::GetState()
 {
     return &m_processor_state;
 }

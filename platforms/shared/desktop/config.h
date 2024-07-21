@@ -105,8 +105,7 @@ struct config_Debug
     bool show_disassembler = true;
     bool show_processor = true;
     bool show_memory = true;
-    bool show_video = false;
-    bool show_video_registers = true;
+    bool show_huc6260 = false;
     int font_size = 0;
 };
 

@@ -15,6 +15,7 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_actions.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_disassembler.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_huc6260.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6270.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6280.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_memeditor.cpp \
@@ -32,6 +33,7 @@ SOURCES_CXX := \
     $(SRC_DIR)/geargrafx_core.cpp \
     $(SRC_DIR)/audio.cpp \
     $(SRC_DIR)/cartridge.cpp \
+    $(SRC_DIR)/huc6260.cpp \
     $(SRC_DIR)/huc6270.cpp \
     $(SRC_DIR)/huc6280.cpp \
     $(SRC_DIR)/huc6280_functors.cpp \

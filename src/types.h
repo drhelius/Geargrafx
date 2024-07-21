@@ -72,22 +72,4 @@ enum GG_Controllers
     GG_CONTROLLER_2
 };
 
-enum GG_OPCode_Type
-{
-    GG_OPCode_Type_Implied,
-    GG_OPCode_Type_1b,
-    GG_OPCode_Type_1b_1b,
-    GG_OPCode_Type_1b_2b,
-    GG_OPCode_Type_2b,
-    GG_OPCode_Type_2b_2b_2b,
-    GG_OPCode_Type_1b_Relative,
-    GG_OPCode_Type_1b_1b_Relative
-};
-
-struct GG_OPCode_Info
-{
-    const char* name;
-    GG_OPCode_Type type;
-};
-
 #endif /* TYPES_H */

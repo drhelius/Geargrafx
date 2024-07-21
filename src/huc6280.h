@@ -37,7 +37,7 @@ class Memory;
 class HuC6280
 {
 public:
-    struct Processor_State
+    struct HuC6280_State
     {
         SixteenBitRegister* PC;
         EightBitRegister* A;
@@ -73,7 +73,7 @@ public:
     void WriteInterruptRegister(u32 address, u8 value);
     u8 ReadTimerRegister();
     void WriteTimerRegister(u32 address, u8 value);
-    Processor_State* GetState();
+    HuC6280_State* GetState();
     void DisassembleNextOPCode();
 
 private:
@@ -91,7 +91,7 @@ private:
     bool m_nmi_requested;
     bool m_high_speed;
     Memory* m_memory;
-    Processor_State m_processor_state;
+    HuC6280_State m_processor_state;
     bool m_timer_enabled;
     unsigned int m_timer_cycles;
     u8 m_timer_counter;

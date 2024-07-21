@@ -568,9 +568,7 @@ static void menu_debug(void)
 
         ImGui::MenuItem("Show Memory Editor", "", &config_debug.show_memory, config_debug.debug);
 
-        ImGui::MenuItem("Show HuC6270 Viewer", "", &config_debug.show_video, config_debug.debug);
-
-        ImGui::MenuItem("Show HuC6270 Registers", "", &config_debug.show_video_registers, config_debug.debug);
+        ImGui::MenuItem("Show HuC6260 Registers", "", &config_debug.show_huc6260, config_debug.debug);
 
         ImGui::Separator();
 

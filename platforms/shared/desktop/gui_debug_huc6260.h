@@ -17,4 +17,17 @@
  *
  */
 
-#include "huc6270.h"
+#ifndef GUI_DEBUG_HUC6260_H
+#define	GUI_DEBUG_HUC6260_H
+
+#ifdef GUI_DEBUG_HUC6260_IMPORT
+    #define EXTERN
+#else
+    #define EXTERN extern
+#endif
+
+EXTERN void gui_debug_window_huc6260(void);
+
+#undef GUI_DEBUG_HUC6260_IMPORT
+#undef EXTERN
+#endif /* GUI_DEBUG_HUC6260_H */

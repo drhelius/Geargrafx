@@ -19,7 +19,23 @@
 #ifndef HUC6280_NAME_H
 #define HUC6280_NAME_H
 
-#include "types.h"
+enum GG_OPCode_Type
+{
+    GG_OPCode_Type_Implied,
+    GG_OPCode_Type_1b,
+    GG_OPCode_Type_1b_1b,
+    GG_OPCode_Type_1b_2b,
+    GG_OPCode_Type_2b,
+    GG_OPCode_Type_2b_2b_2b,
+    GG_OPCode_Type_1b_Relative,
+    GG_OPCode_Type_1b_1b_Relative
+};
+
+struct GG_OPCode_Info
+{
+    const char* name;
+    GG_OPCode_Type type;
+};
 
 static const GG_OPCode_Info k_opcode_names[256] = {
     { "BRK", GG_OPCode_Type_Implied },

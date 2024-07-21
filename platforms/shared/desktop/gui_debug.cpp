@@ -25,6 +25,7 @@
 #include "gui_debug_disassembler.h"
 #include "gui_debug_huc6280.h"
 #include "gui_debug_huc6270.h"
+#include "gui_debug_huc6260.h"
 #include "gui_debug_memory.h"
 #include "config.h"
 
@@ -38,8 +39,8 @@ void gui_debug_windows(void)
             gui_debug_window_memory();
         if (config_debug.show_disassembler)
             gui_debug_window_disassembler();
-        // if (config_debug.show_video)
-        //     debug_window_vram();
+        if (config_debug.show_huc6260)
+            gui_debug_window_huc6260();
         // if (config_debug.show_video_registers)
         //     debug_window_vram_registers();
     }
