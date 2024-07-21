@@ -18,3 +18,28 @@
  */
 
 #include "huc6270.h"
+
+HuC6270::HuC6270()
+{
+
+}
+
+HuC6270::~HuC6270()
+{
+
+}
+
+void HuC6270::Init()
+{
+    Reset();
+}
+
+void HuC6270::Reset()
+{
+
+}
+
+HuC6270::HuC6270_State* HuC6270::GetState()
+{
+    return &m_state;
+}

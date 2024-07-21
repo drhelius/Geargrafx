@@ -25,6 +25,7 @@
 class Audio;
 class Input;
 class HuC6260;
+class HuC6270;
 class HuC6280;
 class Memory;
 class Cartridge;
@@ -61,10 +62,10 @@ public:
     Memory* GetMemory();
     Cartridge* GetCartridge();
     HuC6260* GetHuC6260();
+    HuC6270* GetHuC6270();
     HuC6280* GetHuC6280();
     Audio* GetAudio();
     Input* GetInput();
-    // HuC6270* GetHuC6270();
 
 private:
     void Reset();
@@ -73,13 +74,14 @@ private:
 private:
     Memory* m_memory;
     HuC6260* m_huc6260;
+    HuC6270* m_huc6270;
     HuC6280* m_huc6280;
-    Audio* m_audio;
-    // Video* m_huc6270;
+    Audio* m_audio;    
     Input* m_input;
     Cartridge* m_cartridge;
     bool m_paused;
     GG_Pixel_Format m_pixel_format;
+    int m_clock;
 };
 
 #endif /* GEARGRAFX_CORE_H */

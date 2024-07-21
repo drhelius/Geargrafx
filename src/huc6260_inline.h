@@ -74,18 +74,17 @@ inline void HuC6260::WriteRegister(u32 address, u8 value)
                 case 0:
                     Debug("HuC6260 Speed: 5.36 MHz");
                     m_speed = HuC6260_SPEED_5_36_MHZ;
+                    m_clock_divider = 4;
                     break;
                 case 1:
                     Debug("HuC6260 Speed: 7.16 MHz");
                     m_speed = HuC6260_SPEED_7_16_MHZ;
+                    m_clock_divider = 3;
                     break;
-                case 2:
+                default:
                     Debug("HuC6260 Speed: 10.8 MHz");
                     m_speed = HuC6260_SPEED_10_8_MHZ;
-                    break;
-                case 3:
-                    Debug("HuC6260 Speed: 10.8 MHz");
-                    m_speed = HuC6260_SPEED_10_8_MHZ;
+                    m_clock_divider = 2;
                     break;
             }
             break;

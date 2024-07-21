@@ -17,7 +17,10 @@
  *
  */
 
-#ifndef HUC6280_TIMER_H
-#define HUC6280_TIMER_H
+#ifndef HUC6270_INLINE_H
+#define HUC6270_INLINE_H
 
-#endif /* HUC6280_TIMER_H */
+#include "huc6270.h"
+
+
+#endif /* HUC6270_INLINE_H */

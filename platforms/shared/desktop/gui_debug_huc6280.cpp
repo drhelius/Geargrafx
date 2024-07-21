@@ -136,9 +136,10 @@ void gui_debug_window_huc6280(void)
             ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(input->GetIORegister()));
 
             ImGui::TableNextColumn();
+            u8 tim = (*proc_state->TIMER) ? 0x01 : 0x00;
             ImGui::TextColored(blue, "TIM  "); ImGui::SameLine();
-            ImGui::Text("$%02X", *proc_state->TIMER ? 1 : 0);
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->TIMER ? 1 : 0));
+            ImGui::Text("$%02X", tim);
+            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(tim));
 
             ImGui::TableNextColumn();
             ImGui::TextColored(blue, "TIMC"); ImGui::SameLine();

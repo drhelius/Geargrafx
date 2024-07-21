@@ -20,7 +20,32 @@
 #ifndef HUC6270_H
 #define HUC6270_H
 
+#include "common.h"
+
 #define GG_MAX_RESOLUTION_WIDTH 256
 #define GG_MAX_RESOLUTION_HEIGHT 192
+
+class HuC6270
+{
+public:
+    struct HuC6270_State
+    {
+
+    };
+
+public:
+    HuC6270();
+    ~HuC6270();
+    void Init();
+    void Reset();
+    u8 ReadRegister(u32 address);
+    void WriteRegister(u32 address, u8 value);
+    HuC6270_State* GetState();
+
+private:
+    HuC6270_State m_state;
+};
+
+#include "huc6270_inline.h"
 
 #endif /* HUC6270_H */

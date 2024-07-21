@@ -24,9 +24,10 @@ HuC6260::HuC6260()
     m_control_register = 0;
     m_color_table_address = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
+    m_clock_divider = 4;
     InitPointer(m_color_table);
-    state.CR = &m_control_register;
-    state.CTA = &m_color_table_address;
+    m_state.CR = &m_control_register;
+    m_state.CTA = &m_color_table_address;
 }
 
 HuC6260::~HuC6260()
@@ -45,6 +46,7 @@ void HuC6260::Reset()
     m_control_register = 0;
     m_color_table_address = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
+    m_clock_divider = 4;
     for (int i = 0; i < 512; i++)
     {
         m_color_table[i] = 0;
@@ -53,12 +55,17 @@ void HuC6260::Reset()
 
 HuC6260::HuC6260_State* HuC6260::GetState()
 {
-    return &state;
+    return &m_state;
 }
 
 HuC6260::HuC6260_Speed HuC6260::GetSpeed()
 {
     return m_speed;
+}
+
+int HuC6260::GetClockDivider()
+{
+    return m_clock_divider;
 }
 
 u16* HuC6260::GetColorTable()

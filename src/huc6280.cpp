@@ -33,6 +33,7 @@ HuC6280::HuC6280()
     m_nmi_requested = false;
     m_high_speed = false;
     m_timer_cycles = 0;
+    m_clock_cycles = 0;
     m_timer_enabled = false;
     m_timer_counter = 0;
     m_timer_reload = 0;
@@ -81,6 +82,7 @@ void HuC6280::Reset()
     SetFlag(FLAG_INTERRUPT);
     SetFlag(FLAG_BREAK);
     m_cycles = 0;
+    m_clock_cycles = 0;
     m_irq1_asserted = false;
     m_irq2_asserted = false;
     m_nmi_requested = false;
@@ -92,18 +94,6 @@ void HuC6280::Reset()
     m_timer_irq = false;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
-}
-
-unsigned int HuC6280::RunFor(unsigned int cycles)
-{
-    unsigned int count = 0;
-
-    while (count < cycles)
-    {
-        count += Tick();
-    }
-
-    return count;
 }
 
 unsigned int HuC6280::Tick()
@@ -169,9 +159,9 @@ unsigned int HuC6280::Tick()
     return m_cycles;
 }
 
-void HuC6280::TickTimer(unsigned int cycles)
+void HuC6280::ClockTimer()
 {
-    m_timer_cycles += cycles;
+    m_timer_cycles++;
 
     if (m_timer_cycles >= 1024)
     {
@@ -303,7 +293,7 @@ void HuC6280::DisassembleNextOPCode()
     }
     else if (record->bank >= 0xF8 && record->bank < 0xFC)
     {
-        strncpy(record->segment, "BRAM", 5);
+        strncpy(record->segment, "RAM ", 5);
     }
     else
     {

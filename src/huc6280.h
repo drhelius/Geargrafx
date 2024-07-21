@@ -62,9 +62,9 @@ public:
     ~HuC6280();
     void Init(Memory* memory);
     void Reset();
-    unsigned int RunFor(unsigned int cycles);
+    bool Clock();
     unsigned int Tick();
-    void TickTimer(unsigned int cycles);
+    void ClockTimer();
     void AssertIRQ1(bool asserted);
     void AssertIRQ2(bool asserted);
     void RequestNMI();
@@ -86,6 +86,7 @@ private:
     EightBitRegister m_S;
     EightBitRegister m_P;
     unsigned int m_cycles;
+    unsigned int m_clock_cycles;
     bool m_irq1_asserted;
     bool m_irq2_asserted;
     bool m_nmi_requested;

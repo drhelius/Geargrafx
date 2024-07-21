@@ -23,6 +23,16 @@
 #include "huc6280.h"
 #include "memory.h"
 
+inline bool HuC6280::Clock()
+{
+    if (m_clock_cycles == 0)
+        m_clock_cycles = Tick();
+
+    m_clock_cycles--;
+
+    return m_clock_cycles == 0;
+}
+
 inline void HuC6280::AssertIRQ1(bool asserted)
 {
     Debug("IRQ1 asserted: %s", asserted ? "true" : "false");

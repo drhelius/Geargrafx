@@ -39,6 +39,5 @@ SOURCES_CXX := \
     $(SRC_DIR)/huc6280_functors.cpp \
     $(SRC_DIR)/huc6280_opcodes.cpp \
     $(SRC_DIR)/huc6280_psg.cpp \
-    $(SRC_DIR)/huc6280_timer.cpp \
     $(SRC_DIR)/input.cpp \
     $(SRC_DIR)/memory.cpp \

@@ -33,12 +33,13 @@ GeargrafxCore::GeargrafxCore()
 {
     InitPointer(m_memory);
     InitPointer(m_huc6260);
+    InitPointer(m_huc6270);
     InitPointer(m_huc6280);
     InitPointer(m_audio);
-    // InitPointer(m_huc6270);
     InitPointer(m_input);
     InitPointer(m_cartridge);
     m_paused = true;
+    m_clock = 0;
     m_pixel_format = GG_PIXEL_RGB888;
 }
 
@@ -46,9 +47,9 @@ GeargrafxCore::~GeargrafxCore()
 {
     SafeDelete(m_cartridge);
     SafeDelete(m_input);
-    // SafeDelete(m_huc6270);
     SafeDelete(m_audio);
     SafeDelete(m_huc6280);
+    SafeDelete(m_huc6270);
     SafeDelete(m_huc6260);
     SafeDelete(m_memory);
 }
@@ -63,18 +64,18 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 
     m_cartridge = new Cartridge();
     m_huc6260 = new HuC6260();
+    m_huc6270 = new HuC6270();
     m_huc6280 = new HuC6280();
     m_input = new Input();
     m_memory = new Memory(m_huc6260, m_huc6280, m_cartridge, m_input);
     m_audio = new Audio();
-    // m_huc6270 = new HuC6270(m_memory, m_huc6280);
 
     m_cartridge->Init();
     m_memory->Init();
     m_huc6260->Init();
+    m_huc6270->Init();
     m_huc6280->Init(m_memory);
     m_audio->Init();
-    // m_huc6270->Init();
     m_input->Init();
 }
 
@@ -85,33 +86,43 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     if (m_paused || !m_cartridge->IsReady())
         return false;
 
-    bool stop = step_debugger;
-    int clocks = 0;
-    bool high_speed = m_huc6280->IsHighSpeed();
+    bool stop = false;
+
+    int huc6280_divider = m_huc6280->IsHighSpeed() ? 3 : 12;
+    int huc6260_divider = m_huc6260->GetClockDivider();
+    const int timer_divider = 3;
+    const int audio_divider = 6;
 
     do
     {
-        unsigned int cpu_clocks = m_huc6280->Tick();
-        unsigned int timer_clocks = high_speed ? cpu_clocks : cpu_clocks << 2;
-        unsigned int video_clocks = high_speed ? cpu_clocks : cpu_clocks << 2;
-        unsigned int audio_clocks = high_speed ? cpu_clocks << 1 : cpu_clocks >> 1;
+        m_clock++;
+        bool instruction_completed = false;
 
-        m_huc6280->TickTimer(timer_clocks);
-        // stop = m_huc6270->Tick(clockCycles);
-        m_audio->Tick(audio_clocks);
+        if (m_clock % huc6280_divider == 0)
+            instruction_completed = m_huc6280->Clock();
 
-        // if (m_processor->BreakpointHit())
-        //     breakpoint = true;
+        if (m_clock % timer_divider == 0)
+            m_huc6280->ClockTimer();
 
-        clocks += video_clocks;
+        if (m_clock % huc6260_divider == 0)
+            m_huc6260->Clock();
 
-        if (clocks > 72240)
+        if (m_clock % audio_divider == 0)
+            m_audio->Clock();
+
+        if (step_debugger && instruction_completed)
             stop = true;
 
-        m_audio->EndFrame(sample_buffer, sample_count);
-        RenderFrameBuffer(frame_buffer);
+        if (m_clock >= 72240)
+        {
+            m_clock -= 72240;
+            stop = true;
+        }
     }
     while (!stop);
+
+    m_audio->EndFrame(sample_buffer, sample_count);
+    RenderFrameBuffer(frame_buffer);
 
     return breakpoint;
 }
@@ -176,6 +187,11 @@ HuC6260* GeargrafxCore::GetHuC6260()
     return m_huc6260;
 }
 
+HuC6270* GeargrafxCore::GetHuC6270()
+{
+    return m_huc6270;
+}
+
 HuC6280* GeargrafxCore::GetHuC6280()
 {
     return m_huc6280;
@@ -190,11 +206,6 @@ Input* GeargrafxCore::GetInput()
 {
     return m_input;
 }
-
-// Video* GeargrafxCore::GetVideo()
-// {
-//     return m_video;
-// }
 
 void GeargrafxCore::KeyPressed(GG_Controllers controller, GG_Keys key)
 {
@@ -506,11 +517,12 @@ void GeargrafxCore::ResetSound()
 
 void GeargrafxCore::Reset()
 {
+    m_clock = 0;
     m_memory->Reset();
     m_huc6260->Reset();
+    m_huc6270->Reset();
     m_huc6280->Reset();
     m_audio->Reset();
-    // m_video->Reset(m_cartridge->IsPAL());
     m_input->Reset();
     m_paused = false;
 }

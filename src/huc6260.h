@@ -48,13 +48,15 @@ public:
     void WriteRegister(u32 address, u8 value);
     HuC6260_State* GetState();
     HuC6260_Speed GetSpeed();
+    int GetClockDivider();
     u16* GetColorTable();
 
 private:
-    HuC6260_State state;
+    HuC6260_State m_state;
     u8 m_control_register;
     u16 m_color_table_address;
     HuC6260_Speed m_speed;
+    int m_clock_divider;
     u16* m_color_table;
 };
 
