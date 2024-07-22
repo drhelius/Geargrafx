@@ -12,17 +12,21 @@ define HEADER
 endef
 export HEADER
 
-CXX = g++
-CC = gcc
-#CXX = clang++
-#CC = clang
-
 TARGET_NAME = geargrafx
 GIT_VERSION := "$(shell git describe --abbrev=7 --dirty --always --tags)"
 UNAME_S := $(shell uname -s)
 PLATFORM = "undefined"
 
 OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
+
+USE_CLANG ?= 0
+ifeq ($(USE_CLANG), 1)
+    CXX = clang++
+    CC = clang
+else
+    CXX = g++
+    CC = gcc
+endif
 
 CPPFLAGS += -I../ -I../../
 CPPFLAGS += -Wall -Wextra -Wformat  -DEMULATOR_BUILD=\"$(GIT_VERSION)\"

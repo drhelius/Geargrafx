@@ -6,20 +6,23 @@ ENV LANG="C.UTF-8"
 RUN apt-get update \
     && apt-get upgrade -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        vim \
         make \
+        cmake \
         unzip \
         zip \
+        xxd \
         build-essential \
+        gdb \
+        clang \
+        lldb \
         libsdl2-dev \
         libglew-dev \
         libgtk-3-dev \
-        gdb \
-        vim \
-        cmake \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get autoremove -y && apt-get clean -y
 
-# Default to bash shell (other shells available at /usr/bin/fish and /usr/bin/zsh)
+# Default to zsh shell
 ENV SHELL=/usr/bin/zsh \
     DOCKER_BUILDKIT=1
 
