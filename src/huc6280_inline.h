@@ -111,25 +111,30 @@ inline u8 HuC6280::ReadTimerRegister()
 inline void HuC6280::WriteTimerRegister(u32 address, u8 value)
 {
     Debug("Timer register write at %06X, value=%02X", address, value);
-    if (address == 0x1FEC00)
+
+    switch (address & 0x01)
     {
-        m_timer_reload = value & 0x7F;
-        Debug("Timer reload: %02X", m_timer_reload);
-    }
-    else if (address == 0x1FEC01)
-    {
-        bool enabled = (value & 0x01);
-        if (!m_timer_enabled && enabled)
+        case 0:
         {
-            m_timer_counter = m_timer_reload;
-            Debug("Timer reload when enabled: %02X", m_timer_reload);
+            m_timer_reload = value & 0x7F;
+            Debug("Timer reload: %02X", m_timer_reload);
+            break;
         }
-        m_timer_enabled = enabled;
-        Debug("Timer enabled: %s", m_timer_enabled ? "true" : "false");
-    }
-    else
-    {
-        Debug("Invalid timer register write at %06X, value=%02X", address, value);
+        case 1:
+        {
+            bool enabled = (value & 0x01);
+            if (!m_timer_enabled && enabled)
+            {
+                m_timer_counter = m_timer_reload;
+                Debug("Timer reload when enabled: %02X", m_timer_reload);
+            }
+            m_timer_enabled = enabled;
+            Debug("Timer enabled: %s", m_timer_enabled ? "true" : "false");
+            break;
+        }
+        default:
+            Debug("Invalid timer register write at %06X, value=%02X", address, value);
+            break;
     }
 }
 

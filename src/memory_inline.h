@@ -102,23 +102,22 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
                     return m_io_buffer;
                 }
             case 0x1400:
-                if (physical_address == 0x1FF402 || physical_address == 0x1FF403)
+            {
+                // Interrupt registers
+                if (block_transfer)
+                    return 0x00;
+                else
                 {
-                    // Interrupt registers
-                    if (block_transfer)
-                        return 0x00;
+                    int reg = physical_address & 0x03;
+                    if (reg < 0x02)
+                        return m_io_buffer;
                     else
                     {
                         m_io_buffer = (m_huc6280->ReadInterruptRegister(physical_address) & 0x07) | (m_io_buffer & 0xF8);
                         return m_io_buffer;
                     }
                 }
-                else
-                {
-                    // CD-ROM read
-                    Debug("CD-ROM read at %06X", physical_address);
-                    return block_transfer ? 0x00 : m_io_buffer;
-                }
+            }
             case 0x1800:
                 // Unused
                 Debug("Unused hardware read at %06X", physical_address);
@@ -198,18 +197,13 @@ inline void Memory::Write(u16 address, u8 value)
                 m_io_buffer = value;
                 break;
             case 0x1400:
-                if (physical_address == 0x1FF402 || physical_address == 0x1FF403)
-                {
-                    // Interrupt registers
+            {
+                int reg = physical_address & 0x03;
+                if (reg >= 0x02)
                     m_huc6280->WriteInterruptRegister(physical_address, value);
-                }
-                else
-                {
-                    // CD-ROM write
-                    Debug("CD-ROM write at %06X, value=%02X", physical_address, value);
-                }
                 m_io_buffer = value;
                 break;
+            }
             case 0x1800:
                 // Unused
                 Debug("Unused hardware write at %06X, value=%02X", physical_address, value);

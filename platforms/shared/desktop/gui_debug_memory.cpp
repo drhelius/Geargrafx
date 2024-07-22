@@ -42,18 +42,7 @@ void gui_debug_window_memory(void)
     GeargrafxCore* core = emu_get_core();
     Memory* memory = core->GetMemory();
     Cartridge* cart = core->GetCartridge();
-    // Video* video = core->GetVideo();
-
-    ImGui::PushFont(gui_default_font);
-
-    // ImGui::TextColored(cyan, "  ROM: ");ImGui::SameLine();
-
-    // ImGui::TextColored(magenta, "BANK");ImGui::SameLine();
-    // ImGui::Text("$%02X", memory->GetRomBank()); ImGui::SameLine();
-    // ImGui::TextColored(magenta, "  ADDRESS");ImGui::SameLine();
-    // ImGui::Text("$%05X", memory->GetRomBankAddress());
-
-    ImGui::PopFont();
+    HuC6270* huc6270 = core->GetHuC6270();
 
     if (ImGui::BeginTabBar("##memory_tabs", ImGuiTabBarFlags_None))
     {
@@ -86,6 +75,17 @@ void gui_debug_window_memory(void)
                 mem_edit_select = -1;
             current_mem_edit = 2;
             mem_edit[current_mem_edit].Draw(cart->GetROM(), cart->GetROMSize());
+            ImGui::PopFont();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("VRAM", NULL, mem_edit_select == 3 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        {
+            ImGui::PushFont(gui_default_font);
+            if (mem_edit_select == 3)
+                mem_edit_select = -1;
+            current_mem_edit = 3;
+            mem_edit[current_mem_edit].Draw((u8*)huc6270->GetVRAM(), 0x10000);
             ImGui::PopFont();
             ImGui::EndTabItem();
         }

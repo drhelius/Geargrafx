@@ -42,9 +42,11 @@ public:
     void WriteRegister(u32 address, u8 value);
     void DirectWrite(u32 address, u8 value);
     HuC6270_State* GetState();
+    u16* GetVRAM();
 
 private:
     HuC6270_State m_state;
+    u16* m_vram;
 };
 
 #include "huc6270_inline.h"

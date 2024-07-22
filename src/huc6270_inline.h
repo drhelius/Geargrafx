@@ -25,11 +25,47 @@
 inline u8 HuC6270::ReadRegister(u32 address)
 {
     Debug("HuC6270 read at %06X", address);
+    switch (address & 0x03)
+    {
+        case 0:
+            // Status register
+            Debug("HuC6270 read status register");
+            break;
+        case 2:
+            // Data register (LSB)
+            Debug("HuC6270 read data register (LSB)");
+            break;
+        case 3:
+            // Data register (MSB)
+            Debug("HuC6270 read data register (MSB)");
+            break;
+        default:
+            Debug("HuC6270 invalid read at %06X", address);
+            return 0x00;
+    }
 }
 
 inline void HuC6270::WriteRegister(u32 address, u8 value)
 {
     Debug("HuC6270 write at %06X, value=%02X", address, value);
+    switch (address & 0x03)
+    {
+        case 0:
+            // Address register
+            Debug("HuC6270 write address register: %02X", value);
+            break;
+        case 2:
+            // Data register (LSB)
+            Debug("HuC6270 write data register (LSB): %02X", value);
+            break;
+        case 3:
+            // Data register (MSB)
+            Debug("HuC6270 write data register (MSB): %02X", value);
+            break;
+        default:
+            Debug("HuC6270 invalid write at %06X, value=%02X", address, value);
+            break;
+    }
 }
 
 inline void HuC6270::DirectWrite(u32 address, u8 value)
@@ -49,6 +85,8 @@ inline void HuC6270::DirectWrite(u32 address, u8 value)
             Debug("HuC6270 invalid direct write at %06X, value=%02X", address, value);
             break;
     }
+
+    WriteRegister(address, value);
 }
 
 #endif /* HUC6270_INLINE_H */

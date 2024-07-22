@@ -17,29 +17,39 @@
  *
  */
 
+#include <stdlib.h>
 #include "huc6270.h"
 
 HuC6270::HuC6270()
 {
-
+    InitPointer(m_vram);
 }
 
 HuC6270::~HuC6270()
 {
-
+    SafeDeleteArray(m_vram);
 }
 
 void HuC6270::Init()
 {
+    m_vram = new u16[0x8000];
     Reset();
 }
 
 void HuC6270::Reset()
 {
-
+    for (int i = 0; i < 0x8000; i++)
+    {
+        m_vram[i] = rand() & 0xFFFF;
+    }
 }
 
 HuC6270::HuC6270_State* HuC6270::GetState()
 {
     return &m_state;
+}
+
+u16* HuC6270::GetVRAM()
+{
+    return m_vram;
 }

@@ -421,7 +421,7 @@ void MemEditor::DrawCursors()
 
     ImGui::TextColored(color, "REGION:");
     ImGui::SameLine();
-    ImGui::Text(range_addr, m_mem_base_addr, m_mem_base_addr + m_mem_size);
+    ImGui::Text(range_addr, m_mem_base_addr, m_mem_base_addr + m_mem_size - 1);
     ImGui::SameLine();
     ImGui::TextColored(color, " SELECTION:");
     ImGui::SameLine();
