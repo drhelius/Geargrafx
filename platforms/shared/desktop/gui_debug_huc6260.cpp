@@ -56,7 +56,7 @@ void gui_debug_window_huc6260(void)
     ImGui::TextColored(IsSetBit(*huc6260_state->CR, 2) ? green : gray, "%s", IsSetBit(*huc6260_state->CR, 2) ? "ON" : "OFF");
 
     ImGui::TextColored(magenta, " SPEED "); ImGui::SameLine();
-    const char* speed[] = { "10.8 MHz", "7.16 MHz", "3.58 MHz" };
+    const char* speed[] = { "10.8 MHz", "7.16 MHz", "5.36 MHz" };
     ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
 
     ImGui::NewLine();
