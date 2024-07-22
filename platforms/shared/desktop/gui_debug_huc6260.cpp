@@ -34,7 +34,7 @@ void gui_debug_window_huc6260(void)
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(6, 31), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
-    ImGui::Begin("HuC6270", &config_debug.show_huc6260);
+    ImGui::Begin("HuC6260", &config_debug.show_huc6260);
 
     ImGui::PushFont(gui_default_font);
 
@@ -59,6 +59,12 @@ void gui_debug_window_huc6260(void)
     const char* speed[] = { "10.8 MHz", "7.16 MHz", "3.58 MHz" };
     ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
 
+    ImGui::NewLine();
+
+    ImGui::PushStyleColor(ImGuiCol_Text, cyan);
+    ImGui::SeparatorText("BACKGROUND PALETTE");
+    ImGui::PopStyleColor();
+
     ImGui::NewLine(); ImGui::Text(" "); ImGui::SameLine(0,0);
 
     for (int row = 0; row < 32; row++)
@@ -75,7 +81,7 @@ void gui_debug_window_huc6260(void)
             ImVec4 float_color = color_333_to_float(color);
             char id[16];
             sprintf(id, "##pal_%d_%d", row, col);
-            ImGui::ColorEdit3(id, (float*)&float_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker);
+            ImGui::ColorEdit3(id, (float*)&float_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip);
             if (col != 15)
                 ImGui::SameLine(0, 10);
         }
@@ -92,6 +98,15 @@ void gui_debug_window_huc6260(void)
             ImGui::TextColored(green, "%01X", color_green); ImGui::SameLine(0,0);
             ImGui::TextColored(red, "%01X", color_red); ImGui::SameLine(0,0);
             ImGui::TextColored(blue, "%01X", color_blue); ImGui::SameLine();
+        }
+
+        if (row == 15)
+        {
+            ImGui::NewLine();
+            ImGui::NewLine();
+            ImGui::PushStyleColor(ImGuiCol_Text, cyan);
+            ImGui::SeparatorText("SPRITES PALETTE");
+            ImGui::PopStyleColor();
         }
 
         ImGui::NewLine(); ImGui::Text(" "); ImGui::SameLine(0,0);
