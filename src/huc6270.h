@@ -30,7 +30,9 @@ class HuC6270
 public:
     struct HuC6270_State
     {
-
+        u8* AR;
+        u8* SR;
+        u16* R;
     };
 
 public:
@@ -38,6 +40,7 @@ public:
     ~HuC6270();
     void Init();
     void Reset();
+    u16 Clock();
     u8 ReadRegister(u32 address);
     void WriteRegister(u32 address, u8 value);
     void DirectWrite(u32 address, u8 value);
@@ -47,7 +50,20 @@ public:
 private:
     HuC6270_State m_state;
     u16* m_vram;
+    u8 m_address_register;
+    u8 m_status_register;
+    u16 m_register[20];
+    u16 m_read_buffer;
+
+private:
+    u8 ReadDataRegister(bool msb);
+    void WriteDataRegister(u8 value, bool msb);
 };
+
+const u16 k_register_mask[20] = { 0xFFFF, 0xFFFF, 0xFFFF, 0x0000, 0x0000,
+                        0x1FFF, 0x03FF, 0x03FF, 0x01FF, 0x00FF,
+                        0x7F1F, 0x7F7F, 0xFF1F, 0x01FF, 0x00FF,
+                        0x001F, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 
 #include "huc6270_inline.h"
 

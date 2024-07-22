@@ -23,6 +23,16 @@
 HuC6270::HuC6270()
 {
     InitPointer(m_vram);
+    m_address_register = 0;
+    m_status_register = 0;
+    m_read_buffer = 0;
+    for (int i = 0; i < 20; i++)
+    {
+        m_register[i] = 0;
+    }
+    m_state.AR = &m_address_register;
+    m_state.SR = &m_status_register;
+    m_state.R = m_register;
 }
 
 HuC6270::~HuC6270()
@@ -38,6 +48,15 @@ void HuC6270::Init()
 
 void HuC6270::Reset()
 {
+    m_address_register = 0;
+    m_status_register = 0;
+    m_read_buffer = 0xFFFF;
+
+    for (int i = 0; i < 20; i++)
+    {
+        m_register[i] = 0;
+    }
+
     for (int i = 0; i < 0x8000; i++)
     {
         m_vram[i] = rand() & 0xFFFF;

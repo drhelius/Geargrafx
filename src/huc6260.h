@@ -22,6 +22,8 @@
 
 #include "common.h"
 
+class HuC6270;
+
 class HuC6260
 {
 public:
@@ -39,7 +41,7 @@ public:
     };
 
 public:
-    HuC6260();
+    HuC6260(HuC6270* huc6270);
     ~HuC6260();
     void Init();
     void Reset();
@@ -52,6 +54,7 @@ public:
     u16* GetColorTable();
 
 private:
+    HuC6270* m_huc6270;
     HuC6260_State m_state;
     u8 m_control_register;
     u16 m_color_table_address;

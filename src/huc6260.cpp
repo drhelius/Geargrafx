@@ -19,8 +19,9 @@
 
 #include "huc6260.h"
 
-HuC6260::HuC6260()
+HuC6260::HuC6260(HuC6270* huc6270)
 {
+    m_huc6270 = huc6270;
     m_control_register = 0;
     m_color_table_address = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
