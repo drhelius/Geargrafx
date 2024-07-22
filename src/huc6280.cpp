@@ -230,8 +230,8 @@ void HuC6280::DisassembleNextOPCode()
     {
         char value[4];
         snprintf(value, 4, "%02X", record->opcodes[i]);
-        strncat(record->bytes, value, 20);
-        strncat(record->bytes, " ", 20);
+        strncat(record->bytes, value, 24);
+        strncat(record->bytes, " ", 24);
     }
 
     switch (k_opcode_names[opcode].type)

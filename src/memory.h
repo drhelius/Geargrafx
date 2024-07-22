@@ -34,7 +34,7 @@ public:
     {
         u32 address;
         char name[64];
-        char bytes[20];
+        char bytes[25];
         int size;
         u8 opcodes[7];
         bool jump;
