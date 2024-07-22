@@ -30,7 +30,7 @@ public:
     MemEditor();
     ~MemEditor();
 
-    void Draw(uint8_t* mem_data, int mem_size, int base_display_addr = 0x0000);
+    void Draw(uint8_t* mem_data, int mem_size, int base_display_addr = 0x0000, int word = 1);
     void Copy(uint8_t** data, int* size);
     void Paste(uint8_t* data, int size);
     void JumpToAddress(int address);
@@ -67,6 +67,7 @@ private:
     int m_mem_size;
     int m_mem_base_addr;
     char m_hex_mem_format[6];
+    int m_mem_word;
 };
 
 #endif /* GUI_DEBUG_MEMEDITOR_H */

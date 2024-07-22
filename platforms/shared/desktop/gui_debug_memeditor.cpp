@@ -40,6 +40,7 @@ MemEditor::MemEditor()
     m_mem_data = NULL;
     m_mem_size = 0;
     m_mem_base_addr = 0;
+    m_mem_word = 1;
 }
 
 MemEditor::~MemEditor()
@@ -47,11 +48,15 @@ MemEditor::~MemEditor()
 
 }
 
-void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
+void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int word)
 {
     m_mem_data = mem_data;
     m_mem_size = mem_size;
     m_mem_base_addr = base_display_addr;
+    m_mem_word = word;
+
+    if ((m_mem_word > 1) && m_preview_data_type < 2)
+        m_preview_data_type = 2;
 
     int hex_digits = 1;
     int size = mem_size - 1;
@@ -76,7 +81,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
     int byte_cell_padding = 0;
     int ascii_padding = 4;
     int character_cell_padding = 0;
-    int max_chars_per_cell = 2;
+    int max_chars_per_cell = 2 * m_mem_word;
     ImVec2 character_size = ImGui::CalcTextSize("0");
     float footer_height = (ImGui::GetFrameHeightWithSpacing() * 4) + 4;
     char buf[32];
@@ -133,8 +138,6 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
                 if (IsColumnSeparator(i, m_bytes_per_row))
                     ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, m_separator_column_width);
 
-                sprintf(buf, "%02X", i);
-
                 ImGui::TableSetupColumn(buf, ImGuiTableColumnFlags_WidthFixed, character_size.x * max_chars_per_cell + (6 + byte_cell_padding) * 1);
             }
 
@@ -181,7 +184,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
 
                         if (m_editing_address == byte_address)
                         {
-                            ImGui::PushItemWidth((character_size).x *2);
+                            ImGui::PushItemWidth((character_size).x * (2 * m_mem_word));
                             sprintf(buf, "%02X", mem_data[byte_address]);
 
                             if (m_set_keyboard_here)
@@ -193,7 +196,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
                             ImGui::PushStyleColor(ImGuiCol_Text, red);
                             ImGui::PushStyleColor(ImGuiCol_FrameBg, dark_cyan);
 
-                            if (ImGui::InputText("##editing_input", buf, 3, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_AlwaysOverwrite))
+                            if (ImGui::InputText("##editing_input", buf, (m_mem_word == 1) ? 3 : 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_AlwaysOverwrite))
                             {
                                 try
                                 {
@@ -221,11 +224,21 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr)
                         {
                             ImGui::PushItemWidth((character_size).x);
 
-                            bool gray_out = m_gray_out_zeros && mem_data[byte_address] == 0;
-                            bool highlight = (byte_address >= m_selection_start && byte_address < (m_selection_start + DataPreviewSize()));
+                            uint16_t data = 0;
+
+                            if (m_mem_word == 1)
+                                data = mem_data[byte_address];
+                            else if (m_mem_word == 2)
+                                data = *(uint16_t*)&mem_data[byte_address];
+
+                            bool gray_out = m_gray_out_zeros && (data== 0);
+                            bool highlight = (byte_address >= m_selection_start && byte_address < (m_selection_start + (DataPreviewSize() / m_mem_word)));
 
                             ImVec4 color = highlight ? highlight_color : (gray_out ? gray_color : normal_color);
-                            ImGui::TextColored(color, m_uppercase_hex ? "%02X" : "%02x", mem_data[byte_address]);
+                            if (m_mem_word == 1)
+                                ImGui::TextColored(color, m_uppercase_hex ? "%02X" : "%02x", data);
+                            else if (m_mem_word == 2)
+                                ImGui::TextColored(color, m_uppercase_hex ? "%04X" : "%04x", data);
 
                             if (cell_hovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                             {
