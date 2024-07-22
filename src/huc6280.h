@@ -70,6 +70,7 @@ public:
     void AssertIRQ2(bool asserted);
     void RequestNMI();
     bool IsHighSpeed();
+    void InjectCycles(unsigned int cycles);
     u8 ReadInterruptRegister(u32 address);
     void WriteInterruptRegister(u32 address, u8 value);
     u8 ReadTimerRegister();

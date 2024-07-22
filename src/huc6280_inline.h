@@ -56,6 +56,11 @@ inline bool HuC6280::IsHighSpeed()
     return m_high_speed;
 }
 
+inline void HuC6280::InjectCycles(unsigned int cycles)
+{
+    m_cycles += cycles;
+}
+
 inline u8 HuC6280:: ReadInterruptRegister(u32 address)
 {
     Debug("Interrupt register read at %06X", address);
