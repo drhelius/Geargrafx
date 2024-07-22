@@ -49,9 +49,13 @@ inline u8 HuC6260::ReadRegister(u32 address)
             Debug("HuC6260 Read color table data LSB");
             return m_color_table[m_color_table_address] & 0xFF;
         case 5:
+        {
             // Color table data MSB
             Debug("HuC6260 Read color table data MSB");
-            return 0xFE | ((m_color_table[m_color_table_address] >> 8) & 0x01);
+            u8 ret = 0xFE | ((m_color_table[m_color_table_address] >> 8) & 0x01);
+            m_color_table_address = (m_color_table_address + 1) & 0x01FF;
+            return ret;
+        }
         default:
             // Not used
             Debug("HuC6260 Read unused register");
@@ -107,8 +111,7 @@ inline void HuC6260::WriteRegister(u32 address, u8 value)
             // Color table data MSB
             Debug("HuC6260 Write color table data MSB: %02X", value);
             m_color_table[m_color_table_address] = (m_color_table[m_color_table_address] & 0x00FF) | ((value & 0x01) << 8);
-            m_color_table_address++;
-            m_color_table_address &= 0x01FF;
+            m_color_table_address = (m_color_table_address + 1) & 0x01FF;
             break;
         default:
             // Not used
