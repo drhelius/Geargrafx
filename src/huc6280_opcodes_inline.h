@@ -21,6 +21,7 @@
 #define HUC6280_OPCODES_INLINE_H
 
 #include "huc6280.h"
+#include "huc6270.h"
 #include "memory.h"
 #include "huc6280_names.h"
 
@@ -455,6 +456,12 @@ inline void HuC6280::OPCodes_Store(EightBitRegister* reg, u16 address)
     ClearFlag(FLAG_TRANSFER);
     u8 value = reg->GetValue();
     m_memory->Write(address, value);
+}
+
+inline void HuC6280::OPCodes_STN(int reg, u8 value)
+{
+    ClearFlag(FLAG_TRANSFER);
+    m_huc6270->DirectWrite(0x1FE000 | (reg & 0x03), value);
 }
 
 inline void HuC6280::OPCodes_STZ(u16 address)

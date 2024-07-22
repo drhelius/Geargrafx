@@ -40,6 +40,7 @@ public:
     void Reset();
     u8 ReadRegister(u32 address);
     void WriteRegister(u32 address, u8 value);
+    void DirectWrite(u32 address, u8 value);
     HuC6270_State* GetState();
 
 private:

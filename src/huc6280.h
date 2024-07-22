@@ -33,6 +33,7 @@
 #define FLAG_NEGATIVE   0x80
 
 class Memory;
+class HuC6270;
 
 class HuC6280
 {
@@ -60,7 +61,7 @@ public:
 public:
     HuC6280();
     ~HuC6280();
-    void Init(Memory* memory);
+    void Init(Memory* memory, HuC6270* huc6270);
     void Reset();
     bool Clock();
     unsigned int Tick();
@@ -92,6 +93,7 @@ private:
     bool m_nmi_requested;
     bool m_high_speed;
     Memory* m_memory;
+    HuC6270* m_huc6270;
     HuC6280_State m_processor_state;
     bool m_timer_enabled;
     unsigned int m_timer_cycles;
@@ -162,6 +164,7 @@ private:
     void OPCodes_SBC(u8 value);
     void OPCodes_SMB(int bit, u16 address);
     void OPCodes_Store(EightBitRegister* reg, u16 address);
+    void OPCodes_STN(int reg, u8 value);
     void OPCodes_STZ(u16 address);
     void OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2);
     void OPCodes_TAM();

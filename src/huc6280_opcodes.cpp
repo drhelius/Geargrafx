@@ -40,10 +40,8 @@ void HuC6280::OPCode0x02()
 
 void HuC6280::OPCode0x03()
 {
-    // TODO
     // ST0 #nn
-    u8 nn = Fetch8();
-    Debug("ST0 %02X (HuC6270 0x1FE000)", nn);
+    OPCodes_STN(0, ImmediateAddressing());
 }
 
 void HuC6280::OPCode0x04()
@@ -139,10 +137,8 @@ void HuC6280::OPCode0x12()
 
 void HuC6280::OPCode0x13()
 {
-    // TODO
     // ST1 #nn
-    u8 nn = Fetch8();
-    Debug("ST1 %02X (HuC6270 0x1FE002)", nn);
+    OPCodes_STN(2, ImmediateAddressing());
 }
 
 void HuC6280::OPCode0x14()
@@ -239,10 +235,8 @@ void HuC6280::OPCode0x22()
 
 void HuC6280::OPCode0x23()
 {
-    // TODO
     // ST2 #nn
-    u8 nn = Fetch8();
-    Debug("ST2 %02X (HuC6270 0x1FE000)", nn);
+    OPCodes_STN(3, ImmediateAddressing());
 }
 
 void HuC6280::OPCode0x24()

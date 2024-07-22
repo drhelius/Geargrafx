@@ -62,9 +62,10 @@ HuC6280::~HuC6280()
 {
 }
 
-void HuC6280::Init(Memory* memory)
+void HuC6280::Init(Memory* memory, HuC6270* huc6270)
 {
     m_memory = memory;
+    m_huc6270 = huc6270;
 }
 
 void HuC6280::Reset()

@@ -22,5 +22,33 @@
 
 #include "huc6270.h"
 
+inline u8 HuC6270::ReadRegister(u32 address)
+{
+    Debug("HuC6270 read at %06X", address);
+}
+
+inline void HuC6270::WriteRegister(u32 address, u8 value)
+{
+    Debug("HuC6270 write at %06X, value=%02X", address, value);
+}
+
+inline void HuC6270::DirectWrite(u32 address, u8 value)
+{
+    switch (address)
+    {
+        case 0x1FE000:
+            Debug("HuC6270 direct write (ST0) at %06X, value=%02X", address, value);
+            break;
+        case 0x1FE002:
+            Debug("HuC6270 direct write (ST1) at %06X, value=%02X", address, value);
+            break;
+        case 0x1FE003:
+            Debug("HuC6270 direct write (ST2) at %06X, value=%02X", address, value);
+            break;
+        default:
+            Debug("HuC6270 invalid direct write at %06X, value=%02X", address, value);
+            break;
+    }
+}
 
 #endif /* HUC6270_INLINE_H */

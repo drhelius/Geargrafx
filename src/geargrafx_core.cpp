@@ -67,14 +67,14 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_huc6270 = new HuC6270();
     m_huc6280 = new HuC6280();
     m_input = new Input();
-    m_memory = new Memory(m_huc6260, m_huc6280, m_cartridge, m_input);
+    m_memory = new Memory(m_huc6260, m_huc6270, m_huc6280, m_cartridge, m_input);
     m_audio = new Audio();
 
     m_cartridge->Init();
     m_memory->Init();
     m_huc6260->Init();
     m_huc6270->Init();
-    m_huc6280->Init(m_memory);
+    m_huc6280->Init(m_memory, m_huc6270);
     m_audio->Init();
     m_input->Init();
 }
