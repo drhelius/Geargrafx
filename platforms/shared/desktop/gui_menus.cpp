@@ -248,7 +248,6 @@ static void menu_emulator(void)
         ImGui::Separator();
 
         ImGui::MenuItem("Show ROM info", "", &config_emulator.show_info);
-
         ImGui::MenuItem("Status Messages", "", &config_emulator.status_messages);
 
         ImGui::EndMenu();
@@ -561,14 +560,14 @@ static void menu_debug(void)
         ImGui::Separator();
 
         ImGui::MenuItem("Show Output Screen", "", &config_debug.show_screen, config_debug.debug);
-
         ImGui::MenuItem("Show Disassembler", "", &config_debug.show_disassembler, config_debug.debug);
-
         ImGui::MenuItem("Show HuC6280 Status", "", &config_debug.show_processor, config_debug.debug);
-
         ImGui::MenuItem("Show Memory Editor", "", &config_debug.show_memory, config_debug.debug);
-
         ImGui::MenuItem("Show HuC6260", "", &config_debug.show_huc6260, config_debug.debug);
+        ImGui::MenuItem("Show HuC6270 Info", "", &config_debug.show_huc6270_info, config_debug.debug);
+        ImGui::MenuItem("Show HuC6270 Registers", "", &config_debug.show_huc6270_registers, config_debug.debug);
+        ImGui::MenuItem("Show HuC6270 Background", "", &config_debug.show_huc6270_background, config_debug.debug);
+        ImGui::MenuItem("Show HuC6270 Sprites", "", &config_debug.show_huc6270_sprites, config_debug.debug);
 
         ImGui::Separator();
 
@@ -607,28 +606,20 @@ static void file_dialogs(void)
         gui_shortcut_open_rom = false;
         gui_file_dialog_open_rom();
     }
-
     if (open_ram)
         gui_file_dialog_load_ram();
-
     if (save_ram)
         gui_file_dialog_save_ram();
-
     if (open_state)
         gui_file_dialog_load_state();
-    
     if (save_state)
         gui_file_dialog_save_state();
-
     if (save_screenshot)
         gui_file_dialog_save_screenshot();
-
     if (choose_savestates_path)
         gui_file_dialog_choose_savestate_path();
-
     if (open_symbols)
         gui_file_dialog_load_symbols();
-
     if (open_about)
     {
         gui_dialog_in_use = true;

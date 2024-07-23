@@ -106,6 +106,10 @@ struct config_Debug
     bool show_processor = true;
     bool show_memory = true;
     bool show_huc6260 = false;
+    bool show_huc6270_registers = false;
+    bool show_huc6270_background = false;
+    bool show_huc6270_sprites = false;
+    bool show_huc6270_info = false;
     int font_size = 0;
 };
 

@@ -43,19 +43,19 @@ void gui_debug_window_huc6260(void)
     HuC6260::HuC6260_State* huc6260_state = huc6260->GetState();
     u16* color_table = huc6260->GetColorTable();
 
-    ImGui::TextColored(magenta, " CR    "); ImGui::SameLine();
+    ImGui::TextColored(magenta, "CR    "); ImGui::SameLine();
     ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6260_state->CR, BYTE_TO_BINARY(*huc6260_state->CR));
 
-    ImGui::TextColored(magenta, " CTA   "); ImGui::SameLine();
+    ImGui::TextColored(magenta, "CTA   "); ImGui::SameLine();
     ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6260_state->CTA, BYTE_TO_BINARY(*huc6260_state->CTA >> 8), BYTE_TO_BINARY(*huc6260_state->CTA & 0xFF));
 
-    ImGui::TextColored(magenta, " B&W   "); ImGui::SameLine();
+    ImGui::TextColored(magenta, "B&W   "); ImGui::SameLine();
     ImGui::TextColored(IsSetBit(*huc6260_state->CR, 7) ? green : gray, "%s", IsSetBit(*huc6260_state->CR, 7) ? "ON" : "OFF");
 
-    ImGui::TextColored(magenta, " BLUR  "); ImGui::SameLine();
+    ImGui::TextColored(magenta, "BLUR  "); ImGui::SameLine();
     ImGui::TextColored(IsSetBit(*huc6260_state->CR, 2) ? green : gray, "%s", IsSetBit(*huc6260_state->CR, 2) ? "ON" : "OFF");
 
-    ImGui::TextColored(magenta, " SPEED "); ImGui::SameLine();
+    ImGui::TextColored(magenta, "SPEED "); ImGui::SameLine();
     const char* speed[] = { "10.8 MHz", "7.16 MHz", "5.36 MHz" };
     ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
 
@@ -65,7 +65,7 @@ void gui_debug_window_huc6260(void)
     ImGui::SeparatorText("BACKGROUND PALETTE");
     ImGui::PopStyleColor();
 
-    ImGui::NewLine(); ImGui::Text(" "); ImGui::SameLine(0,0);
+    ImGui::NewLine(); //ImGui::Text(""); ImGui::SameLine(0,0);
 
     for (int row = 0; row < 32; row++)
     {
@@ -86,7 +86,7 @@ void gui_debug_window_huc6260(void)
                 ImGui::SameLine(0, 10);
         }
 
-        ImGui::Text("      "); ImGui::SameLine(0,0);
+        ImGui::Text("     "); ImGui::SameLine(0,0);
 
         for (int col = 0; col < 16; col++)
         {
@@ -109,7 +109,7 @@ void gui_debug_window_huc6260(void)
             ImGui::PopStyleColor();
         }
 
-        ImGui::NewLine(); ImGui::Text(" "); ImGui::SameLine(0,0);
+        ImGui::NewLine(); //ImGui::Text(""); ImGui::SameLine(0,0);
     }
 
     ImGui::PopFont();

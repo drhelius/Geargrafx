@@ -41,7 +41,13 @@ void gui_debug_windows(void)
             gui_debug_window_disassembler();
         if (config_debug.show_huc6260)
             gui_debug_window_huc6260();
-        // if (config_debug.show_video_registers)
-        //     debug_window_vram_registers();
+        if (config_debug.show_huc6270_registers)
+            gui_debug_window_huc6270_registers();
+        if (config_debug.show_huc6270_background)
+            gui_debug_window_huc6270_background();
+        if (config_debug.show_huc6270_sprites)
+            gui_debug_window_huc6270_sprites();
+        if (config_debug.show_huc6270_info)
+            gui_debug_window_huc6270_info();
     }
 }

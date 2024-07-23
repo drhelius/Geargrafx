@@ -17,20 +17,27 @@
  *
  */
 
-#ifndef GUI_DEBUG_HUC6270_H
-#define	GUI_DEBUG_HUC6270_H
+#ifndef HUC6270_DEFINES_H
+#define HUC6270_DEFINES_H
 
-#ifdef GUI_DEBUG_HUC6270_IMPORT
-    #define EXTERN
-#else
-    #define EXTERN extern
-#endif
+#define GG_MAX_RESOLUTION_WIDTH 256
+#define GG_MAX_RESOLUTION_HEIGHT 192
 
-EXTERN void gui_debug_window_huc6270_background(void);
-EXTERN void gui_debug_window_huc6270_sprites(void);
-EXTERN void gui_debug_window_huc6270_registers(void);
-EXTERN void gui_debug_window_huc6270_info(void);
+#define HUC6270_COLLISION 0x01
+#define HUC6270_OVERFLOW 0x02
+#define HUC6270_SCANLINE 0x04
+#define HUC6270_VBLANK_CR 0x08
+#define HUC6270_VBLANK_SR 0x20
+#define HUC6270_BUSY 0x40
 
-#undef GUI_DEBUG_HUC6270_IMPORT
-#undef EXTERN
-#endif /* GUI_DEBUG_HUC6270_H */
+#define HUC6270_VRAM_SIZE 0x8000
+
+#define HUC6270_SPRITES 64
+
+#define HUC6270_LINES 263
+#define HUC6270_LINES_TOP_BLANKING 14
+#define HUC6270_LINES_ACTIVE 242
+#define HUC6270_LINES_BOTTOM_BLANKING 4
+#define HUC6270_LINES_SYNC 3
+
+#endif /* HUC6270_DEFINES_H */

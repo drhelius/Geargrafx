@@ -20,12 +20,15 @@
 #include <stdlib.h>
 #include "huc6270.h"
 
-HuC6270::HuC6270()
+HuC6270::HuC6270(HuC6280* HuC6280)
 {
+    m_huc6280 = HuC6280;
     InitPointer(m_vram);
     m_address_register = 0;
     m_status_register = 0;
     m_read_buffer = 0;
+    m_hpos = 0;
+    m_vpos = 0;
     for (int i = 0; i < 20; i++)
     {
         m_register[i] = 0;
@@ -33,6 +36,9 @@ HuC6270::HuC6270()
     m_state.AR = &m_address_register;
     m_state.SR = &m_status_register;
     m_state.R = m_register;
+    m_state.READ_BUFFER = &m_read_buffer;
+    m_state.HPOS = &m_hpos;
+    m_state.VPOS = &m_vpos;
 }
 
 HuC6270::~HuC6270()
@@ -42,7 +48,7 @@ HuC6270::~HuC6270()
 
 void HuC6270::Init()
 {
-    m_vram = new u16[0x8000];
+    m_vram = new u16[HUC6270_VRAM_SIZE];
     Reset();
 }
 
@@ -51,13 +57,15 @@ void HuC6270::Reset()
     m_address_register = 0;
     m_status_register = 0;
     m_read_buffer = 0xFFFF;
+    m_hpos = 0;
+    m_vpos = 0;
 
     for (int i = 0; i < 20; i++)
     {
         m_register[i] = 0;
     }
 
-    for (int i = 0; i < 0x8000; i++)
+    for (int i = 0; i < HUC6270_VRAM_SIZE; i++)
     {
         m_vram[i] = rand() & 0xFFFF;
     }
