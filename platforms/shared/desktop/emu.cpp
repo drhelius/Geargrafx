@@ -51,8 +51,6 @@ static void init_debug(void);
 static void destroy_debug(void);
 static void update_debug(void);
 static void update_debug_background_buffer(void);
-static void update_debug_tile_buffer(void);
-static void update_debug_sprite_buffers(void);
 
 void emu_init(void)
 {
@@ -139,13 +137,12 @@ void emu_update(void)
     else
         geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
 
-    // update_debug();
-
     if ((sampleCount > 0) && !geargrafx->IsPaused())
     {
         sound_queue->Write(audio_buffer, sampleCount, emu_audio_sync);
     }
 
+    update_debug();
 }
 
 void emu_key_pressed(GG_Controllers controller, GG_Keys key)
@@ -377,19 +374,19 @@ static void load_ram(void)
 
 static void init_debug(void)
 {
-
+    emu_debug_background_buffer = new u8[GG_MAX_BACKGROUND_WIDTH * GG_MAX_BACKGROUND_HEIGHT * 3];
+    for (int i = 0; i < GG_MAX_BACKGROUND_WIDTH * GG_MAX_BACKGROUND_HEIGHT * 3; i++)
+        emu_debug_background_buffer[i] = 0;
 }
 
 static void destroy_debug(void) 
 {
-
+    SafeDeleteArray(emu_debug_background_buffer);
 }
 
 static void update_debug(void)
 {
     update_debug_background_buffer();
-    update_debug_tile_buffer();
-    update_debug_sprite_buffers();
 
     // Video* video = geargrafx->GetVideo();
 
@@ -404,15 +401,52 @@ static void update_debug(void)
 
 static void update_debug_background_buffer(void)
 {
+    HuC6260* huc6260 = geargrafx->GetHuC6260();
+    HuC6270* huc6270 = geargrafx->GetHuC6270();
+    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
+    u16* vram = huc6270->GetVRAM();
+    int screen_reg = (huc6270_state->R[9] >> 4) & 0x07;
+    int screen_size_x = k_scren_size_x[screen_reg];
+    int screen_size_y = k_scren_size_y[screen_reg];
+    emu_debug_background_buffer_width = screen_size_x * 8;
+    emu_debug_background_buffer_height = screen_size_y * 8;
+    int bat_size = screen_size_x * screen_size_y;
+    int pixels = bat_size * 8 * 8;
 
-}
+    for (int pixel = 0; pixel < pixels; pixel++)
+    {
+        int x = pixel % emu_debug_background_buffer_width;
+        int y = pixel / emu_debug_background_buffer_width;
 
-static void update_debug_tile_buffer(void)
-{
+        int bat_entry_index = (x / 8) + ((y / 8) * screen_size_x);
+        u16 bat_entry = vram[bat_entry_index];
+        int tile_index = bat_entry & 0x07FF;
+        int color_table = (bat_entry >> 12) & 0x0F;
 
-}
+        int tile_data = tile_index * 16;
+        int tile_y =  (y % 8);
+        int tile_x = (pixel % 8);
 
-static void update_debug_sprite_buffers(void)
-{
+        int line_start_a = (tile_data + tile_y);
+        int line_start_b = (tile_data + tile_y + 8);
 
+        u8 byte1 = vram[line_start_a] & 0xFF;
+        u8 byte2 = vram[line_start_a] >> 8;
+        u8 byte3 = vram[line_start_b] & 0xFF;
+        u8 byte4 = vram[line_start_b] >> 8;
+
+        int color = ((byte1 >> (7 - tile_x)) & 0x01) | (((byte2 >> (7 - tile_x)) & 0x01) << 1) | (((byte3 >> (7 - tile_x)) & 0x01) << 2) | (((byte4 >> (7 - tile_x)) & 0x01) << 3);
+
+        u16 color_value = huc6260->GetColorTable()[(color_table * 16) + color];
+
+        // convert to 8 bit color
+        int blue = (color_value & 0x07) * 255 / 7;
+        int red = ((color_value >> 3) & 0x07) * 255 / 7;
+        int green = ((color_value >> 6) & 0x07) * 255 / 7;
+
+        int index = (pixel * 3);
+        emu_debug_background_buffer[index] = red;
+        emu_debug_background_buffer[index + 1] = green;
+        emu_debug_background_buffer[index + 2] = blue;
+    }
 }

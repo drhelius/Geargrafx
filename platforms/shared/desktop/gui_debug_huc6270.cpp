@@ -26,6 +26,7 @@
 #include "gui.h"
 #include "config.h"
 #include "emu.h"
+#include "renderer.h"
 
 static const char* k_register_names[20] = { "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",
                                      "CR   ", "RCR  ", "BXR  ", "BYR  ", "MWR  ",
@@ -46,6 +47,8 @@ void gui_debug_window_huc6270_background(void)
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
 
     ImGui::TextColored(magenta, "BACKGROUND");
+
+    ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(emu_debug_background_buffer_width, emu_debug_background_buffer_height), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
 
     ImGui::PopFont();
 
@@ -154,9 +157,7 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(white, "%02X", k_read_write_increment[(huc6270_state->R[5] >> 11) & 0x03]); 
 
     ImGui::TextColored(magenta, "SCREEN: ");ImGui::SameLine();
-    ImGui::TextColored(white, "%dx%d", k_scren_size_x[(huc6270_state->R[5] >> 4) & 0x07], k_scren_size_y[(huc6270_state->R[5] >> 4) & 0x07]);
-
-
+    ImGui::TextColored(white, "%dx%d", k_scren_size_x[(huc6270_state->R[9] >> 4) & 0x07], k_scren_size_y[(huc6270_state->R[9] >> 4) & 0x07]);
 
     ImGui::PopFont();
 
