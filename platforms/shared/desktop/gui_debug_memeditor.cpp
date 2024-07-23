@@ -533,21 +533,21 @@ void MemEditor::DrawDataPreview(int address)
 
     ImGui::TextColored(color, "Dec:");
     ImGui::SameLine();
-    if (final_address + data_size <= m_mem_size)
+    if (final_address + data_size <= (m_mem_size * m_mem_word))
         DrawDataPreviewAsDec(data);
     else
         ImGui::Text(" ");
 
     ImGui::TextColored(color, "Hex:");
     ImGui::SameLine();
-    if (final_address + data_size <= m_mem_size)
+    if (final_address + data_size <= (m_mem_size * m_mem_word))
         DrawDataPreviewAsHex(data);
     else
         ImGui::Text(" ");
 
     ImGui::TextColored(color, "Bin:");
     ImGui::SameLine();
-    if (final_address + data_size <= m_mem_size)
+    if (final_address + data_size <= (m_mem_size * m_mem_word))
         DrawDataPreviewAsBin(data);
     else
         ImGui::Text(" ");
