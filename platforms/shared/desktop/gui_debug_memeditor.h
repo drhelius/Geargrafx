@@ -44,9 +44,9 @@ private:
     void DrawCursors();
     void DrawOptions();
     void DrawDataPreview(int address);
-    void DrawDataPreviewAsHex(int address);
-    void DrawDataPreviewAsDec(int address);
-    void DrawDataPreviewAsBin(int address);
+    void DrawDataPreviewAsHex(int data);
+    void DrawDataPreviewAsDec(int data);
+    void DrawDataPreviewAsBin(int data);
     int DataPreviewSize();
 
 private:
