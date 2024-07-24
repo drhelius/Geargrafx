@@ -48,7 +48,7 @@ void gui_debug_window_huc6270_background(void)
 
     ImGui::TextColored(magenta, "BACKGROUND");
 
-    ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(emu_debug_background_buffer_width, emu_debug_background_buffer_height), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
+    ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(emu_debug_background_buffer_width, emu_debug_background_buffer_height), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width / 1024.0f, emu_debug_background_buffer_height / 512.0f));
 
     ImGui::PopFont();
 
