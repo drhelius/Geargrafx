@@ -27,7 +27,7 @@
 #include "gui.h"
 #include "emu.h"
 
-static MemEditor mem_edit[5];
+static MemEditor mem_edit[6];
 static int mem_edit_select = -1;
 static int current_mem_edit = 0;
 
@@ -42,6 +42,7 @@ void gui_debug_window_memory(void)
     GeargrafxCore* core = emu_get_core();
     Memory* memory = core->GetMemory();
     Cartridge* cart = core->GetCartridge();
+    HuC6260* huc6260 = core->GetHuC6260();
     HuC6270* huc6270 = core->GetHuC6270();
 
     if (ImGui::BeginTabBar("##memory_tabs", ImGuiTabBarFlags_None))
@@ -86,6 +87,28 @@ void gui_debug_window_memory(void)
                 mem_edit_select = -1;
             current_mem_edit = 3;
             mem_edit[current_mem_edit].Draw((u8*)huc6270->GetVRAM(), HUC6270_VRAM_SIZE, 0, 2);
+            ImGui::PopFont();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("SAT", NULL, mem_edit_select == 4 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        {
+            ImGui::PushFont(gui_default_font);
+            if (mem_edit_select == 4)
+                mem_edit_select = -1;
+            current_mem_edit = 4;
+            mem_edit[current_mem_edit].Draw((u8*)huc6270->GetSAT(), HUC6270_SAT_SIZE, 0, 2);
+            ImGui::PopFont();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("PALETTES", NULL, mem_edit_select == 5 ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+        {
+            ImGui::PushFont(gui_default_font);
+            if (mem_edit_select == 5)
+                mem_edit_select = -1;
+            current_mem_edit = 5;
+            mem_edit[current_mem_edit].Draw((u8*)huc6260->GetColorTable(), 512, 0, 2);
             ImGui::PopFont();
             ImGui::EndTabItem();
         }

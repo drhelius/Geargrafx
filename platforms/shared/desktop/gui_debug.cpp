@@ -39,8 +39,10 @@ void gui_debug_windows(void)
             gui_debug_window_memory();
         if (config_debug.show_disassembler)
             gui_debug_window_disassembler();
-        if (config_debug.show_huc6260)
-            gui_debug_window_huc6260();
+        if (config_debug.show_huc6260_info)
+            gui_debug_window_huc6260_info();
+        if (config_debug.show_huc6260_palettes)
+            gui_debug_window_huc6260_palettes();
         if (config_debug.show_huc6270_registers)
             gui_debug_window_huc6270_registers();
         if (config_debug.show_huc6270_background)

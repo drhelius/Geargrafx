@@ -24,6 +24,7 @@ HuC6270::HuC6270(HuC6280* HuC6280)
 {
     m_huc6280 = HuC6280;
     InitPointer(m_vram);
+    InitPointer(m_sat);
     m_address_register = 0;
     m_status_register = 0;
     m_read_buffer = 0;
@@ -44,11 +45,13 @@ HuC6270::HuC6270(HuC6280* HuC6280)
 HuC6270::~HuC6270()
 {
     SafeDeleteArray(m_vram);
+    SafeDeleteArray(m_sat);
 }
 
 void HuC6270::Init()
 {
     m_vram = new u16[HUC6270_VRAM_SIZE];
+    m_sat = new u16[HUC6270_SAT_SIZE];
     Reset();
 }
 
@@ -69,6 +72,11 @@ void HuC6270::Reset()
     {
         m_vram[i] = rand() & 0xFFFF;
     }
+
+    for (int i = 0; i < HUC6270_SAT_SIZE; i++)
+    {
+        m_sat[i] = rand() & 0xFFFF;
+    }
 }
 
 HuC6270::HuC6270_State* HuC6270::GetState()
@@ -79,4 +87,9 @@ HuC6270::HuC6270_State* HuC6270::GetState()
 u16* HuC6270::GetVRAM()
 {
     return m_vram;
+}
+
+u16* HuC6270::GetSAT()
+{
+    return m_sat;
 }

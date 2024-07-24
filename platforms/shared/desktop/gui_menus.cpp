@@ -563,7 +563,8 @@ static void menu_debug(void)
         ImGui::MenuItem("Show Disassembler", "", &config_debug.show_disassembler, config_debug.debug);
         ImGui::MenuItem("Show HuC6280 Status", "", &config_debug.show_processor, config_debug.debug);
         ImGui::MenuItem("Show Memory Editor", "", &config_debug.show_memory, config_debug.debug);
-        ImGui::MenuItem("Show HuC6260", "", &config_debug.show_huc6260, config_debug.debug);
+        ImGui::MenuItem("Show HuC6260 Info", "", &config_debug.show_huc6260_info, config_debug.debug);
+        ImGui::MenuItem("Show HuC6260 Palettes", "", &config_debug.show_huc6260_palettes, config_debug.debug);
         ImGui::MenuItem("Show HuC6270 Info", "", &config_debug.show_huc6270_info, config_debug.debug);
         ImGui::MenuItem("Show HuC6270 Registers", "", &config_debug.show_huc6270_registers, config_debug.debug);
         ImGui::MenuItem("Show HuC6270 Background", "", &config_debug.show_huc6270_background, config_debug.debug);

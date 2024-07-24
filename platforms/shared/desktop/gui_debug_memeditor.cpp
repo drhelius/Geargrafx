@@ -59,7 +59,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
         m_preview_data_type = 2;
 
     int hex_digits = 1;
-    int size = mem_size - 1;
+    int size = m_mem_size - 1;
 
     while (size >>= 4)
     {   
@@ -75,7 +75,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
     ImVec4 highlight_color = orange;
     ImVec4 gray_color = mid_gray;
 
-    int total_rows = (mem_size + (m_bytes_per_row - 1)) / m_bytes_per_row;
+    int total_rows = (m_mem_size + (m_bytes_per_row - 1)) / m_bytes_per_row;
     int separator_count = (m_bytes_per_row - 1) / 4;
     int byte_column_count = 2 + m_bytes_per_row + separator_count + 2;
     int byte_cell_padding = 0;
@@ -163,7 +163,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                     ImGui::TableNextColumn();
                     char single_addr[32];
                     snprintf(single_addr, 32, "%s:  ", m_hex_mem_format);                    
-                    ImGui::Text(single_addr, address + base_display_addr);
+                    ImGui::Text(single_addr, address + m_mem_base_addr);
                     ImGui::TableNextColumn();
 
                     ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(2.75f, 0.0f));
@@ -193,10 +193,10 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                             ImGui::PushItemWidth((character_size).x * (2 * m_mem_word));
 
                             if (m_mem_word == 1)
-                                sprintf(buf, "%02X", mem_data[byte_address]);
+                                sprintf(buf, "%02X", m_mem_data[byte_address]);
                             else if (m_mem_word == 2)
                             {
-                                uint16_t* mem_data_16 = (uint16_t*)mem_data;
+                                uint16_t* mem_data_16 = (uint16_t*)m_mem_data;
                                 sprintf(buf, "%04X", mem_data_16[byte_address]);
                             }
 
@@ -214,14 +214,14 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                                 try
                                 {
                                     if (m_mem_word == 1)
-                                        mem_data[byte_address] = (uint8_t)std::stoul(buf, 0, 16);
+                                        m_mem_data[byte_address] = (uint8_t)std::stoul(buf, 0, 16);
                                     else if (m_mem_word == 2)
                                     {
-                                        uint16_t* mem_data_16 = (uint16_t*)mem_data;
+                                        uint16_t* mem_data_16 = (uint16_t*)m_mem_data;
                                         mem_data_16[byte_address] = (uint16_t)std::stoul(buf, 0, 16);
                                     }
 
-                                    if (byte_address < (mem_size - 1))
+                                    if (byte_address < (m_mem_size - 1))
                                     {
                                         m_editing_address = byte_address + 1;
                                         m_selection_end = m_selection_start = m_editing_address;
@@ -246,10 +246,10 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                             uint16_t data = 0;
 
                             if (m_mem_word == 1)
-                                data = mem_data[byte_address];
+                                data = m_mem_data[byte_address];
                             else if (m_mem_word == 2)
                             {
-                                uint16_t* mem_data_16 = (uint16_t*)mem_data;
+                                uint16_t* mem_data_16 = (uint16_t*)m_mem_data;
                                 data = mem_data_16[byte_address];
                             }
 
@@ -312,7 +312,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                                 ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
                                 ImGui::PushItemWidth(character_size.x);
 
-                                unsigned char c = mem_data[byte_address];
+                                unsigned char c = m_mem_data[byte_address];
 
                                 bool gray_out = m_gray_out_zeros && (c < 32 || c >= 128);
                                 ImGui::TextColored(gray_out ? gray_color : normal_color, "%c", (c >= 32 && c < 128) ? c : '.');
@@ -328,7 +328,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                 }
             }
 
-            if (m_jump_to_address >= 0 && m_jump_to_address < mem_size)
+            if (m_jump_to_address >= 0 && m_jump_to_address < m_mem_size)
             {
                 ImGui::SetScrollY((m_jump_to_address / m_bytes_per_row) * character_size.y);
                 m_selection_start = m_selection_end = m_jump_to_address;

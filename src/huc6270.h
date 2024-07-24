@@ -49,6 +49,7 @@ public:
     void DirectWrite(u32 address, u8 value);
     HuC6270_State* GetState();
     u16* GetVRAM();
+    u16* GetSAT();
 
 private:
     HuC6280* m_huc6280;
@@ -57,6 +58,7 @@ private:
     u8 m_address_register;
     u8 m_status_register;
     u16 m_register[20];
+    u16* m_sat;
     u16 m_read_buffer;
     int m_hpos;
     int m_vpos;
@@ -67,14 +69,13 @@ private:
 };
 
 static const u16 k_register_mask[20] = { 0xFFFF, 0xFFFF, 0xFFFF, 0x0000, 0x0000,
-                        0x1FFF, 0x03FF, 0x03FF, 0x01FF, 0x00FF,
-                        0x7F1F, 0x7F7F, 0xFF1F, 0x01FF, 0x00FF,
-                        0x001F, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+                                         0x1FFF, 0x03FF, 0x03FF, 0x01FF, 0x00FF,
+                                         0x7F1F, 0x7F7F, 0xFF1F, 0x01FF, 0x00FF,
+                                         0x001F, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 
 static const int k_scren_size_x[8] = { 32, 64, 128, 128, 32, 64, 128, 128 };
 static const int k_scren_size_y[8] = { 32, 32, 32, 32, 64, 64, 64, 64 };
-
-static const int k_read_write_increment[4] = { 1, 0x20, 0x40, 0x80 };
+static const int k_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
 
 #include "huc6270_inline.h"
 

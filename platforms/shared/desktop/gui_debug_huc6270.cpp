@@ -33,43 +33,64 @@ static const char* k_register_names[20] = { "MAWR ", "MARR ", "VWR  ", "???  ", 
                                      "HSR  ", "HDR  ", "VPR  ", "VDR  ", "VCR  ",
                                      "DCR  ", "SOUR ", "DESR ", "LENR ", "DVSSR" };
 
-void gui_debug_window_huc6270_background(void)
+void gui_debug_window_huc6270_info(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(6, 31), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
-    ImGui::Begin("HuC6270 Background", &config_debug.show_huc6270_background);
+    ImGui::Begin("HuC6270 Info", &config_debug.show_huc6270_sprites);
 
     ImGui::PushFont(gui_default_font);
 
     GeargrafxCore* core = emu_get_core();
+    HuC6260* huc6260 = core->GetHuC6260();
     HuC6270* huc6270 = core->GetHuC6270();
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
 
-    ImGui::TextColored(magenta, "BACKGROUND");
+    ImGui::TextColored(magenta, "SPEED   "); ImGui::SameLine();
+    const char* speed[] = { "10.8 MHz", "7.16 MHz", "5.36 MHz" };
+    ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
 
-    ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(emu_debug_background_buffer_width, emu_debug_background_buffer_height), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width / 1024.0f, emu_debug_background_buffer_height / 512.0f));
+    ImGui::TextColored(magenta, "SCREEN  ");ImGui::SameLine();
+    ImGui::TextColored(white, "%dx%d", k_scren_size_x[(huc6270_state->R[9] >> 4) & 0x07], k_scren_size_y[(huc6270_state->R[9] >> 4) & 0x07]);
 
-    ImGui::PopFont();
+    ImGui::TextColored(magenta, "X,Y     "); ImGui::SameLine();
+    ImGui::TextColored(white, "%03d,%03d", *huc6270_state->HPOS, *huc6270_state->VPOS);
 
-    ImGui::End();
-    ImGui::PopStyleVar();
-}
+    ImGui::TextColored(magenta, "SPRITES ");ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[5] & 0x0040 ? green : gray, "%s", huc6270_state->R[5] & 0x0040 ? "ON" : "OFF");
 
-void gui_debug_window_huc6270_sprites(void)
-{
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(6, 31), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
-    ImGui::Begin("HuC6270 Sprites", &config_debug.show_huc6270_sprites);
+    ImGui::TextColored(magenta, "BACKGRND");ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[5] & 0x0080 ? green : gray, "%s", huc6270_state->R[5] & 0x0080 ? "ON" : "OFF");
 
-    ImGui::PushFont(gui_default_font);
+    ImGui::TextColored(magenta, "SCROLL X");ImGui::SameLine();
+    ImGui::TextColored(white, "%03d", huc6270_state->R[7]);
 
-    GeargrafxCore* core = emu_get_core();
-    HuC6270* huc6270 = core->GetHuC6270();
-    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
+    ImGui::TextColored(magenta, "SCROLL Y");ImGui::SameLine();
+    ImGui::TextColored(white, "%03d", huc6270_state->R[8]);
 
-    ImGui::TextColored(magenta, "SPRITES");
+    ImGui::TextColored(magenta, "INT REQ ");ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[5] & HUC6270_COLLISION ? orange : gray, "COLL"); ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[5] & HUC6270_OVERFLOW ? orange : gray, "OVER"); ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[5] & HUC6270_SCANLINE ? orange : gray, "SCAN"); ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[5] & HUC6270_VBLANK_CR ? orange : gray, "VERT");
+
+    ImGui::TextColored(magenta, "INT ACT ");ImGui::SameLine();
+    ImGui::TextColored(*huc6270_state->SR & HUC6270_COLLISION ? green : gray, "COLL"); ImGui::SameLine();
+    ImGui::TextColored(*huc6270_state->SR & HUC6270_OVERFLOW ? green : gray, "OVER"); ImGui::SameLine();
+    ImGui::TextColored(*huc6270_state->SR & HUC6270_SCANLINE ? green : gray, "SCAN"); ImGui::SameLine();
+    ImGui::TextColored(*huc6270_state->SR & HUC6270_VBLANK_SR ? green : gray, "VERT");
+
+    ImGui::TextColored(magenta, "R/W INC ");ImGui::SameLine();
+    ImGui::TextColored(white, "%02X", k_read_write_increment[(huc6270_state->R[5] >> 11) & 0x03]);
+
+    ImGui::TextColored(magenta, "SAT DMA ");ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[0x0F] & 0x0004 ? green : gray, "%s", huc6270_state->R[0x0F] & 0x0004 ? "ON" : "OFF");
+
+    ImGui::TextColored(magenta, "BUSY    ");ImGui::SameLine();
+    ImGui::TextColored(*huc6270_state->SR & HUC6270_BUSY ? red : green, *huc6270_state->SR & HUC6270_BUSY ? "YES" : "NO");
+
+
 
     ImGui::PopFont();
 
@@ -123,41 +144,43 @@ void gui_debug_window_huc6270_registers(void)
     ImGui::PopStyleVar();
 }
 
-void gui_debug_window_huc6270_info(void)
+void gui_debug_window_huc6270_background(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(6, 31), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
-    ImGui::Begin("HuC6270 Info", &config_debug.show_huc6270_sprites);
+    ImGui::Begin("HuC6270 Background", &config_debug.show_huc6270_background);
 
     ImGui::PushFont(gui_default_font);
 
     GeargrafxCore* core = emu_get_core();
-    HuC6260* huc6260 = core->GetHuC6260();
     HuC6270* huc6270 = core->GetHuC6270();
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
 
-    ImGui::TextColored(magenta, "SPEED:  "); ImGui::SameLine();
-    const char* speed[] = { "10.8 MHz", "7.16 MHz", "5.36 MHz" };
-    ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
+    ImGui::TextColored(magenta, "BACKGROUND");
 
-    ImGui::TextColored(magenta, "POS:    "); ImGui::SameLine();
-    ImGui::TextColored(white, "%03d,%03d", *huc6270_state->HPOS, *huc6270_state->VPOS);
+    ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(emu_debug_background_buffer_width, emu_debug_background_buffer_height), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width / 1024.0f, emu_debug_background_buffer_height / 512.0f));
 
-    ImGui::TextColored(magenta, "BUSY:   ");ImGui::SameLine();
-    ImGui::TextColored(*huc6270_state->SR & HUC6270_BUSY ? red : green, *huc6270_state->SR & HUC6270_BUSY ? "YES" : "NO");
+    ImGui::PopFont();
 
-    ImGui::TextColored(magenta, "IRQS:   ");ImGui::SameLine();
-    ImGui::TextColored(*huc6270_state->SR & HUC6270_COLLISION ? green : gray, "COLL"); ImGui::SameLine();
-    ImGui::TextColored(*huc6270_state->SR & HUC6270_OVERFLOW ? green : gray, "OVER"); ImGui::SameLine();
-    ImGui::TextColored(*huc6270_state->SR & HUC6270_SCANLINE ? green : gray, "SCAN"); ImGui::SameLine();
-    ImGui::TextColored(*huc6270_state->SR & HUC6270_VBLANK_SR ? green : gray, "VERT");
+    ImGui::End();
+    ImGui::PopStyleVar();
+}
 
-    ImGui::TextColored(magenta, "R/W INC:");ImGui::SameLine();
-    ImGui::TextColored(white, "%02X", k_read_write_increment[(huc6270_state->R[5] >> 11) & 0x03]); 
+void gui_debug_window_huc6270_sprites(void)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::SetNextWindowPos(ImVec2(6, 31), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
+    ImGui::Begin("HuC6270 Sprites", &config_debug.show_huc6270_sprites);
 
-    ImGui::TextColored(magenta, "SCREEN: ");ImGui::SameLine();
-    ImGui::TextColored(white, "%dx%d", k_scren_size_x[(huc6270_state->R[9] >> 4) & 0x07], k_scren_size_y[(huc6270_state->R[9] >> 4) & 0x07]);
+    ImGui::PushFont(gui_default_font);
+
+    GeargrafxCore* core = emu_get_core();
+    HuC6270* huc6270 = core->GetHuC6270();
+    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
+
+    ImGui::TextColored(magenta, "SPRITES");
 
     ImGui::PopFont();
 

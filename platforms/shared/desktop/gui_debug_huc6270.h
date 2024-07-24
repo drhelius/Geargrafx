@@ -26,10 +26,10 @@
     #define EXTERN extern
 #endif
 
+EXTERN void gui_debug_window_huc6270_info(void);
+EXTERN void gui_debug_window_huc6270_registers(void);
 EXTERN void gui_debug_window_huc6270_background(void);
 EXTERN void gui_debug_window_huc6270_sprites(void);
-EXTERN void gui_debug_window_huc6270_registers(void);
-EXTERN void gui_debug_window_huc6270_info(void);
 
 #undef GUI_DEBUG_HUC6270_IMPORT
 #undef EXTERN

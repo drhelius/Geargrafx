@@ -105,7 +105,8 @@ struct config_Debug
     bool show_disassembler = true;
     bool show_processor = true;
     bool show_memory = true;
-    bool show_huc6260 = false;
+    bool show_huc6260_info = false;
+    bool show_huc6260_palettes = false;
     bool show_huc6270_registers = false;
     bool show_huc6270_background = false;
     bool show_huc6270_sprites = false;
