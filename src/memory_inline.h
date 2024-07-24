@@ -26,6 +26,7 @@
 #include "huc6270.h"
 #include "huc6280.h"
 #include "input.h"
+#include "audio.h"
 
 inline u8 Memory::Read(u16 address, bool block_transfer)
 {
@@ -184,6 +185,7 @@ inline void Memory::Write(u16 address, u8 value)
             case 0x0800:
                 // PSG
                 //Debug("PSG write at %06X, value=%02X", physical_address, value);
+                m_audio->WritePSG(physical_address, value);
                 m_io_buffer = value;
                 break;
             case 0x0C00:

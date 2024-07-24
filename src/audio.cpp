@@ -20,9 +20,11 @@
 #include <istream>
 #include <ostream>
 #include "audio.h"
+#include "huc6280_psg.h"
 
 Audio::Audio()
 {
+    InitPointer(m_psg);
     m_elapsed_cycles = 0;
     m_sample_rate = 44100;
     m_mute = false;
@@ -30,16 +32,19 @@ Audio::Audio()
 
 Audio::~Audio()
 {
+    SafeDelete(m_psg);
 }
 
 void Audio::Init()
 {
-    
+    m_psg = new HuC6280PSG();
+    m_psg->Init();
 }
 
 void Audio::Reset()
 {
     m_elapsed_cycles = 0;
+    m_psg->Reset();
 }
 
 void Audio::Mute(bool mute)

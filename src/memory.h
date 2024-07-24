@@ -27,6 +27,7 @@ class HuC6260;
 class HuC6270;
 class HuC6280;
 class Input;
+class Audio;
 
 class Memory
 {
@@ -45,7 +46,7 @@ public:
     };
 
 public:
-    Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* cartridge, Input* input);
+    Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio);
     ~Memory();
     void Init();
     void Reset();
@@ -66,6 +67,7 @@ private:
     HuC6280* m_huc6280;
     Cartridge* m_cartridge;
     Input* m_input;
+    Audio* m_audio;
     u8 m_mpr[8];
     u8* m_wram;
     GG_Disassembler_Record** m_disassemblerMemoryMap;

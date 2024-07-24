@@ -17,11 +17,16 @@
  *
  */
 
+#ifndef AUDIO_H
+#define AUDIO_H
+
 #include "types.h"
 
 #define GG_AUDIO_SAMPLE_RATE 44100
 #define GG_AUDIO_BUFFER_SIZE 2048
 #define GG_AUDIO_BUFFER_COUNT 3
+
+class HuC6280PSG;
 
 class Audio
 {
@@ -32,6 +37,7 @@ public:
     void Reset();
     void Mute(bool mute);
     void Clock();
+    void WritePSG(u32 address, u8 value);
     void EndFrame(s16* sample_buffer, int* sample_count);
     // void SaveState(std::ostream& stream);
     // void LoadState(std::istream& stream);
@@ -40,9 +46,9 @@ private:
     u64 m_elapsed_cycles;
     int m_sample_rate;
     bool m_mute;
+    HuC6280PSG* m_psg;
 };
 
-inline void Audio::Clock()
-{
-    m_elapsed_cycles++;
-}
+#include "audio_inline.h"
+
+#endif /* AUDIO_H */

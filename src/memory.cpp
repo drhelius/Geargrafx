@@ -24,14 +24,16 @@
 #include "huc6280.h"
 #include "cartridge.h"
 #include "input.h"
+#include "audio.h"
 
-Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* cartridge, Input* input)
+Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio)
 {
     m_huc6260 = huc6260;
     m_huc6270 = huc6270;
     m_huc6280 = huc6280;
     m_cartridge = cartridge;
     m_input = input;
+    m_audio = audio;
     InitPointer(m_wram);
     InitPointer(m_disassemblerMemoryMap);
     m_io_buffer = 0;

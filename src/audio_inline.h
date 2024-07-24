@@ -16,46 +16,21 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/
  *
  */
+#ifndef AUDIO_INLINE_H
+#define	AUDIO_INLINE_H
 
+#include "audio.h"
 #include "huc6280_psg.h"
 
-HuC6280PSG::HuC6280PSG()
+inline void Audio::Clock()
 {
-    InitPointer(m_channels);
-    m_channel_select = 0;
-    m_main_amplitude = 0;
-    m_lfo_frequency = 0;
-    m_lfo_control = 0;
+    m_elapsed_cycles++;
+    m_psg->Clock();
 }
 
-HuC6280PSG::~HuC6280PSG()
+inline void Audio::WritePSG(u32 address, u8 value)
 {
-    SafeDeleteArray(m_channels);
+    m_psg->Write(address, value);
 }
 
-void HuC6280PSG::Init()
-{
-    m_channels = new HuC6280PSG_Channel[6];
-    Reset();
-}
-
-void HuC6280PSG::Reset()
-{
-    m_channel_select = 0;
-    m_main_amplitude = 0;
-    m_lfo_frequency = 0;
-    m_lfo_control = 0;
-
-    for (int i = 0; i < 6; i++)
-    {
-        m_channels[i].frequency = 0;
-        m_channels[i].control = 0;
-        m_channels[i].amplitude = 0;
-        m_channels[i].wave = 0;
-        m_channels[i].noise = 0;
-        for (int j = 0; j < 32; j++)
-        {
-            m_channels[i].wave_data[j] = 0;
-        }
-    }
-}
+#endif /* AUDIO_INLINE_H */

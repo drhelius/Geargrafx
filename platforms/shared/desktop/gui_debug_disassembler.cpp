@@ -21,8 +21,8 @@
 #include "gui_debug_disassembler.h"
 
 #include "imgui/imgui.h"
-#include "imgui/colors.h"
 #include "../../../src/geargrafx.h"
+#include "gui_debug_constants.h"
 #include "gui.h"
 #include "config.h"
 #include "emu.h"
