@@ -177,7 +177,7 @@ void HuC6280::ClockTimer()
                 m_timer_counter = m_timer_reload;
                 m_timer_irq = true;
                 SetBit(m_interrupt_request_register, 2);
-                Debug("Timer counter underflow, IRQ, reload: %02X", m_timer_reload);
+                // Debug("Timer counter underflow, IRQ, reload: %02X", m_timer_reload);
             }
         }
     }

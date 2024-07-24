@@ -81,7 +81,7 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
                 return m_huc6260->ReadRegister(physical_address);
             case 0x0800:
                 // PSG
-                Debug("PSG read at %06X", physical_address);
+                //Debug("PSG read at %06X", physical_address);
                 return block_transfer ? 0x00 : m_io_buffer;
             case 0x0C00:
                 // Timer Counter
@@ -183,7 +183,7 @@ inline void Memory::Write(u16 address, u8 value)
                 break;
             case 0x0800:
                 // PSG
-                Debug("PSG write at %06X, value=%02X", physical_address, value);
+                //Debug("PSG write at %06X, value=%02X", physical_address, value);
                 m_io_buffer = value;
                 break;
             case 0x0C00:
