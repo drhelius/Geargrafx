@@ -23,8 +23,32 @@
 #include "huc6270.h"
 #include "huc6280.h"
 
-inline u16 HuC6270::Clock()
+inline bool HuC6270::Clock()
 {
+    bool frame_ready = false;
+
+    if (m_vpos < HUC6270_ACTIVE_DISPLAY_START)
+    {
+        //Debug("HuC6270 during top blanking");
+    }
+    else if (m_vpos < HUC6270_BOTTOM_BLANKING_START)
+    {
+        //Debug("HuC6270 during active display");
+    }
+    else if (m_vpos < HUC6270_SYNC_START)
+    {
+        //Debug("HuC6270 during bottom blanking");
+    }
+    else
+    {
+        //Debug("HuC6270 during sync");
+    }
+
+    if (m_hpos > 256)
+    {
+        //Debug("HuC6270 during horizontal blanking");
+    }
+
     m_hpos++;
 
     if (m_hpos > 341)
@@ -34,15 +58,17 @@ inline u16 HuC6270::Clock()
 
         if (m_vpos > HUC6270_LINES)
         {
+            frame_ready = true;
             m_vpos = 0;
-            if (m_register[0x05] & HUC6270_VBLANK_CR)
+            if (m_register[HUC6270_REG_CR] & HUC6270_VBLANK_CR)
             {
                 m_status_register |= HUC6270_VBLANK_SR;
                 m_huc6280->AssertIRQ1(true);
             }
         }
     }
-    return 0;
+
+    return frame_ready;
 }
 
 inline u8 HuC6270::ReadRegister(u32 address)
@@ -119,17 +145,16 @@ inline void HuC6270::DirectWrite(u32 address, u8 value)
 
 inline u8 HuC6270::ReadDataRegister(bool msb)
 {
-    if (m_address_register == 0x02)
+    if (m_address_register == HUC6270_REG_VRR)
     {
-        // VRR
-        // Debug("HuC6270 read VRR (%s): %02X", msb ? "MSB" : "LSB", m_register[0x02]);
+        // Debug("HuC6270 read VRR (%s): %02X", msb ? "MSB" : "LSB", m_register[HUC6270_REG_VWR]);
         if (msb)
         {
             u8 ret = m_read_buffer >> 8;
-            int increment = k_read_write_increment[(m_register[0x05] >> 11) & 0x03];
-            m_register[0x01] = (m_register[0x01] + increment) & 0x7FFF;
-            m_read_buffer = m_vram[m_register[0x01] & 0x7FFF];
-            // Debug("HuC6270 MARR inncremented %02X to %04X", increment, m_register[0x01]);
+            int increment = k_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
+            m_register[HUC6270_REG_MARR] = (m_register[HUC6270_REG_MARR] + increment) & 0x7FFF;
+            m_read_buffer = m_vram[m_register[HUC6270_REG_MARR] & 0x7FFF];
+            // Debug("HuC6270 MARR inncremented %02X to %04X", increment, m_register[HUC6270_REG_MARR]);
             return ret;
         }
         else
@@ -140,7 +165,7 @@ inline u8 HuC6270::ReadDataRegister(bool msb)
     else
     {
         Debug("HuC6270 invalid read data register: %02X", m_address_register);
-        return m_register[0x02] & 0xFF;
+        return m_register[HUC6270_REG_VWR] & 0xFF;
     }
 }
 
@@ -154,85 +179,67 @@ inline void HuC6270::WriteDataRegister(u8 value, bool msb)
 
     switch (m_address_register)
     {
-        case 0x00:
-            // MAWR
+        case HUC6270_REG_MAWR:
             // Debug("HuC6270 write MAWR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x01:
-            // MARR
+        case HUC6270_REG_MARR:
             // Debug("HuC6270 write MARR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             if (msb)
-                m_read_buffer = m_vram[m_register[0x01] & 0x7FFF];
+                m_read_buffer = m_vram[m_register[HUC6270_REG_MARR] & 0x7FFF];
             break;
-        case 0x02:
-            // VWR
+        case HUC6270_REG_VWR:
             // Debug("HuC6270 write VWR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             if (msb)
             {
-                m_vram[m_register[0x00] & 0x7FFF] = m_register[0x02];
-                int increment = k_read_write_increment[(m_register[0x05] >> 11) & 0x03];
-                m_register[0x00] = (m_register[0x00] + increment) & 0x7FFF;
-                // Debug("HuC6270 MAWR inncremented %02X to %04X", increment, m_register[0x00]);
+                m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
+                int increment = k_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
+                m_register[HUC6270_REG_MAWR] = (m_register[HUC6270_REG_MAWR] + increment) & 0x7FFF;
+                // Debug("HuC6270 MAWR inncremented %02X to %04X", increment, m_register[HUC6270_REG_MAWR]);
             }
             break;
-        case 0x05:
-            // CR
+        case HUC6270_REG_CR:
             // Debug("HuC6270 write CR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x06:
-            // RCR
+        case HUC6270_REG_RCR:
             // Debug("HuC6270 write RCR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x07:
-            // BXR
+        case HUC6270_REG_BXR:
             // Debug("HuC6270 write BXR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x08:
-            // BYR
+        case HUC6270_REG_BYR:
             // Debug("HuC6270 write BYR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x09:
-            // MWR
+        case HUC6270_REG_MWR:
             // Debug("HuC6270 write MWR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x0A:
-            // HSR
+        case HUC6270_REG_HSR:
             // Debug("HuC6270 write HSR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x0B:
-            // HDR
+        case HUC6270_REG_HDR:
             // Debug("HuC6270 write HDR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x0C:
-            // VPR
+        case HUC6270_REG_VPR:
             // Debug("HuC6270 write VPR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x0D:
-            // VDR
+        case HUC6270_REG_VDR:
             // Debug("HuC6270 write VDR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x0E:
-            // VCR
+        case HUC6270_REG_VCR:
             // Debug("HuC6270 write VCR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x0F:
-            // DCR
+        case HUC6270_REG_DCR:
             // Debug("HuC6270 write DCR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x10:
-            // SOUR
+        case HUC6270_REG_SOUR:
             // Debug("HuC6270 write SOUR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x11:
-            // DESR
+        case HUC6270_REG_DESR:
             // Debug("HuC6270 write DESR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x12:
-            // LENR
+        case HUC6270_REG_LENR:
             // Debug("HuC6270 write LENR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
-        case 0x13:
-            // DVSSR
+        case HUC6270_REG_DVSSR:
             // Debug("HuC6270 write DVSSR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             break;
         default:

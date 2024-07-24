@@ -30,10 +30,12 @@ HuC6270::HuC6270(HuC6280* HuC6280)
     m_read_buffer = 0;
     m_hpos = 0;
     m_vpos = 0;
+
     for (int i = 0; i < 20; i++)
     {
         m_register[i] = 0;
     }
+
     m_state.AR = &m_address_register;
     m_state.SR = &m_status_register;
     m_state.R = m_register;

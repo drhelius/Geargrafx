@@ -23,11 +23,6 @@
 #include "huc6260.h"
 #include "huc6270.h"
 
-inline void HuC6260::Clock()
-{
-    u16 pixel = m_huc6270->Clock();
-}
-
 inline u8 HuC6260::ReadRegister(u32 address)
 {
     // Debug("HuC6260 register read at %06X", address);

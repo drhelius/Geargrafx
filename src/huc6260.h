@@ -45,7 +45,6 @@ public:
     ~HuC6260();
     void Init();
     void Reset();
-    void Clock();
     u8 ReadRegister(u32 address);
     void WriteRegister(u32 address, u8 value);
     HuC6260_State* GetState();

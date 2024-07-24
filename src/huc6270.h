@@ -43,7 +43,7 @@ public:
     ~HuC6270();
     void Init();
     void Reset();
-    u16 Clock();
+    bool Clock();
     u8 ReadRegister(u32 address);
     void WriteRegister(u32 address, u8 value);
     void DirectWrite(u32 address, u8 value);

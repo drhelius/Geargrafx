@@ -81,22 +81,21 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 
 bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, bool step_debugger)
 {
-    bool breakpoint = false;
-
     if (m_paused || !m_cartridge->IsReady())
         return false;
 
-    bool stop = false;
-
-    int huc6280_divider = m_huc6280->IsHighSpeed() ? 3 : 12;
-    int huc6260_divider = m_huc6260->GetClockDivider();
+    bool instruction_completed = false;
+    bool breakpoint = false;
+    bool stop = false;    
     const int timer_divider = 3;
     const int audio_divider = 6;
+    int huc6280_divider = m_huc6280->IsHighSpeed() ? 3 : 12;
+    int huc6260_divider = m_huc6260->GetClockDivider();    
 
     do
     {
         m_clock++;
-        bool instruction_completed = false;
+        instruction_completed = false;
 
         if (m_clock % huc6280_divider == 0)
             instruction_completed = m_huc6280->Clock();
@@ -105,7 +104,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
             m_huc6280->ClockTimer();
 
         if (m_clock % huc6260_divider == 0)
-            m_huc6260->Clock();
+            stop = m_huc6270->Clock();
 
         if (m_clock % audio_divider == 0)
             m_audio->Clock();
@@ -113,11 +112,12 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         if (step_debugger && instruction_completed)
             stop = true;
 
-        if (m_clock >= 72240)
-        {
-            m_clock -= 72240;
-            stop = true;
-        }
+        // Failsafe: if the emulator is running too long, stop it
+        // if (m_clock >= 89683)
+        // {
+        //     m_clock -= 89683;
+        //     stop = true;
+        // }
     }
     while (!stop);
 

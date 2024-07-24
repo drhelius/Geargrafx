@@ -50,7 +50,7 @@ void HuC6260::Reset()
     m_clock_divider = 4;
     for (int i = 0; i < 512; i++)
     {
-        m_color_table[i] = 0;
+        m_color_table[i] = ((i ^ (i >> 3)) & 1) ? 0x000 : 0x1FF;
     }
 }
 

@@ -52,28 +52,28 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
 
     ImGui::TextColored(magenta, "SCREEN  ");ImGui::SameLine();
-    ImGui::TextColored(white, "%dx%d", k_scren_size_x[(huc6270_state->R[9] >> 4) & 0x07], k_scren_size_y[(huc6270_state->R[9] >> 4) & 0x07]);
+    ImGui::TextColored(white, "%dx%d", k_scren_size_x[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07], k_scren_size_y[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07]);
 
     ImGui::TextColored(magenta, "X,Y     "); ImGui::SameLine();
     ImGui::TextColored(white, "%03d,%03d", *huc6270_state->HPOS, *huc6270_state->VPOS);
 
     ImGui::TextColored(magenta, "SPRITES ");ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[5] & 0x0040 ? green : gray, "%s", huc6270_state->R[5] & 0x0040 ? "ON" : "OFF");
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & 0x0040 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_CR] & 0x0040 ? "ON" : "OFF");
 
     ImGui::TextColored(magenta, "BACKGRND");ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[5] & 0x0080 ? green : gray, "%s", huc6270_state->R[5] & 0x0080 ? "ON" : "OFF");
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & 0x0080 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_CR] & 0x0080 ? "ON" : "OFF");
 
     ImGui::TextColored(magenta, "SCROLL X");ImGui::SameLine();
-    ImGui::TextColored(white, "%03d", huc6270_state->R[7]);
+    ImGui::TextColored(white, "%03d", huc6270_state->R[HUC6270_REG_BXR]);
 
     ImGui::TextColored(magenta, "SCROLL Y");ImGui::SameLine();
-    ImGui::TextColored(white, "%03d", huc6270_state->R[8]);
+    ImGui::TextColored(white, "%03d", huc6270_state->R[HUC6270_REG_BYR]);
 
     ImGui::TextColored(magenta, "INT REQ ");ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[5] & HUC6270_COLLISION ? orange : gray, "COLL"); ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[5] & HUC6270_OVERFLOW ? orange : gray, "OVER"); ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[5] & HUC6270_SCANLINE ? orange : gray, "SCAN"); ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[5] & HUC6270_VBLANK_CR ? orange : gray, "VERT");
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_COLLISION ? orange : gray, "COLL"); ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_OVERFLOW ? orange : gray, "OVER"); ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_SCANLINE ? orange : gray, "SCAN"); ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_VBLANK_CR ? orange : gray, "VERT");
 
     ImGui::TextColored(magenta, "INT ACT ");ImGui::SameLine();
     ImGui::TextColored(*huc6270_state->SR & HUC6270_COLLISION ? green : gray, "COLL"); ImGui::SameLine();
@@ -82,15 +82,13 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(*huc6270_state->SR & HUC6270_VBLANK_SR ? green : gray, "VERT");
 
     ImGui::TextColored(magenta, "R/W INC ");ImGui::SameLine();
-    ImGui::TextColored(white, "%02X", k_read_write_increment[(huc6270_state->R[5] >> 11) & 0x03]);
+    ImGui::TextColored(white, "%02X", k_read_write_increment[(huc6270_state->R[HUC6270_REG_CR] >> 11) & 0x03]);
 
     ImGui::TextColored(magenta, "SAT DMA ");ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[0x0F] & 0x0004 ? green : gray, "%s", huc6270_state->R[0x0F] & 0x0004 ? "ON" : "OFF");
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_DCR] & 0x0004 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_DCR] & 0x0004 ? "AUTO" : "OFF");
 
-    ImGui::TextColored(magenta, "BUSY    ");ImGui::SameLine();
-    ImGui::TextColored(*huc6270_state->SR & HUC6270_BUSY ? red : green, *huc6270_state->SR & HUC6270_BUSY ? "YES" : "NO");
-
-
+    // ImGui::TextColored(magenta, "BUSY    ");ImGui::SameLine();
+    // ImGui::TextColored(*huc6270_state->SR & HUC6270_BUSY ? orange : gray, *huc6270_state->SR & HUC6270_BUSY ? "YES" : "NO");
 
     ImGui::PopFont();
 

@@ -37,12 +37,20 @@ inline void HuC6280::AssertIRQ1(bool asserted)
 {
     // Debug("IRQ1 asserted: %s", asserted ? "true" : "false");
     m_irq1_asserted = asserted;
+    if (m_irq1_asserted)
+        SetBit(m_interrupt_request_register, 1);
+    else
+        UnsetBit(m_interrupt_request_register, 1);
 }
 
 inline void HuC6280::AssertIRQ2(bool asserted)
 {
     Debug("IRQ2 asserted: %s", asserted ? "true" : "false");
     m_irq2_asserted = asserted;
+    if (m_irq2_asserted)
+        SetBit(m_interrupt_request_register, 0);
+    else
+        UnsetBit(m_interrupt_request_register, 0);
 }
 
 inline void HuC6280::RequestNMI()
