@@ -19,6 +19,7 @@
 
 #include <math.h>
 #include "imgui/imgui.h"
+#include "imgui/implot.h"
 #include "imgui/fonts/RobotoMedium.h"
 #include "nfd/nfd.h"
 #include "config.h"
@@ -58,6 +59,7 @@ void gui_init(void)
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGui::StyleColorsDark();
     ImGuiIO& io = ImGui::GetIO();
 
@@ -85,6 +87,7 @@ void gui_init(void)
 
 void gui_destroy(void)
 {
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
     NFD_Quit();
 }
@@ -108,6 +111,9 @@ void gui_render(void)
         gui_show_info();
 
     show_status_message();
+
+    // ImGui::ShowDemoWindow();
+    // ImPlot::ShowDemoWindow();
 
     ImGui::Render();
 }
