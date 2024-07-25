@@ -459,134 +459,80 @@ static void sdl_events_emu(const SDL_Event* event)
         // }
         // break;
 
-        // case SDL_KEYDOWN:
-        // {
-        //     if (event->key.repeat != 0)
-        //         break;
+        case SDL_KEYDOWN:
+        {
+            if (event->key.repeat != 0)
+                break;
 
-        //     if (event->key.keysym.mod & KMOD_CTRL)
-        //         break;
+            if (event->key.keysym.mod & KMOD_CTRL)
+                break;
 
-        //     int key = event->key.keysym.scancode;
+            int key = event->key.keysym.scancode;
 
-        //     if (key == SDL_SCANCODE_ESCAPE)
-        //     {
-        //         application_trigger_quit();
-        //         break;
-        //     }
+            if (key == SDL_SCANCODE_ESCAPE)
+            {
+                application_trigger_quit();
+                break;
+            }
 
-        //     if (key == SDL_SCANCODE_F11)
-        //     {
-        //         config_emulator.fullscreen = !config_emulator.fullscreen;
-        //         application_trigger_fullscreen(config_emulator.fullscreen);
-        //         break;
-        //     }
+            if (key == SDL_SCANCODE_F11)
+            {
+                config_emulator.fullscreen = !config_emulator.fullscreen;
+                application_trigger_fullscreen(config_emulator.fullscreen);
+                break;
+            }
 
-        //     if (key == SDL_SCANCODE_F12)
-        //     {
-        //         config_emulator.capture_mouse = !config_emulator.capture_mouse;
-        //         break;
-        //     }
+            for (int i = 0; i < 2; i++)
+            {
+                GG_Controllers controller = (i == 0) ? GG_CONTROLLER_1 : GG_CONTROLLER_2;
 
-        //     for (int i = 0; i < 2; i++)
-        //     {
-        //         GC_Controllers controller = (i == 0) ? Controller_1 : Controller_2;
+                if (key == config_input[i].key_left)
+                    emu_key_pressed(controller, GG_KEY_LEFT);
+                else if (key == config_input[i].key_right)
+                    emu_key_pressed(controller, GG_KEY_RIGHT);
+                else if (key == config_input[i].key_up)
+                    emu_key_pressed(controller, GG_KEY_UP);
+                else if (key == config_input[i].key_down)
+                    emu_key_pressed(controller, GG_KEY_DOWN);
+                else if (key == config_input[i].key_1)
+                    emu_key_pressed(controller, GG_KEY_1);
+                else if (key == config_input[i].key_2)
+                    emu_key_pressed(controller, GG_KEY_2);
+                else if (key == config_input[i].key_run)
+                    emu_key_pressed(controller, GG_KEY_RUN);
+                else if (key == config_input[i].key_select)
+                    emu_key_pressed(controller, GG_KEY_SELECT);
+            }
+        }
+        break;
 
-        //         if (key == config_input[i].key_left)
-        //             emu_key_pressed(controller, Key_Left);
-        //         else if (key == config_input[i].key_right)
-        //             emu_key_pressed(controller, Key_Right);
-        //         else if (key == config_input[i].key_up)
-        //             emu_key_pressed(controller, Key_Up);
-        //         else if (key == config_input[i].key_down)
-        //             emu_key_pressed(controller, Key_Down);
-        //         else if (key == config_input[i].key_left_button)
-        //             emu_key_pressed(controller, Key_Left_Button);
-        //         else if (key == config_input[i].key_right_button)
-        //             emu_key_pressed(controller, Key_Right_Button);
-        //         else if (key == config_input[i].key_blue)
-        //             emu_key_pressed(controller, Key_Blue);
-        //         else if (key == config_input[i].key_purple)
-        //             emu_key_pressed(controller, Key_Purple);
-        //         else if (key == config_input[i].key_0)
-        //             emu_key_pressed(controller, Keypad_0);
-        //         else if (key == config_input[i].key_1)
-        //             emu_key_pressed(controller, Keypad_1);
-        //         else if (key == config_input[i].key_2)
-        //             emu_key_pressed(controller, Keypad_2);
-        //         else if (key == config_input[i].key_3)
-        //             emu_key_pressed(controller, Keypad_3);
-        //         else if (key == config_input[i].key_4)
-        //             emu_key_pressed(controller, Keypad_4);
-        //         else if (key == config_input[i].key_5)
-        //             emu_key_pressed(controller, Keypad_5);
-        //         else if (key == config_input[i].key_6)
-        //             emu_key_pressed(controller, Keypad_6);
-        //         else if (key == config_input[i].key_7)
-        //             emu_key_pressed(controller, Keypad_7);
-        //         else if (key == config_input[i].key_8)
-        //             emu_key_pressed(controller, Keypad_8);
-        //         else if (key == config_input[i].key_9)
-        //             emu_key_pressed(controller, Keypad_9);
-        //         else if (key == config_input[i].key_asterisk)
-        //             emu_key_pressed(controller, Keypad_Asterisk);
-        //         else if (key == config_input[i].key_hash)
-        //             emu_key_pressed(controller, Keypad_Hash);
-        //     }
-        // }
-        // break;
+        case SDL_KEYUP:
+        {
+            int key = event->key.keysym.scancode;
 
-        // case SDL_KEYUP:
-        // {
-        //     int key = event->key.keysym.scancode;
+            for (int i = 0; i < 2; i++)
+            {
+                GG_Controllers controller = (i == 0) ? GG_CONTROLLER_1 : GG_CONTROLLER_2;
 
-        //     for (int i = 0; i < 2; i++)
-        //     {
-        //         GC_Controllers controller = (i == 0) ? Controller_1 : Controller_2;
-
-        //         if (key == config_input[i].key_left)
-        //             emu_key_released(controller, Key_Left);
-        //         else if (key == config_input[i].key_right)
-        //             emu_key_released(controller, Key_Right);
-        //         else if (key == config_input[i].key_up)
-        //             emu_key_released(controller, Key_Up);
-        //         else if (key == config_input[i].key_down)
-        //             emu_key_released(controller, Key_Down);
-        //         else if (key == config_input[i].key_left_button)
-        //             emu_key_released(controller, Key_Left_Button);
-        //         else if (key == config_input[i].key_right_button)
-        //             emu_key_released(controller, Key_Right_Button);
-        //         else if (key == config_input[i].key_blue)
-        //             emu_key_released(controller, Key_Blue);
-        //         else if (key == config_input[i].key_purple)
-        //             emu_key_released(controller, Key_Purple);
-        //         else if (key == config_input[i].key_0)
-        //             emu_key_released(controller, Keypad_0);
-        //         else if (key == config_input[i].key_1)
-        //             emu_key_released(controller, Keypad_1);
-        //         else if (key == config_input[i].key_2)
-        //             emu_key_released(controller, Keypad_2);
-        //         else if (key == config_input[i].key_3)
-        //             emu_key_released(controller, Keypad_3);
-        //         else if (key == config_input[i].key_4)
-        //             emu_key_released(controller, Keypad_4);
-        //         else if (key == config_input[i].key_5)
-        //             emu_key_released(controller, Keypad_5);
-        //         else if (key == config_input[i].key_6)
-        //             emu_key_released(controller, Keypad_6);
-        //         else if (key == config_input[i].key_7)
-        //             emu_key_released(controller, Keypad_7);
-        //         else if (key == config_input[i].key_8)
-        //             emu_key_released(controller, Keypad_8);
-        //         else if (key == config_input[i].key_9)
-        //             emu_key_released(controller, Keypad_9);
-        //         else if (key == config_input[i].key_asterisk)
-        //             emu_key_released(controller, Keypad_Asterisk);
-        //         else if (key == config_input[i].key_hash)
-        //             emu_key_released(controller, Keypad_Hash);
-        //     }
-        // }
-        // break;
+                if (key == config_input[i].key_left)
+                    emu_key_released(controller, GG_KEY_LEFT);
+                else if (key == config_input[i].key_right)
+                    emu_key_released(controller, GG_KEY_RIGHT);
+                else if (key == config_input[i].key_up)
+                    emu_key_released(controller, GG_KEY_UP);
+                else if (key == config_input[i].key_down)
+                    emu_key_released(controller, GG_KEY_DOWN);
+                else if (key == config_input[i].key_1)
+                    emu_key_released(controller, GG_KEY_1);
+                else if (key == config_input[i].key_2)
+                    emu_key_released(controller, GG_KEY_2);
+                else if (key == config_input[i].key_run)
+                    emu_key_released(controller, GG_KEY_RUN);
+                else if (key == config_input[i].key_select)
+                    emu_key_released(controller, GG_KEY_SELECT);
+            }
+        }
+        break;
     }
 }
 

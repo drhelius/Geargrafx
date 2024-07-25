@@ -56,20 +56,20 @@ enum GG_Pixel_Format
 
 enum GG_Keys
 {
-    GG_KEY_UP,
-    GG_KEY_DOWN,
-    GG_KEY_LEFT,
-    GG_KEY_RIGHT,
-    GG_KEY_1,
-    GG_KEY_2,
-    GG_KEY_RUN,
-    GG_KEY_SELECT
+    GG_KEY_1 = 0x01,
+    GG_KEY_2 = 0x02,
+    GG_KEY_SELECT = 0x04,
+    GG_KEY_RUN = 0x08,
+    GG_KEY_UP = 0x10,
+    GG_KEY_DOWN = 0x20,
+    GG_KEY_RIGHT = 0x40,
+    GG_KEY_LEFT = 0x80
 };
 
 enum GG_Controllers
 {
-    GG_CONTROLLER_1,
-    GG_CONTROLLER_2
+    GG_CONTROLLER_1 = 0,
+    GG_CONTROLLER_2 = 1
 };
 
 #endif /* TYPES_H */
