@@ -17,47 +17,39 @@
  *
  */
 
+#ifndef INPUT_INLINE_H
+#define INPUT_INLINE_H
+
 #include "input.h"
-#include "common.h"
 
-Input::Input()
+inline u8 Input::ReadK()
 {
-    m_sel = false;
-    m_clr = false;
-    m_register = 0xF0;
-    m_joypads[0] = 0;
-    m_joypads[1] = 0;
+    return m_register;
 }
 
-void Input::Init()
+inline void Input::WriteO(u8 value)
 {
-    Reset();
-}
-
-void Input::Reset()
-{
-    m_sel = true;
-    m_clr = true;
-    m_register = 0;
-    m_joypads[0] = 0;
-    m_joypads[1] = 0;
+    m_sel = IsSetBit(value, 0);
+    m_clr = IsSetBit(value, 1);
     UpdateRegister();
 }
 
-void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
+inline u8 Input::GetIORegister()
 {
-    m_joypads[controller] |= key;
+    return m_register;
 }
 
-void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
+inline void Input::UpdateRegister()
 {
-    m_joypads[controller] &= ~key;
+    if (m_clr)
+        m_register = 0x00;
+    else
+    {
+        if (m_sel)
+            m_register = 0xF0 | (m_joypads[0] >> 4);
+        else
+            m_register = 0xF0 | (m_joypads[0] & 0x0F);
+    }
 }
 
-// void Input::SaveState(std::ostream& stream)
-// {
-// }
-
-// void Input::LoadState(std::istream& stream)
-// {
-// }
+#endif /* INPUT_INLINE_H */

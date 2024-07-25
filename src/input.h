@@ -37,22 +37,16 @@ public:
     // void LoadState(std::istream& stream);
 
 private:
+    bool m_clr;
+    bool m_sel;
+    u8 m_joypads[2];
+    u8 m_register;
+
+private:
+    void UpdateRegister();
 
 };
 
-inline u8 Input::ReadK()
-{
-    return 0;
-}
-
-inline void Input::WriteO(u8 value)
-{
-
-}
-
-inline u8 Input::GetIORegister()
-{
-    return 0;
-}
+#include "input_inline.h"
 
 #endif /* INPUT_H */
