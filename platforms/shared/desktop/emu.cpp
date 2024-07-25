@@ -100,10 +100,11 @@ void emu_destroy(void)
 
 void emu_load_rom(const char* file_path)
 {
+    debugger_command = Debugger_Command_None;
+
     save_ram();
     geargrafx->LoadROM(file_path);
     load_ram();
-    // emu_debug_continue();
 }
 
 void emu_update(void)
@@ -177,6 +178,8 @@ bool emu_is_empty(void)
 
 void emu_reset(void)
 {
+    debugger_command = Debugger_Command_None;
+
     save_ram();
     geargrafx->ResetROM(false);
     load_ram();

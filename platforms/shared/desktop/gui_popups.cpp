@@ -172,8 +172,8 @@ void gui_popup_modal_about(void)
         #ifdef DEBUG
         ImGui::Text("define: DEBUG");
         #endif
-        #ifdef DEBUG_GEARCOLECO
-        ImGui::Text("define: DEBUG_GEARCOLECO");
+        #ifdef GEARGRAFX_DEBUG
+        ImGui::Text("define: GEARGRAFX_DEBUG");
         #endif
         #ifdef __cplusplus
         ImGui::Text("define: __cplusplus = %d", (int)__cplusplus);
