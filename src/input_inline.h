@@ -41,14 +41,20 @@ inline u8 Input::GetIORegister()
 
 inline void Input::UpdateRegister()
 {
-    if (m_clr)
-        m_register = 0x00;
-    else
+    m_register = 0x30;
+
+    if (m_pce_jap)
+        SetBit(m_register, 6);
+
+    if (m_cdrom)
+        SetBit(m_register, 7);
+
+    if (!m_clr)
     {
         if (m_sel)
-            m_register = 0xF0 | (m_joypads[0] >> 4);
+            m_register |= (m_joypads[0] >> 4);
         else
-            m_register = 0xF0 | (m_joypads[0] & 0x0F);
+            m_register |= (m_joypads[0] & 0x0F);
     }
 }
 

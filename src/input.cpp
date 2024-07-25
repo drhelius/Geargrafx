@@ -22,9 +22,11 @@
 
 Input::Input()
 {
+    m_pce_jap = false;
+    m_cdrom = false;
     m_sel = false;
     m_clr = false;
-    m_register = 0xF0;
+    m_register = 0;
     m_joypads[0] = 0;
     m_joypads[1] = 0;
 }
@@ -36,6 +38,8 @@ void Input::Init()
 
 void Input::Reset()
 {
+    m_pce_jap = false;
+    m_cdrom = false;
     m_sel = true;
     m_clr = true;
     m_register = 0;

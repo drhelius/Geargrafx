@@ -41,6 +41,8 @@ private:
     bool m_sel;
     u8 m_joypads[2];
     u8 m_register;
+    bool m_pce_jap;
+    bool m_cdrom;
 
 private:
     void UpdateRegister();
