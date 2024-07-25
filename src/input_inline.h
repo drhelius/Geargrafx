@@ -44,10 +44,10 @@ inline void Input::UpdateRegister()
     m_register = 0x30;
 
     if (m_pce_jap)
-        SetBit(m_register, 6);
+        m_register = SetBit(m_register, 6);
 
     if (m_cdrom)
-        SetBit(m_register, 7);
+        m_register = SetBit(m_register, 7);
 
     if (!m_clr)
     {
