@@ -518,13 +518,13 @@ void GeargrafxCore::ResetSound()
 void GeargrafxCore::Reset()
 {
     m_clock = 0;
+    m_paused = false;
     m_memory->Reset();
     m_huc6260->Reset();
     m_huc6270->Reset();
     m_huc6280->Reset();
     m_audio->Reset();
     m_input->Reset();
-    m_paused = false;
 }
 
 void GeargrafxCore::RenderFrameBuffer(u8* final_framebuffer)
