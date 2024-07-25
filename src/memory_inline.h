@@ -40,7 +40,13 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
         // HuCard ROM
         u8* rom = m_cartridge->GetROM();
         int rom_size = m_cartridge->GetROMSize();
-        return rom[physical_address & (rom_size - 1)];
+        if (physical_address >= rom_size)
+        {
+            Debug("Attempted read out of ROM bounds at %06X", physical_address);
+            return 0xFF;
+        }
+        else
+            return rom[physical_address];
     }
     // 0xF7
     else if (mpr_value < 0xF8)

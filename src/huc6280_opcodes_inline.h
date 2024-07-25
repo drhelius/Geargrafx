@@ -43,6 +43,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
 
     if (IsSetFlag(FLAG_DECIMAL))
     {
+        m_cycles++;
         int low_nibble = (a & 0x0F) + (value & 0x0F) + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
         if (low_nibble > 9) low_nibble += 6;
         int high_nibble = (a >> 4) + (value >> 4) + (low_nibble > 15 ? 1 : 0);
@@ -323,7 +324,7 @@ inline void HuC6280::OPCodes_ORA(u8 value)
     SetNegativeFlagFromResult(result);
 }
 
-inline void HuC6280::OPCodes_RMB(int bit, u16 address)
+inline void HuC6280::OPCodes_RMB(u8 bit, u16 address)
 {
     ClearFlag(FLAG_TRANSFER);
     u8 result = UnsetBit(m_memory->Read(address), bit);
@@ -395,6 +396,7 @@ inline void HuC6280::OPCodes_SBC(u8 value)
     // TODO
     if (IsSetFlag(FLAG_DECIMAL))
     {
+        m_cycles++;
         int carry = IsSetFlag(FLAG_CARRY) ? 0 : 1;
         int low_nibble = (m_A.GetValue() & 0x0F) - (value & 0x0F) - carry;
         int high_nibble = (m_A.GetValue() >> 4) - (value >> 4) - ((low_nibble < 0) ? 1 : 0);
@@ -444,7 +446,7 @@ inline void HuC6280::OPCodes_SBC(u8 value)
     }
 }
 
-inline void HuC6280::OPCodes_SMB(int bit, u16 address)
+inline void HuC6280::OPCodes_SMB(u8 bit, u16 address)
 {
     ClearFlag(FLAG_TRANSFER);
     u8 result = SetBit(m_memory->Read(address), bit);
@@ -458,10 +460,10 @@ inline void HuC6280::OPCodes_Store(EightBitRegister* reg, u16 address)
     m_memory->Write(address, value);
 }
 
-inline void HuC6280::OPCodes_STN(int reg, u8 value)
+inline void HuC6280::OPCodes_STN(u8 reg, u8 value)
 {
     ClearFlag(FLAG_TRANSFER);
-    m_huc6270->DirectWrite(0x1FE000 | (reg & 0x03), value);
+    m_huc6270->WriteRegister(0x1FE000 | reg, value);
 }
 
 inline void HuC6280::OPCodes_STZ(u16 address)
@@ -490,11 +492,10 @@ inline void HuC6280::OPCodes_TAM()
 
     for (int i = 0; i < 8; i++)
     {
-        if ((bits & 0x01) != 0)
+        if ((bits & (0x01 << i)) != 0)
         {
             m_memory->SetMpr(i, m_A.GetValue());
         }
-        bits >>= 1;
     }
 }
 
@@ -510,11 +511,10 @@ inline void HuC6280::OPCodes_TMA()
 
     for (int i = 0; i < 8; i++)
     {
-        if ((bits & 0x01) != 0)
+        if ((bits & (0x01 << i)) != 0)
         {
             m_A.SetValue(m_memory->GetMpr(i));
         }
-        bits >>= 1;
     }
 }
 
@@ -564,16 +564,17 @@ inline void HuC6280::OPCodes_TAI()
     ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    int length = Fetch16();
-    length = (length == 0) ? 0x10000 : length;
-
-    for (int i = 0; i < length; i++)
+    u16 length = Fetch16();
+    u16 alternate = 0;
+    do
     {
-        m_memory->Write(dest, m_memory->Read(source, true));
-        source += (i & 1) ? -1 : 1;
+        m_memory->Write(dest, m_memory->Read(source + alternate, true));
+        alternate ^= 1;
         dest++;
+        length--;
         m_cycles += 6;
     }
+    while (length);
 }
 
 inline void HuC6280::OPCodes_TDD()
@@ -581,16 +582,16 @@ inline void HuC6280::OPCodes_TDD()
     ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    int length = Fetch16();
-    length = (length == 0) ? 0x10000 : length;
-
-    for (int i = 0; i < length; i++)
+    u16 length = Fetch16();
+    do
     {
         m_memory->Write(dest, m_memory->Read(source, true));
         source--;
         dest--;
+        length--;
         m_cycles += 6;
     }
+    while (length);
 }
 
 inline void HuC6280::OPCodes_TIA()
@@ -598,16 +599,17 @@ inline void HuC6280::OPCodes_TIA()
     ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    int length = Fetch16();
-    length = (length == 0) ? 0x10000 : length;
-
-    for (int i = 0; i < length; i++)
+    u16 length = Fetch16();
+    u16 alternate = 0;
+    do
     {
-        m_memory->Write(dest, m_memory->Read(source, true));
+        m_memory->Write(dest + alternate, m_memory->Read(source, true));
         source++;
-        dest += (i & 1) ? -1 : 1;
+        alternate ^= 1;
+        length--;
         m_cycles += 6;
     }
+    while (length);
 }
 
 inline void HuC6280::OPCodes_TII()
@@ -615,16 +617,16 @@ inline void HuC6280::OPCodes_TII()
     ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    int length = Fetch16();
-    length = (length == 0) ? 0x10000 : length;
-
-    for (int i = 0; i < length; i++)
+    u16 length = Fetch16();
+    do
     {
         m_memory->Write(dest, m_memory->Read(source, true));
         source++;
         dest++;
+        length--;
         m_cycles += 6;
     }
+    while (length);
 }
 
 inline void HuC6280::OPCodes_TIN()
@@ -632,15 +634,15 @@ inline void HuC6280::OPCodes_TIN()
     ClearFlag(FLAG_TRANSFER);
     u16 source = Fetch16();
     u16 dest = Fetch16();
-    int length = Fetch16();
-    length = (length == 0) ? 0x10000 : length;
-
-    for (int i = 0; i < length; i++)
+    u16 length = Fetch16();
+    do
     {
         m_memory->Write(dest, m_memory->Read(source, true));
         source++;
+        length--;
         m_cycles += 6;
     }
+    while (length);
 }
 
 inline void HuC6280::UnofficialOPCode()

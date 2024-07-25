@@ -103,7 +103,8 @@ Memory::GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 addres
         record->name[0] = 0;
         record->bytes[0] = 0;
         record->size = 0;
-        for (int i = 0; i < 7; i++) record->opcodes[i] = 0;
+        for (int i = 0; i < 7; i++)
+            record->opcodes[i] = 0;
         record->jump = false;
         record->jump_address = 0;
         m_disassemblerMemoryMap[physical_address] = record;

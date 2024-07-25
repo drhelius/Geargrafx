@@ -252,7 +252,7 @@ inline u16 HuC6280::ZeroPageAddressing()
 
 inline u16 HuC6280::ZeroPageAddressing(EightBitRegister* reg)
 {
-    return (0x2000 | (Fetch8() + reg->GetValue())) & 0x20FF;
+    return 0x2000 | ((Fetch8() + reg->GetValue()) & 0xFF);
 }
 
 inline u16 HuC6280::ZeroPageRelativeAddressing()
@@ -266,7 +266,7 @@ inline u16 HuC6280::ZeroPageIndirectAddressing()
 {
     u16 address = ZeroPageAddressing();
     u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read(address + 1);
+    u8 h = m_memory->Read((address + 1) & 0x20FF);
     return Address16(h, l);
 }
 

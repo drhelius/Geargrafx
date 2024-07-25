@@ -157,15 +157,15 @@ private:
     void OPCodes_LSR_Accumulator();
     void OPCodes_LSR_Memory(u16 address);
     void OPCodes_ORA(u8 value);
-    void OPCodes_RMB(int bit, u16 address);
+    void OPCodes_RMB(u8 bit, u16 address);
     void OPCodes_ROL_Accumulator();
     void OPCodes_ROL_Memory(u16 address);
     void OPCodes_ROR_Accumulator();
     void OPCodes_ROR_Memory(u16 address);
     void OPCodes_SBC(u8 value);
-    void OPCodes_SMB(int bit, u16 address);
+    void OPCodes_SMB(u8 bit, u16 address);
     void OPCodes_Store(EightBitRegister* reg, u16 address);
-    void OPCodes_STN(int reg, u8 value);
+    void OPCodes_STN(u8 reg, u8 value);
     void OPCodes_STZ(u16 address);
     void OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2);
     void OPCodes_TAM();
