@@ -111,8 +111,7 @@ Memory::GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 addres
         record->jump = false;
         record->jump_address = 0;
         record->jump_bank = 0;
-        record->subroutine_src = false;
-        record->subroutine_dst = false;
+        record->subroutine = false;
         record->irq = 0;
         m_disassembler[physical_address] = record;
     }

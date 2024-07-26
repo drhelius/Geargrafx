@@ -410,7 +410,7 @@ static void menu_input(void)
                     gamepad_configuration_item("1:", &config_input[0].gamepad_1, 0);
                     gamepad_configuration_item("2:", &config_input[0].gamepad_2, 0);
 
-                    gui_popup_modal_gamepad(0);                 
+                    gui_popup_modal_gamepad(0);
 
                     ImGui::EndMenu();
                 }
@@ -438,7 +438,7 @@ static void menu_input(void)
                     gamepad_configuration_item("2:", &config_input[1].gamepad_2, 1);
 
 
-                    gui_popup_modal_gamepad(1);                 
+                    gui_popup_modal_gamepad(1);
 
                     ImGui::EndMenu();
                 }
@@ -488,11 +488,6 @@ static void menu_debug(void)
         if (ImGui::MenuItem("Enable", "", &config_debug.debug))
         {
             emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
-
-            // if (config_debug.debug)
-            //     emu_debug_step();
-            // else
-            //     emu_debug_continue();
         }
 
         ImGui::Separator();
@@ -588,7 +583,7 @@ static void menu_debug(void)
 
         if (ImGui::MenuItem("Clear Symbols", "", (void*)0, config_debug.debug))
         {
-            // gui_debug_reset_symbols();
+            gui_debug_reset_symbols();
         }
 
         ImGui::EndMenu();

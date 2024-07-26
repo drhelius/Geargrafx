@@ -365,10 +365,15 @@ static void prepare_drawable_lines(void)
         Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
 
         if (IsValidPointer(record) && (record->name[0] != 0))
-        {
-
             add_auto_symbol(record, i);
+    }
 
+    for (int i = 0; i < 0x10000; i++)
+    {
+        Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
+
+        if (IsValidPointer(record) && (record->name[0] != 0))
+        {
             for (long unsigned int s = 0; s < fixed_symbols.size(); s++)
             {
                 if ((fixed_symbols[s].bank == record->bank) && (fixed_symbols[s].address == i) && show_symbols)
@@ -415,8 +420,12 @@ static void prepare_drawable_lines(void)
             if (i == pc)
                 pc_pos = disassembler_lines.size();
 
-            // if (goto_address_requested && (vec[dis_size].record->address <= goto_address_target))
-            //     goto_address_pos = dis_size;
+            if (goto_address_requested && (i <= goto_address_target))
+            {
+                goto_address_pos = disassembler_lines.size();
+                if ((goto_address_pos > 0) && disassembler_lines[goto_address_pos - 1].is_symbol)
+                    goto_address_pos--;
+            }
 
             disassembler_lines.push_back(line);
         }
@@ -509,7 +518,7 @@ static void show_disassembly(void)
                     enable_bg_color = true;
                     bg_color = dark_yellow;
                 }
-                else if (line.record->subroutine_src && !ImGui::IsItemHovered())
+                else if (line.record->subroutine && !ImGui::IsItemHovered())
                 {
                     enable_bg_color = true;
                     bg_color = dark_green;
@@ -654,16 +663,14 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
     s.address = address;
     bool insert = false;
 
-    if (record->subroutine_dst)
-    {
-        snprintf(s.text, 64, "SUBROUTINE_%02X_%04X", record->bank, address);
-        insert = true;
-    }
-    else if (record->jump && !record->subroutine_src)
+    if (record->jump)// && !record->subroutine_src)
     {
         s.address = record->jump_address;
         s.bank = record->jump_bank;
-        snprintf(s.text, 64, "LABEL_%02X_%04X", record->jump_bank, record->jump_address);
+        if (record->subroutine)
+            snprintf(s.text, 64, "SUBROUTINE_%02X_%04X", record->jump_bank, record->jump_address);
+        else
+            snprintf(s.text, 64, "LABEL_%02X_%04X", record->jump_bank, record->jump_address);
         insert = true;
     }
     else if (record->irq > 0)

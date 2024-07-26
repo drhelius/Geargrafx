@@ -40,7 +40,6 @@ HuC6280::HuC6280()
     m_timer_irq = false;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
-    m_debug_next_subroutine = false;
     m_debug_next_irq = 0;
     m_breakpoint_hit = false;
     m_processor_state.A = &m_A;
@@ -99,7 +98,6 @@ void HuC6280::Reset()
     m_timer_irq = false;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
-    m_debug_next_subroutine = false;
     m_breakpoint_hit = false;
 }
 
@@ -230,7 +228,6 @@ void HuC6280::DisassembleNextOPCode()
 
     if (!changed && record->size != 0)
     {
-        m_debug_next_subroutine = false;
         m_debug_next_irq = 0;
         return;
     }
@@ -243,15 +240,8 @@ void HuC6280::DisassembleNextOPCode()
     record->jump = false;
     record->jump_address = 0;
     record->jump_bank = 0;
-    record->subroutine_src = false;
-    record->subroutine_dst = false;
+    record->subroutine = false;
     record->irq = 0;
-
-    if (m_debug_next_subroutine)
-    {
-        m_debug_next_subroutine = false;
-        record->subroutine_dst = true;
-    }
 
     if (m_debug_next_irq > 0)
     {
@@ -338,8 +328,11 @@ void HuC6280::DisassembleNextOPCode()
     // BSR rr, JSR hhll
     if (opcode == 0x44 || opcode == 0x20)
     {
-        record->subroutine_src = true;
-        m_debug_next_subroutine = true;
+        u16 jump_address = Address16(m_memory->Read(address + 2), m_memory->Read(address + 1));
+        record->subroutine = true;
+        record->jump = true;
+        record->jump_address = jump_address;
+        record->jump_bank = m_memory->GetBank(jump_address);
     }
 
     if (record->bank < 0xF7)

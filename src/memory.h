@@ -45,8 +45,7 @@ public:
         bool jump;
         u16 jump_address;
         u8 jump_bank;
-        bool subroutine_src;
-        bool subroutine_dst;
+        bool subroutine;
         int irq;
     };
 

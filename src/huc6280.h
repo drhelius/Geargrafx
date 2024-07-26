@@ -104,7 +104,6 @@ private:
     bool m_timer_irq;
     u8 m_interrupt_disable_register;
     u8 m_interrupt_request_register;
-    bool m_debug_next_subroutine;
     int m_debug_next_irq;
     bool m_breakpoint_hit;
 

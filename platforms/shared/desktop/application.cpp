@@ -23,6 +23,7 @@
 #include "../../../src/geargrafx.h"
 #include "config.h"
 #include "gui.h"
+#include "gui_debug_disassembler.h"
 #include "renderer.h"
 #include "emu.h"
 
@@ -83,8 +84,8 @@ int application_init(const char* rom_file, const char* symbol_file)
     if (IsValidPointer(symbol_file) && (strlen(symbol_file) > 0))
     {
         Debug("Symbol file argument: %s", symbol_file);
-        // gui_debug_reset_symbols();
-        // gui_debug_load_symbols_file(symbol_file);
+        gui_debug_reset_symbols();
+        gui_debug_load_symbols_file(symbol_file);
     }
 
     return ret;
