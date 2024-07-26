@@ -35,14 +35,18 @@ public:
     struct GG_Disassembler_Record
     {
         u32 address;
+        u8 bank;
         char name[64];
         char bytes[25];
-        int size;
+        char segment[5];
         u8 opcodes[7];
+        int size;
         bool jump;
         u16 jump_address;
-        u8 bank;
-        char segment[5];
+        u8 jump_bank;
+        bool subroutine_src;
+        bool subroutine_dst;
+        int irq;
     };
 
 public:

@@ -131,9 +131,8 @@ bool GeargrafxCore::LoadROM(const char* file_path)
 {
     if (m_cartridge->LoadFromFile(file_path))
     {
-        Reset();
         m_memory->ResetDisassemblerRecords();
-        m_huc6280->DisassembleNextOPCode();
+        Reset();
         return true;
     }
     else
@@ -144,9 +143,8 @@ bool GeargrafxCore::LoadROMFromBuffer(const u8* buffer, int size)
 {
     if (m_cartridge->LoadFromBuffer(buffer, size))
     {
-        Reset();
         m_memory->ResetDisassemblerRecords();
-        m_huc6280->DisassembleNextOPCode();
+        Reset();
         return true;
     }
     else

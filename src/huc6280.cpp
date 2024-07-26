@@ -40,6 +40,8 @@ HuC6280::HuC6280()
     m_timer_irq = false;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
+    m_debug_next_subroutine = false;
+    m_debug_next_irq = 0;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
     m_processor_state.Y = &m_Y;
@@ -72,6 +74,7 @@ void HuC6280::Reset()
 {
     m_PC.SetLow(m_memory->Read(0xFFFE));
     m_PC.SetHigh(m_memory->Read(0xFFFF));
+    m_debug_next_irq = 1;
     DisassembleNextOPCode();
     m_A.SetValue(rand() & 0xFF);
     m_X.SetValue(rand() & 0xFF);
@@ -95,6 +98,7 @@ void HuC6280::Reset()
     m_timer_irq = false;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
+    m_debug_next_subroutine = false;
 }
 
 unsigned int HuC6280::Tick()
@@ -111,6 +115,7 @@ unsigned int HuC6280::Tick()
         irq_low = 0xFFFC;
         irq_high = 0xFFFD;
         m_nmi_requested = false;
+        m_debug_next_irq = 2;
     }
     else if (!IsSetFlag(FLAG_INTERRUPT))
     {
@@ -120,6 +125,7 @@ unsigned int HuC6280::Tick()
             irq = true;
             irq_low = 0xFFFA;
             irq_high = 0xFFFB;
+            m_debug_next_irq = 3;
         }
         // IRQ1
         else if (m_irq1_asserted && !IsSetBit(m_interrupt_disable_register, 1))
@@ -127,6 +133,7 @@ unsigned int HuC6280::Tick()
             irq = true;
             irq_low = 0xFFF8;
             irq_high = 0xFFF9;
+            m_debug_next_irq = 4;
         }
         // IRQ2
         else if (m_irq2_asserted && !IsSetBit(m_interrupt_disable_register, 0))
@@ -134,6 +141,7 @@ unsigned int HuC6280::Tick()
             irq = true;
             irq_low = 0xFFF6;
             irq_high = 0xFFF7;
+            m_debug_next_irq = 5;
         }
     }
 
@@ -217,7 +225,11 @@ void HuC6280::DisassembleNextOPCode()
     }
 
     if (!changed && record->size != 0)
+    {
+        m_debug_next_subroutine = false;
+        m_debug_next_irq = 0;
         return;
+    }
 
     record->size = opcode_size;
     record->address = m_memory->GetPhysicalAddress(address);
@@ -226,6 +238,22 @@ void HuC6280::DisassembleNextOPCode()
     record->bytes[0] = 0;
     record->jump = false;
     record->jump_address = 0;
+    record->jump_bank = 0;
+    record->subroutine_src = false;
+    record->subroutine_dst = false;
+    record->irq = 0;
+
+    if (m_debug_next_subroutine)
+    {
+        m_debug_next_subroutine = false;
+        record->subroutine_dst = true;
+    }
+
+    if (m_debug_next_irq > 0)
+    {
+        record->irq = m_debug_next_irq;
+        m_debug_next_irq = 0;
+    }
 
     for (int i = 0; i < opcode_size; i++)
     {
@@ -271,6 +299,9 @@ void HuC6280::DisassembleNextOPCode()
         {
             s8 rel = m_memory->Read(address + 1);
             u16 jump_address = address + 2 + rel;
+            record->jump = true;
+            record->jump_address = jump_address;
+            record->jump_bank = m_memory->GetBank(jump_address);
             snprintf(record->name, 64, k_opcode_names[opcode].name, jump_address, rel);
             break;
         }
@@ -279,26 +310,45 @@ void HuC6280::DisassembleNextOPCode()
             u8 zero_page = m_memory->Read(address + 1);
             s8 rel = m_memory->Read(address + 2);
             u16 jump_address = address + 3 + rel;
+            record->jump = true;
+            record->jump_address = jump_address;
+            record->jump_bank = m_memory->GetBank(jump_address);
             snprintf(record->name, 64, k_opcode_names[opcode].name, zero_page, jump_address, rel);
             break;
         }
         default:
         {
             break;
-        }   
+        }
+    }
+
+    // JMP hhll
+    if (opcode == 0x4C)
+    {
+        u16 jump_address = Address16(m_memory->Read(address + 2), m_memory->Read(address + 1));
+        record->jump = true;
+        record->jump_address = jump_address;
+        record->jump_bank = m_memory->GetBank(jump_address);
+    }
+
+    // BSR rr, JSR hhll
+    if (opcode == 0x44 || opcode == 0x20)
+    {
+        record->subroutine_src = true;
+        m_debug_next_subroutine = true;
     }
 
     if (record->bank < 0xF7)
     {
-        strncpy(record->segment, "ROM ", 5);
+        strncpy(record->segment, "ROM", 5);
     }
     else if (record->bank >= 0xF8 && record->bank < 0xFC)
     {
-        strncpy(record->segment, "RAM ", 5);
+        strncpy(record->segment, "RAM", 5);
     }
     else
     {
-        strncpy(record->segment, "????", 5);
+        strncpy(record->segment, "???", 5);
     }
 #endif
 }

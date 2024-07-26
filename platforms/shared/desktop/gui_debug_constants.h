@@ -22,8 +22,8 @@
 
 #include "imgui/imgui.h"
 
-static const int gui_debug_symbols_count = 1;
-static const char* gui_debug_symbols[gui_debug_symbols_count] = {
+static const int gui_debug_symbols_count = 0;
+static const char* gui_debug_symbols[1] = {
     "00:0000 0000",
 };
 

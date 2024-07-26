@@ -27,24 +27,25 @@
 #include "config.h"
 #include "emu.h"
 
-// struct DebugSymbol
-// {
-//     int bank;
-//     u16 address;
-//     std::string text;
-// };
+struct DebugSymbol
+{
+    int bank;
+    u16 address;
+    char text[64];
+};
 
-struct DisassmeblerLine
+struct DisassemblerLine
 {
     u16 address;
     bool is_symbol;
     bool is_breakpoint;
     Memory::GG_Disassembler_Record* record;
-    std::string symbol;
+    char symbol[64];
 };
 
-//static std::vector<DebugSymbol> symbols;
-static std::vector<DisassmeblerLine> disassembler_lines(0x10000);
+static std::vector<DebugSymbol> fixed_symbols;
+static std::vector<DebugSymbol> dynamic_symbols;
+static std::vector<DisassemblerLine> disassembler_lines(0x10000);
 static Memory::GG_Disassembler_Record* selected_record = NULL;
 static char brk_address_cpu[5] = "";
 static char brk_address_mem[10] = "";
@@ -61,11 +62,15 @@ static bool show_mem = true;
 static bool show_symbols = true;
 static bool show_segment = true;
 static bool show_bank = true;
+static int pc_pos = 0;
+static int goto_address_pos = 0;
 
 static void show_controls(void);
 static void show_breakpoints(void);
+static void prepare_drawable_lines(void);
 static void show_disassembly(void);
 static void add_symbol(const char* line);
+static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address);
 static void add_breakpoint_cpu(void);
 static void add_breakpoint_mem(void);
 static void request_goto_address(u16 addr);
@@ -81,10 +86,11 @@ void gui_debug_reset(void)
 
 void gui_debug_reset_symbols(void)
 {
-    // symbols.clear();
+    fixed_symbols.clear();
+    dynamic_symbols.clear();
 
-    // for (int i = 0; i < gui_debug_symbols_count; i++)
-    //     add_symbol(gui_debug_symbols[i]);
+    for (int i = 0; i < gui_debug_symbols_count; i++)
+        add_symbol(gui_debug_symbols[i]);
 }
 
 void gui_debug_load_symbols_file(const char* path)
@@ -513,6 +519,77 @@ static void show_breakpoints(void)
     }
 }
 
+static void prepare_drawable_lines(void)
+{
+    Memory* memory = emu_get_core()->GetMemory();
+    HuC6280* processor = emu_get_core()->GetHuC6280();
+    HuC6280::HuC6280_State* proc_state = processor->GetState();
+    int pc = proc_state->PC->GetValue();
+
+    disassembler_lines.clear();
+    dynamic_symbols.clear();
+    pc_pos = 0;
+    goto_address_pos = 0;
+
+    for (int i = 0; i < 0x10000; i++)
+    {
+        Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
+
+        if (IsValidPointer(record) && (record->name[0] != 0))
+        {
+
+            add_auto_symbol(record, i);
+
+            for (long unsigned int s = 0; s < fixed_symbols.size(); s++)
+            {
+                if ((fixed_symbols[s].bank == record->bank) && (fixed_symbols[s].address == i) && show_symbols)
+                {
+                    DisassemblerLine line;
+                    line.address = (u16)i;
+                    line.is_symbol = true;
+                    snprintf(line.symbol, 64, "%s", fixed_symbols[s].text);
+                    disassembler_lines.push_back(line);
+                }
+            }
+
+            for (long unsigned int s = 0; s < dynamic_symbols.size(); s++)
+            {
+                if ((dynamic_symbols[s].bank == record->bank) && (dynamic_symbols[s].address == i) && show_symbols)
+                {
+                    DisassemblerLine line;
+                    line.address = (u16)i;
+                    line.is_symbol = true;
+                    snprintf(line.symbol, 64, "%s", dynamic_symbols[s].text);
+                    disassembler_lines.push_back(line);
+                }
+            }
+
+            DisassemblerLine line;
+            line.address = (u16)i;
+            line.is_symbol = false;
+            line.is_breakpoint = false;
+            line.record = record;
+
+            // for (long unsigned int b = 0; b < breakpoints_cpu->size(); b++)
+            // {
+            //     if ((*breakpoints_cpu)[b] == vec[dis_size].record)
+            //     {
+            //         vec[dis_size].is_breakpoint = true;
+            //         break;
+            //     }
+            // }
+
+            if (i == pc)
+                pc_pos = disassembler_lines.size();
+
+            // if (goto_address_requested && (vec[dis_size].record->address <= goto_address_target))
+            //     goto_address_pos = dis_size;
+
+            disassembler_lines.push_back(line);
+        }
+    }
+}
+
 static void show_disassembly(void)
 {
     ImGui::PushFont(gui_default_font);
@@ -521,57 +598,11 @@ static void show_disassembly(void)
 
     if (window_visible)
     {
-        GeargrafxCore* core = emu_get_core();
-        Memory* memory = core->GetMemory();
-        HuC6280* processor = core->GetHuC6280();
+        HuC6280* processor = emu_get_core()->GetHuC6280();
         HuC6280::HuC6280_State* proc_state = processor->GetState();
         int pc = proc_state->PC->GetValue();
 
-        int pc_pos = 0;
-        int goto_address_pos = 0;
-
-        disassembler_lines.clear();
-
-        for (int i = 0; i < 0x10000; i++)
-        {
-            Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
-
-            if (IsValidPointer(record) && (record->name[0] != 0))
-            {
-                // for (long unsigned int s = 0; s < symbols.size(); s++)
-                // {
-                //     if ((symbols[s].bank == record->bank) && (symbols[s].address == i) && show_symbols)
-                //     {
-                //         vec[dis_size].is_symbol = true;
-                //         vec[dis_size].symbol = symbols[s].text;
-                //         dis_size ++;
-                //     }
-                // }
-
-                DisassmeblerLine line;
-                line.address = (u16)i;
-                line.is_symbol = false;
-                line.is_breakpoint = false;
-                line.record = record;
-
-                // for (long unsigned int b = 0; b < breakpoints_cpu->size(); b++)
-                // {
-                //     if ((*breakpoints_cpu)[b] == vec[dis_size].record)
-                //     {
-                //         vec[dis_size].is_breakpoint = true;
-                //         break;
-                //     }
-                // }
-
-                if (i == pc)
-                    pc_pos = disassembler_lines.size();
-
-                // if (goto_address_requested && (vec[dis_size].record->address <= goto_address_target))
-                //     goto_address_pos = dis_size;
-
-                disassembler_lines.push_back(line);
-            }
-        }
+        prepare_drawable_lines();
 
         if (follow_pc)
         {
@@ -600,11 +631,11 @@ static void show_disassembly(void)
         {
             for (int item = clipper.DisplayStart; item < clipper.DisplayEnd; item++)
             {
-                DisassmeblerLine line = disassembler_lines[item];
+                DisassemblerLine line = disassembler_lines[item];
 
                 if (line.is_symbol)
                 {
-                    ImGui::TextColored(green, "%s:", line.symbol.c_str());
+                    ImGui::TextColored(green, "%s:", line.symbol);
                     continue;
                 }
 
@@ -658,7 +689,7 @@ static void show_disassembly(void)
                 }
 
                 ImGui::SameLine();
-                ImGui::TextColored(color_addr, "%04X:", line.address);
+                ImGui::TextColored(color_addr, "%04X", line.address);
 
                 ImGui::SameLine();
                 if (line.address == pc)
@@ -695,66 +726,102 @@ static void show_disassembly(void)
     }
 
     ImGui::EndChild();
-    
+
     ImGui::PopFont();
 }
 
 static void add_symbol(const char* line)
 {
-    // Log("Loading symbol %s", line);
+    Debug("Loading symbol %s", line);
 
-    // DebugSymbol s;
+    DebugSymbol s;
+    std::string str(line);
 
-    // std::string str(line);
+    str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
+    str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
 
-    // str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
-    // str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+    size_t first = str.find_first_not_of(' ');
+    if (std::string::npos == first)
+    {
+        str = "";
+    }
+    else
+    {
+        size_t last = str.find_last_not_of(' ');
+        str = str.substr(first, (last - first + 1));
+    }
 
-    // size_t first = str.find_first_not_of(' ');
-    // if (std::string::npos == first)
-    // {
-    //     str = "";
-    // }
-    // else
-    // {
-    //     size_t last = str.find_last_not_of(' ');
-    //     str = str.substr(first, (last - first + 1));
-    // }
+    std::size_t comment = str.find(";");
 
-    // std::size_t comment = str.find(";");
+    if (comment != std::string::npos)
+        str = str.substr(0 , comment);
 
-    // if (comment != std::string::npos)
-    //     str = str.substr(0 , comment);
+    std::size_t space = str.find(" ");
 
-    // std::size_t space = str.find(" ");
+    if (space != std::string::npos)
+    {
+        snprintf(s.text, 64, "%s", str.substr(space + 1 , std::string::npos).c_str());
+        str = str.substr(0, space);
 
-    // if (space != std::string::npos)
-    // {
-    //     s.text = str.substr(space + 1 , std::string::npos);
-    //     str = str.substr(0, space);
+        std::size_t separator = str.find(":");
 
-    //     std::size_t separator = str.find(":");
+        try
+        {
+            if (separator != std::string::npos)
+            {
+                s.address = (u16)std::stoul(str.substr(separator + 1 , std::string::npos), 0, 16);
+                s.bank = std::stoul(str.substr(0, separator), 0 , 16);
+            }
+            else
+            {
+                s.address = (u16)std::stoul(str, 0, 16);
+                s.bank = 0;
+            }
 
-    //     try
-    //     {
-    //         if (separator != std::string::npos)
-    //         {
-    //             s.address = (u16)std::stoul(str.substr(separator + 1 , std::string::npos), 0, 16);
+            fixed_symbols.push_back(s);
+        }
+        catch(const std::invalid_argument&)
+        {
+        }
+    }
+}
 
-    //             s.bank = std::stoul(str.substr(0, separator), 0 , 16);
-    //         }
-    //         else
-    //         {
-    //             s.address = (u16)std::stoul(str, 0, 16);
-    //             s.bank = 0;
-    //         }
+static const char* k_irq_symbol_format[6] = {
+    "????_%02X_%04X",
+    "RESET_%02X_%04X",
+    "NMI_%02X_%04X",
+    "TIMER_IRQ_%02X_%04X",
+    "IRQ1_%02X_%04X",
+    "IRQ2_BRK_%02X_%04X"
+};
 
-    //         symbols.push_back(s);
-    //     }
-    //     catch(const std::invalid_argument&)
-    //     {
-    //     }
-    // }
+static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
+{
+    DebugSymbol s;
+    s.bank = record->bank;
+    s.address = address;
+    bool insert = false;
+
+    if (record->subroutine_dst)
+    {
+        snprintf(s.text, 64, "SUBROUTINE_%02X_%04X", record->bank, address);
+        insert = true;
+    }
+    else if (record->jump && !record->subroutine_src)
+    {
+        s.address = record->jump_address;
+        s.bank = record->jump_bank;
+        snprintf(s.text, 64, "LABEL_%02X_%04X", record->jump_bank, record->jump_address);
+        insert = true;
+    }
+    else if (record->irq > 0)
+    {
+        snprintf(s.text, 64, k_irq_symbol_format[record->irq], record->bank, address);
+        insert = true;
+    }
+
+    if (insert)
+        dynamic_symbols.push_back(s);
 }
 
 static void add_breakpoint_cpu(void)
