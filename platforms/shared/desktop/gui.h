@@ -39,12 +39,15 @@ enum gui_ShortCutEvent
     gui_ShortcutSaveState,
     gui_ShortcutLoadState,
     gui_ShortcutScreenshot,
-    gui_ShortcutDebugStep,
+    gui_ShortcutDebugStepOver,
+    gui_ShortcutDebugStepInto,
+    gui_ShortcutDebugStepOut,
+    gui_ShortcutDebugStepFrame,
+    gui_ShortcutDebugBreak,
     gui_ShortcutDebugContinue,
-    gui_ShortcutDebugNextFrame,
-    gui_ShortcutDebugBreakpoint,
     gui_ShortcutDebugRuntocursor,
     gui_ShortcutDebugGoBack,
+    gui_ShortcutDebugBreakpoint,
     gui_ShortcutDebugCopy,
     gui_ShortcutDebugPaste,
     gui_ShortcutShowMainMenu
@@ -54,6 +57,7 @@ EXTERN bool gui_in_use;
 EXTERN bool gui_main_window_hovered;
 EXTERN bool gui_main_menu_hovered;
 EXTERN ImFont* gui_default_font;
+EXTERN ImFont* gui_default_fonts[4];
 EXTERN ImFont* gui_roboto_font;
 EXTERN int gui_main_window_width;
 EXTERN int gui_main_window_height;

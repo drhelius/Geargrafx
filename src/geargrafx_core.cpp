@@ -79,13 +79,12 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_input->Init();
 }
 
-bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, bool step_debugger)
+bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, bool step_debugger, bool stop_on_breakpoint)
 {
     if (m_paused || !m_cartridge->IsReady())
         return false;
 
     bool instruction_completed = false;
-    bool breakpoint = false;
     bool stop = false;    
     const int timer_divider = 3;
     const int audio_divider = 6;
@@ -112,6 +111,9 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         if (step_debugger && instruction_completed)
             stop = true;
 
+        if (stop_on_breakpoint && instruction_completed && m_huc6280->BreakpointHit())
+            stop = true;
+
         // Failsafe: if the emulator is running too long, stop it
         // if (m_clock >= 89683)
         // {
@@ -124,7 +126,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     m_audio->EndFrame(sample_buffer, sample_count);
     RenderFrameBuffer(frame_buffer);
 
-    return breakpoint;
+    return m_huc6280->BreakpointHit();
 }
 
 bool GeargrafxCore::LoadROM(const char* file_path)

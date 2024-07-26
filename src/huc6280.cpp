@@ -42,6 +42,7 @@ HuC6280::HuC6280()
     m_interrupt_request_register = 0;
     m_debug_next_subroutine = false;
     m_debug_next_irq = 0;
+    m_breakpoint_hit = false;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
     m_processor_state.Y = &m_Y;
@@ -99,6 +100,7 @@ void HuC6280::Reset()
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
     m_debug_next_subroutine = false;
+    m_breakpoint_hit = false;
 }
 
 unsigned int HuC6280::Tick()
@@ -199,6 +201,8 @@ HuC6280::HuC6280_State* HuC6280::GetState()
 void HuC6280::DisassembleNextOPCode()
 {
 #ifndef GG_DISABLE_DISASSEMBLER
+
+    CheckBreakpoints();
 
     u16 address = m_PC.GetValue();
     Memory::GG_Disassembler_Record* record = m_memory->GetOrCreateDisassemblerRecord(address);
@@ -350,5 +354,43 @@ void HuC6280::DisassembleNextOPCode()
     {
         strncpy(record->segment, "???", 5);
     }
+#endif
+}
+
+bool HuC6280::BreakpointHit()
+{
+    return m_breakpoint_hit && (m_clock_cycles == 0);
+}
+
+void HuC6280::CheckBreakpoints()
+{
+#ifndef GG_DISABLE_DISASSEMBLER
+
+    m_breakpoint_hit = false;
+
+    std::vector<Memory::GG_Breakpoint>* breakpoints = m_memory->GetBreakpoints();
+
+    for (int i = 0; i < (int)breakpoints->size(); i++)
+    {
+        Memory::GG_Breakpoint* brk = &(*breakpoints)[i];
+
+        if (brk->range)
+        {
+            if (m_PC.GetValue() >= brk->address1 && m_PC.GetValue() <= brk->address2)
+            {
+                m_breakpoint_hit = true;
+                return;
+            }
+        }
+        else
+        {
+            if (m_PC.GetValue() == brk->address1)
+            {
+                m_breakpoint_hit = true;
+                return;
+            }
+        }
+    }
+
 #endif
 }

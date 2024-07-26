@@ -79,9 +79,7 @@ void emu_init(void)
 
     audio_enabled = true;
     emu_audio_sync = true;
-    // emu_debug_disable_breakpoints_cpu = false;
-    // emu_debug_disable_breakpoints_mem = false;
-    // emu_debug_tile_palette = 0;
+    emu_debug_disable_breakpoints = false;
     emu_savefiles_dir_option = 0;
     emu_savestates_dir_option = 0;
     emu_savefiles_path[0] = 0;
@@ -117,6 +115,8 @@ void emu_update(void)
     if (config_debug.debug)
     {
         bool step = false;
+        bool breakpoint_hit = false;
+        bool stop_on_breakpoint = !emu_debug_disable_breakpoints;
 
         switch (debugger_command)
         {
@@ -130,7 +130,10 @@ void emu_update(void)
         }
 
         if (debugger_command != Debugger_Command_None)
-            geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, step);
+            breakpoint_hit = geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, step, stop_on_breakpoint);
+
+        if (breakpoint_hit)
+            debugger_command = Debugger_Command_None;
 
         if (debugger_command != Debugger_Command_Continue)
             debugger_command = Debugger_Command_None;
@@ -309,7 +312,8 @@ void emu_debug_step_frame(void)
 void emu_debug_break(void)
 {
     geargrafx->Pause(false);
-    debugger_command = Debugger_Command_StepInto; 
+    if (debugger_command == Debugger_Command_Continue)
+        debugger_command = Debugger_Command_StepInto;
 }
 
 void emu_debug_continue(void)

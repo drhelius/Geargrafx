@@ -23,6 +23,7 @@
 #include "gui_filedialogs.h"
 #include "gui_popups.h"
 #include "gui_actions.h"
+#include "gui_debug_disassembler.h"
 #include "config.h"
 #include "application.h"
 #include "emu.h"
@@ -260,7 +261,7 @@ static void menu_video(void)
     {
         gui_in_use = true;
 
-        if (ImGui::MenuItem("Full Screen", "F11", &config_emulator.fullscreen))
+        if (ImGui::MenuItem("Full Screen", "F12", &config_emulator.fullscreen))
         {
             application_trigger_fullscreen(config_emulator.fullscreen);
         }
@@ -496,53 +497,61 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Step Over", "CTRL + F10", (void*)0, config_debug.debug))
+        if (ImGui::MenuItem("Step Over", "F10", (void*)0, config_debug.debug))
         {
-            // emu_debug_step();
+            emu_debug_step_over();
         }
 
-        if (ImGui::MenuItem("Step Frame", "CTRL + F6", (void*)0, config_debug.debug))
+        if (ImGui::MenuItem("Step Into", "F11", (void*)0, config_debug.debug))
         {
-            // emu_debug_next_frame();
+            emu_debug_step_into();
         }
 
-        if (ImGui::MenuItem("Continue", "CTRL + F5", (void*)0, config_debug.debug))
+        if (ImGui::MenuItem("Step Out", "SHIFT + F11", (void*)0, config_debug.debug))
         {
-            // emu_debug_continue();
+            emu_debug_step_out();
         }
 
-        if (ImGui::MenuItem("Run To Cursor", "CTRL + F8", (void*)0, config_debug.debug))
+        if (ImGui::MenuItem("Step Frame", "F6", (void*)0, config_debug.debug))
         {
-            // gui_debug_runtocursor();
+            emu_debug_step_frame();
+        }
+
+        if (ImGui::MenuItem("Break", "F7", (void*)0, config_debug.debug))
+        {
+            emu_debug_break();
+        }
+
+        if (ImGui::MenuItem("Continue", "F5", (void*)0, config_debug.debug))
+        {
+            emu_debug_continue();
+        }
+
+        if (ImGui::MenuItem("Run To Cursor", "F8", (void*)0, config_debug.debug))
+        {
+            gui_debug_runtocursor();
         }
 
         ImGui::Separator();
 
         if (ImGui::MenuItem("Go Back", "CTRL + BACKSPACE", (void*)0, config_debug.debug))
         {
-            // gui_debug_go_back();
+            gui_debug_go_back();
         }
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Toggle Breakpoint", "CTRL + F9", (void*)0, config_debug.debug))
+        if (ImGui::MenuItem("Toggle Breakpoint", "F9", (void*)0, config_debug.debug))
         {
-            // gui_debug_toggle_breakpoint();
+            gui_debug_toggle_breakpoint();
         }
 
-        if (ImGui::MenuItem("Clear All Processor Breakpoints", 0, (void*)0, config_debug.debug))
+        if (ImGui::MenuItem("Clear All Breakpoints", 0, (void*)0, config_debug.debug))
         {
-            // gui_debug_reset_breakpoints_cpu();
+            gui_debug_reset_breakpoints();
         }
 
-            if (ImGui::MenuItem("Clear All Memory Breakpoints", 0, (void*)0, config_debug.debug))
-        {
-            // gui_debug_reset_breakpoints_mem();
-        }
-
-        // ImGui::MenuItem("Disable All Processor Breakpoints", 0, &emu_debug_disable_breakpoints_cpu, config_debug.debug);
-
-        // ImGui::MenuItem("Disable All Memory Breakpoints", 0, &emu_debug_disable_breakpoints_mem, config_debug.debug);
+        ImGui::MenuItem("Disable All Breakpoints", 0, &emu_debug_disable_breakpoints, config_debug.debug);
 
         ImGui::Separator();
 
@@ -551,7 +560,7 @@ static void menu_debug(void)
             ImGui::PushItemWidth(110.0f);
             if (ImGui::Combo("##font", &config_debug.font_size, "Very Small\0Small\0Medium\0Large\0\0"))
             {
-                // gui_default_font = default_font[config_debug.font_size];
+                gui_default_font = gui_default_fonts[config_debug.font_size];
             }
             ImGui::PopItemWidth();
             ImGui::EndMenu();

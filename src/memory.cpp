@@ -17,7 +17,10 @@
  *
  */
 
+#include <string>
+#include <stdexcept>
 #include <stdlib.h>
+#include <string.h>
 #include "memory.h"
 #include "huc6260.h"
 #include "huc6270.h"
@@ -35,20 +38,20 @@ Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* 
     m_input = input;
     m_audio = audio;
     InitPointer(m_wram);
-    InitPointer(m_disassemblerMemoryMap);
+    InitPointer(m_disassembler);
     m_io_buffer = 0;
 }
 
 Memory::~Memory()
 {
     SafeDeleteArray(m_wram);
-    if (IsValidPointer(m_disassemblerMemoryMap))
+    if (IsValidPointer(m_disassembler))
     {
         for (int i = 0; i < 0x200000; i++)
         {
-            SafeDelete(m_disassemblerMemoryMap[i]);
+            SafeDelete(m_disassembler[i]);
         }
-        SafeDeleteArray(m_disassemblerMemoryMap);
+        SafeDeleteArray(m_disassembler);
     }
 }
 
@@ -57,10 +60,10 @@ void Memory::Init()
     m_wram = new u8[0x2000];
 
 #ifndef GG_DISABLE_DISASSEMBLER
-    m_disassemblerMemoryMap = new GG_Disassembler_Record*[0x200000];
+    m_disassembler = new GG_Disassembler_Record*[0x200000];
     for (int i = 0; i < 0x200000; i++)
     {
-        InitPointer(m_disassemblerMemoryMap[i]);
+        InitPointer(m_disassembler[i]);
     }
 #endif
 
@@ -85,14 +88,14 @@ void Memory::Reset()
 
 Memory::GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address)
 {
-    return m_disassemblerMemoryMap[GetPhysicalAddress(address)];
+    return m_disassembler[GetPhysicalAddress(address)];
 }
 
 Memory::GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
 {
     u32 physical_address = GetPhysicalAddress(address);
 
-    GG_Disassembler_Record* record = m_disassemblerMemoryMap[physical_address];
+    GG_Disassembler_Record* record = m_disassembler[physical_address];
 
     if (!IsValidPointer(record))
     {
@@ -111,7 +114,7 @@ Memory::GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 addres
         record->subroutine_src = false;
         record->subroutine_dst = false;
         record->irq = 0;
-        m_disassemblerMemoryMap[physical_address] = record;
+        m_disassembler[physical_address] = record;
     }
 
     return record;
@@ -121,8 +124,97 @@ void Memory::ResetDisassemblerRecords()
 {
     for (int i = 0; i < 0x200000; i++)
     {
-        SafeDelete(m_disassemblerMemoryMap[i]);
+        SafeDelete(m_disassembler[i]);
     }
+}
+
+void Memory::ResetBreakpoints()
+{
+    m_breakpoints.clear();
+}
+
+bool Memory::AddBreakpoint(char* text, bool read, bool write, bool execute)
+{
+    int input_len = (int)strlen(text);
+    Memory::GG_Breakpoint brk;
+    brk.address1 = 0;
+    brk.address2 = 0;
+    brk.range = false;
+    brk.read = read;
+    brk.write = write;
+    brk.execute = execute;
+
+    if (!read && !write && !execute)
+        return false;
+
+    try
+    {
+        if ((input_len == 9) && (text[4] == '-'))
+        {
+            std::string str(text);
+            std::size_t separator = str.find("-");
+
+            if (separator != std::string::npos)
+            {
+                brk.address1 = (u16)std::stoul(str.substr(0, separator), 0 , 16);
+                brk.address2 = (u16)std::stoul(str.substr(separator + 1 , std::string::npos), 0, 16);
+                brk.range = true;
+            }
+        }
+        else if (input_len == 4)
+        {
+            brk.address1 = (u16)std::stoul(text, 0, 16);
+        }
+        else
+        {
+            return false;
+        }
+    }
+    catch(const std::invalid_argument&)
+    {
+        return false;
+    }
+
+    bool found = false;
+
+    for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
+    {
+        GG_Breakpoint* item = &m_breakpoints[b];
+
+        if (brk.range)
+        {
+            if (item->range && (item->address1 == brk.address1) && (item->address2 == brk.address2))
+            {
+                found = true;
+                break;
+            }
+        }
+        else
+        {
+            if (!item->range && (item->address1 == brk.address1))
+            {
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found)
+        m_breakpoints.push_back(brk);
+
+    return true;
+}
+
+bool Memory::AddBreakpoint(u16 address)
+{
+    char text[5];
+    sprintf(text, "%04X", address);
+    return AddBreakpoint(text, false, false, true);
+}
+
+std::vector<Memory::GG_Breakpoint>* Memory::GetBreakpoints()
+{
+    return &m_breakpoints;
 }
 
 u8* Memory::GetWram()

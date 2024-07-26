@@ -46,12 +46,11 @@ struct DisassemblerLine
 static std::vector<DebugSymbol> fixed_symbols;
 static std::vector<DebugSymbol> dynamic_symbols;
 static std::vector<DisassemblerLine> disassembler_lines(0x10000);
-static Memory::GG_Disassembler_Record* selected_record = NULL;
-static char brk_address_cpu[5] = "";
-static char brk_address_mem[10] = "";
-static bool brk_new_mem_read = true;
-static bool brk_new_mem_write = true;
-static bool brk_new_mem_execute = true;
+static int selected_address = -1;
+static char new_breakpoint_buffer[10] = "";
+static bool new_breakpoint_read = false;
+static bool new_breakpoint_write = false;
+static bool new_breakpoint_execute = true;
 static char goto_address[5] = "";
 static bool goto_address_requested = false;
 static u16 goto_address_target = 0;
@@ -71,17 +70,15 @@ static void prepare_drawable_lines(void);
 static void show_disassembly(void);
 static void add_symbol(const char* line);
 static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address);
-static void add_breakpoint_cpu(void);
-static void add_breakpoint_mem(void);
+static void add_breakpoint(void);
 static void request_goto_address(u16 addr);
 static bool is_return_instruction(u8 opcode);
 
 void gui_debug_reset(void)
 {
-    gui_debug_reset_breakpoints_cpu();
-    gui_debug_reset_breakpoints_mem();
+    gui_debug_reset_breakpoints();
     gui_debug_reset_symbols();
-    selected_record = NULL;
+    selected_address = -1;
 }
 
 void gui_debug_reset_symbols(void)
@@ -91,6 +88,12 @@ void gui_debug_reset_symbols(void)
 
     for (int i = 0; i < gui_debug_symbols_count; i++)
         add_symbol(gui_debug_symbols[i]);
+}
+
+void gui_debug_reset_breakpoints(void)
+{
+    emu_get_core()->GetMemory()->ResetBreakpoints();
+    new_breakpoint_buffer[0] = 0;
 }
 
 void gui_debug_load_symbols_file(const char* path)
@@ -131,26 +134,10 @@ void gui_debug_load_symbols_file(const char* path)
 
 void gui_debug_toggle_breakpoint(void)
 {
-    // if (IsValidPointer(selected_record))
-    // {
-    //     bool found = false;
-    //     std::vector<Memory::stDisassembleRecord*>* breakpoints = emu_get_core()->GetMemory()->GetBreakpointsCPU();
-
-    //     for (long unsigned int b = 0; b < breakpoints->size(); b++)
-    //     {
-    //         if ((*breakpoints)[b] == selected_record)
-    //         {
-    //             found = true;
-    //              InitPointer((*breakpoints)[b]);
-    //             break;
-    //         }
-    //     }
-
-    //     if (!found)
-    //     {
-    //         breakpoints->push_back(selected_record);
-    //     }
-    // }
+    if (selected_address > 0)
+    {
+        emu_get_core()->GetMemory()->AddBreakpoint(selected_address);
+    }
 }
 
 void gui_debug_runtocursor(void)
@@ -160,18 +147,6 @@ void gui_debug_runtocursor(void)
     //     emu_get_core()->GetMemory()->SetRunToBreakpoint(selected_record);
     //     emu_debug_continue();
     // }
-}
-
-void gui_debug_reset_breakpoints_cpu(void)
-{
-    // emu_get_core()->GetMemory()->GetBreakpointsCPU()->clear();
-    // brk_address_cpu[0] = 0;
-}
-
-void gui_debug_reset_breakpoints_mem(void)
-{
-    // emu_get_core()->GetMemory()->GetBreakpointsMem()->clear();
-    // brk_address_mem[0] = 0;
 }
 
 void gui_debug_go_back(void)
@@ -236,7 +211,7 @@ static void show_controls(void)
     ImGui::SameLine();
     if (ImGui::Button("Reset"))
     {
-        //emu_debug_continue();
+        emu_reset();
     }
 
     ImGui::Checkbox("Follow PC", &follow_pc); ImGui::SameLine();
@@ -289,9 +264,7 @@ static void show_breakpoints(void)
 {
     if (ImGui::CollapsingHeader("Breakpoints"))
     {
-        bool placeholder = false;
-        //ImGui::Checkbox("Disable All##diable_all_mem", &emu_debug_disable_breakpoints_mem);
-        ImGui::Checkbox("Disable All##diable_all_mem", &placeholder);
+        ImGui::Checkbox("Disable All##disable_mem", &emu_debug_disable_breakpoints);
 
         ImGui::Columns(2, "breakpoints");
         ImGui::SetColumnOffset(1, 100);
@@ -299,218 +272,74 @@ static void show_breakpoints(void)
         ImGui::Separator();
 
         ImGui::PushItemWidth(85);
-        if (ImGui::InputTextWithHint("##add_breakpoint", "XXXX-XXXX", brk_address_mem, IM_ARRAYSIZE(brk_address_mem), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+        if (ImGui::InputTextWithHint("##add_breakpoint", "XXXX-XXXX", new_breakpoint_buffer, IM_ARRAYSIZE(new_breakpoint_buffer), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
         {
-            //add_breakpoint_mem();
+            add_breakpoint();
         }
         ImGui::PopItemWidth();
 
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("Use XXXX format for single addresses or XXXX-XXXX for address ranges");
 
-        ImGui::Checkbox("Read", &brk_new_mem_read);
-        ImGui::Checkbox("Write", &brk_new_mem_write);
-        ImGui::Checkbox("Execute", &brk_new_mem_execute);
+        ImGui::Checkbox("Read", &new_breakpoint_read);
+        ImGui::Checkbox("Write", &new_breakpoint_write);
+        ImGui::Checkbox("Execute", &new_breakpoint_execute);
 
         if (ImGui::Button("Add##add", ImVec2(85, 0)))
         {
-            //add_breakpoint_mem();
+            add_breakpoint();
         }
 
         if (ImGui::Button("Clear All##clear_all", ImVec2(85, 0)))
         {
-            //gui_debug_reset_breakpoints_mem();
+            gui_debug_reset_breakpoints();
         }
 
         ImGui::NextColumn();
 
         ImGui::BeginChild("breakpoints", ImVec2(0, 130), false);
+        ImGui::PushFont(gui_default_font);
 
         int remove = -1;
+        std::vector<Memory::GG_Breakpoint>* breakpoints = emu_get_core()->GetMemory()->GetBreakpoints();
 
-        // for (long unsigned int b = 0; b < breakpoints_mem->size(); b++)
-        // {
-        //     ImGui::PushID(10000 + b);
-        //     if (ImGui::SmallButton("X"))
-        //     {
-        //        remove = b;
-        //        ImGui::PopID();
-        //        continue;
-        //     }
+        for (long unsigned int b = 0; b < breakpoints->size(); b++)
+        {
+            Memory::GG_Breakpoint* brk = &(*breakpoints)[b];
 
-        //     ImGui::PopID();
+            ImGui::PushID(10000 + b);
+            if (ImGui::SmallButton("X"))
+            {
+               remove = b;
+               ImGui::PopID();
+               continue;
+            }
 
-        //     ImGui::PushFont(gui_default_font);
-        //     ImGui::SameLine();
-        //     if ((*breakpoints_mem)[b].range)
-        //         ImGui::TextColored(red, "%04X-%04X", (*breakpoints_mem)[b].address1, (*breakpoints_mem)[b].address2);
-        //     else
-        //         ImGui::TextColored(red, "%04X", (*breakpoints_mem)[b].address1);
-        //     if ((*breakpoints_mem)[b].read)
-        //     {
-        //         ImGui::SameLine(); ImGui::TextColored(gray, "R");
-        //     }
-        //     if ((*breakpoints_mem)[b].write)
-        //     {
-        //         ImGui::SameLine(); ImGui::TextColored(gray, "W");
-        //     }
-        //     ImGui::PopFont();
-        // }
+            ImGui::PopID();
+
+            ImGui::SameLine();
+            if ((*breakpoints)[b].range)
+                ImGui::TextColored(red, "%04X-%04X", brk->address1, brk->address2);
+            else
+                ImGui::TextColored(red, "%04X", brk->address1);
+
+            ImGui::SameLine(); ImGui::TextColored(brk->read ? orange : gray, " R");
+            ImGui::SameLine(); ImGui::TextColored(brk->write ? orange : gray, "W");
+            ImGui::SameLine(); ImGui::TextColored(brk->execute ? orange : gray, "X ");
+
+            Memory::GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(brk->address1);
+
+            if (brk->execute && IsValidPointer(record))
+            {
+                ImGui::SameLine(); ImGui::TextColored(white, "%s", record->name);
+            }
+        }
+
+        ImGui::PopFont();
 
         if (remove >= 0)
         {
-            //breakpoints_mem->erase(breakpoints_mem->begin() + remove);
-        }
-
-        ImGui::EndChild();
-        ImGui::Columns(1);
-        ImGui::Separator();
-    }
-
-    if (false)
-    {
-        bool placeholder = false;
-        //ImGui::Checkbox("Disable All##disable_all_cpu", &emu_debug_disable_breakpoints_cpu);
-        ImGui::Checkbox("Disable All##disable_all_cpu", &placeholder);
-
-        ImGui::Columns(2, "breakpoints_cpu");
-        ImGui::SetColumnOffset(1, 85);
-
-        ImGui::Separator();
-
-        if (IsValidPointer(selected_record))
-            sprintf(brk_address_cpu, "%04X", selected_record->address);
-
-        ImGui::PushItemWidth(70);
-        if (ImGui::InputTextWithHint("##add_breakpoint_cpu", "XXXX", brk_address_cpu, IM_ARRAYSIZE(brk_address_cpu), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            add_breakpoint_cpu();
-        }
-        ImGui::PopItemWidth();
-
-
-        if (ImGui::Button("Add##add_cpu", ImVec2(70, 0)))
-        {
-            add_breakpoint_cpu();
-        }
-
-        if (ImGui::Button("Clear All##clear_all_cpu", ImVec2(70, 0)))
-        {
-            gui_debug_reset_breakpoints_cpu();
-        }
-
-        ImGui::NextColumn();
-
-        ImGui::BeginChild("breakpoints_cpu", ImVec2(0, 80), false);
-
-        int remove = -1;
-
-        // for (long unsigned int b = 0; b < breakpoints_cpu->size(); b++)
-        // {
-        //     if (!IsValidPointer((*breakpoints_cpu)[b]))
-        //         continue;
-
-        //     ImGui::PushID(b);
-        //     if (ImGui::SmallButton("X"))
-        //     {
-        //        remove = b;
-        //        ImGui::PopID();
-        //        continue;
-        //     }
-
-        //     ImGui::PopID();
-
-        //     ImGui::PushFont(gui_default_font);
-        //     ImGui::SameLine();
-        //     ImGui::TextColored(red, "%04X", (*breakpoints_cpu)[b]->address);
-        //     ImGui::SameLine();
-        //     ImGui::TextColored(gray, "%s", (*breakpoints_cpu)[b]->name);
-        //     ImGui::PopFont();
-        // }
-
-        if (remove >= 0)
-        {
-            //breakpoints_cpu->erase(breakpoints_cpu->begin() + remove);
-        }
-
-        ImGui::EndChild();
-        ImGui::Columns(1);
-        ImGui::Separator();
-
-    }
-
-    if (false)
-    {
-        bool placeholder = false;
-        //ImGui::Checkbox("Disable All##diable_all_mem", &emu_debug_disable_breakpoints_mem);
-        ImGui::Checkbox("Disable All##diable_all_mem", &placeholder);
-
-        ImGui::Columns(2, "breakpoints_mem");
-        ImGui::SetColumnOffset(1, 100);
-
-        ImGui::Separator();
-
-        ImGui::PushItemWidth(85);
-        if (ImGui::InputTextWithHint("##add_breakpoint_mem", "XXXX-XXXX", brk_address_mem, IM_ARRAYSIZE(brk_address_mem), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            add_breakpoint_mem();
-        }
-        ImGui::PopItemWidth();
-
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Use XXXX format for single addresses or XXXX-XXXX for address ranges");
-
-        ImGui::Checkbox("Read", &brk_new_mem_read);
-        ImGui::Checkbox("Write", &brk_new_mem_write);
-
-        if (ImGui::Button("Add##add_mem", ImVec2(85, 0)))
-        {
-            add_breakpoint_mem();
-        }
-
-        if (ImGui::Button("Clear All##clear_all_mem", ImVec2(85, 0)))
-        {
-            gui_debug_reset_breakpoints_mem();
-        }
-
-        ImGui::NextColumn();
-
-        ImGui::BeginChild("breakpoints_mem", ImVec2(0, 130), false);
-
-        int remove = -1;
-
-        // for (long unsigned int b = 0; b < breakpoints_mem->size(); b++)
-        // {
-        //     ImGui::PushID(10000 + b);
-        //     if (ImGui::SmallButton("X"))
-        //     {
-        //        remove = b;
-        //        ImGui::PopID();
-        //        continue;
-        //     }
-
-        //     ImGui::PopID();
-
-        //     ImGui::PushFont(gui_default_font);
-        //     ImGui::SameLine();
-        //     if ((*breakpoints_mem)[b].range)
-        //         ImGui::TextColored(red, "%04X-%04X", (*breakpoints_mem)[b].address1, (*breakpoints_mem)[b].address2);
-        //     else
-        //         ImGui::TextColored(red, "%04X", (*breakpoints_mem)[b].address1);
-        //     if ((*breakpoints_mem)[b].read)
-        //     {
-        //         ImGui::SameLine(); ImGui::TextColored(gray, "R");
-        //     }
-        //     if ((*breakpoints_mem)[b].write)
-        //     {
-        //         ImGui::SameLine(); ImGui::TextColored(gray, "W");
-        //     }
-        //     ImGui::PopFont();
-        // }
-
-        if (remove >= 0)
-        {
-            //breakpoints_mem->erase(breakpoints_mem->begin() + remove);
+            breakpoints->erase(breakpoints->begin() + remove);
         }
 
         ImGui::EndChild();
@@ -570,14 +399,18 @@ static void prepare_drawable_lines(void)
             line.is_breakpoint = false;
             line.record = record;
 
-            // for (long unsigned int b = 0; b < breakpoints_cpu->size(); b++)
-            // {
-            //     if ((*breakpoints_cpu)[b] == vec[dis_size].record)
-            //     {
-            //         vec[dis_size].is_breakpoint = true;
-            //         break;
-            //     }
-            // }
+            std::vector<Memory::GG_Breakpoint>* breakpoints = emu_get_core()->GetMemory()->GetBreakpoints();
+
+            for (long unsigned int b = 0; b < breakpoints->size(); b++)
+            {
+                Memory::GG_Breakpoint* brk = &(*breakpoints)[b];
+
+                if (brk->execute && (brk->address1 == i))
+                {
+                    line.is_breakpoint = true;
+                    break;
+                }
+            }
 
             if (i == pc)
                 pc_pos = disassembler_lines.size();
@@ -641,7 +474,7 @@ static void show_disassembly(void)
 
                 ImGui::PushID(item);
 
-                bool is_selected = (selected_record == line.record);
+                bool is_selected = (selected_address == line.address);
 
                 if (ImGui::Selectable("", is_selected, ImGuiSelectableFlags_AllowDoubleClick))
                 {
@@ -652,22 +485,41 @@ static void show_disassembly(void)
                     }
                     else if (is_selected)
                     {
-                        InitPointer(selected_record);
-                        brk_address_cpu[0] = 0;
+                        selected_address = -1;
+                        new_breakpoint_buffer[0] = 0;
                     }
                     else
-                        selected_record = line.record;
+                        selected_address = line.address;
                 }
+
+                bool enable_bg_color = false;
+                ImVec4 bg_color;
 
                 if (is_selected)
                 {
                     ImGui::SetItemDefaultFocus();
                 }
+                else if (line.is_breakpoint && !ImGui::IsItemHovered())
+                {
+                    enable_bg_color = true;
+                    bg_color = dark_red;
+                }
                 else if ((line.address == pc) && !ImGui::IsItemHovered())
+                {
+                    enable_bg_color = true;
+                    bg_color = dark_yellow;
+                }
+                else if (line.record->subroutine_src && !ImGui::IsItemHovered())
+                {
+                    enable_bg_color = true;
+                    bg_color = dark_green;
+                }
+
+                if (enable_bg_color)
                 {
                     ImVec2 p_min = ImGui::GetItemRectMin();
                     ImVec2 p_max = ImGui::GetItemRectMax();
-                    ImGui::GetWindowDrawList()->AddRectFilled(p_min, p_max, ImGui::GetColorU32(dark_yellow));
+                    ImGui::GetWindowDrawList()->AddRectFilled(p_min, p_max, ImGui::GetColorU32(bg_color));
                 }
 
                 ImVec4 color_segment = line.is_breakpoint ? red : magenta;
@@ -824,128 +676,10 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
         dynamic_symbols.push_back(s);
 }
 
-static void add_breakpoint_cpu(void)
+static void add_breakpoint(void)
 {
-    // int input_len = (int)strlen(brk_address_cpu);
-    // u16 target_address = 0;
-    // int target_bank = 0;
-
-    // try
-    // {
-    //     if ((input_len == 7) && (brk_address_cpu[2] == ':'))
-    //     {
-    //         std::string str(brk_address_cpu);
-    //         std::size_t separator = str.find(":");
-
-    //         if (separator != std::string::npos)
-    //         {
-    //             target_address = (u16)std::stoul(str.substr(separator + 1 , std::string::npos), 0, 16);
-
-    //             target_bank = std::stoul(str.substr(0, separator), 0 , 16);
-    //             target_bank &= 0xFF;
-    //         }
-    //     } 
-    //     else if (input_len == 4)
-    //     {
-    //         target_bank = 0; 
-    //         target_address = (u16)std::stoul(brk_address_cpu, 0, 16);
-    //     }
-    //     else
-    //     {
-    //         return;
-    //     }
-    // }
-    // catch(const std::invalid_argument&)
-    // {
-    //     return;
-    // }
-
-    // Memory::stDisassembleRecord* record = emu_get_core()->GetMemory()->GetDisassembleRecord(target_address, true);
-
-    // brk_address_cpu[0] = 0;
-
-    // bool found = false;
-    // std::vector<Memory::stDisassembleRecord*>* breakpoints = emu_get_core()->GetMemory()->GetBreakpointsCPU();
-
-    // if (IsValidPointer(record))
-    // {
-    //     for (long unsigned int b = 0; b < breakpoints->size(); b++)
-    //     {
-    //         if ((*breakpoints)[b] == record)
-    //         {
-    //             found = true;
-    //             break;
-    //         }
-    //     }
-    // }
-
-    // if (!found)
-    // {
-    //     breakpoints->push_back(record);
-    // }
-}
-
-static void add_breakpoint_mem(void)
-{
-    // int input_len = (int)strlen(brk_address_mem);
-    // u16 address1 = 0;
-    // u16 address2 = 0;
-    // bool range = false;
-
-    // try
-    // {
-    //     if ((input_len == 9) && (brk_address_mem[4] == '-'))
-    //     {
-    //         std::string str(brk_address_mem);
-    //         std::size_t separator = str.find("-");
-
-    //         if (separator != std::string::npos)
-    //         {
-    //             address1 = (u16)std::stoul(str.substr(0, separator), 0 , 16);
-    //             address2 = (u16)std::stoul(str.substr(separator + 1 , std::string::npos), 0, 16);
-    //             range = true;
-    //         }
-    //     }
-    //     else if (input_len == 4)
-    //     {
-    //         address1 = (u16)std::stoul(brk_address_mem, 0, 16);
-    //     }
-    //     else
-    //     {
-    //         return;
-    //     }
-    // }
-    // catch(const std::invalid_argument&)
-    // {
-    //     return;
-    // }
-
-    // bool found = false;
-    // std::vector<Memory::stMemoryBreakpoint>* breakpoints = emu_get_core()->GetMemory()->GetBreakpointsMem();
-
-    // for (long unsigned int b = 0; b < breakpoints->size(); b++)
-    // {
-    //     Memory::stMemoryBreakpoint temp = (*breakpoints)[b];
-    //     if ((temp.address1 == address1) && (temp.address2 == address2) && (temp.range == range))
-    //     {
-    //         found = true;
-    //         break;
-    //     }
-    // }
-
-    // if (!found)
-    // {
-    //     Memory::stMemoryBreakpoint new_breakpoint;
-    //     new_breakpoint.address1 = address1;
-    //     new_breakpoint.address2 = address2;
-    //     new_breakpoint.range = range;
-    //     new_breakpoint.read = brk_new_mem_read;
-    //     new_breakpoint.write = brk_new_mem_write;
-
-    //     breakpoints->push_back(new_breakpoint);
-    // }
-
-    // brk_address_mem[0] = 0;
+    if (emu_get_core()->GetMemory()->AddBreakpoint(new_breakpoint_buffer, new_breakpoint_read, new_breakpoint_write, new_breakpoint_execute))
+        new_breakpoint_buffer[0] = 0;
 }
 
 static void request_goto_address(u16 address)

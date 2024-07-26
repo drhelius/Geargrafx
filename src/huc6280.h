@@ -77,6 +77,7 @@ public:
     void WriteTimerRegister(u32 address, u8 value);
     HuC6280_State* GetState();
     void DisassembleNextOPCode();
+    bool BreakpointHit();
 
 private:
     typedef void (HuC6280::*opcodeptr) (void);
@@ -105,8 +106,11 @@ private:
     u8 m_interrupt_request_register;
     bool m_debug_next_subroutine;
     int m_debug_next_irq;
+    bool m_breakpoint_hit;
 
 private:
+    void CheckBreakpoints();
+
     u8 Fetch8();
     u16 Fetch16();
     u16 Address16(u8 high, u8 low);

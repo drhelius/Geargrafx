@@ -37,7 +37,6 @@
 #include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
 
-static ImFont* default_font[4];
 static bool status_message_active = false;
 static char status_message[4096] = "";
 static u32 status_message_start_time = 0;
@@ -74,10 +73,10 @@ void gui_init(void)
     for (int i = 0; i < 4; i++)
     {
         font_cfg.SizePixels = (13.0f + (i * 3)) * application_display_scale;
-        default_font[i] = io.Fonts->AddFontDefault(&font_cfg);
+        gui_default_fonts[i] = io.Fonts->AddFontDefault(&font_cfg);
     }
 
-    gui_default_font = default_font[config_debug.font_size];
+    gui_default_font = gui_default_fonts[config_debug.font_size];
 
     emu_audio_mute(!config_audio.enable);
     emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
@@ -154,30 +153,42 @@ void gui_shortcut(gui_ShortCutEvent event)
     case gui_ShortcutScreenshot:
         gui_action_save_screenshot(NULL);
         break;
-    // case gui_ShortcutDebugStep:
-    //     if (config_debug.debug)
-    //         emu_debug_step();
-    //     break;
-    // case gui_ShortcutDebugContinue:
-    //     if (config_debug.debug)
-    //         emu_debug_continue();
-    //     break;
-    // case gui_ShortcutDebugNextFrame:
-    //     if (config_debug.debug)
-    //         emu_debug_next_frame();
-    //     break;
-    // case gui_ShortcutDebugBreakpoint:
-    //     if (config_debug.debug)
-    //         gui_debug_toggle_breakpoint();
-    //     break;
-    // case gui_ShortcutDebugRuntocursor:
-    //     if (config_debug.debug)
-    //         gui_debug_runtocursor();
-    //     break;
-    // case gui_ShortcutDebugGoBack:
-    //     if (config_debug.debug)
-    //         gui_debug_go_back();
-    //     break;
+    case gui_ShortcutDebugStepOver:
+        if (config_debug.debug)
+            emu_debug_step_over();
+        break;
+    case gui_ShortcutDebugStepInto:
+        if (config_debug.debug)
+            emu_debug_step_into();
+        break;
+    case gui_ShortcutDebugStepOut:
+        if (config_debug.debug)
+            emu_debug_step_out();
+        break;
+    case gui_ShortcutDebugStepFrame:
+        if (config_debug.debug)
+            emu_debug_step_frame();
+        break;
+    case gui_ShortcutDebugBreak:
+        if (config_debug.debug)
+            emu_debug_break();
+        break;
+    case gui_ShortcutDebugContinue:
+        if (config_debug.debug)
+            emu_debug_continue();
+        break;
+    case gui_ShortcutDebugRuntocursor:
+        if (config_debug.debug)
+            gui_debug_runtocursor();
+        break;
+    case gui_ShortcutDebugGoBack:
+        if (config_debug.debug)
+            gui_debug_go_back();
+        break;
+    case gui_ShortcutDebugBreakpoint:
+        if (config_debug.debug)
+            gui_debug_toggle_breakpoint();
+        break;
     case gui_ShortcutDebugCopy:
         gui_debug_copy_memory();
         break;
