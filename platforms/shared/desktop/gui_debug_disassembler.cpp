@@ -521,7 +521,7 @@ static void show_disassembly(void)
                 else if (line.record->subroutine && !ImGui::IsItemHovered())
                 {
                     enable_bg_color = true;
-                    bg_color = dark_green;
+                    bg_color = dark_gray;
                 }
 
                 if (enable_bg_color)
@@ -576,7 +576,7 @@ static void show_disassembly(void)
                 bool is_ret = is_return_instruction(line.record->opcodes[0]);
                 if (is_ret)
                 {
-                    ImGui::PushStyleColor(ImGuiCol_Separator, dark_cyan);
+                    ImGui::PushStyleColor(ImGuiCol_Separator, dark_green);
                     ImGui::Separator();
                     ImGui::PopStyleColor();
                 }
@@ -663,7 +663,7 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
     s.address = address;
     bool insert = false;
 
-    if (record->jump)// && !record->subroutine_src)
+    if (record->jump)
     {
         s.address = record->jump_address;
         s.bank = record->jump_bank;
@@ -680,7 +680,19 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
     }
 
     if (insert)
+    {
+        for (long unsigned int i = 0; i < dynamic_symbols.size(); i++)
+        {
+            if ((dynamic_symbols[i].bank == s.bank) && (dynamic_symbols[i].address == s.address))
+            {
+                if (record->subroutine)
+                    snprintf(dynamic_symbols[i].text, 64, "SUBROUTINE_%02X_%04X", record->jump_bank, record->jump_address);
+                return;
+            }
+        }
+
         dynamic_symbols.push_back(s);
+    }
 }
 
 static void add_breakpoint(void)
