@@ -21,6 +21,7 @@
 #define HUC6280_H
 
 #include <vector>
+#include <stack>
 #include "common.h"
 #include "huc6280_registers.h"
 
@@ -94,6 +95,8 @@ public:
     bool AddBreakpoint(u16 address);
     void AddRunToBreakpoint(u16 address);
     std::vector<GG_Breakpoint>* GetBreakpoints();
+    void ClearDisassemblerCallStack();
+    std::stack<u16>* GetDisassemblerCallStack();
 
 private:
     typedef void (HuC6280::*opcodeptr) (void);
@@ -125,9 +128,11 @@ private:
     std::vector<GG_Breakpoint> m_breakpoints;
     GG_Breakpoint m_run_to_breakpoint;
     bool m_run_to_breakpoint_requested;
+    std::stack<u16> m_disassembler_call_stack;
 
 private:
     void CheckBreakpoints();
+    void UpdateDisassemblerCallStack();
 
     u8 Fetch8();
     u16 Fetch16();

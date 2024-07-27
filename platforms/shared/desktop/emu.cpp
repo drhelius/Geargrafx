@@ -300,8 +300,19 @@ void emu_debug_step_into(void)
 
 void emu_debug_step_out(void)
 {
+    HuC6280* processor = emu_get_core()->GetHuC6280();
+    std::stack<u16>* call_stack = processor->GetDisassemblerCallStack();
+
+    if (call_stack->size() > 0)
+    {
+        u16 return_address = call_stack->top();
+        processor->AddRunToBreakpoint(return_address);
+        debugger_command = Debugger_Command_Continue;
+    }
+    else
+        debugger_command = Debugger_Command_Step;
+
     geargrafx->Pause(false);
-    debugger_command = Debugger_Command_Step;
 }
 
 void emu_debug_step_frame(void)

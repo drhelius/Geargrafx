@@ -103,6 +103,7 @@ void HuC6280::Reset()
     m_interrupt_request_register = 0;
     m_breakpoint_hit = false;
     m_run_to_breakpoint_requested = false;
+    ClearDisassemblerCallStack();
 }
 
 unsigned int HuC6280::Tick()
@@ -162,6 +163,8 @@ unsigned int HuC6280::Tick()
         DisassembleNextOPCode();
         return m_cycles;
     }
+
+    UpdateDisassemblerCallStack();
 
     u8 opcode = Fetch8();
     (this->*m_opcodes[opcode])();
@@ -455,6 +458,17 @@ std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints()
     return &m_breakpoints;
 }
 
+void HuC6280::ClearDisassemblerCallStack()
+{
+    while(!m_disassembler_call_stack.empty())
+        m_disassembler_call_stack.pop();
+}
+
+std::stack<u16>* HuC6280::GetDisassemblerCallStack()
+{
+    return &m_disassembler_call_stack;
+}
+
 void HuC6280::CheckBreakpoints()
 {
 #ifndef GG_DISABLE_DISASSEMBLER
@@ -496,6 +510,30 @@ void HuC6280::CheckBreakpoints()
             m_run_to_breakpoint_requested = false;
             return;
         }
+    }
+
+#endif
+}
+
+void HuC6280::UpdateDisassemblerCallStack()
+{
+#ifndef GG_DISABLE_DISASSEMBLER
+
+    u16 address = m_PC.GetValue();
+    u8 opcode = m_memory->Read(address);
+
+    // BSR rr, JSR hhll
+    if (opcode == 0x44 || opcode == 0x20)
+    {
+        u8 opcode_size = k_opcode_sizes[opcode];
+        if (m_disassembler_call_stack.size() < 256)
+            m_disassembler_call_stack.push(address + opcode_size);
+    }
+    // RTS
+    else if (opcode == 0x60)
+    {
+        if (m_disassembler_call_stack.size() > 0)
+            m_disassembler_call_stack.pop();
     }
 
 #endif
