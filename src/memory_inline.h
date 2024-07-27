@@ -30,6 +30,8 @@
 
 inline u8 Memory::Read(u16 address, bool block_transfer)
 {
+    m_huc6280->CheckMemoryBreakpoints(address, true);
+
     u8 mpr_index = (address >> 13) & 0x07;
     u8 mpr_value = m_mpr[mpr_index];
     u32 physical_address = (mpr_value << 13) | (address & 0x1FFF);
@@ -42,8 +44,8 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
         int rom_size = m_cartridge->GetROMSize();
         if ((int)physical_address >= rom_size)
         {
-            Debug("Attempted read out of ROM bounds at %06X", physical_address);
-            return 0xFF;
+            Debug("Attempted read out of ROM bounds at %04X (%06X), MPR(%02X,%02X)", address, physical_address, mpr_index, mpr_value);
+            return rom[physical_address & (rom_size - 1)];
         }
         else
             return rom[physical_address];
@@ -51,8 +53,8 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
     // 0xF7
     else if (mpr_value < 0xF8)
     {
-        // Savegame RAM
-        Debug("Savegame RAM read at %06X", physical_address);
+        // Backup RAM
+        Debug("Backup RAM read at %06X", physical_address);
         return 0xFF;
     }
     // 0xF8 - 0xFB
@@ -141,6 +143,8 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
 
 inline void Memory::Write(u16 address, u8 value)
 {
+    m_huc6280->CheckMemoryBreakpoints(address, false);
+
     u8 mpr_index = (address >> 13) & 0x07;
     u8 mpr_value = m_mpr[mpr_index];
     u32 physical_address = (mpr_value << 13) | (address & 0x1FFF);

@@ -97,6 +97,7 @@ public:
     std::vector<GG_Breakpoint>* GetBreakpoints();
     void ClearDisassemblerCallStack();
     std::stack<u16>* GetDisassemblerCallStack();
+    void CheckMemoryBreakpoints(u16 address, bool read);
 
 private:
     typedef void (HuC6280::*opcodeptr) (void);
@@ -124,7 +125,8 @@ private:
     u8 m_interrupt_disable_register;
     u8 m_interrupt_request_register;
     int m_debug_next_irq;
-    bool m_breakpoint_hit;
+    bool m_cpu_breakpoint_hit;
+    bool m_memory_breakpoint_hit;
     std::vector<GG_Breakpoint> m_breakpoints;
     GG_Breakpoint m_run_to_breakpoint;
     bool m_run_to_breakpoint_requested;

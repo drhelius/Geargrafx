@@ -176,6 +176,9 @@ inline void HuC6270::WriteDataRegister(u8 value, bool msb)
             // Debug("HuC6270 write VWR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             if (msb)
             {
+                if (m_register[HUC6270_REG_MAWR] > 0x8000)
+                    Debug("HuC6270 write VWR out of bounds (%s) %04X: %02X", msb ? "MSB" : "LSB", m_register[m_address_register], value);
+
                 m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
                 u16 increment = k_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
                 m_register[HUC6270_REG_MAWR] = m_register[HUC6270_REG_MAWR] + increment;

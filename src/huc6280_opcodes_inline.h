@@ -562,6 +562,10 @@ inline void HuC6280::OPCodes_TST(u8 value, u16 address)
 inline void HuC6280::OPCodes_TAI()
 {
     ClearFlag(FLAG_TRANSFER);
+    StackPush8(m_Y.GetValue());
+    StackPush8(m_A.GetValue());
+    StackPush8(m_X.GetValue());
+
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
@@ -575,11 +579,19 @@ inline void HuC6280::OPCodes_TAI()
         m_cycles += 6;
     }
     while (length);
+
+    m_X.SetValue(StackPop8());
+    m_A.SetValue(StackPop8());
+    m_Y.SetValue(StackPop8());
 }
 
 inline void HuC6280::OPCodes_TDD()
 {
     ClearFlag(FLAG_TRANSFER);
+    StackPush8(m_Y.GetValue());
+    StackPush8(m_A.GetValue());
+    StackPush8(m_X.GetValue());
+
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
@@ -592,11 +604,19 @@ inline void HuC6280::OPCodes_TDD()
         m_cycles += 6;
     }
     while (length);
+
+    m_X.SetValue(StackPop8());
+    m_A.SetValue(StackPop8());
+    m_Y.SetValue(StackPop8());
 }
 
 inline void HuC6280::OPCodes_TIA()
 {
     ClearFlag(FLAG_TRANSFER);
+    StackPush8(m_Y.GetValue());
+    StackPush8(m_A.GetValue());
+    StackPush8(m_X.GetValue());
+
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
@@ -610,11 +630,19 @@ inline void HuC6280::OPCodes_TIA()
         m_cycles += 6;
     }
     while (length);
+
+    m_X.SetValue(StackPop8());
+    m_A.SetValue(StackPop8());
+    m_Y.SetValue(StackPop8());
 }
 
 inline void HuC6280::OPCodes_TII()
 {
     ClearFlag(FLAG_TRANSFER);
+    StackPush8(m_Y.GetValue());
+    StackPush8(m_A.GetValue());
+    StackPush8(m_X.GetValue());
+
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
@@ -627,11 +655,19 @@ inline void HuC6280::OPCodes_TII()
         m_cycles += 6;
     }
     while (length);
+
+    m_X.SetValue(StackPop8());
+    m_A.SetValue(StackPop8());
+    m_Y.SetValue(StackPop8());
 }
 
 inline void HuC6280::OPCodes_TIN()
 {
     ClearFlag(FLAG_TRANSFER);
+    StackPush8(m_Y.GetValue());
+    StackPush8(m_A.GetValue());
+    StackPush8(m_X.GetValue());
+
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
@@ -643,6 +679,10 @@ inline void HuC6280::OPCodes_TIN()
         m_cycles += 6;
     }
     while (length);
+
+    m_X.SetValue(StackPop8());
+    m_A.SetValue(StackPop8());
+    m_Y.SetValue(StackPop8());
 }
 
 inline void HuC6280::UnofficialOPCode()
