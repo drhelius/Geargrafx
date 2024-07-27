@@ -92,7 +92,7 @@ void gui_debug_reset_symbols(void)
 
 void gui_debug_reset_breakpoints(void)
 {
-    emu_get_core()->GetMemory()->ResetBreakpoints();
+    emu_get_core()->GetHuC6280()->ResetBreakpoints();
     new_breakpoint_buffer[0] = 0;
 }
 
@@ -136,17 +136,18 @@ void gui_debug_toggle_breakpoint(void)
 {
     if (selected_address > 0)
     {
-        emu_get_core()->GetMemory()->AddBreakpoint(selected_address);
+        emu_get_core()->GetHuC6280()->AddBreakpoint(selected_address);
     }
 }
 
 void gui_debug_runtocursor(void)
 {
-    // if (IsValidPointer(selected_record))
-    // {
-    //     emu_get_core()->GetMemory()->SetRunToBreakpoint(selected_record);
-    //     emu_debug_continue();
-    // }
+    if (selected_address > 0)
+    {
+        emu_get_core()->GetHuC6280()->AddRunToBreakpoint(selected_address);
+    }
+
+    emu_debug_continue();
 }
 
 void gui_debug_go_back(void)
@@ -301,11 +302,11 @@ static void show_breakpoints(void)
         ImGui::PushFont(gui_default_font);
 
         int remove = -1;
-        std::vector<Memory::GG_Breakpoint>* breakpoints = emu_get_core()->GetMemory()->GetBreakpoints();
+        std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
 
         for (long unsigned int b = 0; b < breakpoints->size(); b++)
         {
-            Memory::GG_Breakpoint* brk = &(*breakpoints)[b];
+            HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
 
             ImGui::PushID(10000 + b);
             if (ImGui::SmallButton("X"))
@@ -353,7 +354,7 @@ static void prepare_drawable_lines(void)
     Memory* memory = emu_get_core()->GetMemory();
     HuC6280* processor = emu_get_core()->GetHuC6280();
     HuC6280::HuC6280_State* proc_state = processor->GetState();
-    int pc = proc_state->PC->GetValue();
+    u16 pc = proc_state->PC->GetValue();
 
     disassembler_lines.clear();
     dynamic_symbols.clear();
@@ -404,11 +405,11 @@ static void prepare_drawable_lines(void)
             line.is_breakpoint = false;
             line.record = record;
 
-            std::vector<Memory::GG_Breakpoint>* breakpoints = emu_get_core()->GetMemory()->GetBreakpoints();
+            std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
 
             for (long unsigned int b = 0; b < breakpoints->size(); b++)
             {
-                Memory::GG_Breakpoint* brk = &(*breakpoints)[b];
+                HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
 
                 if (brk->execute && (brk->address1 == i))
                 {
@@ -417,7 +418,7 @@ static void prepare_drawable_lines(void)
                 }
             }
 
-            if (i == pc)
+            if ((u16)i == pc)
                 pc_pos = disassembler_lines.size();
 
             if (goto_address_requested && (i <= goto_address_target))
@@ -442,7 +443,7 @@ static void show_disassembly(void)
     {
         HuC6280* processor = emu_get_core()->GetHuC6280();
         HuC6280::HuC6280_State* proc_state = processor->GetState();
-        int pc = proc_state->PC->GetValue();
+        u16 pc = proc_state->PC->GetValue();
 
         prepare_drawable_lines();
 
@@ -697,7 +698,7 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
 
 static void add_breakpoint(void)
 {
-    if (emu_get_core()->GetMemory()->AddBreakpoint(new_breakpoint_buffer, new_breakpoint_read, new_breakpoint_write, new_breakpoint_execute))
+    if (emu_get_core()->GetHuC6280()->AddBreakpoint(new_breakpoint_buffer, new_breakpoint_read, new_breakpoint_write, new_breakpoint_execute))
         new_breakpoint_buffer[0] = 0;
 }
 

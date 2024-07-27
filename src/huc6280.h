@@ -20,6 +20,7 @@
 #ifndef HUC6280_H
 #define HUC6280_H
 
+#include <vector>
 #include "common.h"
 #include "huc6280_registers.h"
 
@@ -58,6 +59,16 @@ public:
         u8* IRR;
     };
 
+    struct GG_Breakpoint
+    {
+        u16 address1;
+        u16 address2;
+        bool read;
+        bool write;
+        bool execute;
+        bool range;
+    };
+
 public:
     HuC6280();
     ~HuC6280();
@@ -78,6 +89,11 @@ public:
     HuC6280_State* GetState();
     void DisassembleNextOPCode();
     bool BreakpointHit();
+    void ResetBreakpoints();
+    bool AddBreakpoint(char* text, bool read, bool write, bool execute);
+    bool AddBreakpoint(u16 address);
+    void AddRunToBreakpoint(u16 address);
+    std::vector<GG_Breakpoint>* GetBreakpoints();
 
 private:
     typedef void (HuC6280::*opcodeptr) (void);
@@ -106,6 +122,9 @@ private:
     u8 m_interrupt_request_register;
     int m_debug_next_irq;
     bool m_breakpoint_hit;
+    std::vector<GG_Breakpoint> m_breakpoints;
+    GG_Breakpoint m_run_to_breakpoint;
+    bool m_run_to_breakpoint_requested;
 
 private:
     void CheckBreakpoints();

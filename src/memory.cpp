@@ -17,10 +17,7 @@
  *
  */
 
-#include <string>
-#include <stdexcept>
 #include <stdlib.h>
-#include <string.h>
 #include "memory.h"
 #include "huc6260.h"
 #include "huc6270.h"
@@ -125,95 +122,6 @@ void Memory::ResetDisassemblerRecords()
     {
         SafeDelete(m_disassembler[i]);
     }
-}
-
-void Memory::ResetBreakpoints()
-{
-    m_breakpoints.clear();
-}
-
-bool Memory::AddBreakpoint(char* text, bool read, bool write, bool execute)
-{
-    int input_len = (int)strlen(text);
-    Memory::GG_Breakpoint brk;
-    brk.address1 = 0;
-    brk.address2 = 0;
-    brk.range = false;
-    brk.read = read;
-    brk.write = write;
-    brk.execute = execute;
-
-    if (!read && !write && !execute)
-        return false;
-
-    try
-    {
-        if ((input_len == 9) && (text[4] == '-'))
-        {
-            std::string str(text);
-            std::size_t separator = str.find("-");
-
-            if (separator != std::string::npos)
-            {
-                brk.address1 = (u16)std::stoul(str.substr(0, separator), 0 , 16);
-                brk.address2 = (u16)std::stoul(str.substr(separator + 1 , std::string::npos), 0, 16);
-                brk.range = true;
-            }
-        }
-        else if (input_len == 4)
-        {
-            brk.address1 = (u16)std::stoul(text, 0, 16);
-        }
-        else
-        {
-            return false;
-        }
-    }
-    catch(const std::invalid_argument&)
-    {
-        return false;
-    }
-
-    bool found = false;
-
-    for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
-    {
-        GG_Breakpoint* item = &m_breakpoints[b];
-
-        if (brk.range)
-        {
-            if (item->range && (item->address1 == brk.address1) && (item->address2 == brk.address2))
-            {
-                found = true;
-                break;
-            }
-        }
-        else
-        {
-            if (!item->range && (item->address1 == brk.address1))
-            {
-                found = true;
-                break;
-            }
-        }
-    }
-
-    if (!found)
-        m_breakpoints.push_back(brk);
-
-    return true;
-}
-
-bool Memory::AddBreakpoint(u16 address)
-{
-    char text[5];
-    sprintf(text, "%04X", address);
-    return AddBreakpoint(text, false, false, true);
-}
-
-std::vector<Memory::GG_Breakpoint>* Memory::GetBreakpoints()
-{
-    return &m_breakpoints;
 }
 
 u8* Memory::GetWram()

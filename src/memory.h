@@ -20,7 +20,6 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <vector>
 #include "common.h"
 
 class Cartridge;
@@ -49,16 +48,6 @@ public:
         int irq;
     };
 
-    struct GG_Breakpoint
-    {
-        u16 address1;
-        u16 address2;
-        bool read;
-        bool write;
-        bool execute;
-        bool range;
-    };
-
 public:
     Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio);
     ~Memory();
@@ -73,10 +62,6 @@ public:
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
     GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
     void ResetDisassemblerRecords();
-    void ResetBreakpoints();
-    bool AddBreakpoint(char* text, bool read, bool write, bool execute);
-    bool AddBreakpoint(u16 address);
-    std::vector<GG_Breakpoint>* GetBreakpoints();
     u8* GetWram();
 
 private:
@@ -90,7 +75,6 @@ private:
     u8* m_wram;
     GG_Disassembler_Record** m_disassembler;
     u8 m_io_buffer;
-    std::vector<GG_Breakpoint> m_breakpoints;
 };
 
 #include "memory_inline.h"

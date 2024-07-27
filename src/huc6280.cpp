@@ -17,12 +17,14 @@
  *
  */
 
+#include <string>
+#include <stdexcept>
+#include <stdlib.h>
+#include <string.h>
 #include "huc6280.h"
 #include "huc6280_timing.h"
 #include "huc6280_names.h"
 #include "memory.h"
-#include <stdlib.h>
-#include <string.h>
 
 HuC6280::HuC6280()
 {
@@ -42,6 +44,7 @@ HuC6280::HuC6280()
     m_interrupt_request_register = 0;
     m_debug_next_irq = 0;
     m_breakpoint_hit = false;
+    m_run_to_breakpoint_requested = false;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
     m_processor_state.Y = &m_Y;
@@ -99,6 +102,7 @@ void HuC6280::Reset()
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
     m_breakpoint_hit = false;
+    m_run_to_breakpoint_requested = false;
 }
 
 unsigned int HuC6280::Tick()
@@ -316,8 +320,8 @@ void HuC6280::DisassembleNextOPCode()
         }
     }
 
-    // JMP hhll
-    if (opcode == 0x4C)
+    // JMP hhll, JSR hhll
+    if (opcode == 0x4C || opcode == 0x20)
     {
         u16 jump_address = Address16(m_memory->Read(address + 2), m_memory->Read(address + 1));
         record->jump = true;
@@ -328,11 +332,7 @@ void HuC6280::DisassembleNextOPCode()
     // BSR rr, JSR hhll
     if (opcode == 0x44 || opcode == 0x20)
     {
-        u16 jump_address = Address16(m_memory->Read(address + 2), m_memory->Read(address + 1));
         record->subroutine = true;
-        record->jump = true;
-        record->jump_address = jump_address;
-        record->jump_bank = m_memory->GetBank(jump_address);
     }
 
     if (record->bank < 0xF7)
@@ -355,23 +355,125 @@ bool HuC6280::BreakpointHit()
     return m_breakpoint_hit && (m_clock_cycles == 0);
 }
 
+void HuC6280::ResetBreakpoints()
+{
+    m_breakpoints.clear();
+}
+
+bool HuC6280::AddBreakpoint(char* text, bool read, bool write, bool execute)
+{
+    int input_len = (int)strlen(text);
+    GG_Breakpoint brk;
+    brk.address1 = 0;
+    brk.address2 = 0;
+    brk.range = false;
+    brk.read = read;
+    brk.write = write;
+    brk.execute = execute;
+
+    if (!read && !write && !execute)
+        return false;
+
+    try
+    {
+        if ((input_len == 9) && (text[4] == '-'))
+        {
+            std::string str(text);
+            std::size_t separator = str.find("-");
+
+            if (separator != std::string::npos)
+            {
+                brk.address1 = (u16)std::stoul(str.substr(0, separator), 0 , 16);
+                brk.address2 = (u16)std::stoul(str.substr(separator + 1 , std::string::npos), 0, 16);
+                brk.range = true;
+            }
+        }
+        else if (input_len == 4)
+        {
+            brk.address1 = (u16)std::stoul(text, 0, 16);
+        }
+        else
+        {
+            return false;
+        }
+    }
+    catch(const std::invalid_argument&)
+    {
+        return false;
+    }
+
+    bool found = false;
+
+    for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
+    {
+        GG_Breakpoint* item = &m_breakpoints[b];
+
+        if (brk.range)
+        {
+            if (item->range && (item->address1 == brk.address1) && (item->address2 == brk.address2))
+            {
+                found = true;
+                break;
+            }
+        }
+        else
+        {
+            if (!item->range && (item->address1 == brk.address1))
+            {
+                found = true;
+                break;
+            }
+        }
+    }
+
+    if (!found)
+        m_breakpoints.push_back(brk);
+
+    return true;
+}
+
+bool HuC6280::AddBreakpoint(u16 address)
+{
+    char text[5];
+    sprintf(text, "%04X", address);
+    return AddBreakpoint(text, false, false, true);
+}
+
+void HuC6280::AddRunToBreakpoint(u16 address)
+{
+    m_run_to_breakpoint.address1 = address;
+    m_run_to_breakpoint.address2 = 0;
+    m_run_to_breakpoint.range = false;
+    m_run_to_breakpoint.read = false;
+    m_run_to_breakpoint.write = false;
+    m_run_to_breakpoint.execute = true;
+    m_run_to_breakpoint_requested = true;
+}
+
+std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints()
+{
+    return &m_breakpoints;
+}
+
 void HuC6280::CheckBreakpoints()
 {
 #ifndef GG_DISABLE_DISASSEMBLER
 
     m_breakpoint_hit = false;
 
-    std::vector<Memory::GG_Breakpoint>* breakpoints = m_memory->GetBreakpoints();
-
-    for (int i = 0; i < (int)breakpoints->size(); i++)
+    for (int i = 0; i < (int)m_breakpoints.size(); i++)
     {
-        Memory::GG_Breakpoint* brk = &(*breakpoints)[i];
+        GG_Breakpoint* brk = &m_breakpoints[i];
+
+        if (!brk->execute)
+            continue;
 
         if (brk->range)
         {
             if (m_PC.GetValue() >= brk->address1 && m_PC.GetValue() <= brk->address2)
             {
                 m_breakpoint_hit = true;
+                m_run_to_breakpoint_requested = false;
                 return;
             }
         }
@@ -380,8 +482,19 @@ void HuC6280::CheckBreakpoints()
             if (m_PC.GetValue() == brk->address1)
             {
                 m_breakpoint_hit = true;
+                m_run_to_breakpoint_requested = false;
                 return;
             }
+        }
+    }
+
+    if (m_run_to_breakpoint_requested)
+    {
+        if (m_PC.GetValue() == m_run_to_breakpoint.address1)
+        {
+            m_breakpoint_hit = true;
+            m_run_to_breakpoint_requested = false;
+            return;
         }
     }
 

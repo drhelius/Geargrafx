@@ -32,9 +32,7 @@
 enum Debugger_Command
 {
     Debugger_Command_Continue,
-    Debugger_Command_StepInto,
-    Debugger_Command_StepOver,
-    Debugger_Command_StepOut,
+    Debugger_Command_Step,
     Debugger_Command_StepFrame,
     Debugger_Command_None
 };
@@ -114,20 +112,9 @@ void emu_update(void)
 
     if (config_debug.debug)
     {
-        bool step = false;
         bool breakpoint_hit = false;
+        bool step = (debugger_command == Debugger_Command_Step);
         bool stop_on_breakpoint = !emu_debug_disable_breakpoints;
-
-        switch (debugger_command)
-        {
-            case Debugger_Command_StepInto:
-            case Debugger_Command_StepOver:
-            case Debugger_Command_StepOut:
-                step = true;
-                break;
-            default:
-                break;
-        }
 
         if (debugger_command != Debugger_Command_None)
             breakpoint_hit = geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, step, stop_on_breakpoint);
@@ -288,19 +275,33 @@ GeargrafxCore* emu_get_core(void)
 
 void emu_debug_step_over(void)
 {
+    HuC6280* processor = emu_get_core()->GetHuC6280();
+    HuC6280::HuC6280_State* proc_state = processor->GetState();
+    Memory* memory = emu_get_core()->GetMemory();
+    u16 pc = proc_state->PC->GetValue();
+    Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(proc_state->PC->GetValue());
+
+    if (IsValidPointer(record) && record->subroutine)
+    {
+        u16 return_address = pc + record->size;
+        processor->AddRunToBreakpoint(return_address);
+        debugger_command = Debugger_Command_Continue;
+    }
+    else
+        debugger_command = Debugger_Command_Step;
+
     geargrafx->Pause(false);
-    debugger_command = Debugger_Command_StepOver;
 }
 void emu_debug_step_into(void)
 {
     geargrafx->Pause(false);
-    debugger_command = Debugger_Command_StepInto;
+    debugger_command = Debugger_Command_Step;
 }
 
 void emu_debug_step_out(void)
 {
     geargrafx->Pause(false);
-    debugger_command = Debugger_Command_StepOut;
+    debugger_command = Debugger_Command_Step;
 }
 
 void emu_debug_step_frame(void)
@@ -313,7 +314,7 @@ void emu_debug_break(void)
 {
     geargrafx->Pause(false);
     if (debugger_command == Debugger_Command_Continue)
-        debugger_command = Debugger_Command_StepInto;
+        debugger_command = Debugger_Command_Step;
 }
 
 void emu_debug_continue(void)
