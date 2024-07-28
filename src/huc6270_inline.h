@@ -162,6 +162,8 @@ inline void HuC6270::WriteDataRegister(u8 value, bool msb)
     else
         m_register[m_address_register] = (m_register[m_address_register] & 0xFF00) | value;
 
+    m_register[m_address_register] &= k_register_mask[m_address_register];
+
     switch (m_address_register)
     {
         case HUC6270_REG_MAWR:
@@ -228,9 +230,6 @@ inline void HuC6270::WriteDataRegister(u8 value, bool msb)
             // Debug("HuC6270 write LENR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
             if (msb)
             {
-                m_register[HUC6270_REG_LENR] = value;
-                m_register[HUC6270_REG_LENR] &= k_register_mask[HUC6270_REG_LENR];
-
                 do
                 {
                     m_vram[m_register[HUC6270_REG_DESR] & 0x7FFF] = m_vram[m_register[HUC6270_REG_SOUR] & 0x7FFF];
