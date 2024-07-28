@@ -59,6 +59,11 @@ inline bool HuC6270::Clock()
         if (m_vpos < 192)
             if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
             {
+                if (m_vpos == m_register[HUC6270_REG_RCR])
+                {
+                    m_status_register |= HUC6270_STATUS_SCANLINE;
+                    m_huc6280->AssertIRQ1(true);
+                }
                 // m_status_register |= HUC6270_STATUS_SCANLINE;
                 // m_huc6280->AssertIRQ1(true);
             }
@@ -73,8 +78,11 @@ inline bool HuC6270::Clock()
                 m_huc6280->AssertIRQ1(true);
             }
 
-            if (m_register[HUC6270_REG_DCR] & 0x10)
+            if (m_trigger_sat_transfer || m_auto_sat_transfer)
             {
+                m_trigger_sat_transfer = false;
+                m_auto_sat_transfer = m_register[HUC6270_REG_DCR] & 0x10;
+
                 u16 satb = m_register[HUC6270_REG_DVSSR] & 0x7FFF;
 
                 for (int i = 0; i < HUC6270_SAT_SIZE; i++)
@@ -83,6 +91,10 @@ inline bool HuC6270::Clock()
                 }
 
                 m_status_register |= HUC6270_STATUS_SAT_END;
+                if (m_register[HUC6270_REG_DCR] & 0x01)
+                {
+                    m_huc6280->AssertIRQ1(true);
+                }
             }
         }
     }
@@ -196,8 +208,12 @@ inline void HuC6270::WriteDataRegister(u8 value, bool msb)
                 m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
                 u16 increment = k_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
                 m_register[HUC6270_REG_MAWR] = m_register[HUC6270_REG_MAWR] + increment;
-                // Debug("HuC6270 MAWR inncremented %02X to %04X", increment, m_register[HUC6270_REG_MAWR]);
+
                 m_status_register |= HUC6270_STATUS_VRAM_END;
+                if (m_register[HUC6270_REG_DCR] & 0x02)
+                {
+                    m_huc6280->AssertIRQ1(true);
+                }
             }
             break;
         case HUC6270_REG_CR:
@@ -258,6 +274,7 @@ inline void HuC6270::WriteDataRegister(u8 value, bool msb)
             break;
         case HUC6270_REG_DVSSR:
             // Debug("HuC6270 write DVSSR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
+            m_trigger_sat_transfer = true;
             break;
         default:
             Debug("HuC6270 invalid write data register %02X: %02X", m_address_register, value);

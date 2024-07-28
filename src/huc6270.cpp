@@ -30,6 +30,8 @@ HuC6270::HuC6270(HuC6280* HuC6280)
     m_read_buffer = 0;
     m_hpos = 0;
     m_vpos = 0;
+    m_trigger_sat_transfer = false;
+    m_auto_sat_transfer = false;
 
     for (int i = 0; i < 20; i++)
     {
@@ -64,6 +66,8 @@ void HuC6270::Reset()
     m_read_buffer = 0xFFFF;
     m_hpos = 0;
     m_vpos = 0;
+    m_trigger_sat_transfer = false;
+    m_auto_sat_transfer = false;
 
     for (int i = 0; i < 20; i++)
     {

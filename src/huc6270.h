@@ -61,6 +61,8 @@ private:
     u16 m_read_buffer;
     int m_hpos;
     int m_vpos;
+    bool m_trigger_sat_transfer;
+    bool m_auto_sat_transfer;
 
 private:
     u8 ReadDataRegister(bool msb);
