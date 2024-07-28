@@ -50,8 +50,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
         if (high_nibble > 9) high_nibble += 6;
 
         final_result = (low_nibble & 0x0F) | ((high_nibble & 0x0F) << 4);
-        SetZeroFlagFromResult(final_result);
-        SetNegativeFlagFromResult(final_result);
+        SetZNFlags(final_result);
         if (high_nibble > 15)
             SetFlag(FLAG_CARRY);
         else
@@ -66,8 +65,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
     {
         int result = a + value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
         final_result = static_cast<u8> (result & 0xFF);
-        SetZeroFlagFromResult(final_result);
-        SetNegativeFlagFromResult(final_result);
+        SetZNFlags(final_result);
         if ((result & 0x100) != 0)
             SetFlag(FLAG_CARRY);
         else
@@ -104,8 +102,7 @@ inline void HuC6280::OPCodes_AND(u8 value)
         result = m_A.GetValue() & value;
         m_A.SetValue(result);
     }
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 inline void HuC6280::OPCodes_ASL_Accumulator()
@@ -114,8 +111,7 @@ inline void HuC6280::OPCodes_ASL_Accumulator()
     u8 value = m_A.GetValue();
     u8 result = static_cast<u8>(value << 1);
     m_A.SetValue(result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
     if ((value & 0x80) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -128,8 +124,7 @@ inline void HuC6280::OPCodes_ASL_Memory(u16 address)
     u8 value = m_memory->Read(address);
     u8 result = static_cast<u8>(value << 1);
     m_memory->Write(address, result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
     if ((value & 0x80) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -156,9 +151,8 @@ inline void HuC6280::OPCodes_BIT(u16 address)
     ClearFlag(FLAG_TRANSFER);
     u8 value = m_memory->Read(address);
     u8 result = m_A.GetValue() & value;
-    SetZeroFlagFromResult(result);
-    SetOverflowFlagFromResult(value);
-    SetNegativeFlagFromResult(value);
+    SetOrClearZNFlags(result);
+    SetOverflowFlag(value);
 }
 
 inline void HuC6280::OPCodes_BRK()
@@ -198,8 +192,7 @@ inline void HuC6280::OPCodes_CMP(EightBitRegister* reg, u8 value)
     ClearFlag(FLAG_TRANSFER);
     u8 reg_value = reg->GetValue();
     u8 result = reg_value - value;
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
     if (reg_value >= value)
         SetFlag(FLAG_CARRY);
     else
@@ -212,8 +205,7 @@ inline void HuC6280::OPCodes_DEC_Mem(u16 address)
     u8 value = m_memory->Read(address);
     u8 result = value - 1;
     m_memory->Write(address, result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 inline void HuC6280::OPCodes_DEC_Reg(EightBitRegister* reg)
@@ -222,8 +214,7 @@ inline void HuC6280::OPCodes_DEC_Reg(EightBitRegister* reg)
     u8 value = reg->GetValue();
     u8 result = value - 1;
     reg->SetValue(result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 inline void HuC6280::OPCodes_EOR(u8 value)
@@ -243,8 +234,7 @@ inline void HuC6280::OPCodes_EOR(u8 value)
         result = m_A.GetValue() ^ value;
         m_A.SetValue(result);
     }
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 inline void HuC6280::OPCodes_INC_Mem(u16 address)
@@ -253,8 +243,7 @@ inline void HuC6280::OPCodes_INC_Mem(u16 address)
     u8 value = m_memory->Read(address);
     u8 result = value + 1;
     m_memory->Write(address, result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 inline void HuC6280::OPCodes_INC_Reg(EightBitRegister* reg)
@@ -263,16 +252,14 @@ inline void HuC6280::OPCodes_INC_Reg(EightBitRegister* reg)
     u8 value = reg->GetValue();
     u8 result = value + 1;
     reg->SetValue(result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 inline void HuC6280::OPCodes_LD(EightBitRegister* reg, u8 value)
 {
     ClearFlag(FLAG_TRANSFER);
     reg->SetValue(value);
-    SetZeroFlagFromResult(value);
-    SetNegativeFlagFromResult(value);
+    SetOrClearZNFlags(value);
 }
 
 inline void HuC6280::OPCodes_LSR_Accumulator()
@@ -281,8 +268,7 @@ inline void HuC6280::OPCodes_LSR_Accumulator()
     u8 value = m_A.GetValue();
     u8 result = value >> 1;
     m_A.SetValue(result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -295,8 +281,7 @@ inline void HuC6280::OPCodes_LSR_Memory(u16 address)
     u8 value = m_memory->Read(address);
     u8 result = value >> 1;
     m_memory->Write(address, result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -320,8 +305,7 @@ inline void HuC6280::OPCodes_ORA(u8 value)
         result = m_A.GetValue() | value;
         m_A.SetValue(result);
     }
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 inline void HuC6280::OPCodes_RMB(u8 bit, u16 address)
@@ -338,8 +322,7 @@ inline void HuC6280::OPCodes_ROL_Accumulator()
     u8 result = static_cast<u8>(value << 1);
     result |= IsSetFlag(FLAG_CARRY) ? 0x01 : 0x00;
     m_A.SetValue(result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetZNFlags(result);
     if ((value & 0x80) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -353,8 +336,7 @@ inline void HuC6280::OPCodes_ROL_Memory(u16 address)
     u8 result = static_cast<u8>(value << 1);
     result |= IsSetFlag(FLAG_CARRY) ? 0x01 : 0x00;
     m_memory->Write(address, result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetZNFlags(result);
     if ((value & 0x80) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -368,8 +350,7 @@ inline void HuC6280::OPCodes_ROR_Accumulator()
     u8 result = value >> 1;
     result |= IsSetFlag(FLAG_CARRY) ? 0x80 : 0x00;
     m_A.SetValue(result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -383,8 +364,7 @@ inline void HuC6280::OPCodes_ROR_Memory(u16 address)
     u8 result = value >> 1;
     result |= IsSetFlag(FLAG_CARRY) ? 0x80 : 0x00;
     m_memory->Write(address, result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -416,8 +396,7 @@ inline void HuC6280::OPCodes_SBC(u8 value)
         } else {
             ClearFlag(FLAG_OVERFLOW);
         }
-        SetZeroFlagFromResult(final_result);
-        SetNegativeFlagFromResult(final_result);
+        SetZNFlags(final_result);
 
         if (high_nibble & 0xF0) {
             ClearFlag(FLAG_CARRY);
@@ -432,8 +411,7 @@ inline void HuC6280::OPCodes_SBC(u8 value)
         ClearFlag(FLAG_TRANSFER);
         int result = m_A.GetValue() - value - (IsSetFlag(FLAG_CARRY) ? 0x00 : 0x01);
         u8 final_result = static_cast<u8> (result & 0xFF);
-        SetZeroFlagFromResult(final_result);
-        SetNegativeFlagFromResult(final_result);
+        SetZNFlags(final_result);
         if ((result & 0x100) == 0)
             SetFlag(FLAG_CARRY);
         else
@@ -523,8 +501,7 @@ inline void HuC6280::OPCodes_Transfer(EightBitRegister* source, EightBitRegister
     ClearFlag(FLAG_TRANSFER);
     u8 value = source->GetValue();
     dest->SetValue(value);
-    SetZeroFlagFromResult(value);
-    SetNegativeFlagFromResult(value);
+    SetOrClearZNFlags(value);
 }
 
 inline void HuC6280::OPCodes_TRB(u16 address)
@@ -532,9 +509,8 @@ inline void HuC6280::OPCodes_TRB(u16 address)
     ClearFlag(FLAG_TRANSFER);
     u8 value = m_memory->Read(address);
     u8 result = ~m_A.GetValue() & value;
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
-    SetOverflowFlagFromResult(result);
+    SetOrClearZNFlags(result);
+    SetOverflowFlag(result);
     m_memory->Write(address, result);
 }
 
@@ -543,9 +519,8 @@ inline void HuC6280::OPCodes_TSB(u16 address)
     ClearFlag(FLAG_TRANSFER);
     u8 value = m_memory->Read(address);
     u8 result = m_A.GetValue() | value;
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
-    SetOverflowFlagFromResult(result);
+    SetOrClearZNFlags(result);
+    SetOverflowFlag(result);
     m_memory->Write(address, result);
 }
 
@@ -554,9 +529,8 @@ inline void HuC6280::OPCodes_TST(u8 value, u16 address)
     ClearFlag(FLAG_TRANSFER);
     u8 mem = m_memory->Read(address);
     u8 result = value & mem;
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
-    SetOverflowFlagFromResult(result);
+    SetOrClearZNFlags(result);
+    SetOverflowFlag(result);
 }
 
 inline void HuC6280::OPCodes_TAI()

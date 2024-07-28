@@ -108,6 +108,7 @@ private:
     EightBitRegister m_Y;
     EightBitRegister m_S;
     EightBitRegister m_P;
+    u8 m_zn_flags_lut[256];
     unsigned int m_cycles;
     unsigned int m_clock_cycles;
     bool m_irq1_asserted;
@@ -142,9 +143,10 @@ private:
     bool PageCrossed(u16 old_address, u16 new_address);
     u16 ZeroPageX();
 
-    void SetZeroFlagFromResult(u8 result);
-    void SetOverflowFlagFromResult(u8 result);
-    void SetNegativeFlagFromResult(u8 result);
+    void CreateZNFlagsTable();
+    void SetOrClearZNFlags(u8 result);
+    void SetZNFlags(u8 result);
+    void SetOverflowFlag(u8 result);
     void SetFlag(u8 flag);
     void ClearFlag(u8 flag);
     bool IsSetFlag(u8 flag);

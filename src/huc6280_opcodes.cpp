@@ -651,8 +651,7 @@ void HuC6280::OPCode0x68()
     ClearFlag(FLAG_TRANSFER);
     u8 result = StackPop8();
     m_A.SetValue(result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 void HuC6280::OPCode0x69()
@@ -763,8 +762,7 @@ void HuC6280::OPCode0x7A()
     ClearFlag(FLAG_TRANSFER);
     u8 result = StackPop8();
     m_Y.SetValue(result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 void HuC6280::OPCode0x7B()
@@ -1534,8 +1532,7 @@ void HuC6280::OPCode0xFA()
     ClearFlag(FLAG_TRANSFER);
     u8 result = StackPop8();
     m_X.SetValue(result);
-    SetZeroFlagFromResult(result);
-    SetNegativeFlagFromResult(result);
+    SetOrClearZNFlags(result);
 }
 
 void HuC6280::OPCode0xFB()

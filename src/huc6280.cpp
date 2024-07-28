@@ -72,6 +72,7 @@ void HuC6280::Init(Memory* memory, HuC6270* huc6270)
 {
     m_memory = memory;
     m_huc6270 = huc6270;
+    CreateZNFlagsTable();
 }
 
 void HuC6280::Reset()
@@ -576,4 +577,17 @@ void HuC6280::UpdateDisassemblerCallStack()
     }
 
 #endif
+}
+
+void HuC6280::CreateZNFlagsTable()
+{
+    for (int i = 0; i < 256; i++)
+    {
+        m_zn_flags_lut[i] = 0;
+
+        if (i == 0)
+            m_zn_flags_lut[i] |= FLAG_ZERO;
+        if (i & 0x80)
+            m_zn_flags_lut[i] |= FLAG_NEGATIVE;
+    }
 }

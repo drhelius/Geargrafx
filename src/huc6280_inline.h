@@ -177,22 +177,20 @@ inline u16 HuC6280::ZeroPageX()
     return 0x2000 | m_X.GetValue();
 }
 
-inline void HuC6280::SetZeroFlagFromResult(u8 result)
+inline void HuC6280::SetOrClearZNFlags(u8 result)
 {
-    if (result == 0)
-        SetFlag(FLAG_ZERO);
-    else
-        ClearFlag(FLAG_ZERO);
+    ClearFlag(FLAG_ZERO | FLAG_NEGATIVE);
+    m_P.SetValue(m_P.GetValue() | m_zn_flags_lut[result]);
 }
 
-inline void HuC6280::SetOverflowFlagFromResult(u8 result)
+inline void HuC6280::SetZNFlags(u8 result)
+{
+    m_P.SetValue(m_P.GetValue() | m_zn_flags_lut[result]);
+}
+
+inline void HuC6280::SetOverflowFlag(u8 result)
 {
     m_P.SetValue((m_P.GetValue() & 0xBF) | (result & 0x40));
-}
-
-inline void HuC6280::SetNegativeFlagFromResult(u8 result)
-{
-    m_P.SetValue((m_P.GetValue() & 0x7F) | (result & 0x80));
 }
 
 inline void HuC6280::SetFlag(u8 flag)
