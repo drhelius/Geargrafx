@@ -125,6 +125,7 @@ private:
     bool m_timer_irq;
     u8 m_interrupt_disable_register;
     u8 m_interrupt_request_register;
+    bool m_flag_transfer_set;
     int m_debug_next_irq;
     bool m_cpu_breakpoint_hit;
     bool m_memory_breakpoint_hit;

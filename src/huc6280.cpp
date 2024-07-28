@@ -42,6 +42,7 @@ HuC6280::HuC6280()
     m_timer_irq = false;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
+    m_flag_transfer_set = false;
     m_debug_next_irq = 0;
     m_cpu_breakpoint_hit = false;
     m_memory_breakpoint_hit = false;
@@ -103,6 +104,7 @@ void HuC6280::Reset()
     m_timer_irq = false;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
+    m_flag_transfer_set = false;
     m_cpu_breakpoint_hit = false;
     m_memory_breakpoint_hit = false;
     m_run_to_breakpoint_requested = false;
@@ -112,6 +114,7 @@ void HuC6280::Reset()
 unsigned int HuC6280::Tick()
 {
     m_memory_breakpoint_hit = false;
+    m_flag_transfer_set = false;
     m_cycles = 0;
     bool irq = false;
     u16 irq_low = 0;
@@ -172,6 +175,8 @@ unsigned int HuC6280::Tick()
 
     u8 opcode = Fetch8();
     (this->*m_opcodes[opcode])();
+    if (!m_flag_transfer_set)
+        ClearFlag(FLAG_TRANSFER);
     DisassembleNextOPCode();
 
     m_cycles += k_opcode_cycles[opcode];

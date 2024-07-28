@@ -71,7 +71,6 @@ void HuC6280::OPCode0x07()
 void HuC6280::OPCode0x08()
 {
     // PHP
-    ClearFlag(FLAG_TRANSFER);
     SetFlag(FLAG_BREAK);
     StackPush8(m_P.GetValue());
 }
@@ -215,7 +214,6 @@ void HuC6280::OPCode0x1F()
 void HuC6280::OPCode0x20()
 {
     // JSR $nn
-    ClearFlag(FLAG_TRANSFER);
     u16 target = AbsoluteAddressing();
     StackPush16(m_PC.GetValue() - 1);
     m_PC.SetValue(target);
@@ -479,7 +477,6 @@ void HuC6280::OPCode0x4B()
 void HuC6280::OPCode0x4C()
 {
     // JMP hhll
-    ClearFlag(FLAG_TRANSFER);
     m_PC.SetValue(AbsoluteAddressing());
 }
 
@@ -564,7 +561,6 @@ void HuC6280::OPCode0x59()
 void HuC6280::OPCode0x5A()
 {
     // PHY
-    ClearFlag(FLAG_TRANSFER);
     StackPush8(m_Y.GetValue());
 }
 
@@ -599,7 +595,6 @@ void HuC6280::OPCode0x5F()
 void HuC6280::OPCode0x60()
 {
     // RTS
-    ClearFlag(FLAG_TRANSFER);
     m_PC.SetValue(StackPop16() + 1);
 }
 
@@ -612,7 +607,6 @@ void HuC6280::OPCode0x61()
 void HuC6280::OPCode0x62()
 {
     // CLA
-    ClearFlag(FLAG_TRANSFER);
     m_A.SetValue(0x00);
 }
 
@@ -648,7 +642,6 @@ void HuC6280::OPCode0x67()
 void HuC6280::OPCode0x68()
 {
     // PLA
-    ClearFlag(FLAG_TRANSFER);
     u8 result = StackPop8();
     m_A.SetValue(result);
     SetOrClearZNFlags(result);
@@ -674,7 +667,6 @@ void HuC6280::OPCode0x6B()
 void HuC6280::OPCode0x6C()
 {
     // JMP (hhll)
-    ClearFlag(FLAG_TRANSFER);
     m_PC.SetValue(AbsoluteIndirectAddressing());
 }
 
@@ -759,7 +751,6 @@ void HuC6280::OPCode0x79()
 void HuC6280::OPCode0x7A()
 {
     // PLY
-    ClearFlag(FLAG_TRANSFER);
     u8 result = StackPop8();
     m_Y.SetValue(result);
     SetOrClearZNFlags(result);
@@ -773,7 +764,6 @@ void HuC6280::OPCode0x7B()
 void HuC6280::OPCode0x7C()
 {
     // JMP (hhll,X)
-    ClearFlag(FLAG_TRANSFER);
     m_PC.SetValue(AbsoluteIndexedIndirectAddressing());
 }
 
@@ -810,7 +800,6 @@ void HuC6280::OPCode0x81()
 void HuC6280::OPCode0x82()
 {
     // CLX
-    ClearFlag(FLAG_TRANSFER);
     m_X.SetValue(0x00);
 }
 
@@ -1196,7 +1185,6 @@ void HuC6280::OPCode0xC1()
 void HuC6280::OPCode0xC2()
 {
     // CLY
-    ClearFlag(FLAG_TRANSFER);
     m_Y.SetValue(0x00);
 }
 
@@ -1340,7 +1328,6 @@ void HuC6280::OPCode0xD9()
 void HuC6280::OPCode0xDA()
 {
     // PHX
-    ClearFlag(FLAG_TRANSFER);
     StackPush8(m_X.GetValue());
 }
 
@@ -1434,7 +1421,6 @@ void HuC6280::OPCode0xE9()
 void HuC6280::OPCode0xEA()
 {
     // NOP
-    ClearFlag(FLAG_TRANSFER);
 }
 
 void HuC6280::OPCode0xEB()
@@ -1494,6 +1480,7 @@ void HuC6280::OPCode0xF4()
 {
     // SET
     OPCodes_SetFlag(FLAG_TRANSFER);
+    m_flag_transfer_set = true;
 }
 
 void HuC6280::OPCode0xF5()
@@ -1529,7 +1516,6 @@ void HuC6280::OPCode0xF9()
 void HuC6280::OPCode0xFA()
 {
     // PLX
-    ClearFlag(FLAG_TRANSFER);
     u8 result = StackPop8();
     m_X.SetValue(result);
     SetOrClearZNFlags(result);
