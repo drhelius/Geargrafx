@@ -57,20 +57,32 @@ inline bool HuC6270::Clock()
         m_vpos++;
 
         if (m_vpos < 192)
-            if (m_register[HUC6270_REG_CR] & HUC6270_SCANLINE)
+            if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
             {
-                //m_status_register |= HUC6270_SCANLINE;
-                //m_huc6280->AssertIRQ1(true);
+                // m_status_register |= HUC6270_STATUS_SCANLINE;
+                // m_huc6280->AssertIRQ1(true);
             }
 
         if (m_vpos > HUC6270_LINES)
         {
             frame_ready = true;
             m_vpos = 0;
-            if (m_register[HUC6270_REG_CR] & HUC6270_VBLANK_CR)
+            if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_VBLANK)
             {
-                m_status_register |= HUC6270_VBLANK_SR;
+                m_status_register |= HUC6270_STATUS_VBLANK;
                 m_huc6280->AssertIRQ1(true);
+            }
+
+            if (m_register[HUC6270_REG_DCR] & 0x10)
+            {
+                u16 satb = m_register[HUC6270_REG_DVSSR] & 0x7FFF;
+
+                for (int i = 0; i < HUC6270_SAT_SIZE; i++)
+                {
+                    m_sat[i] = m_vram[satb + i] & 0x7FFF;
+                }
+
+                m_status_register |= HUC6270_STATUS_SAT_END;
             }
         }
     }
@@ -185,6 +197,7 @@ inline void HuC6270::WriteDataRegister(u8 value, bool msb)
                 u16 increment = k_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
                 m_register[HUC6270_REG_MAWR] = m_register[HUC6270_REG_MAWR] + increment;
                 // Debug("HuC6270 MAWR inncremented %02X to %04X", increment, m_register[HUC6270_REG_MAWR]);
+                m_status_register |= HUC6270_STATUS_VRAM_END;
             }
             break;
         case HUC6270_REG_CR:
