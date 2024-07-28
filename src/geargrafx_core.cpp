@@ -79,17 +79,25 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_input->Init();
 }
 
-bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, bool step_debugger, bool stop_on_breakpoint)
+bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
 {
     if (m_paused || !m_cartridge->IsReady())
         return false;
 
+#ifndef GG_DISABLE_DISASSEMBLER
+    bool debug_enable = false;
+    if (IsValidPointer(debug))
+    {
+        debug_enable = true;
+    }
+#endif
+
     bool instruction_completed = false;
-    bool stop = false;    
+    bool stop = false;
     const int timer_divider = 3;
     const int audio_divider = 6;
     int huc6280_divider = m_huc6280->IsHighSpeed() ? 3 : 12;
-    int huc6260_divider = m_huc6260->GetClockDivider();    
+    int huc6260_divider = m_huc6260->GetClockDivider();
 
     do
     {
@@ -108,12 +116,16 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         if (m_clock % audio_divider == 0)
             m_audio->Clock();
 
-        if (step_debugger && instruction_completed)
+#ifndef GG_DISABLE_DISASSEMBLER
+        if (debug_enable && debug->step_debugger && instruction_completed)
             stop = true;
 
-        if (stop_on_breakpoint && instruction_completed && m_huc6280->BreakpointHit())
+        if (debug_enable && debug->stop_on_breakpoint && instruction_completed && m_huc6280->BreakpointHit())
             stop = true;
 
+        if (debug_enable && debug->stop_on_run_to_breakpoint && instruction_completed && m_huc6280->RunToBreakpointHit())
+            stop = true;
+#endif
         // Failsafe: if the emulator is running too long, stop it
         // if (m_clock >= 89683)
         // {
@@ -126,7 +138,11 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     m_audio->EndFrame(sample_buffer, sample_count);
     RenderFrameBuffer(frame_buffer);
 
-    return m_huc6280->BreakpointHit();
+#ifndef GG_DISABLE_DISASSEMBLER
+    return m_huc6280->BreakpointHit() || m_huc6280->RunToBreakpointHit();
+#else
+    return false;
+#endif
 }
 
 bool GeargrafxCore::LoadROM(const char* file_path)

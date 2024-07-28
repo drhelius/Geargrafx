@@ -32,12 +32,20 @@ class Cartridge;
 
 class GeargrafxCore
 {
+public:
+
+    struct GG_Debug_Run
+    {
+        bool step_debugger;
+        bool stop_on_breakpoint;
+        bool stop_on_run_to_breakpoint;
+    };
 
 public:
     GeargrafxCore();
     ~GeargrafxCore();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGB888);
-    bool RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, bool step_debugger = false, bool stop_on_breakpoint = false);
+    bool RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug = NULL);
     bool LoadROM(const char* file_path);
     bool LoadROMFromBuffer(const u8* buffer, int size);
     void ResetROM(bool preserve_ram);

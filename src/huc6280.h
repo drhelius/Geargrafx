@@ -90,6 +90,7 @@ public:
     HuC6280_State* GetState();
     void DisassembleNextOPCode();
     bool BreakpointHit();
+    bool RunToBreakpointHit();
     void ResetBreakpoints();
     bool AddBreakpoint(char* text, bool read, bool write, bool execute);
     bool AddBreakpoint(u16 address);
@@ -129,6 +130,7 @@ private:
     int m_debug_next_irq;
     bool m_cpu_breakpoint_hit;
     bool m_memory_breakpoint_hit;
+    bool m_run_to_breakpoint_hit;
     std::vector<GG_Breakpoint> m_breakpoints;
     GG_Breakpoint m_run_to_breakpoint;
     bool m_run_to_breakpoint_requested;

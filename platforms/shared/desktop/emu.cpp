@@ -113,11 +113,13 @@ void emu_update(void)
     if (config_debug.debug)
     {
         bool breakpoint_hit = false;
-        bool step = (debugger_command == Debugger_Command_Step);
-        bool stop_on_breakpoint = !emu_debug_disable_breakpoints;
+        GeargrafxCore::GG_Debug_Run debug_run;
+        debug_run.step_debugger = (debugger_command == Debugger_Command_Step);
+        debug_run.stop_on_breakpoint = !emu_debug_disable_breakpoints;
+        debug_run.stop_on_run_to_breakpoint = true;
 
         if (debugger_command != Debugger_Command_None)
-            breakpoint_hit = geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, step, stop_on_breakpoint);
+            breakpoint_hit = geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, &debug_run);
 
         if (breakpoint_hit)
             debugger_command = Debugger_Command_None;
