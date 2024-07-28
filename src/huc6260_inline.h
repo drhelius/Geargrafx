@@ -91,12 +91,12 @@ inline void HuC6260::WriteRegister(u32 address, u8 value)
             break;
         case 2:
             // Color table address LSB
-            m_color_table_address = (m_color_table_address & 0xFF00) | value;
+            m_color_table_address = (m_color_table_address & 0x0100) | value;
             // Debug("HuC6260 Write color table address LSB: %04X", m_color_table_address);
             break;
         case 3:
             // Color table address MSB
-            m_color_table_address = (m_color_table_address & 0x0001) | (value << 8);
+            m_color_table_address = (m_color_table_address & 0x00FF) | ((value & 0x01) << 8);
             // Debug("HuC6260 Write color table address MSB: %04X", m_color_table_address);
             break;
         case 4:
