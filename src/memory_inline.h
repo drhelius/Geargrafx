@@ -36,25 +36,25 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
     u8 mpr_value = m_mpr[mpr_index];
     u32 physical_address = (mpr_value << 13) | (address & 0x1FFF);
 
-    // 0x00 - 0xF6
-    if (mpr_value < 0xF7)
+    // 0x00 - 0x7F
+    if (mpr_value < 0x80)
     {
         // HuCard ROM
-        u8* rom = m_cartridge->GetROM();
-        int rom_size = m_cartridge->GetROMSize();
-        if ((int)physical_address >= rom_size)
-        {
-            Debug("Attempted read out of ROM bounds at %04X (%06X), MPR(%02X,%02X)", address, physical_address, mpr_index, mpr_value);
-            return rom[physical_address & (rom_size - 1)];
-        }
-        else
-            return rom[physical_address];
+        u8** rom_map = m_cartridge->GetROMMap();
+        return rom_map[mpr_value][physical_address & 0x1FFF];
+    }
+    // 0x80 - 0xF6
+    else if (mpr_value < 0xF7)
+    {
+        // Unused
+        Debug("Unused read at %06X, bank=%02X", physical_address, mpr_value);
+        return 0xFF;
     }
     // 0xF7
     else if (mpr_value < 0xF8)
     {
         // Backup RAM
-        Debug("Backup RAM read at %06X", physical_address);
+        Debug("Backup RAM read at %06X, bank=%02X", physical_address, mpr_value);
         return 0xFF;
     }
     // 0xF8 - 0xFB
@@ -63,7 +63,7 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
         // RAM
         if (mpr_value > 0xF8)
         {
-            Debug("SGX RAM read at %06X", physical_address);
+            Debug("SGX RAM read at %06X, bank=%02X", physical_address, mpr_value);
         }
         return m_wram[physical_address & 0x1FFF];
     }
@@ -71,7 +71,7 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
     else if (mpr_value < 0xFF)
     {
         // Unused
-        Debug("Unused read at %06X", physical_address);
+        Debug("Unused read at %06X, bank=%02X", physical_address, mpr_value);
         return 0xFF;
     }
     // 0xFF
@@ -149,17 +149,23 @@ inline void Memory::Write(u16 address, u8 value)
     u8 mpr_value = m_mpr[mpr_index];
     u32 physical_address = (mpr_value << 13) | (address & 0x1FFF);
 
-    // 0x00 - 0xF6
-    if (mpr_value < 0xF7)
+    // 0x00 - 0x7F
+    if (mpr_value < 0x7F)
     {
         // HuCard ROM
-        Debug("Attempted write to HuCard ROM at %06X, value=%02X", physical_address, value);
+        Debug("Attempted write to HuCard ROM at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
+    }
+    // 0x80 - 0xF6
+    else if (mpr_value < 0xF7)
+    {
+        // Unused
+        Debug("Unused write at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
     }
     // 0xF7
     else if (mpr_value < 0xF8)
     {
         // Savegame RAM
-        Debug("Savegame RAM write at %06X, value=%02X", physical_address, value);
+        Debug("Savegame RAM write at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
     }
     // 0xF8 - 0xFB
     else if (mpr_value < 0xFC)
@@ -167,7 +173,7 @@ inline void Memory::Write(u16 address, u8 value)
         // RAM
         if (mpr_value > 0xF8)
         {
-            Debug("SGX RAM write at %06X, value=%02X", physical_address, value);
+            Debug("SGX RAM write at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
         }
         m_wram[physical_address & 0x1FFF] = value;
     }
@@ -175,7 +181,7 @@ inline void Memory::Write(u16 address, u8 value)
     else if (mpr_value < 0xFF)
     {
         // Unused
-        Debug("Unused write at %06X, value=%02X", physical_address, value);
+        Debug("Unused write at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
     }
     else
     {

@@ -31,12 +31,14 @@ public:
     void Reset();
     u32 GetCRC();
     bool IsReady();
+    bool IsSGX();
     int GetROMSize();
     int GetROMBankCount();
     const char* GetFilePath();
     const char* GetFileName();
     const char* GetFileExtension();
     u8* GetROM();
+    u8** GetROMMap();
     bool LoadFromFile(const char* path);
     bool LoadFromBuffer(const u8* buffer, int size);
 
@@ -44,9 +46,11 @@ private:
     bool LoadFromZipFile(const u8* buffer, int size);
     void GatherROMInfo();
     void GatherInfoFromDB();
+    void InitRomMAP();
 
 private:
     u8* m_rom;
+    u8** m_rom_map;
     int m_rom_size;
     int m_rom_bank_count;
     bool m_ready;
@@ -54,6 +58,7 @@ private:
     char m_file_name[512];
     char m_file_extension[512];
     u32 m_crc;
+    bool m_is_sgx;
 };
 
 #endif /* CARTRIDGE_H */

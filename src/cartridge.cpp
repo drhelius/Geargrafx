@@ -34,11 +34,17 @@ Cartridge::Cartridge()
     m_file_extension[0] = 0;
     m_rom_bank_count = 0;
     m_crc = 0;
+    m_is_sgx = false;
+
+    m_rom_map = new u8*[128];
+    for (int i = 0; i < 128; i++)
+        InitPointer(m_rom_map[i]);
 }
 
 Cartridge::~Cartridge()
 {
     SafeDeleteArray(m_rom);
+    SafeDeleteArray(m_rom_map);
 }
 
 void Cartridge::Init()
@@ -56,6 +62,10 @@ void Cartridge::Reset()
     m_file_extension[0] = 0;
     m_rom_bank_count = 0;
     m_crc = 0;
+    m_is_sgx = false;
+
+    for (int i = 0; i < 128; i++)
+        InitPointer(m_rom_map[i]);
 }
 
 u32 Cartridge::GetCRC()
@@ -91,6 +101,11 @@ const char* Cartridge::GetFileName()
 u8* Cartridge::GetROM()
 {
     return m_rom;
+}
+
+u8** Cartridge::GetROMMap()
+{
+    return m_rom_map;
 }
 
 bool Cartridge::LoadFromFile(const char* path)
@@ -153,10 +168,21 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size)
     {
         Debug("Loading ROM from buffer... Size: %d", size);
 
+        if(size & 512)
+        {
+            Debug("Removing 512 bytes header...");
+            size &= ~512;
+            buffer += 512;
+        }
+
+        if(!memcmp(buffer + 0x1FD0, "MCGENJIN", 8))
+        {
+            Debug("MCGENJIN mapper detected.");
+        }
+
         if ((size % 0x2000) != 0)
         {
-            Log("Invalid size found: %d bytes", size);
-            return false;
+            Log("Invalid size found: %d (0x%X) bytes", size, size);
         }
 
         m_rom_size = size;
@@ -164,6 +190,15 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size)
         memcpy(m_rom, buffer, m_rom_size);
 
         GatherROMInfo();
+
+        if (m_is_sgx)
+        {
+            Log("SuperGrafx (SGX) games are not supported yet.");
+            return false;
+        }
+
+        InitRomMAP();
+
         m_ready = true;
 
         Debug("ROM loaded from buffer. Size: %d bytes", m_rom_size);
@@ -239,8 +274,8 @@ void Cartridge::GatherROMInfo()
     m_rom_bank_count = (m_rom_size / 0x2000) + (m_rom_size % 0x2000 ? 1 : 0);
     m_crc = CalculateCRC32(0, m_rom, m_rom_size);
 
-    Debug("ROM Size: %d KB, %d bytes", m_rom_size / 1024, m_rom_size);
-    Debug("ROM Bank Count: %d", m_rom_bank_count);
+    Debug("ROM Size: %d KB, %d bytes (0x%0X)", m_rom_size / 1024, m_rom_size, m_rom_size);
+    Debug("ROM Bank Count: %d (0x%0X)", m_rom_bank_count, m_rom_bank_count);
     Debug("ROM CRC32: %08X", m_crc);
 
     GatherInfoFromDB();
@@ -259,6 +294,12 @@ void Cartridge::GatherInfoFromDB()
         {
             found = true;
             Log("ROM found in database: %s. CRC: %08X", k_game_database[i].title, m_crc);
+
+            if (k_game_database[i].flags & GAMEDB_SGX)
+            {
+                m_is_sgx = true;
+                Log("ROM is a SuperGrafx (SGX) game.");
+            }
         }
         else
             i++;
@@ -267,5 +308,50 @@ void Cartridge::GatherInfoFromDB()
     if (!found)
     {
         Debug("ROM not found in database. CRC: %08X", m_crc);
+    }
+}
+
+void Cartridge::InitRomMAP()
+{
+    if(m_rom_size == 0x60000)
+    {
+        for(int x = 0; x < 64; x++)
+        {
+            int bank = x & 0x1F;
+            int bank_addess = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_addess];
+        }
+
+        for(int x = 64; x < 128; x++)
+        {
+            int bank = (x & 0x0F) + 32;
+            int bank_addess = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_addess];
+        }
+    }
+    else if (m_rom_size == 0x80000)
+    {
+        for(int x = 0; x < 64; x++)
+        {
+            int bank = x & 0x3F;
+            int bank_addess = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_addess];
+        }
+
+        for(int x = 64; x < 128; x++)
+        {
+            int bank = (x & 0x1F) + 32;
+            int bank_addess = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_addess];
+        }
+    }
+    else
+    {
+        for(int x = 0; x < 128; x++)
+        {
+            int bank = x % (m_rom_size / 0x2000);
+            int bank_addess = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_addess];
+        }
     }
 }

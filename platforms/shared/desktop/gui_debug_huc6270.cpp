@@ -180,7 +180,6 @@ void gui_debug_window_huc6270_background(void)
 
     GeargrafxCore* core = emu_get_core();
     HuC6270* huc6270 = core->GetHuC6270();
-    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
 
     ImGui::TextColored(magenta, "BACKGROUND");
 
@@ -203,7 +202,6 @@ void gui_debug_window_huc6270_sprites(void)
 
     GeargrafxCore* core = emu_get_core();
     HuC6270* huc6270 = core->GetHuC6270();
-    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
 
     ImGui::TextColored(magenta, "SPRITES");
 

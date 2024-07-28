@@ -22,16 +22,25 @@
 
 #include "common.h"
 
+#define GAMEDB_NONE 0x00
+#define GAMEDB_SGX  0x01
+
 struct GG_Game_DB_Entry
 {
     u32 crc;
     const char* title;
+    u8 flags;
 };
 
 const GG_Game_DB_Entry k_game_database[] =
 {
-    {0x00000000, "example"},
-    {0, 0}
+    { 0xBEBFE042, "Darius Plus (J) (SGX)", GAMEDB_SGX},
+    { 0x4C2126B0, "Aldynes (J) (SGX)", GAMEDB_SGX},
+    { 0x8C4588E2, "1941 - Counter Attack (J) (SGX)", GAMEDB_SGX},
+    { 0x1F041166, "Madouou Granzort (J) (SGX)", GAMEDB_SGX},
+    { 0xB486A8ED, "Daimakaimura (J) (SGX)", GAMEDB_SGX},
+    { 0x3B13AF61, "Battle Ace (J) (SGX)", GAMEDB_SGX},
+    {0, 0, GAMEDB_NONE}
 };
 
 const uint32_t kCRC32_tab[] = 
