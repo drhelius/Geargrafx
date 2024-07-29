@@ -56,7 +56,7 @@ inline void Input::UpdateRegister()
     if (m_pce_jap)
         m_register = SetBit(m_register, 6);
 
-    if (m_cdrom)
+    if (!m_cdrom)
         m_register = SetBit(m_register, 7);
 
     if (!m_clr)

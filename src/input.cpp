@@ -27,8 +27,8 @@ Input::Input()
     m_sel = false;
     m_clr = false;
     m_register = 0;
-    m_joypads[0] = 0;
-    m_joypads[1] = 0;
+    m_joypads[0] = 0xFF;
+    m_joypads[1] = 0xFF;
 }
 
 void Input::Init()
@@ -43,19 +43,19 @@ void Input::Reset()
     m_sel = true;
     m_clr = true;
     m_register = 0;
-    m_joypads[0] = 0;
-    m_joypads[1] = 0;
+    m_joypads[0] = 0xFF;
+    m_joypads[1] = 0XFF;
     UpdateRegister();
 }
 
 void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
 {
-    m_joypads[controller] |= key;
+    m_joypads[controller] &= ~key;
 }
 
 void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
 {
-    m_joypads[controller] &= ~key;
+    m_joypads[controller] |= key;
 }
 
 // void Input::SaveState(std::ostream& stream)
