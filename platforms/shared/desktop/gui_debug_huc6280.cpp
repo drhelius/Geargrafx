@@ -170,7 +170,16 @@ void gui_debug_window_huc6280(void)
         ImGui::TextColored(*proc_state->NMI ? green : gray, " NMI"); ImGui::SameLine();
         ImGui::TextColored(*proc_state->TIMER_IRQ ? green : gray, "TIQ"); ImGui::SameLine();
         ImGui::TextColored(*proc_state->IRQ1 ? green : gray, "IRQ1"); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->IRQ2 ? green : gray, "IRQ2"); 
+        ImGui::TextColored(*proc_state->IRQ2 ? green : gray, "IRQ2");
+
+        ImGui::TextColored(white, "    "); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IDR & 0x04 ? red : green, "···"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IDR & 0x02 ? red : green, "····"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IDR & 0x01 ? red : green, "····");
+
+        ImGui::TableNextColumn();
+        ImGui::TextColored(input->GetSel() ? orange : gray, " I/O SEL"); ImGui::SameLine();
+        ImGui::TextColored(input->GetClr() ? orange : gray, " I/O CLR"); ImGui::SameLine();
 
         ImGui::TableNextColumn();
         ImGui::TextColored(!*proc_state->SPEED ? green : gray, " 1.79 MHz"); ImGui::SameLine();

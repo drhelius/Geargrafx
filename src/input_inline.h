@@ -39,6 +39,16 @@ inline u8 Input::GetIORegister()
     return m_register;
 }
 
+inline bool Input::GetSel()
+{
+    return m_sel;
+}
+
+inline  bool Input::GetClr()
+{
+    return m_clr;
+}
+
 inline void Input::UpdateRegister()
 {
     m_register = 0x30;

@@ -33,6 +33,8 @@ public:
     u8 ReadK();
     void WriteO(u8 value);
     u8 GetIORegister();
+    bool GetSel();
+    bool GetClr();
     // void SaveState(std::ostream& stream);
     // void LoadState(std::istream& stream);
 
