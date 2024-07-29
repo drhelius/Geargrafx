@@ -28,11 +28,6 @@
 #include "emu.h"
 #include "renderer.h"
 
-static const char* k_register_names[20] = { "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",
-                                     "CR   ", "RCR  ", "BXR  ", "BYR  ", "MWR  ",
-                                     "HSR  ", "HDR  ", "VPR  ", "VDR  ", "VCR  ",
-                                     "DCR  ", "SOUR ", "DESR ", "LENR ", "DVSSR" };
-
 void gui_debug_window_huc6270_info(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);

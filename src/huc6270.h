@@ -63,10 +63,6 @@ private:
     int m_vpos;
     bool m_trigger_sat_transfer;
     bool m_auto_sat_transfer;
-
-private:
-    u8 ReadDataRegister(bool msb);
-    void WriteDataRegister(u8 value, bool msb);
 };
 
 static const u16 k_register_mask[20] = { 0xFFFF, 0xFFFF, 0xFFFF, 0x0000, 0x0000,
@@ -77,6 +73,11 @@ static const u16 k_register_mask[20] = { 0xFFFF, 0xFFFF, 0xFFFF, 0x0000, 0x0000,
 static const int k_scren_size_x[8] = { 32, 64, 128, 128, 32, 64, 128, 128 };
 static const int k_scren_size_y[8] = { 32, 32, 32, 32, 64, 64, 64, 64 };
 static const int k_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
+
+static const char* const k_register_names[20] = { "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",
+                                            "CR   ", "RCR  ", "BXR  ", "BYR  ", "MWR  ",
+                                            "HSR  ", "HDR  ", "VPR  ", "VDR  ", "VCR  ",
+                                            "DCR  ", "SOUR ", "DESR ", "LENR ", "DVSSR" };
 
 #include "huc6270_inline.h"
 
