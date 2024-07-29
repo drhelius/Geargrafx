@@ -44,6 +44,7 @@ HuC6280::HuC6280()
     m_interrupt_request_register = 0;
     m_flag_transfer_set = false;
     m_debug_next_irq = 0;
+    m_breakpoints_enabled = false;
     m_cpu_breakpoint_hit = false;
     m_memory_breakpoint_hit = false;
     m_run_to_breakpoint_hit = false;
@@ -370,6 +371,11 @@ void HuC6280::DisassembleNextOPCode()
 #endif
 }
 
+void HuC6280::EnableBreakpoints(bool enable)
+{
+    m_breakpoints_enabled = enable;
+}
+
 bool HuC6280::BreakpointHit()
 {
     return (m_cpu_breakpoint_hit || m_memory_breakpoint_hit) && (m_clock_cycles == 0);
@@ -495,6 +501,9 @@ void HuC6280::CheckMemoryBreakpoints(u16 address, bool read)
 {
 #ifndef GG_DISABLE_DISASSEMBLER
 
+    if (!m_breakpoints_enabled)
+        return;
+
     for (int i = 0; i < (int)m_breakpoints.size(); i++)
     {
         GG_Breakpoint* brk = &m_breakpoints[i];
@@ -534,6 +543,19 @@ void HuC6280::CheckBreakpoints()
     m_cpu_breakpoint_hit = false;
     m_run_to_breakpoint_hit = false;
 
+    if (m_run_to_breakpoint_requested)
+    {
+        if (m_PC.GetValue() == m_run_to_breakpoint.address1)
+        {
+            m_run_to_breakpoint_hit = true;
+            m_run_to_breakpoint_requested = false;
+            return;
+        }
+    }
+
+    if (!m_breakpoints_enabled)
+        return;
+
     for (int i = 0; i < (int)m_breakpoints.size(); i++)
     {
         GG_Breakpoint* brk = &m_breakpoints[i];
@@ -558,16 +580,6 @@ void HuC6280::CheckBreakpoints()
                 m_run_to_breakpoint_requested = false;
                 return;
             }
-        }
-    }
-
-    if (m_run_to_breakpoint_requested)
-    {
-        if (m_PC.GetValue() == m_run_to_breakpoint.address1)
-        {
-            m_run_to_breakpoint_hit = true;
-            m_run_to_breakpoint_requested = false;
-            return;
         }
     }
 

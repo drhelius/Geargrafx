@@ -89,6 +89,7 @@ public:
     void WriteTimerRegister(u32 address, u8 value);
     HuC6280_State* GetState();
     void DisassembleNextOPCode();
+    void EnableBreakpoints(bool enable);
     bool BreakpointHit();
     bool RunToBreakpointHit();
     void ResetBreakpoints();
@@ -128,6 +129,7 @@ private:
     u8 m_interrupt_request_register;
     bool m_flag_transfer_set;
     int m_debug_next_irq;
+    bool m_breakpoints_enabled;
     bool m_cpu_breakpoint_hit;
     bool m_memory_breakpoint_hit;
     bool m_run_to_breakpoint_hit;
