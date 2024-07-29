@@ -251,6 +251,23 @@ void gui_debug_window_huc6270_background(void)
 
         ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(size_h, size_v), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width / texture_size_h, emu_debug_background_buffer_height / texture_size_v));
 
+        if (show_grid)
+        {
+            float x = p.x;
+            for (int n = 0; n <= screen_size_x; n++)
+            {
+                draw_list->AddLine(ImVec2(x, p.y), ImVec2(x, p.y + size_v), ImColor(grid_color), 1.0f);
+                x += spacing_h;
+            }
+
+            float y = p.y;
+            for (int n = 0; n <= screen_size_y; n++)
+            {
+                draw_list->AddLine(ImVec2(p.x, y), ImVec2(p.x + size_h, y), ImColor(grid_color), 1.0f);
+                y += spacing_v;
+            }
+        }
+
         if (ImGui::IsItemHovered())
         {
             ImVec2 mouse_pos = ImGui::GetMousePos();
@@ -260,9 +277,15 @@ void gui_debug_window_huc6270_background(void)
             int i = (screen_size_x * y) + x;
             if (i >= 0 && i < bat_size)
             {
+
+                ImVec2 tile_pos = ImVec2(p.x + (x * 8.0f * scale), p.y + (y * 8.0f * scale));
+                ImVec2 tile_size = ImVec2(8.0f * scale, 8.0f * scale);
+                draw_list->AddRect(tile_pos, ImVec2(tile_pos.x + tile_size.x, tile_pos.y + tile_size.y), ImColor(cyan), 2.0f, ImDrawFlags_RoundCornersAll, 2.0f);
+
                 u16 bat_entry = vram[i];
                 int tile_index = bat_entry & 0x07FF;
                 int color_table = (bat_entry >> 12) & 0x0F;
+
                 ImGui::BeginTooltip();
 
                 float tile_scale = 16.0f;
@@ -271,7 +294,6 @@ void gui_debug_window_huc6270_background(void)
                 float tile_uv_h = (i % screen_size_x) * 8;
                 float tile_uv_v = (i / screen_size_x) * 8;
 
-                // Show tile image:
                 ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(tile_width, tile_height), ImVec2(tile_uv_h / texture_size_h, tile_uv_v / texture_size_v), ImVec2((tile_uv_h + 8) / texture_size_h, (tile_uv_v + 8) / texture_size_v));
 
                 ImGui::PushFont(gui_default_font);
@@ -291,23 +313,6 @@ void gui_debug_window_huc6270_background(void)
                 ImGui::PopFont();
 
                 ImGui::EndTooltip();
-            }
-        }
-
-        if (show_grid)
-        {
-            float x = p.x;
-            for (int n = 0; n <= screen_size_x; n++)
-            {
-                draw_list->AddLine(ImVec2(x, p.y), ImVec2(x, p.y + size_v), ImColor(grid_color), 1.0f);
-                x += spacing_h;
-            }
-
-            float y = p.y;  
-            for (int n = 0; n <= screen_size_y; n++)
-            {
-                draw_list->AddLine(ImVec2(p.x, y), ImVec2(p.x + size_h, y), ImColor(grid_color), 1.0f);
-                y += spacing_v;
             }
         }
 
