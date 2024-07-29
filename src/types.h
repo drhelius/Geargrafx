@@ -61,8 +61,8 @@ enum GG_Keys
     GG_KEY_SELECT = 0x04,
     GG_KEY_RUN = 0x08,
     GG_KEY_UP = 0x10,
-    GG_KEY_DOWN = 0x20,
-    GG_KEY_RIGHT = 0x40,
+    GG_KEY_RIGHT = 0x20,
+    GG_KEY_DOWN = 0x40,
     GG_KEY_LEFT = 0x80
 };
 
