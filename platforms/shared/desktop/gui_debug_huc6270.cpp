@@ -33,7 +33,7 @@ void gui_debug_window_huc6270_info(void)
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(6, 31), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
-    ImGui::Begin("HuC6270 Info", &config_debug.show_huc6270_sprites);
+    ImGui::Begin("HuC6270 Info", &config_debug.show_huc6270_info);
 
     ImGui::PushFont(gui_default_font);
 
