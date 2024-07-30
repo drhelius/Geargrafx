@@ -318,15 +318,15 @@ void Cartridge::InitRomMAP()
         for(int x = 0; x < 64; x++)
         {
             int bank = x & 0x1F;
-            int bank_addess = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_addess];
+            int bank_address = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_address];
         }
 
         for(int x = 64; x < 128; x++)
         {
             int bank = (x & 0x0F) + 32;
-            int bank_addess = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_addess];
+            int bank_address = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_address];
         }
     }
     else if (m_rom_size == 0x80000)
@@ -334,15 +334,15 @@ void Cartridge::InitRomMAP()
         for(int x = 0; x < 64; x++)
         {
             int bank = x & 0x3F;
-            int bank_addess = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_addess];
+            int bank_address = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_address];
         }
 
         for(int x = 64; x < 128; x++)
         {
             int bank = (x & 0x1F) + 32;
-            int bank_addess = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_addess];
+            int bank_address = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_address];
         }
     }
     else
@@ -350,8 +350,8 @@ void Cartridge::InitRomMAP()
         for(int x = 0; x < 128; x++)
         {
             int bank = x % (m_rom_size / 0x2000);
-            int bank_addess = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_addess];
+            int bank_address = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_address];
         }
     }
 }
