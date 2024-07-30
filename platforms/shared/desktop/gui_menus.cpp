@@ -576,6 +576,11 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
+#if defined(__APPLE__) || defined(_WIN32)
+        ImGui::MenuItem("Multi-Viewport (Restart required)", "", &config_debug.multi_viewport, config_debug.debug);
+        ImGui::Separator();
+#endif
+
         if (ImGui::MenuItem("Load Symbols...", "", (void*)0, config_debug.debug))
         {
             open_symbols = true;

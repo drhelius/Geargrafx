@@ -115,6 +115,7 @@ void config_read(void)
     config_debug.show_huc6270_sprites = read_bool("Debug", "HuC6270Sprites", false);
     config_debug.show_huc6270_info = read_bool("Debug", "HuC6270Info", false);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
+    config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
 
     config_emulator.fullscreen = read_bool("Emulator", "FullScreen", false);
     config_emulator.show_menu = read_bool("Emulator", "ShowMenu", true);
@@ -220,6 +221,7 @@ void config_write(void)
     write_bool("Debug", "HuC6270Sprites", config_debug.show_huc6270_sprites);
     write_bool("Debug", "HuC6270Info", config_debug.show_huc6270_info);
     write_int("Debug", "FontSize", config_debug.font_size);
+    write_bool("Debug", "MultiViewport", config_debug.multi_viewport);
 
     write_bool("Emulator", "FullScreen", config_emulator.fullscreen);
     write_bool("Emulator", "ShowMenu", config_emulator.show_menu);
