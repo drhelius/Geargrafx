@@ -8,9 +8,68 @@
 [![GitHub](https://img.shields.io/github/license/drhelius/Geargrafx)](https://github.com/drhelius/Geargrafx/blob/main/LICENSE)
 [![Twitter Follow](https://img.shields.io/twitter/follow/drhelius)](https://twitter.com/drhelius)
 
-> Currently in development: not intended to be used now
+> IN DEVELOPMENT: Not intended to be used now!
 
 This is an open source project with its ongoing development made possible thanks to the support by these awesome [backers](backers.md). If you find it useful, please, consider [sponsoring](https://github.com/sponsors/drhelius).
+
+----------
+
+![Captura de pantalla 2024-07-29 163929](https://github.com/user-attachments/assets/8f0fbc21-3a96-4560-9ae0-de2b6cfc06fb)
+
+## Build Instructions
+
+### macOS
+
+- Install Xcode and run `xcode-select --install` in the terminal for the compiler to be available on the command line.
+- Run these commands to generate a Mac *app* bundle:
+
+``` shell
+brew install sdl2
+cd platforms/macos
+make dist
+```
+
+### Linux
+
+- Ubuntu / Debian / Raspberry Pi (Raspbian):
+
+``` shell
+sudo apt-get install build-essential libsdl2-dev libglew-dev libgtk-3-dev
+cd platforms/linux
+make
+```
+
+- Fedora:
+
+``` shell
+sudo dnf install @development-tools gcc-c++ SDL2-devel glew-devel gtk3-devel
+cd platforms/linux
+make
+```
+
+### BSD
+
+- FreeBSD:
+
+``` shell
+su root -c "pkg install -y git gmake pkgconf SDL2 glew lang/gcc gtk3"
+cd platforms/bsd
+gmake
+```
+
+- NetBSD:
+
+``` shell
+su root -c "pkgin install gmake pkgconf SDL2 glew lang/gcc gtk3"
+cd platforms/bsd
+gmake
+```
+
+## Contributors
+
+Thank you to all the people who have already contributed to Geargrafx!
+
+[![Contributors](https://contrib.rocks/image?repo=drhelius/geargrafx)]("https://github.com/drhelius/geargrafx/graphs/contributors)
 
 ## License
 
