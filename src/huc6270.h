@@ -24,6 +24,7 @@
 #include "common.h"
 
 class HuC6280;
+class HuC6260;
 
 class HuC6270
 {
@@ -39,11 +40,11 @@ public:
     };
 
 public:
-    HuC6270(HuC6280* HuC6280);
+    HuC6270(HuC6280* huC6280);
     ~HuC6270();
-    void Init();
+    void Init(HuC6260* huc6260, GG_Pixel_Format pixel_format = GG_PIXEL_RGB888);
     void Reset();
-    bool Clock();
+    bool Clock(u8* frame_buffer);
     u8 ReadRegister(u32 address);
     void WriteRegister(u32 address, u8 value);
     HuC6270_State* GetState();
@@ -52,6 +53,7 @@ public:
 
 private:
     HuC6280* m_huc6280;
+    HuC6260* m_huc6260;
     HuC6270_State m_state;
     u16* m_vram;
     u8 m_address_register;
@@ -63,21 +65,28 @@ private:
     int m_vpos;
     bool m_trigger_sat_transfer;
     bool m_auto_sat_transfer;
+    GG_Pixel_Format m_pixel_format;
+    u8* m_frame_buffer;
+
+private:
+    void RenderLine(int y);
 };
 
-static const u16 k_register_mask[20] = { 0xFFFF, 0xFFFF, 0xFFFF, 0x0000, 0x0000,
-                                         0x1FFF, 0x03FF, 0x03FF, 0x01FF, 0x00FF,
-                                         0x7F1F, 0x7F7F, 0xFF1F, 0x01FF, 0x00FF,
-                                         0x001F, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
+static const u16 k_register_mask[20] = {
+    0xFFFF, 0xFFFF, 0xFFFF, 0x0000, 0x0000,
+    0x1FFF, 0x03FF, 0x03FF, 0x01FF, 0x00FF,
+    0x7F1F, 0x7F7F, 0xFF1F, 0x01FF, 0x00FF,
+    0x001F, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 
 static const int k_scren_size_x[8] = { 32, 64, 128, 128, 32, 64, 128, 128 };
 static const int k_scren_size_y[8] = { 32, 32, 32, 32, 64, 64, 64, 64 };
 static const int k_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
 
-static const char* const k_register_names[20] = { "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",
-                                            "CR   ", "RCR  ", "BXR  ", "BYR  ", "MWR  ",
-                                            "HSR  ", "HDR  ", "VPR  ", "VDR  ", "VCR  ",
-                                            "DCR  ", "SOUR ", "DESR ", "LENR ", "DVSSR" };
+static const char* const k_register_names[20] = {
+    "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",
+    "CR   ", "RCR  ", "BXR  ", "BYR  ", "MWR  ",
+    "HSR  ", "HDR  ", "VPR  ", "VDR  ", "VCR  ",
+    "DCR  ", "SOUR ", "DESR ", "LENR ", "DVSSR" };
 
 #include "huc6270_inline.h"
 

@@ -88,7 +88,6 @@ private:
     Input* m_input;
     Cartridge* m_cartridge;
     bool m_paused;
-    GG_Pixel_Format m_pixel_format;
     int m_clock;
 };
 

@@ -21,10 +21,12 @@
 #define HUC6270_INLINE_H
 
 #include "huc6270.h"
-#include "huc6280.h"
+#include "huc6260.h"	
+#include "huc6280.h" 
 
-inline bool HuC6270::Clock()
+inline bool HuC6270::Clock(u8* frame_buffer)
 {
+    m_frame_buffer = frame_buffer;
     bool frame_ready = false;
 
     if (m_vpos < HUC6270_ACTIVE_DISPLAY_START)
@@ -56,7 +58,10 @@ inline bool HuC6270::Clock()
         m_hpos = 0;
         m_vpos++;
 
-        if (m_vpos < 192)
+        if (m_vpos < GG_MAX_RESOLUTION_HEIGHT)
+        {
+            RenderLine(m_vpos - 1);
+
             if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
             {
                 if (m_vpos == m_register[HUC6270_REG_RCR])
@@ -65,6 +70,7 @@ inline bool HuC6270::Clock()
                     m_huc6280->AssertIRQ1(true);
                 }
             }
+        }
 
         if (m_vpos > HUC6270_LINES)
         {

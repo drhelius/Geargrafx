@@ -40,7 +40,6 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_cartridge);
     m_paused = true;
     m_clock = 0;
-    m_pixel_format = GG_PIXEL_RGB888;
 }
 
 GeargrafxCore::~GeargrafxCore()
@@ -60,8 +59,6 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 
     srand((unsigned int)time(NULL));
 
-    m_pixel_format = pixel_format;
-
     m_cartridge = new Cartridge();
     m_huc6280 = new HuC6280();
     m_huc6270 = new HuC6270(m_huc6280);
@@ -73,7 +70,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_cartridge->Init();
     m_memory->Init();
     m_huc6260->Init();
-    m_huc6270->Init();
+    m_huc6270->Init(m_huc6260, pixel_format);
     m_huc6280->Init(m_memory, m_huc6270);
     m_audio->Init();
     m_input->Init();
@@ -112,7 +109,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
             m_huc6280->ClockTimer();
 
         if (m_clock % huc6260_divider == 0)
-            stop = m_huc6270->Clock();
+            stop = m_huc6270->Clock(frame_buffer);
 
         if (m_clock % audio_divider == 0)
             m_audio->Clock();

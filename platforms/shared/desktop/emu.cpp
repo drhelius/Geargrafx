@@ -408,16 +408,6 @@ static void destroy_debug(void)
 static void update_debug(void)
 {
     update_debug_background_buffer();
-
-    // Video* video = geargrafx->GetVideo();
-
-    // video->Render24bit(debug_background_buffer, emu_debug_background_buffer, GC_PIXEL_RGB888, 256 * 256);
-    // video->Render24bit(debug_tile_buffer, emu_debug_tile_buffer, GC_PIXEL_RGB888, 32 * 32 * 64);
-
-    // for (int s = 0; s < 64; s++)
-    // {
-    //     video->Render24bit(debug_sprite_buffers[s], emu_debug_sprite_buffers[s], GC_PIXEL_RGB888, 16 * 16);
-    // }
 }
 
 static void update_debug_background_buffer(void)
