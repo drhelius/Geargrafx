@@ -53,6 +53,30 @@ public:
     u16* GetSAT();
 
 private:
+
+    enum Timing
+    {
+        TIMING_VINT,
+        TIMING_HINT,
+        TIMING_RENDER,
+        TIMING_COUNT
+    };
+
+    enum Scanline_Section
+    {
+        SCANLINE_TOP_BLANKING,
+        SCANLINE_ACTIVE,
+        SCANLINE_BOTTOM_BLANKING,
+        SCANLINE_SYNC
+    };
+
+    struct Line_Events 
+    {
+        bool vint;
+        bool hint;
+        bool render;
+    };
+
     HuC6280* m_huc6280;
     HuC6260* m_huc6260;
     HuC6270_State m_state;
@@ -69,6 +93,8 @@ private:
     bool m_auto_sat_transfer;
     GG_Pixel_Format m_pixel_format;
     u8* m_frame_buffer;
+    Line_Events m_line_events;
+    int m_timing[TIMING_COUNT];
 
 private:
     void RenderLine(int y);

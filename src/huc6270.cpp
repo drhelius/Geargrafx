@@ -78,6 +78,14 @@ void HuC6270::Reset()
     m_trigger_sat_transfer = false;
     m_auto_sat_transfer = false;
 
+    m_line_events.vint = false;
+    m_line_events.hint = false;
+    m_line_events.render = false;
+
+    m_timing[TIMING_VINT] = 256;
+    m_timing[TIMING_HINT] = 256;
+    m_timing[TIMING_RENDER] = 256;
+
     for (int i = 0; i < 20; i++)
     {
         m_register[i] = 0;
@@ -92,6 +100,114 @@ void HuC6270::Reset()
     {
         m_sat[i] = rand() & 0xFFFF;
     }
+}
+
+bool HuC6270::Clock(u8* frame_buffer)
+{
+    m_frame_buffer = frame_buffer;
+    bool frame_ready = false;
+
+    if (m_vpos < HUC6270_ACTIVE_DISPLAY_START)
+    {
+        //Debug("HuC6270 during top blanking");
+        m_scanline_section = SCANLINE_BOTTOM_BLANKING;
+    }
+    else if (m_vpos < HUC6270_BOTTOM_BLANKING_START)
+    {
+        //Debug("HuC6270 during active display");
+        m_scanline_section = SCANLINE_ACTIVE;
+    }
+    else if (m_vpos < HUC6270_SYNC_START)
+    {
+        //Debug("HuC6270 during bottom blanking");
+        m_scanline_section = SCANLINE_BOTTOM_BLANKING;
+    }
+    else
+    {
+        //Debug("HuC6270 during sync");
+        m_scanline_section = SCANLINE_SYNC;
+    }
+
+    ///// VINT /////
+    if (!m_line_events.vint && (m_hpos >= m_timing[TIMING_VINT]))
+    {
+        m_line_events.vint = true;
+        if (m_vpos == HUC6270_BOTTOM_BLANKING_START)
+        {
+            if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_VBLANK)
+            {
+                m_status_register |= HUC6270_STATUS_VBLANK;
+                m_huc6280->AssertIRQ1(true);
+            }
+
+            if (m_trigger_sat_transfer || m_auto_sat_transfer)
+            {
+                m_trigger_sat_transfer = false;
+                m_auto_sat_transfer = m_register[HUC6270_REG_DCR] & 0x10;
+
+                u16 satb = m_register[HUC6270_REG_DVSSR] & 0x7FFF;
+
+                for (int i = 0; i < HUC6270_SAT_SIZE; i++)
+                {
+                    m_sat[i] = m_vram[satb + i] & 0x7FFF;
+                }
+
+                m_status_register |= HUC6270_STATUS_SAT_END;
+                if (m_register[HUC6270_REG_DCR] & 0x01)
+                {
+                    m_huc6280->AssertIRQ1(true);
+                }
+            }
+        }
+    }
+
+    ///// HINT /////
+    if (!m_line_events.hint && (m_hpos >= m_timing[TIMING_HINT]))
+    {
+        m_line_events.hint = true;
+        if (m_scanline_section == SCANLINE_ACTIVE)
+        {
+            if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
+            {
+                if (m_vpos == m_register[HUC6270_REG_RCR])
+                {
+                    m_status_register |= HUC6270_STATUS_SCANLINE;
+                    m_huc6280->AssertIRQ1(true);
+                }
+            }
+        }
+    }
+
+    ///// RENDER /////
+    if (!m_line_events.render && (m_hpos >= m_timing[TIMING_RENDER]))
+    {
+        m_line_events.render = true;
+        if (m_scanline_section == SCANLINE_ACTIVE)
+        {
+            RenderLine(m_vpos - HUC6270_ACTIVE_DISPLAY_START);
+        }
+    }
+
+    m_hpos++;
+
+    ///// END OF LINE /////
+    if (m_hpos > 341)
+    {
+        m_hpos = 0;
+        m_vpos++;
+
+        if (m_vpos > HUC6270_LINES)
+        {
+            m_vpos = 0;
+            frame_ready = true;
+        }
+
+        m_line_events.vint = false;
+        m_line_events.hint = false;
+        m_line_events.render = false;
+    }
+
+    return frame_ready;
 }
 
 HuC6270::HuC6270_State* HuC6270::GetState()
@@ -111,6 +227,11 @@ u16* HuC6270::GetSAT()
 
 void HuC6270::RenderLine(int y)
 {
+    if (y >= GG_MAX_RESOLUTION_HEIGHT)
+    {
+        return;
+    }
+
     int screen_reg = (m_register[HUC6270_REG_MWR] >> 4) & 0x07;
     int screen_size_x = k_scren_size_x[screen_reg];
     int screen_size_x_pixels = screen_size_x * 8;
