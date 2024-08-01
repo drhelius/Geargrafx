@@ -32,6 +32,7 @@ HuC6270::HuC6270(HuC6280* huC6280)
     m_read_buffer = 0;
     m_hpos = 0;
     m_vpos = 0;
+    m_scanline_section = 0;
     m_trigger_sat_transfer = false;
     m_auto_sat_transfer = false;
     m_pixel_format = GG_PIXEL_RGB888;
@@ -48,6 +49,7 @@ HuC6270::HuC6270(HuC6280* huC6280)
     m_state.READ_BUFFER = &m_read_buffer;
     m_state.HPOS = &m_hpos;
     m_state.VPOS = &m_vpos;
+    m_state.SCANLINE_SECTION = &m_scanline_section;
 }
 
 HuC6270::~HuC6270()
@@ -72,6 +74,7 @@ void HuC6270::Reset()
     m_read_buffer = 0xFFFF;
     m_hpos = 0;
     m_vpos = 0;
+    m_scanline_section = 0;
     m_trigger_sat_transfer = false;
     m_auto_sat_transfer = false;
 

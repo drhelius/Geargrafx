@@ -32,18 +32,22 @@ inline bool HuC6270::Clock(u8* frame_buffer)
     if (m_vpos < HUC6270_ACTIVE_DISPLAY_START)
     {
         //Debug("HuC6270 during top blanking");
+        m_scanline_section = 0;
     }
     else if (m_vpos < HUC6270_BOTTOM_BLANKING_START)
     {
         //Debug("HuC6270 during active display");
+        m_scanline_section = 1;
     }
     else if (m_vpos < HUC6270_SYNC_START)
     {
         //Debug("HuC6270 during bottom blanking");
+        m_scanline_section = 2;
     }
     else
     {
         //Debug("HuC6270 during sync");
+        m_scanline_section = 3;
     }
 
     if (m_hpos > 256)

@@ -37,6 +37,7 @@ public:
         u16* READ_BUFFER;
         int* HPOS;
         int* VPOS;
+        int* SCANLINE_SECTION;
     };
 
 public:
@@ -63,6 +64,7 @@ private:
     u16 m_read_buffer;
     int m_hpos;
     int m_vpos;
+    int m_scanline_section;
     bool m_trigger_sat_transfer;
     bool m_auto_sat_transfer;
     GG_Pixel_Format m_pixel_format;
@@ -87,6 +89,9 @@ static const char* const k_register_names[20] = {
     "CR   ", "RCR  ", "BXR  ", "BYR  ", "MWR  ",
     "HSR  ", "HDR  ", "VPR  ", "VDR  ", "VCR  ",
     "DCR  ", "SOUR ", "DESR ", "LENR ", "DVSSR" };
+
+static const char* const k_scanline_sections[] = {
+    "TOP BLANKING", "ACTIVE", "BOTTOM BLANKING", "SYNC" };
 
 #include "huc6270_inline.h"
 
