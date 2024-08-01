@@ -193,10 +193,15 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                     // Debug("HuC6270 write VWR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
                     if (msb)
                     {
-                        if (m_register[HUC6270_REG_MAWR] > 0x8000)
-                            Debug("HuC6270 write VWR out of bounds (%s) %04X: %02X", msb ? "MSB" : "LSB", m_register[m_address_register], value);
+                        if (m_register[HUC6270_REG_MAWR] >= 0x8000)
+                        {
+                            Debug("HuC6270 ignoring write VWR out of bounds (%s) %04X: %02X", msb ? "MSB" : "LSB", m_register[HUC6270_REG_MAWR], value);
+                        }
+                        else
+                        {
+                            m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
+                        }
 
-                        m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
                         u16 increment = k_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
                         m_register[HUC6270_REG_MAWR] = m_register[HUC6270_REG_MAWR] + increment;
                     }
@@ -206,12 +211,20 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                     // Debug("HuC6270 write LENR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
                     if (msb)
                     {
+                        s16 src_increment = m_register[HUC6270_REG_DCR] & 0x02 ? -1 : 1;
+                        s16 dest_increment = m_register[HUC6270_REG_DCR] & 0x04 ? -1 : 1;
+
                         do
                         {
-                            m_vram[m_register[HUC6270_REG_DESR] & 0x7FFF] = m_vram[m_register[HUC6270_REG_SOUR] & 0x7FFF];
+                            if (m_register[HUC6270_REG_DESR] >= 0x8000)
+                            {
+                                Debug("HuC6270 ignoring write VRAM-DMA out of bounds: %04X", m_register[HUC6270_REG_DESR], value);
+                            }
+                            else
+                            {
+                                m_vram[m_register[HUC6270_REG_DESR] & 0x7FFF] = m_vram[m_register[HUC6270_REG_SOUR] & 0x7FFF];
+                            }
 
-                            s16 src_increment = m_register[HUC6270_REG_DCR] & 0x02 ? -1 : 1;
-                            s16 dest_increment = m_register[HUC6270_REG_DCR] & 0x04 ? -1 : 1;
                             m_register[HUC6270_REG_SOUR] += src_increment;
                             m_register[HUC6270_REG_DESR] += dest_increment;
                             m_register[HUC6270_REG_LENR]--;
