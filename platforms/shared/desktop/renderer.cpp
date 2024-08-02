@@ -71,10 +71,11 @@ void renderer_init(void)
     }
 
     renderer_glew_version = (const char*)glewGetString(GLEW_VERSION);
-    renderer_opengl_version = (const char*)glGetString(GL_VERSION);
-
     Debug("Using GLEW %s", renderer_glew_version);
     #endif
+
+    renderer_opengl_version = (const char*)glGetString(GL_VERSION);
+    Debug("Using OpenGL %s", renderer_opengl_version);
 
     init_ogl_gui();
     init_ogl_emu();
