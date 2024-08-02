@@ -32,6 +32,7 @@ HuC6270::HuC6270(HuC6280* huC6280)
     m_read_buffer = 0;
     m_hpos = 0;
     m_vpos = 0;
+    m_raster_line = 0;
     m_scanline_section = 0;
     m_trigger_sat_transfer = false;
     m_auto_sat_transfer = false;
@@ -74,6 +75,7 @@ void HuC6270::Reset()
     m_read_buffer = 0xFFFF;
     m_hpos = 0;
     m_vpos = 0;
+    m_raster_line = 0;
     m_scanline_section = 0;
     m_trigger_sat_transfer = false;
     m_auto_sat_transfer = false;
@@ -106,6 +108,10 @@ bool HuC6270::Clock(u8* frame_buffer)
 {
     m_frame_buffer = frame_buffer;
     bool frame_ready = false;
+    int vsw = m_register[HUC6270_REG_VPR] & 0x1F;
+    int vds = m_register[HUC6270_REG_VPR] >> 8;
+    int vdw = m_register[HUC6270_REG_VDR] & 0x1FF;
+    int vcr = m_register[HUC6270_REG_VCR] & 0xFF;
 
     if (m_vpos < HUC6270_ACTIVE_DISPLAY_START)
     {
@@ -165,11 +171,11 @@ bool HuC6270::Clock(u8* frame_buffer)
     if (!m_line_events.hint && (m_hpos >= m_timing[TIMING_HINT]))
     {
         m_line_events.hint = true;
-        if (m_scanline_section == SCANLINE_ACTIVE)
+        //if (m_scanline_section == SCANLINE_ACTIVE)
         {
             if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
             {
-                if (m_vpos == m_register[HUC6270_REG_RCR])
+                if (m_register[HUC6270_REG_RCR] == m_raster_line)
                 {
                     m_status_register |= HUC6270_STATUS_SCANLINE;
                     m_huc6280->AssertIRQ1(true);
@@ -182,9 +188,11 @@ bool HuC6270::Clock(u8* frame_buffer)
     if (!m_line_events.render && (m_hpos >= m_timing[TIMING_RENDER]))
     {
         m_line_events.render = true;
-        if (m_scanline_section == SCANLINE_ACTIVE)
+        int raster_start = vsw + vds;
+        int raster_end = raster_start + vdw + 1; 
+        if ((m_vpos >= raster_start) && (m_vpos < raster_end))
         {
-            RenderLine(m_vpos - HUC6270_ACTIVE_DISPLAY_START);
+            RenderLine(m_vpos - raster_start);
         }
     }
 
@@ -195,6 +203,14 @@ bool HuC6270::Clock(u8* frame_buffer)
     {
         m_hpos = 0;
         m_vpos++;
+        m_raster_line++;
+
+        int raster_reset = vsw + vds;
+
+        if (m_vpos == raster_reset)
+        {
+            m_raster_line = 64;
+        }
 
         if (m_vpos > HUC6270_LINES)
         {

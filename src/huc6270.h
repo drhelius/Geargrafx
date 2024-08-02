@@ -88,6 +88,7 @@ private:
     u16 m_read_buffer;
     int m_hpos;
     int m_vpos;
+    int m_raster_line;
     int m_scanline_section;
     bool m_trigger_sat_transfer;
     bool m_auto_sat_transfer;
