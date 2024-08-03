@@ -210,7 +210,7 @@ inline bool HuC6280::IsSetFlag(u8 flag)
 
 inline void HuC6280::StackPush16(u16 value)
 {
-    m_memory->Write(0x2100 | m_S.GetValue(), static_cast<u8>((value >> 8) & 0x00FF));
+    m_memory->Write(0x2100 | m_S.GetValue(), static_cast<u8>(value >> 8));
     m_S.Decrement();
     m_memory->Write(0x2100 | m_S.GetValue(), static_cast<u8>(value & 0x00FF));
     m_S.Decrement();
@@ -234,8 +234,7 @@ inline u16 HuC6280::StackPop16()
 inline u8 HuC6280::StackPop8()
 {
     m_S.Increment();
-    u8 result = m_memory->Read(0x2100 | m_S.GetValue());
-    return result;
+    return m_memory->Read(0x2100 | m_S.GetValue());
 }
 
 inline u8 HuC6280::ImmediateAddressing()

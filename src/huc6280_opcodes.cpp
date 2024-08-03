@@ -946,7 +946,7 @@ void HuC6280::OPCode0x99()
 void HuC6280::OPCode0x9A()
 {
     // TXS
-    OPCodes_Transfer(&m_X, &m_S);
+    m_S.SetValue(m_X.GetValue());
 }
 
 void HuC6280::OPCode0x9B()

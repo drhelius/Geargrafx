@@ -143,8 +143,11 @@ inline void HuC6280::OPCodes_BIT(u16 address)
 {
     u8 value = m_memory->Read(address);
     u8 result = m_A.GetValue() & value;
-    SetOrClearZNFlags(result);
-    SetOverflowFlag(value);
+    ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
+    u8 flags = m_P.GetValue();
+    flags |= (m_zn_flags_lut[result] & FLAG_ZERO);
+    flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
+    m_P.SetValue(flags);
 }
 
 inline void HuC6280::OPCodes_BRK()
@@ -197,10 +200,8 @@ inline void HuC6280::OPCodes_DEC_Mem(u16 address)
 
 inline void HuC6280::OPCodes_DEC_Reg(EightBitRegister* reg)
 {
-    u8 value = reg->GetValue();
-    u8 result = value - 1;
-    reg->SetValue(result);
-    SetOrClearZNFlags(result);
+    reg->Decrement();
+    SetOrClearZNFlags(reg->GetValue());
 }
 
 inline void HuC6280::OPCodes_EOR(u8 value)
@@ -232,10 +233,8 @@ inline void HuC6280::OPCodes_INC_Mem(u16 address)
 
 inline void HuC6280::OPCodes_INC_Reg(EightBitRegister* reg)
 {
-    u8 value = reg->GetValue();
-    u8 result = value + 1;
-    reg->SetValue(result);
-    SetOrClearZNFlags(result);
+    reg->Increment();
+    SetOrClearZNFlags(reg->GetValue());
 }
 
 inline void HuC6280::OPCodes_LD(EightBitRegister* reg, u8 value)
@@ -473,26 +472,35 @@ inline void HuC6280::OPCodes_TRB(u16 address)
 {
     u8 value = m_memory->Read(address);
     u8 result = ~m_A.GetValue() & value;
-    SetOrClearZNFlags(result);
-    SetOverflowFlag(result);
     m_memory->Write(address, result);
+    ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
+    u8 flags = m_P.GetValue();
+    flags |= (m_zn_flags_lut[result] & FLAG_ZERO);
+    flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
+    m_P.SetValue(flags);
 }
 
 inline void HuC6280::OPCodes_TSB(u16 address)
 {
     u8 value = m_memory->Read(address);
     u8 result = m_A.GetValue() | value;
-    SetOrClearZNFlags(result);
-    SetOverflowFlag(result);
     m_memory->Write(address, result);
+    ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
+    u8 flags = m_P.GetValue();
+    flags |= (m_zn_flags_lut[result] & FLAG_ZERO);
+    flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
+    m_P.SetValue(flags);
 }
 
 inline void HuC6280::OPCodes_TST(u8 value, u16 address)
 {
     u8 mem = m_memory->Read(address);
     u8 result = value & mem;
-    SetOrClearZNFlags(result);
-    SetOverflowFlag(result);
+    ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
+    u8 flags = m_P.GetValue();
+    flags |= (m_zn_flags_lut[result] & FLAG_ZERO);
+    flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
+    m_P.SetValue(flags);
 }
 
 inline void HuC6280::OPCodes_TAI()
