@@ -61,7 +61,7 @@ void gui_debug_window_huc6280(void)
 
         ImGui::TableNextColumn();
         ImGui::TextColored(yellow, "    SP"); ImGui::SameLine();
-        ImGui::Text("= $%04X", 0x2100 | proc_state->S->GetValue());
+        ImGui::Text("= $%04X", STACK_ADDR | proc_state->S->GetValue());
         ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(0x21), BYTE_TO_BINARY(proc_state->S->GetValue()));
 
         ImGui::TableNextColumn();

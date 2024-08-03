@@ -174,7 +174,7 @@ inline bool HuC6280::PageCrossed(u16 old_address, u16 new_address)
 
 inline u16 HuC6280::ZeroPageX()
 {
-    return 0x2000 | m_X.GetValue();
+    return ZERO_PAGE_ADDR | m_X.GetValue();
 }
 
 inline void HuC6280::SetOrClearZNFlags(u8 result)
@@ -210,31 +210,31 @@ inline bool HuC6280::IsSetFlag(u8 flag)
 
 inline void HuC6280::StackPush16(u16 value)
 {
-    m_memory->Write(0x2100 | m_S.GetValue(), static_cast<u8>(value >> 8));
+    m_memory->Write(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value >> 8));
     m_S.Decrement();
-    m_memory->Write(0x2100 | m_S.GetValue(), static_cast<u8>(value & 0x00FF));
+    m_memory->Write(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value & 0x00FF));
     m_S.Decrement();
 }
 
 inline void HuC6280::StackPush8(u8 value)
 {
-    m_memory->Write(0x2100 | m_S.GetValue(), value);
+    m_memory->Write(STACK_ADDR | m_S.GetValue(), value);
     m_S.Decrement();
 }
 
 inline u16 HuC6280::StackPop16()
 {
     m_S.Increment();
-    u8 l = m_memory->Read(0x2100 | m_S.GetValue());
+    u8 l = m_memory->Read(STACK_ADDR | m_S.GetValue());
     m_S.Increment();
-    u8 h = m_memory->Read(0x2100 | m_S.GetValue());
+    u8 h = m_memory->Read(STACK_ADDR | m_S.GetValue());
     return Address16(h , l);
 }
 
 inline u8 HuC6280::StackPop8()
 {
     m_S.Increment();
-    return m_memory->Read(0x2100 | m_S.GetValue());
+    return m_memory->Read(STACK_ADDR | m_S.GetValue());
 }
 
 inline u8 HuC6280::ImmediateAddressing()
@@ -244,12 +244,12 @@ inline u8 HuC6280::ImmediateAddressing()
 
 inline u16 HuC6280::ZeroPageAddressing()
 {
-    return 0x2000 | Fetch8();
+    return ZERO_PAGE_ADDR | Fetch8();
 }
 
 inline u16 HuC6280::ZeroPageAddressing(EightBitRegister* reg)
 {
-    return 0x2000 | ((Fetch8() + reg->GetValue()) & 0xFF);
+    return ZERO_PAGE_ADDR | ((Fetch8() + reg->GetValue()) & 0xFF);
 }
 
 inline u16 HuC6280::ZeroPageRelativeAddressing()
