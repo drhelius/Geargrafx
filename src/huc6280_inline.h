@@ -280,9 +280,7 @@ inline u16 HuC6280::ZeroPageIndirectIndexedAddressing()
     u16 address = ZeroPageAddressing();
     u8 l = m_memory->Read(address);
     u8 h = m_memory->Read((address + 1) & 0x20FF);
-    address = Address16(h, l);
-    u16 result = address + m_Y.GetValue();
-    return result;
+    return Address16(h, l) + m_Y.GetValue();
 }
 
 inline s8 HuC6280::RelativeAddressing()
