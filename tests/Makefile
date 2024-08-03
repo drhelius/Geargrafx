@@ -1,0 +1,81 @@
+include Makefile.sources
+
+TARGET_NAME = geargrafx-test
+UNAME_S := $(shell uname -s)
+PLATFORM = "undefined"
+GEARGRAFX_TESTING ?= 1
+
+OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
+
+USE_CLANG ?= 0
+ifeq ($(USE_CLANG), 1)
+    CXX = clang++
+    CC = clang
+else
+    CXX = g++
+    CC = gcc
+endif
+
+CPPFLAGS += -I../ -I../../
+CPPFLAGS += -Wall -Wextra -Wformat
+CXXFLAGS += -std=c++11
+CFLAGS += -std=c99
+
+DEBUG ?= 0
+ifeq ($(DEBUG), 1)
+    CPPFLAGS +=-DDEBUG -g3
+else
+    CPPFLAGS +=-DNDEBUG -O3 -flto=auto
+    LDFLAGS += -O3 -flto=auto
+endif
+
+SANITIZE ?= 0
+ifeq ($(SANITIZE), 1)
+    CPPFLAGS +=-fsanitize=address
+    LDFLAGS += -lasan
+endif
+
+ifeq ($(UNAME_S), Linux) #LINUX
+    PLATFORM = "Linux"
+    LDFLAGS += -lGL -lGLEW -ldl `sdl2-config --libs`
+    CPPFLAGS += `sdl2-config --cflags`
+    TARGET := $(TARGET_NAME)
+else ifeq ($(UNAME_S), Darwin) #APPLE
+    PLATFORM = "macOS"
+    LDFLAGS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo `sdl2-config --libs`
+    LDFLAGS += -L/usr/local/lib
+    CPPFLAGS += `sdl2-config --cflags`
+    CPPFLAGS += -I/usr/local/include -I/opt/local/include
+    TARGET := $(TARGET_NAME)
+else ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
+    PLATFORM = "MinGW"
+    LDFLAGS += -lgdi32 -lopengl32 -lglew32 -limm32 `pkg-config --static --libs sdl2`
+    CPPFLAGS += `pkg-config --cflags sdl2`
+    TARGET := $(TARGET_NAME).exe
+else
+    PLATFORM = "Generic Unix-like/BSD"
+    LDFLAGS += `sdl2-config --libs` -lSDL2
+    LDFLAGS += `pkg-config --libs glew` -lGLEW
+    CXXFLAGS += -std=gnu++11
+    CPPFLAGS += `sdl2-config --cflags`
+    CPPFLAGS += `pkg-config --cflags glew`
+    TARGET := $(TARGET_NAME)
+endif
+
+all: $(TARGET)
+	@echo Build complete for $(PLATFORM)
+
+$(TARGET): $(OBJECTS)
+	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
+
+%.o: %.mm
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+%.o: %.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+%.o: %.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -f $(OBJECTS) $(TARGET)
