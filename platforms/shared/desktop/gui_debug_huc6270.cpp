@@ -186,7 +186,7 @@ void gui_debug_window_huc6270_registers(void)
             continue;
 
         ImGui::TextColored(cyan, "R%02X ", i); ImGui::SameLine();
-        ImGui::TextColored(violet, "%s", k_register_names[i]); ImGui::SameLine();
+        ImGui::TextColored(violet, "%s", k_register_names_aligned[i]); ImGui::SameLine();
         ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", huc6270_state->R[i], BYTE_TO_BINARY(huc6270_state->R[i] >> 8), BYTE_TO_BINARY(huc6270_state->R[i] & 0xFF));
 
         if (i == 2)

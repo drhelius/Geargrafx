@@ -42,7 +42,7 @@ static const GG_OPCode_Info k_opcode_names[256] = {
     { "BRK", GG_OPCode_Type_Implied },
     { "ORA $(%02X,X)", GG_OPCode_Type_1b },
     { "SXY", GG_OPCode_Type_Implied },
-    { "ST0 #$%02X  [REG=%s]", GG_OPCode_Type_ST0 },
+    { "ST0 #$%02X  [REG = %s]", GG_OPCode_Type_ST0 },
     { "TSB $%02X", GG_OPCode_Type_1b },
     { "ORA $%02X", GG_OPCode_Type_1b },
     { "ASL $%02X", GG_OPCode_Type_1b },

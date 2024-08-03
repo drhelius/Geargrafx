@@ -111,11 +111,17 @@ static const int k_scren_size_x[8] = { 32, 64, 128, 128, 32, 64, 128, 128 };
 static const int k_scren_size_y[8] = { 32, 32, 32, 32, 64, 64, 64, 64 };
 static const int k_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
 
-static const char* const k_register_names[20] = {
+static const char* const k_register_names_aligned[20] = {
     "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",
     "CR   ", "RCR  ", "BXR  ", "BYR  ", "MWR  ",
     "HSR  ", "HDR  ", "VPR  ", "VDR  ", "VCR  ",
     "DCR  ", "SOUR ", "DESR ", "LENR ", "DVSSR" };
+
+static const char* const k_register_names[20] = {
+    "MAWR", "MARR", "VWR",  "???",  "???",
+    "CR",   "RCR",  "BXR",  "BYR",  "MWR",
+    "HSR",  "HDR",  "VPR",  "VDR",  "VCR",
+    "DCR",  "SOUR", "DESR", "LENR", "DVSSR" };
 
 static const char* const k_scanline_sections[] = {
     "TOP BLANKING", "ACTIVE", "BOTTOM BLANKING", "SYNC" };
