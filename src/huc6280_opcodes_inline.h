@@ -154,6 +154,7 @@ inline void HuC6280::OPCodes_BRK()
 {
     m_PC.Increment();
     StackPush16(m_PC.GetValue());
+    ClearFlag(FLAG_TRANSFER);
     SetFlag(FLAG_BREAK);
     StackPush8(m_P.GetValue());
     SetFlag(FLAG_INTERRUPT);

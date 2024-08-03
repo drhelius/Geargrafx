@@ -254,7 +254,7 @@ static const GG_OPCode_Info k_opcode_names[256] = {
     { "INY", GG_OPCode_Type_Implied },
     { "CMP #$%02X", GG_OPCode_Type_1b },
     { "DEX", GG_OPCode_Type_Implied },
-    { "NOP  [UNOFFICIAL]", GG_OPCode_Type_Implied },
+    { "NOP  [UNOFFICIAL WAI]", GG_OPCode_Type_Implied },
     { "CPY $%04X", GG_OPCode_Type_2b },
     { "CMP $%04X", GG_OPCode_Type_2b },
     { "DEC $%04X", GG_OPCode_Type_2b },

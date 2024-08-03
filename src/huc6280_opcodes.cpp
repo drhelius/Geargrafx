@@ -71,6 +71,7 @@ void HuC6280::OPCode0x07()
 void HuC6280::OPCode0x08()
 {
     // PHP
+    ClearFlag(FLAG_TRANSFER);
     SetFlag(FLAG_BREAK);
     StackPush8(m_P.GetValue());
 }
