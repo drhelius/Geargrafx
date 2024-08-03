@@ -75,6 +75,7 @@ private:
     u8* m_wram;
     GG_Disassembler_Record** m_disassembler;
     u8 m_io_buffer;
+    u8* m_test_memory;
 };
 
 #include "memory_inline.h"

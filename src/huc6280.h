@@ -34,7 +34,7 @@
 #define FLAG_OVERFLOW   0x40
 #define FLAG_NEGATIVE   0x80
 
-#if defined(GEARGRAFX_TESTING)
+#if defined(GG_TESTING)
 #define ZERO_PAGE_ADDR  0x0000
 #define STACK_ADDR      0x0100
 #else

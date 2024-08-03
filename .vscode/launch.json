@@ -25,6 +25,31 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+        {
+            "name": "Build and debug TESTS",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/tests/geargrafx-tests",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/tests",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build (TESTS)",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }

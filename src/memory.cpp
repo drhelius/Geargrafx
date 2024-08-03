@@ -36,12 +36,14 @@ Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* 
     m_audio = audio;
     InitPointer(m_wram);
     InitPointer(m_disassembler);
+    InitPointer(m_test_memory);
     m_io_buffer = 0;
 }
 
 Memory::~Memory()
 {
     SafeDeleteArray(m_wram);
+    SafeDeleteArray(m_test_memory);
     if (IsValidPointer(m_disassembler))
     {
         for (int i = 0; i < 0x200000; i++)
@@ -64,6 +66,10 @@ void Memory::Init()
     }
 #endif
 
+#if defined(GG_TESTING)
+    m_test_memory = new u8[0x10000];
+#endif
+
     Reset();
 }
 
@@ -81,6 +87,13 @@ void Memory::Reset()
     {
         m_wram[i] = rand() & 0xFF;
     }
+
+#if defined(GG_TESTING)
+    for (int i = 0; i < 0x10000; i++)
+    {
+        m_test_memory[i] = rand() & 0xFF;
+    }
+#endif
 }
 
 Memory::GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address)

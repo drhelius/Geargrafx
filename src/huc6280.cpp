@@ -178,8 +178,12 @@ unsigned int HuC6280::Tick()
 
     u8 opcode = Fetch8();
     (this->*m_opcodes[opcode])();
+
+#if !defined(GG_TESTING)
     if (!m_flag_transfer_set)
         ClearFlag(FLAG_TRANSFER);
+#endif
+
     DisassembleNextOPCode();
 
     m_cycles += k_opcode_cycles[opcode];

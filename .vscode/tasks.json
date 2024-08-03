@@ -134,6 +134,32 @@
                 "isDefault": true
             },
             "dependsOn": "Clean"
+        },
+        {
+            "type": "shell",
+            "label": "Build (TESTS)",
+            "command": "make clean && make -j8 -f ${workspaceFolder}/tests/Makefile DEBUG=1",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "dedicated",
+                "showReuseMessage": false,
+                "close": false,
+                "clear": true,
+                "revealProblems": "onProblem"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/tests"
+            },
+            "problemMatcher": [
+                {
+                    "base": "$gcc",
+                    "fileLocation": [
+                        "relative",
+                        "${workspaceFolder}/tests"
+                    ]
+                }
+            ],
+            "group": "build"
         }
     ]
 }

@@ -62,6 +62,7 @@ xcuserdata/
 
 #binaries
 platforms/**/geargrafx
+tests/**/geargrafx-tests
 
 #Switch
 *.a

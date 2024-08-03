@@ -30,6 +30,10 @@
 
 inline u8 Memory::Read(u16 address, bool block_transfer)
 {
+#if defined(GG_TESTING)
+    return m_test_memory[address];
+#endif
+
     m_huc6280->CheckMemoryBreakpoints(address, true);
 
     u8 mpr_index = (address >> 13) & 0x07;
@@ -143,6 +147,11 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
 
 inline void Memory::Write(u16 address, u8 value)
 {
+#if defined(GG_TESTING)
+    m_test_memory[address] = value;
+    return;
+#endif
+
     m_huc6280->CheckMemoryBreakpoints(address, false);
 
     u8 mpr_index = (address >> 13) & 0x07;
