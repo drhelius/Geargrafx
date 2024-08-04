@@ -27,11 +27,11 @@
 
 inline void HuC6280::OPCodes_ADC(u8 value)
 {
-    // TODO
     int a;
     u8 final_result;
     u16 address;
 
+#if !defined(GG_TESTING)
     if (IsSetFlag(FLAG_TRANSFER))
     {
         address = ZeroPageX();
@@ -39,6 +39,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
         m_cycles += 3;
     }
     else
+#endif
         a = m_A.GetValue();
 
     if (IsSetFlag(FLAG_DECIMAL))
@@ -48,43 +49,41 @@ inline void HuC6280::OPCodes_ADC(u8 value)
         if (low_nibble > 9) low_nibble += 6;
         int high_nibble = (a >> 4) + (value >> 4) + (low_nibble > 15 ? 1 : 0);
         if (high_nibble > 9) high_nibble += 6;
-
         final_result = (low_nibble & 0x0F) | ((high_nibble & 0x0F) << 4);
-        SetZNFlags(final_result);
+
+        SetOrClearZNFlags(final_result);
         if (high_nibble > 15)
             SetFlag(FLAG_CARRY);
         else
             ClearFlag(FLAG_CARRY);
-
-        if ((((a ^ value) & 0x80) == 0) && (((a ^ final_result) & 0x80) != 0))
-            SetFlag(FLAG_OVERFLOW);
-        else
-            ClearFlag(FLAG_OVERFLOW);
     }
     else
     {
         int result = a + value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
         final_result = static_cast<u8> (result & 0xFF);
+
+        ClearFlag(FLAG_ZERO | FLAG_CARRY | FLAG_OVERFLOW | FLAG_NEGATIVE);
+
+        u8 flags = m_P.GetValue();
+        flags |= ((((a ^ value) & 0x80) ^ 0x80) & ((a ^ result) & 0x80)) >> 1;
+        flags |= (result >> 8) & FLAG_CARRY;
+        m_P.SetValue(flags);
+
         SetZNFlags(final_result);
-        if ((result & 0x100) != 0)
-            SetFlag(FLAG_CARRY);
-        else
-            ClearFlag(FLAG_CARRY);
-        if ((((a ^ value) & 0x80) == 0) && (((a ^ result) & 0x80) != 0))
-            SetFlag(FLAG_OVERFLOW);
-        else
-            ClearFlag(FLAG_OVERFLOW);
     }
 
+#if !defined(GG_TESTING)
     if (IsSetFlag(FLAG_TRANSFER))
         m_memory->Write(address, final_result);
     else
+#endif
         m_A.SetValue(final_result);
 }
 
 inline void HuC6280::OPCodes_AND(u8 value)
 {
     u8 result;
+#if !defined(GG_TESTING)
     if (IsSetFlag(FLAG_TRANSFER))
     {
         u16 address = ZeroPageX();
@@ -94,6 +93,7 @@ inline void HuC6280::OPCodes_AND(u8 value)
         m_cycles += 3;
     }
     else
+#endif
     {
         result = m_A.GetValue() & value;
         m_A.SetValue(result);
@@ -150,17 +150,37 @@ inline void HuC6280::OPCodes_BIT(u16 address)
     m_P.SetValue(flags);
 }
 
+inline void HuC6280::OPCodes_BIT_Immediate(u16 address)
+{
+    u8 value = m_memory->Read(address);
+    u8 result = m_A.GetValue() & value;
+    ClearFlag(FLAG_ZERO);
+    u8 flags = m_P.GetValue();
+    flags |= (m_zn_flags_lut[result] & FLAG_ZERO);
+    m_P.SetValue(flags);
+}
+
 inline void HuC6280::OPCodes_BRK()
 {
     m_PC.Increment();
     StackPush16(m_PC.GetValue());
+
+#if !defined(GG_TESTING)
     ClearFlag(FLAG_TRANSFER);
+#endif
+
     SetFlag(FLAG_BREAK);
     StackPush8(m_P.GetValue());
+    ClearFlag(FLAG_BREAK | FLAG_DECIMAL);
     SetFlag(FLAG_INTERRUPT);
-    ClearFlag(FLAG_DECIMAL);
+
+#if defined(GG_TESTING)
+    m_PC.SetLow(m_memory->Read(0xFFFE));
+    m_PC.SetHigh(m_memory->Read(0xFFFF));
+#else
     m_PC.SetLow(m_memory->Read(0xFFF6));
     m_PC.SetHigh(m_memory->Read(0xFFF7));
+#endif
 }
 
 inline void HuC6280::OPCodes_Subroutine()
@@ -208,6 +228,7 @@ inline void HuC6280::OPCodes_DEC_Reg(EightBitRegister* reg)
 inline void HuC6280::OPCodes_EOR(u8 value)
 {
     u8 result;
+#if !defined(GG_TESTING)
     if (IsSetFlag(FLAG_TRANSFER))
     {
         u16 address = ZeroPageX();
@@ -217,6 +238,7 @@ inline void HuC6280::OPCodes_EOR(u8 value)
         m_cycles += 3;
     }
     else
+#endif
     {
         result = m_A.GetValue() ^ value;
         m_A.SetValue(result);
@@ -249,7 +271,7 @@ inline void HuC6280::OPCodes_LSR_Accumulator()
     u8 value = m_A.GetValue();
     u8 result = value >> 1;
     m_A.SetValue(result);
-    SetZNFlags(result);
+    SetOrClearZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -261,7 +283,7 @@ inline void HuC6280::OPCodes_LSR_Memory(u16 address)
     u8 value = m_memory->Read(address);
     u8 result = value >> 1;
     m_memory->Write(address, result);
-    SetZNFlags(result);
+    SetOrClearZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -271,6 +293,8 @@ inline void HuC6280::OPCodes_LSR_Memory(u16 address)
 inline void HuC6280::OPCodes_ORA(u8 value)
 {
     u8 result;
+
+#if !defined(GG_TESTING)
     if (IsSetFlag(FLAG_TRANSFER))
     {
         u16 address = ZeroPageX();
@@ -280,6 +304,7 @@ inline void HuC6280::OPCodes_ORA(u8 value)
         m_cycles += 3;
     }
     else
+#endif
     {
         result = m_A.GetValue() | value;
         m_A.SetValue(result);
@@ -299,7 +324,7 @@ inline void HuC6280::OPCodes_ROL_Accumulator()
     u8 result = static_cast<u8>(value << 1);
     result |= IsSetFlag(FLAG_CARRY) ? 0x01 : 0x00;
     m_A.SetValue(result);
-    SetZNFlags(result);
+    SetOrClearZNFlags(result);
     if ((value & 0x80) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -312,7 +337,7 @@ inline void HuC6280::OPCodes_ROL_Memory(u16 address)
     u8 result = static_cast<u8>(value << 1);
     result |= IsSetFlag(FLAG_CARRY) ? 0x01 : 0x00;
     m_memory->Write(address, result);
-    SetZNFlags(result);
+    SetOrClearZNFlags(result);
     if ((value & 0x80) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -325,7 +350,7 @@ inline void HuC6280::OPCodes_ROR_Accumulator()
     u8 result = value >> 1;
     result |= IsSetFlag(FLAG_CARRY) ? 0x80 : 0x00;
     m_A.SetValue(result);
-    SetZNFlags(result);
+    SetOrClearZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -338,7 +363,7 @@ inline void HuC6280::OPCodes_ROR_Memory(u16 address)
     u8 result = value >> 1;
     result |= IsSetFlag(FLAG_CARRY) ? 0x80 : 0x00;
     m_memory->Write(address, result);
-    SetZNFlags(result);
+    SetOrClearZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
     else
@@ -347,44 +372,30 @@ inline void HuC6280::OPCodes_ROR_Memory(u16 address)
 
 inline void HuC6280::OPCodes_SBC(u8 value)
 {
-    // TODO
     if (IsSetFlag(FLAG_DECIMAL))
     {
         m_cycles++;
+
         int carry = IsSetFlag(FLAG_CARRY) ? 0 : 1;
-        int low_nibble = (m_A.GetValue() & 0x0F) - (value & 0x0F) - carry;
-        int high_nibble = (m_A.GetValue() >> 4) - (value >> 4) - ((low_nibble < 0) ? 1 : 0);
-
-        if (low_nibble < 0) {
-            low_nibble += 10;
-        }
-        if (high_nibble < 0) {
-            high_nibble += 10;
-        }
-
-        u8 final_result = (high_nibble << 4) | (low_nibble & 0x0F);        
-        int signed_result = m_A.GetValue() - value - carry;
-
-        if ((signed_result < -99) || (signed_result > 99)) {
-            SetFlag(FLAG_OVERFLOW);
-        } else {
-            ClearFlag(FLAG_OVERFLOW);
-        }
-        SetZNFlags(final_result);
-
-        if (high_nibble & 0xF0) {
-            ClearFlag(FLAG_CARRY);
-        } else {
-            SetFlag(FLAG_CARRY);
-        }
-
-        m_A.SetValue(final_result);
+        u8 m = (m_A.GetValue() & 0xF) - (value & 0xF) - carry;
+        u8 n = (m_A.GetValue() >> 4) - (value >> 4) - ((m >> 4) & 1);
+        u8 res = (n << 4) | (m & 0xF);
+        if(m & 0x10)
+            res -= 0x06;
+        if(n & 0x10)
+            res -= 0x60;
+        m_A.SetValue(res);
+        ClearFlag(FLAG_ZERO | FLAG_CARRY | FLAG_NEGATIVE);
+        u8 flags = m_P.GetValue();
+        flags |= ((n >> 4) & 0x1) ^ 1;
+        m_P.SetValue(flags);
+        SetZNFlags(res);
     }
     else
     {
         int result = m_A.GetValue() - value - (IsSetFlag(FLAG_CARRY) ? 0x00 : 0x01);
         u8 final_result = static_cast<u8> (result & 0xFF);
-        SetZNFlags(final_result);
+        SetOrClearZNFlags(final_result);
         if ((result & 0x100) == 0)
             SetFlag(FLAG_CARRY);
         else
@@ -474,10 +485,16 @@ inline void HuC6280::OPCodes_TRB(u16 address)
     u8 value = m_memory->Read(address);
     u8 result = ~m_A.GetValue() & value;
     m_memory->Write(address, result);
+#if defined(GG_TESTING)
+    ClearFlag(FLAG_ZERO);
+#else
     ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
+#endif
     u8 flags = m_P.GetValue();
-    flags |= (m_zn_flags_lut[result] & FLAG_ZERO);
+    flags |= (m_zn_flags_lut[m_A.GetValue() & value] & FLAG_ZERO);
+#if !defined(GG_TESTING)
     flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
+#endif
     m_P.SetValue(flags);
 }
 
@@ -486,10 +503,16 @@ inline void HuC6280::OPCodes_TSB(u16 address)
     u8 value = m_memory->Read(address);
     u8 result = m_A.GetValue() | value;
     m_memory->Write(address, result);
+#if defined(GG_TESTING)
+    ClearFlag(FLAG_ZERO);
+#else
     ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
+#endif
     u8 flags = m_P.GetValue();
-    flags |= (m_zn_flags_lut[result] & FLAG_ZERO);
+    flags |= (m_zn_flags_lut[m_A.GetValue() & value] & FLAG_ZERO);
+#if !defined(GG_TESTING)
     flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
+#endif
     m_P.SetValue(flags);
 }
 

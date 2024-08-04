@@ -71,9 +71,12 @@ void HuC6280::OPCode0x07()
 void HuC6280::OPCode0x08()
 {
     // PHP
-    ClearFlag(FLAG_TRANSFER);
-    SetFlag(FLAG_BREAK);
-    StackPush8(m_P.GetValue());
+    u8 flags = m_P.GetValue();
+#if !defined(GG_TESTING)
+    flags &= (~FLAG_TRANSFER);
+#endif
+    flags |= FLAG_BREAK;
+    StackPush8(flags);
 }
 
 void HuC6280::OPCode0x09()
@@ -266,6 +269,7 @@ void HuC6280::OPCode0x28()
 {
     // PLP
     m_P.SetValue(StackPop8());
+    ClearFlag(FLAG_BREAK);
 }
 
 void HuC6280::OPCode0x29()
@@ -407,6 +411,7 @@ void HuC6280::OPCode0x40()
 {
     // RTI
     m_P.SetValue(StackPop8());
+    ClearFlag(FLAG_BREAK);
     m_PC.SetValue(StackPop16());
 }
 
@@ -844,7 +849,7 @@ void HuC6280::OPCode0x88()
 void HuC6280::OPCode0x89()
 {
     // BIT #nn
-    OPCodes_BIT(m_PC.GetValue());
+    OPCodes_BIT_Immediate(m_PC.GetValue());
     m_PC.Increment();
 }
 
