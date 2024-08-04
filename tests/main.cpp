@@ -20,30 +20,90 @@
 #include "../src/geargrafx.h"
 #include "RSJparser.tcc"
 
+bool run_file(const char* filename);
+bool run_test(RSJresource& test);
+
+GeargrafxCore* core = nullptr;
+HuC6280* cpu = nullptr;
+Memory* memory = nullptr;
+
 int main(int argc, char* argv[])
 {
     int ret = 0;
+
+    core = new GeargrafxCore();
+    core->Init();
+    cpu = core->GetHuC6280();
+    memory = core->GetMemory();
+
+    char file_number[4];
+    char file_name[10];
+
+    for (int i = 0; i < 0x100; i++)
+    {
+        snprintf(file_number, 4, "%02x", i);
+        snprintf(file_name, 10, "%s.json", file_number);
+
+        if (!run_file(file_name))
+        {
+            ret = 1;
+            break;
+        }
+    }
+
+    SafeDelete(core);
+
+    return ret;
+}
+
+bool run_file(const char* filename)
+{
+    std::ifstream json_fstream (filename);
+
+    if (!json_fstream.is_open())
+    {
+        Log("%s not found", filename);
+        return true;
+    }
+
+    RSJresource json_file(json_fstream);
+
+    int i = 0;
     bool failed = false;
 
-    GeargrafxCore* core = new GeargrafxCore();
-    core->Init();
-    HuC6280* cpu = core->GetHuC6280();
-    Memory* memory = core->GetMemory();
+    for (auto it=json_file.as_array().begin(); it!=json_file.as_array().end(); ++it)
+    {
+        RSJresource test = (*it);
 
-    // std::string str = "{ 'name': 'ca 11 df', 'initial': { 'pc': 25402, 's': 171, 'a': 34, 'x': 222, 'y': 136, 'p': 234, 'ram': [ [25402, 202], [25403, 17], [25404, 223]]}, 'final': { 'pc': 25403, 's': 171, 'a': 34, 'x': 221, 'y': 136, 'p': 232, 'ram': [ [25402, 202], [25403, 17], [25404, 223]]}, 'cycles': [ [25402, 202, 'read'], [25403, 17, 'read']] }";
+        if (!run_test(test))
+        {
+            Log("%s: test %d failed", filename, i);
+            std::cout << test.as_str() << std::endl;
+            failed = true;
+            break;
+        }
 
-    std::string str = "{ 'name': 'cf 1', 'initial': {'pc': 31248, 's': 32, 'a': 103, 'x': 237, 'y': 178, 'p': 184, 'ram': [[31250, 246], [230, 197], [31249, 230], [31248, 207]]}, 'final': {'pc': 31251, 's': 32, 'a': 103, 'x': 237, 'y': 178, 'p': 184, 'ram': [[31250, 246], [230, 197], [31249, 230], [31248, 207]]}, 'cycles': [[31248, 207, 'read'],[31249, 230, 'read'],[230, 197, 'read'],[230, 197, 'read'],[31250, 246, 'read']]}";
+        i++;
+    }
 
-    RSJresource my_resource (str);
+    if (!failed)
+        Log("%s: %d tests passed", filename, i);
 
-    cpu->GetState()->PC->SetValue(my_resource["initial"]["pc"].as<int>());
-    cpu->GetState()->S->SetValue(my_resource["initial"]["s"].as<int>());
-    cpu->GetState()->A->SetValue(my_resource["initial"]["a"].as<int>());
-    cpu->GetState()->X->SetValue(my_resource["initial"]["x"].as<int>());
-    cpu->GetState()->Y->SetValue(my_resource["initial"]["y"].as<int>());
-    cpu->GetState()->P->SetValue(my_resource["initial"]["p"].as<int>());
+    return !failed;
+}
 
-    for (auto it=my_resource["initial"]["ram"].as_array().begin(); it!=my_resource["initial"]["ram"].as_array().end(); ++it)
+bool run_test(RSJresource& test)
+{
+    bool failed = false;
+
+    cpu->GetState()->PC->SetValue(test["initial"]["pc"].as<int>());
+    cpu->GetState()->S->SetValue(test["initial"]["s"].as<int>());
+    cpu->GetState()->A->SetValue(test["initial"]["a"].as<int>());
+    cpu->GetState()->X->SetValue(test["initial"]["x"].as<int>());
+    cpu->GetState()->Y->SetValue(test["initial"]["y"].as<int>());
+    cpu->GetState()->P->SetValue(test["initial"]["p"].as<int>());
+
+    for (auto it=test["initial"]["ram"].as_array().begin(); it!=test["initial"]["ram"].as_array().end(); ++it)
     {
         memory->Write((*it)[0].as<int>(), (*it)[1].as<int>());
     }
@@ -51,7 +111,7 @@ int main(int argc, char* argv[])
     unsigned int cycles = cpu->Tick();
 
 #if 0
-    unsigned int expected_cycles = my_resource["cycles"].as_array().size();
+    unsigned int expected_cycles = test["cycles"].as_array().size();
 
     if (cycles != expected_cycles)
     {
@@ -67,43 +127,43 @@ int main(int argc, char* argv[])
     u8 y = cpu->GetState()->Y->GetValue();
     u8 p = cpu->GetState()->P->GetValue();
 
-    if (pc != my_resource["final"]["pc"].as<int>())
+    if (pc != test["final"]["pc"].as<int>())
     {
-        Log("PC failed, expected: %04X got: %04X", my_resource["final"]["pc"].as<int>(), pc);
+        Log("PC failed, expected: %04X got: %04X", test["final"]["pc"].as<int>(), pc);
         failed = true;
     }
 
-    if (s != my_resource["final"]["s"].as<int>())
+    if (s != test["final"]["s"].as<int>())
     {
-        Log("S failed, expected: %02X got: %02X", my_resource["final"]["s"].as<int>(), s);
+        Log("S failed, expected: %02X got: %02X", test["final"]["s"].as<int>(), s);
         failed = true;
     }
 
-    if (a != my_resource["final"]["a"].as<int>())
+    if (a != test["final"]["a"].as<int>())
     {
-        Log("A failed, expected: %02X got: %02X", my_resource["final"]["a"].as<int>(), a);
+        Log("A failed, expected: %02X got: %02X", test["final"]["a"].as<int>(), a);
         failed = true;
     }
 
-    if (x != my_resource["final"]["x"].as<int>())
+    if (x != test["final"]["x"].as<int>())
     {
-        Log("X failed, expected: %02X got: %02X", my_resource["final"]["x"].as<int>(), x);
+        Log("X failed, expected: %02X got: %02X", test["final"]["x"].as<int>(), x);
         failed = true;
     }
 
-    if (y != my_resource["final"]["y"].as<int>())
+    if (y != test["final"]["y"].as<int>())
     {
-        Log("Y failed, expected: %02X got: %02X", my_resource["final"]["y"].as<int>(), y);
+        Log("Y failed, expected: %02X got: %02X", test["final"]["y"].as<int>(), y);
         failed = true;
     }
 
-    if (p != my_resource["final"]["p"].as<int>())
+    if (p != test["final"]["p"].as<int>())
     {
-        Log("P failed, expected: %02X got: %02X", my_resource["final"]["p"].as<int>(), p);
+        Log("P failed, expected: %02X got: %02X", test["final"]["p"].as<int>(), p);
         failed = true;
     }
 
-    for (auto it=my_resource["final"]["ram"].as_array().begin(); it!=my_resource["final"]["ram"].as_array().end(); ++it)
+    for (auto it=test["final"]["ram"].as_array().begin(); it!=test["final"]["ram"].as_array().end(); ++it)
     {
         u16 address = (*it)[0].as<int>();
         u8 value = memory->Read(address);
@@ -116,17 +176,5 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (failed)
-    {
-        ret = 1;
-        Log("Test failed: %s", str.c_str());
-    }
-    else
-    {
-        Log("Test passed");
-    }
-
-    SafeDelete(core);
-
-    return ret;
+    return !failed;
 }

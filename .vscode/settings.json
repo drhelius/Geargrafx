@@ -3,7 +3,8 @@
         "**/*.o": true,
         "**/*.so": true,
         "**/geargrafx": true,
-        "**/geargrafx-tests": true
+        "**/geargrafx-tests": true,
+        "tests/*.json": true,
     },
     "cmake.configureOnOpen": false,
     "files.associations": {
