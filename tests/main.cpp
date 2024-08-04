@@ -17,6 +17,8 @@
  *
  */
 
+#include <vector>
+#include <algorithm>
 #include "../src/geargrafx.h"
 #include "RSJparser.tcc"
 
@@ -39,7 +41,7 @@ int main(int argc, char* argv[])
     char file_number[4];
     char file_name[10];
 
-    for (int i = 0; i < 0x100; i++)
+    for (int i = 0x00; i < 0x100; i++)
     {
         snprintf(file_number, 4, "%02x", i);
         snprintf(file_name, 10, "%s.json", file_number);
@@ -77,7 +79,7 @@ bool run_file(const char* filename)
 
         if (!run_test(test))
         {
-            Log("%s: test %d failed", filename, i);
+            Log("%s: test %d failed - %s", filename, i, test["name"].as_str().c_str());
             std::cout << test.as_str() << std::endl;
             failed = true;
             break;
