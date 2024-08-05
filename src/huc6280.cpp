@@ -92,7 +92,7 @@ void HuC6280::Reset()
     ClearFlag(FLAG_TRANSFER);
     ClearFlag(FLAG_DECIMAL);
     SetFlag(FLAG_INTERRUPT);
-    SetFlag(FLAG_BREAK);
+    ClearFlag(FLAG_BREAK);
     m_cycles = 0;
     m_clock_cycles = 0;
     m_irq1_asserted = false;
@@ -163,9 +163,7 @@ unsigned int HuC6280::Tick()
     if (irq)
     {
         StackPush16(m_PC.GetValue());
-        ClearFlag(FLAG_BREAK);
         StackPush8(m_P.GetValue());
-        SetFlag(FLAG_BREAK);
         SetFlag(FLAG_INTERRUPT);
         m_PC.SetLow(m_memory->Read(irq_low));
         m_PC.SetHigh(m_memory->Read(irq_high));

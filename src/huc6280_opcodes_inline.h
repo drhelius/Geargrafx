@@ -169,9 +169,8 @@ inline void HuC6280::OPCodes_BRK()
     ClearFlag(FLAG_TRANSFER);
 #endif
 
-    SetFlag(FLAG_BREAK);
-    StackPush8(m_P.GetValue());
-    ClearFlag(FLAG_BREAK | FLAG_DECIMAL);
+    StackPush8(m_P.GetValue() | FLAG_BREAK);
+    ClearFlag(FLAG_DECIMAL);
     SetFlag(FLAG_INTERRUPT);
 
 #if defined(GG_TESTING)

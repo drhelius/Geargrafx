@@ -71,11 +71,10 @@ void HuC6280::OPCode0x07()
 void HuC6280::OPCode0x08()
 {
     // PHP
-    u8 flags = m_P.GetValue();
+    u8 flags = m_P.GetValue() | FLAG_BREAK;
 #if !defined(GG_TESTING)
     flags &= (~FLAG_TRANSFER);
 #endif
-    flags |= FLAG_BREAK;
     StackPush8(flags);
 }
 
