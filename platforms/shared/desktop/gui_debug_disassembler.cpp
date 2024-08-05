@@ -56,7 +56,6 @@ static bool goto_address_requested = false;
 static u16 goto_address_target = 0;
 static bool goto_back_requested = false;
 static int goto_back = 0;
-static bool follow_pc = true;
 static bool show_mem = true;
 static bool show_symbols = true;
 static bool show_segment = true;
@@ -218,7 +217,6 @@ static void show_controls(void)
         emu_reset();
     }
 
-    ImGui::Checkbox("Follow PC", &follow_pc); ImGui::SameLine();
     ImGui::Checkbox("Opcodes", &show_mem);  ImGui::SameLine();
     ImGui::Checkbox("Symbols", &show_symbols);  ImGui::SameLine();
     ImGui::Checkbox("Segment", &show_segment); ImGui::SameLine();
@@ -234,7 +232,6 @@ static void show_controls(void)
         try
         {
             request_goto_address((u16)std::stoul(goto_address, 0, 16));
-            follow_pc = false;
         }
         catch(const std::invalid_argument&)
         {
@@ -248,7 +245,6 @@ static void show_controls(void)
         try
         {
             request_goto_address((u16)std::stoul(goto_address, 0, 16));
-            follow_pc = false;
         }
         catch(const std::invalid_argument&)
         {
@@ -260,7 +256,6 @@ static void show_controls(void)
     if (ImGui::Button("Back", ImVec2(50, 0)))
     {
         goto_back_requested = true;
-        follow_pc = false;
     }
 }
 
@@ -450,8 +445,9 @@ static void show_disassembly(void)
 
         prepare_drawable_lines();
 
-        if (follow_pc)
+        if (emu_debug_pc_changed)
         {
+            emu_debug_pc_changed = false;
             float window_offset = ImGui::GetWindowHeight() / 2.0f;
             float offset = window_offset - (ImGui::GetTextLineHeightWithSpacing() - 2.0f);
             ImGui::SetScrollY((pc_pos * ImGui::GetTextLineHeightWithSpacing()) - offset);
@@ -493,7 +489,6 @@ static void show_disassembly(void)
                 {
                     if (ImGui::IsMouseDoubleClicked(0) && line.record->jump)
                     {
-                        follow_pc = false;
                         request_goto_address(line.record->jump_address);
                     }
                     else if (is_selected)

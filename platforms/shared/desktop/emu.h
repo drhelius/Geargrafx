@@ -28,10 +28,21 @@
     #define EXTERN extern
 #endif
 
+enum Debug_Command
+{
+    Debug_Command_Continue,
+    Debug_Command_Step,
+    Debug_Command_StepFrame,
+    Debug_Command_None
+};
+
+
 EXTERN u8* emu_frame_buffer;
 EXTERN u8* emu_debug_background_buffer;
 EXTERN int emu_debug_background_buffer_width;
 EXTERN int emu_debug_background_buffer_height;
+EXTERN Debug_Command emu_debugg_command;
+EXTERN bool emu_debug_pc_changed;
 
 EXTERN bool emu_audio_sync;
 EXTERN bool emu_debug_disable_breakpoints;
