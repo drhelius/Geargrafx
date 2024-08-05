@@ -485,6 +485,35 @@ void HuC6280::AddRunToBreakpoint(u16 address)
     m_run_to_breakpoint_requested = true;
 }
 
+void HuC6280::RemoveBreakpoint(u16 address)
+{
+    for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
+    {
+        GG_Breakpoint* item = &m_breakpoints[b];
+
+        if (!item->range && (item->address1 == address))
+        {
+            m_breakpoints.erase(m_breakpoints.begin() + b);
+            break;
+        }
+    }
+}
+
+bool HuC6280::IsBreakpoint(u16 address)
+{
+    for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
+    {
+        GG_Breakpoint* item = &m_breakpoints[b];
+
+        if (!item->range && (item->address1 == address))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints()
 {
     return &m_breakpoints;

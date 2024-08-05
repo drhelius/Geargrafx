@@ -136,7 +136,10 @@ void gui_debug_toggle_breakpoint(void)
 {
     if (selected_address > 0)
     {
-        emu_get_core()->GetHuC6280()->AddBreakpoint(selected_address);
+        if (emu_get_core()->GetHuC6280()->IsBreakpoint(selected_address))
+            emu_get_core()->GetHuC6280()->RemoveBreakpoint(selected_address);
+        else
+            emu_get_core()->GetHuC6280()->AddBreakpoint(selected_address);
     }
 }
 

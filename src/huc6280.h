@@ -104,6 +104,8 @@ public:
     bool AddBreakpoint(char* text, bool read, bool write, bool execute);
     bool AddBreakpoint(u16 address);
     void AddRunToBreakpoint(u16 address);
+    void RemoveBreakpoint(u16 address);
+    bool IsBreakpoint(u16 address);
     std::vector<GG_Breakpoint>* GetBreakpoints();
     void ClearDisassemblerCallStack();
     std::stack<u16>* GetDisassemblerCallStack();
