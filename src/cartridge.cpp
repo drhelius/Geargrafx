@@ -112,7 +112,7 @@ bool Cartridge::LoadFromFile(const char* path)
 {
     using namespace std;
 
-    Debug("Loading %s...", path);
+    Log("Loading %s...", path);
 
     Reset();
 
@@ -166,7 +166,7 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size)
 {
     if (IsValidPointer(buffer))
     {
-        Debug("Loading ROM from buffer... Size: %d", size);
+        Log("Loading ROM from buffer... Size: %d", size);
 
         if(size & 512)
         {
@@ -274,9 +274,9 @@ void Cartridge::GatherROMInfo()
     m_rom_bank_count = (m_rom_size / 0x2000) + (m_rom_size % 0x2000 ? 1 : 0);
     m_crc = CalculateCRC32(0, m_rom, m_rom_size);
 
-    Debug("ROM Size: %d KB, %d bytes (0x%0X)", m_rom_size / 1024, m_rom_size, m_rom_size);
-    Debug("ROM Bank Count: %d (0x%0X)", m_rom_bank_count, m_rom_bank_count);
-    Debug("ROM CRC32: %08X", m_crc);
+    Log("ROM Size: %d KB, %d bytes (0x%0X)", m_rom_size / 1024, m_rom_size, m_rom_size);
+    Log("ROM Bank Count: %d (0x%0X)", m_rom_bank_count, m_rom_bank_count);
+    Log("ROM CRC32: %08X", m_crc);
 
     GatherInfoFromDB();
 }

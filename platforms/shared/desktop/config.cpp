@@ -101,7 +101,7 @@ void config_read(void)
         return;
     }
 
-    Debug("Loading settings from %s", config_emu_file_path);
+    Log("Loading settings from %s", config_emu_file_path);
 
     config_debug.debug = read_bool("Debug", "Debug", false);
     config_debug.show_disassembler = read_bool("Debug", "Disassembler", true);
@@ -207,7 +207,7 @@ void config_read(void)
 
 void config_write(void)
 {
-    Debug("Saving settings to %s", config_emu_file_path);
+    Log("Saving settings to %s", config_emu_file_path);
 
     write_bool("Debug", "Debug", config_debug.debug);
     write_bool("Debug", "Disassembler", config_debug.show_disassembler);

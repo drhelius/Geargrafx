@@ -103,8 +103,6 @@ u32 CalculateCRC32(u32 crc, const u8 *buf, int size)
 
     u32 ret = crc ^ ~0U;
 
-    Debug("CRC32: %08X", ret);
-
     return crc ^ ~0U;
 }
 

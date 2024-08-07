@@ -52,7 +52,6 @@ int application_init(const char* rom_file, const char* symbol_file)
 {
     Log("\n%s", GEARGRAFX_TITLE_ASCII);
     Log("%s %s Desktop App", GEARGRAFX_TITLE, GEARGRAFX_VERSION);
-    Log("By Ignacio Sánchez (drhelius)");
 
     config_init();
     config_read();
@@ -134,6 +133,11 @@ void application_trigger_fit_to_content(int width, int height)
     SDL_SetWindowSize(sdl_window, width, height);
 }
 
+void application_update_title(char* title)
+{
+    SDL_SetWindowTitle(sdl_window, title);
+}
+
 static int sdl_init(void)
 {
     Debug("Initializing SDL...");
@@ -150,6 +154,9 @@ static int sdl_init(void)
 
     SDL_VERSION(&application_sdl_build_version);
     SDL_GetVersion(&application_sdl_link_version);
+
+    Log("Using SDL %d.%d.%d (build)", application_sdl_build_version.major, application_sdl_build_version.minor, application_sdl_build_version.patch);
+    Log("Using SDL %d.%d.%d (link) ", application_sdl_link_version.major, application_sdl_link_version.minor, application_sdl_link_version.patch);
 
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
@@ -169,11 +176,11 @@ static int sdl_init(void)
 
     if (application_gamepad_mappings > 0)
     {
-        Debug("Succesfuly loaded %d game controller mappings", application_gamepad_mappings);
+        Log("Succesfuly loaded %d game controller mappings from gamecontrollerdb.txt", application_gamepad_mappings);
     }
     else
     {
-        Log("Game controller database not found!");
+        Log("Game controller database not found (gamecontrollerdb.txt)!!");
     }
 
     int gamepads_found = 0;
@@ -574,20 +581,6 @@ static void sdl_shortcuts_gui(const SDL_Event* event)
 
 static void run_emulator(void)
 {
-    if (!emu_is_empty())
-    {
-        static int i = 0;
-        i++;
-
-        if (i > 20)
-        {
-            i = 0;
-
-            char title[256];
-            sprintf(title, "%s %s - %s", GEARGRAFX_TITLE, GEARGRAFX_VERSION, emu_get_core()->GetCartridge()->GetFileName());
-            SDL_SetWindowTitle(sdl_window, title);
-        }
-    }
     config_emulator.paused = emu_is_paused();
     emu_audio_sync = config_audio.sync;
     emu_update();
@@ -606,9 +599,12 @@ static void render(void)
 
 static void frame_throttle(void)
 {
-    if (emu_is_empty() || emu_is_paused() || config_emulator.ffwd)
+    // TODO: temporal
+    if (true || emu_is_empty() || emu_is_paused() || config_emulator.ffwd)
     {
-        float elapsed = (float)((frame_time_end - frame_time_start) * 1000) / SDL_GetPerformanceFrequency();
+        Uint64 count_per_sec = SDL_GetPerformanceFrequency();
+        float elapsed = (float)(frame_time_end - frame_time_start) / (float)count_per_sec;
+        elapsed *= 1000.0f;
 
         float min = 16.666f;
 

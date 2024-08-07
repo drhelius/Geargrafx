@@ -98,7 +98,7 @@ bool SoundQueue::Start(int sample_rate, int channel_count, int buffer_size, int 
     SDL_PauseAudio(false);
     m_sound_open = true;
 
-    Debug("SoundQueue: Started with %d Hz, %d channels, %d buffer size, %d buffers", sample_rate, channel_count, m_buffer_size, m_buffer_count);
+    Log("SoundQueue: Started with %d Hz, %d channels, %d buffer size, %d buffers", sample_rate, channel_count, m_buffer_size, m_buffer_count);
 
     return true;
 }
