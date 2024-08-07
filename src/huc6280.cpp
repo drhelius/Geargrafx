@@ -29,26 +29,7 @@
 HuC6280::HuC6280()
 {
     InitOPCodeFunctors();
-    m_cycles = 0;
-    m_irq1_asserted = false;
-    m_irq2_asserted = false;
-    m_nmi_requested = false;
-    m_high_speed = false;
-    m_timer_cycles = 0;
-    m_clock_cycles = 0;
-    m_timer_enabled = false;
-    m_timer_counter = 0;
-    m_timer_reload = 0;
-    m_timer_irq = false;
-    m_interrupt_disable_register = 0;
-    m_interrupt_request_register = 0;
-    m_flag_transfer_set = false;
-    m_debug_next_irq = 0;
     m_breakpoints_enabled = false;
-    m_cpu_breakpoint_hit = false;
-    m_memory_breakpoint_hit = false;
-    m_run_to_breakpoint_hit = false;
-    m_run_to_breakpoint_requested = false;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
     m_processor_state.Y = &m_Y;

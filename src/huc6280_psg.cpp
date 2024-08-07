@@ -22,10 +22,6 @@
 HuC6280PSG::HuC6280PSG()
 {
     InitPointer(m_channels);
-    m_channel_select = 0;
-    m_main_amplitude = 0;
-    m_lfo_frequency = 0;
-    m_lfo_control = 0;
 }
 
 HuC6280PSG::~HuC6280PSG()
