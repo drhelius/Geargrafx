@@ -55,7 +55,8 @@ GeargrafxCore::~GeargrafxCore()
 
 void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 {
-    Debug("--== %s %s by Ignacio Sanchez ==--", GEARGRAFX_TITLE, GEARGRAFX_VERSION);
+    Log("Loading %s core %s ...", GEARGRAFX_TITLE, GEARGRAFX_VERSION);
+    Log("by Ignacio Sanchez");
 
     srand((unsigned int)time(NULL));
 
@@ -69,8 +70,8 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 
     m_cartridge->Init();
     m_memory->Init();
-    m_huc6260->Init();
-    m_huc6270->Init(m_huc6260, pixel_format);
+    m_huc6260->Init(pixel_format);
+    m_huc6270->Init();
     m_huc6280->Init(m_memory, m_huc6270);
     m_audio->Init();
     m_input->Init();
@@ -90,28 +91,25 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     }
 #endif
 
+    m_huc6260->SetBuffer(frame_buffer);
     bool instruction_completed = false;
     bool stop = false;
-    const int timer_divider = 3;
-    const int audio_divider = 6;
+    int failsafe_clocks = 0;
     int huc6280_divider = m_huc6280->IsHighSpeed() ? 3 : 12;
-    int huc6260_divider = m_huc6260->GetClockDivider();
 
     do
     {
-        m_clock++;
         instruction_completed = false;
+
+        if (m_clock % 3 == 0)
+            m_huc6280->ClockTimer();
 
         if (m_clock % huc6280_divider == 0)
             instruction_completed = m_huc6280->Clock();
 
-        if (m_clock % timer_divider == 0)
-            m_huc6280->ClockTimer();
+        stop = m_huc6260->Clock();
 
-        if (m_clock % huc6260_divider == 0)
-            stop = m_huc6270->Clock(frame_buffer);
-
-        if (m_clock % audio_divider == 0)
+        if (m_clock % 6 == 0)
             m_audio->Clock();
 
 #ifndef GG_DISABLE_DISASSEMBLER
@@ -125,11 +123,14 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
             stop = true;
 #endif
         // Failsafe: if the emulator is running too long, stop it
-        // if (m_clock >= 89683)
-        // {
-        //     m_clock -= 89683;
+        // if (failsafe_clocks >= 150000)
         //     stop = true;
-        // }
+
+        m_clock++;
+        failsafe_clocks++;
+
+        if ( m_clock == 12)
+            m_clock = 0;
     }
     while (!stop);
 
@@ -234,9 +235,9 @@ void GeargrafxCore::KeyReleased(GG_Controllers controller, GG_Keys key)
 void GeargrafxCore::Pause(bool paused)
 {
     if (!m_paused && paused)
-        Log("Geargrafx PAUSED");
+        Debug("Core paused");
     else if (m_paused && !paused)
-        Log("Geargrafx RESUMED");
+        Debug("Core resumed");
     m_paused = paused;
 }
 

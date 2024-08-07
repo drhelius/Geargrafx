@@ -67,7 +67,7 @@
 #define HUC6270_REG_HSR   0x0A
 #define HUC6270_REG_HDR   0x0B
 #define HUC6270_REG_VPR   0x0C
-#define HUC6270_REG_VDR   0x0D
+#define HUC6270_REG_VDW   0x0D
 #define HUC6270_REG_VCR   0x0E
 #define HUC6270_REG_DCR   0x0F
 #define HUC6270_REG_SOUR  0x10

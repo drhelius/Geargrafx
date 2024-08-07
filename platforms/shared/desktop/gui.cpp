@@ -43,7 +43,6 @@ static u32 status_message_start_time = 0;
 static u32 status_message_duration = 0;
 static void main_window(void);
 static void push_recent_rom(std::string path);
-//static Cartridge::CartridgeRegions get_region(int index);
 static void show_status_message(void);
 
 void gui_init(void)
@@ -229,11 +228,18 @@ void gui_load_rom(const char* path)
     if (config_emulator.start_paused)
     {
         emu_pause();
-        
+
         for (int i=0; i < (GG_MAX_RESOLUTION_WIDTH * GG_MAX_RESOLUTION_HEIGHT); i++)
         {
             emu_frame_buffer[i] = 0;
         }
+    }
+
+    if (!emu_is_empty())
+    {
+        char title[256];
+        sprintf(title, "%s %s - %s", GEARGRAFX_TITLE, GEARGRAFX_VERSION, emu_get_core()->GetCartridge()->GetFileName());
+        application_update_title(title);
     }
 }
 
@@ -364,28 +370,6 @@ static void main_window(void)
     }
 }
 
-
-
-
-// static GC_Color color_float_to_int(ImVec4 color)
-// {
-//     GC_Color ret;
-//     ret.red = (u8)floor(color.x >= 1.0 ? 255.0 : color.x * 256.0);
-//     ret.green = (u8)floor(color.y >= 1.0 ? 255.0 : color.y * 256.0);
-//     ret.blue = (u8)floor(color.z >= 1.0 ? 255.0 : color.z * 256.0);
-//     return ret;
-// }
-
-// static ImVec4 color_int_to_float(GC_Color color)
-// {
-//     ImVec4 ret;
-//     ret.w = 0;
-//     ret.x = (1.0f / 255.0f) * color.red;
-//     ret.y = (1.0f / 255.0f) * color.green;
-//     ret.z = (1.0f / 255.0f) * color.blue;
-//     return ret;
-// }
-
 static void push_recent_rom(std::string path)
 {
     int slot = 0;
@@ -406,21 +390,6 @@ static void push_recent_rom(std::string path)
 
     config_emulator.recent_roms[0] = path;
 }
-
-// static Cartridge::CartridgeRegions get_region(int index)
-// {
-//     switch (index)
-//     {
-//         case 0:
-//             return Cartridge::CartridgeUnknownRegion;
-//         case 1:
-//             return Cartridge::CartridgeNTSC;
-//         case 2:
-//             return Cartridge::CartridgePAL;
-//         default:
-//             return Cartridge::CartridgeUnknownRegion;
-//     }
-// }
 
 static void show_status_message(void)
 {

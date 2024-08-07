@@ -445,6 +445,9 @@ static void update_debug_background_buffer(void)
 
         int color = ((byte1 >> (7 - tile_x)) & 0x01) | (((byte2 >> (7 - tile_x)) & 0x01) << 1) | (((byte3 >> (7 - tile_x)) & 0x01) << 2) | (((byte4 >> (7 - tile_x)) & 0x01) << 3);
 
+        if (color == 0)
+            color_table = 0;
+
         u16 color_value = huc6260->GetColorTable()[(color_table * 16) + color];
 
         // convert to 8 bit color

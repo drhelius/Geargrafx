@@ -47,7 +47,7 @@ inline u8 HuC6270::ReadRegister(u32 address)
             }
             else
             {
-                Debug("HuC6270 invalid read data register: %02X", m_address_register);
+                //Debug("HuC6270 invalid read data register: %02X", m_address_register);
                 return m_register[HUC6270_REG_VWR] & 0xFF;
             }
             break;
@@ -65,12 +65,12 @@ inline u8 HuC6270::ReadRegister(u32 address)
             }
             else
             {
-                Debug("HuC6270 invalid read data register: %02X", m_address_register);
+                //Debug("HuC6270 invalid read data register: %02X", m_address_register);
                 return m_register[HUC6270_REG_VWR] & 0xFF;
             }
             break;
         default:
-            Debug("HuC6270 invalid read at %06X", address);
+            //Debug("HuC6270 invalid read at %06X", address);
             return 0x00;
     }
 }
@@ -124,6 +124,10 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                         m_register[HUC6270_REG_MAWR] = m_register[HUC6270_REG_MAWR] + increment;
                     }
                     break;
+                // 0x08
+                case HUC6270_REG_BYR:
+                    m_latched_byr = m_register[HUC6270_REG_BYR];
+                    break;
                 // 0x12
                 case HUC6270_REG_LENR:
                     // Debug("HuC6270 write LENR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
@@ -165,7 +169,7 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
             break;
         }
         default:
-            Debug("HuC6270 invalid write at %06X, value=%02X", address, value);
+            //Debug("HuC6270 invalid write at %06X, value=%02X", address, value);
             break;
     }
 }

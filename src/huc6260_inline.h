@@ -25,51 +25,32 @@
 
 inline u8 HuC6260::ReadRegister(u32 address)
 {
-    // Debug("HuC6260 register read at %06X", address);
+    u8 ret = 0xFF;
 
     switch (address & 0x07)
     {
-        case 0:
-            // Control register
-            // Debug("HuC6260 Read control register");
-            return 0xFF;
-        case 2:
-            // Color table address LSB
-            // Debug("HuC6260 Read color table address LSB");
-            return 0xFF;
-        case 3:
-            // Color table address MSB
-            // Debug("HuC6260 Read color table address MSB");
-            return 0xFF;
         case 4:
             // Color table data LSB
-            // Debug("HuC6260 Read color table data LSB");
-            return m_color_table[m_color_table_address] & 0xFF;
+            ret = m_color_table[m_color_table_address] & 0xFF;
+            break;
         case 5:
-        {
             // Color table data MSB
-            // Debug("HuC6260 Read color table data MSB");
-            u8 ret = 0xFE | ((m_color_table[m_color_table_address] >> 8) & 0x01);
+            ret = 0xFE | ((m_color_table[m_color_table_address] >> 8) & 0x01);
             m_color_table_address = (m_color_table_address + 1) & 0x01FF;
-            return ret;
-        }
-        default:
-            // Not used
-            Debug("HuC6260 Read unused register");
-            return 0xFF;
+            break;
     }
+
+    return ret;
 }
 
 inline void HuC6260::WriteRegister(u32 address, u8 value)
 {
-    // Debug("HuC6260 register write at %06X, value=%02X", address, value);
-
     switch (address & 0x07)
     {
         case 0:
             // Control register
             m_control_register = value;
-            // Debug("HuC6260 Write control register: %02X", m_control_register);
+
             switch (m_control_register & 0x03)
             {
                 case 0:
@@ -92,21 +73,17 @@ inline void HuC6260::WriteRegister(u32 address, u8 value)
         case 2:
             // Color table address LSB
             m_color_table_address = (m_color_table_address & 0x0100) | value;
-            // Debug("HuC6260 Write color table address LSB: %04X", m_color_table_address);
             break;
         case 3:
             // Color table address MSB
             m_color_table_address = (m_color_table_address & 0x00FF) | ((value & 0x01) << 8);
-            // Debug("HuC6260 Write color table address MSB: %04X", m_color_table_address);
             break;
         case 4:
             // Color table data LSB
-            // Debug("HuC6260 Write color table data LSB: %02X", value);
             m_color_table[m_color_table_address] = (m_color_table[m_color_table_address] & 0x0100) | value;
             break;
         case 5:
             // Color table data MSB
-            // Debug("HuC6260 Write color table data MSB: %02X", value);
             m_color_table[m_color_table_address] = (m_color_table[m_color_table_address] & 0x00FF) | ((value & 0x01) << 8);
             m_color_table_address = (m_color_table_address + 1) & 0x01FF;
             break;

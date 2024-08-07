@@ -24,11 +24,26 @@
 #include "common.h"
 
 class HuC6280;
-class HuC6260;
 
 class HuC6270
 {
 public:
+    enum HuC6270_Vertical_State
+    {
+        HuC6270_VERTICAL_STATE_VSW,
+        HuC6270_VERTICAL_STATE_VDS,
+        HuC6270_VERTICAL_STATE_VDW,
+        HuC6270_VERTICAL_STATE_VCR
+    };
+
+    enum HuC6270_Horizontal_State
+    {
+        HuC6270_HORIZONTAL_STATE_HDS,
+        HuC6270_HORIZONTAL_STATE_HDW,
+        HuC6270_HORIZONTAL_STATE_HDE,
+        HuC6270_HORIZONTAL_STATE_HSW
+    };
+
     struct HuC6270_State
     {
         u8* AR;
@@ -37,15 +52,20 @@ public:
         u16* READ_BUFFER;
         int* HPOS;
         int* VPOS;
-        int* SCANLINE_SECTION;
+        bool* HSYNC;
+        bool* VSYNC;
+        HuC6270_Vertical_State* V_STATE;
+        HuC6270_Horizontal_State* H_STATE;
     };
 
 public:
     HuC6270(HuC6280* huC6280);
     ~HuC6270();
-    void Init(HuC6260* huc6260, GG_Pixel_Format pixel_format = GG_PIXEL_RGB888);
+    void Init();
     void Reset();
-    bool Clock(u8* frame_buffer);
+    u16 Clock(bool* active);
+    void SetHSync(bool active);
+    void SetVSync(bool active);
     u8 ReadRegister(u32 address);
     void WriteRegister(u32 address, u8 value);
     HuC6270_State* GetState();
@@ -53,32 +73,7 @@ public:
     u16* GetSAT();
 
 private:
-
-    enum Timing
-    {
-        TIMING_VINT,
-        TIMING_HINT,
-        TIMING_RENDER,
-        TIMING_COUNT
-    };
-
-    enum Scanline_Section
-    {
-        SCANLINE_TOP_BLANKING,
-        SCANLINE_ACTIVE,
-        SCANLINE_BOTTOM_BLANKING,
-        SCANLINE_SYNC
-    };
-
-    struct Line_Events 
-    {
-        bool vint;
-        bool hint;
-        bool render;
-    };
-
     HuC6280* m_huc6280;
-    HuC6260* m_huc6260;
     HuC6270_State m_state;
     u16* m_vram;
     u8 m_address_register;
@@ -89,16 +84,20 @@ private:
     int m_hpos;
     int m_vpos;
     int m_raster_line;
-    int m_scanline_section;
     bool m_trigger_sat_transfer;
     bool m_auto_sat_transfer;
-    GG_Pixel_Format m_pixel_format;
-    u8* m_frame_buffer;
-    Line_Events m_line_events;
-    int m_timing[TIMING_COUNT];
+    u8 m_latched_byr;
+    bool m_hsync;
+    bool m_vsync;
+    HuC6270_Vertical_State m_v_state;
+    HuC6270_Horizontal_State m_h_state;
+    int m_clocks_to_next_v_state;
+    int m_clocks_to_next_h_state;
+    int m_hds_clocks;
 
 private:
-    void RenderLine(int y);
+    void NextVerticalState();
+    void NextHorizontalState();
 };
 
 static const u16 k_register_mask[20] = {
@@ -122,9 +121,6 @@ static const char* const k_register_names[20] = {
     "CR",   "RCR",  "BXR",  "BYR",  "MWR",
     "HSR",  "HDR",  "VPR",  "VDR",  "VCR",
     "DCR",  "SOUR", "DESR", "LENR", "DVSSR" };
-
-static const char* const k_scanline_sections[] = {
-    "TOP BLANKING", "ACTIVE", "BOTTOM BLANKING", "SYNC" };
 
 #include "huc6270_inline.h"
 

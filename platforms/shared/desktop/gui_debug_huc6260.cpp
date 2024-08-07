@@ -42,20 +42,30 @@ void gui_debug_window_huc6260_info(void)
     HuC6260* huc6260 = core->GetHuC6260();
     HuC6260::HuC6260_State* huc6260_state = huc6260->GetState();
 
-    ImGui::TextColored(magenta, "SPEED"); ImGui::SameLine();
+    ImGui::TextColored(magenta, "SPEED    "); ImGui::SameLine();
     const char* speed[] = { "10.8 MHz", "7.16 MHz", "5.36 MHz" };
     ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
 
-    ImGui::TextColored(magenta, "CR   "); ImGui::SameLine();
+    ImGui::TextColored(magenta, "SIGNALS  "); ImGui::SameLine();
+    ImGui::TextColored(*huc6260_state->HSYNC ? gray : orange, "HSYNC"); ImGui::SameLine();
+    ImGui::TextColored(*huc6260_state->VSYNC ? gray : orange, "VSYNC");
+
+    ImGui::TextColored(magenta, "HPOS,VPOS"); ImGui::SameLine();
+    ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6260_state->HPOS, *huc6260_state->VPOS, *huc6260_state->HPOS, *huc6260_state->VPOS);
+
+    ImGui::TextColored(magenta, "PIXEL    "); ImGui::SameLine();
+    ImGui::TextColored(white, "%0X", *huc6260_state->PIXEL_INDEX);
+
+    ImGui::TextColored(magenta, "CTRL REG "); ImGui::SameLine();
     ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6260_state->CR, BYTE_TO_BINARY(*huc6260_state->CR));
 
-    ImGui::TextColored(magenta, "CTA  "); ImGui::SameLine();
+    ImGui::TextColored(magenta, "CTA      "); ImGui::SameLine();
     ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6260_state->CTA, BYTE_TO_BINARY(*huc6260_state->CTA >> 8), BYTE_TO_BINARY(*huc6260_state->CTA & 0xFF));
 
-    ImGui::TextColored(magenta, "BLUR "); ImGui::SameLine();
+    ImGui::TextColored(magenta, "BLUR     "); ImGui::SameLine();
     ImGui::TextColored(IsSetBit(*huc6260_state->CR, 2) ? green : gray, "%s", IsSetBit(*huc6260_state->CR, 2) ? "ON" : "OFF");
 
-    ImGui::TextColored(magenta, "B&W  "); ImGui::SameLine();
+    ImGui::TextColored(magenta, "B&W      "); ImGui::SameLine();
     ImGui::TextColored(IsSetBit(*huc6260_state->CR, 7) ? green : gray, "%s", IsSetBit(*huc6260_state->CR, 7) ? "ON" : "OFF");
 
     ImGui::PopFont();

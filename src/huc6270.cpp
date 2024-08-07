@@ -24,33 +24,18 @@
 HuC6270::HuC6270(HuC6280* huC6280)
 {
     m_huc6280 = huC6280;
-    InitPointer(m_huc6260); 
     InitPointer(m_vram);
     InitPointer(m_sat);
-    m_address_register = 0;
-    m_status_register = 0;
-    m_read_buffer = 0;
-    m_hpos = 0;
-    m_vpos = 0;
-    m_raster_line = 0;
-    m_scanline_section = 0;
-    m_trigger_sat_transfer = false;
-    m_auto_sat_transfer = false;
-    m_pixel_format = GG_PIXEL_RGB888;
-    InitPointer(m_frame_buffer);
-
-    for (int i = 0; i < 20; i++)
-    {
-        m_register[i] = 0;
-    }
-
     m_state.AR = &m_address_register;
     m_state.SR = &m_status_register;
     m_state.R = m_register;
     m_state.READ_BUFFER = &m_read_buffer;
     m_state.HPOS = &m_hpos;
     m_state.VPOS = &m_vpos;
-    m_state.SCANLINE_SECTION = &m_scanline_section;
+    m_state.HSYNC = &m_hsync;
+    m_state.VSYNC = &m_vsync;
+    m_state.V_STATE = &m_v_state;
+    m_state.H_STATE = &m_h_state;
 }
 
 HuC6270::~HuC6270()
@@ -59,10 +44,8 @@ HuC6270::~HuC6270()
     SafeDeleteArray(m_sat);
 }
 
-void HuC6270::Init(HuC6260* huc6260, GG_Pixel_Format pixel_format)
+void HuC6270::Init()
 {
-    m_huc6260 = huc6260;
-    m_pixel_format = pixel_format;
     m_vram = new u16[HUC6270_VRAM_SIZE];
     m_sat = new u16[HUC6270_SAT_SIZE];
     Reset();
@@ -70,28 +53,33 @@ void HuC6270::Init(HuC6260* huc6260, GG_Pixel_Format pixel_format)
 
 void HuC6270::Reset()
 {
+    for (int i = 0; i < 20; i++)
+    {
+        m_register[i] = 0;
+    }
+
+    m_register[HUC6270_REG_HSR] = 0x0202;
+    m_register[HUC6270_REG_HDR] = 0x041f;
+    m_register[HUC6270_REG_VPR] = 0x0f02;
+    m_register[HUC6270_REG_VDW] = 0x00ef;
+    m_register[HUC6270_REG_VCR] = 0x0004;
+
     m_address_register = 0;
     m_status_register = 0;
     m_read_buffer = 0xFFFF;
     m_hpos = 0;
     m_vpos = 0;
     m_raster_line = 0;
-    m_scanline_section = 0;
     m_trigger_sat_transfer = false;
     m_auto_sat_transfer = false;
-
-    m_line_events.vint = false;
-    m_line_events.hint = false;
-    m_line_events.render = false;
-
-    m_timing[TIMING_VINT] = 256;
-    m_timing[TIMING_HINT] = 256;
-    m_timing[TIMING_RENDER] = 256;
-
-    for (int i = 0; i < 20; i++)
-    {
-        m_register[i] = 0;
-    }
+    m_latched_byr = 0;
+    m_hsync = true;
+    m_vsync = true;
+    m_v_state = HuC6270_VERTICAL_STATE_VSW;
+    m_h_state = HuC6270_HORIZONTAL_STATE_HDS;
+    m_clocks_to_next_v_state = 0;//3;
+    m_clocks_to_next_h_state = 0;//24;
+    m_hds_clocks = (std::max(((m_register[HUC6270_REG_HSR] >> 8) & 0x7F), 2) + 1) << 3;
 
     for (int i = 0; i < HUC6270_VRAM_SIZE; i++)
     {
@@ -104,41 +92,111 @@ void HuC6270::Reset()
     }
 }
 
-bool HuC6270::Clock(u8* frame_buffer)
+u16 HuC6270::Clock(bool* active)
 {
-    m_frame_buffer = frame_buffer;
-    bool frame_ready = false;
-    int vsw = m_register[HUC6270_REG_VPR] & 0x1F;
-    int vds = m_register[HUC6270_REG_VPR] >> 8;
-    int vdw = m_register[HUC6270_REG_VDR] & 0x1FF;
-    int vcr = m_register[HUC6270_REG_VCR] & 0xFF;
+    *active = false;
+    u16 pixel = 0;
 
-    if (m_vpos < HUC6270_ACTIVE_DISPLAY_START)
+    if (m_v_state == HuC6270_VERTICAL_STATE_VDW && m_h_state == HuC6270_HORIZONTAL_STATE_HDW)
     {
-        //Debug("HuC6270 during top blanking");
-        m_scanline_section = SCANLINE_BOTTOM_BLANKING;
-    }
-    else if (m_vpos < HUC6270_BOTTOM_BLANKING_START)
-    {
-        //Debug("HuC6270 during active display");
-        m_scanline_section = SCANLINE_ACTIVE;
-    }
-    else if (m_vpos < HUC6270_SYNC_START)
-    {
-        //Debug("HuC6270 during bottom blanking");
-        m_scanline_section = SCANLINE_BOTTOM_BLANKING;
-    }
-    else
-    {
-        //Debug("HuC6270 during sync");
-        m_scanline_section = SCANLINE_SYNC;
+        *active = true;
+
+        int screen_reg = (m_register[HUC6270_REG_MWR] >> 4) & 0x07;
+        int screen_size_x = k_scren_size_x[screen_reg];
+        int screen_size_x_pixels = screen_size_x * 8;
+        int screen_size_y = k_scren_size_y[screen_reg];
+        int screen_size_y_pixels = screen_size_y * 8;
+
+        int scroll_x = m_register[HUC6270_REG_BXR];
+
+        int bg_y = m_latched_byr;
+        bg_y %= screen_size_y_pixels;
+        int bat_offset = (bg_y / 8) * screen_size_x;
+
+        int bg_x = (m_hpos - m_hds_clocks) + scroll_x;
+
+        bg_x %= screen_size_x_pixels;
+
+        u16 bat_entry = m_vram[bat_offset + (bg_x / 8)];
+        int tile_index = bat_entry & 0x07FF;
+        int color_table = (bat_entry >> 12) & 0x0F;
+        int tile_data = tile_index * 16;
+        int tile_x =  (bg_x % 8);
+        int tile_y = (bg_y % 8);
+        int line_start_a = (tile_data + tile_y);
+        int line_start_b = (tile_data + tile_y + 8);
+        u8 byte1 = m_vram[line_start_a] & 0xFF;
+        u8 byte2 = m_vram[line_start_a] >> 8;
+        u8 byte3 = m_vram[line_start_b] & 0xFF;
+        u8 byte4 = m_vram[line_start_b] >> 8;
+
+        pixel = color_table << 4;
+
+        pixel |= ((byte1 >> (7 - tile_x)) & 0x01) | (((byte2 >> (7 - tile_x)) & 0x01) << 1) | (((byte3 >> (7 - tile_x)) & 0x01) << 2) | (((byte4 >> (7 - tile_x)) & 0x01) << 3);
     }
 
-    ///// VINT /////
-    if (!m_line_events.vint && (m_hpos >= m_timing[TIMING_VINT]))
+    m_hpos++;
+
+    m_clocks_to_next_h_state--;
+    while (m_clocks_to_next_h_state == 0)
+        NextHorizontalState();
+
+    return pixel;
+}
+
+void HuC6270::SetHSync(bool active)
+{
+    if (m_hsync != active)
     {
-        m_line_events.vint = true;
-        if (m_vpos == HUC6270_BOTTOM_BLANKING_START)
+        // High to low
+        if (!active)
+        {
+            if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
+            {
+                if (m_register[HUC6270_REG_RCR] == m_raster_line)
+                {
+                    m_status_register |= HUC6270_STATUS_SCANLINE;
+                    m_huc6280->AssertIRQ1(true);
+                }
+            }
+        }
+        // Low to high
+        else
+        {
+            m_h_state = HuC6270_HORIZONTAL_STATE_HSW;
+            m_clocks_to_next_h_state = 0;
+            m_clocks_to_next_v_state--;
+            m_latched_byr++;
+            m_raster_line++;
+
+            if ((m_clocks_to_next_v_state == 2) && (m_v_state == HuC6270_VERTICAL_STATE_VDS))
+            {
+                m_raster_line = 64;
+            }
+
+            while (m_clocks_to_next_h_state == 0)
+                NextHorizontalState();
+        }
+    }
+
+    m_hsync = active;
+}
+
+void HuC6270::SetVSync(bool active)
+{
+    if (m_vsync != active)
+    {
+        // High to low
+        if (!active)
+        {
+            m_v_state = HuC6270_VERTICAL_STATE_VCR;
+            m_clocks_to_next_v_state = 0;
+
+            while ( m_clocks_to_next_v_state == 0 )
+                NextVerticalState();
+        }
+        // Low to high
+        else
         {
             if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_VBLANK)
             {
@@ -167,63 +225,7 @@ bool HuC6270::Clock(u8* frame_buffer)
         }
     }
 
-    ///// HINT /////
-    if (!m_line_events.hint && (m_hpos >= m_timing[TIMING_HINT]))
-    {
-        m_line_events.hint = true;
-        //if (m_scanline_section == SCANLINE_ACTIVE)
-        {
-            if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
-            {
-                if (m_register[HUC6270_REG_RCR] == m_raster_line)
-                {
-                    m_status_register |= HUC6270_STATUS_SCANLINE;
-                    m_huc6280->AssertIRQ1(true);
-                }
-            }
-        }
-    }
-
-    ///// RENDER /////
-    if (!m_line_events.render && (m_hpos >= m_timing[TIMING_RENDER]))
-    {
-        m_line_events.render = true;
-        int raster_start = vsw + vds;
-        int raster_end = raster_start + vdw + 1; 
-        if ((m_vpos >= raster_start) && (m_vpos < raster_end))
-        {
-            RenderLine(m_vpos - raster_start);
-        }
-    }
-
-    m_hpos++;
-
-    ///// END OF LINE /////
-    if (m_hpos > 341)
-    {
-        m_hpos = 0;
-        m_vpos++;
-        m_raster_line++;
-
-        int raster_reset = vsw + vds;
-
-        if (m_vpos == raster_reset)
-        {
-            m_raster_line = 64;
-        }
-
-        if (m_vpos > HUC6270_LINES)
-        {
-            m_vpos = 0;
-            frame_ready = true;
-        }
-
-        m_line_events.vint = false;
-        m_line_events.hint = false;
-        m_line_events.render = false;
-    }
-
-    return frame_ready;
+    m_vsync = active;
 }
 
 HuC6270::HuC6270_State* HuC6270::GetState()
@@ -241,55 +243,58 @@ u16* HuC6270::GetSAT()
     return m_sat;
 }
 
-void HuC6270::RenderLine(int y)
+void HuC6270::NextVerticalState()
 {
-    if (y >= GG_MAX_RESOLUTION_HEIGHT)
+    switch (m_v_state)
     {
-        return;
+        case HuC6270_VERTICAL_STATE_VSW:
+            m_v_state = HuC6270_VERTICAL_STATE_VDS;
+            m_clocks_to_next_v_state = ((m_register[HUC6270_REG_VPR] >> 8) & 0xFF) + 2;
+            break;
+        case HuC6270_VERTICAL_STATE_VDS:
+            m_v_state = HuC6270_VERTICAL_STATE_VDW;
+            m_clocks_to_next_v_state = (m_register[HUC6270_REG_VDW] & 0x1FF) + 1;
+            m_latched_byr = m_register[HUC6270_REG_BYR];
+            break;
+        case HuC6270_VERTICAL_STATE_VDW:
+            m_v_state = HuC6270_VERTICAL_STATE_VCR;
+            m_clocks_to_next_v_state = m_register[HUC6270_REG_VCR] & 0xFF;
+            break;
+        case HuC6270_VERTICAL_STATE_VCR:
+            m_v_state = HuC6270_VERTICAL_STATE_VSW;
+            m_clocks_to_next_v_state = (m_register[HUC6270_REG_VPR] & 0x1F) + 1;
+            m_vpos = 0;
+            break;
     }
+}
 
-    int screen_reg = (m_register[HUC6270_REG_MWR] >> 4) & 0x07;
-    int screen_size_x = k_scren_size_x[screen_reg];
-    int screen_size_x_pixels = screen_size_x * 8;
-    int screen_size_y = k_scren_size_y[screen_reg];
-    int screen_size_y_pixels = screen_size_y * 8;
-    int buffer_line_offset = y * GG_MAX_RESOLUTION_WIDTH;
-   
-    int scroll_x = m_register[HUC6270_REG_BXR];
-    int scroll_y = m_register[HUC6270_REG_BYR];
-
-    int bg_y = y + scroll_y;
-    bg_y %= screen_size_y_pixels;
-    int bat_offset = (bg_y / 8) * screen_size_x;
-
-    for (int line_x = 0; line_x < GG_MAX_RESOLUTION_WIDTH; line_x++)
+void HuC6270::NextHorizontalState()
+{
+    switch (m_h_state)
     {
-        int bg_x = line_x + scroll_x;
-        bg_x %= screen_size_x_pixels;
+        case HuC6270_HORIZONTAL_STATE_HDS:
+            m_h_state = HuC6270_HORIZONTAL_STATE_HDW;
+            m_clocks_to_next_h_state = ((m_register[HUC6270_REG_HDR] & 0x7F) + 1) << 3;
+            break;
+        case HuC6270_HORIZONTAL_STATE_HDW:
+            m_h_state = HuC6270_HORIZONTAL_STATE_HDE;
+            m_clocks_to_next_h_state = (((m_register[HUC6270_REG_HDR] >> 8) & 0x7F) + 1) << 3;
+            break;
+        case HuC6270_HORIZONTAL_STATE_HDE:
+            m_h_state = HuC6270_HORIZONTAL_STATE_HSW;
+            m_clocks_to_next_h_state = ((m_register[HUC6270_REG_HSR] & 0x1F) + 1) << 3;
+            break;
+        case HuC6270_HORIZONTAL_STATE_HSW:
+            m_h_state = HuC6270_HORIZONTAL_STATE_HDS;
+            m_clocks_to_next_h_state = (std::max(((m_register[HUC6270_REG_HSR] >> 8) & 0x7F), 2) + 1) << 3;
+            m_hds_clocks = m_clocks_to_next_h_state;
 
-        u16 bat_entry = m_vram[bat_offset + (bg_x / 8)];
-        int tile_index = bat_entry & 0x07FF;
-        int color_table = (bat_entry >> 12) & 0x0F;
-        int tile_data = tile_index * 16;
-        int tile_x =  (bg_x % 8);
-        int tile_y = (bg_y % 8);
-        int line_start_a = (tile_data + tile_y);
-        int line_start_b = (tile_data + tile_y + 8);
-        u8 byte1 = m_vram[line_start_a] & 0xFF;
-        u8 byte2 = m_vram[line_start_a] >> 8;
-        u8 byte3 = m_vram[line_start_b] & 0xFF;
-        u8 byte4 = m_vram[line_start_b] >> 8;
+            m_hpos = 0;
+            m_vpos++;
 
-        int color = ((byte1 >> (7 - tile_x)) & 0x01) | (((byte2 >> (7 - tile_x)) & 0x01) << 1) | (((byte3 >> (7 - tile_x)) & 0x01) << 2) | (((byte4 >> (7 - tile_x)) & 0x01) << 3);
+            while (m_clocks_to_next_v_state == 0)
+                NextVerticalState();
 
-        u16 color_value = m_huc6260->GetColorTable()[(color_table * 16) + color];
-        int blue = (color_value & 0x07) * 255 / 7;
-        int red = ((color_value >> 3) & 0x07) * 255 / 7;
-        int green = ((color_value >> 6) & 0x07) * 255 / 7;
-
-        int index = (buffer_line_offset + line_x) * 3;
-        m_frame_buffer[index] = red;
-        m_frame_buffer[index + 1] = green;
-        m_frame_buffer[index + 2] = blue;
+            break;
     }
 }
