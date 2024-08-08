@@ -26,6 +26,7 @@
 #include "gui.h"
 #include "config.h"
 #include "emu.h"
+#include "utils.h"
 
 static ImVec4 color_333_to_float(u16 color);
 
@@ -50,8 +51,12 @@ void gui_debug_window_huc6260_info(void)
     ImGui::TextColored(*huc6260_state->HSYNC ? gray : orange, "HSYNC"); ImGui::SameLine();
     ImGui::TextColored(*huc6260_state->VSYNC ? gray : orange, "VSYNC");
 
+    int vpos = *huc6260_state->VPOS;// - 259;
+    // if (vpos < 0)
+    //     vpos += 263;
+
     ImGui::TextColored(magenta, "HPOS,VPOS"); ImGui::SameLine();
-    ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6260_state->HPOS, *huc6260_state->VPOS, *huc6260_state->HPOS, *huc6260_state->VPOS);
+    ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6260_state->HPOS, vpos, *huc6260_state->HPOS, vpos);
 
     ImGui::TextColored(magenta, "PIXEL    "); ImGui::SameLine();
     ImGui::TextColored(white, "%0X", *huc6260_state->PIXEL_INDEX);

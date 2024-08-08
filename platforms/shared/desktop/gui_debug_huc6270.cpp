@@ -27,6 +27,7 @@
 #include "config.h"
 #include "emu.h"
 #include "renderer.h"
+#include "utils.h"
 
 void gui_debug_window_huc6270_info(void)
 {
