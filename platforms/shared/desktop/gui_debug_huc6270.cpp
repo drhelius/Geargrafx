@@ -50,15 +50,13 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(magenta, "X,Y     "); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6270_state->HPOS, *huc6270_state->VPOS, *huc6270_state->HPOS, *huc6270_state->VPOS);
 
-    const char* h_states[] = { "HDS", "HDW", "HDE", "HSW" };
-    HuC6270::HuC6270_Horizontal_State* h_state = huc6270_state->H_STATE;
+    const char* h_states[] = { "HDS1", "HDS2", "HDS3", "HDW1", "HDW1", "HDE ", "HSW " };
     ImGui::TextColored(magenta, "H STATE "); ImGui::SameLine();
-    ImGui::TextColored(orange, "%s", h_states[*h_state]);
+    ImGui::TextColored(orange, "%s", h_states[*huc6270_state->H_STATE]);
 
-    const char* v_states[] = { "VSW", "VDS", "VDW", "VCR" };
-    HuC6270::HuC6270_Vertical_State* v_state = huc6270_state->V_STATE;
+    const char* v_states[] = { "VDS", "VDW", "VCR", "VSW" };
     ImGui::TextColored(magenta, "V STATE "); ImGui::SameLine();
-    ImGui::TextColored(orange, "%s", v_states[*v_state]);
+    ImGui::TextColored(orange, "%s", v_states[*huc6270_state->V_STATE]);
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "CONTROL REGISTRY"); ImGui::Separator();
 
@@ -123,13 +121,13 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_HSR] & 0x1F);
 
     ImGui::TextColored(magenta, "VSW"); ImGui::SameLine();
-    ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_VPR] & 0x1F); ImGui::SameLine();
+    ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_VSR] & 0x1F); ImGui::SameLine();
 
     ImGui::TextColored(magenta, "VDS"); ImGui::SameLine();
-    ImGui::TextColored(white, "%02X", (huc6270_state->R[HUC6270_REG_VPR] >> 8) & 0xFF); ImGui::SameLine();
+    ImGui::TextColored(white, "%02X", (huc6270_state->R[HUC6270_REG_VSR] >> 8) & 0xFF); ImGui::SameLine();
 
     ImGui::TextColored(magenta, "VDW"); ImGui::SameLine();
-    ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_VDW] & 0x1FF); ImGui::SameLine();
+    ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_VDR] & 0x1FF); ImGui::SameLine();
 
     ImGui::TextColored(magenta, "VCR"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_VCR] & 0xFF);

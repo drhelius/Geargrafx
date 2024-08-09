@@ -125,8 +125,13 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                     }
                     break;
                 // 0x08
+                case HUC6270_REG_BXR:
+                    HUC6270_DEBUG("**** BXR Set");
+                    break;
+                // 0x08
                 case HUC6270_REG_BYR:
-                    m_latched_byr = m_register[HUC6270_REG_BYR];
+                    m_bg_counter_y = m_register[HUC6270_REG_BYR];
+                    HUC6270_DEBUG("**** BYR Set");
                     break;
                 // 0x12
                 case HUC6270_REG_LENR:
@@ -172,6 +177,35 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
             //Debug("HuC6270 invalid write at %06X, value=%02X", address, value);
             break;
     }
+}
+
+inline void HuC6270::RCRIRQ()
+{
+    if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
+    {
+        if (((int)m_register[HUC6270_REG_RCR] - 64) == m_raster_line)
+        {
+            HUC6270_DEBUG("RCR IRQ");
+            m_status_register |= HUC6270_STATUS_SCANLINE;
+            m_huc6280->AssertIRQ1(true);
+        }
+    }
+}
+
+inline int HuC6270::ClocksToBYRLatch()
+{
+    int ret = 1;
+    if (m_latched_hds > 2)
+        ret += ((m_latched_hds + 1) << 3) - 24 + 2;
+    return ret;
+}
+
+inline int HuC6270::ClocksToBXRLatch()
+{
+    int ret = 2;
+    if(m_latched_hds > 2)
+        ret = 1;
+    return ret;
 }
 
 #endif /* HUC6270_INLINE_H */

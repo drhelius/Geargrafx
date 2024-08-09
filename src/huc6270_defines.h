@@ -55,6 +55,8 @@
 #define HUC6270_BOTTOM_BLANKING_START 256
 #define HUC6270_SYNC_START 260
 
+#define HUC6270_RCR_IRQ_CYCLES_BEFORE_HDE 4
+
 #define HUC6270_REG_MAWR  0x00
 #define HUC6270_REG_MARR  0x01
 #define HUC6270_REG_VWR   0x02
@@ -66,13 +68,26 @@
 #define HUC6270_REG_MWR   0x09
 #define HUC6270_REG_HSR   0x0A
 #define HUC6270_REG_HDR   0x0B
-#define HUC6270_REG_VPR   0x0C
-#define HUC6270_REG_VDW   0x0D
+#define HUC6270_REG_VSR   0x0C
+#define HUC6270_REG_VDR   0x0D
 #define HUC6270_REG_VCR   0x0E
 #define HUC6270_REG_DCR   0x0F
 #define HUC6270_REG_SOUR  0x10
 #define HUC6270_REG_DESR  0x11
 #define HUC6270_REG_LENR  0x12
 #define HUC6270_REG_DVSSR 0x13
+
+#define HUC6270_VAR_HSW (m_register[HUC6270_REG_HSR] & 0x1F)
+#define HUC6270_VAR_HDS ((m_register[HUC6270_REG_HSR] >> 8) & 0x7F)
+#define HUC6270_VAR_HDW (m_register[HUC6270_REG_HDR] & 0x7F)
+#define HUC6270_VAR_HDE ((m_register[HUC6270_REG_HDR] >> 8) & 0x7F)
+#define HUC6270_VAR_VSW (m_register[HUC6270_REG_VSR] & 0x1F)
+#define HUC6270_VAR_VDS ((m_register[HUC6270_REG_VSR] >> 8) & 0xFF)
+#define HUC6270_VAR_VDW (m_register[HUC6270_REG_VDR] & 0x1FF)
+#define HUC6270_VAR_VCR (m_register[HUC6270_REG_VCR] & 0xFF)
+
+#define HUC6270_DEBUG(...) { }
+//#define HUC6270_DEBUG(x, ...) Debug(x ": h_state=%d clocks_to_next_h_state=%d raster_line=%d v_state=%d lines_to_next_v_state=%d bg_counter_y=%d latched_bxr=%d RCR=%d BXR=%d BYR=%d", ## __VA_ARGS__, m_h_state, m_clocks_to_next_h_state, m_raster_line, m_v_state, m_lines_to_next_v_state, m_bg_counter_y, m_latched_bxr, m_register[HUC6270_REG_RCR], m_register[HUC6270_REG_BXR], m_register[HUC6270_REG_BYR]);
+
 
 #endif /* HUC6270_DEFINES_H */

@@ -30,18 +30,23 @@ class HuC6270
 public:
     enum HuC6270_Vertical_State
     {
-        HuC6270_VERTICAL_STATE_VSW,
         HuC6270_VERTICAL_STATE_VDS,
         HuC6270_VERTICAL_STATE_VDW,
-        HuC6270_VERTICAL_STATE_VCR
+        HuC6270_VERTICAL_STATE_VCR,
+        HuC6270_VERTICAL_STATE_VSW,
+        HuC6270_VERTICAL_STATE_COUNT
     };
 
     enum HuC6270_Horizontal_State
     {
-        HuC6270_HORIZONTAL_STATE_HDS,
-        HuC6270_HORIZONTAL_STATE_HDW,
+        HuC6270_HORIZONTAL_STATE_HDS_1,
+        HuC6270_HORIZONTAL_STATE_HDS_2,
+        HuC6270_HORIZONTAL_STATE_HDS_3,
+        HuC6270_HORIZONTAL_STATE_HDW_1,
+        HuC6270_HORIZONTAL_STATE_HDW_2,
         HuC6270_HORIZONTAL_STATE_HDE,
-        HuC6270_HORIZONTAL_STATE_HSW
+        HuC6270_HORIZONTAL_STATE_HSW,
+        HuC6270_HORIZONTAL_STATE_COUNT
     };
 
     struct HuC6270_State
@@ -52,10 +57,8 @@ public:
         u16* READ_BUFFER;
         int* HPOS;
         int* VPOS;
-        bool* HSYNC;
-        bool* VSYNC;
-        HuC6270_Vertical_State* V_STATE;
-        HuC6270_Horizontal_State* H_STATE;
+        int* V_STATE;
+        int* H_STATE;
     };
 
 public:
@@ -81,23 +84,37 @@ private:
     u16 m_register[20];
     u16* m_sat;
     u16 m_read_buffer;
-    int m_hpos;
-    int m_vpos;
-    int m_raster_line;
     bool m_trigger_sat_transfer;
     bool m_auto_sat_transfer;
-    u8 m_latched_byr;
-    bool m_hsync;
-    bool m_vsync;
-    HuC6270_Vertical_State m_v_state;
-    HuC6270_Horizontal_State m_h_state;
-    int m_clocks_to_next_v_state;
+    int m_hpos;
+    int m_vpos;
+    int m_bg_offset_y;
+    int m_bg_counter_y;
+    int m_raster_line;
+    u16 m_latched_bxr;
+    u16 m_latched_hds;
+    u16 m_latched_hdw;
+    u16 m_latched_hde;
+    u16 m_latched_hsw;
+    u16 m_latched_vds;
+    u16 m_latched_vdw;
+    u16 m_latched_vcr;
+    u16 m_latched_vsw;
+    u16 m_latched_mwr;
+    int m_v_state;
+    int m_h_state;
+    int m_lines_to_next_v_state;
     int m_clocks_to_next_h_state;
-    int m_hds_clocks;
+    bool m_vblank_triggered;
+    bool m_active_line;
 
 private:
     void NextVerticalState();
     void NextHorizontalState();
+    void VBlankIRQ();
+    void RCRIRQ();
+    int ClocksToBYRLatch();
+    int ClocksToBXRLatch();
 };
 
 static const u16 k_register_mask[20] = {
