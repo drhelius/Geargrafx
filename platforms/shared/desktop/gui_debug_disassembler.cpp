@@ -477,6 +477,7 @@ static void prepare_drawable_lines(void)
 static void show_disassembly(void)
 {
     ImGui::PushFont(gui_default_font);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, mid_gray);
 
     bool window_visible = ImGui::BeginChild("##dis", ImVec2(ImGui::GetContentRegionAvail().x, 0), true, 0);
 
@@ -630,6 +631,7 @@ static void show_disassembly(void)
 
     ImGui::EndChild();
 
+    ImGui::PopStyleColor();
     ImGui::PopFont();
 }
 
