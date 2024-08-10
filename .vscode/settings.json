@@ -4,6 +4,7 @@
         "**/*.so": true,
         "**/geargrafx": true,
         "**/geargrafx-tests": true,
+        "**/binary_to_compressed_c": true,
         "tests/*.json": true,
     },
     "cmake.configureOnOpen": false,
