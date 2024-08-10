@@ -502,7 +502,7 @@ static void menu_debug(void)
             emu_debug_step_into();
         }
 
-        if (ImGui::MenuItem("Step Out", "SHIFT + F11", (void*)0, config_debug.debug))
+        if (ImGui::MenuItem("Step Out", "SHIFT+F11", (void*)0, config_debug.debug))
         {
             emu_debug_step_out();
         }
@@ -529,7 +529,7 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Go Back", "CTRL + BACKSPACE", (void*)0, config_debug.debug))
+        if (ImGui::MenuItem("Go Back", "CTRL+BACKSPACE", (void*)0, config_debug.debug))
         {
             gui_debug_go_back();
         }

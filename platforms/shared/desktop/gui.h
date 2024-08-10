@@ -59,6 +59,7 @@ EXTERN bool gui_main_menu_hovered;
 EXTERN ImFont* gui_default_font;
 EXTERN ImFont* gui_default_fonts[4];
 EXTERN ImFont* gui_roboto_font;
+EXTERN ImFont* gui_material_icons_font;
 EXTERN int gui_main_window_width;
 EXTERN int gui_main_window_height;
 EXTERN int gui_main_menu_height;

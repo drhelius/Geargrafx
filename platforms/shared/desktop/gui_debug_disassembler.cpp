@@ -21,6 +21,7 @@
 #include "gui_debug_disassembler.h"
 
 #include "imgui/imgui.h"
+#include "imgui/fonts/IconsMaterialDesign.h"
 #include "../../../src/geargrafx.h"
 #include "gui_debug_constants.h"
 #include "gui.h"
@@ -178,44 +179,88 @@ void gui_debug_window_disassembler(void)
 
 static void show_controls(void)
 {
-    if (ImGui::Button("Step Over"))
-    {
-        emu_debug_step_over();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Step Into"))
-    {
-        emu_debug_step_into();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Step Out"))
-    {
-        emu_debug_step_out();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Step Frame"))
-    {
-        emu_debug_step_frame();
-    }
-    if (ImGui::Button("Break"))
-    {
-        emu_debug_break();
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Continue"))
+    ImGui::PushFont(gui_material_icons_font);
+
+    if (ImGui::Button(ICON_MD_PLAY_ARROW))
     {
         emu_debug_continue();
     }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Continue (F5)");
+    }
+
     ImGui::SameLine();
-    if (ImGui::Button("Run To Cursor"))
+    if (ImGui::Button(ICON_MD_STOP))
+    {
+        emu_debug_break();
+    }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Break (F7)");
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_MD_REDO))
+    {
+        emu_debug_step_over();
+    }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Step Over (F10)");
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_MD_FILE_DOWNLOAD))
+    {
+        emu_debug_step_into();
+    }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Step Into (F11)");
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_MD_FILE_UPLOAD))
+    {
+        emu_debug_step_out();
+    }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Step Out (Shift+F11)");
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_MD_KEYBOARD_TAB))
     {
         gui_debug_runtocursor();
     }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Run to Cursor (F8)");
+    }
+
     ImGui::SameLine();
-    if (ImGui::Button("Reset"))
+    if (ImGui::Button(ICON_MD_INPUT))
+    {
+        emu_debug_step_frame();
+    }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Step Frame (F6)");
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_MD_REPLAY))
     {
         emu_reset();
     }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Reset (CTRL+R)");
+    }
+
+    ImGui::PopFont();
 
     ImGui::Checkbox("Opcodes", &show_mem);  ImGui::SameLine();
     ImGui::Checkbox("Symbols", &show_symbols);  ImGui::SameLine();
@@ -224,8 +269,6 @@ static void show_controls(void)
 
     ImGui::Separator();
 
-    ImGui::Text("Go To Address: ");
-    ImGui::SameLine();
     ImGui::PushItemWidth(45);
     if (ImGui::InputTextWithHint("##goto_address", "XXXX", goto_address, IM_ARRAYSIZE(goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
     {
@@ -240,7 +283,7 @@ static void show_controls(void)
     }
     ImGui::PopItemWidth();
     ImGui::SameLine();
-    if (ImGui::Button("Go", ImVec2(30, 0)))
+    if (ImGui::Button("Go To Address", ImVec2(120, 0)))
     {
         try
         {
@@ -253,7 +296,7 @@ static void show_controls(void)
     }
 
     ImGui::SameLine();
-    if (ImGui::Button("Back", ImVec2(50, 0)))
+    if (ImGui::Button("Go Back", ImVec2(80, 0)))
     {
         goto_back_requested = true;
     }

@@ -21,6 +21,8 @@
 #include "imgui/imgui.h"
 #include "imgui/implot.h"
 #include "imgui/fonts/RobotoMedium.h"
+#include "imgui/fonts/MaterialIcons.h"
+#include "imgui/fonts/IconsMaterialDesign.h"
 #include "nfd/nfd.h"
 #include "config.h"
 #include "application.h"
@@ -72,6 +74,15 @@ void gui_init(void)
 #endif
 
     gui_roboto_font = io.Fonts->AddFontFromMemoryCompressedTTF(RobotoMedium_compressed_data, RobotoMedium_compressed_size, 17.0f * application_display_scale, NULL, io.Fonts->GetGlyphRangesCyrillic());
+
+    float iconFontSize = 20.0f;
+    static const ImWchar icons_ranges[] = { ICON_MIN_MD, ICON_MAX_16_MD, 0 };
+    ImFontConfig icons_config;
+    icons_config.MergeMode = true;
+    icons_config.PixelSnapH = true;
+    icons_config.GlyphMinAdvanceX = iconFontSize;
+    icons_config.GlyphOffset = { 0.0f, 5.0f };
+    gui_material_icons_font = io.Fonts->AddFontFromMemoryCompressedTTF(MaterialIcons_compressed_data, MaterialIcons_compressed_size, iconFontSize, &icons_config, icons_ranges);
 
     ImFontConfig font_cfg;
 
