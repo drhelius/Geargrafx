@@ -55,7 +55,7 @@ GeargrafxCore::~GeargrafxCore()
 
 void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 {
-    Log("Loading %s core %s ...", GEARGRAFX_TITLE, GEARGRAFX_VERSION);
+    Log("Loading %s core %s ...", GG_TITLE, GG_VERSION);
     Log("by Ignacio Sanchez");
 
     srand((unsigned int)time(NULL));
@@ -170,8 +170,8 @@ bool GeargrafxCore::LoadROMFromBuffer(const u8* buffer, int size)
 
 bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
 {
-    runtime_info.screen_width = GG_MAX_RESOLUTION_WIDTH;
-    runtime_info.screen_height = GG_MAX_RESOLUTION_HEIGHT;
+    runtime_info.screen_width = 256;
+    runtime_info.screen_height = 240;
 
     if (m_cartridge->IsReady())
     {

@@ -94,7 +94,7 @@ void gui_main_menu(void)
 
 static void menu_geargrafx(void)
 {
-    if (ImGui::BeginMenu(GEARGRAFX_TITLE))
+    if (ImGui::BeginMenu(GG_TITLE))
     {
         gui_in_use = true;
 
@@ -601,7 +601,7 @@ static void menu_about(void)
     {
         gui_in_use = true;
 
-        if (ImGui::MenuItem("About " GEARGRAFX_TITLE " " GEARGRAFX_VERSION " ..."))
+        if (ImGui::MenuItem("About " GG_TITLE " " GG_VERSION " ..."))
         {
             open_about = true;
         }
@@ -633,7 +633,7 @@ static void file_dialogs(void)
     if (open_about)
     {
         gui_dialog_in_use = true;
-        ImGui::OpenPopup("About " GEARGRAFX_TITLE);
+        ImGui::OpenPopup("About " GG_TITLE);
     }
 
     gui_popup_modal_about();

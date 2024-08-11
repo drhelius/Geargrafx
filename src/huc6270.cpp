@@ -85,7 +85,7 @@ void HuC6270::Reset()
     m_latched_mwr = 0;
     m_v_state = HuC6270_VERTICAL_STATE_VDS;
     m_h_state = HuC6270_HORIZONTAL_STATE_HDS_1;
-    m_lines_to_next_v_state = 1;
+    m_lines_to_next_v_state = m_latched_vds + 2;
     m_clocks_to_next_h_state = 1;
     m_vblank_triggered = false;
     m_active_line = false;
@@ -143,6 +143,8 @@ u16 HuC6270::Clock(bool* active)
 
         m_latched_bxr++;
     }
+
+    m_hpos++;
 
     m_clocks_to_next_h_state--;
     while (m_clocks_to_next_h_state == 0)
@@ -246,6 +248,7 @@ void HuC6270::NextHorizontalState()
     {
         case HuC6270_HORIZONTAL_STATE_HDS_1:
             m_hpos = 0;
+            m_vpos = (m_vpos + 1) % HUC6260_LINES;
             m_active_line = (m_raster_line < 240);
             m_latched_hds = HUC6270_VAR_HDS;
             m_latched_hdw = HUC6270_VAR_HDW;

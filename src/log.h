@@ -24,10 +24,10 @@
 #include <cstdarg>
 #include "defines.h"
 
-#ifdef GEARGRAFX_DEBUG
+#ifdef GG_DEBUG
 #ifdef __ANDROID__
 #include <android/log.h>
-#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, "GEARGRAFX", __VA_ARGS__);
+#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, GG_TITLE, __VA_ARGS__);
 #endif
 #define Debug(msg, ...) (Log_func(true, msg, ##__VA_ARGS__))
 #else

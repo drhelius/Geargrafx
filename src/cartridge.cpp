@@ -295,7 +295,7 @@ void Cartridge::GatherInfoFromDB()
             found = true;
             Log("ROM found in database: %s. CRC: %08X", k_game_database[i].title, m_crc);
 
-            if (k_game_database[i].flags & GAMEDB_SGX)
+            if (k_game_database[i].flags & GG_GAMEDB_SGX)
             {
                 m_is_sgx = true;
                 Log("ROM is a SuperGrafx (SGX) game.");

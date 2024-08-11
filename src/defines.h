@@ -24,9 +24,10 @@
     #define EMULATOR_BUILD "undefined"
 #endif
 
-#define GEARGRAFX_TITLE "Geargrafx"
-#define GEARGRAFX_VERSION EMULATOR_BUILD
-#define GEARGRAFX_TITLE_ASCII "" \
+#define GG_VERSION EMULATOR_BUILD
+
+#define GG_TITLE "Geargrafx"
+#define GG_TITLE_ASCII "" \
 "   ____                                 __      \n" \
 "  / ___| ___  __ _ _ __ __ _ _ __ __ _ / _|_  __\n" \
 " | |  _ / _ \\/ _` | '__/ _` | '__/ _` | |_\\ \\/ /\n" \
@@ -35,7 +36,7 @@
 "                       |___/                    \n"
 
 #if defined(DEBUG)
-    #define GEARGRAFX_DEBUG 1
+    #define GG_DEBUG 1
 #endif
 
 #if !defined(NULL)
@@ -49,9 +50,9 @@
 #define IsValidPointer(pointer) ((pointer) != NULL)
 
 #if defined(MSB_FIRST) || defined(__BIG_ENDIAN__) || (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
-    #define IS_BIG_ENDIAN
+    #define GG_BIG_ENDIAN
 #else
-    #define IS_LITTLE_ENDIAN
+    #define GG_LITTLE_ENDIAN
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -65,7 +66,7 @@
     #define NO_INLINE
 #endif
 
-#if !defined(GEARGRAFX_DEBUG)
+#if !defined(GG_DEBUG)
     #if defined(__GNUC__) || defined(__clang__)
         #if !defined(__OPTIMIZE__) && !defined(__OPTIMIZE_SIZE__)
             #warning "Compiling without optimizations."

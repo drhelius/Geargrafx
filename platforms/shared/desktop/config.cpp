@@ -41,7 +41,7 @@ void config_init(void)
     if (check_portable())
         config_root_path = SDL_GetBasePath();
     else
-        config_root_path = SDL_GetPrefPath("Geardome", GEARGRAFX_TITLE);
+        config_root_path = SDL_GetPrefPath("Geardome", GG_TITLE);
 
     strcpy(config_emu_file_path, config_root_path);
     strcat(config_emu_file_path, "config.ini");

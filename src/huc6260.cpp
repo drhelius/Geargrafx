@@ -83,7 +83,7 @@ void HuC6260::Reset()
     m_speed = HuC6260_SPEED_5_36_MHZ;
     m_clock_divider = 4;
     m_hpos = 0;
-    m_vpos = HUC6260_VSYNC_START_VPOS;
+    m_vpos = 0;
     m_pixel_index = 0;
     m_pixel_clock = 0;
     m_hsync = true;

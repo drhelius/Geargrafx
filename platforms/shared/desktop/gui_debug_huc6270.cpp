@@ -286,7 +286,6 @@ void gui_debug_window_huc6270_background(void)
     {
         ImVec2 p = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        ImGuiIO& io = ImGui::GetIO();
 
         ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(size_h, size_v), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width / texture_size_h, emu_debug_background_buffer_height / texture_size_v));
 

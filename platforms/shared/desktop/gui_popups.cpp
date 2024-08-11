@@ -87,10 +87,10 @@ void gui_popup_modal_gamepad(int pad)
 
 void gui_popup_modal_about(void)
 {
-    if (ImGui::BeginPopupModal("About " GEARGRAFX_TITLE, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal("About " GG_TITLE, NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::PushFont(gui_default_font);
-        ImGui::TextColored(cyan, "%s\n", GEARGRAFX_TITLE_ASCII);
+        ImGui::TextColored(cyan, "%s\n", GG_TITLE_ASCII);
 
         ImGui::TextColored(orange, "  By Ignacio Sánchez (DrHelius)");
         ImGui::Text(" "); ImGui::SameLine();
@@ -102,7 +102,7 @@ void gui_popup_modal_about(void)
         ImGui::PopFont();
 
         ImGui::Separator();
-        ImGui::Text("%s is licensed under the GPL-3.0 License, see LICENSE for more information.", GEARGRAFX_TITLE);
+        ImGui::Text("%s is licensed under the GPL-3.0 License, see LICENSE for more information.", GG_TITLE);
         ImGui::Separator();
         ImGui::NewLine();
 
@@ -112,12 +112,11 @@ void gui_popup_modal_about(void)
             {
                 ImGui::BeginChild("build", ImVec2(0, 150), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
-                ImGui::Text("Build: %s", GEARGRAFX_VERSION);
+                ImGui::Text("Build: %s", GG_VERSION);
 
                 #if defined(__TIMESTAMP__)
                 ImGui::Text("Generated on: %s", __TIMESTAMP__);
                 #endif
-
                 #if defined(_M_ARM64)
                 ImGui::Text("Windows ARM64 build");
                 #endif
@@ -145,8 +144,14 @@ void gui_popup_modal_about(void)
                 #if defined(__APPLE__) && defined(__x86_64__)
                 ImGui::Text("macOS build (Intel)");
                 #endif
+                #if defined(__ANDROID__)
+                ImGui::Text("Android build");
+                #endif
                 #if defined(_MSC_FULL_VER)
                 ImGui::Text("Microsoft C++ %d", _MSC_FULL_VER);
+                #endif
+                #if defined(_MSVC_LANG)
+                ImGui::Text("MSVC %d", _MSVC_LANG);
                 #endif
                 #if defined(__CLR_VER)
                 ImGui::Text("CLR version: %d", __CLR_VER);
@@ -166,27 +171,32 @@ void gui_popup_modal_about(void)
                 ImGui::Text("SDL %d.%d.%d (build)", application_sdl_build_version.major, application_sdl_build_version.minor, application_sdl_build_version.patch);
                 ImGui::Text("SDL %d.%d.%d (link) ", application_sdl_link_version.major, application_sdl_link_version.minor, application_sdl_link_version.patch);
                 ImGui::Text("OpenGL %s", renderer_opengl_version);
-                #ifndef __APPLE__
+                #if !defined(__APPLE__)
                 ImGui::Text("GLEW %s", renderer_glew_version);
                 #endif
                 ImGui::Text("Dear ImGui %s (%d)", IMGUI_VERSION, IMGUI_VERSION_NUM);
 
-                #ifdef DEBUG
+                #if defined(DEBUG)
                 ImGui::Text("define: DEBUG");
                 #endif
-                #ifdef GEARGRAFX_DEBUG
-                ImGui::Text("define: GEARGRAFX_DEBUG");
+                #if defined(GG_DEBUG)
+                ImGui::Text("define: GG_DEBUG");
                 #endif
-                #ifdef __cplusplus
+                #if defined(__cplusplus)
                 ImGui::Text("define: __cplusplus = %d", (int)__cplusplus);
                 #endif
-                #ifdef __STDC__
+                #if defined(__STDC__)
                 ImGui::Text("define: __STDC__ = %d", (int)__STDC__);
                 #endif
-                #ifdef __STDC_VERSION__
+                #if defined(__STDC_VERSION__)
                 ImGui::Text("define: __STDC_VERSION__ = %d", (int)__STDC_VERSION__);
                 #endif
-
+                #if defined(GG_LITTLE_ENDIAN)
+                ImGui::Text("define: GG_LITTLE_ENDIAN");
+                #endif
+                #if defined(GG_BIG_ENDIAN)
+                ImGui::Text("define: GG_BIG_ENDIAN");
+                #endif
                 ImGui::EndChild();
                 ImGui::EndTabItem();
             }
@@ -207,22 +217,24 @@ void gui_popup_modal_about(void)
             ImGui::EndTabBar();
         }
 
+        ImGui::NewLine();
         ImGui::Separator();
 
         for (int i = 0; i < 2; i++)
         {
             if (application_gamepad[i])
-                ImGui::Text("Gamepad detected for Player %d", i+1);
+                ImGui::Text("> Gamepad detected for Player %d", i+1);
             else
-                ImGui::Text("No gamepad detected for Player %d", i+1);
+                ImGui::Text("> No gamepad detected for Player %d", i+1);
         }
 
         if (application_gamepad_mappings > 0)
-            ImGui::Text("%d gamepad mappings loaded", application_gamepad_mappings);
+            ImGui::Text("%d game controller mappings loaded from gamecontrollerdb.txt", application_gamepad_mappings);
         else
-            ImGui::Text("Gamepad database not found");
+            ImGui::Text("ERROR: Game controller database not found (gamecontrollerdb.txt)!!");
 
         ImGui::Separator();
+        ImGui::NewLine();
 
         if (ImGui::Button("OK", ImVec2(120, 0))) 
         {

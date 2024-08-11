@@ -50,8 +50,8 @@ static void save_window_size(void);
 
 int application_init(const char* rom_file, const char* symbol_file)
 {
-    Log("\n%s", GEARGRAFX_TITLE_ASCII);
-    Log("%s %s Desktop App", GEARGRAFX_TITLE, GEARGRAFX_VERSION);
+    Log("\n%s", GG_TITLE_ASCII);
+    Log("%s %s Desktop App", GG_TITLE, GG_VERSION);
 
     config_init();
     config_read();
@@ -165,7 +165,7 @@ static int sdl_init(void)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 
-    sdl_window = SDL_CreateWindow(GEARGRAFX_TITLE " " GEARGRAFX_VERSION, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config_emulator.window_width, config_emulator.window_height, window_flags);
+    sdl_window = SDL_CreateWindow(GG_TITLE " " GG_VERSION, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config_emulator.window_width, config_emulator.window_height, window_flags);
     gl_context = SDL_GL_CreateContext(sdl_window);
     SDL_GL_MakeCurrent(sdl_window, gl_context);
     SDL_GL_SetSwapInterval(0);
@@ -180,7 +180,7 @@ static int sdl_init(void)
     }
     else
     {
-        Log("Game controller database not found (gamecontrollerdb.txt)!!");
+        Log("ERROR: Game controller database not found (gamecontrollerdb.txt)!!");
     }
 
     int gamepads_found = 0;

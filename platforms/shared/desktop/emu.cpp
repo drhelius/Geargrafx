@@ -43,7 +43,7 @@ static void update_debug_background_buffer(void);
 
 void emu_init(void)
 {
-    int screen_size = GG_MAX_RESOLUTION_WIDTH * GG_MAX_RESOLUTION_HEIGHT;
+    int screen_size = HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT;
 
     emu_frame_buffer = new u8[screen_size * 3];
 
@@ -392,8 +392,8 @@ static void load_ram(void)
 
 static void init_debug(void)
 {
-    emu_debug_background_buffer = new u8[GG_MAX_BACKGROUND_WIDTH * GG_MAX_BACKGROUND_HEIGHT * 3];
-    for (int i = 0; i < GG_MAX_BACKGROUND_WIDTH * GG_MAX_BACKGROUND_HEIGHT * 3; i++)
+    emu_debug_background_buffer = new u8[HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 3];
+    for (int i = 0; i < HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 3; i++)
         emu_debug_background_buffer[i] = 0;
 }
 

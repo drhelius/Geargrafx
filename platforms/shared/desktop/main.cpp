@@ -37,8 +37,8 @@ int main(int argc, char* argv[])
         } 
         else if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--version") == 0))
         {
-            printf("%s\n", GEARGRAFX_TITLE_ASCII);
-            printf("Build: %s\n", GEARGRAFX_VERSION);
+            printf("%s\n", GG_TITLE_ASCII);
+            printf("Build: %s\n", GG_VERSION);
             printf("Author: Ignacio Sánchez (drhelius)\n");
             return 0;
         }

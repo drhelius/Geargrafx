@@ -244,7 +244,7 @@ void gui_load_rom(const char* path)
     {
         emu_pause();
 
-        for (int i=0; i < (GG_MAX_RESOLUTION_WIDTH * GG_MAX_RESOLUTION_HEIGHT); i++)
+        for (int i=0; i < (HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT); i++)
         {
             emu_frame_buffer[i] = 0;
         }
@@ -253,7 +253,7 @@ void gui_load_rom(const char* path)
     if (!emu_is_empty())
     {
         char title[256];
-        sprintf(title, "%s %s - %s", GEARGRAFX_TITLE, GEARGRAFX_VERSION, emu_get_core()->GetCartridge()->GetFileName());
+        sprintf(title, "%s %s - %s", GG_TITLE, GG_VERSION, emu_get_core()->GetCartridge()->GetFileName());
         application_update_title(title);
     }
 }
@@ -362,12 +362,12 @@ static void main_window(void)
 
         flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-        ImGui::Begin(GEARGRAFX_TITLE, 0, flags);
+        ImGui::Begin(GG_TITLE, 0, flags);
         gui_main_window_hovered = ImGui::IsWindowHovered();
     }
 
-    float tex_h = (float)runtime.screen_width / (float)(GG_MAX_RESOLUTION_WIDTH);
-    float tex_v = (float)runtime.screen_height / (float)(GG_MAX_RESOLUTION_HEIGHT);
+    float tex_h = (float)runtime.screen_width / (float)(SYSTEM_TEXTURE_WIDTH);
+    float tex_v = (float)runtime.screen_height / (float)(SYSTEM_TEXTURE_HEIGHT);
 
     ImGui::Image((void*)(intptr_t)renderer_emu_texture, ImVec2((float)gui_main_window_width, (float)gui_main_window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
@@ -526,7 +526,7 @@ static void set_style(void)
     style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.1450980454683304f, 0.1450980454683304f, 0.1490196138620377f, 1.0f);
     style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.0f, 1.0f, 1.0f, 0.699999988079071f);
     style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.800000011920929f, 0.800000011920929f, 0.800000011920929f, 0.2000000029802322f);
-    style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.1450980454683304f, 0.1450980454683304f, 0.1490196138620377f, 1.0f);
+    style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.1450980454683304f, 0.1450980454683304f, 0.1490196138620377f, 0.7f);
 
     style.Colors[ImGuiCol_DockingPreview] = style.Colors[ImGuiCol_HeaderActive] * ImVec4(1.0f, 1.0f, 1.0f, 0.7f);
     style.Colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);

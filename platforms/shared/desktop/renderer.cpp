@@ -44,9 +44,6 @@ static u32 scanlines[16] = {
     0x00000000, 0x00000000, 0x00000000, 0x00000000,
     0x000000FF, 0x000000FF, 0x000000FF, 0x000000FF,
     0x000000FF, 0x000000FF, 0x000000FF, 0x000000FF};
-static const int FRAME_BUFFER_SCALE = 4;
-static const int FRAME_BUFFER_WIDTH = GG_MAX_RESOLUTION_WIDTH * FRAME_BUFFER_SCALE;
-static const int FRAME_BUFFER_HEIGHT = GG_MAX_RESOLUTION_HEIGHT * FRAME_BUFFER_SCALE;
 
 static void init_ogl_gui(void);
 static void init_ogl_emu(void);
@@ -165,7 +162,7 @@ static void init_ogl_emu(void)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D, system_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, GG_MAX_RESOLUTION_WIDTH, GG_MAX_RESOLUTION_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_frame_buffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SYSTEM_TEXTURE_WIDTH, SYSTEM_TEXTURE_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_frame_buffer);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -176,7 +173,7 @@ static void init_ogl_debug(void)
 {
     glGenTextures(1, &renderer_emu_debug_huc6270_background);
     glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_background);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, GG_MAX_BACKGROUND_WIDTH, GG_MAX_BACKGROUND_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_background_buffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, HUC6270_MAX_BACKGROUND_WIDTH, HUC6270_MAX_BACKGROUND_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_background_buffer);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
