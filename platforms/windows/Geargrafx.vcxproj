@@ -68,7 +68,7 @@
     <ClInclude Include="..\..\src\common.h" />
     <ClInclude Include="..\..\src\defines.h" />
     <ClInclude Include="..\..\src\game_db.h" />
-    <ClInclude Include="..\..\src\gearcoleco.h" />
+    <ClInclude Include="..\..\src\geargrafx.h" />
     <ClInclude Include="..\..\src\geargrafx_core.h" />
     <ClInclude Include="..\..\src\geargrafx.h" />
     <ClInclude Include="..\..\src\input_inline.h" />
