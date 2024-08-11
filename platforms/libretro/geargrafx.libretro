@@ -1,0 +1,11 @@
+[Libretro]
+Type=Emulator
+Version=1.0.0
+Name=Geargrafx
+Module=geargrafx_libretro.so
+LibretroVersion=1
+Authors=Ignacio Sanchez Gines;
+License=GPL-3.0+;
+
+[Platform:PcEngine]
+MimeType=application/x-pc-engine-rom;

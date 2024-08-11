@@ -1,0 +1,13 @@
+SOURCES_C   :=
+SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
+                $(SOURCE_DIR)/audio.cpp \
+                $(SOURCE_DIR)/cartridge.cpp \
+                $(SOURCE_DIR)/geargrafx_core.cpp \
+                $(SOURCE_DIR)/huc6260.cpp \
+                $(SOURCE_DIR)/huc6270.cpp \
+                $(SOURCE_DIR)/huc6280_functors.cpp \
+                $(SOURCE_DIR)/huc6280_opcodes.cpp \
+                $(SOURCE_DIR)/huc6280_psg.cpp \
+                $(SOURCE_DIR)/huc6280.cpp \
+                $(SOURCE_DIR)/input.cpp \
+                $(SOURCE_DIR)/memory.cpp \

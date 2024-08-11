@@ -74,28 +74,28 @@ jobs:
       working-directory: platforms/linux
       env:
         USE_CLANG: 1
-  # libretro:
-  #   name: Libretro (ubuntu)
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-  #     with:
-  #       fetch-depth: 0
-  #   - name: Get build number
-  #     run: |
-  #       echo "BUILD_NUMBER=$(git describe --abbrev=7 --dirty --always --tags)" >> $GITHUB_ENV
-  #   - name: make
-  #     run: make
-  #     working-directory: platforms/libretro
-  #   - name: Archive binary
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-libretro-linux
-  #       path: platforms/libretro/${{ env.NAME_LOWER }}_libretro.so
+  libretro:
+    name: Libretro (ubuntu)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Get build number
+      run: |
+        echo "BUILD_NUMBER=$(git describe --abbrev=7 --dirty --always --tags)" >> $GITHUB_ENV
+    - name: make
+      run: make
+      working-directory: platforms/libretro
+    - name: Archive binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-libretro-linux
+        path: platforms/libretro/${{ env.NAME_LOWER }}_libretro.so
   macos:
     name: macOS
     strategy:
@@ -203,46 +203,46 @@ jobs:
       with:
         name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-bsd
         path: artifact/*
-  # release:
-  #   name: Release
-  #   needs: [linux, macos, windows, bsd]
-  #   if: github.event_name != 'pull_request' && startswith(github.ref, 'refs/tags/')
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: write
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v4
-  #     with:
-  #       fetch-depth: 0
-  #   - name: Get build number
-  #     run: |
-  #       echo "BUILD_NUMBER=$(git describe --abbrev=7 --dirty --always --tags)" >> $GITHUB_ENV
-  #   - name: Prepare release directory
-  #     run: |
-  #       mkdir -p release
-  #   - name: Download artifacts
-  #     uses: actions/download-artifact@v4
-  #     with:
-  #       pattern: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-*
-  #       path: release
-  #   - name: Zip directories
-  #     run: |
-  #       cd release
-  #       for f in *; do
-  #         if [ -d "$f" ]; then
-  #           cd $f
-  #           echo "Compressing $f"
-  #           zip -r $f.zip *
-  #           mv $f.zip ../
-  #           cd ..
-  #         fi
-  #       done
-  #   - name: Create release
-  #     run: |
-  #       gh release create ${{ github.ref_name }} ./release/*.zip \
-  #         --title "${{ env.NAME_UPPER }} ${{ github.ref_name }}" \
-  #         --draft \
-  #         --generate-notes
-  #     env:
-  #       GITHUB_TOKEN: ${{ github.TOKEN }}
+  release:
+    name: Release
+    needs: [linux, macos, windows, bsd]
+    if: github.event_name != 'pull_request' && startswith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Get build number
+      run: |
+        echo "BUILD_NUMBER=$(git describe --abbrev=7 --dirty --always --tags)" >> $GITHUB_ENV
+    - name: Prepare release directory
+      run: |
+        mkdir -p release
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-*
+        path: release
+    - name: Zip directories
+      run: |
+        cd release
+        for f in *; do
+          if [ -d "$f" ]; then
+            cd $f
+            echo "Compressing $f"
+            zip -r $f.zip *
+            mv $f.zip ../
+            cd ..
+          fi
+        done
+    - name: Create release
+      run: |
+        gh release create ${{ github.ref_name }} ./release/*.zip \
+          --title "${{ env.NAME_UPPER }} ${{ github.ref_name }}" \
+          --draft \
+          --generate-notes
+      env:
+        GITHUB_TOKEN: ${{ github.TOKEN }}
