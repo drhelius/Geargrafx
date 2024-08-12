@@ -182,6 +182,9 @@ void gui_popup_modal_about(void)
                 #if defined(GG_DEBUG)
                 ImGui::Text("define: GG_DEBUG");
                 #endif
+                #if defined(GG_NO_OPTIMIZATIONS)
+                ImGui::Text("define: GG_NO_OPTIMIZATIONS");
+                #endif
                 #if defined(__cplusplus)
                 ImGui::Text("define: __cplusplus = %d", (int)__cplusplus);
                 #endif

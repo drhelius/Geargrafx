@@ -70,10 +70,12 @@
     #if defined(__GNUC__) || defined(__clang__)
         #if !defined(__OPTIMIZE__) && !defined(__OPTIMIZE_SIZE__)
             #warning "Compiling without optimizations."
+            #define GG_NO_OPTIMIZATIONS
         #endif
     #elif defined(_MSC_VER)
         #if !defined(NDEBUG)
             #pragma message("Compiling without optimizations.")
+            #define GG_NO_OPTIMIZATIONS
         #endif
     #endif
 #endif
