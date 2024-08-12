@@ -651,7 +651,7 @@ inline void HuC6280::UnofficialOPCode()
 {
     u16 opcode_address = m_PC.GetValue() - 1;
     u8 opcode = m_memory->Read(opcode_address);
-    Debug("** HuC6280 --> UNOFFICIAL OP Code (%02X) at $%.4X -- %s", opcode, opcode_address, k_opcode_names[opcode]);
+    Debug("** HuC6280 --> UNOFFICIAL OP Code (%02X) at $%.4X -- %s", opcode, opcode_address, k_huc6280_opcode_names[opcode]);
 }
 
 #endif /* HUC6280_OPCODES_INLINE_H */

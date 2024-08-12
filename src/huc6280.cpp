@@ -167,7 +167,7 @@ unsigned int HuC6280::Tick()
 
     DisassembleNextOPCode();
 
-    m_cycles += k_opcode_cycles[opcode];
+    m_cycles += k_huc6280_opcode_cycles[opcode];
 
     return m_cycles;
 }
@@ -215,7 +215,7 @@ void HuC6280::DisassembleNextOPCode()
     }
 
     u8 opcode = m_memory->Read(address);
-    u8 opcode_size = k_opcode_sizes[opcode];
+    u8 opcode_size = k_huc6280_opcode_sizes[opcode];
 
     bool changed = false;
 
@@ -261,36 +261,36 @@ void HuC6280::DisassembleNextOPCode()
         strncat(record->bytes, " ", 24);
     }
 
-    switch (k_opcode_names[opcode].type)
+    switch (k_huc6280_opcode_names[opcode].type)
     {
         case GG_OPCode_Type_Implied:
         {
-            snprintf(record->name, 64, "%s", k_opcode_names[opcode].name);
+            snprintf(record->name, 64, "%s", k_huc6280_opcode_names[opcode].name);
             break;
         }
         case GG_OPCode_Type_1b:
         {
-            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1));
+            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, m_memory->Read(address + 1));
             break;
         }
         case GG_OPCode_Type_1b_1b:
         {
-            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2));
+            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2));
             break;
         }
         case GG_OPCode_Type_1b_2b:
         {
-            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2) | (m_memory->Read(address + 3) << 8));
+            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, m_memory->Read(address + 1), m_memory->Read(address + 2) | (m_memory->Read(address + 3) << 8));
             break;
         }
         case GG_OPCode_Type_2b:
         {
-            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8));
+            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8));
             break;
         }
         case GG_OPCode_Type_2b_2b_2b:
         {
-            snprintf(record->name, 64, k_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8), m_memory->Read(address + 3) | (m_memory->Read(address + 4) << 8), m_memory->Read(address + 5) | (m_memory->Read(address + 6) << 8));
+            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, m_memory->Read(address + 1) | (m_memory->Read(address + 2) << 8), m_memory->Read(address + 3) | (m_memory->Read(address + 4) << 8), m_memory->Read(address + 5) | (m_memory->Read(address + 6) << 8));
             break;
         }
         case GG_OPCode_Type_1b_Relative:
@@ -300,7 +300,7 @@ void HuC6280::DisassembleNextOPCode()
             record->jump = true;
             record->jump_address = jump_address;
             record->jump_bank = m_memory->GetBank(jump_address);
-            snprintf(record->name, 64, k_opcode_names[opcode].name, jump_address, rel);
+            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, jump_address, rel);
             break;
         }
         case GG_OPCode_Type_1b_1b_Relative:
@@ -311,13 +311,13 @@ void HuC6280::DisassembleNextOPCode()
             record->jump = true;
             record->jump_address = jump_address;
             record->jump_bank = m_memory->GetBank(jump_address);
-            snprintf(record->name, 64, k_opcode_names[opcode].name, zero_page, jump_address, rel);
+            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, zero_page, jump_address, rel);
             break;
         }
         case GG_OPCode_Type_ST0:
         {
             u8 reg = m_memory->Read(address + 1);
-            snprintf(record->name, 64, k_opcode_names[opcode].name, reg, k_register_names[reg]);
+            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, reg, k_register_names[reg]);
             break;
         }
         default:
@@ -610,7 +610,7 @@ void HuC6280::UpdateDisassemblerCallStack()
     // BSR rr, JSR hhll
     if (opcode == 0x44 || opcode == 0x20)
     {
-        u8 opcode_size = k_opcode_sizes[opcode];
+        u8 opcode_size = k_huc6280_opcode_sizes[opcode];
         if (m_disassembler_call_stack.size() < 256)
             m_disassembler_call_stack.push(address + opcode_size);
     }

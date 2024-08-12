@@ -414,8 +414,8 @@ static void update_debug_background_buffer(void)
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     u16* vram = huc6270->GetVRAM();
     int screen_reg = (huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07;
-    int screen_size_x = k_scren_size_x[screen_reg];
-    int screen_size_y = k_scren_size_y[screen_reg];
+    int screen_size_x = k_huc6270_screen_size_x[screen_reg];
+    int screen_size_y = k_huc6270_screen_size_y[screen_reg];
     emu_debug_background_buffer_width = screen_size_x * 8;
     emu_debug_background_buffer_height = screen_size_y * 8;
     int bat_size = screen_size_x * screen_size_y;

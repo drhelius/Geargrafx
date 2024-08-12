@@ -93,6 +93,8 @@ private:
     u16 m_bgr555_palette[512];
 };
 
+static const int k_huc6260_line_width[4] = { 256, 341, 512, 512 };
+
 #include "huc6260_inline.h"
 
 #endif /* HUC6260_H */

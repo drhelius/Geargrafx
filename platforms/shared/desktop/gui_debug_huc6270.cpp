@@ -72,7 +72,7 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(disp_out_value == 3 ? red : white, "%s", disp_output[disp_out_value]);
 
     ImGui::TextColored(magenta, "R/W INC "); ImGui::SameLine();
-    ImGui::TextColored(white, "%02X", k_read_write_increment[(huc6270_state->R[HUC6270_REG_CR] >> 11) & 0x03]);
+    ImGui::TextColored(white, "%02X", k_huc6270_read_write_increment[(huc6270_state->R[HUC6270_REG_CR] >> 11) & 0x03]);
 
     ImGui::TextColored(magenta, "INT REQ "); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_COLLISION ? orange : gray, "COLL"); ImGui::SameLine();
@@ -97,7 +97,7 @@ void gui_debug_window_huc6270_info(void)
     ImGui::NewLine(); ImGui::TextColored(cyan, "DISPLAY GEOMETRY"); ImGui::Separator(); 
 
     ImGui::TextColored(magenta, "SCREEN      "); ImGui::SameLine();
-    ImGui::TextColored(white, "%dx%d", k_scren_size_x[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07], k_scren_size_y[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07]);
+    ImGui::TextColored(white, "%dx%d", k_huc6270_screen_size_x[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07], k_huc6270_screen_size_y[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07]);
 
     ImGui::TextColored(magenta, "VRAM WIDTH  "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", huc6270_state->R[HUC6270_REG_MWR] & 0x03);
@@ -223,8 +223,8 @@ void gui_debug_window_huc6270_background(void)
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     u16* vram = huc6270->GetVRAM();
     int screen_reg = (huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07;
-    int screen_size_x = k_scren_size_x[screen_reg];
-    int screen_size_y = k_scren_size_y[screen_reg];
+    int screen_size_x = k_huc6270_screen_size_x[screen_reg];
+    int screen_size_y = k_huc6270_screen_size_y[screen_reg];
     int bat_size = screen_size_x * screen_size_y;
 
     static bool show_grid = true;
@@ -262,7 +262,7 @@ void gui_debug_window_huc6270_background(void)
         ImGui::TextColored(magenta, "        SCREEN");
 
         ImGui::SameLine();
-        ImGui::TextColored(white, "%dx%d", k_scren_size_x[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07], k_scren_size_y[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07]);
+        ImGui::TextColored(white, "%dx%d", k_huc6270_screen_size_x[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07], k_huc6270_screen_size_y[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07]);
 
         ImGui::TextColored(magenta, "SCROLL X "); 
 

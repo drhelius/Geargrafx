@@ -38,7 +38,7 @@ struct GG_OPCode_Info
     GG_OPCode_Type type;
 };
 
-static const GG_OPCode_Info k_opcode_names[256] = {
+static const GG_OPCode_Info k_huc6280_opcode_names[256] = {
     { "BRK", GG_OPCode_Type_Implied },
     { "ORA $(%02X,X)", GG_OPCode_Type_1b },
     { "SXY", GG_OPCode_Type_Implied },

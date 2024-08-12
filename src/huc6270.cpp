@@ -299,24 +299,23 @@ void HuC6270::RenderLine()
     for (int i = 0; i < 256; i++)
     {
         int screen_reg = (m_register[HUC6270_REG_MWR] >> 4) & 0x07;
-        int screen_size_x = k_scren_size_x[screen_reg];
-        int screen_size_x_pixels = screen_size_x * 8;
-        int screen_size_y = k_scren_size_y[screen_reg];
-        int screen_size_y_pixels = screen_size_y * 8;
+        int screen_size_x = k_huc6270_screen_size_x[screen_reg];
+        int screen_size_x_pixels = k_huc6270_screen_size_x_pixels[screen_reg];
+        int screen_size_y_pixels = k_huc6270_screen_size_y_pixels[screen_reg];
 
         int bg_y = m_bg_offset_y;
         bg_y %= screen_size_y_pixels;
-        int bat_offset = (bg_y / 8) * screen_size_x;
+        int bat_offset = (bg_y >> 3) * screen_size_x;
 
         int bg_x = m_latched_bxr + i;
         bg_x %= screen_size_x_pixels;
 
-        u16 bat_entry = m_vram[bat_offset + (bg_x / 8)];
+        u16 bat_entry = m_vram[bat_offset + (bg_x >> 3)];
         int tile_index = bat_entry & 0x07FF;
         int color_table = (bat_entry >> 12) & 0x0F;
-        int tile_data = tile_index * 16;
-        int tile_x =  (bg_x % 8);
-        int tile_y = (bg_y % 8);
+        int tile_data = tile_index << 4;
+        int tile_x =  (bg_x & 7);
+        int tile_y = (bg_y & 7);
         int line_start_a = (tile_data + tile_y);
         int line_start_b = (tile_data + tile_y + 8);
         u8 byte1 = m_vram[line_start_a] & 0xFF;

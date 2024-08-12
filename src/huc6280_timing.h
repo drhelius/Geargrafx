@@ -22,7 +22,7 @@
 
 #include "common.h"
 
-const u8 k_opcode_cycles[256] =
+const u8 k_huc6280_opcode_cycles[256] =
 {
 /*          0  1  2  3   4  5  6  7  8  9  A  B  C  D  E  F */
 /* 0x00 */  8, 7, 3, 5,  6, 4, 6, 7, 3, 2, 2, 2, 7, 5, 7, 6,
@@ -43,7 +43,7 @@ const u8 k_opcode_cycles[256] =
 /* 0xF0 */  2, 7, 7, 17, 2, 4, 6, 7, 2, 5, 4, 2, 2, 5, 7, 6
 };
 
-const u8 k_opcode_sizes[256] =
+const u8 k_huc6280_opcode_sizes[256] =
 {
 /*          0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 /* 0x00 */  2, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 1, 3, 3, 3, 3,

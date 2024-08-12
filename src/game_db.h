@@ -43,7 +43,7 @@ const GG_Game_DB_Entry k_game_database[] =
     {0, 0, GG_GAMEDB_NONE}
 };
 
-const uint32_t kCRC32_tab[] = 
+const uint32_t k_crc32_tab[] =
 {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
     0xe963a535, 0x9e6495a3,	0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
@@ -98,7 +98,7 @@ u32 CalculateCRC32(u32 crc, const u8 *buf, int size)
 
     while (size--)
     {
-        crc = kCRC32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
+        crc = k_crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
     }
 
     return crc ^ ~0U;

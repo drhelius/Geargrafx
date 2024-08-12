@@ -126,9 +126,11 @@ static const u16 k_register_mask[20] = {
     0x7F1F, 0x7F7F, 0xFF1F, 0x01FF, 0x00FF,
     0x001F, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF };
 
-static const int k_scren_size_x[8] = { 32, 64, 128, 128, 32, 64, 128, 128 };
-static const int k_scren_size_y[8] = { 32, 32, 32, 32, 64, 64, 64, 64 };
-static const int k_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
+static const int k_huc6270_screen_size_x[8] = { 32, 64, 128, 128, 32, 64, 128, 128 };
+static const int k_huc6270_screen_size_y[8] = { 32, 32, 32, 32, 64, 64, 64, 64 };
+static const int k_huc6270_screen_size_x_pixels[8] = { 32 * 8, 64 * 8, 128 * 8, 128 * 8, 32 * 8, 64 * 8, 128 * 8, 128 * 8 };
+static const int k_huc6270_screen_size_y_pixels[8] = { 32 * 8, 32 * 8, 32 * 8, 32 * 8, 64 * 8, 64 * 8, 64 * 8, 64 * 8 };
+static const int k_huc6270_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
 
 static const char* const k_register_names_aligned[20] = {
     "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",

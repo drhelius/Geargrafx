@@ -82,7 +82,7 @@ inline u8 HuC6270::ReadRegister(u32 address)
             if (m_address_register == HUC6270_REG_VRR)
             {
                 u8 ret = m_read_buffer >> 8;
-                int increment = k_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
+                int increment = k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
                 m_register[HUC6270_REG_MARR] = m_register[HUC6270_REG_MARR] + increment;
                 m_read_buffer = m_vram[m_register[HUC6270_REG_MARR] & 0x7FFF];
                 // Debug("HuC6270 MARR inncremented %02X to %04X", increment, m_register[HUC6270_REG_MARR]);
@@ -145,7 +145,7 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                             m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
                         }
 
-                        u16 increment = k_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
+                        u16 increment = k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
                         m_register[HUC6270_REG_MAWR] = m_register[HUC6270_REG_MAWR] + increment;
                     }
                     break;
