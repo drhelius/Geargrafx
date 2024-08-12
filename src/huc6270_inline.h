@@ -21,8 +21,33 @@
 #define HUC6270_INLINE_H
 
 #include "huc6270.h"
-#include "huc6260.h"	
-#include "huc6280.h" 
+#include "huc6260.h"
+#include "huc6280.h"
+
+inline u16 HuC6270::Clock(bool* active)
+{
+    *active = false;
+    u16 pixel = 0;
+
+    if (m_active_line &&
+        (m_h_state == HuC6270_HORIZONTAL_STATE_HDW_1 || m_h_state == HuC6270_HORIZONTAL_STATE_HDW_2))
+    {
+        *active = true;
+        if (m_line_buffer_index < 256)
+            pixel = m_line_buffer[m_line_buffer_index];
+        else
+            Debug("HuC6270 line buffer overflow %d", m_line_buffer_index);
+        m_line_buffer_index++;
+    }
+
+    m_hpos++;
+
+    m_clocks_to_next_h_state--;
+    while (m_clocks_to_next_h_state == 0)
+        NextHorizontalState();
+
+    return pixel;
+}
 
 inline u8 HuC6270::ReadRegister(u32 address)
 {

@@ -107,6 +107,8 @@ private:
     int m_clocks_to_next_h_state;
     bool m_vblank_triggered;
     bool m_active_line;
+    u16 m_line_buffer[HUC6270_MAX_RESOLUTION_WIDTH];
+    int m_line_buffer_index;
 
 private:
     void NextVerticalState();
@@ -115,6 +117,7 @@ private:
     void RCRIRQ();
     int ClocksToBYRLatch();
     int ClocksToBXRLatch();
+    void RenderLine();
 };
 
 static const u16 k_register_mask[20] = {
