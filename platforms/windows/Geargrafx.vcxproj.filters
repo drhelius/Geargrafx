@@ -1,0 +1,351 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Manifest Include="Geargrafx.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\shared\desktop\application.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\config.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\emu.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_actions.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug_disassembler.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug_huc6260.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug_huc6270.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug_huc6280.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug_memeditor.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug_memory.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_popups.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_menus.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_filedialogs.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\main.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\renderer.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\imgui.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\imgui_demo.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\imgui_draw.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\imgui_impl_opengl2.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\imgui_impl_sdl2.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\imgui_tables.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\imgui_widgets.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\implot.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\implot_demo.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\imgui\implot_items.cpp">
+      <Filter>desktop\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\nfd\nfd_win.cpp">
+      <Filter>desktop\nfd</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\audio\sound_queue.cpp">
+      <Filter>audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cartridge.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\geargrafx_core.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\huc6260.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\huc6270.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\huc6280.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\huc6280_functors.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\huc6280_opcodes.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\huc6280_psg.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\memory.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\shared\desktop\application.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\backers.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\config.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\emu.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_actions.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_constants.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_disassembler.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_huc6260.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_huc6270.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_huc6280.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_memeditor.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_popups.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_menus.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_filedialogs.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_memory.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\license.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\renderer.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\utils.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\imconfig.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\imgui.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_opengl2.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_sdl.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\imgui_internal.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\implot.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\implot_internal.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\imstb_rectpack.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\imstb_textedit.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\imstb_truetype.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\nfd\nfd.h">
+      <Filter>desktop\nfd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\stb\stb_image_write.h">
+      <Filter>desktop\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\mINI\ini.h">
+      <Filter>desktop\mINI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\audi\sound_queue.h">
+      <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\audio.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\audio_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\bit_ops.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cartridge.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\defines.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\game_db.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\geargrafx.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\geargrafx_core.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6260.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6260_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6270.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6270_defines.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6270_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6280.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6280_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6280_opcodes.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6280_opcodes_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6280_psg.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6280_psg_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6280_registers.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6280_timing.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\input.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\input_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\log.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\memory.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\memory_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\types.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\fonts\IconsMaterialDesign.h">
+      <Filter>desktop\imgui\fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\fonts\MaterialIcons.h">
+      <Filter>desktop\imgui\fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\fonts\RobotoMedium.h">
+      <Filter>desktop\imgui\fonts</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{39e50856-2108-48fd-a913-eb2000b78c33}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="desktop">
+      <UniqueIdentifier>{b305c14e-49f4-4f2f-9d40-5b15a839fbb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="audio">
+      <UniqueIdentifier>{c8dae10e-4945-4204-9ecb-41eb990aeed0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="desktop\imgui">
+      <UniqueIdentifier>{2845bb6f-3a7e-4dd9-a512-26cc2d70d318}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="desktop\mINI">
+      <UniqueIdentifier>{b57ba6f5-bb7b-4e67-a5d9-a0c067357f4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="desktop\stb">
+      <UniqueIdentifier>{35f248dc-8fee-4dca-a836-403a5186a022}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="desktop\nfd">
+      <UniqueIdentifier>{fc50fbb4-e133-436b-af1a-a97b7279fdb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="desktop\imgui\fonts">
+      <UniqueIdentifier>{e751b237-67eb-4f7d-8eb9-2dff996a9ef4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
