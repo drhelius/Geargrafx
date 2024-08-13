@@ -170,8 +170,8 @@ bool GeargrafxCore::LoadROMFromBuffer(const u8* buffer, int size)
 
 bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
 {
-    runtime_info.screen_width = 256;
-    runtime_info.screen_height = 240;
+    runtime_info.screen_width = m_huc6260->GetCurrentLineWidth();
+    runtime_info.screen_height = 263;
 
     if (m_cartridge->IsReady())
     {

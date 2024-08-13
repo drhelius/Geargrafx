@@ -50,22 +50,22 @@ inline void HuC6260::WriteRegister(u32 address, u8 value)
         case 0:
             // Control register
             m_control_register = value;
+            m_speed = m_control_register & 0x03;
+            m_blur = (m_control_register >> 2) & 0x01;
+            m_black_and_white = IsSetBit(m_control_register, 7);
 
-            switch (m_control_register & 0x03)
+            switch (m_speed)
             {
                 case 0:
                     Debug("HuC6260 Speed: 5.36 MHz");
-                    m_speed = HuC6260_SPEED_5_36_MHZ;
                     m_clock_divider = 4;
                     break;
                 case 1:
                     Debug("HuC6260 Speed: 7.16 MHz");
-                    m_speed = HuC6260_SPEED_7_16_MHZ;
                     m_clock_divider = 3;
                     break;
                 default:
                     Debug("HuC6260 Speed: 10.8 MHz");
-                    m_speed = HuC6260_SPEED_10_8_MHZ;
                     m_clock_divider = 2;
                     break;
             }

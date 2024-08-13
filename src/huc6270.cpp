@@ -20,7 +20,6 @@
 #include <cassert>
 #include <stdlib.h>
 #include "huc6270.h"
-#include "huc6260.h"
 
 HuC6270::HuC6270(HuC6280* huC6280)
 {
@@ -202,8 +201,9 @@ void HuC6270::NextHorizontalState()
     {
         case HuC6270_HORIZONTAL_STATE_HDS_1:
             m_line_buffer_index = 0;
+            HUC6270_DEBUG("------ hpos reset: %d", m_hpos);
             m_hpos = 0;
-            m_vpos = (m_vpos + 1) % HUC6260_LINES;
+            m_vpos = (m_vpos + 1) % 263;
             m_active_line = (m_raster_line < 240);
             m_latched_hds = HUC6270_VAR_HDS;
             m_latched_hdw = HUC6270_VAR_HDW;
@@ -247,7 +247,7 @@ void HuC6270::NextHorizontalState()
             m_raster_line++;
 
             m_lines_to_next_v_state--;
-            if (m_lines_to_next_v_state <= 0)
+            while (m_lines_to_next_v_state <= 0)
                 NextVerticalState();
 
             RCRIRQ();
@@ -296,7 +296,9 @@ void HuC6270::VBlankIRQ()
 
 void HuC6270::RenderLine()
 {
-    for (int i = 0; i < 256; i++)
+    int pixels = (m_latched_hdw + 1) << 3;
+
+    for (int i = 0; i < pixels; i++)
     {
         int screen_reg = (m_register[HUC6270_REG_MWR] >> 4) & 0x07;
         int screen_size_x = k_huc6270_screen_size_x[screen_reg];

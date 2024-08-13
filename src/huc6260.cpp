@@ -86,8 +86,10 @@ void HuC6260::Reset()
     m_vpos = 0;
     m_pixel_index = 0;
     m_pixel_clock = 0;
-    m_hsync = true;
-    m_vsync = true;
+    m_hsync = false;
+    m_vsync = false;
+    m_blur = 0;
+    m_black_and_white = false;
 
     for (int i = 0; i < 512; i++)
     {
@@ -104,7 +106,7 @@ bool HuC6260::Clock()
         bool active = false;
         u16 pixel = m_huc6270->Clock(&active);
 
-        if (active)
+        if (true)
         {
             if ((pixel & 0x10F) == 0)
                 pixel = 0;
@@ -115,17 +117,19 @@ bool HuC6260::Clock()
             u8 green = m_rgb888_palette[color][1];
             u8 blue = m_rgb888_palette[color][2];
 
-            if (m_pixel_index >= (256 * 240))
+            if (m_pixel_index >= (HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT))
                 Debug("Pixel Index: %d\n", m_pixel_index);
             else
             {
-                m_frame_buffer[((m_pixel_index) * 3) + 0] = red;
-                m_frame_buffer[((m_pixel_index) * 3) + 1] = green;
-                m_frame_buffer[((m_pixel_index) * 3) + 2] = blue;
+                int component = m_pixel_index * 4;
+                m_frame_buffer[component + 0] = red;
+                m_frame_buffer[component + 1] = green;
+                m_frame_buffer[component + 2] = blue;
+                m_frame_buffer[component + 3] = 255;
             }
-
-            m_pixel_index++;
         }
+
+        m_pixel_index++;
     }
 
     m_pixel_clock = (m_pixel_clock + 1) % m_clock_divider;
@@ -142,23 +146,23 @@ bool HuC6260::Clock()
             // End of horizontal sync
             m_hsync = true;
             m_huc6270->SetHSync(true);
-            if (m_vpos == 262)
+            if (m_vpos == (k_huc6260_total_lines[m_blur] - 1))
             {
                 m_pixel_index = 0;
                 frame_ready = true;
             }
-            m_vpos = (m_vpos + 1) % HUC6260_LINES;
+            m_vpos = (m_vpos + 1) % k_huc6260_total_lines[m_blur];
             m_pixel_clock = 0;
             break;
         case HUC6260_VSYNC_HPOS:
             // Start of vertical sync
-            if (m_vpos == HUC6260_VSYNC_START_VPOS)
+            if (m_vpos == (k_huc6260_total_lines[m_blur] - 4))
             {
                 m_vsync = false;
                 m_huc6270->SetVSync(false);
             }
             // End of vertical sync
-            else if (m_vpos == HUC6260_VSYNC_END_VPOS)
+            else if (m_vpos == (k_huc6260_total_lines[m_blur] - 1))
             {
                 m_vsync = true;
                 m_huc6270->SetVSync(true);
@@ -176,7 +180,7 @@ HuC6260::HuC6260_State* HuC6260::GetState()
 
 HuC6260::HuC6260_Speed HuC6260::GetSpeed()
 {
-    return m_speed;
+    return k_huc6260_speed[m_speed];
 }
 
 int HuC6260::GetClockDivider()
@@ -192,4 +196,9 @@ u16* HuC6260::GetColorTable()
 void HuC6260::SetBuffer(u8* frame_buffer)
 {
     m_frame_buffer = frame_buffer;
+}
+
+int HuC6260::GetCurrentLineWidth()
+{
+    return k_huc6260_line_width[m_speed];
 }

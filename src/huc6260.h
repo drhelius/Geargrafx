@@ -28,8 +28,6 @@
 #define HUC6260_HSYNC_START_HPOS (HUC6260_LINE_LENGTH - HUC6260_HSYNC_LENGTH)
 #define HUC6260_HSYNC_END_HPOS 0
 #define HUC6260_VSYNC_HPOS (HUC6260_HSYNC_START_HPOS + 30)
-#define HUC6260_VSYNC_START_VPOS (HUC6260_LINES - 4)
-#define HUC6260_VSYNC_END_VPOS (HUC6260_LINES - 1)
 
 class HuC6270;
 
@@ -49,9 +47,9 @@ public:
 
     enum HuC6260_Speed
     {
-        HuC6260_SPEED_10_8_MHZ = 0,
-        HuC6260_SPEED_7_16_MHZ = 1,
-        HuC6260_SPEED_5_36_MHZ = 2
+        HuC6260_SPEED_5_36_MHZ,
+        HuC6260_SPEED_7_16_MHZ,
+        HuC6260_SPEED_10_8_MHZ,
     };
 
 public:
@@ -68,13 +66,14 @@ public:
     int GetClockDivider();
     u16* GetColorTable();
     void SetBuffer(u8* frame_buffer);
+    int GetCurrentLineWidth();
 
 private:
     HuC6270* m_huc6270;
     HuC6260_State m_state;
     u8 m_control_register;
     u16 m_color_table_address;
-    HuC6260_Speed m_speed;
+    int m_speed;
     int m_clock_divider;
     u16* m_color_table;
     u8* m_frame_buffer;
@@ -84,6 +83,8 @@ private:
     int m_pixel_clock;
     bool m_hsync;
     bool m_vsync;
+    int m_blur;
+    bool m_black_and_white;
     GG_Pixel_Format m_pixel_format;
     u8 m_rgb888_palette[512][3];
     u8 m_bgr888_palette[512][3];
@@ -93,7 +94,11 @@ private:
     u16 m_bgr555_palette[512];
 };
 
-static const int k_huc6260_line_width[4] = { 256, 341, 512, 512 };
+static const HuC6260::HuC6260_Speed k_huc6260_speed[4] = {
+    HuC6260::HuC6260_SPEED_5_36_MHZ, HuC6260::HuC6260_SPEED_7_16_MHZ,
+    HuC6260::HuC6260_SPEED_10_8_MHZ, HuC6260::HuC6260_SPEED_10_8_MHZ };
+static const int k_huc6260_line_width[4] = { 342, 455, 683, 683 };
+static const int k_huc6260_total_lines[2] = { 262, 263 };
 
 #include "huc6260_inline.h"
 

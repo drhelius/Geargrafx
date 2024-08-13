@@ -45,13 +45,14 @@ void emu_init(void)
 {
     int screen_size = HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT;
 
-    emu_frame_buffer = new u8[screen_size * 3];
+    emu_frame_buffer = new u8[screen_size * 4];
 
-    for (int i=0, j=0; i < screen_size; i++, j+=3)
+    for (int i=0, j=0; i < screen_size; i++, j+=4)
     {
         emu_frame_buffer[j] = 0;
-        emu_frame_buffer[j+1] = 0;
-        emu_frame_buffer[j+2] = 0;
+        emu_frame_buffer[j + 1] = 0;
+        emu_frame_buffer[j + 2] = 0;
+        emu_frame_buffer[j + 3] = 255;
     }
 
     init_debug();

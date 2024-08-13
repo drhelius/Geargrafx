@@ -44,7 +44,7 @@ void gui_debug_window_huc6260_info(void)
     HuC6260::HuC6260_State* huc6260_state = huc6260->GetState();
 
     ImGui::TextColored(magenta, "SPEED    "); ImGui::SameLine();
-    const char* speed[] = { "10.8 MHz", "7.16 MHz", "5.36 MHz" };
+    const char* speed[] = { "5.36 MHz", "7.16 MHz", "10.8 MHz" };
     ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
 
     ImGui::TextColored(magenta, "SIGNALS  "); ImGui::SameLine();
