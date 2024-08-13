@@ -71,42 +71,30 @@ inline void HuC6280::InjectCycles(unsigned int cycles)
 
 inline u8 HuC6280:: ReadInterruptRegister(u32 address)
 {
-    // Debug("Interrupt register read at %06X", address);
-    if (address == 0x1FF402)
+    switch (address & 1)
     {
-        // Debug("Interrupt disable register: %02X", m_interrupt_disable_register);
-        return m_interrupt_disable_register;
-    }
-    else if (address == 0x1FF403)
-    {
-        // Debug("Interrupt request register: %02X", m_interrupt_request_register);
-        return m_interrupt_request_register;
-    }
-    else
-    {
-        Debug("Invalid interrupt register read at %06X", address);
-        return 0;
+        case 0:
+            // Acknowledge TIQ
+            UnsetBit(m_interrupt_request_register, 2);
+            m_timer_irq = false;
+            return m_interrupt_disable_register;
+        case 1:
+            return m_interrupt_request_register;
     }
 }
 
 inline void HuC6280::WriteInterruptRegister(u32 address, u8 value)
 {
-    // Debug("Interrupt register write at %06X, value=%02X", address, value);
-    if (address == 0x1FF402)
+    switch (address & 1)
     {
-        m_interrupt_disable_register = value & 0x07;
-        // Debug("Interrupt disable register: %02X", m_interrupt_disable_register);
-    }
-    else if (address == 0x1FF403)
-    {
-        // Acknowledge TIQ
-        UnsetBit(m_interrupt_request_register, 2);
-        m_timer_irq = false;
-        // Debug("Interrupt request register: %02X", m_interrupt_request_register);
-    }
-    else
-    {
-        Debug("Invalid interrupt register write at %06X, value=%02X", address, value);
+        case 0:
+            m_interrupt_disable_register = value & 0x07;
+            break;
+        case 1:
+            // Acknowledge TIQ
+            UnsetBit(m_interrupt_request_register, 2);
+            m_timer_irq = false;
+            break;
     }
 }
 

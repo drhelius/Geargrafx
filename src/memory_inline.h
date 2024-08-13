@@ -121,9 +121,11 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
                     return 0x00;
                 else
                 {
-                    int reg = physical_address & 0x03;
-                    if (reg < 0x02)
+                    if(!(address & 2))
+                    {
+                        Debug("Invalid interrupt register read at %06X", physical_address);
                         return m_io_buffer;
+                    }
                     else
                     {
                         m_io_buffer = (m_huc6280->ReadInterruptRegister(physical_address) & 0x07) | (m_io_buffer & 0xF8);
@@ -225,10 +227,15 @@ inline void Memory::Write(u16 address, u8 value)
                 break;
             case 0x1400:
             {
-                int reg = physical_address & 0x03;
-                if (reg >= 0x02)
+                if(!(address & 2))
+                {
+                    Debug("Invalid interrupt register write at %06X, value=%02X", physical_address, value);
+                }
+                else
+                {
                     m_huc6280->WriteInterruptRegister(physical_address, value);
-                m_io_buffer = value;
+                    m_io_buffer = value;
+                }
                 break;
             }
             case 0x1800:
