@@ -95,7 +95,6 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     bool instruction_completed = false;
     bool stop = false;
     int failsafe_clocks = 0;
-    int huc6280_divider = m_huc6280->IsHighSpeed() ? 3 : 12;
 
     do
     {
@@ -104,7 +103,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         if (m_clock % 3 == 0)
             m_huc6280->ClockTimer();
 
-        if (m_clock % huc6280_divider == 0)
+        if ((m_clock % (m_huc6280->IsHighSpeed() ? 3 : 12)) == 0)
             instruction_completed = m_huc6280->Clock();
 
         stop = m_huc6260->Clock();
