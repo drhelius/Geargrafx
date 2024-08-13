@@ -71,6 +71,7 @@ void HuC6270::Reset()
     m_vpos = 0;
     m_bg_offset_y = 0;
     m_bg_counter_y = 0;
+    m_increment_bg_counter_y = false;
     m_raster_line = 0;
     m_latched_bxr = 0;
     m_latched_hds = HUC6270_VAR_HDS;
@@ -201,7 +202,7 @@ void HuC6270::NextHorizontalState()
     {
         case HuC6270_HORIZONTAL_STATE_HDS_1:
             m_line_buffer_index = 0;
-            HUC6270_DEBUG("------ hpos reset: %d", m_hpos);
+            //HUC6270_DEBUG("------ hpos reset: %d", m_hpos);
             m_hpos = 0;
             m_vpos = (m_vpos + 1) % 263;
             m_active_line = (m_raster_line < 240);
@@ -216,10 +217,14 @@ void HuC6270::NextHorizontalState()
         case HuC6270_HORIZONTAL_STATE_HDS_2:
             m_clocks_to_next_h_state = ClocksToBXRLatch();
 
-            if(m_raster_line == 0)
-                m_bg_counter_y = m_register[HUC6270_REG_BYR];
-            else
-                m_bg_counter_y++;
+            if (m_increment_bg_counter_y)
+            {
+                m_increment_bg_counter_y = false;
+                if(m_raster_line == 0)
+                    m_bg_counter_y = m_register[HUC6270_REG_BYR];
+                else
+                    m_bg_counter_y++;
+            }
             m_bg_offset_y = m_bg_counter_y;
 
             HUC6270_DEBUG("HDS 2");
@@ -245,6 +250,7 @@ void HuC6270::NextHorizontalState()
             m_clocks_to_next_h_state = HUC6270_RCR_IRQ_CYCLES_BEFORE_HDE;
 
             m_raster_line++;
+            m_increment_bg_counter_y = true;
 
             m_lines_to_next_v_state--;
             while (m_lines_to_next_v_state <= 0)

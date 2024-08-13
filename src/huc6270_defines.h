@@ -89,5 +89,4 @@
 #define HUC6270_DEBUG(...) { }
 //#define HUC6270_DEBUG(x, ...) Debug(x ": h_state=%d clocks_to_next_h_state=%d raster_line=%d v_state=%d lines_to_next_v_state=%d bg_counter_y=%d latched_bxr=%d RCR=%d BXR=%d BYR=%d", ## __VA_ARGS__, m_h_state, m_clocks_to_next_h_state, m_raster_line, m_v_state, m_lines_to_next_v_state, m_bg_counter_y, m_latched_bxr, m_register[HUC6270_REG_RCR], m_register[HUC6270_REG_BXR], m_register[HUC6270_REG_BYR]);
 
-
 #endif /* HUC6270_DEFINES_H */

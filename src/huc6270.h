@@ -90,6 +90,7 @@ private:
     int m_vpos;
     int m_bg_offset_y;
     int m_bg_counter_y;
+    bool m_increment_bg_counter_y;
     int m_raster_line;
     u16 m_latched_bxr;
     u16 m_latched_hds;
