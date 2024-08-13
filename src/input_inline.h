@@ -59,7 +59,7 @@ inline void Input::UpdateRegister()
     if (!m_cdrom)
         m_register = SetBit(m_register, 7);
 
-    if (!m_clr)
+    //if (!m_clr)
     {
         if (m_sel)
             m_register |= (m_joypads[0] >> 4);
