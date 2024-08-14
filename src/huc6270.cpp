@@ -210,6 +210,7 @@ void HuC6270::NextHorizontalState()
             m_latched_hdw = HUC6270_VAR_HDW;
             m_latched_hde = HUC6270_VAR_HDE;
             m_latched_hsw = HUC6270_VAR_HSW;
+            m_latched_cr = HUC6270_VAR_CR;
             m_clocks_to_next_h_state = ClocksToBYRLatch();
             HUC6270_DEBUG(">>>\nHDS Start!  HSW: %d, HDW: %d, HDW: %d, HDE: %d", m_latched_hsw, m_latched_hds, m_latched_hdw, m_latched_hde);
             HUC6270_DEBUG("HDS 1");
@@ -304,35 +305,52 @@ void HuC6270::RenderLine()
 {
     int pixels = (m_latched_hdw + 1) << 3;
 
-    for (int i = 0; i < pixels; i++)
+    // BG off
+    if((m_latched_cr & 0x80) == 0)
     {
-        int screen_reg = (m_register[HUC6270_REG_MWR] >> 4) & 0x07;
-        int screen_size_x = k_huc6270_screen_size_x[screen_reg];
-        int screen_size_x_pixels = k_huc6270_screen_size_x_pixels[screen_reg];
-        int screen_size_y_pixels = k_huc6270_screen_size_y_pixels[screen_reg];
+        u16 color = 0x100;
 
-        int bg_y = m_bg_offset_y;
-        bg_y %= screen_size_y_pixels;
-        int bat_offset = (bg_y >> 3) * screen_size_x;
+        // Sprites off
+        if((m_latched_cr & 0xC0) == 0)
+            color = 0x000;
 
-        int bg_x = m_latched_bxr + i;
-        bg_x %= screen_size_x_pixels;
+        for (int i = 0; i < pixels; i++)
+            m_line_buffer[i] = color;
+    }
 
-        u16 bat_entry = m_vram[bat_offset + (bg_x >> 3)];
-        int tile_index = bat_entry & 0x07FF;
-        int color_table = (bat_entry >> 12) & 0x0F;
-        int tile_data = tile_index << 4;
-        int tile_x =  (bg_x & 7);
-        int tile_y = (bg_y & 7);
-        int line_start_a = (tile_data + tile_y);
-        int line_start_b = (tile_data + tile_y + 8);
-        u8 byte1 = m_vram[line_start_a] & 0xFF;
-        u8 byte2 = m_vram[line_start_a] >> 8;
-        u8 byte3 = m_vram[line_start_b] & 0xFF;
-        u8 byte4 = m_vram[line_start_b] >> 8;
+    // BG on
+    if((m_latched_cr & 0x80) != 0)
+    {
+        for (int i = 0; i < pixels; i++)
+        {
+            int screen_reg = (m_latched_mwr >> 4) & 0x07;
+            int screen_size_x = k_huc6270_screen_size_x[screen_reg];
+            int screen_size_x_pixels = k_huc6270_screen_size_x_pixels[screen_reg];
+            int screen_size_y_pixels = k_huc6270_screen_size_y_pixels[screen_reg];
 
-        m_line_buffer[i] = color_table << 4;
+            int bg_y = m_bg_offset_y;
+            bg_y %= screen_size_y_pixels;
+            int bat_offset = (bg_y >> 3) * screen_size_x;
 
-        m_line_buffer[i] |= ((byte1 >> (7 - tile_x)) & 0x01) | (((byte2 >> (7 - tile_x)) & 0x01) << 1) | (((byte3 >> (7 - tile_x)) & 0x01) << 2) | (((byte4 >> (7 - tile_x)) & 0x01) << 3);
+            int bg_x = m_latched_bxr + i;
+            bg_x %= screen_size_x_pixels;
+
+            u16 bat_entry = m_vram[bat_offset + (bg_x >> 3)];
+            int tile_index = bat_entry & 0x07FF;
+            int color_table = (bat_entry >> 12) & 0x0F;
+            int tile_data = tile_index << 4;
+            int tile_x =  (bg_x & 7);
+            int tile_y = (bg_y & 7);
+            int line_start_a = (tile_data + tile_y);
+            int line_start_b = (tile_data + tile_y + 8);
+            u8 byte1 = m_vram[line_start_a] & 0xFF;
+            u8 byte2 = m_vram[line_start_a] >> 8;
+            u8 byte3 = m_vram[line_start_b] & 0xFF;
+            u8 byte4 = m_vram[line_start_b] >> 8;
+
+            m_line_buffer[i] = color_table << 4;
+
+            m_line_buffer[i] |= ((byte1 >> (7 - tile_x)) & 0x01) | (((byte2 >> (7 - tile_x)) & 0x01) << 1) | (((byte3 >> (7 - tile_x)) & 0x01) << 2) | (((byte4 >> (7 - tile_x)) & 0x01) << 3);
+        }
     }
 }

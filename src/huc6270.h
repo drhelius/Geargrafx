@@ -102,6 +102,7 @@ private:
     u16 m_latched_vcr;
     u16 m_latched_vsw;
     u16 m_latched_mwr;
+    u16 m_latched_cr;
     int m_v_state;
     int m_h_state;
     int m_lines_to_next_v_state;

@@ -93,7 +93,7 @@ void HuC6260::Reset()
 
     for (int i = 0; i < 512; i++)
     {
-        m_color_table[i] = ((i ^ (i >> 3)) & 1) ? 0x000 : 0x1FF;
+        m_color_table[i] = 0;
     }
 }
 

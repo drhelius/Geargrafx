@@ -27,7 +27,7 @@
 inline u16 HuC6270::Clock(bool* active)
 {
     *active = false;
-    u16 pixel = 0;
+    u16 pixel = 0x100;
 
     if (m_active_line &&
         (m_h_state == HuC6270_HORIZONTAL_STATE_HDW_1 || m_h_state == HuC6270_HORIZONTAL_STATE_HDW_2))
