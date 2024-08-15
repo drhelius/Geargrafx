@@ -88,6 +88,7 @@ void renderer_destroy(void)
     glDeleteTextures(1, &system_texture);
     glDeleteTextures(1, &scanlines_texture);
     glDeleteTextures(1, &renderer_emu_debug_huc6270_background);
+    glDeleteTextures(64, renderer_emu_debug_huc6270_sprites);
     ImGui_ImplOpenGL2_Shutdown();
 }
 
@@ -176,6 +177,15 @@ static void init_ogl_debug(void)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, HUC6270_MAX_BACKGROUND_WIDTH, HUC6270_MAX_BACKGROUND_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_background_buffer);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    for (int s = 0; s < 64; s++)
+    {
+        glGenTextures(1, &renderer_emu_debug_huc6270_sprites[s]);
+        glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_sprites[s]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_sprite_buffers[s]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    }
 }
 
 static void init_scanlines_texture(void)
@@ -266,16 +276,12 @@ static void update_debug_textures(void)
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emu_debug_background_buffer_width, emu_debug_background_buffer_height,
             GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_background_buffer);
 
-    // glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_vram_tiles);
-    // glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 32 * 8, 32 * 8,
-    //             GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_tile_buffer);
-
-    // for (int s = 0; s < 64; s++)
-    // {
-    //     glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_vram_sprites[s]);
-    //     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 16, 16,
-    //             GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_sprite_buffers[s]);
-    // }
+    for (int s = 0; s < 64; s++)
+    {
+        glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_sprites[s]);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 16, 16,
+                GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_sprite_buffers[s]);
+    }
 }
 
 static void render_emu_bilinear(void)

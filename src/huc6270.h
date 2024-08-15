@@ -74,6 +74,17 @@ public:
     HuC6270_State* GetState();
     u16* GetVRAM();
     u16* GetSAT();
+    void SetNoSpriteLimit(bool no_sprite_limit);
+
+private:
+
+    struct HuC6270_Sprite_Data
+    {
+        u16 x;
+        u16 flags;
+        u8 palette;
+        u16 data[4];
+    };
 
 private:
     HuC6280* m_huc6280;
@@ -111,6 +122,9 @@ private:
     bool m_active_line;
     u16 m_line_buffer[HUC6270_MAX_RESOLUTION_WIDTH];
     int m_line_buffer_index;
+    bool m_no_sprite_limit;
+    int m_sprite_count;
+    HuC6270_Sprite_Data m_sprites[128];
 
 private:
     void NextVerticalState();
@@ -120,6 +134,9 @@ private:
     int ClocksToBYRLatch();
     int ClocksToBXRLatch();
     void RenderLine();
+    void RenderBackground(int width);
+    void RenderSprites(int width);
+    void FetchSprites();
 };
 
 static const u16 k_register_mask[20] = {
@@ -133,6 +150,8 @@ static const int k_huc6270_screen_size_y[8] = { 32, 32, 32, 32, 64, 64, 64, 64 }
 static const int k_huc6270_screen_size_x_pixels[8] = { 32 * 8, 64 * 8, 128 * 8, 128 * 8, 32 * 8, 64 * 8, 128 * 8, 128 * 8 };
 static const int k_huc6270_screen_size_y_pixels[8] = { 32 * 8, 32 * 8, 32 * 8, 32 * 8, 64 * 8, 64 * 8, 64 * 8, 64 * 8 };
 static const int k_huc6270_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
+static const int k_huc6270_sprite_width[2] = { 16, 32 };
+static const int k_huc6270_sprite_height[4] = { 16, 32, 64, 64 };
 
 static const char* const k_register_names_aligned[20] = {
     "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",

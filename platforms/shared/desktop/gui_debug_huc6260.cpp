@@ -142,6 +142,8 @@ void gui_debug_window_huc6260_palettes(void)
         {
             ImGui::PushFont(gui_default_font);
 
+            ImGui::NewLine();
+
             for (int row = 16; row < 32; row++)
             {
                 for (int col = 0; col < 16; col++)

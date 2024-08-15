@@ -38,6 +38,7 @@ enum Debug_Command
 
 
 EXTERN u8* emu_frame_buffer;
+EXTERN u8* emu_debug_sprite_buffers[64];
 EXTERN u8* emu_debug_background_buffer;
 EXTERN int emu_debug_background_buffer_width;
 EXTERN int emu_debug_background_buffer_height;

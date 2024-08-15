@@ -90,6 +90,9 @@ void HuC6270::Reset()
     m_vblank_triggered = false;
     m_active_line = false;
     m_line_buffer_index = 0;
+    m_no_sprite_limit = false;
+    m_sprite_count = 0;
+
 
     for (int i = 0; i < HUC6270_VRAM_SIZE; i++)
     {
@@ -98,12 +101,23 @@ void HuC6270::Reset()
 
     for (int i = 0; i < HUC6270_SAT_SIZE; i++)
     {
-        m_sat[i] = rand() & 0xFFFF;
+        m_sat[i] = 0;
     }
 
     for (int i = 0; i < HUC6270_MAX_RESOLUTION_WIDTH; i++)
     {
         m_line_buffer[i] = 0;
+    }
+
+    for (int i = 0; i < 128; i++)
+    {
+        m_sprites[i].x = 0;
+        m_sprites[i].flags = 0;
+        m_sprites[i].palette = 0;
+        for (int j = 0; j < 4; j++)
+        {
+            m_sprites[i].data[j] = 0;
+        }
     }
 }
 
@@ -160,6 +174,11 @@ u16* HuC6270::GetVRAM()
 u16* HuC6270::GetSAT()
 {
     return m_sat;
+}
+
+void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
+{
+    m_no_sprite_limit = no_sprite_limit;
 }
 
 void HuC6270::NextVerticalState()
@@ -257,6 +276,9 @@ void HuC6270::NextHorizontalState()
             while (m_lines_to_next_v_state <= 0)
                 NextVerticalState();
 
+            if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
+                FetchSprites();
+
             RCRIRQ();
 
             HUC6270_DEBUG("HDW 2");
@@ -303,54 +325,138 @@ void HuC6270::VBlankIRQ()
 
 void HuC6270::RenderLine()
 {
-    int pixels = (m_latched_hdw + 1) << 3;
+    int width = (m_latched_hdw + 1) << 3;
 
-    // BG off
     if((m_latched_cr & 0x80) == 0)
     {
         u16 color = 0x100;
 
-        // Sprites off
         if((m_latched_cr & 0xC0) == 0)
             color = 0x000;
 
-        for (int i = 0; i < pixels; i++)
+        for (int i = 0; i < width; i++)
             m_line_buffer[i] = color;
     }
 
-    // BG on
     if((m_latched_cr & 0x80) != 0)
     {
-        for (int i = 0; i < pixels; i++)
+        RenderBackground(width);
+    }
+
+    if((m_latched_cr & 0xC0) != 0)
+    {
+        RenderSprites(width);
+    }
+}
+
+ void HuC6270::RenderBackground(int width)
+ {
+    for (int i = 0; i < width; i++)
+    {
+        int screen_reg = (m_latched_mwr >> 4) & 0x07;
+        int screen_size_x = k_huc6270_screen_size_x[screen_reg];
+        int screen_size_x_pixels = k_huc6270_screen_size_x_pixels[screen_reg];
+        int screen_size_y_pixels = k_huc6270_screen_size_y_pixels[screen_reg];
+
+        int bg_y = m_bg_offset_y;
+        bg_y %= screen_size_y_pixels;
+        int bat_offset = (bg_y >> 3) * screen_size_x;
+
+        int bg_x = m_latched_bxr + i;
+        bg_x %= screen_size_x_pixels;
+
+        u16 bat_entry = m_vram[bat_offset + (bg_x >> 3)];
+        int tile_index = bat_entry & 0x07FF;
+        int color_table = (bat_entry >> 12) & 0x0F;
+        int tile_data = tile_index << 4;
+        int tile_x = 7 - (bg_x & 7);
+        int tile_y = (bg_y & 7);
+        int line_start_a = (tile_data + tile_y);
+        int line_start_b = (tile_data + tile_y + 8);
+        u8 byte1 = m_vram[line_start_a] & 0xFF;
+        u8 byte2 = m_vram[line_start_a] >> 8;
+        u8 byte3 = m_vram[line_start_b] & 0xFF;
+        u8 byte4 = m_vram[line_start_b] >> 8;
+
+        m_line_buffer[i] = color_table << 4;
+
+        m_line_buffer[i] |= ((byte1 >> tile_x) & 0x01) | (((byte2 >> tile_x) & 0x01) << 1) | (((byte3 >> tile_x) & 0x01) << 2) | (((byte4 >> tile_x) & 0x01) << 3);
+    }
+ }
+
+void HuC6270::RenderSprites(int width)
+{
+    for(int i = (m_sprite_count - 1) ; i >= 0; i--)
+    {
+        int pos = m_sprites[i].x - 0x20;
+        u8 byte1 = m_sprites[i].data[0];
+        u8 byte2 = m_sprites[i].data[1];
+        u8 byte3 = m_sprites[i].data[2];
+        u8 byte4 = m_sprites[i].data[3];
+
+        for(int x = 0; x < 16; x++)
         {
-            int screen_reg = (m_latched_mwr >> 4) & 0x07;
-            int screen_size_x = k_huc6270_screen_size_x[screen_reg];
-            int screen_size_x_pixels = k_huc6270_screen_size_x_pixels[screen_reg];
-            int screen_size_y_pixels = k_huc6270_screen_size_y_pixels[screen_reg];
+            u16 pixel = ((byte1 >> x) & 0x01) | (((byte2 >> x) & 0x01) << 1) | (((byte3 >> x) & 0x01) << 2) | (((byte4 >> x) & 0x01) << 3);
 
-            int bg_y = m_bg_offset_y;
-            bg_y %= screen_size_y_pixels;
-            int bat_offset = (bg_y >> 3) * screen_size_x;
+            if(pixel)
+            {
+                pixel |= 0x100;
+                int tx = pos + x;
 
-            int bg_x = m_latched_bxr + i;
-            bg_x %= screen_size_x_pixels;
+                if(tx >= width)
+                    continue;
 
-            u16 bat_entry = m_vram[bat_offset + (bg_x >> 3)];
-            int tile_index = bat_entry & 0x07FF;
-            int color_table = (bat_entry >> 12) & 0x0F;
-            int tile_data = tile_index << 4;
-            int tile_x =  (bg_x & 7);
-            int tile_y = (bg_y & 7);
-            int line_start_a = (tile_data + tile_y);
-            int line_start_b = (tile_data + tile_y + 8);
-            u8 byte1 = m_vram[line_start_a] & 0xFF;
-            u8 byte2 = m_vram[line_start_a] >> 8;
-            u8 byte3 = m_vram[line_start_b] & 0xFF;
-            u8 byte4 = m_vram[line_start_b] >> 8;
+                //m_line_buffer[tx] = pixel | m_sprites[i].palette;
+            }
+        }
+    }
+}
 
-            m_line_buffer[i] = color_table << 4;
+void HuC6270::FetchSprites()
+{
+    m_sprite_count = 0;
 
-            m_line_buffer[i] |= ((byte1 >> (7 - tile_x)) & 0x01) | (((byte2 >> (7 - tile_x)) & 0x01) << 1) | (((byte3 >> (7 - tile_x)) & 0x01) << 2) | (((byte4 >> (7 - tile_x)) & 0x01) << 3);
+    for (int i = 0; i < 64; i++)
+    {
+        int sprite_index = i << 2;
+        int y = (m_sat[sprite_index + 0] & 0x3FF) - 64;
+        u16 x = m_sat[sprite_index + 1] & 0x3FF;
+        u16 pattern = m_sat[sprite_index + 2] & 0x3FF;
+        u16 flags = m_sat[sprite_index + 3];
+        u16 palette = (flags & 0x0F) << 4;
+        u16 width = k_huc6270_sprite_width[(flags >> 8) & 0x01];
+        u16 height = k_huc6270_sprite_height[(flags >> 12) & 0x03];
+
+        if ((y <= m_raster_line) && ((y + height) > m_raster_line))
+        {
+            int y_offset = m_raster_line - y;
+            if (y_offset >= height)
+                continue;
+
+            if (m_sprite_count >= 16)
+            {
+                if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW)
+                {
+                    m_status_register |= HUC6270_STATUS_OVERFLOW;
+                    m_huc6280->AssertIRQ1(true);
+                }
+                if (m_no_sprite_limit)
+                    break;
+            }
+
+            if(flags & 0x8000)
+                y_offset = height - 1 - y_offset;
+
+            m_sprites[m_sprite_count].x = x;
+            m_sprites[m_sprite_count].flags = flags;
+            m_sprites[m_sprite_count].palette = palette;
+
+            for (int j = 0; j < 4; j++)
+            {
+                m_sprites[m_sprite_count].data[j] = m_vram[pattern + (j * 16)];
+            }
+
+            m_sprite_count++;
         }
     }
 }
