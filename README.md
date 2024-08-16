@@ -18,6 +18,11 @@ This is an open source project with its ongoing development made possible thanks
 
 ## Build Instructions
 
+### Windows
+
+- Install Microsoft Visual Studio Community 2022 or later.
+- Open the Geargrafx Visual Studio solution `platforms/windows/Geargrafx.sln` and build.
+
 ### macOS
 
 - Install Xcode and run `xcode-select --install` in the terminal for the compiler to be available on the command line.
