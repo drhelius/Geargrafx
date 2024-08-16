@@ -374,7 +374,7 @@ void emu_save_screenshot(const char* file_path)
 
     Log("Saving screenshot to %s", file_path);
 
-    stbi_write_png(file_path, runtime.screen_width, runtime.screen_height, 3, emu_frame_buffer, runtime.screen_width * 3);
+    stbi_write_png(file_path, runtime.screen_width, runtime.screen_height, 4, emu_frame_buffer, runtime.screen_width * 4);
 
     Log("Screenshot saved!");
 }
@@ -397,32 +397,32 @@ static void load_ram(void)
 
 static void reset_buffers(void)
 {
-    int screen_size = HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT;
-    for (int i=0, j=0; i < screen_size; i++, j+=4)
-    {
-        emu_frame_buffer[j] = 0;
-        emu_frame_buffer[j + 1] = 0;
-        emu_frame_buffer[j + 2] = 0;
-        emu_frame_buffer[j + 3] = 255;
-    }
+    emu_debug_background_buffer_width = 32;
+    emu_debug_background_buffer_height = 32;
+
+     for (int i = 0; i < HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT * 4; i++)
+        emu_frame_buffer[i] = 0;
 
     for (int i = 0; i < GG_AUDIO_BUFFER_SIZE; i++)
         audio_buffer[i] = 0;
 
-    for (int i = 0; i < HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 3; i++)
+    for (int i = 0; i < HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4; i++)
         emu_debug_background_buffer[i] = 0;
 
     for (int i = 0; i < 64; i++)
     {
-        for (int j = 0; j < HUC6270_MAX_SPRITE_WIDTH * HUC6270_MAX_SPRITE_HEIGHT * 3; j++)
+        for (int j = 0; j < HUC6270_MAX_SPRITE_WIDTH * HUC6270_MAX_SPRITE_HEIGHT * 4; j++)
             emu_debug_sprite_buffers[i][j] = 0;
+
+        emu_debug_sprite_widths[i] = 16;
+        emu_debug_sprite_heights[i] = 16;
     }
 }
 
 static void init_debug(void)
 {
-    emu_debug_background_buffer = new u8[HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 3];
-    for (int i = 0; i < HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 3; i++)
+    emu_debug_background_buffer = new u8[HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4];
+    for (int i = 0; i < HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4; i++)
         emu_debug_background_buffer[i] = 0;
 
     for (int i = 0; i < 64; i++)
@@ -495,10 +495,11 @@ static void update_debug_background_buffer(void)
         int red = ((color_value >> 3) & 0x07) * 255 / 7;
         int green = ((color_value >> 6) & 0x07) * 255 / 7;
 
-        int index = (pixel * 3);
-        emu_debug_background_buffer[index] = red;
+        int index = (pixel * 4);
+        emu_debug_background_buffer[index + 0] = red;
         emu_debug_background_buffer[index + 1] = green;
         emu_debug_background_buffer[index + 2] = blue;
+        emu_debug_background_buffer[index + 3] = 255;
     }
 }
 
@@ -511,32 +512,40 @@ static void update_debug_sprite_buffers(void)
     u16* sat = huc6270->GetSAT();
     u16* color_table = huc6260->GetColorTable();
 
-
     for (int i = 0; i < 64; i++)
     {
-        u16 sprite_y = sat[i * 4] & 0x03FF;
-        u16 sprite_x = sat[(i * 4) + 1] & 0x03FF;
         u16 sprite_data = sat[(i * 4) + 2] & 0x07FF;
+        u16 sprite_address = sprite_data << 5;  
         u16 sprite_flags = sat[(i * 4) + 3] & 0xB98F;
 
-        bool h_flip = (sprite_flags & 0x0800) != 0;
-        bool v_flip = (sprite_flags & 0x8000) != 0;
         int width = k_huc6270_sprite_width[(sprite_flags >> 8) & 0x01];
         int height = k_huc6270_sprite_height[(sprite_flags >> 12) & 0x03];
         int palette = sprite_flags & 0x0F;
-        bool priority = (sprite_flags & 0x0080) != 0;
 
-        for (int pixel_y = 0; pixel_y < 16; pixel_y++)
+        emu_debug_sprite_widths[i] = width;
+        emu_debug_sprite_heights[i] = height;
+
+        int tiles_h = width >> 4;
+
+        for (int pixel_y = 0; pixel_y < height; pixel_y++)
         {
-            u16 line_start = (sprite_data << 5) + pixel_y;
-            u16 plane1 = vram[line_start];
-            u16 plane2 = vram[line_start + 16];
-            u16 plane3 = vram[line_start + 32];
-            u16 plane4 = vram[line_start + 48];
+            int tile_v = pixel_y >> 4;
+            int tile_line_offset = tile_v * tiles_h * 64;
+            int offset_y = pixel_y % 16;
+            u16 line_start = sprite_address + offset_y + tile_line_offset;
 
-            for (int pixel_x = 0; pixel_x < 16; pixel_x++)
+            for (int pixel_x = 0; pixel_x < width; pixel_x++)
             {
-                int x = 15 - pixel_x;
+                int tile_h = pixel_x >> 4;
+                int tile_offset = tile_h * 64;
+                int line = line_start + tile_offset;
+
+                u16 plane1 = vram[line + 0];
+                u16 plane2 = vram[line + 16];
+                u16 plane3 = vram[line + 32];
+                u16 plane4 = vram[line + 48];
+
+                int x = 15 - (pixel_x % 16);
                 u16 pixel = ((plane1 >> x) & 0x01) | (((plane2 >> x) & 0x01) << 1) | (((plane3 >> x) & 0x01) << 2) | (((plane4 >> x) & 0x01) << 3);
                 pixel |= (palette << 4);
                 pixel |= 0x100;
@@ -544,18 +553,19 @@ static void update_debug_sprite_buffers(void)
                 u8 green = ((color >> 6) & 0x07) * 255 / 7;
                 u8 red = ((color >> 3) & 0x07) * 255 / 7;
                 u8 blue = (color & 0x07) * 255 / 7;
+
                 if (!(pixel & 0x0F))
                 {
                     red = 255;
                     green = 0;
                     blue = 255;
                 }
-                int pixel_index = ((pixel_y * 16) + pixel_x) * 4;
+
+                int pixel_index = ((pixel_y * width) + pixel_x) * 4;
                 emu_debug_sprite_buffers[i][pixel_index + 0] = red;
                 emu_debug_sprite_buffers[i][pixel_index + 1] = green;
                 emu_debug_sprite_buffers[i][pixel_index + 2] = blue;
                 emu_debug_sprite_buffers[i][pixel_index + 3] = 255;
-
             }
         }
     }

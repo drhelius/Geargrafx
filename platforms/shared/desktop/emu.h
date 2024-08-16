@@ -42,6 +42,8 @@ EXTERN u8* emu_debug_sprite_buffers[64];
 EXTERN u8* emu_debug_background_buffer;
 EXTERN int emu_debug_background_buffer_width;
 EXTERN int emu_debug_background_buffer_height;
+EXTERN int emu_debug_sprite_widths[64];
+EXTERN int emu_debug_sprite_heights[64];
 EXTERN Debug_Command emu_debugg_command;
 EXTERN bool emu_debug_pc_changed;
 

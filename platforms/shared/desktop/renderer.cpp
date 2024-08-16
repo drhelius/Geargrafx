@@ -174,7 +174,7 @@ static void init_ogl_debug(void)
 {
     glGenTextures(1, &renderer_emu_debug_huc6270_background);
     glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_background);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, HUC6270_MAX_BACKGROUND_WIDTH, HUC6270_MAX_BACKGROUND_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_background_buffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, HUC6270_MAX_BACKGROUND_WIDTH, HUC6270_MAX_BACKGROUND_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_background_buffer);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -182,7 +182,7 @@ static void init_ogl_debug(void)
     {
         glGenTextures(1, &renderer_emu_debug_huc6270_sprites[s]);
         glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_sprites[s]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_sprite_buffers[s]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_sprite_buffers[s]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
@@ -274,12 +274,12 @@ static void update_debug_textures(void)
 {
     glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_background);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emu_debug_background_buffer_width, emu_debug_background_buffer_height,
-            GL_RGB, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_background_buffer);
+            GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_background_buffer);
 
     for (int s = 0; s < 64; s++)
     {
         glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_sprites[s]);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 16, 16,
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emu_debug_sprite_widths[s], emu_debug_sprite_heights[s],
                 GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_sprite_buffers[s]);
     }
 }

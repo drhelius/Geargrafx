@@ -395,10 +395,12 @@ void gui_debug_window_huc6270_sprites(void)
         p[s] = ImGui::GetCursorScreenPos();
 
         u16 sprite_flags = sat[(s * 4) + 3] & 0xB98F;
-        float fwidth = 16.0f * scale;//k_huc6270_sprite_width[(sprite_flags >> 8) & 0x01] * scale;
-        float fheight = 16.0f * scale;//k_huc6270_sprite_height[(sprite_flags >> 12) & 0x03] * scale;
+        float fwidth = k_huc6270_sprite_width[(sprite_flags >> 8) & 0x01] * scale;
+        float fheight = k_huc6270_sprite_height[(sprite_flags >> 12) & 0x03] * scale;
+        float tex_h = fwidth / 32.0f / scale;
+        float tex_v = fheight / 64.0f / scale;
 
-        ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_sprites[s], ImVec2(fwidth, fheight), ImVec2(0.0f, 0.0f), ImVec2((1.0f / 16.0f) * (fwidth / scale), (1.0f / 16.0f) * (fheight / scale)));
+        ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_sprites[s], ImVec2(fwidth, fheight), ImVec2(0.0f, 0.0f), ImVec2(tex_h, tex_v));
 
         float mouse_x = io.MousePos.x - p[s].x;
         float mouse_y = io.MousePos.y - p[s].y;
