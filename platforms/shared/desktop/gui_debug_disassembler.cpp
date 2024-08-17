@@ -162,7 +162,7 @@ void gui_debug_window_disassembler(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(159, 31), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(463, 553), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("Disassembler", &config_debug.show_disassembler);
 
@@ -611,9 +611,15 @@ static void show_disassembly(void)
 
                 if (show_mem)
                 {
+                    char spaces[32];
+                    int offset = 21 - strlen(line.record->name);
+                    if (offset < 0)
+                        offset = 0;
+                    for (int i = 0; i < offset; i++)
+                        spaces[i] = ' ';
+                    spaces[offset] = 0;
                     ImGui::SameLine();
-                    ImGui::SetCursorPosX(310.0f);
-                    ImGui::TextColored(color_mem, ";%s", line.record->bytes);
+                    ImGui::TextColored(color_mem, "%s;%s", spaces, line.record->bytes);
                 }
 
                 bool is_ret = is_return_instruction(line.record->opcodes[0]);

@@ -36,6 +36,7 @@ static const int config_max_recent_roms = 10;
 
 struct config_Emulator
 {
+    bool maximized = false;
     bool fullscreen = false;
     bool show_menu = true;
     bool paused = false;

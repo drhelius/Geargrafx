@@ -33,8 +33,8 @@ static ImVec4 color_333_to_float(u16 color);
 void gui_debug_window_huc6260_info(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(6, 31), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(75, 228), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(280, 170), ImGuiCond_FirstUseEver);
     ImGui::Begin("HuC6260 Info", &config_debug.show_huc6260_info);
 
     ImGui::PushFont(gui_default_font);
@@ -82,8 +82,8 @@ void gui_debug_window_huc6260_info(void)
 void gui_debug_window_huc6260_palettes(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(6, 31), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(401, 641), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(59, 70), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(526, 400), ImGuiCond_FirstUseEver);
     ImGui::Begin("HuC6260 Palettes", &config_debug.show_huc6260_palettes);
 
     GeargrafxCore* core = emu_get_core();
@@ -94,6 +94,7 @@ void gui_debug_window_huc6260_palettes(void)
     {
         if (ImGui::BeginTabItem("Background", NULL, ImGuiTabItemFlags_None))
         {
+            ImGui::BeginChild("background_palettes", ImVec2(0, 0.0f), ImGuiChildFlags_None);
             ImGui::PushFont(gui_default_font);
 
             ImGui::NewLine();
@@ -111,7 +112,7 @@ void gui_debug_window_huc6260_palettes(void)
                     u16 color = color_table[i];
                     ImVec4 float_color = color_333_to_float(color);
                     char id[16];
-                    sprintf(id, "##pal_%d_%d", row, col);
+                    sprintf(id, "##bg_pal_%d_%d", row, col);
                     ImGui::ColorEdit3(id, (float*)&float_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip);
                     if (col != 15)
                         ImGui::SameLine(0, 10);
@@ -134,12 +135,16 @@ void gui_debug_window_huc6260_palettes(void)
                 ImGui::NewLine();
             }
 
+            ImGui::NewLine();
+
             ImGui::PopFont();
+            ImGui::EndChild();
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem("Sprites", NULL, ImGuiTabItemFlags_None))
         {
+            ImGui::BeginChild("sprite_palettes", ImVec2(0, 0.0f), ImGuiChildFlags_None);
             ImGui::PushFont(gui_default_font);
 
             ImGui::NewLine();
@@ -157,7 +162,7 @@ void gui_debug_window_huc6260_palettes(void)
                     u16 color = color_table[i];
                     ImVec4 float_color = color_333_to_float(color);
                     char id[16];
-                    sprintf(id, "##pal_%d_%d", row, col);
+                    sprintf(id, "##spr_pal_%d_%d", row, col);
                     ImGui::ColorEdit3(id, (float*)&float_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip);
                     if (col != 15)
                         ImGui::SameLine(0, 10);
@@ -180,7 +185,10 @@ void gui_debug_window_huc6260_palettes(void)
                 ImGui::NewLine();
             }
 
+            ImGui::NewLine();
+
             ImGui::PopFont();
+            ImGui::EndChild();
             ImGui::EndTabItem();
         }
 

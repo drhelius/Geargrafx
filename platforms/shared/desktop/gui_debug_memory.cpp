@@ -34,8 +34,8 @@ static int current_mem_edit = 0;
 void gui_debug_window_memory(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(567, 249), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(324, 308), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(625, 321), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(343, 262), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("Memory Editor", &config_debug.show_memory);
 

@@ -165,6 +165,9 @@ static int sdl_init(void)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 
+    if (config_emulator.maximized)
+        window_flags = (SDL_WindowFlags)(window_flags | SDL_WINDOW_MAXIMIZED);
+
     sdl_window = SDL_CreateWindow(GG_TITLE " " GG_VERSION, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config_emulator.window_width, config_emulator.window_height, window_flags);
     gl_context = SDL_GL_CreateContext(sdl_window);
     SDL_GL_MakeCurrent(sdl_window, gl_context);
@@ -642,5 +645,6 @@ static void save_window_size(void)
         SDL_GetWindowSize(sdl_window, &width, &height);
         config_emulator.window_width = width;
         config_emulator.window_height = height;
+        config_emulator.maximized = (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_MAXIMIZED);
     }
 }

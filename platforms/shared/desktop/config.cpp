@@ -117,6 +117,7 @@ void config_read(void)
     config_debug.font_size = read_int("Debug", "FontSize", 0);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
 
+    config_emulator.maximized = read_bool("Emulator", "Maximized", false);
     config_emulator.fullscreen = read_bool("Emulator", "FullScreen", false);
     config_emulator.show_menu = read_bool("Emulator", "ShowMenu", true);
     config_emulator.ffwd_speed = read_int("Emulator", "FFWD", 1);
@@ -223,6 +224,7 @@ void config_write(void)
     write_int("Debug", "FontSize", config_debug.font_size);
     write_bool("Debug", "MultiViewport", config_debug.multi_viewport);
 
+    write_bool("Emulator", "Maximized", config_emulator.maximized);
     write_bool("Emulator", "FullScreen", config_emulator.fullscreen);
     write_bool("Emulator", "ShowMenu", config_emulator.show_menu);
     write_int("Emulator", "FFWD", config_emulator.ffwd_speed);
