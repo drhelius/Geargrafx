@@ -45,29 +45,17 @@ static void update_debug_sprite_buffers(void);
 
 void emu_init(void)
 {
-    int screen_size = HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT;
-
-    emu_frame_buffer = new u8[screen_size * 4];
-
-    for (int i=0, j=0; i < screen_size; i++, j+=4)
-    {
-        emu_frame_buffer[j] = 0;
-        emu_frame_buffer[j + 1] = 0;
-        emu_frame_buffer[j + 2] = 0;
-        emu_frame_buffer[j + 3] = 255;
-    }
+    emu_frame_buffer = new u8[1024 * 512 * 4];
+    audio_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
 
     init_debug();
+    reset_buffers();
 
     geargrafx = new GeargrafxCore();
     geargrafx->Init();
 
     sound_queue = new SoundQueue();
     sound_queue->Start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT);
-
-    audio_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
-    for (int i = 0; i < GG_AUDIO_BUFFER_SIZE; i++)
-        audio_buffer[i] = 0;
 
     audio_enabled = true;
     emu_audio_sync = true;
@@ -400,7 +388,7 @@ static void reset_buffers(void)
     emu_debug_background_buffer_width = 32;
     emu_debug_background_buffer_height = 32;
 
-     for (int i = 0; i < HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT * 4; i++)
+     for (int i = 0; i < 1024 * 512 * 4; i++)
         emu_frame_buffer[i] = 0;
 
     for (int i = 0; i < GG_AUDIO_BUFFER_SIZE; i++)
