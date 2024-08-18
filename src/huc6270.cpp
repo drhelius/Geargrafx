@@ -308,11 +308,11 @@ void HuC6270::VBlankIRQ()
         m_trigger_sat_transfer = false;
         m_auto_sat_transfer = m_register[HUC6270_REG_DCR] & 0x10;
 
-        u16 satb = m_register[HUC6270_REG_DVSSR] & 0x7FFF;
+        u16 satb = m_register[HUC6270_REG_DVSSR];
 
         for (int i = 0; i < HUC6270_SAT_SIZE; i++)
         {
-            m_sat[i] = m_vram[satb + i] & 0x7FFF;
+            m_sat[i] = m_vram[(satb + i) & 0x7FFF];
         }
 
         m_status_register |= HUC6270_STATUS_SAT_END;
@@ -456,7 +456,7 @@ void HuC6270::FetchSprites()
                 y = height - 1 - y;
 
             int tile_y = y >> 4;
-            int tile_line_offset = tile_y * total_tiles_x * 64;
+            int tile_line_offset = tile_y * 2 * 64;
             int offset_y = y & 0xF;
             u16 line_start = sprite_address + tile_line_offset + offset_y;
 

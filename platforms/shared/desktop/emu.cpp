@@ -518,7 +518,7 @@ static void update_debug_sprites(void)
         for (int y = 0; y < height; y++)
         {
             int tile_y = y >> 4;
-            int tile_line_offset = tile_y * total_tiles_x * 64;
+            int tile_line_offset = tile_y * 2 * 64;
             int offset_y = y & 0xF;
             u16 line_start = sprite_address + tile_line_offset + offset_y;
 
