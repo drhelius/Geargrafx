@@ -40,8 +40,8 @@ static void reset_buffers(void);
 static void init_debug(void);
 static void destroy_debug(void);
 static void update_debug(void);
-static void update_debug_background_buffer(void);
-static void update_debug_sprite_buffers(void);
+static void update_debug_background(void);
+static void update_debug_sprites(void);
 
 void emu_init(void)
 {
@@ -431,11 +431,11 @@ static void destroy_debug(void)
 
 static void update_debug(void)
 {
-    update_debug_background_buffer();
-    update_debug_sprite_buffers();
+    update_debug_background();
+    update_debug_sprites();
 }
 
-static void update_debug_background_buffer(void)
+static void update_debug_background(void)
 {
     HuC6260* huc6260 = geargrafx->GetHuC6260();
     HuC6270* huc6270 = geargrafx->GetHuC6270();
@@ -491,7 +491,7 @@ static void update_debug_background_buffer(void)
     }
 }
 
-static void update_debug_sprite_buffers(void)
+static void update_debug_sprites(void)
 {
     HuC6260* huc6260 = geargrafx->GetHuC6260();
     HuC6270* huc6270 = geargrafx->GetHuC6270();
@@ -503,7 +503,7 @@ static void update_debug_sprite_buffers(void)
     for (int i = 0; i < 64; i++)
     {
         u16 sprite_data = sat[(i * 4) + 2] & 0x07FF;
-        u16 sprite_address = sprite_data << 5;  
+        u16 sprite_address = sprite_data << 5;
         u16 sprite_flags = sat[(i * 4) + 3] & 0xB98F;
 
         int width = k_huc6270_sprite_width[(sprite_flags >> 8) & 0x01];
@@ -513,30 +513,31 @@ static void update_debug_sprite_buffers(void)
         emu_debug_sprite_widths[i] = width;
         emu_debug_sprite_heights[i] = height;
 
-        int tiles_h = width >> 4;
+        int total_tiles_x = width >> 4;
 
-        for (int pixel_y = 0; pixel_y < height; pixel_y++)
+        for (int y = 0; y < height; y++)
         {
-            int tile_v = pixel_y >> 4;
-            int tile_line_offset = tile_v * tiles_h * 64;
-            int offset_y = pixel_y % 16;
-            u16 line_start = sprite_address + offset_y + tile_line_offset;
+            int tile_y = y >> 4;
+            int tile_line_offset = tile_y * total_tiles_x * 64;
+            int offset_y = y & 0xF;
+            u16 line_start = sprite_address + tile_line_offset + offset_y;
 
-            for (int pixel_x = 0; pixel_x < width; pixel_x++)
+            for (int x = 0; x < width; x++)
             {
-                int tile_h = pixel_x >> 4;
-                int tile_offset = tile_h * 64;
-                int line = line_start + tile_offset;
+                int tile_x = x >> 4;
+                int tile_x_offset = tile_x * 64;
+                int line = line_start + tile_x_offset;
 
                 u16 plane1 = vram[line + 0];
                 u16 plane2 = vram[line + 16];
                 u16 plane3 = vram[line + 32];
                 u16 plane4 = vram[line + 48];
 
-                int x = 15 - (pixel_x % 16);
-                u16 pixel = ((plane1 >> x) & 0x01) | (((plane2 >> x) & 0x01) << 1) | (((plane3 >> x) & 0x01) << 2) | (((plane4 >> x) & 0x01) << 3);
+                int pixel_x = 15 - (x & 0xF);
+                u16 pixel = ((plane1 >> pixel_x) & 0x01) | (((plane2 >> pixel_x) & 0x01) << 1) | (((plane3 >> pixel_x) & 0x01) << 2) | (((plane4 >> pixel_x) & 0x01) << 3);
                 pixel |= (palette << 4);
                 pixel |= 0x100;
+
                 int color = color_table[pixel & 0x1FF];
                 u8 green = ((color >> 6) & 0x07) * 255 / 7;
                 u8 red = ((color >> 3) & 0x07) * 255 / 7;
@@ -549,7 +550,7 @@ static void update_debug_sprite_buffers(void)
                     blue = 255;
                 }
 
-                int pixel_index = ((pixel_y * width) + pixel_x) * 4;
+                int pixel_index = ((y * width) + x) << 2;
                 emu_debug_sprite_buffers[i][pixel_index + 0] = red;
                 emu_debug_sprite_buffers[i][pixel_index + 1] = green;
                 emu_debug_sprite_buffers[i][pixel_index + 2] = blue;

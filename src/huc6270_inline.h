@@ -217,6 +217,15 @@ inline void HuC6270::RCRIRQ()
     }
 }
 
+inline void HuC6270::OverflowIRQ()
+{
+    if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW)
+    {
+        m_status_register |= HUC6270_STATUS_OVERFLOW;
+        m_huc6280->AssertIRQ1(true);
+    }
+}
+
 inline int HuC6270::ClocksToBYRLatch()
 {
     int ret = 1;

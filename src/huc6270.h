@@ -131,6 +131,7 @@ private:
     void NextHorizontalState();
     void VBlankIRQ();
     void RCRIRQ();
+    void OverflowIRQ();
     int ClocksToBYRLatch();
     int ClocksToBXRLatch();
     void RenderLine();
