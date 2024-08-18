@@ -114,8 +114,8 @@ void gui_popup_modal_about(void)
 
                 ImGui::Text("Build: %s", GG_VERSION);
 
-                #if defined(__TIMESTAMP__)
-                ImGui::Text("Generated on: %s", __TIMESTAMP__);
+                #if defined(__DATE__) && defined(__TIME__)
+                ImGui::Text("Built on: %s - %s", __DATE__, __TIME__);
                 #endif
                 #if defined(_M_ARM64)
                 ImGui::Text("Windows ARM64 build");
