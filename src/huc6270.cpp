@@ -459,8 +459,7 @@ void HuC6270::FetchSprites()
             if (y >= height)
                 continue;
 
-            if (false)
-            //if (m_sprite_count >= 16)
+            if (m_sprite_count >= 16)
             {
                 OverflowIRQ();
                 if (!m_no_sprite_limit)
@@ -481,25 +480,31 @@ void HuC6270::FetchSprites()
             int tile_y = y >> 4;
             int tile_line_offset = tile_y * 2 * 64;
             int offset_y = y & 0xF;
-            u16 line_start = sprite_address + tile_line_offset + offset_y;
 
-            m_sprites[m_sprite_count].x = sprite_x;
-            m_sprites[m_sprite_count].flags = flags;
-            m_sprites[m_sprite_count].palette = palette;
-
-            if (width == 32)
+            if (width == 16)
             {
-                line_start += (x_flip ? 0 : 64);
-                m_sprites[m_sprite_count].x += 16;
+                u16 line_start = sprite_address + tile_line_offset + offset_y;
+                m_sprites[m_sprite_count].x = sprite_x;
+                m_sprites[m_sprite_count].flags = flags;
+                m_sprites[m_sprite_count].palette = palette;
+                m_sprites[m_sprite_count].data[0] = m_vram[line_start + 0];
+                m_sprites[m_sprite_count].data[1] = m_vram[line_start + 16];
+                m_sprites[m_sprite_count].data[2] = m_vram[line_start + 32];
+                m_sprites[m_sprite_count].data[3] = m_vram[line_start + 48];
             }
-
-            m_sprites[m_sprite_count].data[0] = m_vram[line_start + 0];
-            m_sprites[m_sprite_count].data[1] = m_vram[line_start + 16];
-            m_sprites[m_sprite_count].data[2] = m_vram[line_start + 32];
-            m_sprites[m_sprite_count].data[3] = m_vram[line_start + 48];
-
-            if (width == 32)
+            else
             {
+                u16 line_start = sprite_address + tile_line_offset + offset_y;
+                u16 line = line_start + (x_flip ? 64 : 0);
+
+                m_sprites[m_sprite_count].x = sprite_x;
+                m_sprites[m_sprite_count].flags = flags;
+                m_sprites[m_sprite_count].palette = palette;
+                m_sprites[m_sprite_count].data[0] = m_vram[line + 0];
+                m_sprites[m_sprite_count].data[1] = m_vram[line + 16];
+                m_sprites[m_sprite_count].data[2] = m_vram[line + 32];
+                m_sprites[m_sprite_count].data[3] = m_vram[line + 48];
+
                 m_sprite_count++;
 
                 if (m_sprite_count >= 16)
@@ -509,14 +514,15 @@ void HuC6270::FetchSprites()
                         break;
                 }
 
-                line_start += (x_flip ? 64 : -64);
-                m_sprites[m_sprite_count].x = sprite_x;
+                line = line_start + (x_flip ? 0 : 64);
+
+                m_sprites[m_sprite_count].x = sprite_x + 16;
                 m_sprites[m_sprite_count].flags = flags;
                 m_sprites[m_sprite_count].palette = palette;
-                m_sprites[m_sprite_count].data[0] = m_vram[line_start + 0];
-                m_sprites[m_sprite_count].data[1] = m_vram[line_start + 16];
-                m_sprites[m_sprite_count].data[2] = m_vram[line_start + 32];
-                m_sprites[m_sprite_count].data[3] = m_vram[line_start + 48];
+                m_sprites[m_sprite_count].data[0] = m_vram[line + 0];
+                m_sprites[m_sprite_count].data[1] = m_vram[line + 16];
+                m_sprites[m_sprite_count].data[2] = m_vram[line + 32];
+                m_sprites[m_sprite_count].data[3] = m_vram[line + 48];
             }
 
             m_sprite_count++;
