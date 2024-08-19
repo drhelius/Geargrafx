@@ -88,7 +88,11 @@ void gui_action_save_screenshot(const char* path)
     string file_path;
 
     if (path != NULL)
+    {
         file_path = path;
+        if (file_path.find_last_of(".") == string::npos)
+            file_path += ".png";
+    }
     else if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
          file_path = file_path.assign(emu_savestates_path)+ "/" + string(emu_get_core()->GetCartridge()->GetFileName()) + " - " + date_time + ".png";
     else
