@@ -121,6 +121,7 @@ private:
     bool m_vblank_triggered;
     bool m_active_line;
     u16 m_line_buffer[HUC6270_MAX_RESOLUTION_WIDTH];
+    u16 m_line_buffer_sprites[HUC6270_MAX_RESOLUTION_WIDTH];
     int m_line_buffer_index;
     bool m_no_sprite_limit;
     int m_sprite_count;

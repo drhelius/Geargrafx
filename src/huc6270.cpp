@@ -107,6 +107,7 @@ void HuC6270::Reset()
     for (int i = 0; i < HUC6270_MAX_RESOLUTION_WIDTH; i++)
     {
         m_line_buffer[i] = 0;
+        m_line_buffer_sprites[i] = 0;
     }
 
     for (int i = 0; i < 128; i++)
@@ -335,7 +336,9 @@ void HuC6270::RenderLine()
             color = 0x000;
 
         for (int i = 0; i < width; i++)
+        {
             m_line_buffer[i] = color;
+        }
     }
 
     if((m_latched_cr & 0x80) != 0)
@@ -386,6 +389,11 @@ void HuC6270::RenderLine()
 
 void HuC6270::RenderSprites(int width)
 {
+    for (int i = 0; i < width; i++)
+    {
+        m_line_buffer_sprites[i] = 0;
+    }
+
     for(int i = (m_sprite_count - 1) ; i >= 0; i--)
     {
         int pos = m_sprites[i].x - 0x20;
@@ -406,23 +414,37 @@ void HuC6270::RenderSprites(int width)
 
             if(pixel & 0x0F)
             {
-                pixel |= m_sprites[i].palette;
-                pixel |= 0x100;
-
                 int x_in_screen = pos + x;
-
                 if((x_in_screen < 0) || (x_in_screen >= width))
                     continue;
 
-                m_line_buffer[x_in_screen] = pixel;
+                bool priority = (m_sprites[i].flags & 0x0080);
+
+                if (!priority && (m_line_buffer[x_in_screen] & 0x0F))
+                    pixel = 0;
+                else
+                    pixel |= m_sprites[i].palette;
+
+                pixel |= 0x100;
+
+                m_line_buffer_sprites[x_in_screen] = pixel;
             }
         }
+    }
+
+    for (int i = 0; i < width; i++)
+    {
+        if(m_line_buffer_sprites[i] & 0x0F)
+            m_line_buffer[i] = m_line_buffer_sprites[i];
     }
 }
 
 void HuC6270::FetchSprites()
 {
     m_sprite_count = 0;
+
+    if (!(HUC6270_VAR_CR & 0x0040))
+        return;
 
     for (int i = 0; i < 64; i++)
     {
@@ -437,7 +459,8 @@ void HuC6270::FetchSprites()
             if (y >= height)
                 continue;
 
-            if (m_sprite_count >= 16)
+            if (false)
+            //if (m_sprite_count >= 16)
             {
                 OverflowIRQ();
                 if (!m_no_sprite_limit)
