@@ -451,7 +451,8 @@ void HuC6270::FetchSprites()
         int sprite_offset = i << 2;
         int sprite_y = (m_sat[sprite_offset + 0] & 0x3FF) - 64;
         u16 flags = m_sat[sprite_offset + 3];
-        u16 height = k_huc6270_sprite_height[(flags >> 12) & 0x03];
+        int cgy = (flags >> 12) & 0x03;
+        u16 height = k_huc6270_sprite_height[cgy];
 
         if ((sprite_y <= m_raster_line) && ((sprite_y + height) > m_raster_line))
         {
@@ -466,19 +467,21 @@ void HuC6270::FetchSprites()
                     break;
             }
 
+            int cgx = (flags >> 8) & 0x01;
+            u16 width = k_huc6270_sprite_width[cgx];
             u16 sprite_x = m_sat[sprite_offset + 1] & 0x3FF;
-            u16 pattern = m_sat[sprite_offset + 2] & 0x3FF;
-            u16 sprite_address = pattern << 5;
+            u16 pattern = (m_sat[sprite_offset + 2] >> 1) & 0x3FF;
+            pattern &= k_huc6270_sprite_mask_width[cgx];
+            pattern &= k_huc6270_sprite_mask_height[cgy];
+            u16 sprite_address = pattern << 6;
             u16 palette = (flags & 0x0F) << 4;
-            u16 width = k_huc6270_sprite_width[(flags >> 8) & 0x01];
-            int total_tiles_x = width >> 4;
             bool x_flip = (flags & 0x0800);
 
             if(flags & 0x8000)
                 y = height - 1 - y;
 
             int tile_y = y >> 4;
-            int tile_line_offset = tile_y * 2 * 64;
+            int tile_line_offset = tile_y * 128;
             int offset_y = y & 0xF;
 
             if (width == 16)

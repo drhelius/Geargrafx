@@ -493,25 +493,26 @@ static void update_debug_sprites(void)
 {
     HuC6260* huc6260 = geargrafx->GetHuC6260();
     HuC6270* huc6270 = geargrafx->GetHuC6270();
-    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     u16* vram = huc6270->GetVRAM();
     u16* sat = huc6270->GetSAT();
     u16* color_table = huc6260->GetColorTable();
 
     for (int i = 0; i < 64; i++)
     {
-        u16 sprite_data = sat[(i * 4) + 2] & 0x07FF;
-        u16 sprite_address = sprite_data << 5;
-        u16 sprite_flags = sat[(i * 4) + 3] & 0xB98F;
-
-        int width = k_huc6270_sprite_width[(sprite_flags >> 8) & 0x01];
-        int height = k_huc6270_sprite_height[(sprite_flags >> 12) & 0x03];
-        int palette = sprite_flags & 0x0F;
+        int sprite_offset = i << 2;
+        u16 flags = sat[sprite_offset + 3] & 0xB98F;
+        int palette = flags & 0x0F;
+        int cgx = (flags >> 8) & 0x01;
+        int cgy = (flags >> 12) & 0x03;
+        int width = k_huc6270_sprite_width[cgx];
+        int height = k_huc6270_sprite_height[cgy];
+        u16 pattern = (sat[sprite_offset + 2] >> 1) & 0x3FF;
+        pattern &= k_huc6270_sprite_mask_width[cgx];
+        pattern &= k_huc6270_sprite_mask_height[cgy];
+        u16 sprite_address = pattern << 6;
 
         emu_debug_sprite_widths[i] = width;
         emu_debug_sprite_heights[i] = height;
-
-        int total_tiles_x = width >> 4;
 
         for (int y = 0; y < height; y++)
         {

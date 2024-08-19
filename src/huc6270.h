@@ -154,6 +154,8 @@ static const int k_huc6270_screen_size_y_pixels[8] = { 32 * 8, 32 * 8, 32 * 8, 3
 static const int k_huc6270_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
 static const int k_huc6270_sprite_width[2] = { 16, 32 };
 static const int k_huc6270_sprite_height[4] = { 16, 32, 64, 64 };
+static const int k_huc6270_sprite_mask_width[2] = { 0xFFFF, 0xFFFE };
+static const int k_huc6270_sprite_mask_height[4] = { 0xFFFF, 0xFFFD, 0xFFF9, 0xFFF9 };
 
 static const char* const k_register_names_aligned[20] = {
     "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",
