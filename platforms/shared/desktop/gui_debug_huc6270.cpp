@@ -23,6 +23,7 @@
 #include "imgui/imgui.h"
 #include "../../../src/geargrafx.h"
 #include "gui_debug_constants.h"
+#include "gui_debug_memory.h"
 #include "gui.h"
 #include "config.h"
 #include "emu.h"
@@ -315,7 +316,6 @@ void gui_debug_window_huc6270_background(void)
             int i = (screen_size_x * y) + x;
             if (i >= 0 && i < bat_size)
             {
-
                 ImVec2 tile_pos = ImVec2(p.x + (x * 8.0f * scale), p.y + (y * 8.0f * scale));
                 ImVec2 tile_size = ImVec2(8.0f * scale, 8.0f * scale);
                 draw_list->AddRect(tile_pos, ImVec2(tile_pos.x + tile_size.x, tile_pos.y + tile_size.y), ImColor(cyan), 2.0f, ImDrawFlags_RoundCornersAll, 2.0f);
@@ -351,6 +351,11 @@ void gui_debug_window_huc6270_background(void)
                 ImGui::PopFont();
 
                 ImGui::EndTooltip();
+
+                if (ImGui::IsMouseClicked(0))
+                {
+                    gui_debug_memory_goto(MEMORY_EDITOR_VRAM, tile_index * 16);
+                }
             }
         }
 
@@ -436,7 +441,7 @@ void gui_debug_window_huc6270_sprites(void)
         {
             int sprite_y = sat[s * 4] & 0x03FF;
             int sprite_x = sat[(s * 4) + 1] & 0x03FF;
-            u16 sprite_data = sat[(s * 4) + 2] & 0x07FF;
+            u16 pattern = (sat[(s * 4) + 2] >> 1) & 0x03FF;
 
             bool h_flip = (sprite_flags & 0x0800) != 0;
             bool v_flip = (sprite_flags & 0x8000) != 0;
@@ -477,10 +482,10 @@ void gui_debug_window_huc6270_sprites(void)
             ImGui::Text("%dx%d", width, height);
 
             ImGui::TextColored(magenta, " PATTERN:  "); ImGui::SameLine();
-            ImGui::Text("%03X (%d)", sprite_data, sprite_data);
+            ImGui::Text("%03X (%d)", pattern, pattern);
 
             ImGui::TextColored(magenta, " VRAM ADDR:"); ImGui::SameLine();
-            ImGui::Text("$%04X", sprite_data << 5);
+            ImGui::Text("$%04X", pattern << 6);
 
             ImGui::TextColored(magenta, " PALETTE:  "); ImGui::SameLine();
             ImGui::Text("%01X (%d)", palette, palette);
@@ -496,14 +501,12 @@ void gui_debug_window_huc6270_sprites(void)
 
             if (ImGui::IsMouseClicked(0))
             {
-                // mem_edit_select = 4;
-                // mem_edit[4].JumpToAddress(sprite_tile_addr);
+                gui_debug_memory_goto(MEMORY_EDITOR_VRAM, pattern << 6);
             }
         }
     }
 
     ImGui::Columns(1);
-
 
     ImGui::PopFont();
 

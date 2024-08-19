@@ -26,9 +26,21 @@
     #define EXTERN extern
 #endif
 
+enum Memory_Editor_Tabs
+{
+    MEMORY_EDITOR_RAM = 0,
+    MEMORY_EDITOR_ZERO_PAGE,
+    MEMORY_EDITOR_ROM,
+    MEMORY_EDITOR_VRAM,
+    MEMORY_EDITOR_SAT,
+    MEMORY_EDITOR_PALETTES,
+    MEMORY_EDITOR_MAX
+};
+
 EXTERN void gui_debug_window_memory(void);
 EXTERN void gui_debug_copy_memory(void);
 EXTERN void gui_debug_paste_memory(void);
+EXTERN void gui_debug_memory_goto(int editor, int address);
 
 #undef GUI_DEBUG_MEMORY_IMPORT
 #undef EXTERN
