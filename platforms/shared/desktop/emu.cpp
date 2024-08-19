@@ -360,11 +360,9 @@ void emu_save_screenshot(const char* file_path)
     GG_Runtime_Info runtime;
     emu_get_runtime(runtime);
 
-    Log("Saving screenshot to %s", file_path);
-
     stbi_write_png(file_path, runtime.screen_width, runtime.screen_height, 4, emu_frame_buffer, runtime.screen_width * 4);
 
-    Log("Screenshot saved!");
+    Log("Screenshot saved to %s", file_path);
 }
 
 static void save_ram(void)
