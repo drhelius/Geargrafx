@@ -34,9 +34,13 @@ inline u16 HuC6270::Clock(bool* active)
     {
         *active = true;
         if (m_line_buffer_index < 512)
+        {
             pixel = m_line_buffer[m_line_buffer_index];
+        }
         else
+        {
             Debug("HuC6270 line buffer overflow %d", m_line_buffer_index);
+        }
         m_line_buffer_index++;
     }
 

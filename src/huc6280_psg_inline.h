@@ -30,6 +30,7 @@ inline void HuC6280PSG::Clock()
 inline void HuC6280PSG::Write(u32 address, u8 value)
 {
     Sync();
+
 }
 
 #endif /* HUC6280_PSG_INLINE_H */

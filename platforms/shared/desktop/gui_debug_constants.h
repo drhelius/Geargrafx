@@ -22,11 +22,6 @@
 
 #include "imgui/imgui.h"
 
-static const int gui_debug_symbols_count = 0;
-static const char* gui_debug_symbols[1] = {
-    "00:0000 0000",
-};
-
 static const ImVec4 cyan =          ImVec4(0.10f, 0.90f, 0.90f, 1.0f);
 static const ImVec4 dark_cyan =     ImVec4(0.00f, 0.30f, 0.30f, 1.0f);
 static const ImVec4 magenta =       ImVec4(1.00f, 0.50f, 0.96f, 1.0f);

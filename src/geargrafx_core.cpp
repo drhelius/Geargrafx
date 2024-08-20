@@ -233,9 +233,14 @@ void GeargrafxCore::KeyReleased(GG_Controllers controller, GG_Keys key)
 void GeargrafxCore::Pause(bool paused)
 {
     if (!m_paused && paused)
+    {
         Debug("Core paused");
+    }
     else if (m_paused && !paused)
+    {
         Debug("Core resumed");
+    }
+
     m_paused = paused;
 }
 

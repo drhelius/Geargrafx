@@ -71,30 +71,30 @@ inline void HuC6280::InjectCycles(unsigned int cycles)
 
 inline u8 HuC6280:: ReadInterruptRegister(u32 address)
 {
-    switch (address & 1)
+    if ((address & 1) == 0)
     {
-        case 0:
-            // Acknowledge TIQ
-            UnsetBit(m_interrupt_request_register, 2);
-            m_timer_irq = false;
-            return m_interrupt_disable_register;
-        case 1:
-            return m_interrupt_request_register;
+        // Acknowledge TIQ
+        UnsetBit(m_interrupt_request_register, 2);
+        m_timer_irq = false;
+        return m_interrupt_disable_register;
+    }
+    else
+    {
+        return m_interrupt_request_register;
     }
 }
 
 inline void HuC6280::WriteInterruptRegister(u32 address, u8 value)
 {
-    switch (address & 1)
+    if ((address & 1) == 0)
     {
-        case 0:
-            m_interrupt_disable_register = value & 0x07;
-            break;
-        case 1:
-            // Acknowledge TIQ
-            UnsetBit(m_interrupt_request_register, 2);
-            m_timer_irq = false;
-            break;
+        m_interrupt_disable_register = value & 0x07;
+    }
+    else
+    {
+        // Acknowledge TIQ
+        UnsetBit(m_interrupt_request_register, 2);
+        m_timer_irq = false;
     }
 }
 

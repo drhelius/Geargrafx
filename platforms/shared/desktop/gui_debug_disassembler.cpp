@@ -85,9 +85,6 @@ void gui_debug_reset_symbols(void)
 {
     fixed_symbols.clear();
     dynamic_symbols.clear();
-
-    for (int i = 0; i < gui_debug_symbols_count; i++)
-        add_symbol(gui_debug_symbols[i]);
 }
 
 void gui_debug_reset_breakpoints(void)
