@@ -107,7 +107,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                 ImGui::TableSetupColumn(buf, ImGuiTableColumnFlags_WidthFixed, character_size.x * max_chars_per_cell + (6 + byte_cell_padding) * 1);
             }
 
-            if ((m_mem_word == 1) and ascii)
+            if ((m_mem_word == 1) && ascii)
             {
                 ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, character_size.x * ascii_padding);
                 ImGui::TableSetupColumn("ASCII", ImGuiTableColumnFlags_WidthFixed, (character_size.x + character_cell_padding * 1) * m_bytes_per_row);
