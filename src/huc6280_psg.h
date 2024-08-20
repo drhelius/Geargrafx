@@ -22,6 +22,12 @@
 
 #include "common.h"
 
+#define GG_AUDIO_SAMPLE_RATE 44100
+#define GG_AUDIO_BUFFER_SIZE 2048
+#define GG_AUDIO_BUFFER_COUNT 3
+#define GG_AUDIO_CLOCK_RATE (GG_CLOCK_RATE / 3)
+#define GG_AUDIO_CYCLES_PER_SAMPLE (GG_AUDIO_CLOCK_RATE / GG_AUDIO_SAMPLE_RATE)
+
 class HuC6280PSG
 {
 public:
@@ -51,6 +57,10 @@ public:
     void Reset();
     void Clock();
     void Write(u32 address, u8 value);
+    int EndFrame(s16* sample_buffer);
+
+private:
+    void Sync();
 
 private:
     HuC6280PSG_Channel* m_channels;
@@ -58,6 +68,11 @@ private:
     u8 m_main_amplitude;
     u8 m_lfo_frequency;
     u8 m_lfo_control;
+    int m_elapsed_cycles;
+    int m_sample_cycle_counter;
+    int m_cycles_per_sample;
+    int m_buffer_index;
+    s16* m_buffer;
 };
 
 #include "huc6280_psg_inline.h"

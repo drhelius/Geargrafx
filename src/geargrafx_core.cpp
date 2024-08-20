@@ -108,7 +108,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
 
         stop = m_huc6260->Clock();
 
-        if (m_clock % 6 == 0)
+        if (m_clock % 3 == 0)
             m_audio->Clock();
 
 #ifndef GG_DISABLE_DISASSEMBLER
@@ -134,7 +134,6 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     while (!stop);
 
     m_audio->EndFrame(sample_buffer, sample_count);
-    RenderFrameBuffer(frame_buffer);
 
 #ifndef GG_DISABLE_DISASSEMBLER
     return m_huc6280->BreakpointHit() || m_huc6280->RunToBreakpointHit();
@@ -539,28 +538,4 @@ void GeargrafxCore::Reset()
     m_huc6280->Reset();
     m_audio->Reset();
     m_input->Reset();
-}
-
-void GeargrafxCore::RenderFrameBuffer(u8* final_framebuffer)
-{
-    // int size = GC_RESOLUTION_WIDTH_WITH_OVERSCAN * GC_RESOLUTION_HEIGHT_WITH_OVERSCAN;
-    // u16* srcBuffer = (m_memory->IsBiosLoaded() ? m_video->GetFrameBuffer() : kNoBiosImage);
-
-    // switch (m_pixelFormat)
-    // {
-    //     case GG_PIXEL_RGB555:
-    //     case GG_PIXEL_BGR555:
-    //     case GG_PIXEL_RGB565:
-    //     case GG_PIXEL_BGR565:
-    //     {
-    //         m_video->Render16bit(srcBuffer, finalFrameBuffer, m_pixelFormat, size, true);
-    //         break;
-    //     }
-    //     case GG_PIXEL_RGB888:
-    //     case GG_PIXEL_BGR888:
-    //     {
-    //         m_video->Render24bit(srcBuffer, finalFrameBuffer, m_pixelFormat, size, true);
-    //         break;
-    //     }
-    // }
 }

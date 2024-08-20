@@ -22,10 +22,6 @@
 
 #include "types.h"
 
-#define GG_AUDIO_SAMPLE_RATE 44100
-#define GG_AUDIO_BUFFER_SIZE 2048
-#define GG_AUDIO_BUFFER_COUNT 3
-
 class HuC6280PSG;
 
 class Audio
@@ -43,10 +39,9 @@ public:
     // void LoadState(std::istream& stream);
 
 private:
-    u64 m_elapsed_cycles;
-    int m_sample_rate;
     bool m_mute;
     HuC6280PSG* m_psg;
+    s16* m_psg_buffer;
 };
 
 #include "audio_inline.h"

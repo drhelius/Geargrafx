@@ -24,7 +24,6 @@
 
 inline void Audio::Clock()
 {
-    m_elapsed_cycles++;
     m_psg->Clock();
 }
 

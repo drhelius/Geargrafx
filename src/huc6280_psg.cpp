@@ -26,17 +26,24 @@ HuC6280PSG::HuC6280PSG()
 
 HuC6280PSG::~HuC6280PSG()
 {
+    SafeDeleteArray(m_buffer);
     SafeDeleteArray(m_channels);
 }
 
 void HuC6280PSG::Init()
 {
+    m_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
     m_channels = new HuC6280PSG_Channel[6];
     Reset();
 }
 
 void HuC6280PSG::Reset()
 {
+    m_elapsed_cycles = 0;
+    m_buffer_index = 0;
+    m_cycles_per_sample = GG_AUDIO_CYCLES_PER_SAMPLE;
+    m_sample_cycle_counter = 0;
+
     m_channel_select = 0;
     m_main_amplitude = 0;
     m_lfo_frequency = 0;
@@ -54,4 +61,52 @@ void HuC6280PSG::Reset()
             m_channels[i].wave_data[j] = 0;
         }
     }
+}
+
+int HuC6280PSG::EndFrame(s16* sample_buffer)
+{
+    Sync();
+
+    int samples = 0;
+
+    if (IsValidPointer(sample_buffer))
+    {
+        samples = m_buffer_index;
+
+        for (int s = 0; s < samples; s++)
+            sample_buffer[s] = m_buffer[s];
+    }
+
+    m_buffer_index = 0;
+
+    return samples;
+}
+
+void HuC6280PSG::Sync()
+{
+    for (int i = 0; i < m_elapsed_cycles; i++)
+    {
+        m_sample_cycle_counter++;
+
+        if (m_sample_cycle_counter >= m_cycles_per_sample)
+        {
+            m_sample_cycle_counter -= m_cycles_per_sample;
+
+            s16 sample = 0;
+
+            // TODO: PSG sound generation
+
+            m_buffer[m_buffer_index] = sample;
+            m_buffer[m_buffer_index + 1] = sample;
+            m_buffer_index += 2;
+
+            if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
+            {
+                Log("ERROR: PSG buffer overflow");
+                m_buffer_index = 0;
+            }
+        }
+    }
+
+    m_elapsed_cycles = 0;
 }

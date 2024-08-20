@@ -25,26 +25,31 @@
 Audio::Audio()
 {
     InitPointer(m_psg);
-    m_elapsed_cycles = 0;
-    m_sample_rate = 44100;
     m_mute = false;
 }
 
 Audio::~Audio()
 {
     SafeDelete(m_psg);
+    SafeDeleteArray(m_psg_buffer);
 }
 
 void Audio::Init()
 {
+    m_psg_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
+
     m_psg = new HuC6280PSG();
     m_psg->Init();
 }
 
 void Audio::Reset()
 {
-    m_elapsed_cycles = 0;
     m_psg->Reset();
+
+    for (int i = 0; i < GG_AUDIO_BUFFER_SIZE; i++)
+    {
+        m_psg_buffer[i] = 0;
+    }
 }
 
 void Audio::Mute(bool mute)
@@ -55,7 +60,21 @@ void Audio::Mute(bool mute)
 void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 {
     *sample_count = 0;
-    m_elapsed_cycles = 0;
+
+    int count = m_psg->EndFrame(m_psg_buffer);
+
+    if (IsValidPointer(sample_buffer) && IsValidPointer(sample_count))
+    {
+        *sample_count = count;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (m_mute)
+                sample_buffer[i] = 0;
+            else
+                sample_buffer[i] = m_psg_buffer[i];
+        }
+    }
 }
 
 // void Audio::SaveState(std::ostream& stream)

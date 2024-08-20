@@ -602,8 +602,7 @@ static void render(void)
 
 static void frame_throttle(void)
 {
-    // TODO: temporal
-    if (true || emu_is_empty() || emu_is_paused() || config_emulator.ffwd)
+    if (emu_is_empty() || emu_is_paused() || config_emulator.ffwd)
     {
         Uint64 count_per_sec = SDL_GetPerformanceFrequency();
         float elapsed = (float)(frame_time_end - frame_time_start) / (float)count_per_sec;

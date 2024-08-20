@@ -77,7 +77,6 @@ public:
 
 private:
     void Reset();
-    void RenderFrameBuffer(u8* final_framebuffer);
 
 private:
     Memory* m_memory;
