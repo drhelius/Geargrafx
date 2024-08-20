@@ -27,6 +27,7 @@
 #include "gui_debug_huc6270.h"
 #include "gui_debug_huc6260.h"
 #include "gui_debug_memory.h"
+#include "gui_debug_psg.h"
 #include "config.h"
 
 void gui_debug_windows(void)
@@ -51,5 +52,7 @@ void gui_debug_windows(void)
             gui_debug_window_huc6270_sprites();
         if (config_debug.show_huc6270_info)
             gui_debug_window_huc6270_info();
+        if (config_debug.show_psg)
+            gui_debug_window_psg();
     }
 }

@@ -38,6 +38,7 @@ public:
         u8 amplitude;
         u8 wave;
         u8 noise;
+        u8 wave_index;
         u8 wave_data[32];
     };
 
@@ -48,6 +49,8 @@ public:
         u8* MAIN_AMPLITUDE;
         u8* LFO_FREQUENCY;
         u8* LFO_CONTROL;
+        int* BUFFER_INDEX;
+        s16* BUFFER;
     };
 
 public:
@@ -58,12 +61,15 @@ public:
     void Clock();
     void Write(u32 address, u8 value);
     int EndFrame(s16* sample_buffer);
+    HuC6280PSG_State* GetState();
 
 private:
     void Sync();
 
 private:
+    HuC6280PSG_State m_state;
     HuC6280PSG_Channel* m_channels;
+    HuC6280PSG_Channel* m_current_channel;
     u8 m_channel_select;
     u8 m_main_amplitude;
     u8 m_lfo_frequency;

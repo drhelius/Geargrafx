@@ -114,6 +114,7 @@ void config_read(void)
     config_debug.show_huc6270_background = read_bool("Debug", "HuC6270Background", false);
     config_debug.show_huc6270_sprites = read_bool("Debug", "HuC6270Sprites", false);
     config_debug.show_huc6270_info = read_bool("Debug", "HuC6270Info", false);
+    config_debug.show_psg = read_bool("Debug", "PSG", false);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
 
@@ -221,6 +222,7 @@ void config_write(void)
     write_bool("Debug", "HuC6270Background", config_debug.show_huc6270_background);
     write_bool("Debug", "HuC6270Sprites", config_debug.show_huc6270_sprites);
     write_bool("Debug", "HuC6270Info", config_debug.show_huc6270_info);
+    write_bool("Debug", "PSG", config_debug.show_psg);
     write_int("Debug", "FontSize", config_debug.font_size);
     write_bool("Debug", "MultiViewport", config_debug.multi_viewport);
 

@@ -17,34 +17,17 @@
  *
  */
 
-#ifndef AUDIO_H
-#define AUDIO_H
+#ifndef GUI_DEBUG_PSG_H
+#define	GUI_DEBUG_PSG_H
 
-#include "types.h"
+#ifdef GUI_DEBUG_PSG_IMPORT
+    #define EXTERN
+#else
+    #define EXTERN extern
+#endif
 
-class HuC6280PSG;
+EXTERN void gui_debug_window_psg(void);
 
-class Audio
-{
-public:
-    Audio();
-    ~Audio();
-    void Init();
-    void Reset();
-    void Mute(bool mute);
-    void Clock();
-    void WritePSG(u32 address, u8 value);
-    void EndFrame(s16* sample_buffer, int* sample_count);
-    HuC6280PSG* GetPSG();
-    // void SaveState(std::ostream& stream);
-    // void LoadState(std::istream& stream);
-
-private:
-    bool m_mute;
-    HuC6280PSG* m_psg;
-    s16* m_psg_buffer;
-};
-
-#include "audio_inline.h"
-
-#endif /* AUDIO_H */
+#undef GUI_DEBUG_PSG_IMPORT
+#undef EXTERN
+#endif /* GUI_DEBUG_PSG_H */

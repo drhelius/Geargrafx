@@ -48,7 +48,7 @@ MemEditor::~MemEditor()
 
 }
 
-void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int word)
+void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int word, bool ascii)
 {
     m_mem_data = mem_data;
     m_mem_size = mem_size;
@@ -107,7 +107,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                 ImGui::TableSetupColumn(buf, ImGuiTableColumnFlags_WidthFixed, character_size.x * max_chars_per_cell + (6 + byte_cell_padding) * 1);
             }
 
-            if (m_mem_word == 1)
+            if ((m_mem_word == 1) and ascii)
             {
                 ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, character_size.x * ascii_padding);
                 ImGui::TableSetupColumn("ASCII", ImGuiTableColumnFlags_WidthFixed, (character_size.x + character_cell_padding * 1) * m_bytes_per_row);
@@ -123,7 +123,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                 ImGui::TextColored(column_color, "%s", ImGui::TableGetColumnName(i));
             }
 
-            if (m_mem_word == 1)
+            if ((m_mem_word == 1) && ascii)
             {
                 ImGui::TableNextColumn();
                 ImGui::TextColored(ascii_color, "%s", ImGui::TableGetColumnName(ImGui::TableGetColumnCount() - 1));
@@ -277,7 +277,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
 
                     ImGui::PopStyleVar();
 
-                    if (m_mem_word == 1)
+                    if ((m_mem_word == 1) && ascii)
                     {
                         ImGui::TableNextColumn();
                         float column_x = ImGui::GetCursorPosX() + (ImGui::GetColumnWidth() / 2.0f);

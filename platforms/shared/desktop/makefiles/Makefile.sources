@@ -20,6 +20,7 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6280.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_memeditor.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_memory.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_psg.cpp \
     $(DESKTOP_SRC_DIR)/renderer.cpp \
     $(DESKTOP_SRC_DIR)/emu.cpp \
     $(DESKTOP_SRC_DIR)/imgui/imgui_impl_sdl2.cpp \

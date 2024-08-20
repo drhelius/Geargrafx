@@ -112,6 +112,7 @@ struct config_Debug
     bool show_huc6270_background = false;
     bool show_huc6270_sprites = false;
     bool show_huc6270_info = false;
+    bool show_psg = false;
     int font_size = 0;
     bool multi_viewport = false;
 };

@@ -29,8 +29,86 @@ inline void HuC6280PSG::Clock()
 
 inline void HuC6280PSG::Write(u32 address, u8 value)
 {
+    int reg = address & 0x0F;
+
+    // Channel select
+    if (reg == 0)
+    {
+        m_channel_select = value & 0x07;
+        m_current_channel = &m_channels[m_channel_select];
+        return;
+    }
+
     Sync();
 
+    switch (reg)
+    {
+    // Main amplitude
+    case 1:
+        m_main_amplitude = value;
+        break;
+    // Channel frequency (low)
+    case 2:
+        if (m_channel_select < 6)
+        {
+            m_current_channel->frequency = (m_current_channel->frequency & 0x0F00) | value;
+        }
+        break;
+    // Channel frequency (high)
+    case 3:
+        if (m_channel_select < 6)
+        {
+            m_current_channel->frequency = (m_current_channel->frequency & 0x00FF) | ((value & 0x0F) << 8);
+        }
+        break;
+    // Channel control
+    case 4:
+        if (m_channel_select < 6)
+        {
+            m_current_channel->control = value;
+        }
+        break;
+    // Channel amplitude
+    case 5:
+        if (m_channel_select < 6)
+        {
+            m_current_channel->amplitude = value;
+        }
+        break;
+    // Channel waveform data
+    case 6:
+        if (m_channel_select < 6)
+        {
+            int data = value & 0x1F;
+            m_current_channel->wave = data;
+
+            // DDA off
+            if((m_current_channel->control & 0x40) == 0)
+            {
+                m_current_channel->wave_data[m_current_channel->wave_index] = data;
+            }
+
+            // Channel off, DDA off
+            if((m_current_channel->control & 0xC0) == 0)
+                m_current_channel->wave_index = ((m_current_channel->wave_index + 1) & 0x1F);
+        }
+        break;
+    // Channel noise (only channels 4 and 5)
+    case 7:
+        if ((m_channel_select > 3) && (m_channel_select < 6))
+        {
+            m_current_channel->noise = value;
+        }
+        break;
+    // LFO frequency
+    case 8:
+        m_lfo_frequency = value;
+        break;
+    // LFO control
+    case 9:
+        m_lfo_control = value;
+        break;
+    }
 }
 
 #endif /* HUC6280_PSG_INLINE_H */

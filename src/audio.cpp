@@ -77,6 +77,11 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
     }
 }
 
+HuC6280PSG* Audio::GetPSG()
+{
+    return m_psg;
+}
+
 // void Audio::SaveState(std::ostream& stream)
 // {
 //     stream.write(reinterpret_cast<const char*> (&m_elapsed_cycles), sizeof(m_ElapsedCycles));

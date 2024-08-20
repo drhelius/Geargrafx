@@ -573,6 +573,7 @@ static void menu_debug(void)
         ImGui::MenuItem("Show HuC6270 Registers", "", &config_debug.show_huc6270_registers, config_debug.debug);
         ImGui::MenuItem("Show HuC6270 Background", "", &config_debug.show_huc6270_background, config_debug.debug);
         ImGui::MenuItem("Show HuC6270 Sprites", "", &config_debug.show_huc6270_sprites, config_debug.debug);
+        ImGui::MenuItem("Show PSG", "", &config_debug.show_psg, config_debug.debug);
 
         ImGui::Separator();
 

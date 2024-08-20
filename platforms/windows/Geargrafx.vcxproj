@@ -41,6 +41,7 @@
     <ClCompile Include="..\shared\desktop\gui_debug_huc6280.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_memeditor.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_memory.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_debug_psg.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug.cpp" />
     <ClCompile Include="..\shared\desktop\gui_filedialogs.cpp" />
     <ClCompile Include="..\shared\desktop\gui_menus.cpp" />
@@ -102,6 +103,7 @@
     <ClInclude Include="..\shared\desktop\gui_debug_huc6280.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_memeditor.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_memory.h" />
+    <ClInclude Include="..\shared\desktop\gui_debug_psg.h" />
     <ClInclude Include="..\shared\desktop\gui_debug.h" />
     <ClInclude Include="..\shared\desktop\gui_filedialogs.h" />
     <ClInclude Include="..\shared\desktop\gui_menus.h" />

@@ -22,6 +22,7 @@
 HuC6280PSG::HuC6280PSG()
 {
     InitPointer(m_channels);
+    InitPointer(m_current_channel);
 }
 
 HuC6280PSG::~HuC6280PSG()
@@ -34,6 +35,15 @@ void HuC6280PSG::Init()
 {
     m_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
     m_channels = new HuC6280PSG_Channel[6];
+
+    m_state.CHANNEL_SELECT = &m_channel_select;
+    m_state.MAIN_AMPLITUDE = &m_main_amplitude;
+    m_state.LFO_FREQUENCY = &m_lfo_frequency;
+    m_state.LFO_CONTROL = &m_lfo_control;
+    m_state.BUFFER_INDEX = &m_buffer_index;
+    m_state.BUFFER = m_buffer;
+    m_state.CHANNELS = m_channels;
+
     Reset();
 }
 
@@ -49,6 +59,8 @@ void HuC6280PSG::Reset()
     m_lfo_frequency = 0;
     m_lfo_control = 0;
 
+    m_current_channel = &m_channels[0];
+
     for (int i = 0; i < 6; i++)
     {
         m_channels[i].frequency = 0;
@@ -56,6 +68,7 @@ void HuC6280PSG::Reset()
         m_channels[i].amplitude = 0;
         m_channels[i].wave = 0;
         m_channels[i].noise = 0;
+        m_channels[i].wave_index = 0;
         for (int j = 0; j < 32; j++)
         {
             m_channels[i].wave_data[j] = 0;
@@ -80,6 +93,11 @@ int HuC6280PSG::EndFrame(s16* sample_buffer)
     m_buffer_index = 0;
 
     return samples;
+}
+
+HuC6280PSG::HuC6280PSG_State* HuC6280PSG::GetState()
+{
+    return &m_state;
 }
 
 void HuC6280PSG::Sync()
