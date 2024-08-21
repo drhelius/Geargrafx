@@ -22,6 +22,7 @@
 #include "gui.h"
 #include "gui_actions.h"
 #include "gui_debug_memory.h"
+#include "gui_debug_disassembler.h"
 #include "config.h"
 #include "emu.h"
 #include "nfd/nfd.h"
@@ -180,3 +181,18 @@ void gui_file_dialog_save_memory_dump(void)
     }
 }
 
+void gui_file_dialog_save_disassembler(void)
+{
+    nfdchar_t *outPath;
+    nfdfilteritem_t filterItem[1] = { { "Disassembler Files", "txt" } };
+    nfdresult_t result = NFD_SaveDialog(&outPath, filterItem, 1, NULL, NULL);
+    if (result == NFD_OKAY)
+    {
+        gui_debug_save_disassembler(outPath);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        Log("Save Disassembler Error: %s", NFD_GetError());
+    }
+}

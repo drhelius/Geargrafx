@@ -29,11 +29,12 @@
 EXTERN void gui_debug_reset(void);
 EXTERN void gui_debug_reset_symbols(void);
 EXTERN void gui_debug_reset_breakpoints(void);
-EXTERN void gui_debug_load_symbols_file(const char* path);
+EXTERN void gui_debug_load_symbols_file(const char* file_path);
 EXTERN void gui_debug_toggle_breakpoint(void);
 EXTERN void gui_debug_runtocursor(void);
 EXTERN void gui_debug_go_back(void);
 EXTERN void gui_debug_window_disassembler(void);
+EXTERN void gui_debug_save_disassembler(const char* file_path);
 
 #undef GUI_DEBUG_DISASSEMBLER_IMPORT
 #undef EXTERN

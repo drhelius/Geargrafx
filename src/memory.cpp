@@ -141,3 +141,8 @@ u8* Memory::GetWram()
 {
     return m_wram;
 }
+
+Memory::GG_Disassembler_Record** Memory::GetAllDisassemblerRecords()
+{
+    return m_disassembler;
+}

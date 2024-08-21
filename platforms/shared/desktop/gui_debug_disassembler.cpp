@@ -95,7 +95,7 @@ void gui_debug_reset_breakpoints(void)
     new_breakpoint_buffer[0] = 0;
 }
 
-void gui_debug_load_symbols_file(const char* path)
+void gui_debug_load_symbols_file(const char* file_path)
 {
     // Log("Loading symbol file %s", path);
 
@@ -175,6 +175,32 @@ void gui_debug_window_disassembler(void)
 
     ImGui::End();
     ImGui::PopStyleVar();
+}
+
+void gui_debug_save_disassembler(const char* file_path)
+{
+    FILE* file = fopen(file_path, "w");
+
+    Memory* memory = emu_get_core()->GetMemory();
+    Memory::GG_Disassembler_Record** records = memory->GetAllDisassemblerRecords();
+
+    for (int i = 0; i < 0x200000; i++)
+    {
+        Memory::GG_Disassembler_Record* record = records[i];
+
+        if (IsValidPointer(record) && (record->name[0] != 0))
+        {
+            if (record->subroutine || record->irq)
+                fprintf(file, "\n");
+
+            fprintf(file, "%06X-%02X:    %s\n", i, record->bank, record->name);
+
+            if (is_return_instruction(record->opcodes[0]))
+                fprintf(file, "\n");
+        }
+    }
+
+    fclose(file);
 }
 
 static void show_controls(void)
@@ -738,7 +764,7 @@ static void disassembler_menu(void)
     {
         if (ImGui::MenuItem("Save Code As..."))
         {
-            
+            gui_file_dialog_save_disassembler();
         }
 
         ImGui::EndMenu();

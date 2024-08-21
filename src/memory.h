@@ -63,6 +63,7 @@ public:
     GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
     void ResetDisassemblerRecords();
     u8* GetWram();
+    GG_Disassembler_Record** GetAllDisassemblerRecords();
 
 private:
     HuC6260* m_huc6260;
