@@ -37,6 +37,7 @@ public:
     void SelectAll();
     void ClearSelection();
     void SetValueToSelection(int value);
+    void SaveToFile(const char* file_path);
 
 private:
     bool IsColumnSeparator(int current_column, int column_count);

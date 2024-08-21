@@ -681,3 +681,26 @@ void MemEditor::SetValueToSelection(int value)
         m_mem_data[i] = value & mask;
     }
 }
+
+void MemEditor::SaveToFile(const char* file_path)
+{
+    int size = m_mem_size * m_mem_word;
+    int row = m_bytes_per_row * m_mem_word;
+
+    FILE* file = fopen(file_path, "w");
+
+    if (file)
+    {
+        for (int i = 0; i < (size - 1); i++)
+        {
+            fprintf(file, "%02X ", m_mem_data[i]);
+
+            if ((i % row) == (row - 1))
+                fprintf(file, "\n");
+        }
+
+        fprintf(file, "%02X", m_mem_data[(size - 1)]);
+
+        fclose(file);
+    }
+}

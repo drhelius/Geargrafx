@@ -23,6 +23,7 @@
 #include "../../../src/geargrafx.h"
 #include "imgui/imgui.h"
 #include "gui_debug_memeditor.h"
+#include "gui_filedialogs.h"
 #include "config.h"
 #include "gui.h"
 #include "emu.h"
@@ -156,6 +157,7 @@ void gui_debug_paste_memory(void)
     {
         std::string text(clipboard);
 
+        text.erase(std::remove(text.begin(), text.end(), '\n'), text.end());
         text.erase(std::remove(text.begin(), text.end(), ' '), text.end());
 
         size_t buffer_size = text.size() / 2;
@@ -195,6 +197,11 @@ void gui_debug_memory_goto(int editor, int address)
     mem_edit[mem_edit_select].JumpToAddress(address);
 }
 
+void gui_debug_save_memory_dump(const char* file_path)
+{
+    mem_edit[current_mem_edit].SaveToFile(file_path);
+}
+
 static void memory_editor_menu(void)
 {
     ImGui::BeginMenuBar();
@@ -203,7 +210,7 @@ static void memory_editor_menu(void)
     {
         if (ImGui::MenuItem("Save Memory As..."))
         {
-
+            gui_file_dialog_save_memory_dump();
         }
 
         ImGui::EndMenu();
