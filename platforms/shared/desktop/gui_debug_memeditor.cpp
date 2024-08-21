@@ -206,7 +206,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                                 m_set_keyboard_here = false;
                             }
 
-                            ImGui::PushStyleColor(ImGuiCol_Text, red);
+                            ImGui::PushStyleColor(ImGuiCol_Text, yellow);
                             ImGui::PushStyleColor(ImGuiCol_FrameBg, dark_cyan);
 
                             if (ImGui::InputText("##editing_input", buf, (m_mem_word == 1) ? 3 : 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_AlwaysOverwrite))

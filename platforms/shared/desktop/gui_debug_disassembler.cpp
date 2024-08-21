@@ -25,6 +25,7 @@
 #include "../../../src/geargrafx.h"
 #include "gui_debug_constants.h"
 #include "gui.h"
+#include "gui_filedialogs.h"
 #include "config.h"
 #include "emu.h"
 
@@ -73,6 +74,7 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
 static void add_breakpoint(void);
 static void request_goto_address(u16 addr);
 static bool is_return_instruction(u8 opcode);
+static void disassembler_menu(void);
 
 void gui_debug_reset(void)
 {
@@ -161,8 +163,9 @@ void gui_debug_window_disassembler(void)
     ImGui::SetNextWindowPos(ImVec2(159, 31), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(463, 553), ImGuiCond_FirstUseEver);
 
-    ImGui::Begin("Disassembler", &config_debug.show_disassembler);
+    ImGui::Begin("Disassembler", &config_debug.show_disassembler, ImGuiWindowFlags_MenuBar);
 
+    disassembler_menu();
     show_controls();
 
     ImGui::Separator();
@@ -184,7 +187,7 @@ static void show_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Continue (F5)");
+        ImGui::SetTooltip("Start (F5)");
     }
 
     ImGui::SameLine();
@@ -194,7 +197,7 @@ static void show_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Break (F7)");
+        ImGui::SetTooltip("Stop (F7)");
     }
 
     ImGui::SameLine();
@@ -228,16 +231,6 @@ static void show_controls(void)
     }
 
     ImGui::SameLine();
-    if (ImGui::Button(ICON_MD_KEYBOARD_TAB))
-    {
-        gui_debug_runtocursor();
-    }
-    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-    {
-        ImGui::SetTooltip("Run to Cursor (F8)");
-    }
-
-    ImGui::SameLine();
     if (ImGui::Button(ICON_MD_INPUT))
     {
         emu_debug_step_frame();
@@ -245,6 +238,16 @@ static void show_controls(void)
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
         ImGui::SetTooltip("Step Frame (F6)");
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button(ICON_MD_KEYBOARD_TAB))
+    {
+        gui_debug_runtocursor();
+    }
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+    {
+        ImGui::SetTooltip("Run to Cursor (F8)");
     }
 
     ImGui::SameLine();
@@ -258,45 +261,6 @@ static void show_controls(void)
     }
 
     ImGui::PopFont();
-
-    ImGui::Checkbox("Opcodes", &show_mem);  ImGui::SameLine();
-    ImGui::Checkbox("Symbols", &show_symbols);  ImGui::SameLine();
-    ImGui::Checkbox("Segment", &show_segment); ImGui::SameLine();
-    ImGui::Checkbox("Bank", &show_bank);
-
-    ImGui::Separator();
-
-    ImGui::PushItemWidth(45);
-    if (ImGui::InputTextWithHint("##goto_address", "XXXX", goto_address, IM_ARRAYSIZE(goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
-    {
-        try
-        {
-            request_goto_address((u16)std::stoul(goto_address, 0, 16));
-        }
-        catch(const std::invalid_argument&)
-        {
-        }
-        goto_address[0] = 0;
-    }
-    ImGui::PopItemWidth();
-    ImGui::SameLine();
-    if (ImGui::Button("Go To Address", ImVec2(120, 0)))
-    {
-        try
-        {
-            request_goto_address((u16)std::stoul(goto_address, 0, 16));
-        }
-        catch(const std::invalid_argument&)
-        {
-        }
-        goto_address[0] = 0;
-    }
-
-    ImGui::SameLine();
-    if (ImGui::Button("Go Back", ImVec2(80, 0)))
-    {
-        goto_back_requested = true;
-    }
 }
 
 static void show_breakpoints(void)
@@ -764,4 +728,157 @@ static bool is_return_instruction(u8 opcode)
         default:
             return false;
     }
+}
+
+static void disassembler_menu(void)
+{
+    ImGui::BeginMenuBar();
+
+    if (ImGui::BeginMenu("File"))
+    {
+        if (ImGui::MenuItem("Save Code As..."))
+        {
+            
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("View"))
+    {
+        ImGui::Separator();
+
+        ImGui::MenuItem("Opcodes", NULL, &show_mem);
+        ImGui::MenuItem("Symbols", NULL, &show_symbols);
+        ImGui::MenuItem("Segment", NULL, &show_segment);
+        ImGui::MenuItem("Bank", NULL, &show_bank);
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Go"))
+    {
+        if (ImGui::MenuItem("Back", "CTRL+BACKSPACE"))
+        {
+            gui_debug_go_back();
+        }
+
+        if (ImGui::BeginMenu("Go To Address..."))
+        {
+            ImGui::PushItemWidth(45);
+            if (ImGui::InputTextWithHint("##goto_address", "XXXX", goto_address, IM_ARRAYSIZE(goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+            {
+                try
+                {
+                    request_goto_address((u16)std::stoul(goto_address, 0, 16));
+                }
+                catch(const std::invalid_argument&)
+                {
+                }
+                goto_address[0] = 0;
+            }
+            ImGui::PopItemWidth();
+            ImGui::SameLine();
+            if (ImGui::Button("Go!", ImVec2(40, 0)))
+            {
+                try
+                {
+                    request_goto_address((u16)std::stoul(goto_address, 0, 16));
+                }
+                catch(const std::invalid_argument&)
+                {
+                }
+                goto_address[0] = 0;
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenu();
+    }
+
+
+    if (ImGui::BeginMenu("Run"))
+    {
+        if (ImGui::MenuItem("Start", "F5"))
+        {
+            emu_debug_continue();
+        }
+
+        if (ImGui::MenuItem("Stop", "F7"))
+        {
+            emu_debug_break();
+        }
+
+        if (ImGui::MenuItem("Step Over", "F10"))
+        {
+            emu_debug_step_over();
+        }
+
+        if (ImGui::MenuItem("Step Into", "F11"))
+        {
+            emu_debug_step_into();
+        }
+
+        if (ImGui::MenuItem("Step Out", "Shift+F11"))
+        {
+            emu_debug_step_out();
+        }
+
+        if (ImGui::MenuItem("Step Frame", "F6"))
+        {
+            emu_debug_step_frame();
+        }
+
+        if (ImGui::MenuItem("Run to Cursor", "F8"))
+        {
+            gui_debug_runtocursor();
+        }
+
+        if (ImGui::MenuItem("Reset", "CTRL+R"))
+        {
+            emu_reset();
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Breakpoints"))
+    {
+        if (ImGui::MenuItem("Toggle", "F9"))
+        {
+            gui_debug_toggle_breakpoint();
+        }
+
+        if (ImGui::MenuItem("Clear All"))
+        {
+            gui_debug_reset_breakpoints();
+        }
+
+        ImGui::MenuItem("Disable All", 0, &emu_debug_disable_breakpoints);
+
+        ImGui::EndMenu();
+    }
+
+    bool open_symbols = false;
+
+    if (ImGui::BeginMenu("Symbols"))
+    {
+        if (ImGui::MenuItem("Load Symbols..."))
+        {
+            open_symbols = true;
+        }
+
+        if (ImGui::MenuItem("Clear Symbols"))
+        {
+            gui_debug_reset_symbols();
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (open_symbols)
+        gui_file_dialog_load_symbols();
+
+    ImGui::EndMenuBar();
 }

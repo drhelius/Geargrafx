@@ -37,7 +37,6 @@ static bool save_ram = false;
 static bool open_state = false;
 static bool save_state = false;
 static bool open_about = false;
-static bool open_symbols = false;
 static bool save_screenshot = false;
 static bool choose_savestates_path = false;
 
@@ -67,7 +66,6 @@ void gui_main_menu(void)
     open_state = false;
     save_state = false;
     open_about = false;
-    open_symbols = false;
     save_screenshot = false;
     choose_savestates_path = false;
     gui_main_menu_hovered = false;
@@ -492,77 +490,6 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Step Over", "F10", (void*)0, config_debug.debug))
-        {
-            emu_debug_step_over();
-        }
-
-        if (ImGui::MenuItem("Step Into", "F11", (void*)0, config_debug.debug))
-        {
-            emu_debug_step_into();
-        }
-
-        if (ImGui::MenuItem("Step Out", "SHIFT+F11", (void*)0, config_debug.debug))
-        {
-            emu_debug_step_out();
-        }
-
-        if (ImGui::MenuItem("Step Frame", "F6", (void*)0, config_debug.debug))
-        {
-            emu_debug_step_frame();
-        }
-
-        if (ImGui::MenuItem("Break", "F7", (void*)0, config_debug.debug))
-        {
-            emu_debug_break();
-        }
-
-        if (ImGui::MenuItem("Continue", "F5", (void*)0, config_debug.debug))
-        {
-            emu_debug_continue();
-        }
-
-        if (ImGui::MenuItem("Run To Cursor", "F8", (void*)0, config_debug.debug))
-        {
-            gui_debug_runtocursor();
-        }
-
-        ImGui::Separator();
-
-        if (ImGui::MenuItem("Go Back", "CTRL+BACKSPACE", (void*)0, config_debug.debug))
-        {
-            gui_debug_go_back();
-        }
-
-        ImGui::Separator();
-
-        if (ImGui::MenuItem("Toggle Breakpoint", "F9", (void*)0, config_debug.debug))
-        {
-            gui_debug_toggle_breakpoint();
-        }
-
-        if (ImGui::MenuItem("Clear All Breakpoints", 0, (void*)0, config_debug.debug))
-        {
-            gui_debug_reset_breakpoints();
-        }
-
-        ImGui::MenuItem("Disable All Breakpoints", 0, &emu_debug_disable_breakpoints, config_debug.debug);
-
-        ImGui::Separator();
-
-        if (ImGui::BeginMenu("Font Size", config_debug.debug))
-        {
-            ImGui::PushItemWidth(110.0f);
-            if (ImGui::Combo("##font", &config_debug.font_size, "Very Small\0Small\0Medium\0Large\0\0"))
-            {
-                gui_default_font = gui_default_fonts[config_debug.font_size];
-            }
-            ImGui::PopItemWidth();
-            ImGui::EndMenu();
-        }
-
-        ImGui::Separator();
-
         ImGui::MenuItem("Show Output Screen", "", &config_debug.show_screen, config_debug.debug);
         ImGui::MenuItem("Show Disassembler", "", &config_debug.show_disassembler, config_debug.debug);
         ImGui::MenuItem("Show HuC6280 Status", "", &config_debug.show_processor, config_debug.debug);
@@ -575,21 +502,22 @@ static void menu_debug(void)
         ImGui::MenuItem("Show HuC6270 Sprites", "", &config_debug.show_huc6270_sprites, config_debug.debug);
         ImGui::MenuItem("Show PSG", "", &config_debug.show_psg, config_debug.debug);
 
-        ImGui::Separator();
-
 #if defined(__APPLE__) || defined(_WIN32)
-        ImGui::MenuItem("Multi-Viewport (Restart required)", "", &config_debug.multi_viewport, config_debug.debug);
         ImGui::Separator();
+        ImGui::MenuItem("Multi-Viewport (Restart required)", "", &config_debug.multi_viewport, config_debug.debug);
 #endif
 
-        if (ImGui::MenuItem("Load Symbols...", "", (void*)0, config_debug.debug))
-        {
-            open_symbols = true;
-        }
+        ImGui::Separator();
 
-        if (ImGui::MenuItem("Clear Symbols", "", (void*)0, config_debug.debug))
+        if (ImGui::BeginMenu("Font Size", config_debug.debug))
         {
-            gui_debug_reset_symbols();
+            ImGui::PushItemWidth(110.0f);
+            if (ImGui::Combo("##font", &config_debug.font_size, "Very Small\0Small\0Medium\0Large\0\0"))
+            {
+                gui_default_font = gui_default_fonts[config_debug.font_size];
+            }
+            ImGui::PopItemWidth();
+            ImGui::EndMenu();
         }
 
         ImGui::EndMenu();
@@ -629,8 +557,6 @@ static void file_dialogs(void)
         gui_file_dialog_save_screenshot();
     if (choose_savestates_path)
         gui_file_dialog_choose_savestate_path();
-    if (open_symbols)
-        gui_file_dialog_load_symbols();
     if (open_about)
     {
         gui_dialog_in_use = true;

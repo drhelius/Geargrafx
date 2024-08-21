@@ -31,13 +31,17 @@ static MemEditor mem_edit[MEMORY_EDITOR_MAX];
 static int mem_edit_select = -1;
 static int current_mem_edit = 0;
 
+static void memory_editor_menu(void);
+
 void gui_debug_window_memory(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(625, 321), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(343, 262), ImGuiCond_FirstUseEver);
 
-    ImGui::Begin("Memory Editor", &config_debug.show_memory);
+    ImGui::Begin("Memory Editor", &config_debug.show_memory, ImGuiWindowFlags_MenuBar);
+
+    memory_editor_menu();
 
     GeargrafxCore* core = emu_get_core();
     Memory* memory = core->GetMemory();
@@ -183,4 +187,63 @@ void gui_debug_memory_goto(int editor, int address)
 {
     mem_edit_select = editor;
     mem_edit[mem_edit_select].JumpToAddress(address);
+}
+
+static void memory_editor_menu(void)
+{
+    ImGui::BeginMenuBar();
+
+    if (ImGui::BeginMenu("File"))
+    {
+        if (ImGui::MenuItem("Save Memory As..."))
+        {
+
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Edit"))
+    {
+        if (ImGui::MenuItem("Copy", "Ctrl+C"))
+        {
+            gui_debug_copy_memory();
+        }
+
+        if (ImGui::MenuItem("Paste", "Ctrl+V"))
+        {
+            gui_debug_paste_memory();
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Selection"))
+    {
+        if (ImGui::MenuItem("Select All", "Ctrl+A"))
+        {
+            //mem_edit[current_mem_edit].SelectAll();
+        }
+
+        if (ImGui::BeginMenu("Set value"))
+        {
+            char buffer[5];
+            buffer[0]=0;
+            if (ImGui::InputTextWithHint("##set_value", "XXXX", buffer, IM_ARRAYSIZE(buffer), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+            {
+               
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Set!", ImVec2(40, 0)))
+            {
+
+            }
+            ImGui::EndMenu();
+
+        }
+
+        ImGui::EndMenu();
+    }
+
+    ImGui::EndMenuBar();
 }
