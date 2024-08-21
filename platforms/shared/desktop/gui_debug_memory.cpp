@@ -30,6 +30,7 @@
 static MemEditor mem_edit[MEMORY_EDITOR_MAX];
 static int mem_edit_select = -1;
 static int current_mem_edit = 0;
+static char set_value_buffer[5] = {0};
 
 static void memory_editor_menu(void);
 
@@ -183,6 +184,11 @@ void gui_debug_paste_memory(void)
     SDL_free(clipboard);
 }
 
+void gui_debug_select_all(void)
+{
+    mem_edit[current_mem_edit].SelectAll();
+}
+
 void gui_debug_memory_goto(int editor, int address)
 {
     mem_edit_select = editor;
@@ -222,24 +228,41 @@ static void memory_editor_menu(void)
     {
         if (ImGui::MenuItem("Select All", "Ctrl+A"))
         {
-            //mem_edit[current_mem_edit].SelectAll();
+            mem_edit[current_mem_edit].SelectAll();
+        }
+
+        if (ImGui::MenuItem("Clear Selection"))
+        {
+            mem_edit[current_mem_edit].ClearSelection();
         }
 
         if (ImGui::BeginMenu("Set value"))
         {
-            char buffer[5];
-            buffer[0]=0;
-            if (ImGui::InputTextWithHint("##set_value", "XXXX", buffer, IM_ARRAYSIZE(buffer), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+            ImGui::SetNextItemWidth(50);
+            if (ImGui::InputTextWithHint("##set_value", "XXXX", set_value_buffer, IM_ARRAYSIZE(set_value_buffer), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
             {
-               
+                try
+                {
+                    mem_edit[current_mem_edit].SetValueToSelection((int)std::stoul(set_value_buffer, 0, 16));
+                    set_value_buffer[0] = 0;
+                }
+                catch(const std::invalid_argument&)
+                {
+                }
             }
             ImGui::SameLine();
             if (ImGui::Button("Set!", ImVec2(40, 0)))
             {
-
+                try
+                {
+                    mem_edit[current_mem_edit].SetValueToSelection((int)std::stoul(set_value_buffer, 0, 16));
+                    set_value_buffer[0] = 0;
+                }
+                catch(const std::invalid_argument&)
+                {
+                }
             }
             ImGui::EndMenu();
-
         }
 
         ImGui::EndMenu();

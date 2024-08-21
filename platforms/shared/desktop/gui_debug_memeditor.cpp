@@ -54,6 +54,8 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
     m_mem_size = mem_size;
     m_mem_base_addr = base_display_addr;
     m_mem_word = word;
+    if (m_mem_word > 2)
+        m_mem_word = 2;
 
     if ((m_mem_word > 1) && ((m_preview_data_type < 2) || (m_preview_data_type > 3)))
         m_preview_data_type = 2;
@@ -635,15 +637,15 @@ void MemEditor::Copy(uint8_t** data, int* size)
     int start = m_selection_start;
     int end = m_selection_end;
 
-    *size = end - start + 1;
-    *data = m_mem_data + start;
+    *size = (end - start + 1) * m_mem_word;
+    *data = m_mem_data + (start * m_mem_word);
 }
 
 void MemEditor::Paste(uint8_t* data, int size)
 {
-    int selection = m_selection_end - m_selection_start + 1;
-    int start = m_selection_start;
-    int end = m_selection_start + (size < selection ? size : selection);
+    int selection_size = (m_selection_end - m_selection_start + 1) * m_mem_word;
+    int start = m_selection_start * m_mem_word;
+    int end = start + std::min(size, selection_size);
 
     for (int i = start; i < end; i++)
     {
@@ -654,4 +656,28 @@ void MemEditor::Paste(uint8_t* data, int size)
 void MemEditor::JumpToAddress(int address)
 {
     m_jump_to_address = address - m_mem_base_addr;
+}
+
+void MemEditor::SelectAll()
+{
+    m_selection_start = 0;
+    m_selection_end = m_mem_size - 1;
+}
+
+void MemEditor::ClearSelection()
+{
+    m_selection_start = m_selection_end = 0;
+}
+
+void MemEditor::SetValueToSelection(int value)
+{
+    int selection_size = (m_selection_end - m_selection_start + 1) * m_mem_word;
+    int start = m_selection_start * m_mem_word;
+    int end = start + selection_size;
+    int mask = m_mem_word == 1 ? 0xFF : 0xFFFF;
+
+    for (int i = start; i < end; i++)
+    {
+        m_mem_data[i] = value & mask;
+    }
 }

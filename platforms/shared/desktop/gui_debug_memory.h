@@ -40,6 +40,7 @@ enum Memory_Editor_Tabs
 EXTERN void gui_debug_window_memory(void);
 EXTERN void gui_debug_copy_memory(void);
 EXTERN void gui_debug_paste_memory(void);
+EXTERN void gui_debug_select_all(void);
 EXTERN void gui_debug_memory_goto(int editor, int address);
 
 #undef GUI_DEBUG_MEMORY_IMPORT

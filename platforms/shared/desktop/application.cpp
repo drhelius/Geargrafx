@@ -506,6 +506,10 @@ static void sdl_shortcuts_gui(const SDL_Event* event)
 
         switch (key)
         {
+            case SDL_SCANCODE_A:
+                if (event->key.keysym.mod & KMOD_CTRL)
+                    gui_shortcut(gui_ShortcutDebugSelectAll);
+                break;
             case SDL_SCANCODE_C:
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutDebugCopy);

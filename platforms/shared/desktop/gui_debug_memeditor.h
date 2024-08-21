@@ -34,6 +34,9 @@ public:
     void Copy(uint8_t** data, int* size);
     void Paste(uint8_t* data, int size);
     void JumpToAddress(int address);
+    void SelectAll();
+    void ClearSelection();
+    void SetValueToSelection(int value);
 
 private:
     bool IsColumnSeparator(int current_column, int column_count);

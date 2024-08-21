@@ -50,6 +50,7 @@ enum gui_ShortCutEvent
     gui_ShortcutDebugBreakpoint,
     gui_ShortcutDebugCopy,
     gui_ShortcutDebugPaste,
+    gui_ShortcutDebugSelectAll,
     gui_ShortcutShowMainMenu
 };
 
