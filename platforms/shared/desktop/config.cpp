@@ -115,6 +115,11 @@ void config_read(void)
     config_debug.show_huc6270_sprites = read_bool("Debug", "HuC6270Sprites", false);
     config_debug.show_huc6270_info = read_bool("Debug", "HuC6270Info", false);
     config_debug.show_psg = read_bool("Debug", "PSG", false);
+    config_debug.dis_show_mem = read_bool("Debug", "DisMem", true);
+    config_debug.dis_show_symbols = read_bool("Debug", "DisSymbols", true);
+    config_debug.dis_show_segment = read_bool("Debug", "DisSegment", true);
+    config_debug.dis_show_bank = read_bool("Debug", "DisBank", true);
+    config_debug.dis_show_auto_symbols = read_bool("Debug", "DisAutoSymbols", true);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
 
@@ -223,6 +228,11 @@ void config_write(void)
     write_bool("Debug", "HuC6270Sprites", config_debug.show_huc6270_sprites);
     write_bool("Debug", "HuC6270Info", config_debug.show_huc6270_info);
     write_bool("Debug", "PSG", config_debug.show_psg);
+    write_bool("Debug", "DisMem", config_debug.dis_show_mem);
+    write_bool("Debug", "DisSymbols", config_debug.dis_show_symbols);
+    write_bool("Debug", "DisSegment", config_debug.dis_show_segment);
+    write_bool("Debug", "DisBank", config_debug.dis_show_bank);
+    write_bool("Debug", "DisAutoSymbols", config_debug.dis_show_auto_symbols);
     write_int("Debug", "FontSize", config_debug.font_size);
     write_bool("Debug", "MultiViewport", config_debug.multi_viewport);
 

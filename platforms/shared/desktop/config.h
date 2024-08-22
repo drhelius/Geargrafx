@@ -113,6 +113,11 @@ struct config_Debug
     bool show_huc6270_sprites = false;
     bool show_huc6270_info = false;
     bool show_psg = false;
+    bool dis_show_mem = true;
+    bool dis_show_symbols = true;
+    bool dis_show_segment = true;
+    bool dis_show_bank = true;
+    bool dis_show_auto_symbols = true;
     int font_size = 0;
     bool multi_viewport = false;
 };
