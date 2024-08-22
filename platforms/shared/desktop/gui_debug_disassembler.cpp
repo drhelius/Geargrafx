@@ -24,6 +24,7 @@
 #include "imgui/fonts/IconsMaterialDesign.h"
 #include "../../../src/geargrafx.h"
 #include "gui_debug_constants.h"
+#include "gui_debug_text.h"
 #include "gui.h"
 #include "gui_filedialogs.h"
 #include "config.h"
@@ -43,6 +44,8 @@ struct DisassemblerLine
     bool is_breakpoint;
     Memory::GG_Disassembler_Record* record;
     char symbol[64];
+    char name_with_symbol[64];
+    int name_real_length;
 };
 
 static std::vector<DebugSymbol> fixed_symbols;
@@ -70,6 +73,8 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
 static void add_breakpoint(void);
 static void request_goto_address(u16 addr);
 static bool is_return_instruction(u8 opcode);
+static void replace_symbols(DisassemblerLine* line, const char* color);
+static void draw_instruction_name(DisassemblerLine* line, bool is_pc);
 static void disassembler_menu(void);
 
 void gui_debug_reset(void)
@@ -444,6 +449,7 @@ static void prepare_drawable_lines(void)
             line.is_symbol = false;
             line.is_breakpoint = false;
             line.record = record;
+            snprintf(line.name_with_symbol, 64, "%s", line.record->name);
 
             std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
 
@@ -577,7 +583,6 @@ static void show_disassembly(void)
                 ImVec4 color_bank = line.is_breakpoint ? red : violet;
                 ImVec4 color_addr = line.is_breakpoint ? red : cyan;
                 ImVec4 color_mem = line.is_breakpoint ? red : mid_gray;
-                ImVec4 color_name = line.is_breakpoint ? red : white;
 
                 if (config_debug.dis_show_segment)
                 {
@@ -598,7 +603,6 @@ static void show_disassembly(void)
                 if (line.address == pc)
                 {
                     ImGui::TextColored(yellow, " ->");
-                    color_name = yellow;
                 }
                 else
                 {
@@ -606,12 +610,13 @@ static void show_disassembly(void)
                 }
 
                 ImGui::SameLine();
-                ImGui::TextColored(color_name, "%s", line.record->name);
+                draw_instruction_name(&line, line.address == pc);
 
                 if (config_debug.dis_show_mem)
                 {
+                    int len = line.name_real_length;
                     char spaces[32];
-                    int offset = 21 - strlen(line.record->name);
+                    int offset = 25 - len;
                     if (offset < 0)
                         offset = 0;
                     for (int i = 0; i < offset; i++)
@@ -720,9 +725,9 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
         s.address = record->jump_address;
         s.bank = record->jump_bank;
         if (record->subroutine)
-            snprintf(s.text, 64, "SUBROUTINE_%02X_%04X", record->jump_bank, record->jump_address);
+            snprintf(s.text, 64, "SUB_%02X_%04X", record->jump_bank, record->jump_address);
         else
-            snprintf(s.text, 64, "LABEL_%02X_%04X", record->jump_bank, record->jump_address);
+            snprintf(s.text, 64, "TAG_%02X_%04X", record->jump_bank, record->jump_address);
         insert = true;
     }
     else if (record->irq > 0)
@@ -738,7 +743,7 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
             if ((dynamic_symbols[i].bank == s.bank) && (dynamic_symbols[i].address == s.address))
             {
                 if (record->subroutine)
-                    snprintf(dynamic_symbols[i].text, 64, "SUBROUTINE_%02X_%04X", record->jump_bank, record->jump_address);
+                    snprintf(dynamic_symbols[i].text, 64, "SUB_%02X_%04X", record->jump_bank, record->jump_address);
                 return;
             }
         }
@@ -769,6 +774,88 @@ static bool is_return_instruction(u8 opcode)
         default:
             return false;
     }
+}
+
+static void replace_symbols(DisassemblerLine* line, const char* color)
+{
+    bool symbol_found = false;
+
+    for (long unsigned int s = 0; s < fixed_symbols.size(); s++)
+    {
+        if ((fixed_symbols[s].address == line->record->jump_address) && (fixed_symbols[s].bank == line->record->jump_bank))
+        {
+            std::string instr = line->record->name;
+            std::string symbol = fixed_symbols[s].text;
+            char jump_address[6];
+            snprintf(jump_address, 6, "$%04X", line->record->jump_address);
+            size_t pos = instr.find(jump_address);
+            if (pos == std::string::npos)
+                break;
+            instr.replace(pos, 5, color + symbol);
+            snprintf(line->name_with_symbol, 64, "%s", instr.c_str());
+            symbol_found = true;
+            break;
+        }
+    }
+
+    if (!symbol_found && config_debug.dis_show_auto_symbols)
+    {
+        for (long unsigned int s = 0; s < dynamic_symbols.size(); s++)
+        {
+            if ((dynamic_symbols[s].address == line->record->jump_address) && (dynamic_symbols[s].bank == line->record->jump_bank))
+            {
+                std::string instr = line->record->name;
+                std::string symbol = dynamic_symbols[s].text;
+                char jump_address[6];
+                snprintf(jump_address, 6, "$%04X", line->record->jump_address);
+                size_t pos = instr.find(jump_address);
+                instr.replace(pos, 5, color + symbol);
+                snprintf(line->name_with_symbol, 64, "%s", instr.c_str());
+                break;
+            }
+        }
+    }
+}
+
+static void draw_instruction_name(DisassemblerLine* line, bool is_pc)
+{
+    const char* const c_yellow = "{FFE60C}";
+    const char* const c_white = "{FFFFFF}";
+    const char* const c_red = "{FA2573}";
+    const char* const c_green = "{1AE51A}";
+    const char* const c_blue = "{3466FF}";
+
+    const char* color;
+    const char* symbol_color;
+
+    if (is_pc)
+    {
+        color = c_yellow;
+        symbol_color = c_yellow;
+    }
+    else if (line->is_breakpoint)
+    {
+        color = c_red;
+        symbol_color = c_red;
+    }
+    else
+    {
+        color = c_white;
+        symbol_color = c_green;
+    }
+
+    if (config_debug.dis_replace_symbols && line->record->jump)
+    {
+        replace_symbols(line, symbol_color);
+    }
+
+    const char* name = config_debug.dis_replace_symbols ? line->name_with_symbol : line->record->name;
+    std::string instr = name;
+    size_t pos = instr.find("{}");
+    if (pos != std::string::npos)
+        instr.replace(pos, 2, c_blue);
+
+    line->name_real_length = TextColoredEx("%s%s", color, instr.c_str());
 }
 
 static void disassembler_menu(void)
@@ -904,6 +991,7 @@ static void disassembler_menu(void)
     if (ImGui::BeginMenu("Symbols"))
     {
         ImGui::MenuItem("Automatic Symbols", NULL, &config_debug.dis_show_auto_symbols);
+        ImGui::MenuItem("Replace Address With Symbol", NULL, &config_debug.dis_replace_symbols);
 
         ImGui::Separator();
 

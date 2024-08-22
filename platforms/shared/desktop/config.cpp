@@ -120,6 +120,7 @@ void config_read(void)
     config_debug.dis_show_segment = read_bool("Debug", "DisSegment", true);
     config_debug.dis_show_bank = read_bool("Debug", "DisBank", true);
     config_debug.dis_show_auto_symbols = read_bool("Debug", "DisAutoSymbols", true);
+    config_debug.dis_replace_symbols = read_bool("Debug", "DisReplaceSymbols", true);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
 
@@ -233,6 +234,7 @@ void config_write(void)
     write_bool("Debug", "DisSegment", config_debug.dis_show_segment);
     write_bool("Debug", "DisBank", config_debug.dis_show_bank);
     write_bool("Debug", "DisAutoSymbols", config_debug.dis_show_auto_symbols);
+    write_bool("Debug", "DisReplaceSymbols", config_debug.dis_replace_symbols);
     write_int("Debug", "FontSize", config_debug.font_size);
     write_bool("Debug", "MultiViewport", config_debug.multi_viewport);
 

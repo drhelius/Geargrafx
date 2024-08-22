@@ -183,6 +183,9 @@
     <ClInclude Include="..\shared\desktop\gui_debug_psg.h">
       <Filter>desktop</Filter>
     </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_text.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
     <ClInclude Include="..\shared\desktop\license.h">
       <Filter>desktop</Filter>
     </ClInclude>
