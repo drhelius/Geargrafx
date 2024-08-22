@@ -131,7 +131,6 @@ void gui_file_dialog_choose_savestate_path(void)
     }
 }
 
-
 void gui_file_dialog_load_symbols(void)
 {
     nfdchar_t *outPath;
@@ -139,8 +138,8 @@ void gui_file_dialog_load_symbols(void)
     nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, NULL);
     if (result == NFD_OKAY)
     {
-        // gui_debug_reset_symbols();
-        // gui_debug_load_symbols_file(outPath);
+        gui_debug_reset_symbols();
+        gui_debug_load_symbols_file(outPath);
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)

@@ -58,10 +58,6 @@ static bool goto_address_requested = false;
 static u16 goto_address_target = 0;
 static bool goto_back_requested = false;
 static int goto_back = 0;
-static bool show_mem = true;
-static bool show_symbols = true;
-static bool show_segment = true;
-static bool show_bank = true;
 static int pc_pos = 0;
 static int goto_address_pos = 0;
 
@@ -97,38 +93,50 @@ void gui_debug_reset_breakpoints(void)
 
 void gui_debug_load_symbols_file(const char* file_path)
 {
-    // Log("Loading symbol file %s", path);
+    std::ifstream file(file_path);
 
-    // std::ifstream file(path);
+    if (file.is_open())
+    {
+        Log("Loading symbol file %s", file_path);
 
-    // if (file.is_open())
-    // {
-    //     std::string line;
-    //     bool valid_section = true;
+        std::string line;
+        bool valid_section = true;
 
-    //     while (std::getline(file, line))
-    //     {
-    //         size_t comment = line.find_first_of(';');
-    //         if (comment != std::string::npos)
-    //             line = line.substr(0, comment);
-    //         line = line.erase(0, line.find_first_not_of(" \t\r\n"));
-    //         line = line.erase(line.find_last_not_of(" \t\r\n") + 1);
+        while (std::getline(file, line))
+        {
+            size_t comment = line.find_first_of(';');
+            if (comment != std::string::npos)
+                line = line.substr(0, comment);
+            line = line.erase(0, line.find_first_not_of(" \t\r\n"));
+            line = line.erase(line.find_last_not_of(" \t\r\n") + 1);
+            while (line[0] == ' ')
+                line = line.substr(1);
 
-    //         if (line.empty())
-    //             continue;
+            if (line.find("Bank") == 0)
+                continue;
 
-    //         if (line.find("[") != std::string::npos)
-    //         {
-    //             valid_section = (line.find("[labels]") != std::string::npos);
-    //             continue;
-    //         }
+            if (line.find("-") == 0)
+                continue;
 
-    //         if (valid_section)
-    //             add_symbol(line.c_str());
-    //     }
+            if (line.empty())
+                continue;
 
-    //     file.close();
-    // }
+            if (line.find("[") != std::string::npos)
+            {
+                valid_section = (line.find("[labels]") != std::string::npos);
+                continue;
+            }
+
+            if (valid_section)
+                add_symbol(line.c_str());
+        }
+
+        file.close();
+    }
+    else
+    {
+        Debug("Symbol file %s not found", file_path);
+    }
 }
 
 void gui_debug_toggle_breakpoint(void)
@@ -403,29 +411,33 @@ static void prepare_drawable_lines(void)
 
         if (IsValidPointer(record) && (record->name[0] != 0))
         {
-            for (long unsigned int s = 0; s < fixed_symbols.size(); s++)
-            {
-                if ((fixed_symbols[s].bank == record->bank) && (fixed_symbols[s].address == i) && show_symbols)
+            bool fixed_symbol_found = false;
+            if (config_debug.dis_show_symbols)
+                for (long unsigned int s = 0; s < fixed_symbols.size(); s++)
                 {
-                    DisassemblerLine line;
-                    line.address = (u16)i;
-                    line.is_symbol = true;
-                    snprintf(line.symbol, 64, "%s", fixed_symbols[s].text);
-                    disassembler_lines.push_back(line);
+                    if ((fixed_symbols[s].bank == record->bank) && (fixed_symbols[s].address == i))
+                    {
+                        DisassemblerLine line;
+                        line.address = (u16)i;
+                        line.is_symbol = true;
+                        snprintf(line.symbol, 64, "%s", fixed_symbols[s].text);
+                        disassembler_lines.push_back(line);
+                        fixed_symbol_found = true;
+                    }
                 }
-            }
 
-            for (long unsigned int s = 0; s < dynamic_symbols.size(); s++)
-            {
-                if ((dynamic_symbols[s].bank == record->bank) && (dynamic_symbols[s].address == i) && show_symbols)
+            if (config_debug.dis_show_symbols && config_debug.dis_show_auto_symbols && !fixed_symbol_found)
+                for (long unsigned int s = 0; s < dynamic_symbols.size(); s++)
                 {
-                    DisassemblerLine line;
-                    line.address = (u16)i;
-                    line.is_symbol = true;
-                    snprintf(line.symbol, 64, "%s", dynamic_symbols[s].text);
-                    disassembler_lines.push_back(line);
+                    if ((dynamic_symbols[s].bank == record->bank) && (dynamic_symbols[s].address == i))
+                    {
+                        DisassemblerLine line;
+                        line.address = (u16)i;
+                        line.is_symbol = true;
+                        snprintf(line.symbol, 64, "%s", dynamic_symbols[s].text);
+                        disassembler_lines.push_back(line);
+                    }
                 }
-            }
 
             DisassemblerLine line;
             line.address = (u16)i;
@@ -567,13 +579,13 @@ static void show_disassembly(void)
                 ImVec4 color_mem = line.is_breakpoint ? red : mid_gray;
                 ImVec4 color_name = line.is_breakpoint ? red : white;
 
-                if (show_segment)
+                if (config_debug.dis_show_segment)
                 {
                     ImGui::SameLine();
                     ImGui::TextColored(color_segment, "%s", line.record->segment);
                 }
 
-                if (show_bank)
+                if (config_debug.dis_show_bank)
                 {
                     ImGui::SameLine();
                     ImGui::TextColored(color_bank, "%02X", line.record->bank);
@@ -596,7 +608,7 @@ static void show_disassembly(void)
                 ImGui::SameLine();
                 ImGui::TextColored(color_name, "%s", line.record->name);
 
-                if (show_mem)
+                if (config_debug.dis_show_mem)
                 {
                     char spaces[32];
                     int offset = 21 - strlen(line.record->name);
@@ -637,6 +649,7 @@ static void add_symbol(const char* line)
 
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+    std::replace(str.begin(), str.end(), '\t', ' ');
 
     size_t first = str.find_first_not_of(' ');
     if (std::string::npos == first)
@@ -654,12 +667,14 @@ static void add_symbol(const char* line)
     if (comment != std::string::npos)
         str = str.substr(0 , comment);
 
-    std::size_t space = str.find(" ");
+    std::size_t space = str.find_last_of(" ");
 
     if (space != std::string::npos)
     {
         snprintf(s.text, 64, "%s", str.substr(space + 1 , std::string::npos).c_str());
         str = str.substr(0, space);
+
+        std::replace(str.begin(), str.end(), ' ', ':');
 
         std::size_t separator = str.find(":");
 
@@ -774,10 +789,10 @@ static void disassembler_menu(void)
     {
         ImGui::Separator();
 
-        ImGui::MenuItem("Opcodes", NULL, &show_mem);
-        ImGui::MenuItem("Symbols", NULL, &show_symbols);
-        ImGui::MenuItem("Segment", NULL, &show_segment);
-        ImGui::MenuItem("Bank", NULL, &show_bank);
+        ImGui::MenuItem("Opcodes", NULL, &config_debug.dis_show_mem);
+        ImGui::MenuItem("Symbols", NULL, &config_debug.dis_show_symbols);
+        ImGui::MenuItem("Segment", NULL, &config_debug.dis_show_segment);
+        ImGui::MenuItem("Bank", NULL, &config_debug.dis_show_bank);
 
         ImGui::EndMenu();
     }
@@ -890,6 +905,8 @@ static void disassembler_menu(void)
 
     if (ImGui::BeginMenu("Symbols"))
     {
+        ImGui::MenuItem("Automatic Symbols", NULL, &config_debug.dis_show_auto_symbols);
+
         if (ImGui::MenuItem("Load Symbols..."))
         {
             open_symbols = true;

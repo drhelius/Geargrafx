@@ -345,6 +345,10 @@ void HuC6280::DisassembleNextOPCode()
     {
         strncpy(record->segment, "ROM", 5);
     }
+    else if (record->bank == 0xF7)
+    {
+        strncpy(record->segment, "BAT", 5);
+    }
     else if (record->bank >= 0xF8 && record->bank < 0xFC)
     {
         strncpy(record->segment, "RAM", 5);
