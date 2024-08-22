@@ -787,8 +787,6 @@ static void disassembler_menu(void)
 
     if (ImGui::BeginMenu("View"))
     {
-        ImGui::Separator();
-
         ImGui::MenuItem("Opcodes", NULL, &config_debug.dis_show_mem);
         ImGui::MenuItem("Symbols", NULL, &config_debug.dis_show_symbols);
         ImGui::MenuItem("Segment", NULL, &config_debug.dis_show_segment);
@@ -906,6 +904,8 @@ static void disassembler_menu(void)
     if (ImGui::BeginMenu("Symbols"))
     {
         ImGui::MenuItem("Automatic Symbols", NULL, &config_debug.dis_show_auto_symbols);
+
+        ImGui::Separator();
 
         if (ImGui::MenuItem("Load Symbols..."))
         {
