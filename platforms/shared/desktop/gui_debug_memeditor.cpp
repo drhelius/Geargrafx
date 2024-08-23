@@ -707,6 +707,11 @@ void MemEditor::DrawContexMenu(int address, bool cell_hovered)
             Paste();
         }
 
+        if (ImGui::Selectable("Select All"))
+        {
+            SelectAll();
+        }
+
         if (ImGui::Selectable("Add Bookmark..."))
         {
             m_add_bookmark = true;
