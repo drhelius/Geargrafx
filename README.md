@@ -14,7 +14,7 @@ This is an open source project with its ongoing development made possible thanks
 
 ----------
 
-![Captura de pantalla 2024-07-29 163929](https://github.com/user-attachments/assets/8f0fbc21-3a96-4560-9ae0-de2b6cfc06fb)
+![Geargrafx](https://github.com/user-attachments/assets/7db9eab6-e9c4-422d-a75f-3fde73d3d7f2)
 
 ## Build Instructions
 
