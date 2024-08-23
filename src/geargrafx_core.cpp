@@ -38,6 +38,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_audio);
     InitPointer(m_input);
     InitPointer(m_cartridge);
+    InitPointer(m_debug_callback);
     m_paused = true;
     m_clock = 0;
 }
@@ -83,12 +84,22 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         return false;
 
 #ifndef GG_DISABLE_DISASSEMBLER
+
     bool debug_enable = false;
     if (IsValidPointer(debug))
     {
         debug_enable = true;
         m_huc6280->EnableBreakpoints(debug->stop_on_breakpoint);
     }
+
+    GG_Debug_State debug_state;
+    debug_state.PC = m_huc6280->GetState()->PC->GetValue();
+    debug_state.P = m_huc6280->GetState()->P->GetValue();
+    debug_state.A = m_huc6280->GetState()->A->GetValue();
+    debug_state.X = m_huc6280->GetState()->X->GetValue();
+    debug_state.Y = m_huc6280->GetState()->Y->GetValue();
+    debug_state.S = m_huc6280->GetState()->S->GetValue();
+    debug_state.cycles = 0;
 #endif
 
     m_huc6260->SetBuffer(frame_buffer);
@@ -120,6 +131,18 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
 
         if (debug_enable && debug->stop_on_run_to_breakpoint && instruction_completed && m_huc6280->RunToBreakpointHit())
             stop = true;
+
+        if (debug_enable && instruction_completed && IsValidPointer(m_debug_callback))
+        {
+            m_debug_callback(&debug_state);
+            debug_state.PC = m_huc6280->GetState()->PC->GetValue();
+            debug_state.P = m_huc6280->GetState()->P->GetValue();
+            debug_state.A = m_huc6280->GetState()->A->GetValue();
+            debug_state.X = m_huc6280->GetState()->X->GetValue();
+            debug_state.Y = m_huc6280->GetState()->Y->GetValue();
+            debug_state.S = m_huc6280->GetState()->S->GetValue();
+            debug_state.cycles = 0;
+        }
 #endif
         // Failsafe: if the emulator is running too long, stop it
         // if (failsafe_clocks >= 150000)
@@ -218,6 +241,11 @@ Audio* GeargrafxCore::GetAudio()
 Input* GeargrafxCore::GetInput()
 {
     return m_input;
+}
+
+void GeargrafxCore::SetDebugCallback(GG_Debug_Callback callback)
+{
+    m_debug_callback = callback;
 }
 
 void GeargrafxCore::KeyPressed(GG_Controllers controller, GG_Keys key)

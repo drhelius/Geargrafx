@@ -38,6 +38,7 @@
 #include "gui_debug.h"
 #include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
+#include "gui_debug_trace_logger.h"
 
 static bool status_message_active = false;
 static char status_message[4096] = "";
@@ -100,6 +101,7 @@ void gui_init(void)
 
     emu_audio_mute(!config_audio.enable);
     emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
+    emu_debug_set_callback(gui_debug_trace_logger_update);
 
     gui_init_menus();
 }

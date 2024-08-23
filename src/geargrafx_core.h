@@ -41,6 +41,19 @@ public:
         bool stop_on_run_to_breakpoint;
     };
 
+    struct GG_Debug_State
+    {
+        u16 PC;
+        u8 P;
+        u8 A;
+        u8 X;
+        u8 Y;
+        u8 S;
+        int cycles;
+    };
+
+    typedef void (*GG_Debug_Callback)(GG_Debug_State* state);
+
 public:
     GeargrafxCore();
     ~GeargrafxCore();
@@ -74,6 +87,7 @@ public:
     HuC6280* GetHuC6280();
     Audio* GetAudio();
     Input* GetInput();
+    void SetDebugCallback(GG_Debug_Callback callback);
 
 private:
     void Reset();
@@ -88,6 +102,7 @@ private:
     Cartridge* m_cartridge;
     bool m_paused;
     int m_clock;
+    GG_Debug_Callback m_debug_callback;
 };
 
 #endif /* GEARGRAFX_CORE_H */

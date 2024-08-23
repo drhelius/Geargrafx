@@ -326,6 +326,11 @@ void emu_debug_continue(void)
     emu_debugg_command = Debug_Command_Continue;
 }
 
+void emu_debug_set_callback(GeargrafxCore::GG_Debug_Callback callback)
+{
+    geargrafx->SetDebugCallback(callback);
+}
+
 void emu_video_no_sprite_limit(bool enabled)
 {
     geargrafx->GetHuC6270()->SetNoSpriteLimit(enabled);
