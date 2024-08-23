@@ -275,5 +275,15 @@ static void memory_editor_menu(void)
         ImGui::EndMenu();
     }
 
+    if (ImGui::BeginMenu("Bookmarks"))
+    {
+        if (ImGui::MenuItem("Clear All"))
+        {
+
+        }
+
+        ImGui::EndMenu();
+    }
+
     ImGui::EndMenuBar();
 }

@@ -48,9 +48,16 @@ struct DisassemblerLine
     int name_real_length;
 };
 
+struct Bookmark
+{
+    u16 address;
+    char name[32];
+};
+
 static std::vector<DebugSymbol> fixed_symbols;
 static std::vector<DebugSymbol> dynamic_symbols;
 static std::vector<DisassemblerLine> disassembler_lines(0x10000);
+static std::vector<Bookmark> bookmarks;
 static int selected_address = -1;
 static char new_breakpoint_buffer[10] = "";
 static bool new_breakpoint_read = false;
@@ -63,11 +70,13 @@ static bool goto_back_requested = false;
 static int goto_back = 0;
 static int pc_pos = 0;
 static int goto_address_pos = 0;
+static bool add_bookmark = false;
 
-static void show_controls(void);
-static void show_breakpoints(void);
+static void draw_controls(void);
+static void draw_breakpoints(void);
 static void prepare_drawable_lines(void);
-static void show_disassembly(void);
+static void draw_disassembly(void);
+static void draw_context_menu(DisassemblerLine* line);
 static void add_symbol(const char* line);
 static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address);
 static void add_breakpoint(void);
@@ -76,6 +85,7 @@ static bool is_return_instruction(u8 opcode);
 static void replace_symbols(DisassemblerLine* line, const char* color);
 static void draw_instruction_name(DisassemblerLine* line, bool is_pc);
 static void disassembler_menu(void);
+static void add_bookmark_popup(void);
 
 void gui_debug_reset(void)
 {
@@ -155,6 +165,11 @@ void gui_debug_toggle_breakpoint(void)
     }
 }
 
+void gui_debug_add_bookmark(void)
+{
+    add_bookmark = true;
+}
+
 void gui_debug_runtocursor(void)
 {
     if (selected_address > 0)
@@ -179,12 +194,14 @@ void gui_debug_window_disassembler(void)
     ImGui::Begin("Disassembler", &config_debug.show_disassembler, ImGuiWindowFlags_MenuBar);
 
     disassembler_menu();
-    show_controls();
+    draw_controls();
 
     ImGui::Separator();
 
-    show_breakpoints();
-    show_disassembly();
+    draw_breakpoints();
+    draw_disassembly();
+
+    add_bookmark_popup();
 
     ImGui::End();
     ImGui::PopStyleVar();
@@ -216,7 +233,7 @@ void gui_debug_save_disassembler(const char* file_path)
     fclose(file);
 }
 
-static void show_controls(void)
+static void draw_controls(void)
 {
     ImGui::PushFont(gui_material_icons_font);
 
@@ -302,7 +319,7 @@ static void show_controls(void)
     ImGui::PopFont();
 }
 
-static void show_breakpoints(void)
+static void draw_breakpoints(void)
 {
     if (ImGui::CollapsingHeader("Breakpoints"))
     {
@@ -373,7 +390,8 @@ static void show_breakpoints(void)
 
             if (brk->execute && IsValidPointer(record))
             {
-                ImGui::SameLine(); ImGui::TextColored(white, "%s", record->name);
+                ImGui::SameLine();
+                TextColoredEx(" %s", record->name);
             }
         }
 
@@ -479,7 +497,7 @@ static void prepare_drawable_lines(void)
     }
 }
 
-static void show_disassembly(void)
+static void draw_disassembly(void)
 {
     ImGui::PushFont(gui_default_font);
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, mid_gray);
@@ -579,6 +597,8 @@ static void show_disassembly(void)
                     ImGui::GetWindowDrawList()->AddRectFilled(p_min, p_max, ImGui::GetColorU32(bg_color));
                 }
 
+                draw_context_menu(&line);
+
                 ImVec4 color_segment = line.is_breakpoint ? red : magenta;
                 ImVec4 color_bank = line.is_breakpoint ? red : violet;
                 ImVec4 color_addr = line.is_breakpoint ? red : cyan;
@@ -616,7 +636,7 @@ static void show_disassembly(void)
                 {
                     int len = line.name_real_length;
                     char spaces[32];
-                    int offset = 25 - len;
+                    int offset = 28 - len;
                     if (offset < 0)
                         offset = 0;
                     for (int i = 0; i < offset; i++)
@@ -643,6 +663,28 @@ static void show_disassembly(void)
 
     ImGui::PopStyleColor();
     ImGui::PopFont();
+}
+
+static void draw_context_menu(DisassemblerLine* line)
+{
+    ImGui::PopFont();
+    if (ImGui::BeginPopupContextItem())
+    {
+        selected_address = line->address;
+
+        if (ImGui::Selectable("Add Bookmark..."))
+        {
+            gui_debug_add_bookmark();
+        }
+
+        if (ImGui::Selectable("Toggle Breakpoint"))
+        {
+            gui_debug_toggle_breakpoint();
+        }
+
+        ImGui::EndPopup();
+    }
+    ImGui::PushFont(gui_default_font);
 }
 
 static void add_symbol(const char* line)
@@ -829,21 +871,25 @@ static void draw_instruction_name(DisassemblerLine* line, bool is_pc)
 {
     const char* color;
     const char* symbol_color;
+    const char* extra_color;
 
     if (is_pc)
     {
         color = c_yellow;
         symbol_color = c_yellow;
+        extra_color = c_yellow;
     }
     else if (line->is_breakpoint)
     {
         color = c_red;
         symbol_color = c_red;
+        extra_color = c_red;
     }
     else
     {
         color = c_white;
         symbol_color = c_green;
+        extra_color = c_blue;
     }
 
     if (config_debug.dis_replace_symbols && line->record->jump)
@@ -855,7 +901,7 @@ static void draw_instruction_name(DisassemblerLine* line, bool is_pc)
     std::string instr = name;
     size_t pos = instr.find("{}");
     if (pos != std::string::npos)
-        instr.replace(pos, 2, c_blue);
+        instr.replace(pos, 2, extra_color);
 
     line->name_real_length = TextColoredEx("%s%s", color, instr.c_str());
 }
@@ -988,6 +1034,34 @@ static void disassembler_menu(void)
         ImGui::EndMenu();
     }
 
+    if (ImGui::BeginMenu("Bookmarks"))
+    {
+        if (ImGui::MenuItem("Add Bookmark..."))
+        {
+            gui_debug_add_bookmark();
+        }
+
+        if (ImGui::MenuItem("Clear All"))
+        {
+            bookmarks.clear();
+        }
+
+        if (bookmarks.size() > 0)
+            ImGui::Separator();
+
+        for (long unsigned int i = 0; i < bookmarks.size(); i++)
+        {
+            char label[80];
+            snprintf(label, 80, "$%04X: %s", bookmarks[i].address, bookmarks[i].name);
+            if (ImGui::MenuItem(label))
+            {
+                request_goto_address(bookmarks[i].address);
+            }
+        }
+
+        ImGui::EndMenu();
+    }
+
     bool open_symbols = false;
 
     if (ImGui::BeginMenu("Symbols"))
@@ -1014,4 +1088,77 @@ static void disassembler_menu(void)
         gui_file_dialog_load_symbols();
 
     ImGui::EndMenuBar();
+}
+
+static void add_bookmark_popup(void)
+{
+    if (add_bookmark)
+    {
+        ImGui::OpenPopup("Add Bookmark");
+        add_bookmark = false;
+    }
+
+    if (ImGui::BeginPopupModal("Add Bookmark", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static char address[5] = "";
+        static char name[32] = "";
+        int bookmark_address = selected_address;
+
+        if (bookmark_address > 0)
+            snprintf(address, 5, "%04X", bookmark_address);
+
+        ImGui::Text("Name:");
+        ImGui::PushItemWidth(200);ImGui::SetItemDefaultFocus();
+        ImGui::InputText("##name", name, IM_ARRAYSIZE(name));
+
+        ImGui::Text("Address:");
+        ImGui::PushItemWidth(50);
+        ImGui::InputTextWithHint("##bookaddr", "XXXX", address, IM_ARRAYSIZE(address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+
+        ImGui::Separator();
+
+        if (ImGui::Button("OK", ImVec2(90, 0)))
+        {
+            try
+            {
+                bookmark_address = (int)std::stoul(address, 0, 16);
+
+                if (strlen(name) == 0)
+                {
+                    Memory* memory = emu_get_core()->GetMemory();
+                    Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(bookmark_address);
+
+                    if (IsValidPointer(record) && (record->name[0] != 0))
+                    {
+                        std::string instr = record->name;
+                        size_t pos = instr.find("{}");
+                        if (pos != std::string::npos)
+                            instr.replace(pos, 2, "");
+                        snprintf(name, 32, "%s", instr.c_str());
+                    }
+                    else
+                    {
+                        snprintf(name, 32, "Bookmark_%04X", bookmark_address);
+                    }
+                }
+
+                Bookmark bookmark;
+                bookmark.address = bookmark_address;
+                snprintf(bookmark.name, 32, "%s", name);
+                bookmarks.push_back(bookmark);
+                ImGui::CloseCurrentPopup();
+
+                address[0] = 0;
+                name[0] = 0;
+            }
+            catch(const std::invalid_argument&)
+            {
+            }
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(90, 0))) { ImGui::CloseCurrentPopup(); }
+
+        ImGui::EndPopup();
+    }
 }
