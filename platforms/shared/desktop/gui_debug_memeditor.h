@@ -72,6 +72,7 @@ private:
     int m_mem_base_addr;
     char m_hex_mem_format[6];
     int m_mem_word;
+    char m_goto_address[7];
 };
 
 #endif /* GUI_DEBUG_MEMEDITOR_H */

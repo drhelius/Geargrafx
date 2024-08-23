@@ -41,6 +41,7 @@ MemEditor::MemEditor()
     m_mem_size = 0;
     m_mem_base_addr = 0;
     m_mem_word = 1;
+    m_goto_address[0] = 0;
 }
 
 MemEditor::~MemEditor()
@@ -85,7 +86,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
     int character_cell_padding = 0;
     int max_chars_per_cell = 2 * m_mem_word;
     ImVec2 character_size = ImGui::CalcTextSize("0");
-    float footer_height = (ImGui::GetFrameHeightWithSpacing() * 4) + 4;
+    float footer_height = (ImGui::GetFrameHeightWithSpacing() * 4) + 10;
     char buf[32];
 
     if (ImGui::BeginChild("##mem", ImVec2(ImGui::GetContentRegionAvail().x, -footer_height), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav))
@@ -452,22 +453,67 @@ void MemEditor::HandleSelection(int address, int row)
 
 void MemEditor::DrawCursors()
 {
-    ImVec4 color = ImVec4(0.1f,0.9f,0.9f,1.0f);
+    ImGui::Columns(2, "##cursors", false);
+
+    ImGui::Text("Go to:");
+    ImGui::SameLine();
+    ImGui::PushItemWidth(55);
+
+    if (ImGui::InputTextWithHint("##gotoaddr", "XXXXXX", m_goto_address, IM_ARRAYSIZE(m_goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+    {
+        try
+        {
+            JumpToAddress((int)std::stoul(m_goto_address, 0, 16));
+            m_goto_address[0] = 0;
+        }
+        catch(const std::invalid_argument&)
+        {
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Go!", ImVec2(30, 0)))
+    {
+        try
+        {
+            JumpToAddress((int)std::stoul(m_goto_address, 0, 16));
+            m_goto_address[0] = 0;
+        }
+        catch(const std::invalid_argument&)
+        {
+        }
+    }
+
+    ImGui::NextColumn();
+
     char range_addr[32];
+    char region_text[32];
     char single_addr[32];
+    char selection_text[32];
+    char all_text[128];
     snprintf(range_addr, 32, "%s-%s", m_hex_mem_format, m_hex_mem_format);
+    snprintf(region_text, 32, range_addr, m_mem_base_addr, m_mem_base_addr + m_mem_size - 1);
     snprintf(single_addr, 32, "%s", m_hex_mem_format);
+    if (m_selection_start == m_selection_end)
+        snprintf(selection_text, 32, single_addr, m_mem_base_addr + m_selection_start);
+    else
+        snprintf(selection_text, 32, range_addr, m_mem_base_addr + m_selection_start, m_mem_base_addr + m_selection_end);
+    snprintf(all_text, 128, "REGION: %s  SELECTION: %s", region_text, selection_text);
+
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize(all_text).x 
+    - ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x);
+
+    ImVec4 color = ImVec4(0.1f,0.9f,0.9f,1.0f);
 
     ImGui::TextColored(color, "REGION:");
     ImGui::SameLine();
-    ImGui::Text(range_addr, m_mem_base_addr, m_mem_base_addr + m_mem_size - 1);
+    ImGui::Text("%s", region_text);
     ImGui::SameLine();
     ImGui::TextColored(color, " SELECTION:");
     ImGui::SameLine();
-    if (m_selection_start == m_selection_end)
-        ImGui::Text(single_addr, m_mem_base_addr + m_selection_start);
-    else
-        ImGui::Text(range_addr, m_mem_base_addr + m_selection_start, m_mem_base_addr + m_selection_end);
+    ImGui::Text("%s", selection_text);
+
+    ImGui::Columns(1);
+
     ImGui::Separator();
 }
 
@@ -494,23 +540,6 @@ void MemEditor::DrawOptions()
         ImGui::Checkbox("Gray out zeros", &m_gray_out_zeros);
 
         ImGui::EndPopup();
-    }
-
-    ImGui::SameLine();
-    ImGui::Text("Go to:");
-    ImGui::SameLine();
-    ImGui::PushItemWidth(45);
-    char goto_address[5] = "";
-    if (ImGui::InputTextWithHint("##gotoaddr", "XXXX", goto_address, IM_ARRAYSIZE(goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
-    {
-        try
-        {
-            JumpToAddress((int)std::stoul(goto_address, 0, 16));
-        }
-        catch(const std::invalid_argument&)
-        {
-        }
-        goto_address[0] = 0;
     }
 }
 
@@ -655,7 +684,8 @@ void MemEditor::Paste(uint8_t* data, int size)
 
 void MemEditor::JumpToAddress(int address)
 {
-    m_jump_to_address = address - m_mem_base_addr;
+    if (address >= m_mem_base_addr && address < (m_mem_base_addr + m_mem_size))
+        m_jump_to_address = address - m_mem_base_addr;
 }
 
 void MemEditor::SelectAll()
