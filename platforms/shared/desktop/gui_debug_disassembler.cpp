@@ -48,7 +48,7 @@ struct DisassemblerLine
     int name_real_length;
 };
 
-struct Bookmark
+struct DisassemblerBookmark
 {
     u16 address;
     char name[32];
@@ -57,7 +57,7 @@ struct Bookmark
 static std::vector<DebugSymbol> fixed_symbols;
 static std::vector<DebugSymbol> dynamic_symbols;
 static std::vector<DisassemblerLine> disassembler_lines(0x10000);
-static std::vector<Bookmark> bookmarks;
+static std::vector<DisassemblerBookmark> bookmarks;
 static int selected_address = -1;
 static char new_breakpoint_buffer[10] = "";
 static bool new_breakpoint_read = false;
@@ -1041,7 +1041,7 @@ static void disassembler_menu(void)
             gui_debug_add_bookmark();
         }
 
-        if (ImGui::MenuItem("Clear All"))
+        if (ImGui::MenuItem("Remove All"))
         {
             bookmarks.clear();
         }
@@ -1142,7 +1142,7 @@ static void add_bookmark_popup(void)
                     }
                 }
 
-                Bookmark bookmark;
+                DisassemblerBookmark bookmark;
                 bookmark.address = bookmark_address;
                 snprintf(bookmark.name, 32, "%s", name);
                 bookmarks.push_back(bookmark);

@@ -17,9 +17,11 @@
  *
  */
 
-#include "gui_debug_memeditor.h"
 #include <string>
 #include <stdexcept>
+#include <algorithm>
+#include <SDL.h>
+#include "gui_debug_memeditor.h"
 #include "gui_debug_constants.h"
 
 MemEditor::MemEditor()
@@ -42,6 +44,7 @@ MemEditor::MemEditor()
     m_mem_base_addr = 0;
     m_mem_word = 1;
     m_goto_address[0] = 0;
+    m_add_bookmark = false;
 }
 
 MemEditor::~MemEditor()
@@ -49,7 +52,7 @@ MemEditor::~MemEditor()
 
 }
 
-void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int word, bool ascii)
+void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int word, bool ascii, bool preview, bool options, bool cursors)
 {
     m_mem_data = mem_data;
     m_mem_size = mem_size;
@@ -86,7 +89,15 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
     int character_cell_padding = 0;
     int max_chars_per_cell = 2 * m_mem_word;
     ImVec2 character_size = ImGui::CalcTextSize("0");
-    float footer_height = (ImGui::GetFrameHeightWithSpacing() * 4) + 10;
+    float footer_height = 0;
+
+    if (options)
+        footer_height += ImGui::GetFrameHeightWithSpacing();
+    if (preview)
+        footer_height += ((character_size.y + 4) * 3) + 4;
+    if (cursors)
+        footer_height += ImGui::GetFrameHeightWithSpacing();
+
     char buf[32];
 
     if (ImGui::BeginChild("##mem", ImVec2(ImGui::GetContentRegionAvail().x, -footer_height), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav))
@@ -180,7 +191,15 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
 
                         ImVec2 cell_start_pos = ImGui::GetCursorScreenPos() - ImGui::GetStyle().CellPadding;
                         ImVec2 cell_size = (character_size * ImVec2(max_chars_per_cell, 1)) + (ImVec2(2, 2) * ImGui::GetStyle().CellPadding) + ImVec2(1 + byte_cell_padding, 0);
-                        bool cell_hovered = ImGui::IsMouseHoveringRect(cell_start_pos, cell_start_pos + cell_size, false) && ImGui::IsWindowHovered();
+
+                        ImVec2 hover_cell_size = cell_size;
+
+                        if (IsColumnSeparator(x + 1, m_bytes_per_row))
+                        {
+                            hover_cell_size.x += m_separator_column_width + 1;
+                        }
+
+                        bool cell_hovered = ImGui::IsMouseHoveringRect(cell_start_pos, cell_start_pos + hover_cell_size, false) && ImGui::IsWindowHovered();
 
                         DrawSelectionBackground(x, byte_address, cell_start_pos, cell_size);
 
@@ -270,6 +289,9 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                                 m_editing_address = byte_address;
                                 m_set_keyboard_here = true;
                             }
+
+
+                            DrawContexMenu(byte_address, cell_hovered);
                         }
 
                         ImGui::PopItemWidth();
@@ -347,9 +369,14 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
     }
     ImGui::EndChild();
 
-    DrawCursors();
-    DrawDataPreview(m_selection_start);
-    DrawOptions();
+    if (cursors)
+        DrawCursors();
+    if (preview)
+        DrawDataPreview(m_selection_start);
+    if (options)
+        DrawOptions();
+
+    BookMarkPopup();
 }
 
 bool MemEditor::IsColumnSeparator(int current_column, int column_count)
@@ -433,7 +460,7 @@ void MemEditor::HandleSelection(int address, int row)
             }
         }
     }
-    else if (ImGui::IsMouseDown(ImGuiMouseButton_Left) || ImGui::IsMouseDown(ImGuiMouseButton_Right))
+    else if (ImGui::IsMouseDown(ImGuiMouseButton_Left))// || ImGui::IsMouseDown(ImGuiMouseButton_Right))
     {
         m_selection_start = address;
         m_selection_end = address;
@@ -453,12 +480,7 @@ void MemEditor::HandleSelection(int address, int row)
 
 void MemEditor::DrawCursors()
 {
-    ImGui::Columns(2, "##cursors", false);
-
-    ImGui::Text("Go to:");
-    ImGui::SameLine();
     ImGui::PushItemWidth(55);
-
     if (ImGui::InputTextWithHint("##gotoaddr", "XXXXXX", m_goto_address, IM_ARRAYSIZE(m_goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
     {
         try
@@ -483,7 +505,7 @@ void MemEditor::DrawCursors()
         }
     }
 
-    ImGui::NextColumn();
+    ImGui::SameLine();
 
     char range_addr[32];
     char region_text[32];
@@ -497,7 +519,7 @@ void MemEditor::DrawCursors()
         snprintf(selection_text, 32, single_addr, m_mem_base_addr + m_selection_start);
     else
         snprintf(selection_text, 32, range_addr, m_mem_base_addr + m_selection_start, m_mem_base_addr + m_selection_end);
-    snprintf(all_text, 128, "REGION: %s  SELECTION: %s", region_text, selection_text);
+    snprintf(all_text, 128, "REGION: %s SELECTION: %s", region_text, selection_text);
 
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize(all_text).x 
     - ImGui::GetScrollX() - 2 * ImGui::GetStyle().ItemSpacing.x);
@@ -511,10 +533,6 @@ void MemEditor::DrawCursors()
     ImGui::TextColored(color, " SELECTION:");
     ImGui::SameLine();
     ImGui::Text("%s", selection_text);
-
-    ImGui::Columns(1);
-
-    ImGui::Separator();
 }
 
 void MemEditor::DrawOptions()
@@ -545,6 +563,8 @@ void MemEditor::DrawOptions()
 
 void MemEditor::DrawDataPreview(int address)
 {
+    ImGui::Separator();
+
     if (address < 0 || address >= m_mem_size)
         return;
 
@@ -661,25 +681,172 @@ int MemEditor::DataPreviewSize()
     }
 }
 
-void MemEditor::Copy(uint8_t** data, int* size)
+void MemEditor::DrawContexMenu(int address, bool cell_hovered)
 {
-    int start = m_selection_start;
-    int end = m_selection_end;
+    char id[16];
+    snprintf(id, 16, "##context_%d", address);
 
-    *size = (end - start + 1) * m_mem_word;
-    *data = m_mem_data + (start * m_mem_word);
+    if (cell_hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+        ImGui::OpenPopup(id);
+
+    if (ImGui::BeginPopup(id, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings))
+    {
+        if (m_gui_font != NULL)
+            ImGui::PushFont(m_gui_font);
+
+        if ((address < m_selection_start) || (address > m_selection_end))
+            m_selection_start = m_selection_end = address;
+
+        if (ImGui::Selectable("Copy"))
+        {
+            Copy();
+        }
+
+        if (ImGui::Selectable("Paste"))
+        {
+            Paste();
+        }
+
+        if (ImGui::Selectable("Add Bookmark..."))
+        {
+            m_add_bookmark = true;
+        }
+
+        if (m_gui_font != NULL)
+            ImGui::PopFont();
+
+        ImGui::EndPopup();
+    }
 }
 
-void MemEditor::Paste(uint8_t* data, int size)
+void MemEditor::BookMarkPopup()
 {
-    int selection_size = (m_selection_end - m_selection_start + 1) * m_mem_word;
-    int start = m_selection_start * m_mem_word;
-    int end = start + std::min(size, selection_size);
-
-    for (int i = start; i < end; i++)
+    if (m_add_bookmark)
     {
-        m_mem_data[i] = data[i - start];
+        ImGui::OpenPopup("Add Bookmark");
+        m_add_bookmark = false;
     }
+
+    if (m_gui_font != NULL)
+        ImGui::PushFont(m_gui_font);
+
+    if (ImGui::BeginPopupModal("Add Bookmark", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static char address[7] = "";
+        static char name[32] = "";
+        int bookmark_address = m_selection_start;
+
+        if (bookmark_address > 0)
+            snprintf(address, 7, "%06X", bookmark_address);
+
+        ImGui::Text("Name:");
+        ImGui::PushItemWidth(200);ImGui::SetItemDefaultFocus();
+        ImGui::InputText("##name", name, IM_ARRAYSIZE(name));
+
+        ImGui::Text("Address:");
+        ImGui::PushItemWidth(70);
+        ImGui::InputTextWithHint("##bookaddr", "XXXXXX", address, IM_ARRAYSIZE(address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+
+        ImGui::Separator();
+
+        if (ImGui::Button("OK", ImVec2(90, 0)))
+        {
+            try
+            {
+                bookmark_address = (int)std::stoul(address, 0, 16);
+
+                if (strlen(name) == 0)
+                {
+                    snprintf(name, 32, "Bookmark_%06X", bookmark_address);
+                }
+
+                Bookmark bookmark;
+                bookmark.address = bookmark_address;
+                snprintf(bookmark.name, 32, "%s", name);
+                m_bookmarks.push_back(bookmark);
+                ImGui::CloseCurrentPopup();
+
+                address[0] = 0;
+                name[0] = 0;
+            }
+            catch(const std::invalid_argument&)
+            {
+            }
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(90, 0))) { ImGui::CloseCurrentPopup(); }
+
+        ImGui::EndPopup();
+    }
+
+    if (m_gui_font != NULL)
+            ImGui::PopFont();
+}
+
+void MemEditor::Copy()
+{
+    int size = (m_selection_end - m_selection_start + 1) * m_mem_word;
+    uint8_t* data = m_mem_data + (m_selection_start * m_mem_word);
+
+    std::string text;
+
+    for (int i = 0; i < size; i++)
+    {
+        char byte[3];
+        sprintf(byte, "%02X", data[i]);
+        if (i > 0)
+            text += " ";
+        text += byte;
+    }
+
+    SDL_SetClipboardText(text.c_str());
+}
+
+void MemEditor::Paste()
+{
+    char* clipboard = SDL_GetClipboardText();
+
+    if (clipboard != NULL)
+    {
+        std::string text(clipboard);
+
+        text.erase(std::remove(text.begin(), text.end(), '\n'), text.end());
+        text.erase(std::remove(text.begin(), text.end(), ' '), text.end());
+
+        int buffer_size = text.size() / 2;
+
+        uint8_t* data = new uint8_t[buffer_size];
+
+        for (int i = 0; i < buffer_size; i ++)
+        {
+            std::string byte = text.substr(i * 2, 2);
+
+            try
+            {
+                data[i] = (uint8_t)std::stoul(byte, 0, 16);
+            }
+            catch(const std::invalid_argument&)
+            {
+                delete[] data;
+                SDL_free(clipboard);
+                return;
+            }
+        }
+
+        int selection_size = (m_selection_end - m_selection_start + 1) * m_mem_word;
+        int start = m_selection_start * m_mem_word;
+        int end = start + std::min(buffer_size, selection_size);
+
+        for (int i = start; i < end; i++)
+        {
+            m_mem_data[i] = data[i - start];
+        }
+
+        delete[] data;
+    }
+
+    SDL_free(clipboard);
 }
 
 void MemEditor::JumpToAddress(int address)
@@ -733,4 +900,24 @@ void MemEditor::SaveToFile(const char* file_path)
 
         fclose(file);
     }
+}
+
+void MemEditor::AddBookmark()
+{
+    m_add_bookmark = true;
+}
+
+void MemEditor::RemoveBookmarks()
+{
+    m_bookmarks.clear();
+}
+
+std::vector<MemEditor::Bookmark>* MemEditor::GetBookmarks()
+{
+    return &m_bookmarks;
+}
+
+void MemEditor::SetGuiFont(ImFont* gui_font)
+{
+    m_gui_font = gui_font;
 }

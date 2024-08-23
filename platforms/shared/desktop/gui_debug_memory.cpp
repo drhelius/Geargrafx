@@ -37,6 +37,11 @@ static void memory_editor_menu(void);
 
 void gui_debug_window_memory(void)
 {
+    for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
+    {
+        mem_edit[i].SetGuiFont(gui_roboto_font);
+    }
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(625, 321), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(343, 262), ImGuiCond_FirstUseEver);
@@ -128,62 +133,12 @@ void gui_debug_window_memory(void)
 
 void gui_debug_copy_memory(void)
 {
-    int size = 0;
-    u8* data = NULL;
-    mem_edit[current_mem_edit].Copy(&data, &size);
-
-    if (IsValidPointer(data))
-    {
-        std::string text;
-
-        for (int i = 0; i < size; i++)
-        {
-            char byte[3];
-            sprintf(byte, "%02X", data[i]);
-            if (i > 0)
-                text += " ";
-            text += byte;
-        }
-
-        SDL_SetClipboardText(text.c_str());
-    }
+    mem_edit[current_mem_edit].Copy();
 }
 
 void gui_debug_paste_memory(void)
 {
-    char* clipboard = SDL_GetClipboardText();
-
-    if (IsValidPointer(clipboard))
-    {
-        std::string text(clipboard);
-
-        text.erase(std::remove(text.begin(), text.end(), '\n'), text.end());
-        text.erase(std::remove(text.begin(), text.end(), ' '), text.end());
-
-        size_t buffer_size = text.size() / 2;
-        u8* data = new u8[buffer_size];
-
-        for (size_t i = 0; i < buffer_size; i ++)
-        {
-            std::string byte = text.substr(i * 2, 2);
-
-            try
-            {
-                data[i] = (u8)std::stoul(byte, 0, 16);
-            }
-            catch(const std::invalid_argument&)
-            {
-                delete[] data;
-                return;
-            }
-        }
-
-        mem_edit[current_mem_edit].Paste(data, buffer_size);
-
-        delete[] data;
-    }
-
-    SDL_free(clipboard);
+    mem_edit[current_mem_edit].Paste();
 }
 
 void gui_debug_select_all(void)
@@ -279,7 +234,30 @@ static void memory_editor_menu(void)
     {
         if (ImGui::MenuItem("Clear All"))
         {
+            mem_edit[current_mem_edit].RemoveBookmarks();
+        }
 
+        if (ImGui::MenuItem("Add Bookmark"))
+        {
+            mem_edit[current_mem_edit].AddBookmark();
+        }
+
+        std::vector<MemEditor::Bookmark>* bookmarks = mem_edit[current_mem_edit].GetBookmarks();
+
+        if (bookmarks->size() > 0)
+            ImGui::Separator();
+
+        for (long unsigned int i = 0; i < bookmarks->size(); i++)
+        {
+            MemEditor::Bookmark* bookmark = &(*bookmarks)[i];
+
+            char label[80];
+            snprintf(label, 80, "$%04X: %s", bookmark->address, bookmark->name);
+
+            if (ImGui::MenuItem(label))
+            {
+                mem_edit[current_mem_edit].JumpToAddress(bookmark->address);
+            }
         }
 
         ImGui::EndMenu();

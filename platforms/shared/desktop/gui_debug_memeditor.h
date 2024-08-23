@@ -22,22 +22,34 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <vector>
 #include "imgui/imgui.h"
 
 class MemEditor
 {
 public:
+    struct Bookmark
+    {
+        int address;
+        char name[32];
+    };
+
+public:
     MemEditor();
     ~MemEditor();
 
-    void Draw(uint8_t* mem_data, int mem_size, int base_display_addr = 0x0000, int word = 1, bool ascii = true);
-    void Copy(uint8_t** data, int* size);
-    void Paste(uint8_t* data, int size);
+    void Draw(uint8_t* mem_data, int mem_size, int base_display_addr = 0x0000, int word = 1, bool ascii = true, bool preview = true, bool options = true, bool cursors = true);
+    void Copy();
+    void Paste();
     void JumpToAddress(int address);
     void SelectAll();
     void ClearSelection();
     void SetValueToSelection(int value);
     void SaveToFile(const char* file_path);
+    void AddBookmark();
+    void RemoveBookmarks();
+    std::vector<Bookmark>* GetBookmarks();
+    void SetGuiFont(ImFont* gui_font);
 
 private:
     bool IsColumnSeparator(int current_column, int column_count);
@@ -52,6 +64,8 @@ private:
     void DrawDataPreviewAsDec(int data);
     void DrawDataPreviewAsBin(int data);
     int DataPreviewSize();
+    void DrawContexMenu(int address, bool cell_hovered);
+    void BookMarkPopup();
 
 private:
     float m_separator_column_width;
@@ -73,6 +87,9 @@ private:
     char m_hex_mem_format[6];
     int m_mem_word;
     char m_goto_address[7];
+    bool m_add_bookmark;
+    std::vector<Bookmark> m_bookmarks;
+    ImFont* m_gui_font;
 };
 
 #endif /* GUI_DEBUG_MEMEDITOR_H */

@@ -36,6 +36,11 @@ static float plot_y[32];
 
 void gui_debug_window_psg(void)
 {
+    for (int i = 0; i < 6; i++)
+    {
+        mem_edit[i].SetGuiFont(gui_roboto_font);
+    }
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(180, 45), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(438, 482), ImGuiCond_FirstUseEver);
@@ -144,9 +149,9 @@ void gui_debug_window_psg(void)
 
                 ImGui::Columns(1);
 
-                ImGui::BeginChild("##waveform", ImVec2(ImGui::GetWindowWidth() - 20, 160), true);
+                ImGui::BeginChild("##waveform", ImVec2(ImGui::GetWindowWidth() - 20, 60), true);
 
-                mem_edit[channel].Draw(psg_channel->wave_data, 32, 0, 1, false);
+                mem_edit[channel].Draw(psg_channel->wave_data, 32, 0, 1, false, false, false, false);
 
                 ImGui::EndChild();
 
