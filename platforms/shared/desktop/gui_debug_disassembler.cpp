@@ -809,6 +809,8 @@ static void replace_symbols(DisassemblerLine* line, const char* color)
                 char jump_address[6];
                 snprintf(jump_address, 6, "$%04X", line->record->jump_address);
                 size_t pos = instr.find(jump_address);
+                if (pos == std::string::npos)
+                    break;
                 instr.replace(pos, 5, color + symbol);
                 snprintf(line->name_with_symbol, 64, "%s", instr.c_str());
                 break;
@@ -817,14 +819,14 @@ static void replace_symbols(DisassemblerLine* line, const char* color)
     }
 }
 
+static const char* const c_yellow = "{FFE60C}";
+static const char* const c_white = "{FFFFFF}";
+static const char* const c_red = "{FA2573}";
+static const char* const c_green = "{1AE51A}";
+static const char* const c_blue = "{3466FF}";
+
 static void draw_instruction_name(DisassemblerLine* line, bool is_pc)
 {
-    const char* const c_yellow = "{FFE60C}";
-    const char* const c_white = "{FFFFFF}";
-    const char* const c_red = "{FA2573}";
-    const char* const c_green = "{1AE51A}";
-    const char* const c_blue = "{3466FF}";
-
     const char* color;
     const char* symbol_color;
 
