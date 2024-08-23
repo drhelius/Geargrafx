@@ -66,6 +66,7 @@ public:
         bool* NMI;
         u8* IDR;
         u8* IRR;
+        unsigned int* CYCLES;
     };
 
     struct GG_Breakpoint
@@ -123,6 +124,7 @@ private:
     u8 m_zn_flags_lut[256];
     unsigned int m_cycles;
     unsigned int m_clock_cycles;
+    unsigned int m_last_instruction_cycles;
     bool m_irq1_asserted;
     bool m_irq2_asserted;
     bool m_nmi_requested;

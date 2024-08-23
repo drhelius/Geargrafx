@@ -20,6 +20,7 @@
 #define GUI_ACTIONS_IMPORT
 #include "gui_actions.h"
 #include "gui.h"
+#include "gui_debug_trace_logger.h"
 #include "config.h"
 #include "emu.h"
 #include "../../../src/geargrafx.h"
@@ -27,6 +28,7 @@
 void gui_action_reset(void)
 {
     gui_set_status_message("Resetting...", 3000);
+    gui_debug_trace_logger_clear();
 
     emu_resume();
     emu_reset();
@@ -34,7 +36,7 @@ void gui_action_reset(void)
     if (config_emulator.start_paused)
     {
         emu_pause();
-        
+
         for (int i=0; i < (HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT); i++)
         {
             emu_frame_buffer[i] = 0;

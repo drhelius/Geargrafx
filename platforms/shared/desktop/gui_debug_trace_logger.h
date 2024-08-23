@@ -30,6 +30,8 @@
 
 EXTERN void gui_debug_window_trace_logger(void);
 EXTERN void gui_debug_trace_logger_update(GeargrafxCore::GG_Debug_State* state);
+EXTERN void gui_debug_trace_logger_clear(void);
+EXTERN void gui_debug_save_log(const char* file_path);
 
 #undef GUI_DEBUG_TRACE_LOGGER_IMPORT
 #undef EXTERN

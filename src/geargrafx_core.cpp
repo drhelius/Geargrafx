@@ -84,22 +84,14 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         return false;
 
 #ifndef GG_DISABLE_DISASSEMBLER
-
+    GG_Debug_State debug_state;
+    bool get_debug_state = true;
     bool debug_enable = false;
     if (IsValidPointer(debug))
     {
         debug_enable = true;
         m_huc6280->EnableBreakpoints(debug->stop_on_breakpoint);
     }
-
-    GG_Debug_State debug_state;
-    debug_state.PC = m_huc6280->GetState()->PC->GetValue();
-    debug_state.P = m_huc6280->GetState()->P->GetValue();
-    debug_state.A = m_huc6280->GetState()->A->GetValue();
-    debug_state.X = m_huc6280->GetState()->X->GetValue();
-    debug_state.Y = m_huc6280->GetState()->Y->GetValue();
-    debug_state.S = m_huc6280->GetState()->S->GetValue();
-    debug_state.cycles = 0;
 #endif
 
     m_huc6260->SetBuffer(frame_buffer);
@@ -109,6 +101,18 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
 
     do
     {
+#ifndef GG_DISABLE_DISASSEMBLER
+        if (get_debug_state)
+        {
+            get_debug_state = false;
+            debug_state.PC = m_huc6280->GetState()->PC->GetValue();
+            debug_state.P = m_huc6280->GetState()->P->GetValue();
+            debug_state.A = m_huc6280->GetState()->A->GetValue();
+            debug_state.X = m_huc6280->GetState()->X->GetValue();
+            debug_state.Y = m_huc6280->GetState()->Y->GetValue();
+            debug_state.S = m_huc6280->GetState()->S->GetValue();
+        }
+#endif
         instruction_completed = false;
 
         if (m_clock % 3 == 0)
@@ -134,14 +138,9 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
 
         if (debug_enable && instruction_completed && IsValidPointer(m_debug_callback))
         {
+            debug_state.cycles = *m_huc6280->GetState()->CYCLES;
             m_debug_callback(&debug_state);
-            debug_state.PC = m_huc6280->GetState()->PC->GetValue();
-            debug_state.P = m_huc6280->GetState()->P->GetValue();
-            debug_state.A = m_huc6280->GetState()->A->GetValue();
-            debug_state.X = m_huc6280->GetState()->X->GetValue();
-            debug_state.Y = m_huc6280->GetState()->Y->GetValue();
-            debug_state.S = m_huc6280->GetState()->S->GetValue();
-            debug_state.cycles = 0;
+            get_debug_state = true;
         }
 #endif
         // Failsafe: if the emulator is running too long, stop it

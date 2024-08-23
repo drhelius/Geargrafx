@@ -23,14 +23,18 @@
 #include <deque>
 #include "imgui/imgui.h"
 #include "gui.h"
+#include "gui_filedialogs.h"
 #include "config.h"
 #include "emu.h"
 
 static bool trace_logger_enabled = false;
-static int trace_logger_count = 10000;
+static int trace_logger_count = 0;
+static unsigned int trace_logger_instruction_count = 0;
 static std::deque<std::string> trace_logger_lines;
 
 static void trace_logger_menu(void);
+
+static const int k_line_count[] = { 1000, 5000, 10000, 50000, 100000, 500000, 1000000 };
 
 void gui_debug_window_trace_logger(void)
 {
@@ -46,16 +50,12 @@ void gui_debug_window_trace_logger(void)
 
     ImGui::SameLine();
 
-    if (ImGui::InputInt("lines", &trace_logger_count, 1, 1000, ImGuiInputTextFlags_AllowTabInput))
+    ImGui::PushItemWidth(100);
+    if (ImGui::Combo("lines  ", &trace_logger_count, "1000\0 5000\0 10000\0 50000\0 100000\0 500000\0 1000000\0\0"))
     {
-        if (trace_logger_count < 1)
-            trace_logger_count = 1;
-        else if (trace_logger_count > 100000)
-            trace_logger_count = 100000;
-
-        if ((int)trace_logger_lines.size() > trace_logger_count)
+        if ((int)trace_logger_lines.size() > k_line_count[trace_logger_count])
         {
-            int diff = trace_logger_lines.size() - trace_logger_count;
+            int diff = trace_logger_lines.size() - k_line_count[trace_logger_count];
             trace_logger_lines.erase(trace_logger_lines.begin(), trace_logger_lines.begin() + diff);
         }
     }
@@ -65,6 +65,13 @@ void gui_debug_window_trace_logger(void)
     if (ImGui::Button(trace_logger_enabled ? "Stop" : "Start"))
     {
         trace_logger_enabled = !trace_logger_enabled;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Clear"))
+    {
+        gui_debug_trace_logger_clear();
     }
 
     if (ImGui::BeginChild("##logger", ImVec2(ImGui::GetContentRegionAvail().x, 0), true, 0))
@@ -95,7 +102,7 @@ void gui_debug_trace_logger_update(GeargrafxCore::GG_Debug_State* state)
 {
     if (trace_logger_enabled)
     {
-        if ((int)trace_logger_lines.size() >= trace_logger_count)
+        if ((int)trace_logger_lines.size() >= k_line_count[trace_logger_count])
         {
             trace_logger_lines.pop_front();
         }
@@ -106,15 +113,15 @@ void gui_debug_trace_logger_update(GeargrafxCore::GG_Debug_State* state)
         if (!IsValidPointer(record))
             return;
 
-        char bank[32];
-        snprintf(bank, sizeof(bank), "%02X", record->bank);
+        char bank[8];
+        snprintf(bank, sizeof(bank), "%02X:", record->bank);
 
         char registers[40];
-        snprintf(registers, sizeof(registers), "A: %02X  X: %02X  Y: %02X  S: %02X",
+        snprintf(registers, sizeof(registers), "A: %02X  X: %02X  Y: %02X  S: %02X   ",
             state->A, state->X, state->Y, state->S);
 
         char flags[32];
-        snprintf(flags, sizeof(flags), "P: %c%c%c%c%c%c%c%c",
+        snprintf(flags, sizeof(flags), "P: %c%c%c%c%c%c%c%c   ",
             (state->P & FLAG_NEGATIVE) ? 'N' : 'n',
             (state->P & FLAG_OVERFLOW) ? 'V' : 'v',
             (state->P & FLAG_TRANSFER) ? 'T' : 't',
@@ -124,14 +131,50 @@ void gui_debug_trace_logger_update(GeargrafxCore::GG_Debug_State* state)
             (state->P & FLAG_ZERO) ? 'Z' : 'z',
             (state->P & FLAG_CARRY) ? 'C' : 'c');
 
+        char cycles[16];
+        snprintf(cycles, sizeof(cycles), "(%02d) ", state->cycles);
+
+        char counter[16];
+        snprintf(counter, sizeof(counter), "%d  ", trace_logger_instruction_count);
+
         std::string instr = record->name;
         instr.erase(std::remove(instr.begin(), instr.end(), '{'), instr.end());
         instr.erase(std::remove(instr.begin(), instr.end(), '}'), instr.end());
 
         char line[256];
-        snprintf(line, sizeof(line), "%s:%04X   %s   %s   %s   %s", bank, state->PC, registers, flags, instr.c_str(), record->bytes);
+        snprintf(line, sizeof(line), "%s%s%04X   %s%s%s%s   %s",
+            config_debug.trace_counter ? counter : "",
+            config_debug.trace_bank ? bank : "", 
+            state->PC, 
+            config_debug.trace_registers ? registers : "", 
+            config_debug.trace_flags ? flags : "",
+            config_debug.trace_cycles ? cycles : "",
+            instr.c_str(),
+            config_debug.trace_bytes ? record->bytes : "");
 
         trace_logger_lines.push_back(line);
+        trace_logger_instruction_count++;
+    }
+}
+
+void gui_debug_trace_logger_clear(void)
+{
+    trace_logger_lines.clear();
+    trace_logger_instruction_count = 0;
+}
+
+void gui_debug_save_log(const char* file_path)
+{
+    FILE* file = fopen(file_path, "w");
+
+    if (file != NULL)
+    {
+        for (long unsigned int i = 0; i < trace_logger_lines.size(); i++)
+        {
+            fprintf(file, "%s\n", trace_logger_lines[i].c_str());
+        }
+
+        fclose(file);
     }
 }
 
@@ -143,7 +186,7 @@ static void trace_logger_menu(void)
     {
         if (ImGui::MenuItem("Save Log As..."))
         {
-            
+            gui_file_dialog_save_log();
         }
 
         ImGui::EndMenu();
@@ -151,10 +194,12 @@ static void trace_logger_menu(void)
 
     if (ImGui::BeginMenu("Log"))
     {
-        ImGui::MenuItem("Bank Number", "", &config_debug.trace_bank, config_debug.debug);
-        ImGui::MenuItem("Registers", "", &config_debug.trace_registers, config_debug.debug);
-        ImGui::MenuItem("Flags", "", &config_debug.trace_flags, config_debug.debug);
-        ImGui::MenuItem("Cycles", "", &config_debug.trace_bank, config_debug.debug);
+        ImGui::MenuItem("Instruction Counter", "", &config_debug.trace_counter);
+        ImGui::MenuItem("Bank Number", "", &config_debug.trace_bank);
+        ImGui::MenuItem("Registers", "", &config_debug.trace_registers);
+        ImGui::MenuItem("Flags", "", &config_debug.trace_flags);
+        ImGui::MenuItem("Cycles", "", &config_debug.trace_cycles);
+        ImGui::MenuItem("Bytes", "", &config_debug.trace_bytes);
 
         ImGui::EndMenu();
     }

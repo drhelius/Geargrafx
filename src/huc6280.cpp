@@ -46,6 +46,7 @@ HuC6280::HuC6280()
     m_processor_state.NMI = &m_nmi_requested;
     m_processor_state.IDR = &m_interrupt_disable_register;
     m_processor_state.IRR = &m_interrupt_request_register;
+    m_processor_state.CYCLES = &m_last_instruction_cycles;
 }
 
 HuC6280::~HuC6280()
@@ -76,6 +77,7 @@ void HuC6280::Reset()
     ClearFlag(FLAG_BREAK);
     m_cycles = 0;
     m_clock_cycles = 0;
+    m_last_instruction_cycles = 0;
     m_irq1_asserted = false;
     m_irq2_asserted = false;
     m_nmi_requested = false;
@@ -169,6 +171,8 @@ unsigned int HuC6280::Tick()
 
     m_cycles += k_huc6280_opcode_cycles[opcode];
 
+    m_last_instruction_cycles = m_cycles;
+
     return m_cycles;
 }
 
@@ -189,7 +193,6 @@ void HuC6280::ClockTimer()
                 m_timer_counter = m_timer_reload;
                 m_timer_irq = true;
                 SetBit(m_interrupt_request_register, 2);
-                // Debug("Timer counter underflow, IRQ, reload: %02X", m_timer_reload);
             }
         }
     }

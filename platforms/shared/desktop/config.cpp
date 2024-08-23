@@ -116,10 +116,12 @@ void config_read(void)
     config_debug.show_huc6270_info = read_bool("Debug", "HuC6270Info", false);
     config_debug.show_psg = read_bool("Debug", "PSG", false);
     config_debug.show_trace_logger = read_bool("Debug", "TraceLogger", false);
+    config_debug.trace_counter = read_bool("Debug", "TraceCounter", true);
     config_debug.trace_bank = read_bool("Debug", "TraceBank", true);
     config_debug.trace_registers = read_bool("Debug", "TraceRegisters", true);
     config_debug.trace_flags = read_bool("Debug", "TraceFlags", true);
     config_debug.trace_cycles = read_bool("Debug", "TraceCycles", true);
+    config_debug.trace_bytes = read_bool("Debug", "TraceBytes", true);
     config_debug.dis_show_mem = read_bool("Debug", "DisMem", true);
     config_debug.dis_show_symbols = read_bool("Debug", "DisSymbols", true);
     config_debug.dis_show_segment = read_bool("Debug", "DisSegment", true);
@@ -235,10 +237,12 @@ void config_write(void)
     write_bool("Debug", "HuC6270Info", config_debug.show_huc6270_info);
     write_bool("Debug", "PSG", config_debug.show_psg);
     write_bool("Debug", "TraceLogger", config_debug.show_trace_logger);
+    write_bool("Debug", "TraceCounter", config_debug.trace_counter);
     write_bool("Debug", "TraceBank", config_debug.trace_bank);
     write_bool("Debug", "TraceRegisters", config_debug.trace_registers);
     write_bool("Debug", "TraceFlags", config_debug.trace_flags);
     write_bool("Debug", "TraceCycles", config_debug.trace_cycles);
+    write_bool("Debug", "TraceBytes", config_debug.trace_bytes);
     write_bool("Debug", "DisMem", config_debug.dis_show_mem);
     write_bool("Debug", "DisSymbols", config_debug.dis_show_symbols);
     write_bool("Debug", "DisSegment", config_debug.dis_show_segment);
