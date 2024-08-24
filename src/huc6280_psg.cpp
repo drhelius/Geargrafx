@@ -17,12 +17,14 @@
  *
  */
 
+#include <cmath>
+#include <algorithm>
 #include "huc6280_psg.h"
 
 HuC6280PSG::HuC6280PSG()
 {
     InitPointer(m_channels);
-    InitPointer(m_current_channel);
+    InitPointer(m_ch);
 }
 
 HuC6280PSG::~HuC6280PSG()
@@ -44,6 +46,7 @@ void HuC6280PSG::Init()
     m_state.BUFFER = m_buffer;
     m_state.CHANNELS = m_channels;
 
+    ComputeVolumeLUT();
     Reset();
 }
 
@@ -59,7 +62,10 @@ void HuC6280PSG::Reset()
     m_lfo_frequency = 0;
     m_lfo_control = 0;
 
-    m_current_channel = &m_channels[0];
+    m_left_sample = 0;
+    m_right_sample = 0;
+
+    m_ch = &m_channels[0];
 
     for (int i = 0; i < 6; i++)
     {
@@ -67,8 +73,14 @@ void HuC6280PSG::Reset()
         m_channels[i].control = 0;
         m_channels[i].amplitude = 0;
         m_channels[i].wave = 0;
-        m_channels[i].noise = 0;
         m_channels[i].wave_index = 0;
+        m_channels[i].noise_control = 0;
+        m_channels[i].noise_frequency = 0;
+        m_channels[i].noise_seed = 0;
+        m_channels[i].noise_counter = 0;
+        m_channels[i].counter = 0;
+        m_channels[i].output = 0;
+
         for (int j = 0; j < 32; j++)
         {
             m_channels[i].wave_data[j] = 0;
@@ -102,20 +114,84 @@ HuC6280PSG::HuC6280PSG_State* HuC6280PSG::GetState()
 
 void HuC6280PSG::Sync()
 {
+    
+
     for (int i = 0; i < m_elapsed_cycles; i++)
     {
+        u8 main_left_vol = (m_main_amplitude >> 4) & 0x0F;
+        u8 main_right_vol = m_main_amplitude & 0x0F;
+
+        m_left_sample = 0;
+        m_right_sample = 0;
+
+        for (int i = 0; i < 1; i++)
+        {
+            HuC6280PSG_Channel* ch = &m_channels[i];
+
+            // Channel off
+            if (!(ch->control & 0x80))
+                continue;
+
+            u8 left_vol = (ch->amplitude >> 4) & 0x0F;
+            u8 right_vol = ch->amplitude & 0x0F;
+            u8 channel_vol = (ch->control >> 1) & 0x0F;
+
+            int temp_left_vol = std::min(0x0F, (0x0F - main_left_vol) + (0x0F - left_vol) + (0x0F - channel_vol));
+            int temp_right_vol = std::min(0x0F, (0x0F - main_right_vol) + (0x0F - right_vol) + (0x0F - channel_vol));
+
+            int final_left_vol = m_volume_lut[(temp_left_vol << 1) | (~ch->control & 0x01)];
+            int final_right_vol = m_volume_lut[(temp_right_vol << 1) | (~ch->control & 0x01)];
+
+            // Noise
+            if ((i >=4) && (ch->noise_control & 0x80))
+            {
+
+            }
+            // DDA
+            else if (ch->control & 0x40)
+            {
+
+            }
+            // Waveform
+            else
+            {
+                // LFO
+                if ((i < 2) && (m_lfo_control & 0x03))
+                {
+                    if (i == 1)
+                        continue;
+                }
+                // No LFO
+                else
+                {
+                    u32 feq = ch->frequency ? ch->frequency : 0x1000;
+
+                    //for (int j = 0; j < cycles; j++)
+                    {
+                        int data = ch->wave_data[ch->wave_index];
+                        ch->counter--;
+
+                        if (ch->counter <= 0)
+                        {
+                            ch->counter = feq;
+                            ch->wave_index = (ch->wave_index + 1) & 0x1F;
+                        }
+
+                        m_left_sample += (s16)((data - 16));// * final_left_vol);
+                        m_right_sample += (s16)((data - 16));// * final_right_vol);
+                    }
+                }
+            }
+        }
+        
         m_sample_cycle_counter++;
 
         if (m_sample_cycle_counter >= m_cycles_per_sample)
         {
             m_sample_cycle_counter -= m_cycles_per_sample;
 
-            s16 sample = 0;
-
-            // TODO: PSG sound generation
-
-            m_buffer[m_buffer_index] = sample;
-            m_buffer[m_buffer_index + 1] = sample;
+            m_buffer[m_buffer_index] = m_left_sample;
+            m_buffer[m_buffer_index + 1] = m_right_sample;
             m_buffer_index += 2;
 
             if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
@@ -127,4 +203,24 @@ void HuC6280PSG::Sync()
     }
 
     m_elapsed_cycles = 0;
+}
+
+void HuC6280PSG::UpdateChannels(int cycles)
+{
+
+}
+
+void HuC6280PSG::ComputeVolumeLUT()
+{
+    double amplitude = 65535.0 / 6.0 / 32.0;
+    double step = 48.0 / 32.0;
+    
+    for (int i = 0; i < 30; i++)
+    {
+        m_volume_lut[i] = (u16)amplitude;
+        amplitude /= pow(10.0, step / 20.0);
+    }
+
+    m_volume_lut[30] = 0;
+    m_volume_lut[31] = 0;
 }

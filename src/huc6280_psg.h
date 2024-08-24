@@ -37,9 +37,14 @@ public:
         u8 control;
         u8 amplitude;
         u8 wave;
-        u8 noise;
         u8 wave_index;
         u8 wave_data[32];
+        u8 noise_control;
+        u32 noise_frequency;
+        u32 noise_seed;
+        int noise_counter;
+        int counter;
+        s16 output;
     };
 
     struct HuC6280PSG_State
@@ -65,11 +70,13 @@ public:
 
 private:
     void Sync();
+    void UpdateChannels(int cycles);
+    void ComputeVolumeLUT();
 
 private:
     HuC6280PSG_State m_state;
     HuC6280PSG_Channel* m_channels;
-    HuC6280PSG_Channel* m_current_channel;
+    HuC6280PSG_Channel* m_ch;
     u8 m_channel_select;
     u8 m_main_amplitude;
     u8 m_lfo_frequency;
@@ -79,6 +86,9 @@ private:
     int m_cycles_per_sample;
     int m_buffer_index;
     s16* m_buffer;
+    u16 m_volume_lut[32];
+    s16 m_left_sample;
+    s16 m_right_sample;
 };
 
 #include "huc6280_psg_inline.h"

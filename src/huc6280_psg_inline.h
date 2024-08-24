@@ -35,7 +35,7 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
     if (reg == 0)
     {
         m_channel_select = value & 0x07;
-        m_current_channel = &m_channels[m_channel_select];
+        m_ch = &m_channels[m_channel_select];
         return;
     }
 
@@ -51,28 +51,38 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
     case 2:
         if (m_channel_select < 6)
         {
-            m_current_channel->frequency = (m_current_channel->frequency & 0x0F00) | value;
+            m_ch->frequency = (m_ch->frequency & 0x0F00) | value;
         }
         break;
     // Channel frequency (high)
     case 3:
         if (m_channel_select < 6)
         {
-            m_current_channel->frequency = (m_current_channel->frequency & 0x00FF) | ((value & 0x0F) << 8);
+            m_ch->frequency = (m_ch->frequency & 0x00FF) | ((value & 0x0F) << 8);
         }
         break;
     // Channel control
     case 4:
         if (m_channel_select < 6)
         {
-            m_current_channel->control = value;
+            // DDA on to off
+            if ((m_ch->control & 0x40) && (!(value & 0x40))) 
+            {
+                m_ch->wave_index = 0;
+            }
+            // Channel off to on
+            if ((!(m_ch->control & 0x80)) && (value & 0x80)) 
+            {
+                m_ch->counter = m_ch->frequency;
+            }
+            m_ch->control = value;
         }
         break;
     // Channel amplitude
     case 5:
         if (m_channel_select < 6)
         {
-            m_current_channel->amplitude = value;
+            m_ch->amplitude = value;
         }
         break;
     // Channel waveform data
@@ -80,24 +90,24 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
         if (m_channel_select < 6)
         {
             int data = value & 0x1F;
-            m_current_channel->wave = data;
+            m_ch->wave = data;
 
             // DDA off
-            if((m_current_channel->control & 0x40) == 0)
+            if((m_ch->control & 0x40) == 0)
             {
-                m_current_channel->wave_data[m_current_channel->wave_index] = data;
+                m_ch->wave_data[m_ch->wave_index] = data;
             }
 
             // Channel off, DDA off
-            if((m_current_channel->control & 0xC0) == 0)
-                m_current_channel->wave_index = ((m_current_channel->wave_index + 1) & 0x1F);
+            if((m_ch->control & 0xC0) == 0)
+                m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
         }
         break;
     // Channel noise (only channels 4 and 5)
     case 7:
         if ((m_channel_select > 3) && (m_channel_select < 6))
         {
-            m_current_channel->noise = value;
+            m_ch->noise_control = value;
         }
         break;
     // LFO frequency

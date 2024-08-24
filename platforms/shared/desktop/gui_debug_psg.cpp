@@ -89,6 +89,10 @@ void gui_debug_window_psg(void)
 
                 ImGui::Columns(2, "channels", false);
 
+                ImGui::TextColored(cyan, "DDA "); ImGui::SameLine();
+                ImGui::TextColored(violet, "            "); ImGui::SameLine();
+                ImGui::TextColored(white, "%d", psg_channel->output);
+
                 ImGui::TextColored(cyan, "R02 "); ImGui::SameLine();
                 ImGui::TextColored(violet, "FREQ LOW    "); ImGui::SameLine();
                 ImGui::TextColored(white, "%02X", psg_channel->frequency & 0xFF);
@@ -115,8 +119,16 @@ void gui_debug_window_psg(void)
                 if (channel > 3)
                 {
                     ImGui::TextColored(cyan, "R07 "); ImGui::SameLine();
-                    ImGui::TextColored(violet, "NOISE       "); ImGui::SameLine();
-                    ImGui::TextColored(white, "%02X", psg_channel->noise);
+                    ImGui::TextColored(violet, "NOISE CTRL  "); ImGui::SameLine();
+                    ImGui::TextColored(white, "%02X", psg_channel->noise_control);
+
+                    ImGui::TextColored(cyan, "    "); ImGui::SameLine();
+                    ImGui::TextColored(violet, "NOISE FREQ  "); ImGui::SameLine();
+                    ImGui::TextColored(white, "%04X", psg_channel->noise_frequency);
+
+                    ImGui::TextColored(cyan, "    "); ImGui::SameLine();
+                    ImGui::TextColored(violet, "NOISE SEED  "); ImGui::SameLine();
+                    ImGui::TextColored(white, "%04X", psg_channel->noise_seed);
                 }
 
                 ImGui::NewLine();
