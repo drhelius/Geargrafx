@@ -124,7 +124,7 @@ void HuC6280PSG::Sync()
         m_left_sample = 0;
         m_right_sample = 0;
 
-        for (int i = 0; i < 1; i++)
+        for (int i = 0; i < 6; i++)
         {
             HuC6280PSG_Channel* ch = &m_channels[i];
 
@@ -177,8 +177,8 @@ void HuC6280PSG::Sync()
                             ch->wave_index = (ch->wave_index + 1) & 0x1F;
                         }
 
-                        m_left_sample += (s16)((data - 16));// * final_left_vol);
-                        m_right_sample += (s16)((data - 16));// * final_right_vol);
+                        m_left_sample += (s16)((data - 16) * final_left_vol);
+                        m_right_sample += (s16)((data - 16) * final_right_vol);
                     }
                 }
             }
