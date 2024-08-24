@@ -123,7 +123,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
 
         stop = m_huc6260->Clock();
 
-        if (m_clock % 3 == 0)
+        if (m_clock % 6 == 0)
             m_audio->Clock();
 
 #ifndef GG_DISABLE_DISASSEMBLER
