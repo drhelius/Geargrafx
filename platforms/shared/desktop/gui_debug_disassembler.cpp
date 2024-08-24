@@ -1102,7 +1102,7 @@ static void add_bookmark_popup(void)
     {
         static char address[5] = "";
         static char name[32] = "";
-        int bookmark_address = selected_address;
+        u16 bookmark_address = (u16)selected_address;
 
         if (bookmark_address > 0)
             snprintf(address, 5, "%04X", bookmark_address);

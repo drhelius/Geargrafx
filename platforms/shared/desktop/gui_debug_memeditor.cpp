@@ -64,15 +64,15 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
     if ((m_mem_word > 1) && ((m_preview_data_type < 2) || (m_preview_data_type > 3)))
         m_preview_data_type = 2;
 
-    int hex_digits = 1;
+    uint8_t hex_digits = 1;
     int size = m_mem_size - 1;
 
     while (size >>= 4)
-    {   
+    {
         hex_digits++;
     }
 
-    snprintf(m_hex_mem_format, 6, "%%0%dX", hex_digits);
+    snprintf(m_hex_mem_format, 8, "%%0%dX", hex_digits);
 
     ImVec4 addr_color = cyan;
     ImVec4 ascii_color = magenta;
