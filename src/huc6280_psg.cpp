@@ -79,7 +79,7 @@ void HuC6280PSG::Reset()
         m_channels[i].noise_seed = 0;
         m_channels[i].noise_counter = 0;
         m_channels[i].counter = 0;
-        m_channels[i].output = 0;
+        m_channels[i].dda = 0;
 
         for (int j = 0; j < 32; j++)
         {

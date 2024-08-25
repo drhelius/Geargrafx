@@ -91,7 +91,7 @@ void gui_debug_window_psg(void)
 
                 ImGui::TextColored(cyan, "DDA "); ImGui::SameLine();
                 ImGui::TextColored(violet, "            "); ImGui::SameLine();
-                ImGui::TextColored(white, "%d", psg_channel->output);
+                ImGui::TextColored(white, "%d", psg_channel->dda);
 
                 ImGui::TextColored(cyan, "R02 "); ImGui::SameLine();
                 ImGui::TextColored(violet, "FREQ LOW    "); ImGui::SameLine();

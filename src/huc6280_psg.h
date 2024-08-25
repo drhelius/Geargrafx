@@ -44,7 +44,7 @@ public:
         u32 noise_seed;
         int noise_counter;
         int counter;
-        s16 output;
+        s16 dda;
     };
 
     struct HuC6280PSG_State
