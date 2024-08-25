@@ -100,25 +100,25 @@ bool SoundQueue::Start(int sample_rate, int channel_count, int buffer_size, int 
         return false;
     }
 
-    SDL_AudioSpec want, have;
-    want.freq = sample_rate;
-    want.format = AUDIO_S16SYS;
-    want.channels = channel_count;
-    want.silence = 0;
-    want.samples = m_buffer_size / channel_count;
-    want.size = 0;
-    want.callback = FillBufferCallback;
-    want.userdata = this;
+    SDL_AudioSpec spec;
+    spec.freq = sample_rate;
+    spec.format = AUDIO_S16SYS;
+    spec.channels = channel_count;
+    spec.silence = 0;
+    spec.samples = m_buffer_size / channel_count;
+    spec.size = 0;
+    spec.callback = FillBufferCallback;
+    spec.userdata = this;
 
-    Log("SoundQueue: Desired - frequency: %d format: f %d s %d be %d sz %d channels: %d samples: %d", want.freq, SDL_AUDIO_ISFLOAT(want.format), SDL_AUDIO_ISSIGNED(want.format), SDL_AUDIO_ISBIGENDIAN(want.format), SDL_AUDIO_BITSIZE(want.format), want.channels, want.samples);
+    Log("SoundQueue: Desired - frequency: %d format: f %d s %d be %d sz %d channels: %d samples: %d", spec.freq, SDL_AUDIO_ISFLOAT(spec.format), SDL_AUDIO_ISSIGNED(spec.format), SDL_AUDIO_ISBIGENDIAN(spec.format), SDL_AUDIO_BITSIZE(spec.format), spec.channels, spec.samples);
     
-    if (SDL_OpenAudioDevice(NULL, 0, &want, &have, 0) < 0)
+    if (SDL_OpenAudio(&spec, NULL) < 0)
     {
         sdl_error("Couldn't open SDL audio");
         return false;
     }
 
-    Log("SoundQueue: Obtained - frequency: %d format: f %d s %d be %d sz %d channels: %d samples: %d", have.freq, SDL_AUDIO_ISFLOAT(have.format), SDL_AUDIO_ISSIGNED(have.format), SDL_AUDIO_ISBIGENDIAN(have.format), SDL_AUDIO_BITSIZE(have.format), have.channels, have.samples);
+    Log("SoundQueue: Obtained - frequency: %d format: f %d s %d be %d sz %d channels: %d samples: %d", spec.freq, SDL_AUDIO_ISFLOAT(spec.format), SDL_AUDIO_ISSIGNED(spec.format), SDL_AUDIO_ISBIGENDIAN(spec.format), SDL_AUDIO_BITSIZE(spec.format), spec.channels, spec.samples);
 
     SDL_PauseAudio(false);
     m_sound_open = true;     
