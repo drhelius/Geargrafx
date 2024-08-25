@@ -131,10 +131,12 @@ Memory::GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 addres
 
 void Memory::ResetDisassemblerRecords()
 {
+#ifndef GG_DISABLE_DISASSEMBLER
     for (int i = 0; i < 0x200000; i++)
     {
         SafeDelete(m_disassembler[i]);
     }
+#endif
 }
 
 u8* Memory::GetWram()
