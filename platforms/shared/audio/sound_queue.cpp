@@ -38,6 +38,23 @@ SoundQueue::SoundQueue()
     m_sound_open = false;
     m_sync_output = true;
 
+    int audio_drivers_count = SDL_GetNumAudioDrivers();
+    int audio_devices_count = SDL_GetNumAudioDevices(0);
+
+    Debug("SoundQueue: %d audio backends", audio_drivers_count);
+
+    for (int i = 0; i < audio_drivers_count; i++)
+    {
+        Debug("SoundQueue: %s", SDL_GetAudioDriver(i));
+    }
+
+    Debug("SoundQueue: %d audio devices", audio_devices_count);
+
+    for (int i = 0; i < audio_devices_count; i++)
+    {
+        Debug("SoundQueue: %s", SDL_GetAudioDeviceName(i, 0));
+    }
+
     std::string platform = SDL_GetPlatform();
     if ((platform == "Linux") && (!IsRunningInWSL()))
     {
@@ -50,7 +67,7 @@ SoundQueue::SoundQueue()
         SDL_Init(SDL_INIT_AUDIO);
     }
 
-    Debug("SoundQueue: Initialized");
+    Log("SoundQueue: %s driver selected", SDL_GetCurrentAudioDriver());
 
     atexit(SDL_Quit);
 }
@@ -62,6 +79,8 @@ SoundQueue::~SoundQueue()
 
 bool SoundQueue::Start(int sample_rate, int channel_count, int buffer_size, int buffer_count)
 {
+    Log("SoundQueue: Starting with %d Hz, %d channels, %d buffer size, %d buffers ...", sample_rate, channel_count, buffer_size, buffer_count);
+
     m_write_buffer = 0;
     m_write_position = 0;
     m_read_buffer = 0;
@@ -81,24 +100,28 @@ bool SoundQueue::Start(int sample_rate, int channel_count, int buffer_size, int 
         return false;
     }
 
-    SDL_AudioSpec as;
-    as.freq = sample_rate;
-    as.format = AUDIO_S16SYS;
-    as.channels = channel_count;
-    as.silence = 0;
-    as.samples = m_buffer_size / channel_count;
-    as.size = 0;
-    as.callback = FillBufferCallback;
-    as.userdata = this;
-    if (SDL_OpenAudio(&as, NULL) < 0)
+    SDL_AudioSpec want, have;
+    want.freq = sample_rate;
+    want.format = AUDIO_S16SYS;
+    want.channels = channel_count;
+    want.silence = 0;
+    want.samples = m_buffer_size / channel_count;
+    want.size = 0;
+    want.callback = FillBufferCallback;
+    want.userdata = this;
+
+    Log("SoundQueue: Desired - frequency: %d format: f %d s %d be %d sz %d channels: %d samples: %d", want.freq, SDL_AUDIO_ISFLOAT(want.format), SDL_AUDIO_ISSIGNED(want.format), SDL_AUDIO_ISBIGENDIAN(want.format), SDL_AUDIO_BITSIZE(want.format), want.channels, want.samples);
+    
+    if (SDL_OpenAudioDevice(NULL, 0, &want, &have, 0) < 0)
     {
         sdl_error("Couldn't open SDL audio");
         return false;
     }
-    SDL_PauseAudio(false);
-    m_sound_open = true;
 
-    Log("SoundQueue: Started with %d Hz, %d channels, %d buffer size, %d buffers", sample_rate, channel_count, m_buffer_size, m_buffer_count);
+    Log("SoundQueue: Obtained - frequency: %d format: f %d s %d be %d sz %d channels: %d samples: %d", have.freq, SDL_AUDIO_ISFLOAT(have.format), SDL_AUDIO_ISSIGNED(have.format), SDL_AUDIO_ISBIGENDIAN(have.format), SDL_AUDIO_BITSIZE(have.format), have.channels, have.samples);
+
+    SDL_PauseAudio(false);
+    m_sound_open = true;     
 
     return true;
 }
