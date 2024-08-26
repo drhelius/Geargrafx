@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\miniz\miniz.c" />
     <ClCompile Include="..\..\src\audio.cpp" />
     <ClCompile Include="..\..\src\cartridge.cpp" />
     <ClCompile Include="..\..\src\geargrafx_core.cpp" />
@@ -63,6 +64,7 @@
     <ClCompile Include="..\shared\desktop\renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\miniz\miniz.h" />
     <ClInclude Include="..\..\src\audio_inline.h" />
     <ClInclude Include="..\..\src\audio.h" />
     <ClInclude Include="..\..\src\bit_ops.h" />
@@ -91,7 +93,7 @@
     <ClInclude Include="..\..\src\huc6280_timing.h" />
     <ClInclude Include="..\..\src\huc6280.h" />
     <ClInclude Include="..\..\src\types.h" />
-    <ClInclude Include="..\shared\audi\sound_queue.h" />
+    <ClInclude Include="..\shared\audio\sound_queue.h" />
     <ClInclude Include="..\shared\desktop\application.h" />
     <ClInclude Include="..\shared\desktop\backers.h" />
     <ClInclude Include="..\shared\desktop\config.h" />
