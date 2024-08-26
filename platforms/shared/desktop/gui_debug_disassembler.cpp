@@ -53,9 +53,8 @@ struct DisassemblerBookmark
     char name[32];
 };
 
-DebugSymbol** fixed_symbols = NULL;
-DebugSymbol** dynamic_symbols = NULL;
-
+static DebugSymbol*** fixed_symbols = NULL;
+static DebugSymbol*** dynamic_symbols = NULL;
 static std::vector<DisassemblerLine> disassembler_lines(0x10000);
 static std::vector<DisassemblerBookmark> bookmarks;
 static int selected_address = -1;
@@ -72,7 +71,6 @@ static int pc_pos = 0;
 static int goto_address_pos = 0;
 static bool add_bookmark = false;
 
-static int get_symbol_index(u8 bank, u16 address);
 static void draw_controls(void);
 static void draw_breakpoints(void);
 static void prepare_drawable_lines(void);
@@ -90,24 +88,39 @@ static void add_bookmark_popup(void);
 
 void gui_debug_disassembler_init(void)
 {
-    fixed_symbols = new DebugSymbol*[0x10000 * 0x100];
-    dynamic_symbols = new DebugSymbol*[0x10000 * 0x100];
+    fixed_symbols = new DebugSymbol**[0x100];
+    dynamic_symbols = new DebugSymbol**[0x100];
 
-    for (int i = 0; i < 0x10000 * 0x100; i++)
+    for (int i = 0; i < 0x100; i++)
     {
-        InitPointer(fixed_symbols[i]);
-        InitPointer(dynamic_symbols[i]);
+        fixed_symbols[i] = new DebugSymbol*[0x10000];
+        dynamic_symbols[i] = new DebugSymbol*[0x10000];
+    }
+
+    for (int i = 0; i < 0x100; i++)
+    {
+        for (int j = 0; j < 0x10000; j++)
+        {
+            InitPointer(fixed_symbols[i][j]);
+            InitPointer(dynamic_symbols[i][j]);
+        }
     }
 }
 
 void gui_debug_disassembler_destroy(void)
 {
-    for (int i = 0; i < 0x10000 * 0x100; i++)
+    for (int i = 0; i < 0x100; i++)
     {
-        SafeDelete(fixed_symbols[i]);
-        SafeDelete(dynamic_symbols[i]);
+        for (int j = 0; j < 0x10000; j++)
+        {
+            SafeDelete(fixed_symbols[i][j]);
+            SafeDelete(dynamic_symbols[i][j]);
+        }
+
+        SafeDeleteArray(fixed_symbols[i]);
+        SafeDeleteArray(dynamic_symbols[i]);
     }
-        
+
     SafeDeleteArray(fixed_symbols);
     SafeDeleteArray(dynamic_symbols);
 }
@@ -121,8 +134,14 @@ void gui_debug_reset(void)
 
 void gui_debug_reset_symbols(void)
 {
-    //fixed_symbols.clear();
-    //dynamic_symbols.clear();
+    for (int i = 0; i < 0x100; i++)
+    {
+        for (int j = 0; j < 0x10000; j++)
+        {
+            SafeDelete(fixed_symbols[i][j]);
+            SafeDelete(dynamic_symbols[i][j]);
+        }
+    }
 }
 
 void gui_debug_reset_breakpoints(void)
@@ -256,11 +275,6 @@ void gui_debug_save_disassembler(const char* file_path)
     }
 
     fclose(file);
-}
-
-static int get_symbol_index(u8 bank, u16 address)
-{
-    return (bank * 0x10000) + address;
 }
 
 static void draw_controls(void)
@@ -446,7 +460,6 @@ static void prepare_drawable_lines(void)
     u16 pc = proc_state->PC->GetValue();
 
     disassembler_lines.clear();
-    //dynamic_symbols.clear();
     pc_pos = 0;
     goto_address_pos = 0;
 
@@ -467,7 +480,7 @@ static void prepare_drawable_lines(void)
             bool fixed_symbol_found = false;
             if (config_debug.dis_show_symbols)
             {
-                DebugSymbol* symbol = fixed_symbols[get_symbol_index(record->bank, i)];
+                DebugSymbol* symbol = fixed_symbols[record->bank][i];
 
                 if (IsValidPointer(symbol))
                 {
@@ -481,7 +494,7 @@ static void prepare_drawable_lines(void)
 
             if (config_debug.dis_show_symbols && config_debug.dis_show_auto_symbols && !fixed_symbol_found)
             {
-                DebugSymbol* symbol = dynamic_symbols[get_symbol_index(record->bank, i)];
+                DebugSymbol* symbol = dynamic_symbols[record->bank][i];
 
                 if (IsValidPointer(symbol))
                 {
@@ -773,7 +786,7 @@ static void add_symbol(const char* line)
             new_symbol->bank = s.bank;
             snprintf(new_symbol->text, 64, "%s", s.text);
 
-            fixed_symbols[get_symbol_index(s.bank, s.address)] = new_symbol;
+            fixed_symbols[s.bank][s.address] = new_symbol;
         }
         catch(const std::invalid_argument&)
         {
@@ -815,12 +828,12 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
 
     if (insert)
     {
-        DebugSymbol* new_symbol = dynamic_symbols[get_symbol_index(s.bank, s.address)];
+        DebugSymbol* new_symbol = dynamic_symbols[s.bank][s.address];
 
         if (IsValidPointer(new_symbol))
         {
            if (record->subroutine)
-               snprintf(dynamic_symbols[get_symbol_index(s.bank, s.address)]->text, 64, "SUB_%02X_%04X", record->jump_bank, record->jump_address);
+               snprintf(dynamic_symbols[s.bank][s.address]->text, 64, "SUB_%02X_%04X", record->jump_bank, record->jump_address);
         }
         else
         {
@@ -829,7 +842,7 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
             new_symbol->bank = s.bank;
             snprintf(new_symbol->text, 64, "%s", s.text);
 
-            dynamic_symbols[get_symbol_index(s.bank, s.address)] = new_symbol;
+            dynamic_symbols[s.bank][s.address] = new_symbol;
         }
     }
 }
@@ -862,7 +875,7 @@ static void replace_symbols(DisassemblerLine* line, const char* color)
 {
     bool symbol_found = false;
 
-    DebugSymbol* fixed_symbol = fixed_symbols[get_symbol_index(line->record->jump_bank, line->record->jump_address)];
+    DebugSymbol* fixed_symbol = fixed_symbols[line->record->jump_bank][line->record->jump_address];
 
     if (IsValidPointer(fixed_symbol))
     {
@@ -879,7 +892,10 @@ static void replace_symbols(DisassemblerLine* line, const char* color)
         }
     }
 
-    DebugSymbol* dynamic_symbol = dynamic_symbols[get_symbol_index(line->record->jump_bank, line->record->jump_address)];
+    if (symbol_found)
+        return;
+
+    DebugSymbol* dynamic_symbol = dynamic_symbols[line->record->jump_bank][line->record->jump_address];
 
     if (IsValidPointer(dynamic_symbol))
     {
