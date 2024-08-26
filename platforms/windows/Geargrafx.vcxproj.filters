@@ -97,9 +97,6 @@
     <ClCompile Include="..\shared\audio\sound_queue.cpp">
       <Filter>audio</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\miniz\miniz.c">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\audio.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -132,6 +129,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\memory.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\miniz\miniz.c">
+      <Filter>src\miniz</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -246,9 +246,6 @@
     <ClInclude Include="..\shared\audio\sound_queue.h">
       <Filter>audio</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\miniz\miniz.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\audio.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -342,6 +339,9 @@
     <ClInclude Include="..\shared\desktop\imgui\fonts\RobotoMedium.h">
       <Filter>desktop\imgui\fonts</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\miniz\miniz.h">
+      <Filter>src\miniz</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -367,6 +367,9 @@
     </Filter>
     <Filter Include="desktop\imgui\fonts">
       <UniqueIdentifier>{e751b237-67eb-4f7d-8eb9-2dff996a9ef4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\miniz">
+      <UniqueIdentifier>{637c4ee0-6e40-4be6-b0b7-027f70325ac6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
