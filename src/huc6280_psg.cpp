@@ -76,7 +76,7 @@ void HuC6280PSG::Reset()
         m_channels[i].wave_index = 0;
         m_channels[i].noise_control = 0;
         m_channels[i].noise_frequency = 0;
-        m_channels[i].noise_seed = 0;
+        m_channels[i].noise_seed = 1;
         m_channels[i].noise_counter = 0;
         m_channels[i].counter = 0;
         m_channels[i].dda = 0;
@@ -114,8 +114,6 @@ HuC6280PSG::HuC6280PSG_State* HuC6280PSG::GetState()
 
 void HuC6280PSG::Sync()
 {
-    
-
     for (int i = 0; i < m_elapsed_cycles; i++)
     {
         u8 main_left_vol = (m_main_amplitude >> 4) & 0x0F;
@@ -145,12 +143,25 @@ void HuC6280PSG::Sync()
             // Noise
             if ((i >=4) && (ch->noise_control & 0x80))
             {
+                u32 freq = (ch->noise_control & 0x1F) ^ 0x1F;
+                s16 data = IsSetBit(ch->noise_seed, 0) ? 0x1F : 0;
+                ch->noise_counter--;
 
+                if (ch->noise_counter <= 0)
+                {
+                    ch->noise_counter = freq << 6;
+                    const u32 seed = ch->noise_seed;
+                    ch->noise_seed = (seed >> 1) | ((IsSetBit(seed, 0) ^ IsSetBit(seed, 1) ^ IsSetBit(seed, 11) ^ IsSetBit(seed, 12) ^ IsSetBit(seed, 17)) << 17);
+                }
+
+                m_left_sample += (s16)((data - 16) * final_left_vol);
+                m_right_sample += (s16)((data - 16) * final_right_vol);
             }
             // DDA
             else if (ch->control & 0x40)
             {
-
+                m_left_sample += (s16)((ch->dda - 16) * final_left_vol);
+                m_right_sample += (s16)((ch->dda - 16) * final_right_vol);
             }
             // Waveform
             else
@@ -160,26 +171,60 @@ void HuC6280PSG::Sync()
                 {
                     if (i == 1)
                         continue;
+
+                    HuC6280PSG_Channel* src = &m_channels[1];
+                    HuC6280PSG_Channel* dest = &m_channels[0];
+
+                    u16 lfo_freq = src->frequency ? src->frequency : 0x1000;
+                    s32 freq = dest->frequency ? dest->frequency : 0x1000;
+
+                    if (m_lfo_control & 0x80)
+                    {
+                        src->counter = lfo_freq * m_lfo_frequency;
+                        src->wave_index = 0;
+                    }
+                    else
+                    {
+                        s16 lfo_data = src->wave_data[src->wave_index];
+                        src->counter--;
+
+                        if (src->counter <= 0)
+                        {
+                            src->counter = lfo_freq * m_lfo_frequency;
+                            src->wave_index = (src->wave_index + 1) & 0x1f;
+                        }
+
+                        freq += ((lfo_data - 16) << (((m_lfo_control & 3) - 1) << 1));
+                    }
+
+                    s16 data = dest->wave_data[dest->wave_index];
+                    dest->counter--;
+
+                    if (dest->counter <= 0)
+                    {
+                        dest->counter = freq;
+                        dest->wave_index = (dest->wave_index + 1) & 0x1f;
+                    }
+
+                    m_left_sample += (s16)((data - 16) * final_left_vol);
+                    m_right_sample += (s16)((data - 16) * final_right_vol);
+
                 }
                 // No LFO
                 else
                 {
-                    u32 feq = ch->frequency ? ch->frequency : 0x1000;
+                    u32 freq = ch->frequency ? ch->frequency : 0x1000;
+                    int data = ch->wave_data[ch->wave_index];
+                    ch->counter--;
 
-                    //for (int j = 0; j < cycles; j++)
+                    if (ch->counter <= 0)
                     {
-                        int data = ch->wave_data[ch->wave_index];
-                        ch->counter--;
-
-                        if (ch->counter <= 0)
-                        {
-                            ch->counter = feq;
-                            ch->wave_index = (ch->wave_index + 1) & 0x1F;
-                        }
-
-                        m_left_sample += (s16)((data - 16) * final_left_vol);
-                        m_right_sample += (s16)((data - 16) * final_right_vol);
+                        ch->counter = freq;
+                        ch->wave_index = (ch->wave_index + 1) & 0x1F;
                     }
+
+                    m_left_sample += (s16)((data - 16) * final_left_vol);
+                    m_right_sample += (s16)((data - 16) * final_right_vol);
                 }
             }
         }
