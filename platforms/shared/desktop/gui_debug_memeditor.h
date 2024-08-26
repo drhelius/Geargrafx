@@ -90,6 +90,7 @@ private:
     bool m_add_bookmark;
     std::vector<Bookmark> m_bookmarks;
     ImFont* m_gui_font;
+    ImDrawList* m_draw_list;
 };
 
 #endif /* GUI_DEBUG_MEMEDITOR_H */
