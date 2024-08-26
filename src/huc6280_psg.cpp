@@ -205,11 +205,6 @@ void HuC6280PSG::Sync()
     m_elapsed_cycles = 0;
 }
 
-void HuC6280PSG::UpdateChannels(int cycles)
-{
-
-}
-
 void HuC6280PSG::ComputeVolumeLUT()
 {
     double amplitude = 65535.0 / 6.0 / 32.0;

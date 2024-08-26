@@ -148,8 +148,8 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
 
         if (ImGui::BeginTable("##hex", byte_column_count, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoKeepColumnsVisible | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
         {
-            m_row_scroll_top = ImGui::GetScrollY() / character_size.y;
-            m_row_scroll_bottom = m_row_scroll_top + (ImGui::GetWindowHeight() / character_size.y);
+            m_row_scroll_top = (int)(ImGui::GetScrollY() / character_size.y);
+            m_row_scroll_bottom = m_row_scroll_top + (int)(ImGui::GetWindowHeight() / character_size.y);
 
             ImGui::TableSetupColumn("ADDR");
             ImGui::TableSetupColumn("");
@@ -190,7 +190,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                             ImGui::TableNextColumn();
 
                         ImVec2 cell_start_pos = ImGui::GetCursorScreenPos() - ImGui::GetStyle().CellPadding;
-                        ImVec2 cell_size = (character_size * ImVec2(max_chars_per_cell, 1)) + (ImVec2(2, 2) * ImGui::GetStyle().CellPadding) + ImVec2(1 + byte_cell_padding, 0);
+                        ImVec2 cell_size = (character_size * ImVec2((float)max_chars_per_cell, 1)) + (ImVec2(2, 2) * ImGui::GetStyle().CellPadding) + ImVec2((float)(1 + byte_cell_padding), 0);
 
                         ImVec2 hover_cell_size = cell_size;
 
@@ -329,7 +329,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
 
                                 int byte_address = address + x;
                                 ImVec2 cell_start_pos = ImGui::GetCursorScreenPos() - ImGui::GetStyle().CellPadding;
-                                ImVec2 cell_size = (character_size * ImVec2(1, 1)) + (ImVec2(2, 2) * ImGui::GetStyle().CellPadding) + ImVec2(1 + byte_cell_padding, 0);
+                                ImVec2 cell_size = (character_size * ImVec2(1, 1)) + (ImVec2(2, 2) * ImGui::GetStyle().CellPadding) + ImVec2((float)(1 + byte_cell_padding), 0);
 
                                 DrawSelectionAsciiBackground(byte_address, cell_start_pos, cell_size);
 
@@ -399,7 +399,7 @@ void MemEditor::DrawSelectionBackground(int x, int address, ImVec2 cell_pos, ImV
         cell_size.x += m_separator_column_width + 1;
     }
 
-    drawList->AddRectFilled(cell_pos + ImVec2(x == 0 ? 1 : 0, 0), cell_pos + cell_size, ImColor(background_color));
+    drawList->AddRectFilled(cell_pos + ImVec2(x == 0 ? 1.0f : 0.0f, 0), cell_pos + cell_size, ImColor(background_color));
 }
 
 void MemEditor::DrawSelectionAsciiBackground(int address, ImVec2 cell_pos, ImVec2 cell_size)
@@ -819,7 +819,7 @@ void MemEditor::Paste()
         text.erase(std::remove(text.begin(), text.end(), '\n'), text.end());
         text.erase(std::remove(text.begin(), text.end(), ' '), text.end());
 
-        int buffer_size = text.size() / 2;
+        int buffer_size = (int)text.size() / 2;
 
         uint8_t* data = new uint8_t[buffer_size];
 

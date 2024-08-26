@@ -51,8 +51,8 @@ public:
 
     struct HuC6270_State
     {
-        u8* AR;
-        u8* SR;
+        u16* AR;
+        u16* SR;
         u16* R;
         u16* READ_BUFFER;
         int* HPOS;
@@ -90,8 +90,8 @@ private:
     HuC6280* m_huc6280;
     HuC6270_State m_state;
     u16* m_vram;
-    u8 m_address_register;
-    u8 m_status_register;
+    u16 m_address_register;
+    u16 m_status_register;
     u16 m_register[20];
     u16* m_sat;
     u16 m_read_buffer;

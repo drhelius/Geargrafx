@@ -70,7 +70,6 @@ public:
 
 private:
     void Sync();
-    void UpdateChannels(int cycles);
     void ComputeVolumeLUT();
 
 private:

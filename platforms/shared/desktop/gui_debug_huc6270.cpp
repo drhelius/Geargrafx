@@ -329,8 +329,8 @@ void gui_debug_window_huc6270_background(void)
                 float tile_scale = 16.0f;
                 float tile_width = 8.0f * tile_scale;
                 float tile_height = 8.0f * tile_scale;
-                float tile_uv_h = (i % screen_size_x) * 8;
-                float tile_uv_v = (i / screen_size_x) * 8;
+                float tile_uv_h = (i % screen_size_x) * 8.0f;
+                float tile_uv_v = (i / screen_size_x) * 8.0f;
 
                 ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(tile_width, tile_height), ImVec2(tile_uv_h / texture_size_h, tile_uv_v / texture_size_v), ImVec2((tile_uv_h + 8) / texture_size_h, (tile_uv_v + 8) / texture_size_v));
 
@@ -449,8 +449,8 @@ void gui_debug_window_huc6270_sprites(void)
             int palette = sprite_flags & 0x0F;
             bool priority = (sprite_flags & 0x0080) != 0;
 
-            float real_x = sprite_x - 32;
-            float real_y = sprite_y - 64;
+            float real_x = (float)(sprite_x - 32);
+            float real_y = (float)(sprite_y - 64);
 
             float rectx_min = p_screen.x + (real_x * screen_scale);
             float rectx_max = p_screen.x + ((real_x + width) * screen_scale);

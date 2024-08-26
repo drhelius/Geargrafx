@@ -474,7 +474,7 @@ void HuC6270::FetchSprites()
             pattern &= k_huc6270_sprite_mask_width[cgx];
             pattern &= k_huc6270_sprite_mask_height[cgy];
             u16 sprite_address = pattern << 6;
-            u16 palette = (flags & 0x0F) << 4;
+            u8 palette = (flags & 0x0F) << 4;
             bool x_flip = (flags & 0x0800);
 
             if(flags & 0x8000)

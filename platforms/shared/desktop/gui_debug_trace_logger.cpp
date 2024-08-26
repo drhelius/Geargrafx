@@ -55,7 +55,7 @@ void gui_debug_window_trace_logger(void)
     {
         if ((int)trace_logger_lines.size() > k_line_count[trace_logger_count])
         {
-            int diff = trace_logger_lines.size() - k_line_count[trace_logger_count];
+            int diff = (int)trace_logger_lines.size() - k_line_count[trace_logger_count];
             trace_logger_lines.erase(trace_logger_lines.begin(), trace_logger_lines.begin() + diff);
         }
     }
@@ -79,7 +79,7 @@ void gui_debug_window_trace_logger(void)
         ImGui::PushFont(gui_default_font);
 
         ImGuiListClipper clipper;
-        clipper.Begin(trace_logger_lines.size(), ImGui::GetTextLineHeightWithSpacing());
+        clipper.Begin((int)trace_logger_lines.size(), ImGui::GetTextLineHeightWithSpacing());
 
         while (clipper.Step())
         {

@@ -138,8 +138,8 @@ void gui_debug_window_psg(void)
 
                 for (int i = 0; i < 32; i++)
                 {
-                    plot_x[i] = i;
-                    plot_y[i] = psg_channel->wave_data[i];
+                    plot_x[i] = (float)i;
+                    plot_y[i] = (float)psg_channel->wave_data[i];
                 }
 
                 ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(1,1));

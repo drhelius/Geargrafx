@@ -526,11 +526,11 @@ static void prepare_drawable_lines(void)
             }
 
             if ((u16)i == pc)
-                pc_pos = disassembler_lines.size();
+                pc_pos = (int)disassembler_lines.size();
 
             if (goto_address_requested && (i <= goto_address_target))
             {
-                goto_address_pos = disassembler_lines.size();
+                goto_address_pos = (int)disassembler_lines.size();
                 if ((goto_address_pos > 0) && disassembler_lines[goto_address_pos - 1].symbol)
                     goto_address_pos--;
             }
@@ -577,7 +577,7 @@ static void draw_disassembly(void)
         }
 
         ImGuiListClipper clipper;
-        clipper.Begin(disassembler_lines.size(), ImGui::GetTextLineHeightWithSpacing());
+        clipper.Begin((int)disassembler_lines.size(), ImGui::GetTextLineHeightWithSpacing());
 
         while (clipper.Step())
         {

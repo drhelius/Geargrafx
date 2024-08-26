@@ -329,7 +329,7 @@ static void main_window(void)
         {
             scale_multiplier = 1;
             h_corrected = h;
-            w_corrected = h * ratio;
+            w_corrected = (int)(h * ratio);
         }
         else if (config_video.scale == 5)
         {
