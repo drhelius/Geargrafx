@@ -29,22 +29,19 @@ HuC6280PSG::HuC6280PSG()
 
 HuC6280PSG::~HuC6280PSG()
 {
-    SafeDeleteArray(m_buffer);
     SafeDeleteArray(m_channels);
 }
 
 void HuC6280PSG::Init()
 {
-    m_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
     m_channels = new HuC6280PSG_Channel[6];
 
+    m_state.CHANNELS = m_channels;
     m_state.CHANNEL_SELECT = &m_channel_select;
     m_state.MAIN_AMPLITUDE = &m_main_amplitude;
     m_state.LFO_FREQUENCY = &m_lfo_frequency;
     m_state.LFO_CONTROL = &m_lfo_control;
     m_state.BUFFER_INDEX = &m_buffer_index;
-    m_state.BUFFER = m_buffer;
-    m_state.CHANNELS = m_channels;
 
     ComputeVolumeLUT();
     Reset();
@@ -62,9 +59,6 @@ void HuC6280PSG::Reset()
     m_lfo_frequency = 0;
     m_lfo_control = 0;
 
-    m_left_sample = 0;
-    m_right_sample = 0;
-
     m_ch = &m_channels[0];
 
     for (int i = 0; i < 6; i++)
@@ -80,10 +74,17 @@ void HuC6280PSG::Reset()
         m_channels[i].noise_counter = 0;
         m_channels[i].counter = 0;
         m_channels[i].dda = 0;
+        m_channels[i].left_sample = 0;
+        m_channels[i].right_sample = 0;
 
         for (int j = 0; j < 32; j++)
         {
             m_channels[i].wave_data[j] = 0;
+        }
+
+        for (int j = 0; j < GG_AUDIO_BUFFER_SIZE; j++)
+        {
+            m_channels[i].output[j] = 0;
         }
     }
 }
@@ -99,7 +100,12 @@ int HuC6280PSG::EndFrame(s16* sample_buffer)
         samples = m_buffer_index;
 
         for (int s = 0; s < samples; s++)
-            sample_buffer[s] = m_buffer[s];
+        {
+            s16 final_sample = 0;
+            for (int i = 0; i < 6; i++)
+                final_sample += m_channels[i].output[s];
+            sample_buffer[s] = final_sample;
+        }
     }
 
     m_buffer_index = 0;
@@ -119,12 +125,15 @@ void HuC6280PSG::Sync()
         u8 main_left_vol = (m_main_amplitude >> 4) & 0x0F;
         u8 main_right_vol = m_main_amplitude & 0x0F;
 
-        m_left_sample = 0;
-        m_right_sample = 0;
+        s16 left_sample = 0;
+        s16 right_sample = 0;
 
         for (int i = 0; i < 6; i++)
         {
             HuC6280PSG_Channel* ch = &m_channels[i];
+
+            ch->left_sample = 0;
+            ch->right_sample = 0;
 
             // Channel off
             if (!(ch->control & 0x80))
@@ -140,11 +149,13 @@ void HuC6280PSG::Sync()
             int final_left_vol = m_volume_lut[(temp_left_vol << 1) | (~ch->control & 0x01)];
             int final_right_vol = m_volume_lut[(temp_right_vol << 1) | (~ch->control & 0x01)];
 
+            int data = 0;
+
             // Noise
             if ((i >=4) && (ch->noise_control & 0x80))
             {
                 u32 freq = (ch->noise_control & 0x1F) ^ 0x1F;
-                s16 data = IsSetBit(ch->noise_seed, 0) ? 0x1F : 0;
+                data = IsSetBit(ch->noise_seed, 0) ? 0x1F : 0;
                 ch->noise_counter--;
 
                 if (ch->noise_counter <= 0)
@@ -153,15 +164,11 @@ void HuC6280PSG::Sync()
                     const u32 seed = ch->noise_seed;
                     ch->noise_seed = (seed >> 1) | ((IsSetBit(seed, 0) ^ IsSetBit(seed, 1) ^ IsSetBit(seed, 11) ^ IsSetBit(seed, 12) ^ IsSetBit(seed, 17)) << 17);
                 }
-
-                m_left_sample += (s16)((data - 16) * final_left_vol);
-                m_right_sample += (s16)((data - 16) * final_right_vol);
             }
             // DDA
             else if (ch->control & 0x40)
             {
-                m_left_sample += (s16)((ch->dda - 16) * final_left_vol);
-                m_right_sample += (s16)((ch->dda - 16) * final_right_vol);
+                data = ch->dda;
             }
             // Waveform
             else
@@ -197,7 +204,7 @@ void HuC6280PSG::Sync()
                         freq += ((lfo_data - 16) << (((m_lfo_control & 3) - 1) << 1));
                     }
 
-                    s16 data = dest->wave_data[dest->wave_index];
+                    data = dest->wave_data[dest->wave_index];
                     dest->counter--;
 
                     if (dest->counter <= 0)
@@ -205,16 +212,12 @@ void HuC6280PSG::Sync()
                         dest->counter = freq;
                         dest->wave_index = (dest->wave_index + 1) & 0x1f;
                     }
-
-                    m_left_sample += (s16)((data - 16) * final_left_vol);
-                    m_right_sample += (s16)((data - 16) * final_right_vol);
-
                 }
                 // No LFO
                 else
                 {
                     u32 freq = ch->frequency ? ch->frequency : 0x1000;
-                    int data = ch->wave_data[ch->wave_index];
+                    data = ch->wave_data[ch->wave_index];
                     ch->counter--;
 
                     if (ch->counter <= 0)
@@ -222,11 +225,11 @@ void HuC6280PSG::Sync()
                         ch->counter = freq;
                         ch->wave_index = (ch->wave_index + 1) & 0x1F;
                     }
-
-                    m_left_sample += (s16)((data - 16) * final_left_vol);
-                    m_right_sample += (s16)((data - 16) * final_right_vol);
                 }
             }
+
+            ch->left_sample = (s16)((data - 16) * final_left_vol);
+            ch->right_sample = (s16)((data - 16) * final_right_vol);
         }
         
         m_sample_cycle_counter++;
@@ -235,8 +238,12 @@ void HuC6280PSG::Sync()
         {
             m_sample_cycle_counter -= m_cycles_per_sample;
 
-            m_buffer[m_buffer_index] = m_left_sample;
-            m_buffer[m_buffer_index + 1] = m_right_sample;
+            for (int i = 0; i < 6; i++)
+            {
+                m_channels[i].output[m_buffer_index + 0] = m_channels[i].left_sample;
+                m_channels[i].output[m_buffer_index + 1] = m_channels[i].right_sample;
+            }
+
             m_buffer_index += 2;
 
             if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)

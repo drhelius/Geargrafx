@@ -45,6 +45,9 @@ public:
         int noise_counter;
         int counter;
         s16 dda;
+        s16 output[GG_AUDIO_BUFFER_SIZE];
+        s16 left_sample;
+        s16 right_sample;
     };
 
     struct HuC6280PSG_State
@@ -55,7 +58,6 @@ public:
         u8* LFO_FREQUENCY;
         u8* LFO_CONTROL;
         int* BUFFER_INDEX;
-        s16* BUFFER;
     };
 
 public:
@@ -84,10 +86,7 @@ private:
     int m_sample_cycle_counter;
     int m_cycles_per_sample;
     int m_buffer_index;
-    s16* m_buffer;
     u16 m_volume_lut[32];
-    s16 m_left_sample;
-    s16 m_right_sample;
 };
 
 #include "huc6280_psg_inline.h"
