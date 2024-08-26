@@ -319,7 +319,7 @@ void HuC6280::DisassembleNextOPCode()
         }
         case GG_OPCode_Type_ST0:
         {
-            u8 reg = m_memory->Read(address + 1);
+            u8 reg = m_memory->Read(address + 1) & 0x1F;
             snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, reg, k_register_names[reg]);
             break;
         }

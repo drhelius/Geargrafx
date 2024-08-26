@@ -157,17 +157,17 @@ static const int k_huc6270_sprite_height[4] = { 16, 32, 64, 64 };
 static const int k_huc6270_sprite_mask_width[2] = { 0xFFFF, 0xFFFE };
 static const int k_huc6270_sprite_mask_height[4] = { 0xFFFF, 0xFFFD, 0xFFF9, 0xFFF9 };
 
-static const char* const k_register_names_aligned[20] = {
-    "MAWR ", "MARR ", "VWR  ", "???  ", "???  ",
-    "CR   ", "RCR  ", "BXR  ", "BYR  ", "MWR  ",
-    "HSR  ", "HDR  ", "VPR  ", "VDR  ", "VCR  ",
-    "DCR  ", "SOUR ", "DESR ", "LENR ", "DVSSR" };
+static const char* const k_register_names_aligned[32] = {
+    "MAWR ", "MARR ", "VWR  ", "???  ", "???  ", "CR   ", "RCR  ", "BXR  ",
+    "BYR  ", "MWR  ", "HSR  ", "HDR  ", "VSR  ", "VDR  ", "VCR  ", "DCR  ",
+    "SOUR ", "DESR ", "LENR ", "DVSSR", "???  ", "???  ", "???  ", "???  ",
+    "???  ", "???  ", "???  ", "???  ", "???  ", "???  ", "???  ", "???  " };
 
-static const char* const k_register_names[20] = {
-    "MAWR", "MARR", "VWR",  "???",  "???",
-    "CR",   "RCR",  "BXR",  "BYR",  "MWR",
-    "HSR",  "HDR",  "VPR",  "VDR",  "VCR",
-    "DCR",  "SOUR", "DESR", "LENR", "DVSSR" };
+static const char* const k_register_names[32] = {
+    "MAWR", "MARR", "VWR",  "???",   "???",  "CR",   "RCR", "BXR",
+    "BYR",  "MWR",  "HSR",  "HDR",   "VSR",  "VDR",  "VCR", "DCR",
+    "SOUR", "DESR", "LENR", "DVSSR", "???" , "???" , "???", "???",
+    "???",  "???",  "???",  "???",   "???",  "???",  "???", "???" };
 
 #include "huc6270_inline.h"
 
