@@ -38,6 +38,7 @@
 #include "gui_debug.h"
 #include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
+#include "gui_debug_psg.h"
 #include "gui_debug_trace_logger.h"
 
 static bool status_message_active = false;
@@ -104,6 +105,7 @@ void gui_init(void)
     emu_debug_set_callback(gui_debug_trace_logger_update);
 
     gui_debug_disassembler_init();
+    gui_debug_psg_init();
 
     gui_init_menus();
 }
@@ -111,6 +113,7 @@ void gui_init(void)
 void gui_destroy(void)
 {
     gui_debug_disassembler_destroy();
+    gui_debug_psg_destroy();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
     NFD_Quit();

@@ -33,6 +33,20 @@
 static MemEditor mem_edit[6];
 static float plot_x[32];
 static float plot_y[32];
+static float* wave_buffer_left = NULL;
+static float* wave_buffer_right = NULL;
+
+void gui_debug_psg_init(void)
+{
+    wave_buffer_left = new float[GG_AUDIO_BUFFER_SIZE];
+    wave_buffer_right = new float[GG_AUDIO_BUFFER_SIZE];
+}
+
+void gui_debug_psg_destroy(void)
+{
+    SafeDeleteArray(wave_buffer_left);
+    SafeDeleteArray(wave_buffer_right);
+}
 
 void gui_debug_window_psg(void)
 {
@@ -46,11 +60,23 @@ void gui_debug_window_psg(void)
     ImGui::SetNextWindowSize(ImVec2(438, 482), ImGuiCond_FirstUseEver);
     ImGui::Begin("PSG", &config_debug.show_psg);
 
-    ImGui::PushFont(gui_default_font);
-
     GeargrafxCore* core = emu_get_core();
     HuC6280PSG* psg = core->GetAudio()->GetPSG();
     HuC6280PSG::HuC6280PSG_State* psg_state = psg->GetState();
+
+    bool test = true;
+    ImGui::TextColored(cyan, "Mute: "); ImGui::SameLine();
+    ImGui::Button("0"); ImGui::SameLine();
+    ImGui::Button("1"); ImGui::SameLine();
+    ImGui::Button("2"); ImGui::SameLine();
+    ImGui::Button("3"); ImGui::SameLine();
+    ImGui::Button("4"); ImGui::SameLine();
+    ImGui::Button("5");
+
+    ImGui::Separator();
+    ImGui::NewLine();
+
+    ImGui::PushFont(gui_default_font);
 
     ImGui::Columns(2, "psg", true);
 
@@ -76,6 +102,8 @@ void gui_debug_window_psg(void)
 
     ImGui::NewLine();
 
+    ImGui::PopFont();
+
     if (ImGui::BeginTabBar("##memory_tabs", ImGuiTabBarFlags_None))
     {
         for (int channel = 0; channel < 6; channel++)
@@ -85,9 +113,69 @@ void gui_debug_window_psg(void)
 
             if (ImGui::BeginTabItem(tab_name))
             {
+                ImGui::PushFont(gui_default_font);
+
                 HuC6280PSG::HuC6280PSG_Channel* psg_channel = &psg_state->CHANNELS[channel];
 
                 ImGui::Columns(2, "channels", false);
+
+                ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(1, 1));
+
+                int trigger_left = 0;
+                int trigger_right = 0;
+                int data_size = (*psg_state->FRAME_SAMPLES) / 2;
+
+                for (int i = 0; i < data_size; i++)
+                {
+                    wave_buffer_left[i] = (float)(psg_channel->output[i * 2]) / 32768.0f * 8.0f;
+                    wave_buffer_right[i] = (float)(psg_channel->output[(i * 2) + 1]) / 32768.0f * 8.0f;
+                }
+
+                for (int i = 100; i < data_size; ++i) {
+                    if (wave_buffer_left[i - 1] < 0.0f && wave_buffer_left[i] >= 0.0f) {
+                        trigger_left = i;
+                        break;
+                    }
+                }
+
+                for (int i = 100; i < data_size; ++i) {
+                    if (wave_buffer_right[i - 1] < 0.0f && wave_buffer_right[i] >= 0.0f) {
+                        trigger_right = i;
+                        break;
+                    }
+                }
+
+                int half_window_size = 100;
+                int x_min_left = std::max(0, trigger_left - half_window_size);
+                int x_max_left = std::min(data_size, trigger_left + half_window_size);
+
+                ImPlotAxisFlags flags = ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
+
+                if (ImPlot::BeginPlot("Left wave", ImVec2(100, 50), ImPlotFlags_CanvasOnly))
+                {
+                    ImPlot::SetupAxes("x", "y", flags, flags);
+                    ImPlot::SetupAxesLimits(x_min_left, x_max_left, -1.0f, 1.0f, ImPlotCond_Always);
+                    ImPlot::SetNextLineStyle(white, 1.0f);
+                    ImPlot::PlotLine("Wave", wave_buffer_left, data_size);
+                    ImPlot::EndPlot();
+                }
+
+                ImGui::SameLine();
+
+
+                int x_min_right = std::max(0, trigger_right - half_window_size);
+                int x_max_right = std::min(data_size, trigger_right + half_window_size);
+
+                if (ImPlot::BeginPlot("Right wave", ImVec2(100, 50), ImPlotFlags_CanvasOnly))
+                {
+                    ImPlot::SetupAxes("x", "y", flags, flags);
+                    ImPlot::SetupAxesLimits(x_min_right, x_max_right, -1.0f, 1.0f, ImPlotCond_Always);
+                    ImPlot::SetNextLineStyle(white, 1.0f);
+                    ImPlot::PlotLine("Wave", wave_buffer_right, data_size);
+                    ImPlot::EndPlot();
+                }
+
+                ImGui::NewLine();
 
                 ImGui::TextColored(cyan, "DDA "); ImGui::SameLine();
                 ImGui::TextColored(violet, "            "); ImGui::SameLine();
@@ -121,20 +209,9 @@ void gui_debug_window_psg(void)
                     ImGui::TextColored(cyan, "R07 "); ImGui::SameLine();
                     ImGui::TextColored(violet, "NOISE CTRL  "); ImGui::SameLine();
                     ImGui::TextColored(white, "%02X", psg_channel->noise_control);
-
-                    ImGui::TextColored(cyan, "    "); ImGui::SameLine();
-                    ImGui::TextColored(violet, "NOISE FREQ  "); ImGui::SameLine();
-                    ImGui::TextColored(white, "%04X", psg_channel->noise_frequency);
-
-                    ImGui::TextColored(cyan, "    "); ImGui::SameLine();
-                    ImGui::TextColored(violet, "NOISE SEED  "); ImGui::SameLine();
-                    ImGui::TextColored(white, "%04X", psg_channel->noise_seed);
                 }
 
-                ImGui::NewLine();
-
                 ImGui::NextColumn();
-
 
                 for (int i = 0; i < 32; i++)
                 {
@@ -142,22 +219,21 @@ void gui_debug_window_psg(void)
                     plot_y[i] = (float)psg_channel->wave_data[i];
                 }
 
-                ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(1,1));
-
-                if (ImPlot::BeginPlot("Line Plots", ImVec2(200, 200), ImPlotFlags_CanvasOnly))
+                if (ImPlot::BeginPlot("Wave data", ImVec2(200, 200), ImPlotFlags_CanvasOnly))
                 {
-                    ImPlotAxisFlags flags = ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
-                    ImPlot::SetupAxes("x", "y", flags, flags);
+                    ImPlotAxisFlags flags_waveform = ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
+                    ImPlot::SetupAxes("x", "y", flags_waveform, flags_waveform);
                     ImPlot::SetupAxesLimits(-1,32, -1,32);
                     ImPlot::SetupAxisTicks(ImAxis_X1, 0, 32, 33, nullptr, false);
                     ImPlot::SetupAxisTicks(ImAxis_Y1, 0, 32, 33, nullptr, false);
-                    //ImPlot::SetNextMarkerStyle(0, 2.0f, IMPLOT_AUTO_COL, 1.0f);
                     ImPlot::SetNextLineStyle(orange, 3.0f);
-                    ImPlot::PlotLine("f(x)", plot_x, plot_y, 32);
+                    ImPlot::PlotLine("waveform", plot_x, plot_y, 32);
                     ImPlot::EndPlot();
                 }
 
                 ImPlot::PopStyleVar();
+
+                ImGui::NewLine();
 
                 ImGui::Columns(1);
 
@@ -167,6 +243,8 @@ void gui_debug_window_psg(void)
 
                 ImGui::EndChild();
 
+                ImGui::PopFont();
+
                 ImGui::EndTabItem();
             }
         }
@@ -174,7 +252,7 @@ void gui_debug_window_psg(void)
         ImGui::EndTabBar();
     }
 
-    ImGui::PopFont();
+    
 
     ImGui::End();
     ImGui::PopStyleVar();

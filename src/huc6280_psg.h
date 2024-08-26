@@ -58,6 +58,7 @@ public:
         u8* LFO_FREQUENCY;
         u8* LFO_CONTROL;
         int* BUFFER_INDEX;
+        int* FRAME_SAMPLES;
     };
 
 public:
@@ -84,6 +85,7 @@ private:
     u8 m_lfo_control;
     int m_elapsed_cycles;
     int m_sample_cycle_counter;
+    int m_frame_samples;
     int m_cycles_per_sample;
     int m_buffer_index;
     u16 m_volume_lut[32];

@@ -26,6 +26,8 @@
     #define EXTERN extern
 #endif
 
+EXTERN void gui_debug_psg_init(void);
+EXTERN void gui_debug_psg_destroy(void);
 EXTERN void gui_debug_window_psg(void);
 
 #undef GUI_DEBUG_PSG_IMPORT

@@ -42,6 +42,7 @@ void HuC6280PSG::Init()
     m_state.LFO_FREQUENCY = &m_lfo_frequency;
     m_state.LFO_CONTROL = &m_lfo_control;
     m_state.BUFFER_INDEX = &m_buffer_index;
+    m_state.FRAME_SAMPLES = &m_frame_samples;
 
     ComputeVolumeLUT();
     Reset();
@@ -53,6 +54,7 @@ void HuC6280PSG::Reset()
     m_buffer_index = 0;
     m_cycles_per_sample = GG_AUDIO_CYCLES_PER_SAMPLE;
     m_sample_cycle_counter = 0;
+    m_frame_samples = 0;
 
     m_channel_select = 0;
     m_main_amplitude = 0;
@@ -98,6 +100,7 @@ int HuC6280PSG::EndFrame(s16* sample_buffer)
     if (IsValidPointer(sample_buffer))
     {
         samples = m_buffer_index;
+        m_frame_samples = m_buffer_index;
 
         for (int s = 0; s < samples; s++)
         {
@@ -120,13 +123,10 @@ HuC6280PSG::HuC6280PSG_State* HuC6280PSG::GetState()
 
 void HuC6280PSG::Sync()
 {
-    for (int i = 0; i < m_elapsed_cycles; i++)
+    for (int cycles = 0; cycles < m_elapsed_cycles; cycles++)
     {
         u8 main_left_vol = (m_main_amplitude >> 4) & 0x0F;
         u8 main_right_vol = m_main_amplitude & 0x0F;
-
-        s16 left_sample = 0;
-        s16 right_sample = 0;
 
         for (int i = 0; i < 6; i++)
         {
@@ -231,7 +231,7 @@ void HuC6280PSG::Sync()
             ch->left_sample = (s16)((data - 16) * final_left_vol);
             ch->right_sample = (s16)((data - 16) * final_right_vol);
         }
-        
+
         m_sample_cycle_counter++;
 
         if (m_sample_cycle_counter >= m_cycles_per_sample)
