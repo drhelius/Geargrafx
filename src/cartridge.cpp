@@ -18,7 +18,7 @@
  */
 
 #include "cartridge.h"
-#include "miniz/miniz.c"
+#include "miniz/miniz.h"
 #include "game_db.h"
 #include <string>
 #include <fstream>

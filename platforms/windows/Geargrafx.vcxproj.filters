@@ -97,6 +97,9 @@
     <ClCompile Include="..\shared\audio\sound_queue.cpp">
       <Filter>audio</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\miniz\miniz.c">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\audio.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -240,8 +243,11 @@
     <ClInclude Include="..\shared\desktop\mINI\ini.h">
       <Filter>desktop\mINI</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\audi\sound_queue.h">
+    <ClInclude Include="..\shared\audio\sound_queue.h">
       <Filter>audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\miniz\miniz.h">
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\audio.h">
       <Filter>src</Filter>
