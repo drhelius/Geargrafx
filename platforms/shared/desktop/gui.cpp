@@ -103,11 +103,14 @@ void gui_init(void)
     emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
     emu_debug_set_callback(gui_debug_trace_logger_update);
 
+    gui_debug_disassembler_init();
+
     gui_init_menus();
 }
 
 void gui_destroy(void)
 {
+    gui_debug_disassembler_destroy();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
     NFD_Quit();
