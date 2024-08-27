@@ -44,6 +44,11 @@ void HuC6280PSG::Init()
     m_state.BUFFER_INDEX = &m_buffer_index;
     m_state.FRAME_SAMPLES = &m_frame_samples;
 
+    for (int i = 0; i < 6; i++)
+    {
+        m_channels[i].mute = false;
+    }
+
     ComputeVolumeLUT();
     Reset();
 }
@@ -78,7 +83,6 @@ void HuC6280PSG::Reset()
         m_channels[i].dda = 0;
         m_channels[i].left_sample = 0;
         m_channels[i].right_sample = 0;
-        m_channels[i].mute = false;
 
         for (int j = 0; j < 32; j++)
         {

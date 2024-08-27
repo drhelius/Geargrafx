@@ -69,7 +69,6 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
             if ((m_ch->control & 0x40) && (!(value & 0x40))) 
             {
                 m_ch->wave_index = 0;
-                m_ch->dda = m_ch->wave_data[m_ch->wave_index];
                 m_ch->counter = m_ch->frequency;
             }
             // Channel off to on
@@ -79,7 +78,6 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
                 if (!(value & 0x40))
                 {
                     m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
-                    m_ch->dda = m_ch->wave_data[m_ch->wave_index];
                 }
             }
             m_ch->control = value;
@@ -109,8 +107,8 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
             if(!(m_ch->control & 0xC0))
                 m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
 
-            // Channel on
-            if (m_ch->control & 0x80)
+            // DDA on
+            if (m_ch->control & 0x40) 
             {
                 m_ch->dda = data;
             }
@@ -126,6 +124,13 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
     // LFO frequency
     case 8:
         m_lfo_frequency = value;
+
+        if (value & 0x80)
+        {
+            u16 lfo_freq = m_channels[1].frequency ? m_channels[1].frequency : 0x1000;
+            m_channels[1].counter = lfo_freq * m_lfo_frequency;
+            m_channels[1].wave_index = 0;
+        }
         break;
     // LFO control
     case 9:
