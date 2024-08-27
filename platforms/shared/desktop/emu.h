@@ -87,6 +87,7 @@ EXTERN void emu_debug_set_callback(GeargrafxCore::GG_Debug_Callback callback);
 
 EXTERN void emu_video_no_sprite_limit(bool enabled);
 EXTERN void emu_set_overscan(int overscan);
+EXTERN void emu_set_scanline_start_end(int start, int end);
 EXTERN void emu_save_screenshot(const char* file_path);
 
 #undef EMU_IMPORT

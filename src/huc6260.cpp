@@ -32,6 +32,10 @@ HuC6260::HuC6260(HuC6270* huc6270)
     m_state.VSYNC = &m_vsync;
     InitPointer(m_color_table);
     InitPointer(m_frame_buffer);
+
+    m_overscan = 0;
+    m_scanline_start = 0;
+    m_scanline_end = 239;
 }
 
 HuC6260::~HuC6260()
@@ -86,6 +90,7 @@ void HuC6260::Reset()
     m_vpos = 0;
     m_pixel_index = 0;
     m_pixel_clock = 0;
+    m_pixel_x = 0;
     m_hsync = false;
     m_vsync = false;
     m_blur = 0;
@@ -103,16 +108,19 @@ bool HuC6260::Clock()
 
     if (m_pixel_clock == 0)
     {
-        bool active = false;
-        u16 pixel = m_huc6270->Clock(&active);
+        u16 pixel = m_huc6270->Clock();
 
-        if (true)
+        int start_x = k_huc6260_line_offset[m_overscan][m_speed];
+        int end_x = start_x + k_huc6260_line_width[m_overscan][m_speed];
+        int start_y = m_scanline_start + 14;
+        int end_y = m_scanline_end + 14 + 1;
+
+        if ((m_pixel_x >= start_x) && (m_pixel_x < end_x) && (m_vpos >= start_y) && (m_vpos < end_y))
         {
             if ((pixel & 0x10F) == 0)
                 pixel = 0;
 
             u16 color = m_color_table[pixel];
-
             u8 red = m_rgb888_palette[color][0];
             u8 green = m_rgb888_palette[color][1];
             u8 blue = m_rgb888_palette[color][2];
@@ -127,13 +135,18 @@ bool HuC6260::Clock()
                 m_frame_buffer[component + 2] = blue;
                 m_frame_buffer[component + 3] = 255;
             }
+
+            m_pixel_index++;
         }
 
-        m_pixel_index++;
+        m_pixel_x = (m_pixel_x + 1) % k_huc6260_full_line_width[m_speed];
     }
 
     m_pixel_clock = (m_pixel_clock + 1) % m_clock_divider;
     m_hpos = (m_hpos + 1) % HUC6260_LINE_LENGTH;
+
+    if (m_hpos == 0)
+        m_pixel_x = 0;
 
     switch (m_hpos)
     {
@@ -200,5 +213,25 @@ void HuC6260::SetBuffer(u8* frame_buffer)
 
 int HuC6260::GetCurrentLineWidth()
 {
-    return k_huc6260_line_width[m_speed];
+    return k_huc6260_line_width[m_overscan][m_speed];
+}
+
+int HuC6260::GetCurrentHeight()
+{
+    return std::min(240, std::max(1, 240 - m_scanline_start - (239 - m_scanline_end)));
+}
+
+void HuC6260::SetScanlineStart(int scanline_start)
+{
+    m_scanline_start = std::max(0, std::min(239, scanline_start));
+}
+
+void HuC6260::SetScanlineEnd(int scanline_end)
+{
+    m_scanline_end = std::max(0, std::min(239, scanline_end));
+}
+
+void HuC6260::SetOverscan(bool overscan)
+{
+    m_overscan = overscan ? 1 : 0;
 }

@@ -338,23 +338,13 @@ void emu_video_no_sprite_limit(bool enabled)
 
 void emu_set_overscan(int overscan)
 {
-    // switch (overscan)
-    // {
-    //     case 0:
-    //         geargrafx->GetVideo()->SetOverscan(Video::OverscanDisabled);
-    //         break;
-    //     case 1:
-    //         geargrafx->GetVideo()->SetOverscan(Video::OverscanTopBottom);
-    //         break;
-    //     case 2:
-    //         geargrafx->GetVideo()->SetOverscan(Video::OverscanFull284);
-    //         break;
-    //     case 3:
-    //         geargrafx->GetVideo()->SetOverscan(Video::OverscanFull320);
-    //         break;
-    //     default:
-    //         geargrafx->GetVideo()->SetOverscan(Video::OverscanDisabled);
-    // }
+    geargrafx->GetHuC6260()->SetOverscan(overscan == 0 ? false : true);
+}
+
+void emu_set_scanline_start_end(int start, int end)
+{
+    geargrafx->GetHuC6260()->SetScanlineStart(start);
+    geargrafx->GetHuC6260()->SetScanlineEnd(end);
 }
 
 void emu_save_screenshot(const char* file_path)
@@ -506,6 +496,8 @@ static void update_debug_sprites(void)
     {
         int sprite_offset = i << 2;
         u16 flags = sat[sprite_offset + 3] & 0xB98F;
+        bool x_flip = (flags & 0x0800);
+        bool y_flip = (flags & 0x8000);
         int palette = flags & 0x0F;
         int cgx = (flags >> 8) & 0x01;
         int cgy = (flags >> 12) & 0x03;
@@ -521,14 +513,16 @@ static void update_debug_sprites(void)
 
         for (int y = 0; y < height; y++)
         {
-            int tile_y = y >> 4;
+            int flipped_y = y_flip ? (height - 1 - y) : y;
+            int tile_y = flipped_y >> 4;
             int tile_line_offset = tile_y * 2 * 64;
-            int offset_y = y & 0xF;
+            int offset_y = flipped_y & 0xF;
             u16 line_start = sprite_address + tile_line_offset + offset_y;
 
             for (int x = 0; x < width; x++)
             {
-                int tile_x = x >> 4;
+                int flipped_x = x_flip ? (width - 1 - x) : x;
+                int tile_x = flipped_x >> 4;
                 int tile_x_offset = tile_x * 64;
                 int line = line_start + tile_x_offset;
 
@@ -537,7 +531,7 @@ static void update_debug_sprites(void)
                 u16 plane3 = vram[line + 32];
                 u16 plane4 = vram[line + 48];
 
-                int pixel_x = 15 - (x & 0xF);
+                int pixel_x = 15 - (flipped_x & 0xF);
                 u16 pixel = ((plane1 >> pixel_x) & 0x01) | (((plane2 >> pixel_x) & 0x01) << 1) | (((plane3 >> pixel_x) & 0x01) << 2) | (((plane4 >> pixel_x) & 0x01) << 3);
                 pixel |= (palette << 4);
                 pixel |= 0x100;

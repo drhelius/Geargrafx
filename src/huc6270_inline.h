@@ -24,15 +24,13 @@
 #include "huc6260.h"
 #include "huc6280.h"
 
-inline u16 HuC6270::Clock(bool* active)
+inline u16 HuC6270::Clock()
 {
-    *active = false;
     u16 pixel = 0x100;
 
     if (m_active_line &&
         (m_h_state == HuC6270_HORIZONTAL_STATE_HDW_1 || m_h_state == HuC6270_HORIZONTAL_STATE_HDW_2))
     {
-        *active = true;
         if (m_line_buffer_index < 512)
         {
             pixel = m_line_buffer[m_line_buffer_index];

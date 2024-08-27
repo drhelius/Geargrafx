@@ -439,7 +439,7 @@ void gui_debug_window_huc6270_sprites(void)
 
         if (window_hovered && (mouse_x >= 0.0f) && (mouse_x < fwidth) && (mouse_y >= 0.0f) && (mouse_y < fheight))
         {
-            int sprite_y = sat[s * 4] & 0x03FF;
+            int sprite_y = (sat[s * 4] & 0x03FF) + 3;
             int sprite_x = sat[(s * 4) + 1] & 0x03FF;
             u16 pattern = (sat[(s * 4) + 2] >> 1) & 0x03FF;
 

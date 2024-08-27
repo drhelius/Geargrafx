@@ -60,7 +60,9 @@ struct config_Video
 {
     int scale = 0;
     int ratio = 1;
-    int overscan = 1;
+    int overscan = 0;
+    int scanline_start = 0;
+    int scanline_end = 239;
     bool fps = false;
     bool bilinear = false;
     bool sprite_limit = false;

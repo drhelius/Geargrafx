@@ -294,12 +294,29 @@ static void menu_video(void)
 
         if (ImGui::BeginMenu("Overscan"))
         {
-            ImGui::PushItemWidth(150.0f);
-            if (ImGui::Combo("##overscan", &config_video.overscan, "Disabled\0Top+Bottom\0Full (284 width)\0Full (320 width)\0\0"))
+            ImGui::PushItemWidth(100.0f);
+            if (ImGui::Combo("##overscan", &config_video.overscan, "Disabled\0Enabled\0\0"))
             {
-                // emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
+                emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
             }
             ImGui::PopItemWidth();
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Scanline Start/End"))
+        {
+            if (ImGui::SliderInt("##scanline_start", &config_video.scanline_start, 0, 239, "Start = %d"))
+            {
+                emu_set_scanline_start_end(
+                config_debug.debug ? 0 : config_video.scanline_start,
+                config_debug.debug ? 239 : config_video.scanline_end);
+            }
+            if (ImGui::SliderInt("##scanline_end", &config_video.scanline_end, 0, 239, "End = %d"))
+            {
+                emu_set_scanline_start_end(
+                config_debug.debug ? 0 : config_video.scanline_start,
+                config_debug.debug ? 239 : config_video.scanline_end);
+            }
             ImGui::EndMenu();
         }
 
@@ -486,6 +503,9 @@ static void menu_debug(void)
         if (ImGui::MenuItem("Enable", "", &config_debug.debug))
         {
             emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
+            emu_set_scanline_start_end(
+                config_debug.debug ? 0 : config_video.scanline_start,
+                config_debug.debug ? 239 : config_video.scanline_end);
         }
 
         ImGui::Separator();

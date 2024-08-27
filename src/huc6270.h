@@ -66,7 +66,7 @@ public:
     ~HuC6270();
     void Init();
     void Reset();
-    u16 Clock(bool* active);
+    u16 Clock();
     void SetHSync(bool active);
     void SetVSync(bool active);
     u8 ReadRegister(u32 address);

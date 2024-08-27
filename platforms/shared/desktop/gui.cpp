@@ -102,6 +102,9 @@ void gui_init(void)
 
     emu_audio_mute(!config_audio.enable);
     emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
+    emu_set_scanline_start_end(
+                config_debug.debug ? 0 : config_video.scanline_start,
+                config_debug.debug ? 239 : config_video.scanline_end);
     emu_debug_set_callback(gui_debug_trace_logger_update);
 
     gui_debug_disassembler_init();

@@ -67,6 +67,10 @@ public:
     u16* GetColorTable();
     void SetBuffer(u8* frame_buffer);
     int GetCurrentLineWidth();
+    int GetCurrentHeight();
+    void SetScanlineStart(int scanline_start);
+    void SetScanlineEnd(int scanline_end);
+    void SetOverscan(bool overscan);
 
 private:
     HuC6270* m_huc6270;
@@ -81,10 +85,14 @@ private:
     int m_vpos;
     int m_pixel_index;
     int m_pixel_clock;
+    int m_pixel_x;
     bool m_hsync;
     bool m_vsync;
     int m_blur;
     bool m_black_and_white;
+    int m_overscan;
+    int m_scanline_start;
+    int m_scanline_end;
     GG_Pixel_Format m_pixel_format;
     u8 m_rgb888_palette[512][3];
     u8 m_bgr888_palette[512][3];
@@ -97,8 +105,15 @@ private:
 static const HuC6260::HuC6260_Speed k_huc6260_speed[4] = {
     HuC6260::HuC6260_SPEED_5_36_MHZ, HuC6260::HuC6260_SPEED_7_16_MHZ,
     HuC6260::HuC6260_SPEED_10_8_MHZ, HuC6260::HuC6260_SPEED_10_8_MHZ };
-static const int k_huc6260_line_width[4] = { 342, 455, 683, 683 };
+
 static const int k_huc6260_total_lines[2] = { 262, 263 };
+static const int k_huc6260_full_line_width[4] = { 342, 455, 683, 683 };
+static const int k_huc6260_line_width[2][4] = {
+    { 256, 341, 512, 512 },
+    { 256 + 24, 341 + 32, 512 + 48, 512 + 48 } };
+static const int k_huc6260_line_offset[2][4] = {
+    { 8 + 24, 8 + 38, 8 + 96, 8 + 96 },
+    { 8 + 24 - 12, 8 + 38 - 16, 8 + 96 - 24, 8 + 96 - 24 } };
 
 #include "huc6260_inline.h"
 
