@@ -35,8 +35,10 @@ CFLAGS += -std=c99
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)
+    BUILD_CONFIG = Debug
     CPPFLAGS +=-DDEBUG -g3
 else
+    BUILD_CONFIG = Release
     CPPFLAGS +=-DNDEBUG -O3 -flto=auto
     LDFLAGS += -O3 -flto=auto
 endif
@@ -70,7 +72,7 @@ else
 endif
 
 all: header $(TARGET)
-	@echo Build complete for $(PLATFORM)
+	@echo Build complete for $(PLATFORM) \($(BUILD_CONFIG)\)
 
 $(TARGET): $(OBJECTS)
 	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)

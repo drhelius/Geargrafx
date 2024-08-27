@@ -97,7 +97,6 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
 
     m_huc6260->SetBuffer(frame_buffer);
     bool stop = false;
-    int failsafe_clocks = 0;
 
     do
     {
@@ -148,12 +147,8 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
             get_debug_state = true;
         }
 #endif
-        // Failsafe: if the emulator is running too long, stop it
-        // if (failsafe_clocks >= 150000)
-        //     stop = true;
 
         m_clock++;
-        failsafe_clocks++;
 
         if ( m_clock == 12)
             m_clock = 0;
