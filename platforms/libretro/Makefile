@@ -333,10 +333,11 @@ OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
 INCLUDES += -I$(SOURCE_DIR)
 
-CFLAGS   += -DGEARCOLECO_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(fpic)
-CXXFLAGS += -DGEARCOLECO_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(fpic)
+CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(fpic)
+CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(fpic)
 
 all: $(TARGET)
+	@echo Build complete for $(platform)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
@@ -344,9 +345,12 @@ ifeq ($(STATIC_LINKING), 1)
 else
 	$(CXX) $(fpic) $(SHARED) $(INCLUDES) -o $@ $(OBJECTS) $(LDFLAGS)
 endif
-  
-%.o: %.c
+
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) $(fpic) -c -o $@ $<
+
+%.o: %.c
+	$(CC) $(CXXFLAGS) $(fpic) -c -o $@ $<
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)
