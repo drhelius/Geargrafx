@@ -56,15 +56,28 @@ SoundQueue::SoundQueue()
     }
 
     std::string platform = SDL_GetPlatform();
-    if ((platform == "Linux") && (!IsRunningInWSL()))
+    if (platform == "Linux")
     {
-        Debug("SoundQueue: Linux detected");
-        SDL_InitSubSystem(SDL_INIT_AUDIO);
-        SDL_AudioInit("alsa");
+        if (SDL_InitSubSystem(SDL_INIT_AUDIO) < 0)
+            sdl_error("Couldn't init AUDIO subsystem");
+
+        if (IsRunningInWSL())
+        {
+            Debug("SoundQueue: Running in WSL");
+            if (SDL_AudioInit("pulseaudio") < 0)
+                sdl_error("Couldn't init pulseaudio audio driver");
+        }
+        else
+        {
+            Debug("SoundQueue: Running in Linux");
+            if (SDL_AudioInit("alsa") < 0)
+                sdl_error("Couldn't init alsa audio driver");
+        }
     }
     else
     {
-        SDL_Init(SDL_INIT_AUDIO);
+        if (SDL_Init(SDL_INIT_AUDIO) < 0)
+            sdl_error("Couldn't init AUDIO");
     }
 
     Log("SoundQueue: %s driver selected", SDL_GetCurrentAudioDriver());
@@ -111,7 +124,7 @@ bool SoundQueue::Start(int sample_rate, int channel_count, int buffer_size, int 
     spec.userdata = this;
 
     Log("SoundQueue: Desired - frequency: %d format: f %d s %d be %d sz %d channels: %d samples: %d", spec.freq, SDL_AUDIO_ISFLOAT(spec.format), SDL_AUDIO_ISSIGNED(spec.format), SDL_AUDIO_ISBIGENDIAN(spec.format), SDL_AUDIO_BITSIZE(spec.format), spec.channels, spec.samples);
-    
+
     if (SDL_OpenAudio(&spec, NULL) < 0)
     {
         sdl_error("Couldn't open SDL audio");
@@ -121,7 +134,7 @@ bool SoundQueue::Start(int sample_rate, int channel_count, int buffer_size, int 
     Log("SoundQueue: Obtained - frequency: %d format: f %d s %d be %d sz %d channels: %d samples: %d", spec.freq, SDL_AUDIO_ISFLOAT(spec.format), SDL_AUDIO_ISSIGNED(spec.format), SDL_AUDIO_ISBIGENDIAN(spec.format), SDL_AUDIO_BITSIZE(spec.format), spec.channels, spec.samples);
 
     SDL_PauseAudio(false);
-    m_sound_open = true;     
+    m_sound_open = true;
 
     return true;
 }
@@ -153,6 +166,9 @@ int SoundQueue::GetSampleCount()
 
 void SoundQueue::Write(int16_t* samples, int count, bool sync)
 {
+    if (!m_sound_open)
+        return;
+
     m_sync_output = sync;
 
     while (count)
@@ -205,7 +221,6 @@ bool SoundQueue::IsRunningInWSL()
 
     if ((file = fopen("/proc/sys/fs/binfmt_misc/WSLInterop", "r")))
     {
-        Debug("SoundQueue: Running in WSL");
         fclose(file);
         return true;
     }
