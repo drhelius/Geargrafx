@@ -22,6 +22,7 @@
 
 #include "imgui/imgui.h"
 #include "imgui/implot.h"
+#include "imgui/fonts/IconsMaterialDesign.h"
 #include "../../../src/geargrafx.h"
 #include "gui.h"
 #include "gui_debug_constants.h"
@@ -64,18 +65,6 @@ void gui_debug_window_psg(void)
     HuC6280PSG* psg = core->GetAudio()->GetPSG();
     HuC6280PSG::HuC6280PSG_State* psg_state = psg->GetState();
 
-    bool test = true;
-    ImGui::TextColored(cyan, "Mute: "); ImGui::SameLine();
-    ImGui::Button("0"); ImGui::SameLine();
-    ImGui::Button("1"); ImGui::SameLine();
-    ImGui::Button("2"); ImGui::SameLine();
-    ImGui::Button("3"); ImGui::SameLine();
-    ImGui::Button("4"); ImGui::SameLine();
-    ImGui::Button("5");
-
-    ImGui::Separator();
-    ImGui::NewLine();
-
     ImGui::PushFont(gui_default_font);
 
     ImGui::Columns(2, "psg", true);
@@ -99,7 +88,6 @@ void gui_debug_window_psg(void)
     ImGui::TextColored(white, "%02X", *psg_state->LFO_CONTROL);
 
     ImGui::Columns(1);
-
     ImGui::NewLine();
 
     ImGui::PopFont();
@@ -118,6 +106,24 @@ void gui_debug_window_psg(void)
                 HuC6280PSG::HuC6280PSG_Channel* psg_channel = &psg_state->CHANNELS[channel];
 
                 ImGui::Columns(2, "channels", false);
+
+                char label[32];
+                snprintf(label, 32, "%s##mute%d", psg_state->CHANNELS[channel].mute ? ICON_MD_MUSIC_OFF : ICON_MD_MUSIC_NOTE, channel);
+
+                ImGui::PushStyleColor(ImGuiCol_Text, psg_state->CHANNELS[channel].mute ? mid_gray : white);
+                ImGui::PushFont(gui_material_icons_font);
+                if (ImGui::Button(label))
+                    psg_state->CHANNELS[channel].mute = !psg_state->CHANNELS[channel].mute;
+                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                {
+                    char tooltip[5];
+                    snprintf(tooltip, 5, "CH %d", channel);
+                    ImGui::SetTooltip("%s", tooltip);
+                }
+                ImGui::PopFont();
+                ImGui::PopStyleColor();
+
+                ImGui::SameLine();
 
                 ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(1, 1));
 
@@ -151,7 +157,7 @@ void gui_debug_window_psg(void)
 
                 ImPlotAxisFlags flags = ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
 
-                if (ImPlot::BeginPlot("Left wave", ImVec2(100, 50), ImPlotFlags_CanvasOnly))
+                if (ImPlot::BeginPlot("Left wave", ImVec2(80, 50), ImPlotFlags_CanvasOnly))
                 {
                     ImPlot::SetupAxes("x", "y", flags, flags);
                     ImPlot::SetupAxesLimits(x_min_left, x_max_left, -1.0f, 1.0f, ImPlotCond_Always);
@@ -162,11 +168,10 @@ void gui_debug_window_psg(void)
 
                 ImGui::SameLine();
 
-
                 int x_min_right = std::max(0, trigger_right - half_window_size);
                 int x_max_right = std::min(data_size, trigger_right + half_window_size);
 
-                if (ImPlot::BeginPlot("Right wave", ImVec2(100, 50), ImPlotFlags_CanvasOnly))
+                if (ImPlot::BeginPlot("Right wave", ImVec2(80, 50), ImPlotFlags_CanvasOnly))
                 {
                     ImPlot::SetupAxes("x", "y", flags, flags);
                     ImPlot::SetupAxesLimits(x_min_right, x_max_right, -1.0f, 1.0f, ImPlotCond_Always);

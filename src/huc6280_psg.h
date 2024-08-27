@@ -48,6 +48,7 @@ public:
         s16 output[GG_AUDIO_BUFFER_SIZE];
         s16 left_sample;
         s16 right_sample;
+        bool mute;
     };
 
     struct HuC6280PSG_State

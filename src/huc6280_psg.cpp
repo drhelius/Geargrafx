@@ -78,6 +78,7 @@ void HuC6280PSG::Reset()
         m_channels[i].dda = 0;
         m_channels[i].left_sample = 0;
         m_channels[i].right_sample = 0;
+        m_channels[i].mute = false;
 
         for (int j = 0; j < 32; j++)
         {
@@ -135,7 +136,6 @@ void HuC6280PSG::Sync()
             ch->left_sample = 0;
             ch->right_sample = 0;
 
-            // Channel off
             if (!(ch->control & 0x80))
                 continue;
 
@@ -228,8 +228,11 @@ void HuC6280PSG::Sync()
                 }
             }
 
-            ch->left_sample = (s16)((data - 16) * final_left_vol);
-            ch->right_sample = (s16)((data - 16) * final_right_vol);
+            if (!ch->mute)
+            {
+                ch->left_sample = (s16)((data - 16) * final_left_vol);
+                ch->right_sample = (s16)((data - 16) * final_right_vol);
+            }
         }
 
         m_sample_cycle_counter++;
