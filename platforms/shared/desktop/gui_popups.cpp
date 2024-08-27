@@ -101,16 +101,11 @@ void gui_popup_modal_about(void)
 
         ImGui::PopFont();
 
-        ImGui::Separator();
-        ImGui::Text("%s is licensed under the GPL-3.0 License, see LICENSE for more information.", GG_TITLE);
-        ImGui::Separator();
-        ImGui::NewLine();
-
         if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
         {
             if (ImGui::BeginTabItem("Build Info"))
             {
-                ImGui::BeginChild("build", ImVec2(0, 150), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+                ImGui::BeginChild("build", ImVec2(0, 100), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
 
                 ImGui::Text("Build: %s", GG_VERSION);
 
@@ -205,14 +200,14 @@ void gui_popup_modal_about(void)
             }
             if (ImGui::BeginTabItem("Special thanks to"))
             {
-                ImGui::BeginChild("backers", ImVec2(0, 150), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+                ImGui::BeginChild("backers", ImVec2(0, 100), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
                 ImGui::Text("%s", BACKERS_STR);
                 ImGui::EndChild();
                 ImGui::EndTabItem();
             }
             if (ImGui::BeginTabItem("LICENSE"))
             {
-                ImGui::BeginChild("license", ImVec2(0, 150), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+                ImGui::BeginChild("license", ImVec2(0, 100), false, ImGuiWindowFlags_AlwaysVerticalScrollbar);
                 ImGui::TextUnformatted(GPL_LICENSE_STR);
                 ImGui::EndChild();
                 ImGui::EndTabItem();
