@@ -34,6 +34,7 @@
 static MemEditor mem_edit[6];
 static float plot_x[32];
 static float plot_y[32];
+static bool exclusive_channel[6] = { false, false, false, false, false, false };
 static float* wave_buffer_left = NULL;
 static float* wave_buffer_right = NULL;
 
@@ -107,23 +108,49 @@ void gui_debug_window_psg(void)
 
                 ImGui::Columns(2, "channels", false);
 
-                char label[32];
-                snprintf(label, 32, "%s##mute%d", psg_state->CHANNELS[channel].mute ? ICON_MD_MUSIC_OFF : ICON_MD_MUSIC_NOTE, channel);
+                ImGui::BeginTable("##table", 2, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoPadOuterX);
+
+                ImGui::TableNextColumn();
 
                 ImGui::PushStyleColor(ImGuiCol_Text, psg_state->CHANNELS[channel].mute ? mid_gray : white);
                 ImGui::PushFont(gui_material_icons_font);
+
+                char label[32];
+                snprintf(label, 32, "%s##mute%d", psg_state->CHANNELS[channel].mute ? ICON_MD_MUSIC_OFF : ICON_MD_MUSIC_NOTE, channel);
                 if (ImGui::Button(label))
+                {
+                    for (int i = 0; i < 6; i++)
+                        exclusive_channel[i] = false;
                     psg_state->CHANNELS[channel].mute = !psg_state->CHANNELS[channel].mute;
+                }
+                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                    ImGui::SetTooltip("Mute / Unmute");
+
+                snprintf(label, 32, "%s##exc%d", ICON_MD_STAR, channel);
+
+                ImGui::PushStyleColor(ImGuiCol_Text, exclusive_channel[channel] ? yellow : white);
+                if (ImGui::Button(label))
+                {
+                    exclusive_channel[channel] = !exclusive_channel[channel];
+                    psg_state->CHANNELS[channel].mute = false;
+                    for (int i = 0; i < 6; i++)
+                    {
+                        if (i != channel)
+                        {
+                            exclusive_channel[i] = false;
+                            psg_state->CHANNELS[i].mute = exclusive_channel[channel] ? true : false;
+                        }
+                    }
+                }
+                ImGui::PopStyleColor();
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 {
-                    char tooltip[5];
-                    snprintf(tooltip, 5, "CH %d", channel);
-                    ImGui::SetTooltip("%s", tooltip);
+                    ImGui::SetTooltip("Mute Others");
                 }
                 ImGui::PopFont();
                 ImGui::PopStyleColor();
 
-                ImGui::SameLine();
+                ImGui::TableNextColumn();
 
                 ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(1, 1));
 
@@ -179,6 +206,8 @@ void gui_debug_window_psg(void)
                     ImPlot::PlotLine("Wave", wave_buffer_right, data_size);
                     ImPlot::EndPlot();
                 }
+
+                ImGui::EndTable();
 
                 ImGui::NewLine();
 
