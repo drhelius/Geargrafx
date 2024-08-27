@@ -29,7 +29,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
 {
     int a;
     u8 final_result;
-    u16 address;
+    u16 address = 0;
 
 #if !defined(GG_TESTING)
     if (IsSetFlag(FLAG_TRANSFER))
@@ -40,7 +40,8 @@ inline void HuC6280::OPCodes_ADC(u8 value)
     }
     else
 #endif
-        a = m_A.GetValue();
+
+    a = m_A.GetValue();
 
     if (IsSetFlag(FLAG_DECIMAL))
     {

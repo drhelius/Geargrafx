@@ -129,9 +129,9 @@ bool Cartridge::LoadFromFile(const char* path)
     extension = pathstr.substr(pathstr.find_last_of(".") + 1);
     transform(extension.begin(), extension.end(), extension.begin(), (int(*)(int)) tolower);
 
-    strncpy(m_file_path, path, 512);
-    strncpy(m_file_name, filename.c_str(), 512);
-    strncpy(m_file_extension, extension.c_str(), 512);
+    snprintf(m_file_path, sizeof(m_file_path), "%s", path);
+    snprintf(m_file_name, sizeof(m_file_name), "%s", filename.c_str());
+    snprintf(m_file_extension, sizeof(m_file_extension), "%s", extension.c_str());
 
     ifstream file(path, ios::in | ios::binary | ios::ate);
 

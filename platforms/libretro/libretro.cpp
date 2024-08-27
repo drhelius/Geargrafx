@@ -36,7 +36,7 @@ static const char slash = '/';
 #endif
 
 #define MAX_PADS 2
-#define JOYPAD_BUTTONS 16
+#define JOYPAD_BUTTONS 8
 
 static struct retro_log_callback logging;
 static retro_log_printf_t log_cb;
@@ -50,8 +50,6 @@ static int current_screen_width = 0;
 static int current_screen_height = 0;
 static bool allow_up_down = false;
 static bool libretro_supports_bitmasks;
-static int spinner_support = 0;
-static int spinner_sensitivity = 1;
 static float aspect_ratio = 0.0f;
 
 static GeargrafxCore* core;
@@ -59,10 +57,6 @@ static u8* frame_buffer;
 
 static int joypad[MAX_PADS][JOYPAD_BUTTONS];
 static int joypre[MAX_PADS][JOYPAD_BUTTONS];
-static int joypad_ext[MAX_PADS][4];
-static int joypre_ext[MAX_PADS][4];
-static bool mouse[2];
-static bool mousepre[2];
 
 static GG_Keys keymap[] = {
     GG_KEY_UP,
@@ -71,8 +65,8 @@ static GG_Keys keymap[] = {
     GG_KEY_RIGHT,
     GG_KEY_1,
     GG_KEY_2,
-    GG_KEY_RUN,
-    GG_KEY_SELECT
+    GG_KEY_SELECT,
+    GG_KEY_RUN
 };
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
@@ -119,7 +113,8 @@ void retro_init(void)
     core->Init(GG_PIXEL_RGB565);
 #endif
 
-    frame_buffer = new u8[HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT * 2];
+    //frame_buffer = new u8[HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT * 2];
+    frame_buffer = new u8[1024 * 512 * 2];
 
     audio_sample_count = 0;
 
@@ -143,47 +138,23 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 
     struct retro_input_descriptor joypad[] = {
 
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,                              "Joystick Up" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,                            "Joystick Down" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,                            "Joystick Left" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,                           "Joystick Right" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,                               "Yellow (Left)" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,                               "Red (Right)" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,                               "Keypad 1" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,                               "Keypad 2" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,                               "Keypad 3" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,                               "Keypad 4" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,                              "Keypad 5" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,                              "Keypad 6" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,                              "Keypad 7" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,                              "Keypad 8" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,                           "Keypad *" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,                          "Keypad #" },
-        { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y,  "Keypad 9" },
-        { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X,  "Keypad 0" },
-        { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Purple" },
-        { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Blue" },
+        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,                              "Up" },
+        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,                            "Down" },
+        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,                            "Left" },
+        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,                           "Right" },
+        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,                               "I" },
+        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,                               "II" },
+        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,                          "Select" },
+        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,                           "Run" },
 
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,                              "Joystick Up" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,                            "Joystick Down" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,                            "Joystick Left" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,                           "Joystick Right" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,                               "Yellow (Left)" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,                               "Red (Right)" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,                               "Keypad 1" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,                               "Keypad 2" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,                               "Keypad 3" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,                               "Keypad 4" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,                              "Keypad 5" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,                              "Keypad 6" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,                              "Keypad 7" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,                              "Keypad 8" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,                           "Keypad *" },
-        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,                          "Keypad #" },
-        { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y,  "Keypad 9" },
-        { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X,  "Keypad 0" },
-        { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Purple" },
-        { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Blue" },
+        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,                              "Up" },
+        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,                            "Down" },
+        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,                            "Left" },
+        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,                           "Right" },
+        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,                               "I" },
+        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,                               "II" },
+        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,                          "Select" },
+        { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,                           "Run" },
 
         { 0, 0, 0, 0, NULL }
     };
@@ -223,10 +194,10 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
     info->geometry.base_width   = runtime_info.screen_width;
     info->geometry.base_height  = runtime_info.screen_height;
-    info->geometry.max_width    = HUC6270_MAX_RESOLUTION_WIDTH;
-    info->geometry.max_height   = HUC6270_MAX_RESOLUTION_HEIGHT;
+    info->geometry.max_width    = 1024;//HUC6270_MAX_RESOLUTION_WIDTH;
+    info->geometry.max_height   = 512;//HUC6270_MAX_RESOLUTION_HEIGHT;
     info->geometry.aspect_ratio = aspect_ratio;
-    info->timing.fps            = 60.0;
+    info->timing.fps            = 59.82;
     info->timing.sample_rate    = 44100.0;
 }
 
@@ -304,8 +275,6 @@ static void update_input(void)
     {
         for (int i = 0; i < JOYPAD_BUTTONS; i++)
             joypre[j][i] = joypad[j][i];
-        for (int i = 0; i < 4; i++)
-            joypre_ext[j][i] = joypad_ext[j][i];
     }
 
     // Get current state
@@ -327,26 +296,8 @@ static void update_input(void)
         }
         joypad[j][4] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_A)      ? 1 : 0;
         joypad[j][5] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_B)      ? 1 : 0;
-        joypad[j][6] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_X)      ? 1 : 0;
-        joypad[j][7] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_Y)      ? 1 : 0;
-        joypad[j][8] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_START)  ? 1 : 0;
-        joypad[j][9] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT) ? 1 : 0;
-        joypad[j][10] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_L)     ? 1 : 0;
-        joypad[j][11] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_R)     ? 1 : 0;
-        joypad[j][12] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_L2)    ? 1 : 0;
-        joypad[j][13] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_R2)    ? 1 : 0;
-        joypad[j][14] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_L3)    ? 1 : 0;
-        joypad[j][15] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_R3)    ? 1 : 0;
-
-        int analog_left_x = input_state_cb( j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
-        int analog_left_y = input_state_cb( j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
-        int analog_right_x = input_state_cb( j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
-        int analog_right_y = input_state_cb( j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
-
-        joypad_ext[j][0] = analog_left_x != 0 ? 1 : 0;
-        joypad_ext[j][1] = analog_left_y != 0 ? 1 : 0;
-        joypad_ext[j][2] = analog_right_x != 0 ? 1 : 0;
-        joypad_ext[j][3] = analog_right_y != 0 ? 1 : 0;
+        joypad[j][6] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT) ? 1 : 0;
+        joypad[j][7] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_START)  ? 1 : 0;
     }
 
     for (int j = 0; j < MAX_PADS; j++)
@@ -359,17 +310,6 @@ static void update_input(void)
                     core->KeyPressed(static_cast<GG_Controllers>(j), keymap[i]);
                 else
                     core->KeyReleased(static_cast<GG_Controllers>(j), keymap[i]);
-            }
-        }
-
-        for (int i = 0; i < 4; i++)
-        {
-            if (joypad_ext[j][i] != joypre_ext[j][i])
-            {
-                if (joypad_ext[j][i] == 1)
-                    core->KeyPressed(static_cast<GG_Controllers>(j), keymap[i + JOYPAD_BUTTONS]);
-                else
-                    core->KeyReleased(static_cast<GG_Controllers>(j), keymap[i + JOYPAD_BUTTONS]);
             }
         }
     }
@@ -410,11 +350,7 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        // TODO
-        // if (strcmp(var.value, "Enabled") == 0)
-        //     core->GetVideo()->SetNoSpriteLimit(true);
-        // else
-        //     core->GetVideo()->SetNoSpriteLimit(false);
+        core->GetHuC6270()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
     }
 }
 
