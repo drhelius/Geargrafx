@@ -29,6 +29,7 @@ inline u16 HuC6270::Clock()
     u16 pixel = 0x100;
 
     if (m_active_line &&
+        (m_v_state == HuC6270_VERTICAL_STATE_VDW) &&
         (m_h_state == HuC6270_HORIZONTAL_STATE_HDW_1 || m_h_state == HuC6270_HORIZONTAL_STATE_HDW_2))
     {
         if (m_line_buffer_index < 512)

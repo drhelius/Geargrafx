@@ -153,6 +153,8 @@ void HuC6270::SetVSync(bool active)
         m_v_state = HuC6270_VERTICAL_STATE_VSW;
         m_lines_to_next_v_state = m_latched_vsw + 1;
 
+        m_increment_bg_counter_y = false;
+
         HUC6270_DEBUG("+++ VSYNC H to L");
     }
     // Low to high
