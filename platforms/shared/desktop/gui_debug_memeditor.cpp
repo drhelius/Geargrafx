@@ -743,12 +743,12 @@ void MemEditor::BookMarkPopup()
 
     if (ImGui::BeginPopupModal("Add Bookmark", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        static char address[7] = "";
+        static char address[9] = "";
         static char name[32] = "";
         int bookmark_address = m_selection_start;
 
         if (bookmark_address > 0)
-            snprintf(address, 7, "%06X", bookmark_address);
+            snprintf(address, 9, "%06X", bookmark_address);
 
         ImGui::Text("Name:");
         ImGui::PushItemWidth(200);ImGui::SetItemDefaultFocus();
@@ -756,7 +756,7 @@ void MemEditor::BookMarkPopup()
 
         ImGui::Text("Address:");
         ImGui::PushItemWidth(70);
-        ImGui::InputTextWithHint("##bookaddr", "XXXXXX", address, IM_ARRAYSIZE(address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+        ImGui::InputTextWithHint("##bookaddr", "XXXXXX", address, 6, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 
         ImGui::Separator();
 
