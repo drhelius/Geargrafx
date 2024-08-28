@@ -110,11 +110,17 @@ bool HuC6260::Clock()
     {
         u16 pixel = m_huc6270->Clock();
 
+#ifdef HUC6260_DEBUG
+        int start_x = 0;
+        int end_x = k_huc6260_full_line_width[m_speed];
+        int start_y = 0;
+        int end_y = 263;
+#else
         int start_x = k_huc6260_line_offset[m_overscan][m_speed];
         int end_x = start_x + k_huc6260_line_width[m_overscan][m_speed];
         int start_y = m_scanline_start + 14;
         int end_y = m_scanline_end + 14 + 1;
-
+#endif
         if ((m_pixel_x >= start_x) && (m_pixel_x < end_x) && (m_vpos >= start_y) && (m_vpos < end_y))
         {
             if ((pixel & 0x10F) == 0)
@@ -125,16 +131,11 @@ bool HuC6260::Clock()
             u8 green = m_rgb888_palette[color][1];
             u8 blue = m_rgb888_palette[color][2];
 
-            if (m_pixel_index >= (HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT))
-                Debug("Pixel Index: %d\n", m_pixel_index);
-            else
-            {
-                int component = m_pixel_index * 4;
-                m_frame_buffer[component + 0] = red;
-                m_frame_buffer[component + 1] = green;
-                m_frame_buffer[component + 2] = blue;
-                m_frame_buffer[component + 3] = 255;
-            }
+            int component = m_pixel_index * 4;
+            m_frame_buffer[component + 0] = red;
+            m_frame_buffer[component + 1] = green;
+            m_frame_buffer[component + 2] = blue;
+            m_frame_buffer[component + 3] = 255;
 
             m_pixel_index++;
         }
@@ -213,12 +214,20 @@ void HuC6260::SetBuffer(u8* frame_buffer)
 
 int HuC6260::GetCurrentLineWidth()
 {
+#ifdef HUC6260_DEBUG
+    return k_huc6260_full_line_width[m_speed];
+#else
     return k_huc6260_line_width[m_overscan][m_speed];
+#endif
 }
 
 int HuC6260::GetCurrentHeight()
 {
+#ifdef HUC6260_DEBUG
+    return 263;
+#else
     return std::min(240, std::max(1, 240 - m_scanline_start - (239 - m_scanline_end)));
+#endif
 }
 
 void HuC6260::SetScanlineStart(int scanline_start)

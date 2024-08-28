@@ -113,8 +113,7 @@ void retro_init(void)
     core->Init(GG_PIXEL_RGB565);
 #endif
 
-    //frame_buffer = new u8[HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT * 2];
-    frame_buffer = new u8[1024 * 512 * 2];
+    frame_buffer = new u8[HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT * 2];
 
     audio_sample_count = 0;
 
