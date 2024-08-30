@@ -70,6 +70,24 @@ cd platforms/bsd
 gmake
 ```
 
+### Libretro
+
+- Ubuntu / Debian / Raspberry Pi (Raspbian):
+
+``` shell
+sudo apt install build-essential
+cd platforms/libretro
+make
+```
+
+- Fedora:
+
+``` shell
+sudo dnf install @development-tools gcc-c++
+cd platforms/libretro
+make
+```
+
 ## Contributors
 
 Thank you to all the people who have already contributed to Geargrafx!
