@@ -12,9 +12,24 @@
 
 This is an open source project with its ongoing development made possible thanks to the support by these awesome [backers](backers.md). If you find it useful, please, consider [sponsoring](https://github.com/sponsors/drhelius).
 
-----------
-
 ![Geargrafx](https://github.com/user-attachments/assets/7db9eab6-e9c4-422d-a75f-3fde73d3d7f2)
+
+## Downloads
+
+- **Windows**:
+  - [Geargrafx-0.0.3-windows-x64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.3/Geargrafx-0.0.3-windows-x64.zip)
+  - [Geargrafx-0.0.3-windows-arm64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.3/Geargrafx-0.0.3-windows-arm64.zip)
+  - NOTE: If you have errors you may need to install:
+    - [Microsoft Visual C++ Redistributable](https://go.microsoft.com/fwlink/?LinkId=746572)
+    - [OpenGL Compatibility Pack](https://apps.microsoft.com/detail/9nqpsl29bfff)
+- **macOS**:
+  - [Geargrafx-0.0.3-macos-arm.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.3/Geargrafx-0.0.3-macos-arm.zip)
+  - [Geargrafx-0.0.3-macos-intel.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.3/Geargrafx-0.0.3-macos-intel.zip)
+- **Linux**:
+  - [Geargrafx-0.0.3-ubuntu-24.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.3/Geargrafx-1.1.0-ubuntu-24.04.zip)
+  - [Geargrafx-0.0.3-ubuntu-22.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.3/Geargrafx-1.1.0-ubuntu-22.04.zip)
+  - [Geargrafx-0.0.3-ubuntu-20.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.3/Geargrafx-1.1.0-ubuntu-20.04.zip) 
+  - NOTE: You may need to install `libsdl2` and `libglew`
 
 ## Build Instructions
 
