@@ -16,6 +16,7 @@ This is an open source project with its ongoing development made possible thanks
 
 ## Downloads
 
+- **Latest Builds**: [here](https://github.com/drhelius/Geargrafx/actions/workflows/geargrafx.yml))
 - **Windows**:
   - [Geargrafx-0.0.3-windows-x64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.3/Geargrafx-0.0.3-windows-x64.zip)
   - [Geargrafx-0.0.3-windows-arm64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.3/Geargrafx-0.0.3-windows-arm64.zip)
