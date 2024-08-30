@@ -756,7 +756,7 @@ void MemEditor::BookMarkPopup()
 
         ImGui::Text("Address:");
         ImGui::PushItemWidth(70);
-        ImGui::InputTextWithHint("##bookaddr", "XXXXXX", address, 6, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+        ImGui::InputTextWithHint("##bookaddr", "XXXXXX", address, 7, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 
         ImGui::Separator();
 
