@@ -80,6 +80,7 @@ private:
 
     struct HuC6270_Sprite_Data
     {
+        int index;
         u16 x;
         u16 flags;
         u8 palette;
@@ -97,6 +98,7 @@ private:
     u16 m_read_buffer;
     bool m_trigger_sat_transfer;
     bool m_auto_sat_transfer;
+    int m_sat_transfer_pending;
     int m_hpos;
     int m_vpos;
     int m_bg_offset_y;
@@ -120,8 +122,8 @@ private:
     int m_clocks_to_next_h_state;
     bool m_vblank_triggered;
     bool m_active_line;
-    u16 m_line_buffer[HUC6270_MAX_RESOLUTION_WIDTH];
-    u16 m_line_buffer_sprites[HUC6270_MAX_RESOLUTION_WIDTH];
+    u16 m_line_buffer[1024];
+    u16 m_line_buffer_sprites[1024];
     int m_line_buffer_index;
     bool m_no_sprite_limit;
     int m_sprite_count;
@@ -133,6 +135,7 @@ private:
     void VBlankIRQ();
     void RCRIRQ();
     void OverflowIRQ();
+    void SpriteCollisionIRQ();
     int ClocksToBYRLatch();
     int ClocksToBXRLatch();
     void RenderLine();

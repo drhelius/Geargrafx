@@ -67,6 +67,7 @@ void HuC6270::Reset()
     m_read_buffer = 0xFFFF;
     m_trigger_sat_transfer = false;
     m_auto_sat_transfer = false;
+    m_sat_transfer_pending = -1;
     m_hpos = 0;
     m_vpos = 0;
     m_bg_offset_y = 0;
@@ -104,7 +105,7 @@ void HuC6270::Reset()
         m_sat[i] = 0;
     }
 
-    for (int i = 0; i < HUC6270_MAX_RESOLUTION_WIDTH; i++)
+    for (int i = 0; i < 1024; i++)
     {
         m_line_buffer[i] = 0;
         m_line_buffer_sprites[i] = 0;
@@ -318,17 +319,19 @@ void HuC6270::VBlankIRQ()
             m_sat[i] = m_vram[(satb + i) & 0x7FFF];
         }
 
-        m_status_register |= HUC6270_STATUS_SAT_END;
-        if (m_register[HUC6270_REG_DCR] & 0x01)
-        {
-            m_huc6280->AssertIRQ1(true);
-        }
+        m_sat_transfer_pending = 1024;
+
+        // m_status_register |= HUC6270_STATUS_SAT_END;
+        // if (m_register[HUC6270_REG_DCR] & 0x01)
+        // {
+        //     m_huc6280->AssertIRQ1(true);
+        // }
     }
 }
 
 void HuC6270::RenderLine()
 {
-    int width = (m_latched_hdw + 1) << 3;
+    int width = std::min(1024, (m_latched_hdw + 1) << 3);
 
     if((m_latched_cr & 0x80) == 0)
     {
@@ -429,6 +432,9 @@ void HuC6270::RenderSprites(int width)
 
                 pixel |= 0x100;
 
+                if ((m_sprites[i].index == 0) && (m_line_buffer_sprites[x_in_screen] & 0x0F))
+                    SpriteCollisionIRQ();
+
                 m_line_buffer_sprites[x_in_screen] = pixel;
             }
         }
@@ -489,6 +495,7 @@ void HuC6270::FetchSprites()
             if (width == 16)
             {
                 u16 line_start = sprite_address + tile_line_offset + offset_y;
+                m_sprites[m_sprite_count].index = i;
                 m_sprites[m_sprite_count].x = sprite_x;
                 m_sprites[m_sprite_count].flags = flags;
                 m_sprites[m_sprite_count].palette = palette;
@@ -501,7 +508,7 @@ void HuC6270::FetchSprites()
             {
                 u16 line_start = sprite_address + tile_line_offset + offset_y;
                 u16 line = line_start + (x_flip ? 64 : 0);
-
+                m_sprites[m_sprite_count].index = i;
                 m_sprites[m_sprite_count].x = sprite_x;
                 m_sprites[m_sprite_count].flags = flags;
                 m_sprites[m_sprite_count].palette = palette;
@@ -520,7 +527,7 @@ void HuC6270::FetchSprites()
                 }
 
                 line = line_start + (x_flip ? 0 : 64);
-
+                m_sprites[m_sprite_count].index = i;
                 m_sprites[m_sprite_count].x = sprite_x + 16;
                 m_sprites[m_sprite_count].flags = flags;
                 m_sprites[m_sprite_count].palette = palette;

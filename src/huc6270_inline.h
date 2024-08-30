@@ -26,6 +26,20 @@
 
 inline u16 HuC6270::Clock()
 {
+    if (m_sat_transfer_pending > 0)
+    {
+        m_sat_transfer_pending--;
+
+        if (m_sat_transfer_pending == 0)
+        {
+            m_status_register |= HUC6270_STATUS_SAT_END;
+            if (m_register[HUC6270_REG_DCR] & 0x01)
+            {
+                m_huc6280->AssertIRQ1(true);
+            }
+        }
+    }
+
     u16 pixel = 0x100;
 
     if (m_active_line &&
@@ -119,6 +133,12 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
         {
             bool msb = address & 0x01;
 
+            if (m_address_register > 0x13)
+            {
+                Debug("HuC6270 INVALID write to data register (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_address_register);
+                return;
+            }
+
             if (msb)
                 m_register[m_address_register] = (m_register[m_address_register] & 0x00FF) | (value << 8);
             else
@@ -152,7 +172,7 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                         m_register[HUC6270_REG_MAWR] = m_register[HUC6270_REG_MAWR] + increment;
                     }
                     break;
-                // 0x08
+                // 0x07
                 case HUC6270_REG_BXR:
                     HUC6270_DEBUG("**** BXR Set");
                     break;
@@ -225,6 +245,15 @@ inline void HuC6270::OverflowIRQ()
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW)
     {
         m_status_register |= HUC6270_STATUS_OVERFLOW;
+        m_huc6280->AssertIRQ1(true);
+    }
+}
+
+inline void HuC6270::SpriteCollisionIRQ()
+{
+    if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_COLLISION)
+    {
+        m_status_register |= HUC6270_STATUS_COLLISION;
         m_huc6280->AssertIRQ1(true);
     }
 }
