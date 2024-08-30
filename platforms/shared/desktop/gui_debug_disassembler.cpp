@@ -715,6 +715,11 @@ static void draw_context_menu(DisassemblerLine* line)
     {
         selected_address = line->address;
 
+        if (ImGui::Selectable("Run To Cursor"))
+        {
+            gui_debug_runtocursor();
+        }
+
         if (ImGui::Selectable("Add Bookmark..."))
         {
             gui_debug_add_bookmark();
