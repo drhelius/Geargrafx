@@ -36,62 +36,63 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
 
     m_huc6280->CheckMemoryBreakpoints(address, true);
 
-    u8 mpr_index = (address >> 13) & 0x07;
-    u8 mpr_value = m_mpr[mpr_index];
-    u32 physical_address = (mpr_value << 13) | (address & 0x1FFF);
+    u8 mpr = address >> 13;
+    u16 offset = address & 0x1FFF;
+    u8 bank = m_mpr[mpr];
+    //u32 physical_address = (bank << 13) | (address & 0x1FFF);
 
     // 0x00 - 0x7F
-    if (mpr_value < 0x80)
+    if (bank < 0x80)
     {
         // HuCard ROM
         u8** rom_map = m_cartridge->GetROMMap();
-        return rom_map[mpr_value][physical_address & 0x1FFF];
+        return rom_map[bank][offset];
     }
     // 0x80 - 0xF6
-    else if (mpr_value < 0xF7)
+    else if (bank < 0xF7)
     {
         // Unused
-        Debug("Unused read at %06X, bank=%02X", physical_address, mpr_value);
+        Debug("Unused read at %06X, bank=%02X", offset, bank);
         return 0xFF;
     }
     // 0xF7
-    else if (mpr_value < 0xF8)
+    else if (bank < 0xF8)
     {
         // Backup RAM
-        Debug("Backup RAM read at %06X, bank=%02X", physical_address, mpr_value);
+        Debug("Backup RAM read at %06X, bank=%02X", offset, bank);
         return 0xFF;
     }
     // 0xF8 - 0xFB
-    else if (mpr_value < 0xFC)
+    else if (bank < 0xFC)
     {
         // RAM
-        if (mpr_value > 0xF8)
+        if (bank > 0xF8)
         {
-            Debug("SGX RAM read at %06X, bank=%02X", physical_address, mpr_value);
+            Debug("SGX RAM read at %06X, bank=%02X", offset, bank);
         }
-        return m_wram[physical_address & 0x1FFF];
+        return m_wram[offset];
     }
     // 0xFC - 0xFE
-    else if (mpr_value < 0xFF)
+    else if (bank < 0xFF)
     {
         // Unused
-        Debug("Unused read at %06X, bank=%02X", physical_address, mpr_value);
+        Debug("Unused read at %06X, bank=%02X", offset, bank);
         return 0xFF;
     }
     // 0xFF
     else
     {
         // Hardware Page
-        switch (physical_address & 0x001C00)
+        switch (offset & 0x001C00)
         {
             case 0x0000:
                 // HuC6270
                 m_huc6280->InjectCycles(1);
-                return m_huc6270->ReadRegister(physical_address);
+                return m_huc6270->ReadRegister(offset);
             case 0x0400:
                 // HuC6260
                 m_huc6280->InjectCycles(1);
-                return m_huc6260->ReadRegister(physical_address);
+                return m_huc6260->ReadRegister(offset);
             case 0x0800:
                 // PSG
                 //Debug("PSG read at %06X", physical_address);
@@ -123,23 +124,23 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
                 {
                     if(!(address & 2))
                     {
-                        Debug("Invalid interrupt register read at %06X", physical_address);
+                        Debug("Invalid interrupt register read at %06X", offset);
                         return m_io_buffer;
                     }
                     else
                     {
-                        m_io_buffer = (m_huc6280->ReadInterruptRegister(physical_address) & 0x07) | (m_io_buffer & 0xF8);
+                        m_io_buffer = (m_huc6280->ReadInterruptRegister(offset) & 0x07) | (m_io_buffer & 0xF8);
                         return m_io_buffer;
                     }
                 }
             }
             case 0x1800:
                 // Unused
-                Debug("Unused hardware read at %06X", physical_address);
+                Debug("Unused hardware read at %06X", offset);
                 return 0xFF;
             case 0x1C00:
                 // Unused
-                Debug("Unused hardware read at %06X", physical_address);
+                Debug("Unused hardware read at %06X", offset);
                 return 0xFF;
             default:
                 return 0xFF;
@@ -156,7 +157,7 @@ inline void Memory::Write(u16 address, u8 value)
 
     m_huc6280->CheckMemoryBreakpoints(address, false);
 
-    u8 mpr_index = (address >> 13) & 0x07;
+    u8 mpr_index = address >> 13;
     u8 mpr_value = m_mpr[mpr_index];
     u32 physical_address = (mpr_value << 13) | (address & 0x1FFF);
 

@@ -29,9 +29,9 @@ inline void HuC6280::OPCodes_ADC(u8 value)
 {
     int a;
     u8 final_result;
-    u16 address = 0;
 
 #if !defined(GG_TESTING)
+    u16 address = 0;
     if (IsSetFlag(FLAG_TRANSFER))
     {
         address = ZeroPageX();

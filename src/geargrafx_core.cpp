@@ -93,6 +93,8 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         debug_enable = true;
         m_huc6280->EnableBreakpoints(debug->stop_on_breakpoint);
     }
+#else
+    UNUSED(debug);
 #endif
 
     m_huc6260->SetBuffer(frame_buffer);
@@ -278,6 +280,8 @@ bool GeargrafxCore::IsPaused()
 
 void GeargrafxCore::ResetROM(bool preserve_ram)
 {
+    UNUSED(preserve_ram);
+
     if (m_cartridge->IsReady())
     {
         Log("Geargrafx RESET");

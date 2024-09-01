@@ -553,7 +553,9 @@ void HuC6280::CheckMemoryBreakpoints(u16 address, bool read)
             }
         }
     }
-
+#else
+    UNUSED(address);
+    UNUSED(read);
 #endif
 }
 

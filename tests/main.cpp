@@ -31,6 +31,9 @@ Memory* memory = nullptr;
 
 int main(int argc, char* argv[])
 {
+    UNUSED(argc);
+    UNUSED(argv);
+
     int ret = 0;
 
     core = new GeargrafxCore();
@@ -110,9 +113,11 @@ bool run_test(RSJresource& test)
         memory->Write((*it)[0].as<int>(), (*it)[1].as<int>());
     }
 
-    unsigned int cycles = cpu->Tick();
+    cpu->Tick();
 
 #if 0
+    unsigned int cycles = cpu->Tick();
+
     unsigned int expected_cycles = test["cycles"].as_array().size();
 
     if (cycles != expected_cycles)
