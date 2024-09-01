@@ -27,7 +27,7 @@
 
 inline void HuC6280::OPCodes_ADC(u8 value)
 {
-    int a;
+    u8 a;
     u8 final_result;
 
 #if !defined(GG_TESTING)
@@ -46,22 +46,30 @@ inline void HuC6280::OPCodes_ADC(u8 value)
     if (IsSetFlag(FLAG_DECIMAL))
     {
         m_cycles++;
-        int low_nibble = (a & 0x0F) + (value & 0x0F) + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
-        if (low_nibble > 9) low_nibble += 6;
-        int high_nibble = (a >> 4) + (value >> 4) + (low_nibble > 15 ? 1 : 0);
-        if (high_nibble > 9) high_nibble += 6;
-        final_result = (low_nibble & 0x0F) | ((high_nibble & 0x0F) << 4);
 
-        SetOrClearZNFlags(final_result);
-        if (high_nibble > 15)
+        int c = IsSetFlag(FLAG_CARRY) ? 1 : 0;
+        int lo =  (a & 0x0f) + (value & 0x0f) + c;
+        int hi = (a & 0xf0) + (value & 0xf0);
+
+        if (lo > 0x09)
+        {
+            hi += 0x10;
+            lo += 0x06;
+        }
+        if (hi > 0x90)
+            hi += 0x60;
+        if (hi & 0xff00)
             SetFlag(FLAG_CARRY);
         else
             ClearFlag(FLAG_CARRY);
+
+        final_result = static_cast<u8>((lo & 0x0f) + (hi & 0xf0));
+        SetOrClearZNFlags(final_result);
     }
     else
     {
         int result = a + value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
-        final_result = static_cast<u8> (result & 0xFF);
+        final_result = static_cast<u8>(result & 0xFF);
 
         ClearFlag(FLAG_ZERO | FLAG_CARRY | FLAG_OVERFLOW | FLAG_NEGATIVE);
 
@@ -394,7 +402,7 @@ inline void HuC6280::OPCodes_SBC(u8 value)
     else
     {
         int result = m_A.GetValue() - value - (IsSetFlag(FLAG_CARRY) ? 0x00 : 0x01);
-        u8 final_result = static_cast<u8> (result & 0xFF);
+        u8 final_result = static_cast<u8>(result & 0xFF);
         SetOrClearZNFlags(final_result);
         if ((result & 0x100) == 0)
             SetFlag(FLAG_CARRY);
