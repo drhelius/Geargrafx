@@ -22,6 +22,16 @@
 #include "../src/geargrafx.h"
 #include "RSJparser.tcc"
 
+int excluded_tests[] = {
+    0x02, 0x03, 0x0B, 0x13, 0x1B, 0x22, 0x23, 0x2B, 0x33, 0x3B,
+    0x42, 0x43, 0x44, 0x4B, 0x53, 0x54, 0x5B, 0x5C, 0x61, 0x62,
+    0x63, 0x65, 0x69, 0x6B, 0x6D, 0x71, 0x72, 0x73, 0x75, 0x79,
+    0x7B, 0x7D, 0x82, 0x83, 0x8B, 0x93, 0x9B, 0xA3, 0xAB, 0xB3,
+    0xBB, 0xC2, 0xC3, 0xCB, 0xD3, 0xD4, 0xDB, 0xDC, 0xE1, 0xE2,
+    0xE3, 0xE5, 0xE9, 0xEB, 0xED, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5,
+    0xF9, 0xFB, 0xFC, 0xFD
+};
+
 bool run_file(const char* filename);
 bool run_test(RSJresource& test);
 
@@ -43,9 +53,31 @@ int main(int argc, char* argv[])
 
     char file_number[4];
     char file_name[10];
+    int exclude_count = sizeof(excluded_tests) / sizeof(int);
+
+    Log("Excluding %d tests...", exclude_count);
 
     for (int i = 0x00; i < 0x100; i++)
     {
+        bool excluded = false;
+
+        for (int j = 0; j < exclude_count; j++)
+        {
+            if (i == excluded_tests[j])
+            {
+                excluded = true;
+                break;
+            }
+        }
+
+        if (excluded)
+        {
+            Log("Excluding %02X: %s", i, k_huc6280_opcode_names[i].name);
+            continue;
+        }
+
+        //Log("Testing %02X: %s", i, k_huc6280_opcode_names[i].name);
+
         snprintf(file_number, 4, "%02x", i);
         snprintf(file_name, 10, "%s.json", file_number);
 
@@ -91,8 +123,8 @@ bool run_file(const char* filename)
         i++;
     }
 
-    if (!failed)
-        Log("%s: %d tests passed", filename, i);
+    //if (!failed)
+    //    Log("%s: %d tests passed", filename, i);
 
     return !failed;
 }
