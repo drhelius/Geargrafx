@@ -89,7 +89,7 @@ void HuC6280::Reset()
     m_timer_irq = false;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
-    m_flag_transfer_set = false;
+    m_skip_flag_transfer_clear = false;
     m_cpu_breakpoint_hit = false;
     m_memory_breakpoint_hit = false;
     m_run_to_breakpoint_hit = false;
@@ -100,7 +100,7 @@ void HuC6280::Reset()
 unsigned int HuC6280::Tick()
 {
     m_memory_breakpoint_hit = false;
-    m_flag_transfer_set = false;
+    m_skip_flag_transfer_clear = false;
     m_cycles = 0;
     bool irq = false;
     u16 irq_low = 0;
@@ -146,11 +146,12 @@ unsigned int HuC6280::Tick()
     if (irq)
     {
         StackPush16(m_PC.GetValue());
-        StackPush8(m_P.GetValue());
+        StackPush8(m_P.GetValue() & ~FLAG_BREAK);
         SetFlag(FLAG_INTERRUPT);
+        ClearFlag(FLAG_DECIMAL | FLAG_TRANSFER);
         m_PC.SetLow(m_memory->Read(irq_low));
         m_PC.SetHigh(m_memory->Read(irq_high));
-        m_cycles += 7;
+        m_cycles += 8;
         DisassembleNextOPCode();
         return m_cycles;
     }
@@ -163,7 +164,7 @@ unsigned int HuC6280::Tick()
 #if defined(GG_TESTING)
     SetFlag(FLAG_TRANSFER);
 #else
-    if (!m_flag_transfer_set)
+    if (!m_skip_flag_transfer_clear)
         ClearFlag(FLAG_TRANSFER);
 #endif
 

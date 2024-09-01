@@ -71,11 +71,10 @@ void HuC6280::OPCode0x07()
 void HuC6280::OPCode0x08()
 {
     // PHP
-    u8 flags = m_P.GetValue() | FLAG_BREAK;
-#if !defined(GG_TESTING)
-    flags &= (~FLAG_TRANSFER);
-#endif
-    StackPush8(flags);
+    #if !defined(GG_TESTING)
+        ClearFlag(FLAG_TRANSFER);
+    #endif
+    StackPush8(m_P.GetValue() | FLAG_BREAK);
 }
 
 void HuC6280::OPCode0x09()
@@ -170,7 +169,7 @@ void HuC6280::OPCode0x17()
 void HuC6280::OPCode0x18()
 {
     // CLC
-    OPCodes_ClearFlag(FLAG_CARRY);
+    ClearFlag(FLAG_CARRY);
 }
 
 void HuC6280::OPCode0x19()
@@ -268,7 +267,7 @@ void HuC6280::OPCode0x28()
 {
     // PLP
     m_P.SetValue(StackPop8());
-    ClearFlag(FLAG_BREAK);
+    m_skip_flag_transfer_clear = true;
 }
 
 void HuC6280::OPCode0x29()
@@ -362,7 +361,7 @@ void HuC6280::OPCode0x37()
 void HuC6280::OPCode0x38()
 {
     // SEC
-    OPCodes_SetFlag(FLAG_CARRY);
+    SetFlag(FLAG_CARRY);
 }
 
 void HuC6280::OPCode0x39()
@@ -410,8 +409,8 @@ void HuC6280::OPCode0x40()
 {
     // RTI
     m_P.SetValue(StackPop8());
-    ClearFlag(FLAG_BREAK);
     m_PC.SetValue(StackPop16());
+    m_skip_flag_transfer_clear = true;
 }
 
 void HuC6280::OPCode0x41()
@@ -554,7 +553,7 @@ void HuC6280::OPCode0x57()
 void HuC6280::OPCode0x58()
 {
     // CLI
-    OPCodes_ClearFlag(FLAG_INTERRUPT);
+    ClearFlag(FLAG_INTERRUPT);
 }
 
 void HuC6280::OPCode0x59()
@@ -744,7 +743,7 @@ void HuC6280::OPCode0x77()
 void HuC6280::OPCode0x78()
 {
     // SEI
-    OPCodes_SetFlag(FLAG_INTERRUPT);
+    SetFlag(FLAG_INTERRUPT);
 }
 
 void HuC6280::OPCode0x79()
@@ -1131,7 +1130,7 @@ void HuC6280::OPCode0xB7()
 void HuC6280::OPCode0xB8()
 {
     // CLV
-    OPCodes_ClearFlag(FLAG_OVERFLOW);
+    ClearFlag(FLAG_OVERFLOW);
 }
 
 void HuC6280::OPCode0xB9()
@@ -1321,7 +1320,7 @@ void HuC6280::OPCode0xD7()
 void HuC6280::OPCode0xD8()
 {
     // CLD
-    OPCodes_ClearFlag(FLAG_DECIMAL);
+    ClearFlag(FLAG_DECIMAL);
 }
 
 void HuC6280::OPCode0xD9()
@@ -1484,8 +1483,8 @@ void HuC6280::OPCode0xF3()
 void HuC6280::OPCode0xF4()
 {
     // SET
-    OPCodes_SetFlag(FLAG_TRANSFER);
-    m_flag_transfer_set = true;
+    SetFlag(FLAG_TRANSFER);
+    m_skip_flag_transfer_clear = true;
 }
 
 void HuC6280::OPCode0xF5()
@@ -1509,7 +1508,7 @@ void HuC6280::OPCode0xF7()
 void HuC6280::OPCode0xF8()
 {
     // SED
-    OPCodes_SetFlag(FLAG_DECIMAL);
+    SetFlag(FLAG_DECIMAL);
 }
 
 void HuC6280::OPCode0xF9()

@@ -139,7 +139,7 @@ private:
     bool m_timer_irq;
     u8 m_interrupt_disable_register;
     u8 m_interrupt_request_register;
-    bool m_flag_transfer_set;
+    bool m_skip_flag_transfer_clear;
     int m_debug_next_irq;
     bool m_breakpoints_enabled;
     bool m_cpu_breakpoint_hit;
@@ -196,8 +196,6 @@ private:
     void OPCodes_BIT_Immediate(u16 address);
     void OPCodes_BRK();
     void OPCodes_Subroutine();
-    void OPCodes_ClearFlag(u8 flag);
-    void OPCodes_SetFlag(u8 flag);
     void OPCodes_CMP(EightBitRegister* reg, u8 value);
     void OPCodes_DEC_Mem(u16 address);
     void OPCodes_DEC_Reg(EightBitRegister* reg);

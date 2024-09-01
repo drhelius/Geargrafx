@@ -198,16 +198,6 @@ inline void HuC6280::OPCodes_Subroutine()
     m_PC.SetValue(static_cast<u16>(m_PC.GetValue() + displacement));
 }
 
-inline void HuC6280::OPCodes_ClearFlag(u8 flag)
-{
-    ClearFlag(flag);
-}
-
-inline void HuC6280::OPCodes_SetFlag(u8 flag)
-{
-    SetFlag(flag);
-}
-
 inline void HuC6280::OPCodes_CMP(EightBitRegister* reg, u8 value)
 {
     u8 reg_value = reg->GetValue();
@@ -527,10 +517,9 @@ inline void HuC6280::OPCodes_TSB(u16 address)
 inline void HuC6280::OPCodes_TST(u8 value, u16 address)
 {
     u8 mem = m_memory->Read(address);
-    u8 result = value & mem;
     ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
     u8 flags = m_P.GetValue();
-    flags |= (m_zn_flags_lut[result] & FLAG_ZERO);
+    flags |= (value & mem) ? 0 : FLAG_ZERO;
     flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
     m_P.SetValue(flags);
 }
