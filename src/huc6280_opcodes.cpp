@@ -71,9 +71,9 @@ void HuC6280::OPCode0x07()
 void HuC6280::OPCode0x08()
 {
     // PHP
-    #if !defined(GG_TESTING)
-        ClearFlag(FLAG_TRANSFER);
-    #endif
+#if !defined(GG_TESTING)
+    ClearFlag(FLAG_TRANSFER);
+#endif
     StackPush8(m_P.GetValue() | FLAG_BREAK);
 }
 
