@@ -185,22 +185,27 @@ bool emu_is_audio_enabled(void)
 
 void emu_save_ram(const char* file_path)
 {
+    // TODO
     // if (!emu_is_empty())
     //     geargrafx->SaveRam(file_path, true);
+    UNUSED(file_path);
 }
 
 void emu_load_ram(const char* file_path)
 {
+    // TODO
     // if (!emu_is_empty())
     // {
     //     save_ram();
     //     geargrafx->ResetROM(&config);
     //     geargrafx->LoadRam(file_path, true);
     // }
+    UNUSED(file_path);
 }
 
 void emu_save_state_slot(int index)
 {
+    // TODO
     // if (!emu_is_empty())
     // {
     //     if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
@@ -208,10 +213,12 @@ void emu_save_state_slot(int index)
     //     else
     //         geargrafx->SaveState(index);
     // }
+    UNUSED(index);
 }
 
 void emu_load_state_slot(int index)
 {
+    // TODO
     // if (!emu_is_empty())
     // {
     //     if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
@@ -219,18 +226,23 @@ void emu_load_state_slot(int index)
     //     else
     //         geargrafx->LoadState(index);
     // }
+    UNUSED(index);
 }
 
 void emu_save_state_file(const char* file_path)
 {
+    // TODO
     // if (!emu_is_empty())
     //     geargrafx->SaveState(file_path, -1);
+    UNUSED(file_path);
 }
 
 void emu_load_state_file(const char* file_path)
 {
+    // TODO
     // if (!emu_is_empty())
     //     geargrafx->LoadState(file_path, -1);
+    UNUSED(file_path);
 }
 
 void emu_get_runtime(GG_Runtime_Info& runtime)
