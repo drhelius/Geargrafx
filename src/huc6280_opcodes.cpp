@@ -529,7 +529,7 @@ void HuC6280::OPCode0x53()
 void HuC6280::OPCode0x54()
 {
     // CSL
-    m_high_speed = false;
+    m_speed = 0;
 }
 
 void HuC6280::OPCode0x55()
@@ -553,7 +553,7 @@ void HuC6280::OPCode0x57()
 void HuC6280::OPCode0x58()
 {
     // CLI
-    ClearFlag(FLAG_INTERRUPT);
+    m_cli_requested = true;
 }
 
 void HuC6280::OPCode0x59()
@@ -743,7 +743,7 @@ void HuC6280::OPCode0x77()
 void HuC6280::OPCode0x78()
 {
     // SEI
-    SetFlag(FLAG_INTERRUPT);
+    m_sei_requested = true;
 }
 
 void HuC6280::OPCode0x79()
@@ -1296,7 +1296,7 @@ void HuC6280::OPCode0xD3()
 void HuC6280::OPCode0xD4()
 {
     // CSH
-    m_high_speed = true;
+    m_speed = 1;
 }
 
 void HuC6280::OPCode0xD5()

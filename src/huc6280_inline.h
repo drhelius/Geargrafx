@@ -25,12 +25,21 @@
 
 inline bool HuC6280::Clock()
 {
-    if (m_clock_cycles == 0)
-        m_clock_cycles = Tick();
+    ClockTimer();
 
-    m_clock_cycles--;
+    bool instruction_completed = false;
 
-    return m_clock_cycles == 0;
+    if (m_clock % k_huc6280_speed_divisor[m_speed] == 0)
+    {
+        if (m_clock_cycles == 0)
+            m_clock_cycles = Tick();
+        m_clock_cycles--;
+        instruction_completed = (m_clock_cycles == 0);
+    }
+
+    m_clock = (m_clock + 1) % 12;
+
+    return instruction_completed;
 }
 
 inline void HuC6280::AssertIRQ1(bool asserted)
@@ -57,11 +66,6 @@ inline void HuC6280::RequestNMI()
 {
     Debug("NMI requested");
     m_nmi_requested = true;
-}
-
-inline bool HuC6280::IsHighSpeed()
-{
-    return m_high_speed;
 }
 
 inline void HuC6280::InjectCycles(unsigned int cycles)
@@ -122,6 +126,8 @@ inline void HuC6280::WriteTimerRegister(u32 address, u8 value)
             if (!m_timer_enabled && enabled)
             {
                 m_timer_counter = m_timer_reload;
+                m_timer_cycles = 0;
+                m_timer_reload_requested = false;
                 // Debug("Timer reload when enabled: %02X", m_timer_reload);
             }
             m_timer_enabled = enabled;

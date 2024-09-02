@@ -56,7 +56,7 @@ public:
         EightBitRegister* Y;
         EightBitRegister* S;
         EightBitRegister* P;
-        bool* SPEED;
+        int* SPEED;
         bool* TIMER;
         bool* TIMER_IRQ;
         u8* TIMER_COUNTER;
@@ -86,11 +86,9 @@ public:
     void Reset();
     bool Clock();
     unsigned int Tick();
-    void ClockTimer();
     void AssertIRQ1(bool asserted);
     void AssertIRQ2(bool asserted);
     void RequestNMI();
-    bool IsHighSpeed();
     void InjectCycles(unsigned int cycles);
     u8 ReadInterruptRegister(u32 address);
     void WriteInterruptRegister(u32 address, u8 value);
@@ -123,16 +121,20 @@ private:
     EightBitRegister m_P;
     u8 m_zn_flags_lut[256];
     unsigned int m_cycles;
+    unsigned int m_clock;
     unsigned int m_clock_cycles;
     unsigned int m_last_instruction_cycles;
     bool m_irq1_asserted;
     bool m_irq2_asserted;
     bool m_nmi_requested;
-    bool m_high_speed;
+    bool m_cli_requested;
+    bool m_sei_requested;
+    int m_speed;
     Memory* m_memory;
     HuC6270* m_huc6270;
     HuC6280_State m_processor_state;
     bool m_timer_enabled;
+    bool m_timer_reload_requested;
     unsigned int m_timer_cycles;
     u8 m_timer_counter;
     u8 m_timer_reload;
@@ -151,6 +153,8 @@ private:
     std::stack<u16> m_disassembler_call_stack;
 
 private:
+    void ClockTimer();
+
     void CheckBreakpoints();
     void UpdateDisassemblerCallStack();
 
@@ -296,6 +300,9 @@ private:
     void OPCode0xF8(); void OPCode0xF9(); void OPCode0xFA(); void OPCode0xFB();
     void OPCode0xFC(); void OPCode0xFD(); void OPCode0xFE(); void OPCode0xFF();
 };
+
+static const int k_huc6280_speed_divisor[2] = { 12, 3 };
+static const int k_huc6280_timer_divisor = (1024 * 3);
 
 #include "huc6280_inline.h"
 #include "huc6280_opcodes_inline.h"

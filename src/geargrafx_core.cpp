@@ -103,8 +103,6 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     do
     {
 #ifndef GG_DISABLE_DISASSEMBLER
-        instruction_completed = false;
-
         if (get_debug_state)
         {
             get_debug_state = false;
@@ -115,16 +113,10 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
             debug_state.Y = m_huc6280->GetState()->Y->GetValue();
             debug_state.S = m_huc6280->GetState()->S->GetValue();
         }
-#endif
 
-        if (m_clock % 3 == 0)
-            m_huc6280->ClockTimer();
-
-        if ((m_clock % (m_huc6280->IsHighSpeed() ? 3 : 12)) == 0)
-#ifndef GG_DISABLE_DISASSEMBLER
-            instruction_completed = m_huc6280->Clock();
+        instruction_completed = m_huc6280->Clock();
 #else
-            m_huc6280->Clock();
+        m_huc6280->Clock();
 #endif
 
         stop = m_huc6260->Clock();
@@ -150,10 +142,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         }
 #endif
 
-        m_clock++;
-
-        if ( m_clock == 12)
-            m_clock = 0;
+        m_clock = (m_clock + 1) % 12;
     }
     while (!stop);
 

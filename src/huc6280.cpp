@@ -36,7 +36,7 @@ HuC6280::HuC6280()
     m_processor_state.S = &m_S;
     m_processor_state.P = &m_P;
     m_processor_state.PC = &m_PC;
-    m_processor_state.SPEED = &m_high_speed;
+    m_processor_state.SPEED = &m_speed;
     m_processor_state.TIMER = &m_timer_enabled;
     m_processor_state.TIMER_IRQ = &m_timer_irq;
     m_processor_state.TIMER_COUNTER = &m_timer_counter;
@@ -76,14 +76,18 @@ void HuC6280::Reset()
     SetFlag(FLAG_INTERRUPT);
     ClearFlag(FLAG_BREAK);
     m_cycles = 0;
+    m_clock = 0;
     m_clock_cycles = 0;
     m_last_instruction_cycles = 0;
     m_irq1_asserted = false;
     m_irq2_asserted = false;
     m_nmi_requested = false;
-    m_high_speed = false;
+    m_cli_requested = false;
+    m_sei_requested = false;
+    m_speed = 0;
     m_timer_cycles = 0;
     m_timer_enabled = false;
+    m_timer_reload_requested = false;
     m_timer_counter = 0;
     m_timer_reload = 0;
     m_timer_irq = false;
@@ -102,59 +106,6 @@ unsigned int HuC6280::Tick()
     m_memory_breakpoint_hit = false;
     m_skip_flag_transfer_clear = false;
     m_cycles = 0;
-    bool irq = false;
-    u16 irq_low = 0;
-    u16 irq_high = 0;
-
-    // NMI
-    if (m_nmi_requested)
-    {
-        irq = true;
-        irq_low = 0xFFFC;
-        irq_high = 0xFFFD;
-        m_nmi_requested = false;
-        m_debug_next_irq = 2;
-    }
-    else if (!IsSetFlag(FLAG_INTERRUPT))
-    {
-        // TIQ
-        if (m_timer_irq && !IsSetBit(m_interrupt_disable_register, 2))
-        {
-            irq = true;
-            irq_low = 0xFFFA;
-            irq_high = 0xFFFB;
-            m_debug_next_irq = 3;
-        }
-        // IRQ1
-        else if (m_irq1_asserted && !IsSetBit(m_interrupt_disable_register, 1))
-        {
-            irq = true;
-            irq_low = 0xFFF8;
-            irq_high = 0xFFF9;
-            m_debug_next_irq = 4;
-        }
-        // IRQ2
-        else if (m_irq2_asserted && !IsSetBit(m_interrupt_disable_register, 0))
-        {
-            irq = true;
-            irq_low = 0xFFF6;
-            irq_high = 0xFFF7;
-            m_debug_next_irq = 5;
-        }
-    }
-
-    if (irq)
-    {
-        StackPush16(m_PC.GetValue());
-        StackPush8(m_P.GetValue() & ~FLAG_BREAK);
-        SetFlag(FLAG_INTERRUPT);
-        ClearFlag(FLAG_DECIMAL | FLAG_TRANSFER);
-        m_PC.SetLow(m_memory->Read(irq_low));
-        m_PC.SetHigh(m_memory->Read(irq_high));
-        m_cycles += 8;
-        DisassembleNextOPCode();
-        return m_cycles;
-    }
 
     UpdateDisassemblerCallStack();
 
@@ -174,6 +125,70 @@ unsigned int HuC6280::Tick()
 
     m_last_instruction_cycles = m_cycles;
 
+    bool irq_pending = false;
+    u16 irq_pending_low = 0;
+    u16 irq_pending_high = 0;
+
+    // NMI
+    if (m_nmi_requested)
+    {
+        irq_pending = true;
+        irq_pending_low = 0xFFFC;
+        irq_pending_high = 0xFFFD;
+        m_nmi_requested = false;
+        m_debug_next_irq = 2;
+    }
+    else if (!IsSetFlag(FLAG_INTERRUPT))
+    {
+        // TIQ
+        if (m_timer_irq && !IsSetBit(m_interrupt_disable_register, 2))
+        {
+            irq_pending = true;
+            irq_pending_low = 0xFFFA;
+            irq_pending_high = 0xFFFB;
+            m_debug_next_irq = 3;
+        }
+        // IRQ1
+        else if (m_irq1_asserted && !IsSetBit(m_interrupt_disable_register, 1))
+        {
+            irq_pending = true;
+            irq_pending_low = 0xFFF8;
+            irq_pending_high = 0xFFF9;
+            m_debug_next_irq = 4;
+        }
+        // IRQ2
+        else if (m_irq2_asserted && !IsSetBit(m_interrupt_disable_register, 0))
+        {
+            irq_pending = true;
+            irq_pending_low = 0xFFF6;
+            irq_pending_high = 0xFFF7;
+            m_debug_next_irq = 5;
+        }
+    }
+
+    if (irq_pending)
+    {
+        StackPush16(m_PC.GetValue());
+        StackPush8(m_P.GetValue() & ~FLAG_BREAK);
+        SetFlag(FLAG_INTERRUPT);
+        ClearFlag(FLAG_DECIMAL | FLAG_TRANSFER);
+        m_PC.SetLow(m_memory->Read(irq_pending_low));
+        m_PC.SetHigh(m_memory->Read(irq_pending_high));
+        m_cycles += 8;
+        DisassembleNextOPCode();
+    }
+
+    if (m_cli_requested)
+    {
+        m_cli_requested = false;
+        ClearFlag(FLAG_INTERRUPT);
+    }
+    else if (m_sei_requested)
+    {
+        m_sei_requested = false;
+        SetFlag(FLAG_INTERRUPT);
+    }
+
     return m_cycles;
 }
 
@@ -181,17 +196,24 @@ void HuC6280::ClockTimer()
 {
     m_timer_cycles++;
 
-    if (m_timer_cycles >= 1024)
+    if(m_timer_reload_requested)
     {
-        m_timer_cycles -= 1024;
+        m_timer_counter = m_timer_reload;
+        m_timer_reload_requested = false;
+        return;
+    }
+
+    if (m_timer_cycles >= k_huc6280_timer_divisor)
+    {
+        m_timer_cycles = 0;
 
         if (m_timer_enabled)
         {
-            m_timer_counter = (m_timer_counter - 1) & 0x7F;
+            m_timer_counter--;
 
-            if (m_timer_counter == 0x7F)
+            if (m_timer_counter == 0xFF)
             {
-                m_timer_counter = m_timer_reload;
+                m_timer_reload_requested = true;
                 m_timer_irq = true;
                 SetBit(m_interrupt_request_register, 2);
             }
@@ -236,7 +258,11 @@ void HuC6280::DisassembleNextOPCode()
 
     if (!changed && record->size != 0)
     {
-        m_debug_next_irq = 0;
+        if (m_debug_next_irq > 0)
+        {
+            record->irq = m_debug_next_irq;
+            m_debug_next_irq = 0;
+        }
         return;
     }
 
