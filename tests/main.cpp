@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        //Log("Testing %02X: %s", i, k_huc6280_opcode_names[i].name);
+        Log("Testing %02X: %s", i, k_huc6280_opcode_names[i].name);
 
         snprintf(file_number, 4, "%02x", i);
         snprintf(file_name, 10, "%s.json", file_number);

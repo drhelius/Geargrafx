@@ -268,6 +268,9 @@ void HuC6280::OPCode0x28()
     // PLP
     m_P.SetValue(StackPop8());
     m_skip_flag_transfer_clear = true;
+#if defined(GG_TESTING)
+    ClearFlag(FLAG_BREAK);
+#endif
 }
 
 void HuC6280::OPCode0x29()
@@ -411,6 +414,9 @@ void HuC6280::OPCode0x40()
     m_P.SetValue(StackPop8());
     m_PC.SetValue(StackPop16());
     m_skip_flag_transfer_clear = true;
+#if defined(GG_TESTING)
+    ClearFlag(FLAG_BREAK);
+#endif
 }
 
 void HuC6280::OPCode0x41()
