@@ -56,8 +56,7 @@ GeargrafxCore::~GeargrafxCore()
 
 void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 {
-    Log("Loading %s core %s ...", GG_TITLE, GG_VERSION);
-    Log("by Ignacio Sanchez");
+    Log("Loading %s core %s by Ignacio Sanchez", GG_TITLE, GG_VERSION);
 
     srand((unsigned int)time(NULL));
 
