@@ -156,12 +156,13 @@ jobs:
         xcrun notarytool submit "notarization.zip" --keychain-profile "notarytool-profile" --wait
         xcrun stapler staple "${{ env.NAME_UPPER }}.app"
         spctl -a -vvv -t install "${{ env.NAME_UPPER }}.app"
+        ditto -c -k --keepParent "${{ env.NAME_UPPER }}.app" "${{ env.NAME_UPPER }}.app.zip"
       working-directory: platforms/macos    
     - name: Prepare artifact directory
       run: |
         mkdir -p artifact
         cp platforms/shared/README.txt artifact/
-        mv platforms/macos/${{ env.NAME_UPPER }}.app artifact/
+        mv platforms/macos/${{ env.NAME_UPPER }}.app.zip artifact/
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:
