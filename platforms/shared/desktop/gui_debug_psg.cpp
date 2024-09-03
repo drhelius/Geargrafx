@@ -98,7 +98,7 @@ void gui_debug_window_psg(void)
         for (int channel = 0; channel < 6; channel++)
         {
             char tab_name[32];
-            sprintf(tab_name, "CH %d", channel);
+            snprintf(tab_name, 32, "CH %d", channel);
 
             if (ImGui::BeginTabItem(tab_name))
             {

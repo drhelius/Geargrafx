@@ -264,7 +264,7 @@ void gui_load_rom(const char* path)
     if (!emu_is_empty())
     {
         char title[256];
-        sprintf(title, "%s %s - %s", GG_TITLE, GG_VERSION, emu_get_core()->GetCartridge()->GetFileName());
+        snprintf(title, 256, "%s %s - %s", GG_TITLE, GG_VERSION, emu_get_core()->GetCartridge()->GetFileName());
         application_update_title(title);
     }
 }

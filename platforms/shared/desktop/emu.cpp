@@ -250,7 +250,7 @@ void emu_get_runtime(GG_Runtime_Info& runtime)
     geargrafx->GetRuntimeInfo(runtime);
 }
 
-void emu_get_info(char* info)
+void emu_get_info(char* info, int buffer_size)
 {
     if (!emu_is_empty())
     {
@@ -263,11 +263,11 @@ void emu_get_info(char* info)
         int rom_size = cart->GetROMSize();
         int rom_banks = cart->GetROMBankCount();
 
-        sprintf(info, "File Name: %s\nCRC: %08X\nROM Size: %d bytes, %d KB\nROM Banks: %d\nScreen Resolution: %dx%d", filename, crc, rom_size, rom_size / 1024, rom_banks, runtime.screen_width, runtime.screen_height);
+        snprintf(info, buffer_size, "File Name: %s\nCRC: %08X\nROM Size: %d bytes, %d KB\nROM Banks: %d\nScreen Resolution: %dx%d", filename, crc, rom_size, rom_size / 1024, rom_banks, runtime.screen_width, runtime.screen_height);
     }
     else
     {
-        sprintf(info, "There is no ROM loaded!");
+        snprintf(info, buffer_size, "There is no ROM loaded!");
     }
 }
 

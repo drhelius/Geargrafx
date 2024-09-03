@@ -119,7 +119,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                 if (IsColumnSeparator(i, m_bytes_per_row))
                     ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, m_separator_column_width);
 
-                sprintf(buf, "%02X", i);
+                snprintf(buf, 32, "%02X", i);
 
                 ImGui::TableSetupColumn(buf, ImGuiTableColumnFlags_WidthFixed, character_size.x * max_chars_per_cell + (6 + byte_cell_padding) * 1);
             }
@@ -218,11 +218,11 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                             ImGui::PushItemWidth((character_size).x * (2 * m_mem_word));
 
                             if (m_mem_word == 1)
-                                sprintf(buf, "%02X", m_mem_data[byte_address]);
+                                snprintf(buf, 32, "%02X", m_mem_data[byte_address]);
                             else if (m_mem_word == 2)
                             {
                                 uint16_t* mem_data_16 = (uint16_t*)m_mem_data;
-                                sprintf(buf, "%04X", mem_data_16[byte_address]);
+                                snprintf(buf, 32, "%04X", mem_data_16[byte_address]);
                             }
 
                             if (m_set_keyboard_here)
@@ -320,7 +320,7 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
                         {
                             for (int x = 0; x < m_bytes_per_row; x++)
                             {
-                                sprintf(buf, "##ascii_cell%d", x);
+                                snprintf(buf, 32, "##ascii_cell%d", x);
                                 ImGui::TableSetupColumn(buf, ImGuiTableColumnFlags_WidthFixed, character_size.x + character_cell_padding * 1);
                             }
 
@@ -804,8 +804,8 @@ void MemEditor::Copy()
 
     for (int i = 0; i < size; i++)
     {
-        char byte[3];
-        sprintf(byte, "%02X", data[i]);
+        char byte[4];
+        snprintf(byte, 4, "%02X", data[i]);
         if (i > 0)
             text += " ";
         text += byte;

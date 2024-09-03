@@ -75,7 +75,7 @@ EXTERN void emu_load_state_slot(int index);
 EXTERN void emu_save_state_file(const char* file_path);
 EXTERN void emu_load_state_file(const char* file_path);
 EXTERN void emu_get_runtime(GG_Runtime_Info& runtime);
-EXTERN void emu_get_info(char* info);
+EXTERN void emu_get_info(char* info, int buffer_size);
 EXTERN GeargrafxCore* emu_get_core(void);
 EXTERN void emu_debug_step_over(void);
 EXTERN void emu_debug_step_into(void);

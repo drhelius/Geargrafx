@@ -484,8 +484,8 @@ bool HuC6280::AddBreakpoint(char* text, bool read, bool write, bool execute)
 
 bool HuC6280::AddBreakpoint(u16 address)
 {
-    char text[5];
-    sprintf(text, "%04X", address);
+    char text[6];
+    snprintf(text, 6, "%04X", address);
     return AddBreakpoint(text, false, false, true);
 }
 
