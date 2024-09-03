@@ -138,7 +138,10 @@ jobs:
         security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
         security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_CI_KEYCHAIN_PWD" build.keychain
 
-        /usr/bin/codesign --deep --force --verify --verbose --timestamp --options runtime --entitlements "app.entitlements" --sign "$MACOS_CERTIFICATE_NAME" ${{ env.NAME_UPPER }}.app
+        codesign --force --verbose --timestamp --options runtime --entitlements "app.entitlements" --sign "$MACOS_CERTIFICATE_NAME" ${{ env.NAME_UPPER }}.app/Contents/MacOS/gamecontrollerdb.txt
+        codesign --force --verbose --timestamp --options runtime --entitlements "app.entitlements" --sign "$MACOS_CERTIFICATE_NAME" ${{ env.NAME_UPPER }}.app/Contents/MacOS/libSDL2-2.0.0.dylib
+        codesign --force --verbose --timestamp --options runtime --entitlements "app.entitlements" --sign "$MACOS_CERTIFICATE_NAME" ${{ env.NAME_UPPER }}.app/Contents/MacOS/${{ env.NAME_LOWER }}
+        codesign --force --verbose --timestamp --options runtime --entitlements "app.entitlements" --sign "$MACOS_CERTIFICATE_NAME" ${{ env.NAME_UPPER }}.app
       working-directory: platforms/macos
     - name: Notarize app bundle
       env:
