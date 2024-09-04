@@ -54,7 +54,7 @@ jobs:
         path: artifact/*
   linux-clang:
     name: Linux (Clang/LLVM)
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
@@ -124,15 +124,15 @@ jobs:
       run: make dist
       working-directory: platforms/macos
     - name: Codesign app bundle
-      env: 
+      env:
         MACOS_CERTIFICATE: ${{ secrets.PROD_MACOS_CERTIFICATE }}
         MACOS_CERTIFICATE_PWD: ${{ secrets.PROD_MACOS_CERTIFICATE_PWD }}
         MACOS_CERTIFICATE_NAME: ${{ secrets.PROD_MACOS_CERTIFICATE_NAME }}
         MACOS_CI_KEYCHAIN_PWD: ${{ secrets.PROD_MACOS_CI_KEYCHAIN_PWD }}
-      run: |  
+      run: |
         echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
 
-        security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain 
+        security create-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
         security default-keychain -s build.keychain
         security unlock-keychain -p "$MACOS_CI_KEYCHAIN_PWD" build.keychain
         security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
@@ -156,7 +156,7 @@ jobs:
         xcrun stapler staple "${{ env.NAME_UPPER }}.app"
         spctl -a -vvv -t install "${{ env.NAME_UPPER }}.app"
         ditto -c -k --keepParent "${{ env.NAME_UPPER }}.app" "${{ env.NAME_UPPER }}.app.zip"
-      working-directory: platforms/macos    
+      working-directory: platforms/macos
     - name: Prepare artifact directory
       run: |
         mkdir -p artifact
