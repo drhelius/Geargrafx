@@ -371,8 +371,8 @@ void gui_debug_window_huc6270_sprites(void)
     float scale = 4.0f;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(79, 120), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(547, 394), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(78, 56), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(546, 500), ImGuiCond_FirstUseEver);
     ImGui::Begin("HuC6270 Sprites", &config_debug.show_huc6270_sprites);
 
     ImGui::PushFont(gui_default_font);

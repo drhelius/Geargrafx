@@ -106,7 +106,7 @@ void config_read(void)
     config_debug.debug = read_bool("Debug", "Debug", false);
     config_debug.show_disassembler = read_bool("Debug", "Disassembler", true);
     config_debug.show_screen = read_bool("Debug", "Screen", true);
-    config_debug.show_memory = read_bool("Debug", "Memory", true);
+    config_debug.show_memory = read_bool("Debug", "Memory", false);
     config_debug.show_processor = read_bool("Debug", "Processor", true);
     config_debug.show_huc6260_info = read_bool("Debug", "HuC6260Info", false);
     config_debug.show_huc6260_palettes = read_bool("Debug", "HuC6260Palettes", false);

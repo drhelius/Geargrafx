@@ -49,7 +49,7 @@ static void main_window(void);
 static void push_recent_rom(std::string path);
 static void show_status_message(void);
 static void set_style(void);
-static ImVec4 Lerp(const ImVec4& a, const ImVec4& b, float t);
+static ImVec4 lerp(const ImVec4& a, const ImVec4& b, float t);
 
 void gui_init(void)
 {
@@ -357,7 +357,7 @@ static void main_window(void)
     {
         flags |= ImGuiWindowFlags_AlwaysAutoResize;
 
-        ImGui::SetNextWindowPos(ImVec2(625, 31), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(616, 26), ImGuiCond_FirstUseEver);
 
         ImGui::Begin("Output###debug_output", &config_debug.show_screen, flags);
         gui_main_window_hovered = ImGui::IsWindowHovered();
@@ -542,15 +542,15 @@ static void set_style(void)
     style.Colors[ImGuiCol_DockingPreview] = style.Colors[ImGuiCol_HeaderActive] * ImVec4(1.0f, 1.0f, 1.0f, 0.7f);
     style.Colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
     style.Colors[ImGuiCol_TabHovered] = style.Colors[ImGuiCol_HeaderHovered];
-    //style.Colors[ImGuiCol_Tab] = Lerp(style.Colors[ImGuiCol_Header], style.Colors[ImGuiCol_TitleBgActive], 0.80f);
-    style.Colors[ImGuiCol_TabSelected] = Lerp(style.Colors[ImGuiCol_HeaderActive], style.Colors[ImGuiCol_TitleBgActive], 0.60f);
+    //style.Colors[ImGuiCol_Tab] = lerp(style.Colors[ImGuiCol_Header], style.Colors[ImGuiCol_TitleBgActive], 0.80f);
+    style.Colors[ImGuiCol_TabSelected] = lerp(style.Colors[ImGuiCol_HeaderActive], style.Colors[ImGuiCol_TitleBgActive], 0.60f);
     style.Colors[ImGuiCol_TabSelectedOverline] = style.Colors[ImGuiCol_HeaderActive];
-    style.Colors[ImGuiCol_TabDimmed] = Lerp(style.Colors[ImGuiCol_Tab], style.Colors[ImGuiCol_TitleBg], 0.80f);
-    style.Colors[ImGuiCol_TabDimmedSelected] = Lerp(style.Colors[ImGuiCol_TabSelected], style.Colors[ImGuiCol_TitleBg], 0.40f);
+    style.Colors[ImGuiCol_TabDimmed] = lerp(style.Colors[ImGuiCol_Tab], style.Colors[ImGuiCol_TitleBg], 0.80f);
+    style.Colors[ImGuiCol_TabDimmedSelected] = lerp(style.Colors[ImGuiCol_TabSelected], style.Colors[ImGuiCol_TitleBg], 0.40f);
     style.Colors[ImGuiCol_TabDimmedSelectedOverline] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
 }
 
-static ImVec4 Lerp(const ImVec4& a, const ImVec4& b, float t)
+static ImVec4 lerp(const ImVec4& a, const ImVec4& b, float t)
 {
     return ImVec4(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t);
 }

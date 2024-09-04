@@ -232,8 +232,8 @@ void gui_debug_go_back(void)
 void gui_debug_window_disassembler(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(159, 31), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(463, 553), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(155, 26), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(458, 553), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("Disassembler", &config_debug.show_disassembler, ImGuiWindowFlags_MenuBar);
 
@@ -545,7 +545,7 @@ static void draw_disassembly(void)
     ImGui::PushFont(gui_default_font);
     ImGui::PushStyleColor(ImGuiCol_HeaderHovered, mid_gray);
 
-    bool window_visible = ImGui::BeginChild("##dis", ImVec2(ImGui::GetContentRegionAvail().x, 0), true, 0);
+    bool window_visible = ImGui::BeginChild("##dis", ImVec2(ImGui::GetContentRegionAvail().x, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
 
     if (window_visible)
     {

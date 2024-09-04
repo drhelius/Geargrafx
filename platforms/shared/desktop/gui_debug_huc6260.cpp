@@ -34,7 +34,7 @@ void gui_debug_window_huc6260_info(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(75, 228), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(280, 170), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(280, 174), ImGuiCond_FirstUseEver);
     ImGui::Begin("HuC6260 Info", &config_debug.show_huc6260_info);
 
     ImGui::PushFont(gui_default_font);
@@ -94,7 +94,7 @@ void gui_debug_window_huc6260_palettes(void)
     {
         if (ImGui::BeginTabItem("Background", NULL, ImGuiTabItemFlags_None))
         {
-            ImGui::BeginChild("background_palettes", ImVec2(0, 0.0f), ImGuiChildFlags_None);
+            ImGui::BeginChild("background_palettes", ImVec2(0, 0.0f), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar);
             ImGui::PushFont(gui_default_font);
 
             ImGui::NewLine();
@@ -144,7 +144,7 @@ void gui_debug_window_huc6260_palettes(void)
 
         if (ImGui::BeginTabItem("Sprites", NULL, ImGuiTabItemFlags_None))
         {
-            ImGui::BeginChild("sprite_palettes", ImVec2(0, 0.0f), ImGuiChildFlags_None);
+            ImGui::BeginChild("sprite_palettes", ImVec2(0, 0.0f), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar);
             ImGui::PushFont(gui_default_font);
 
             ImGui::NewLine();

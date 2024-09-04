@@ -31,7 +31,7 @@
 void gui_debug_window_huc6280(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(6, 31), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(3, 26), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("HuC6280", &config_debug.show_processor, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize);
 

@@ -39,8 +39,8 @@ static const int k_line_count[] = { 1000, 5000, 10000, 50000, 100000, 500000, 10
 void gui_debug_window_trace_logger(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(625, 321), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(343, 262), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(340, 168), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(342, 262), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("Trace Logger", &config_debug.show_trace_logger, ImGuiWindowFlags_MenuBar);
 
@@ -74,7 +74,7 @@ void gui_debug_window_trace_logger(void)
         gui_debug_trace_logger_clear();
     }
 
-    if (ImGui::BeginChild("##logger", ImVec2(ImGui::GetContentRegionAvail().x, 0), true, 0))
+    if (ImGui::BeginChild("##logger", ImVec2(ImGui::GetContentRegionAvail().x, 0), true, ImGuiWindowFlags_HorizontalScrollbar))
     {
         ImGui::PushFont(gui_default_font);
 
