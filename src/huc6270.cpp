@@ -337,9 +337,6 @@ void HuC6270::RenderLine()
     {
         u16 color = 0x100;
 
-        if((m_latched_cr & 0xC0) == 0)
-            color = 0x000;
-
         for (int i = 0; i < width; i++)
         {
             m_line_buffer[i] = color;
