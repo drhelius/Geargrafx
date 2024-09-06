@@ -410,10 +410,11 @@ void HuC6280::ResetBreakpoints()
     m_breakpoints.clear();
 }
 
-bool HuC6280::AddBreakpoint(char* text, bool read, bool write, bool execute)
+bool HuC6280::AddBreakpoint(int type, char* text, bool read, bool write, bool execute)
 {
     int input_len = (int)strlen(text);
     GG_Breakpoint brk;
+    brk.type = type;
     brk.address1 = 0;
     brk.address2 = 0;
     brk.range = false;
@@ -458,9 +459,16 @@ bool HuC6280::AddBreakpoint(char* text, bool read, bool write, bool execute)
     {
         GG_Breakpoint* item = &m_breakpoints[b];
 
+        if (item->type != brk.type)
+            continue;
+
         if (brk.range)
         {
             if (item->range && (item->address1 == brk.address1) && (item->address2 == brk.address2))
+            {
+                found = true;
+                break;
+            }
             {
                 found = true;
                 break;
@@ -486,11 +494,12 @@ bool HuC6280::AddBreakpoint(u16 address)
 {
     char text[6];
     snprintf(text, 6, "%04X", address);
-    return AddBreakpoint(text, false, false, true);
+    return AddBreakpoint(HuC6280_BREAKPOINT_TYPE_ROMRAM, text, false, false, true);
 }
 
 void HuC6280::AddRunToBreakpoint(u16 address)
 {
+    m_run_to_breakpoint.type = HuC6280_BREAKPOINT_TYPE_ROMRAM;
     m_run_to_breakpoint.address1 = address;
     m_run_to_breakpoint.address2 = 0;
     m_run_to_breakpoint.range = false;
@@ -500,13 +509,13 @@ void HuC6280::AddRunToBreakpoint(u16 address)
     m_run_to_breakpoint_requested = true;
 }
 
-void HuC6280::RemoveBreakpoint(u16 address)
+void HuC6280::RemoveBreakpoint(int type, u16 address)
 {
     for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
     {
         GG_Breakpoint* item = &m_breakpoints[b];
 
-        if (!item->range && (item->address1 == address))
+        if (!item->range && (item->address1 == address) && (item->type == type))
         {
             m_breakpoints.erase(m_breakpoints.begin() + b);
             break;
@@ -514,13 +523,13 @@ void HuC6280::RemoveBreakpoint(u16 address)
     }
 }
 
-bool HuC6280::IsBreakpoint(u16 address)
+bool HuC6280::IsBreakpoint(int type, u16 address)
 {
     for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
     {
         GG_Breakpoint* item = &m_breakpoints[b];
 
-        if (!item->range && (item->address1 == address))
+        if (!item->range && (item->address1 == address) && (item->type == type))
         {
             return true;
         }
@@ -545,7 +554,7 @@ std::stack<u16>* HuC6280::GetDisassemblerCallStack()
     return &m_disassembler_call_stack;
 }
 
-void HuC6280::CheckMemoryBreakpoints(u16 address, bool read)
+void HuC6280::CheckMemoryBreakpoints(int type, u16 address, bool read)
 {
 #ifndef GG_DISABLE_DISASSEMBLER
 
@@ -556,6 +565,8 @@ void HuC6280::CheckMemoryBreakpoints(u16 address, bool read)
     {
         GG_Breakpoint* brk = &m_breakpoints[i];
 
+        if (brk->type != type)
+            continue;
         if (read && !brk->read)
             continue;
         if (!read && !brk->write)
@@ -611,6 +622,8 @@ void HuC6280::CheckBreakpoints()
         GG_Breakpoint* brk = &m_breakpoints[i];
 
         if (!brk->execute)
+            continue;
+        if (brk->type != HuC6280_BREAKPOINT_TYPE_ROMRAM)
             continue;
 
         if (brk->range)

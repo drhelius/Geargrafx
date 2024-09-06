@@ -56,12 +56,6 @@ void HuC6270::Reset()
         m_register[i] = 0;
     }
 
-    m_register[HUC6270_REG_HSR] = 0x0202;
-    m_register[HUC6270_REG_HDR] = 0x041f;
-    m_register[HUC6270_REG_VSR] = 0x0f02;
-    m_register[HUC6270_REG_VDR] = 0x00ef;
-    m_register[HUC6270_REG_VCR] = 0x0004;
-
     m_address_register = 0;
     m_status_register = 0;
     m_read_buffer = 0xFFFF;
@@ -97,7 +91,7 @@ void HuC6270::Reset()
 
     for (int i = 0; i < HUC6270_VRAM_SIZE; i++)
     {
-        m_vram[i] = rand() & 0xFFFF;
+        m_vram[i] = 0;
     }
 
     for (int i = 0; i < HUC6270_SAT_SIZE; i++)
@@ -320,12 +314,6 @@ void HuC6270::VBlankIRQ()
         }
 
         m_sat_transfer_pending = 1024;
-
-        // m_status_register |= HUC6270_STATUS_SAT_END;
-        // if (m_register[HUC6270_REG_DCR] & 0x01)
-        // {
-        //     m_huc6280->AssertIRQ1(true);
-        // }
     }
 }
 

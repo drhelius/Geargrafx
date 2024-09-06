@@ -110,7 +110,7 @@ bool HuC6260::Clock()
     {
         u16 pixel = m_huc6270->Clock();
 
-#ifdef HUC6260_DEBUG
+#if defined(HUC6260_DEBUG)
         int start_x = 0;
         int end_x = k_huc6260_full_line_width[m_speed];
         int start_y = 0;
@@ -214,7 +214,7 @@ void HuC6260::SetBuffer(u8* frame_buffer)
 
 int HuC6260::GetCurrentLineWidth()
 {
-#ifdef HUC6260_DEBUG
+#if defined(HUC6260_DEBUG)
     return k_huc6260_full_line_width[m_speed];
 #else
     return k_huc6260_line_width[m_overscan][m_speed];
@@ -223,7 +223,7 @@ int HuC6260::GetCurrentLineWidth()
 
 int HuC6260::GetCurrentHeight()
 {
-#ifdef HUC6260_DEBUG
+#if defined(HUC6260_DEBUG)
     return 263;
 #else
     return std::min(240, std::max(1, 240 - m_scanline_start - (239 - m_scanline_end)));
