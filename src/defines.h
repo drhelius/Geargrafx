@@ -20,7 +20,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#ifndef EMULATOR_BUILD
+#if !defined(EMULATOR_BUILD)
     #define EMULATOR_BUILD "undefined"
 #endif
 

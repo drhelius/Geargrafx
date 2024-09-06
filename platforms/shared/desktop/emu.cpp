@@ -24,7 +24,7 @@
 #include "config.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#ifdef _WIN32
+#if defined(_WIN32)
 #define STBIW_WINDOWS_UTF8
 #endif
 #include "stb/stb_image_write.h"

@@ -142,7 +142,7 @@ static int sdl_init(void)
 {
     Debug("Initializing SDL...");
 
-#ifdef _WIN32
+#if defined(_WIN32)
     SDL_SetHint(SDL_HINT_WINDOWS_DPI_SCALING, "1");
 #endif
     

@@ -58,6 +58,7 @@ static DebugSymbol*** dynamic_symbols = NULL;
 static std::vector<DisassemblerLine> disassembler_lines(0x10000);
 static std::vector<DisassemblerBookmark> bookmarks;
 static int selected_address = -1;
+static int new_breakpoint_type = HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM;
 static char new_breakpoint_buffer[10] = "";
 static bool new_breakpoint_read = false;
 static bool new_breakpoint_write = false;
@@ -78,7 +79,7 @@ static void draw_disassembly(void);
 static void draw_context_menu(DisassemblerLine* line);
 static void add_symbol(const char* line);
 static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address);
-static void add_breakpoint(void);
+static void add_breakpoint(int type);
 static void request_goto_address(u16 addr);
 static bool is_return_instruction(u8 opcode);
 static void replace_symbols(DisassemblerLine* line, const char* color);
@@ -202,8 +203,8 @@ void gui_debug_toggle_breakpoint(void)
 {
     if (selected_address > 0)
     {
-        if (emu_get_core()->GetHuC6280()->IsBreakpoint(selected_address))
-            emu_get_core()->GetHuC6280()->RemoveBreakpoint(selected_address);
+        if (emu_get_core()->GetHuC6280()->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, selected_address))
+            emu_get_core()->GetHuC6280()->RemoveBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, selected_address);
         else
             emu_get_core()->GetHuC6280()->AddBreakpoint(selected_address);
     }
@@ -367,17 +368,25 @@ static void draw_breakpoints(void)
 {
     if (ImGui::CollapsingHeader("Breakpoints"))
     {
-        ImGui::Checkbox("Disable All##disable_mem", &emu_debug_disable_breakpoints);
+        ImGui::Checkbox("Disable All##disable_mem", &emu_debug_disable_breakpoints); ImGui::SameLine();
+
+        if (ImGui::Button("Remove All##clear_all", ImVec2(85, 0)))
+        {
+            gui_debug_reset_breakpoints();
+        }
 
         ImGui::Columns(2, "breakpoints");
-        ImGui::SetColumnOffset(1, 100);
+        ImGui::SetColumnOffset(1, 130);
 
         ImGui::Separator();
+
+        ImGui::PushItemWidth(120);
+        ImGui::Combo("Type##type", &new_breakpoint_type, "ROM/RAM\0VRAM\0Palette RAM\0HuC6270 Reg\0HuC6260 Reg\0");
 
         ImGui::PushItemWidth(85);
         if (ImGui::InputTextWithHint("##add_breakpoint", "XXXX-XXXX", new_breakpoint_buffer, IM_ARRAYSIZE(new_breakpoint_buffer), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
         {
-            add_breakpoint();
+            add_breakpoint(new_breakpoint_type);
         }
         ImGui::PopItemWidth();
 
@@ -386,16 +395,13 @@ static void draw_breakpoints(void)
 
         ImGui::Checkbox("Read", &new_breakpoint_read);
         ImGui::Checkbox("Write", &new_breakpoint_write);
-        ImGui::Checkbox("Execute", &new_breakpoint_execute);
+
+        if (new_breakpoint_type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
+            ImGui::Checkbox("Execute", &new_breakpoint_execute);
 
         if (ImGui::Button("Add##add", ImVec2(85, 0)))
         {
-            add_breakpoint();
-        }
-
-        if (ImGui::Button("Clear All##clear_all", ImVec2(85, 0)))
-        {
-            gui_debug_reset_breakpoints();
+            add_breakpoint(new_breakpoint_type);
         }
 
         ImGui::NextColumn();
@@ -852,9 +858,9 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
     }
 }
 
-static void add_breakpoint(void)
+static void add_breakpoint(int type)
 {
-    if (emu_get_core()->GetHuC6280()->AddBreakpoint(new_breakpoint_buffer, new_breakpoint_read, new_breakpoint_write, new_breakpoint_execute))
+    if (emu_get_core()->GetHuC6280()->AddBreakpoint(type, new_breakpoint_buffer, new_breakpoint_read, new_breakpoint_write, new_breakpoint_execute))
         new_breakpoint_buffer[0] = 0;
 }
 
@@ -1081,7 +1087,7 @@ static void disassembler_menu(void)
             gui_debug_toggle_breakpoint();
         }
 
-        if (ImGui::MenuItem("Clear All"))
+        if (ImGui::MenuItem("Remove All"))
         {
             gui_debug_reset_breakpoints();
         }

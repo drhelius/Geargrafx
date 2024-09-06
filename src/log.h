@@ -24,14 +24,14 @@
 #include <cstdarg>
 #include "defines.h"
 
-#ifdef GG_DEBUG
-#ifdef __ANDROID__
-#include <android/log.h>
-#define printf(...) __android_log_print(ANDROID_LOG_DEBUG, GG_TITLE, __VA_ARGS__);
-#endif
-#define Debug(msg, ...) (Log_func(true, msg, ##__VA_ARGS__))
+#if defined(GG_DEBUG)
+    #if defined(__ANDROID__)
+        #include <android/log.h>
+        #define printf(...) __android_log_print(ANDROID_LOG_DEBUG, GG_TITLE, __VA_ARGS__);
+    #endif
+    #define Debug(msg, ...) (Log_func(true, msg, ##__VA_ARGS__))
 #else
-#define Debug(msg, ...)
+    #define Debug(msg, ...)
 #endif
 
 #define Log(msg, ...) (Log_func(false, msg, ##__VA_ARGS__))

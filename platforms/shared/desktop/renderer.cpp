@@ -17,12 +17,12 @@
  *
  */
 
-#ifdef __APPLE__
-#define GL_SILENCE_DEPRECATION
-#include <OpenGL/gl.h>
+#if defined(__APPLE__)
+    #define GL_SILENCE_DEPRECATION
+    #include <OpenGL/gl.h>
 #else
-#include <GL/glew.h>
-#include <SDL_opengl.h>
+    #include <GL/glew.h>
+    #include <SDL_opengl.h>
 #endif
 
 #include "imgui/imgui.h"
@@ -60,7 +60,7 @@ static void render_scanlines(void);
 
 void renderer_init(void)
 {
-    #ifndef __APPLE__
+#if !defined(__APPLE__)
     GLenum err = glewInit();
     if (GLEW_OK != err)
     {
@@ -69,7 +69,7 @@ void renderer_init(void)
 
     renderer_glew_version = (const char*)glewGetString(GLEW_VERSION);
     Log("Using GLEW %s", renderer_glew_version);
-    #endif
+#endif
 
     renderer_opengl_version = (const char*)glGetString(GL_VERSION);
     Log("Using OpenGL %s", renderer_opengl_version);

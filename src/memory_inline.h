@@ -34,7 +34,9 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
     return m_test_memory[address];
 #endif
 
-    m_huc6280->CheckMemoryBreakpoints(address, true);
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, address, true);
+#endif
 
     u8 mpr = address >> 13;
     u16 offset = address & 0x1FFF;
@@ -155,7 +157,9 @@ inline void Memory::Write(u16 address, u8 value)
     return;
 #endif
 
-    m_huc6280->CheckMemoryBreakpoints(address, false);
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, address, false);
+#endif
 
     u8 mpr_index = address >> 13;
     u8 mpr_value = m_mpr[mpr_index];

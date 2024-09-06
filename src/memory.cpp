@@ -80,12 +80,16 @@ void Memory::Reset()
 
     for (int i = 0; i < 7; i++)
     {
-        m_mpr[i] = rand() & 0xFF;
+        do
+        {
+            m_mpr[i] = rand() & 0xFF;
+        }
+        while (m_mpr[i] == 0x00);
     }
 
     for (int i = 0; i < 0x2000; i++)
     {
-        m_wram[i] = rand() & 0xFF;
+        m_wram[i] = 0;
     }
 
 #if defined(GG_TESTING)

@@ -69,8 +69,19 @@ public:
         unsigned int* CYCLES;
     };
 
+    enum GG_Breakpoint_Type
+    {
+        HuC6280_BREAKPOINT_TYPE_ROMRAM = 0,
+        HuC6280_BREAKPOINT_TYPE_VRAM,
+        HuC6280_BREAKPOINT_TYPE_PALETTE_RAM,
+        HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER,
+        HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER,
+        HuC6280_BREAKPOINT_TYPE_COUNT
+    };
+
     struct GG_Breakpoint
     {
+        int type;
         u16 address1;
         u16 address2;
         bool read;
@@ -100,15 +111,15 @@ public:
     bool BreakpointHit();
     bool RunToBreakpointHit();
     void ResetBreakpoints();
-    bool AddBreakpoint(char* text, bool read, bool write, bool execute);
+    bool AddBreakpoint(int type, char* text, bool read, bool write, bool execute);
     bool AddBreakpoint(u16 address);
     void AddRunToBreakpoint(u16 address);
-    void RemoveBreakpoint(u16 address);
-    bool IsBreakpoint(u16 address);
+    void RemoveBreakpoint(int type, u16 address);
+    bool IsBreakpoint(int type, u16 address);
     std::vector<GG_Breakpoint>* GetBreakpoints();
     void ClearDisassemblerCallStack();
     std::stack<u16>* GetDisassemblerCallStack();
-    void CheckMemoryBreakpoints(u16 address, bool read);
+    void CheckMemoryBreakpoints(int type, u16 address, bool read);
 
 private:
     typedef void (HuC6280::*opcodeptr) (void);

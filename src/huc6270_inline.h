@@ -99,6 +99,9 @@ inline u8 HuC6270::ReadRegister(u32 address)
             if (m_address_register == HUC6270_REG_VRR)
             {
                 u8 ret = m_read_buffer >> 8;
+#if !defined(GG_DISABLE_DISASSEMBLER)
+                m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, m_register[HUC6270_REG_MAWR], true);
+#endif
                 int increment = k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
                 m_register[HUC6270_REG_MARR] = m_register[HUC6270_REG_MARR] + increment;
                 m_read_buffer = m_vram[m_register[HUC6270_REG_MARR] & 0x7FFF];
@@ -165,6 +168,9 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                         }
                         else
                         {
+#if !defined(GG_DISABLE_DISASSEMBLER)
+                            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, m_register[HUC6270_REG_MAWR], false);
+#endif
                             m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
                         }
 
