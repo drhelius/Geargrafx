@@ -351,7 +351,7 @@ void HuC6270::RenderLine()
         RenderBackground(width);
     }
 
-    if((m_latched_cr & 0xC0) != 0)
+    if((m_latched_cr & 0x40) != 0)
     {
         RenderSprites(width);
     }
@@ -450,9 +450,6 @@ void HuC6270::RenderSprites(int width)
 void HuC6270::FetchSprites()
 {
     m_sprite_count = 0;
-
-    if (!(HUC6270_VAR_CR & 0x0040))
-        return;
 
     for (int i = 0; i < 64; i++)
     {
