@@ -63,7 +63,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_cartridge = new Cartridge();
     m_huc6280 = new HuC6280();
     m_huc6270 = new HuC6270(m_huc6280);
-    m_huc6260 = new HuC6260(m_huc6270);
+    m_huc6260 = new HuC6260(m_huc6270, m_huc6280);
     m_input = new Input();
     m_audio = new Audio();
     m_memory = new Memory(m_huc6260, m_huc6270, m_huc6280, m_cartridge, m_input, m_audio);
@@ -82,7 +82,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     if (m_paused || !m_cartridge->IsReady())
         return false;
 
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
     GG_Debug_State debug_state;
     bool get_debug_state = true;
     bool debug_enable = false;
@@ -101,7 +101,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
 
     do
     {
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
         if (get_debug_state)
         {
             get_debug_state = false;
@@ -123,7 +123,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
         if (m_clock % 6 == 0)
             m_audio->Clock();
 
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
         if (debug_enable && debug->step_debugger && instruction_completed)
             stop = true;
 
@@ -147,7 +147,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
 
     m_audio->EndFrame(sample_buffer, sample_count);
 
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
     return m_huc6280->BreakpointHit() || m_huc6280->RunToBreakpointHit();
 #else
     return false;

@@ -58,7 +58,7 @@ void Memory::Init()
 {
     m_wram = new u8[0x2000];
 
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
     m_disassembler = new GG_Disassembler_Record*[0x200000];
     for (int i = 0; i < 0x200000; i++)
     {
@@ -135,7 +135,7 @@ Memory::GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 addres
 
 void Memory::ResetDisassemblerRecords()
 {
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
     for (int i = 0; i < 0x200000; i++)
     {
         SafeDelete(m_disassembler[i]);

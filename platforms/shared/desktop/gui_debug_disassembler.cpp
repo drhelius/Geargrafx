@@ -364,6 +364,8 @@ static void draw_controls(void)
     ImGui::PopFont();
 }
 
+static const char* k_breakpoint_types[] = { "ROM/RAM ", "VRAM    ", "PALETTE ", "6270 REG", "6260 REG" };
+
 static void draw_breakpoints(void)
 {
     if (ImGui::CollapsingHeader("Breakpoints"))
@@ -391,7 +393,7 @@ static void draw_breakpoints(void)
         ImGui::PopItemWidth();
 
         if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Use XXXX format for single addresses or XXXX-XXXX for address ranges");
+            ImGui::SetTooltip("Use hex XXXX format for single addresses or XXXX-XXXX for address ranges");
 
         ImGui::Checkbox("Read", &new_breakpoint_read);
         ImGui::Checkbox("Write", &new_breakpoint_write);
@@ -426,15 +428,20 @@ static void draw_breakpoints(void)
 
             ImGui::PopID();
 
-            ImGui::SameLine();
+            ImGui::SameLine(); ImGui::TextColored(red, "%s", k_breakpoint_types[brk->type]); ImGui::SameLine();
+
             if ((*breakpoints)[b].range)
-                ImGui::TextColored(red, "%04X-%04X", brk->address1, brk->address2);
+                ImGui::TextColored(cyan, "%04X-%04X", brk->address1, brk->address2);
             else
-                ImGui::TextColored(red, "%04X", brk->address1);
+                ImGui::TextColored(cyan, "%04X", brk->address1);
 
             ImGui::SameLine(); ImGui::TextColored(brk->read ? orange : gray, " R");
             ImGui::SameLine(); ImGui::TextColored(brk->write ? orange : gray, "W");
-            ImGui::SameLine(); ImGui::TextColored(brk->execute ? orange : gray, "X ");
+
+            if (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
+            {
+                ImGui::SameLine(); ImGui::TextColored(brk->execute ? orange : gray, "X");
+            }
 
             Memory::GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(brk->address1);
 
@@ -442,6 +449,11 @@ static void draw_breakpoints(void)
             {
                 ImGui::SameLine();
                 TextColoredEx(" %s", record->name);
+            }
+            else if (!brk->range && (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER) && (brk->address1 < 20))
+            {
+                ImGui::SameLine();
+                ImGui::TextColored(violet, " %s", k_register_names[brk->address1]);
             }
         }
 
@@ -860,7 +872,18 @@ static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
 
 static void add_breakpoint(int type)
 {
-    if (emu_get_core()->GetHuC6280()->AddBreakpoint(type, new_breakpoint_buffer, new_breakpoint_read, new_breakpoint_write, new_breakpoint_execute))
+    bool read = new_breakpoint_read;
+    bool write = new_breakpoint_write;
+    bool execute = new_breakpoint_execute;
+
+    if (type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
+    {
+        if (!read && !write)
+            return;
+        execute = false;
+    }
+
+    if (emu_get_core()->GetHuC6280()->AddBreakpoint(type, new_breakpoint_buffer, read, write, execute))
         new_breakpoint_buffer[0] = 0;
 }
 

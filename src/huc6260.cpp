@@ -19,8 +19,9 @@
 
 #include "huc6260.h"
 
-HuC6260::HuC6260(HuC6270* huc6270)
+HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
 {
+    m_huc6280 = huc6280;
     m_huc6270 = huc6270;
     m_pixel_format = GG_PIXEL_RGB888;
     m_state.CR = &m_control_register;

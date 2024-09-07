@@ -31,6 +31,7 @@
 //#define HUC6260_DEBUG
 
 class HuC6270;
+class HuC6280;
 
 class HuC6260
 {
@@ -54,7 +55,7 @@ public:
     };
 
 public:
-    HuC6260(HuC6270* huc6270);
+    HuC6260(HuC6270* huc6270, HuC6280* huc6280);
     ~HuC6260();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGB888);
     void InitPalettes();
@@ -75,6 +76,7 @@ public:
 
 private:
     HuC6270* m_huc6270;
+    HuC6280* m_huc6280;
     HuC6260_State m_state;
     u8 m_control_register;
     u16 m_color_table_address;

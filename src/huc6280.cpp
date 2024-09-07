@@ -228,7 +228,7 @@ HuC6280::HuC6280_State* HuC6280::GetState()
 
 void HuC6280::DisassembleNextOPCode()
 {
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
 
     CheckBreakpoints();
 
@@ -439,7 +439,7 @@ bool HuC6280::AddBreakpoint(int type, char* text, bool read, bool write, bool ex
                 brk.range = true;
             }
         }
-        else if (input_len == 4)
+        else if ((input_len > 0) && (input_len <= 4))
         {
             brk.address1 = (u16)std::stoul(text, 0, 16);
         }
@@ -556,7 +556,7 @@ std::stack<u16>* HuC6280::GetDisassemblerCallStack()
 
 void HuC6280::CheckMemoryBreakpoints(int type, u16 address, bool read)
 {
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
 
     if (!m_breakpoints_enabled)
         return;
@@ -599,7 +599,7 @@ void HuC6280::CheckMemoryBreakpoints(int type, u16 address, bool read)
 
 void HuC6280::CheckBreakpoints()
 {
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
 
     m_cpu_breakpoint_hit = false;
     m_run_to_breakpoint_hit = false;
@@ -651,7 +651,7 @@ void HuC6280::CheckBreakpoints()
 
 void HuC6280::UpdateDisassemblerCallStack()
 {
-#ifndef GG_DISABLE_DISASSEMBLER
+#if !defined(GG_DISABLE_DISASSEMBLER)
 
     u16 address = m_PC.GetValue();
     u8 opcode = m_memory->Read(address);

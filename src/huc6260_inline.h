@@ -22,9 +22,14 @@
 
 #include "huc6260.h"
 #include "huc6270.h"
+#include "huc6280.h"
 
 inline u8 HuC6260::ReadRegister(u32 address)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER, address & 0x07, true);
+#endif
+
     u8 ret = 0xFF;
 
     switch (address & 0x07)
@@ -35,6 +40,9 @@ inline u8 HuC6260::ReadRegister(u32 address)
             break;
         case 5:
             // Color table data MSB
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM, m_color_table_address, true);
+#endif
             ret = 0xFE | ((m_color_table[m_color_table_address] >> 8) & 0x01);
             m_color_table_address = (m_color_table_address + 1) & 0x01FF;
             break;
@@ -45,6 +53,10 @@ inline u8 HuC6260::ReadRegister(u32 address)
 
 inline void HuC6260::WriteRegister(u32 address, u8 value)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER, address & 0x07, false);
+#endif
+
     switch (address & 0x07)
     {
         case 0:
@@ -84,6 +96,9 @@ inline void HuC6260::WriteRegister(u32 address, u8 value)
             break;
         case 5:
             // Color table data MSB
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM, m_color_table_address, false);
+#endif
             m_color_table[m_color_table_address] = (m_color_table[m_color_table_address] & 0x00FF) | ((value & 0x01) << 8);
             m_color_table_address = (m_color_table_address + 1) & 0x01FF;
             break;
