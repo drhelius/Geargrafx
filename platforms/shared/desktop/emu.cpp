@@ -64,6 +64,7 @@ void emu_init(void)
     emu_savefiles_path[0] = 0;
     emu_savestates_path[0] = 0;
     emu_debug_disable_breakpoints = false;
+    emu_debug_irq_breakpoints = false;
     emu_debugg_command = Debug_Command_None;
     emu_debug_pc_changed = false;
 }
@@ -102,6 +103,7 @@ void emu_update(void)
         debug_run.step_debugger = (emu_debugg_command == Debug_Command_Step);
         debug_run.stop_on_breakpoint = !emu_debug_disable_breakpoints;
         debug_run.stop_on_run_to_breakpoint = true;
+        debug_run.stop_on_irq = emu_debug_irq_breakpoints;
 
         if (emu_debugg_command != Debug_Command_None)
             breakpoint_hit = geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, &debug_run);

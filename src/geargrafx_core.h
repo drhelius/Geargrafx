@@ -39,6 +39,7 @@ public:
         bool step_debugger;
         bool stop_on_breakpoint;
         bool stop_on_run_to_breakpoint;
+        bool stop_on_irq;
     };
 
     struct GG_Debug_State

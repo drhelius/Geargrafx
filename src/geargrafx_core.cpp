@@ -90,7 +90,7 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
     if (IsValidPointer(debug))
     {
         debug_enable = true;
-        m_huc6280->EnableBreakpoints(debug->stop_on_breakpoint);
+        m_huc6280->EnableBreakpoints(debug->stop_on_breakpoint, debug->stop_on_irq);
     }
 #else
     UNUSED(debug);

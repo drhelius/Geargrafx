@@ -370,6 +370,7 @@ static void draw_breakpoints(void)
 {
     if (ImGui::CollapsingHeader("Breakpoints"))
     {
+        ImGui::Checkbox("Break On IRQs##irq_break", &emu_debug_irq_breakpoints); ImGui::SameLine();
         ImGui::Checkbox("Disable All##disable_mem", &emu_debug_disable_breakpoints); ImGui::SameLine();
 
         if (ImGui::Button("Remove All##clear_all", ImVec2(85, 0)))
@@ -1105,10 +1106,14 @@ static void disassembler_menu(void)
 
     if (ImGui::BeginMenu("Breakpoints"))
     {
-        if (ImGui::MenuItem("Toggle", "F9"))
+        if (ImGui::MenuItem("Toggle Selected Line", "F9"))
         {
             gui_debug_toggle_breakpoint();
         }
+
+        ImGui::MenuItem("Break On IRQs", 0, &emu_debug_irq_breakpoints);
+
+        ImGui::Separator();
 
         if (ImGui::MenuItem("Remove All"))
         {

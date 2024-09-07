@@ -30,6 +30,7 @@ HuC6280::HuC6280()
 {
     InitOPCodeFunctors();
     m_breakpoints_enabled = false;
+    m_breakpoints_irq_enabled = false;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
     m_processor_state.Y = &m_Y;
@@ -176,6 +177,10 @@ unsigned int HuC6280::Tick()
         m_PC.SetHigh(m_memory->Read(irq_pending_high));
         m_cycles += 8;
         DisassembleNextOPCode();
+#if !defined(GG_DISABLE_DISASSEMBLER)
+        if (m_breakpoints_irq_enabled)
+            m_cpu_breakpoint_hit = true;
+#endif
     }
 
     if (m_cli_requested)
@@ -390,9 +395,10 @@ void HuC6280::DisassembleNextOPCode()
 #endif
 }
 
-void HuC6280::EnableBreakpoints(bool enable)
+void HuC6280::EnableBreakpoints(bool enable, bool irqs)
 {
     m_breakpoints_enabled = enable;
+    m_breakpoints_irq_enabled = irqs;
 }
 
 bool HuC6280::BreakpointHit()
