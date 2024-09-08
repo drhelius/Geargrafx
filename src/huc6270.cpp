@@ -255,7 +255,7 @@ void HuC6270::NextHorizontalState()
             break;
         case HuC6270_HORIZONTAL_STATE_HDW_1:
             m_clocks_to_next_h_state = ((m_latched_hdw + 1) << 3) - HUC6270_RCR_IRQ_CYCLES_BEFORE_HDE;
-            if (m_v_state == HuC6270_VERTICAL_STATE_VCR && !m_vblank_triggered)
+            if ((m_v_state != HuC6270_VERTICAL_STATE_VDW) && !m_vblank_triggered)
             {
                 m_vblank_triggered = true;
                 VBlankIRQ();
