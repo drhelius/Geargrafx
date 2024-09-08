@@ -153,6 +153,11 @@ bool emu_is_paused(void)
     return geargrafx->IsPaused();
 }
 
+bool emu_is_debug_idle(void)
+{
+    return config_debug.debug && (emu_debugg_command == Debug_Command_None);
+}
+
 bool emu_is_empty(void)
 {
     return !geargrafx->GetCartridge()->IsReady();

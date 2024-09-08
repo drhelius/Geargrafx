@@ -64,6 +64,7 @@ EXTERN void emu_key_released(GG_Controllers controller, GG_Keys key);
 EXTERN void emu_pause(void);
 EXTERN void emu_resume(void);
 EXTERN bool emu_is_paused(void);
+EXTERN bool emu_is_debug_idle(void);
 EXTERN bool emu_is_empty(void);
 EXTERN void emu_reset(void);
 EXTERN void emu_audio_mute(bool mute);
