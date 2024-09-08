@@ -220,8 +220,10 @@ void HuC6280PSG::Sync()
                 // No LFO
                 else
                 {
-                    u32 freq = ch->frequency ? ch->frequency : 0x1000;
-                    data = ch->wave_data[ch->wave_index];
+                    int freq = ch->frequency ? ch->frequency : 0x1000;
+
+                    if (freq > 7)
+                        data = ch->wave_data[ch->wave_index];
                     ch->counter--;
 
                     if (ch->counter <= 0)
