@@ -475,10 +475,6 @@ bool HuC6280::AddBreakpoint(int type, char* text, bool read, bool write, bool ex
                 found = true;
                 break;
             }
-            {
-                found = true;
-                break;
-            }
         }
         else
         {
