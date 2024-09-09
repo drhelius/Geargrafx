@@ -82,15 +82,11 @@ inline u8 HuC6270::ReadRegister(u32 address)
         }
         // Data register (LSB)
         case 2:
-            if (m_address_register == HUC6270_REG_VRR)
-            {
-                return m_read_buffer & 0xFF;
-            }
-            else
+            if (m_address_register != HUC6270_REG_VRR)
             {
                 //Debug("HuC6270 invalid read data register: %02X", m_address_register);
-                return m_register[HUC6270_REG_VWR] & 0xFF;
             }
+            return m_read_buffer & 0xFF;
             break;
         // Data register (MSB)
         case 3:
@@ -114,7 +110,7 @@ inline u8 HuC6270::ReadRegister(u32 address)
             else
             {
                 //Debug("HuC6270 invalid read data register: %02X", m_address_register);
-                return m_register[HUC6270_REG_VWR] & 0xFF;
+                return m_read_buffer >> 8;
             }
             break;
         default:
