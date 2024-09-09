@@ -76,7 +76,7 @@ static const GG_OPCode_Info k_huc6280_opcode_names[256] = {
     { "JSR $%04X", GG_OPCode_Type_2b },
     { "AND $(%02X,X)", GG_OPCode_Type_1b },
     { "SAX", GG_OPCode_Type_Implied },
-    { "ST2 #$%02x  {}[MSB]", GG_OPCode_Type_1b },
+    { "ST2 #$%02X  {}[MSB]", GG_OPCode_Type_1b },
     { "BIT $%02X", GG_OPCode_Type_1b },
     { "AND $%02X", GG_OPCode_Type_1b },
     { "ROL $%02X", GG_OPCode_Type_1b },
