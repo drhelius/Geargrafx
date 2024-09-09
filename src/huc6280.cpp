@@ -420,6 +420,7 @@ bool HuC6280::AddBreakpoint(int type, char* text, bool read, bool write, bool ex
 {
     int input_len = (int)strlen(text);
     GG_Breakpoint brk;
+    brk.enabled = true;
     brk.type = type;
     brk.address1 = 0;
     brk.address2 = 0;
@@ -501,6 +502,7 @@ bool HuC6280::AddBreakpoint(u16 address)
 
 void HuC6280::AddRunToBreakpoint(u16 address)
 {
+    m_run_to_breakpoint.enabled = true;
     m_run_to_breakpoint.type = HuC6280_BREAKPOINT_TYPE_ROMRAM;
     m_run_to_breakpoint.address1 = address;
     m_run_to_breakpoint.address2 = 0;
@@ -567,6 +569,8 @@ void HuC6280::CheckMemoryBreakpoints(int type, u16 address, bool read)
     {
         GG_Breakpoint* brk = &m_breakpoints[i];
 
+        if (!brk->enabled)
+            continue;
         if (brk->type != type)
             continue;
         if (read && !brk->read)
@@ -623,6 +627,8 @@ void HuC6280::CheckBreakpoints()
     {
         GG_Breakpoint* brk = &m_breakpoints[i];
 
+        if (!brk->enabled)
+            continue;
         if (!brk->execute)
             continue;
         if (brk->type != HuC6280_BREAKPOINT_TYPE_ROMRAM)

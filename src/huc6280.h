@@ -81,6 +81,7 @@ public:
 
     struct GG_Breakpoint
     {
+        bool enabled;
         int type;
         u16 address1;
         u16 address2;

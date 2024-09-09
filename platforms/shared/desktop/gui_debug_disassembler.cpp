@@ -429,19 +429,28 @@ static void draw_breakpoints(void)
 
             ImGui::PopID();
 
-            ImGui::SameLine(); ImGui::TextColored(red, "%s", k_breakpoint_types[brk->type]); ImGui::SameLine();
+            ImGui::SameLine();
+
+            ImGui::PushID(20000 + b);
+            if (ImGui::SmallButton(brk->enabled ? "-" : "+"))
+            {
+                brk->enabled = !brk->enabled;
+            }
+            ImGui::PopID();
+
+            ImGui::SameLine(); ImGui::TextColored(brk->enabled ? red : gray, "%s", k_breakpoint_types[brk->type]); ImGui::SameLine();
 
             if ((*breakpoints)[b].range)
-                ImGui::TextColored(cyan, "%04X-%04X", brk->address1, brk->address2);
+                ImGui::TextColored(brk->enabled ? cyan : gray, "%04X-%04X", brk->address1, brk->address2);
             else
-                ImGui::TextColored(cyan, "%04X", brk->address1);
+                ImGui::TextColored(brk->enabled ? cyan : gray, "%04X", brk->address1);
 
-            ImGui::SameLine(); ImGui::TextColored(brk->read ? orange : gray, " R");
-            ImGui::SameLine(); ImGui::TextColored(brk->write ? orange : gray, "W");
+            ImGui::SameLine(); ImGui::TextColored(brk->enabled && brk->read ? orange : gray, " R");
+            ImGui::SameLine(0, 2); ImGui::TextColored(brk->enabled && brk->write ? orange : gray, "W");
 
             if (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
             {
-                ImGui::SameLine(); ImGui::TextColored(brk->execute ? orange : gray, "X");
+                ImGui::SameLine(0, 2); ImGui::TextColored(brk->enabled && brk->execute ? orange : gray, "X");
             }
 
             Memory::GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(brk->address1);
@@ -449,12 +458,14 @@ static void draw_breakpoints(void)
             if (brk->execute && IsValidPointer(record))
             {
                 ImGui::SameLine();
+                ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled ? white : gray);
                 TextColoredEx(" %s", record->name);
+                ImGui::PopStyleColor();
             }
             else if (!brk->range && (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER) && (brk->address1 < 20))
             {
                 ImGui::SameLine();
-                ImGui::TextColored(violet, " %s", k_register_names[brk->address1]);
+                ImGui::TextColored(brk->enabled ? violet : gray, " %s", k_register_names[brk->address1]);
             }
         }
 
