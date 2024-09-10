@@ -210,7 +210,7 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                             m_register[HUC6270_REG_DESR] += dest_increment;
                             m_register[HUC6270_REG_LENR]--;
                         }
-                        while (m_register[HUC6270_REG_LENR]);
+                        while (m_register[HUC6270_REG_LENR] != 0xFFFF);
 
                         m_status_register |= HUC6270_STATUS_VRAM_END;
                         if (m_register[HUC6270_REG_DCR] & 0x02)
