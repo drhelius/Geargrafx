@@ -73,49 +73,48 @@ inline u8 HuC6270::ReadRegister(u32 address)
         // Status register
         case 0:
         {
-            // Debug("HuC6270 read status register");
             u8 ret = m_status_register & 0x7F;
             m_huc6280->AssertIRQ1(false);
             m_status_register &= 0x40;
             return ret;
-            break;
         }
         // Data register (LSB)
         case 2:
+        {
             if (m_address_register != HUC6270_REG_VRR)
             {
-                //Debug("HuC6270 invalid read data register: %02X", m_address_register);
+                Debug("HuC6270 invalid data register (LSB) read: %02X", m_address_register);
             }
             return m_read_buffer & 0xFF;
-            break;
+        }
         // Data register (MSB)
         case 3:
-
+        {
 #if !defined(GG_DISABLE_DISASSEMBLER)
             m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, m_address_register, true);
 #endif
+            u8 ret = m_read_buffer >> 8;
 
             if (m_address_register == HUC6270_REG_VRR)
             {
-                u8 ret = m_read_buffer >> 8;
 #if !defined(GG_DISABLE_DISASSEMBLER)
-                m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, m_register[HUC6270_REG_MAWR], true);
+                m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, m_register[HUC6270_REG_MARR], true);
 #endif
-                int increment = k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
-                m_register[HUC6270_REG_MARR] = m_register[HUC6270_REG_MARR] + increment;
                 m_read_buffer = m_vram[m_register[HUC6270_REG_MARR] & 0x7FFF];
-                // Debug("HuC6270 MARR inncremented %02X to %04X", increment, m_register[HUC6270_REG_MARR]);
-                return ret;
+                m_register[HUC6270_REG_MARR] += k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
             }
             else
             {
-                //Debug("HuC6270 invalid read data register: %02X", m_address_register);
-                return m_read_buffer >> 8;
+                Debug("HuC6270 invalid data register (MSB) read: %02X", m_address_register);
             }
-            break;
+
+            return ret;
+        }
         default:
-            //Debug("HuC6270 invalid read at %06X", address);
+        {
+            Debug("HuC6270 invalid register read at %06X, reg=%d", address, address & 0x03);
             return 0x00;
+        }
     }
 }
 
@@ -126,14 +125,12 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
         // Address register
         case 0:
             m_address_register = value & 0x1F;
-            // Debug("HuC6270 write address register: %02X", m_address_register);
             break;
         // Data register (LSB)
         case 2:
         // Data register (MSB)
         case 3:
         {
-
 #if !defined(GG_DISABLE_DISASSEMBLER)
             m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, m_address_register, false);
 #endif
@@ -157,13 +154,14 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
             {
                 // 0x01
                 case HUC6270_REG_MARR:
-                    // Debug("HuC6270 write MARR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
                     if (msb)
+                    {
                         m_read_buffer = m_vram[m_register[HUC6270_REG_MARR] & 0x7FFF];
+                        m_register[HUC6270_REG_MARR] += k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
+                    }
                     break;
                 // 0x02
                 case HUC6270_REG_VWR:
-                    // Debug("HuC6270 write VWR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
                     if (msb)
                     {
                         if (m_register[HUC6270_REG_MAWR] >= 0x8000)
@@ -178,8 +176,7 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                             m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
                         }
 
-                        u16 increment = k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
-                        m_register[HUC6270_REG_MAWR] = m_register[HUC6270_REG_MAWR] + increment;
+                        m_register[HUC6270_REG_MAWR] += k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
                     }
                     break;
                 // 0x07
@@ -193,7 +190,6 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                     break;
                 // 0x12
                 case HUC6270_REG_LENR:
-                    // Debug("HuC6270 write LENR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
                     if (msb)
                     {
                         s16 src_increment = m_register[HUC6270_REG_DCR] & 0x02 ? -1 : 1;
@@ -225,14 +221,13 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                     break;
                 // 0x13
                 case HUC6270_REG_DVSSR:
-                    // Debug("HuC6270 write DVSSR (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_register[m_address_register]);
                     m_trigger_sat_transfer = true;
                     break;
             }
             break;
         }
         default:
-            //Debug("HuC6270 invalid write at %06X, value=%02X", address, value);
+            Debug("HuC6270 invalid write at %06X, value=%02X", address, value);
             break;
     }
 }
