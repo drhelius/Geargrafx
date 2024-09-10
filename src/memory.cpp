@@ -37,7 +37,6 @@ Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* 
     InitPointer(m_wram);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
-    m_io_buffer = 0;
 }
 
 Memory::~Memory()
@@ -75,7 +74,7 @@ void Memory::Init()
 
 void Memory::Reset()
 {
-    m_io_buffer = 0;
+    m_io_buffer = 0xFF;
     m_mpr[7] = 0x00;
 
     for (int i = 0; i < 7; i++)

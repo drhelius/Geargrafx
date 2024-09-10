@@ -83,7 +83,7 @@ inline u8 HuC6270::ReadRegister(u32 address)
         {
             if (m_address_register != HUC6270_REG_VRR)
             {
-                Debug("HuC6270 invalid data register (LSB) read: %02X", m_address_register);
+                Debug("[PC=%04X] HuC6270 invalid data register (LSB) read: %02X", m_huc6280->GetState()->PC->GetValue(), m_address_register);
             }
             return m_read_buffer & 0xFF;
         }
@@ -105,14 +105,14 @@ inline u8 HuC6270::ReadRegister(u32 address)
             }
             else
             {
-                Debug("HuC6270 invalid data register (MSB) read: %02X", m_address_register);
+                Debug("[PC=%04X] HuC6270 invalid data register (MSB) read: %02X", m_huc6280->GetState()->PC->GetValue(), m_address_register);
             }
 
             return ret;
         }
         default:
         {
-            Debug("HuC6270 invalid register read at %06X, reg=%d", address, address & 0x03);
+            Debug("[PC=%04X] HuC6270 invalid register read at %06X, reg=%d", m_huc6280->GetState()->PC->GetValue(), address, address & 0x03);
             return 0x00;
         }
     }
@@ -139,7 +139,7 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
 
             if (m_address_register > 0x13)
             {
-                Debug("HuC6270 INVALID write to data register (%s) %02X: %04X", msb ? "MSB" : "LSB", value, m_address_register);
+                Debug("[PC=%04X] HuC6270 INVALID write to data register (%s) %02X: %04X", m_huc6280->GetState()->PC->GetValue(), msb ? "MSB" : "LSB", value, m_address_register);
                 return;
             }
 
@@ -166,7 +166,7 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                     {
                         if (m_register[HUC6270_REG_MAWR] >= 0x8000)
                         {
-                            Debug("HuC6270 ignoring write VWR out of bounds (%s) %04X: %02X", msb ? "MSB" : "LSB", m_register[HUC6270_REG_MAWR], value);
+                            Debug("[PC=%04X] HuC6270 ignoring write VWR out of bounds (%s) %04X: %02X", m_huc6280->GetState()->PC->GetValue(), msb ? "MSB" : "LSB", m_register[HUC6270_REG_MAWR], value);
                         }
                         else
                         {
@@ -199,7 +199,7 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
                         {
                             if (m_register[HUC6270_REG_DESR] >= 0x8000)
                             {
-                                Debug("HuC6270 ignoring write VRAM-DMA out of bounds: %04X", m_register[HUC6270_REG_DESR], value);
+                                Debug("[PC=%04X] HuC6270 ignoring write VRAM-DMA out of bounds: %04X", m_huc6280->GetState()->PC->GetValue(), m_register[HUC6270_REG_DESR], value);
                             }
                             else
                             {
@@ -227,7 +227,7 @@ inline void HuC6270::WriteRegister(u32 address, u8 value)
             break;
         }
         default:
-            Debug("HuC6270 invalid write at %06X, value=%02X", address, value);
+            Debug("[PC=%04X] HuC6270 invalid write at %06X, value=%02X", m_huc6280->GetState()->PC->GetValue(), address, value);
             break;
     }
 }
