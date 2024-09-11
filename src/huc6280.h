@@ -97,7 +97,8 @@ public:
     void Init(Memory* memory, HuC6270* huc6270);
     void Reset();
     bool Clock();
-    unsigned int Tick();
+    unsigned int TickOPCode();
+    unsigned int TickIRQ();
     void AssertIRQ1(bool asserted);
     void AssertIRQ2(bool asserted);
     void RequestNMI();
@@ -134,8 +135,9 @@ private:
     u8 m_zn_flags_lut[256];
     unsigned int m_cycles;
     unsigned int m_clock;
-    unsigned int m_clock_cycles;
+    int m_clock_cycles;
     unsigned int m_last_instruction_cycles;
+    bool m_checking_irqs;
     bool m_irq1_asserted;
     bool m_irq2_asserted;
     bool m_nmi_requested;

@@ -31,8 +31,14 @@ inline bool HuC6280::Clock()
 
     if (m_clock % k_huc6280_speed_divisor[m_speed] == 0)
     {
-        if (m_clock_cycles == 0)
-            m_clock_cycles = Tick();
+        if (m_clock_cycles <= 0)
+        {
+            if (m_checking_irqs)
+                m_clock_cycles += TickIRQ();
+            else
+                m_clock_cycles += TickOPCode();
+        }
+
         m_clock_cycles--;
         instruction_completed = (m_clock_cycles == 0);
     }
@@ -44,7 +50,6 @@ inline bool HuC6280::Clock()
 
 inline void HuC6280::AssertIRQ1(bool asserted)
 {
-    // Debug("IRQ1 asserted: %s", asserted ? "true" : "false");
     m_irq1_asserted = asserted;
     if (m_irq1_asserted)
         SetBit(m_interrupt_request_register, 1);

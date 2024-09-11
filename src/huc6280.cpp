@@ -80,6 +80,7 @@ void HuC6280::Reset()
     m_clock = 0;
     m_clock_cycles = 0;
     m_last_instruction_cycles = 0;
+    m_checking_irqs = false;
     m_irq1_asserted = false;
     m_irq2_asserted = false;
     m_nmi_requested = false;
@@ -102,7 +103,7 @@ void HuC6280::Reset()
     ClearDisassemblerCallStack();
 }
 
-unsigned int HuC6280::Tick()
+unsigned int HuC6280::TickOPCode()
 {
     m_memory_breakpoint_hit = false;
     m_skip_flag_transfer_clear = false;
@@ -126,6 +127,14 @@ unsigned int HuC6280::Tick()
 
     m_last_instruction_cycles = m_cycles;
 
+    m_checking_irqs = true;
+
+    return m_cycles;
+}
+
+unsigned int HuC6280::TickIRQ()
+{
+    m_cycles = 0;
     bool irq_pending = false;
     u16 irq_pending_low = 0;
     u16 irq_pending_high = 0;
@@ -193,6 +202,8 @@ unsigned int HuC6280::Tick()
         m_sei_requested = false;
         SetFlag(FLAG_INTERRUPT);
     }
+
+    m_checking_irqs = false;
 
     return m_cycles;
 }
