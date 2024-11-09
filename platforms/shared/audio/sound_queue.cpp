@@ -64,7 +64,7 @@ SoundQueue::SoundQueue()
         if (IsRunningInWSL())
         {
             Debug("SoundQueue: Running in WSL");
-            if (SDL_AudioInit("bad") < 0)
+            if (SDL_AudioInit("pulseaudio") < 0)
                 sdl_error("Couldn't init pulseaudio audio driver");
         }
         else
