@@ -288,7 +288,7 @@ void gui_debug_window_huc6270_background(void)
         ImVec2 p = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-        ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(size_h, size_v), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width / texture_size_h, emu_debug_background_buffer_height / texture_size_v));
+        ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(size_h, size_v), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width / texture_size_h, emu_debug_background_buffer_height / texture_size_v));
 
         if (show_grid)
         {
@@ -332,7 +332,7 @@ void gui_debug_window_huc6270_background(void)
                 float tile_uv_h = (i % screen_size_x) * 8.0f;
                 float tile_uv_v = (i / screen_size_x) * 8.0f;
 
-                ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(tile_width, tile_height), ImVec2(tile_uv_h / texture_size_h, tile_uv_v / texture_size_v), ImVec2((tile_uv_h + 8) / texture_size_h, (tile_uv_v + 8) / texture_size_v));
+                ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(tile_width, tile_height), ImVec2(tile_uv_h / texture_size_h, tile_uv_v / texture_size_v), ImVec2((tile_uv_h + 8) / texture_size_h, (tile_uv_v + 8) / texture_size_v));
 
                 ImGui::PushFont(gui_default_font);
 
@@ -403,7 +403,7 @@ void gui_debug_window_huc6270_sprites(void)
         float tex_h = fwidth / 32.0f / scale;
         float tex_v = fheight / 64.0f / scale;
 
-        ImGui::Image((void*)(intptr_t)renderer_emu_debug_huc6270_sprites[s], ImVec2(fwidth, fheight), ImVec2(0.0f, 0.0f), ImVec2(tex_h, tex_v));
+        ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_sprites[s], ImVec2(fwidth, fheight), ImVec2(0.0f, 0.0f), ImVec2(tex_h, tex_v));
 
         float mouse_x = io.MousePos.x - p[s].x;
         float mouse_y = io.MousePos.y - p[s].y;
@@ -425,7 +425,7 @@ void gui_debug_window_huc6270_sprites(void)
     float tex_h = (float)runtime.screen_width / (float)(SYSTEM_TEXTURE_WIDTH);
     float tex_v = (float)runtime.screen_height / (float)(SYSTEM_TEXTURE_HEIGHT);
 
-    ImGui::Image((void*)(intptr_t)renderer_emu_texture, ImVec2(runtime.screen_width * screen_scale, runtime.screen_height * screen_scale), ImVec2(0, 0), ImVec2(tex_h, tex_v));
+    ImGui::Image((ImTextureID)(intptr_t)renderer_emu_texture, ImVec2(runtime.screen_width * screen_scale, runtime.screen_height * screen_scale), ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
     for (int s = 0; s < 64; s++)
     {
