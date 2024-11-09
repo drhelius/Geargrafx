@@ -34,6 +34,7 @@ public:
     void Write(int16_t* samples, int count, bool sync);
     int GetSampleCount();
     int16_t* GetCurrentlyPlaying();
+    bool IsOpen();
 
 private:
     int16_t* volatile m_buffers;

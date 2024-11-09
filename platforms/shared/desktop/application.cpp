@@ -606,7 +606,7 @@ static void render(void)
 
 static void frame_throttle(void)
 {
-    if (emu_is_empty() || emu_is_paused() || emu_is_debug_idle() || config_emulator.ffwd)
+    if (emu_is_empty() || emu_is_paused() || emu_is_debug_idle() || !emu_is_audio_open() || config_emulator.ffwd)
     {
         Uint64 count_per_sec = SDL_GetPerformanceFrequency();
         float elapsed = (float)(frame_time_end - frame_time_start) / (float)count_per_sec;

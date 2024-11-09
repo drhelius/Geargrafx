@@ -164,6 +164,16 @@ int SoundQueue::GetSampleCount()
     return m_buffer_size * m_buffer_count - buffer_free;
 }
 
+int16_t* SoundQueue::GetCurrentlyPlaying()
+{
+    return m_currently_playing;
+}
+
+bool SoundQueue::IsOpen()
+{
+    return m_sound_open;
+}
+
 void SoundQueue::Write(int16_t* samples, int count, bool sync)
 {
     if (!m_sound_open)
