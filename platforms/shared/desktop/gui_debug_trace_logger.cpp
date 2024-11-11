@@ -90,9 +90,9 @@ void gui_debug_window_trace_logger(void)
         }
 
         ImGui::PopFont();
-
-        ImGui::EndChild();
     }
+
+    ImGui::EndChild();
 
     ImGui::End();
     ImGui::PopStyleVar();

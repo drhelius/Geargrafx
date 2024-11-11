@@ -358,10 +358,9 @@ void gui_debug_window_huc6270_background(void)
                 }
             }
         }
-
-        ImGui::EndChild();
     }
 
+    ImGui::EndChild();
     ImGui::End();
     ImGui::PopStyleVar();
 }
