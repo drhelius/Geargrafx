@@ -11,6 +11,22 @@
             "cStandard": "c99",
             "cppStandard": "c++11",
             "intelliSenseMode": "linux-gcc-x64"
+        },
+        {
+            "name": "Mac",
+            "compilerPath": "/usr/bin/clang",
+            "intelliSenseMode": "macos-clang-x64",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/opt/homebrew/include/SDL2"
+            ],
+            "defines": ["${myDefines}"],
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "macFrameworkPath": ["/System/Library/Frameworks", "/Library/Frameworks"],
+            "browse": {
+              "path": ["${workspaceFolder}"]
+            }
         }
     ],
     "version": 4
