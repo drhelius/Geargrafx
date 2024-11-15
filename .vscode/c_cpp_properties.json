@@ -19,7 +19,7 @@
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c99",
             "cppStandard": "c++11",
-            "intelliSenseMode": "macos-clang-x64",
+            "intelliSenseMode": "macos-clang-arm64",
             "includePath": [
                 "${workspaceFolder}/**",
                 "/opt/homebrew/include/SDL2"
@@ -30,5 +30,6 @@
             }
         }
     ],
-    "version": 4
+    "version": 4,
+    "enableConfigurationSquiggles": true
 }

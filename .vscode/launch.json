@@ -43,7 +43,12 @@
             "cwd": "${workspaceFolder}/tests",
             "environment": [],
             "externalConsole": false,
-            "MIMode": "gdb",
+            "linux": {
+                "MIMode": "gdb"
+            },
+            "osx": {
+                "MIMode": "lldb"
+            },
             "preLaunchTask": "Build (TESTS)",
             "setupCommands": [
                 {
