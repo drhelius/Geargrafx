@@ -222,7 +222,7 @@ nfdresult_t NFD_OpenDialogN(nfdnchar_t** outPath,
                             const nfdnfilteritem_t* filterList,
                             nfdfiltersize_t filterCount,
                             const nfdnchar_t* defaultPath) {
-    nfdopendialognargs_t args = {0};
+    nfdopendialognargs_t args = {};
     args.filterList = filterList;
     args.filterCount = filterCount;
     args.defaultPath = defaultPath;
@@ -282,7 +282,7 @@ nfdresult_t NFD_OpenDialogMultipleN(const nfdpathset_t** outPaths,
                                     const nfdnfilteritem_t* filterList,
                                     nfdfiltersize_t filterCount,
                                     const nfdnchar_t* defaultPath) {
-    nfdopendialognargs_t args = {0};
+    nfdopendialognargs_t args = {};
     args.filterList = filterList;
     args.filterCount = filterCount;
     args.defaultPath = defaultPath;
@@ -348,7 +348,7 @@ nfdresult_t NFD_SaveDialogN(nfdnchar_t** outPath,
                             nfdfiltersize_t filterCount,
                             const nfdnchar_t* defaultPath,
                             const nfdnchar_t* defaultName) {
-    nfdsavedialognargs_t args = {0};
+    nfdsavedialognargs_t args = {};
     args.filterList = filterList;
     args.filterCount = filterCount;
     args.defaultPath = defaultPath;
@@ -413,7 +413,7 @@ nfdresult_t NFD_SaveDialogU8_With_Impl(nfdversion_t version,
 }
 
 nfdresult_t NFD_PickFolderN(nfdnchar_t** outPath, const nfdnchar_t* defaultPath) {
-    nfdpickfoldernargs_t args = {0};
+    nfdpickfoldernargs_t args = {};
     args.defaultPath = defaultPath;
     return NFD_PickFolderN_With_Impl(NFD_INTERFACE_VERSION, outPath, &args);
 }
@@ -465,7 +465,7 @@ nfdresult_t NFD_PickFolderU8_With_Impl(nfdversion_t version,
 }
 
 nfdresult_t NFD_PickFolderMultipleN(const nfdpathset_t** outPaths, const nfdnchar_t* defaultPath) {
-    nfdpickfoldernargs_t args = {0};
+    nfdpickfoldernargs_t args = {};
     args.defaultPath = defaultPath;
     return NFD_PickFolderMultipleN_With_Impl(NFD_INTERFACE_VERSION, outPaths, &args);
 }
