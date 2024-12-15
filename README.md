@@ -18,19 +18,19 @@ This is an open source project with its ongoing development made possible thanks
 
 - **Latest Builds**: [here](https://github.com/drhelius/Geargrafx/actions/workflows/geargrafx.yml)
 - **Windows**:
-  - [Geargrafx-0.0.4-windows-x64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.4/Geargrafx-0.0.4-windows-x64.zip)
-  - [Geargrafx-0.0.4-windows-arm64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.4/Geargrafx-0.0.4-windows-arm64.zip)
+  - [Geargrafx-0.0.5-windows-x64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-windows-x64.zip)
+  - [Geargrafx-0.0.5-windows-arm64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-windows-arm64.zip)
   - NOTE: If you have errors you may need to install:
     - [Microsoft Visual C++ Redistributable](https://go.microsoft.com/fwlink/?LinkId=746572)
     - [OpenGL Compatibility Pack](https://apps.microsoft.com/detail/9nqpsl29bfff)
 - **macOS**:
-  - [Geargrafx-0.0.4-macos-arm.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.4/Geargrafx-0.0.4-macos-arm.zip)
-  - [Geargrafx-0.0.4-macos-intel.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.4/Geargrafx-0.0.4-macos-intel.zip)
+  - [Geargrafx-0.0.5-macos-arm.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-macos-arm.zip)
+  - [Geargrafx-0.0.5-macos-intel.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-macos-intel.zip)
   - NOTE: macOS 12 or later.
 - **Linux**:
-  - [Geargrafx-0.0.4-ubuntu-24.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.4/Geargrafx-1.1.0-ubuntu-24.04.zip)
-  - [Geargrafx-0.0.4-ubuntu-22.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.4/Geargrafx-1.1.0-ubuntu-22.04.zip)
-  - [Geargrafx-0.0.4-ubuntu-20.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.4/Geargrafx-1.1.0-ubuntu-20.04.zip) 
+  - [Geargrafx-0.0.5-ubuntu-24.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-ubuntu-24.04.zip)
+  - [Geargrafx-0.0.5-ubuntu-22.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-ubuntu-22.04.zip)
+  - [Geargrafx-0.0.5-ubuntu-20.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-ubuntu-20.04.zip) 
   - NOTE: You may need to install `libsdl2` and `libglew`
 
 ## Build Instructions
