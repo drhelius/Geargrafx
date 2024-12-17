@@ -79,7 +79,7 @@ static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 }
 
 static const struct retro_variable vars[] = {
-    { "geargrafx_aspect_ratio", "Aspect Ratio (restart); 1:1 PAR|4:3 DAR|16:9 DAR" },
+    { "geargrafx_aspect_ratio", "Aspect Ratio (restart); 1:1 PAR|4:3 DAR|16:9 DAR|16:10 DAR" },
     { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
     { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
     { NULL }
@@ -340,6 +340,8 @@ static void check_variables(void)
             aspect_ratio = 4.0f / 3.0f;
         else if (strcmp(var.value, "16:9 DAR") == 0)
             aspect_ratio = 16.0f / 9.0f;
+        else if (strcmp(var.value, "16:10 DAR") == 0)
+            aspect_ratio = 16.0f / 10.0f;
         else
             aspect_ratio = 0.0f;
     }
