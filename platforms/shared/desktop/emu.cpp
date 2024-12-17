@@ -65,7 +65,7 @@ void emu_init(void)
     emu_savestates_path[0] = 0;
     emu_debug_disable_breakpoints = false;
     emu_debug_irq_breakpoints = false;
-    emu_debugg_command = Debug_Command_None;
+    emu_debug_command = Debug_Command_None;
     emu_debug_pc_changed = false;
 }
 
@@ -81,7 +81,7 @@ void emu_destroy(void)
 
 void emu_load_rom(const char* file_path)
 {
-    emu_debugg_command = Debug_Command_None;
+    emu_debug_command = Debug_Command_None;
     reset_buffers();
 
     save_ram();
@@ -100,22 +100,22 @@ void emu_update(void)
     {
         bool breakpoint_hit = false;
         GeargrafxCore::GG_Debug_Run debug_run;
-        debug_run.step_debugger = (emu_debugg_command == Debug_Command_Step);
+        debug_run.step_debugger = (emu_debug_command == Debug_Command_Step);
         debug_run.stop_on_breakpoint = !emu_debug_disable_breakpoints;
         debug_run.stop_on_run_to_breakpoint = true;
         debug_run.stop_on_irq = emu_debug_irq_breakpoints;
 
-        if (emu_debugg_command != Debug_Command_None)
+        if (emu_debug_command != Debug_Command_None)
             breakpoint_hit = geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, &debug_run);
 
-        if (breakpoint_hit || emu_debugg_command == Debug_Command_StepFrame || emu_debugg_command == Debug_Command_Step)
+        if (breakpoint_hit || emu_debug_command == Debug_Command_StepFrame || emu_debug_command == Debug_Command_Step)
                 emu_debug_pc_changed = true;
 
         if (breakpoint_hit)
-            emu_debugg_command = Debug_Command_None;
+            emu_debug_command = Debug_Command_None;
 
-        if (emu_debugg_command != Debug_Command_Continue)
-            emu_debugg_command = Debug_Command_None;
+        if (emu_debug_command != Debug_Command_Continue)
+            emu_debug_command = Debug_Command_None;
     }
     else
         geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
@@ -155,7 +155,7 @@ bool emu_is_paused(void)
 
 bool emu_is_debug_idle(void)
 {
-    return config_debug.debug && (emu_debugg_command == Debug_Command_None);
+    return config_debug.debug && (emu_debug_command == Debug_Command_None);
 }
 
 bool emu_is_empty(void)
@@ -165,7 +165,7 @@ bool emu_is_empty(void)
 
 void emu_reset(void)
 {
-    emu_debugg_command = Debug_Command_None;
+    emu_debug_command = Debug_Command_None;
     reset_buffers();
 
     save_ram();
@@ -300,10 +300,10 @@ void emu_debug_step_over(void)
     {
         u16 return_address = pc + record->size;
         processor->AddRunToBreakpoint(return_address);
-        emu_debugg_command = Debug_Command_Continue;
+        emu_debug_command = Debug_Command_Continue;
     }
     else
-        emu_debugg_command = Debug_Command_Step;
+        emu_debug_command = Debug_Command_Step;
 
     geargrafx->Pause(false);
 }
@@ -311,7 +311,7 @@ void emu_debug_step_over(void)
 void emu_debug_step_into(void)
 {
     geargrafx->Pause(false);
-    emu_debugg_command = Debug_Command_Step;
+    emu_debug_command = Debug_Command_Step;
 }
 
 void emu_debug_step_out(void)
@@ -323,10 +323,10 @@ void emu_debug_step_out(void)
     {
         u16 return_address = call_stack->top();
         processor->AddRunToBreakpoint(return_address);
-        emu_debugg_command = Debug_Command_Continue;
+        emu_debug_command = Debug_Command_Continue;
     }
     else
-        emu_debugg_command = Debug_Command_Step;
+        emu_debug_command = Debug_Command_Step;
 
     geargrafx->Pause(false);
 }
@@ -334,20 +334,20 @@ void emu_debug_step_out(void)
 void emu_debug_step_frame(void)
 {
     geargrafx->Pause(false);
-    emu_debugg_command = Debug_Command_StepFrame;
+    emu_debug_command = Debug_Command_StepFrame;
 }
 
 void emu_debug_break(void)
 {
     geargrafx->Pause(false);
-    if (emu_debugg_command == Debug_Command_Continue)
-        emu_debugg_command = Debug_Command_Step;
+    if (emu_debug_command == Debug_Command_Continue)
+        emu_debug_command = Debug_Command_Step;
 }
 
 void emu_debug_continue(void)
 {
     geargrafx->Pause(false);
-    emu_debugg_command = Debug_Command_Continue;
+    emu_debug_command = Debug_Command_Continue;
 }
 
 void emu_debug_set_callback(GeargrafxCore::GG_Debug_Callback callback)

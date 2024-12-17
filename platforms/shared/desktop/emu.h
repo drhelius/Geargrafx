@@ -44,7 +44,7 @@ EXTERN int emu_debug_background_buffer_width;
 EXTERN int emu_debug_background_buffer_height;
 EXTERN int emu_debug_sprite_widths[64];
 EXTERN int emu_debug_sprite_heights[64];
-EXTERN Debug_Command emu_debugg_command;
+EXTERN Debug_Command emu_debug_command;
 EXTERN bool emu_debug_pc_changed;
 
 EXTERN bool emu_audio_sync;
