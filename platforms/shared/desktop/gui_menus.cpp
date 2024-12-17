@@ -268,7 +268,7 @@ static void menu_video(void)
 
         if (ImGui::MenuItem("Resize Window to Content"))
         {
-            if (!config_debug.debug && (config_video.ratio != 3))
+            if (!config_debug.debug)
             {
                 application_trigger_fit_to_content(gui_main_window_width, gui_main_window_height + gui_main_menu_height);
             }
@@ -287,7 +287,7 @@ static void menu_video(void)
         if (ImGui::BeginMenu("Aspect Ratio"))
         {
             ImGui::PushItemWidth(160.0f);
-            ImGui::Combo("##ratio", &config_video.ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0\0");
+            ImGui::Combo("##ratio", &config_video.ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0\0");
             ImGui::PopItemWidth();
             ImGui::EndMenu();
         }
