@@ -593,12 +593,22 @@ static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int
     ImGui::SameLine(100);
 
     char button_label[256];
-    snprintf(button_label, 256, "%s##%s%d", SDL_GetScancodeName(*key), text, player);
+    snprintf(button_label, 256, "%s##%s%d", SDL_GetKeyName(SDL_GetKeyFromScancode(*key)), text, player);
 
     if (ImGui::Button(button_label, ImVec2(90,0)))
     {
         gui_configured_key = key;
         ImGui::OpenPopup("Keyboard Configuration");
+    }
+
+    ImGui::SameLine();
+
+    char remove_label[256];
+    snprintf(remove_label, sizeof(remove_label), "X##rk%s%d", text, player);
+
+    if (ImGui::Button(remove_label))
+    {
+        *key = SDL_SCANCODE_UNKNOWN;
     }
 }
 
@@ -607,14 +617,25 @@ static void gamepad_configuration_item(const char* text, int* button, int player
     ImGui::Text("%s", text);
     ImGui::SameLine(100);
 
-    static const char* gamepad_names[16] = {"A", "B", "X" ,"Y", "BACK", "GUID", "START", "L3", "R3", "L1", "R1", "UP", "DOWN", "LEFT", "RIGHT", "15"};
+    static const char* gamepad_names[16] = {"A", "B", "X" ,"Y", "BACK", "GUIDE", "START", "L3", "R3", "L1", "R1", "UP", "DOWN", "LEFT", "RIGHT", "15"};
+    const char* button_name = (*button >= 0 && *button < 16) ? gamepad_names[*button] : "";
 
     char button_label[256];
-    snprintf(button_label, 256, "%s##%s%d", gamepad_names[*button], text, player);
+    snprintf(button_label, 256, "%s##%s%d", button_name, text, player);
 
     if (ImGui::Button(button_label, ImVec2(70,0)))
     {
         gui_configured_button = button;
         ImGui::OpenPopup("Gamepad Configuration");
+    }
+
+    ImGui::SameLine();
+
+    char remove_label[256];
+    snprintf(remove_label, sizeof(remove_label), "X##rg%s%d", text, player);
+
+    if (ImGui::Button(remove_label))
+    {
+        *button = SDL_CONTROLLER_BUTTON_INVALID;
     }
 }

@@ -29,6 +29,7 @@
 #include "license.h"
 #include "backers.h"
 #include "renderer.h"
+#include "keyboard.h"
 
 void gui_popup_modal_keyboard()
 {
@@ -37,11 +38,12 @@ void gui_popup_modal_keyboard()
         ImGui::Text("Press any key to assign...\n\n");
         ImGui::Separator();
 
-        for ( int i = 0; i < ImGuiKey_NamedKey_END; ++i )
+        for (ImGuiKey i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_NamedKey_END; i = (ImGuiKey)(i + 1))
         {
-            if (ImGui::IsKeyDown((ImGuiKey)i))
+            if (ImGui::IsKeyDown(i))
             {
-                SDL_Scancode key = (SDL_Scancode)i;
+                SDL_Keycode key_code = ImGuiKeyToSDLKeycode(i);
+                SDL_Scancode key = SDL_GetScancodeFromKey(key_code);
 
                 if ((key != SDL_SCANCODE_LCTRL) && (key != SDL_SCANCODE_RCTRL) && (key != SDL_SCANCODE_CAPSLOCK))
                 {
