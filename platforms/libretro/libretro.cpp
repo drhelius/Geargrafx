@@ -48,6 +48,7 @@ static s16 audio_buf[1];
 static int audio_sample_count = 0;
 static int current_screen_width = 0;
 static int current_screen_height = 0;
+static float current_aspect_ratio = 0;
 static bool allow_up_down = false;
 static bool libretro_supports_bitmasks;
 static float aspect_ratio = 0.0f;
@@ -370,10 +371,13 @@ void retro_run(void)
     GG_Runtime_Info runtime_info;
     core->GetRuntimeInfo(runtime_info);
 
-    if ((runtime_info.screen_width != current_screen_width) || (runtime_info.screen_height != current_screen_height))
+    if ((runtime_info.screen_width != current_screen_width) ||
+        (runtime_info.screen_height != current_screen_height) ||
+        (aspect_ratio != current_aspect_ratio))
     {
         current_screen_width = runtime_info.screen_width;
         current_screen_height = runtime_info.screen_height;
+        current_aspect_ratio = aspect_ratio;
 
         retro_system_av_info info;
         info.geometry.base_width   = runtime_info.screen_width;
