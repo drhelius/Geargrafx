@@ -96,9 +96,9 @@ void gui_popup_modal_about(void)
 
         ImGui::TextColored(orange, "  By Ignacio Sánchez (DrHelius)");
         ImGui::Text(" "); ImGui::SameLine();
-        ImGui::TextLink("https://github.com/drhelius/Geargrafx");
+        ImGui::TextLinkOpenURL("https://github.com/drhelius/Geargrafx");
         ImGui::Text(" "); ImGui::SameLine();
-        ImGui::TextLink("https://x.com/drhelius");
+        ImGui::TextLinkOpenURL("https://x.com/drhelius");
         ImGui::NewLine();
 
         ImGui::PopFont();
