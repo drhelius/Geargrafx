@@ -12,7 +12,7 @@
 
 This is an open source project with its ongoing development made possible thanks to the support by these awesome [backers](backers.md). If you find it useful, please, consider [sponsoring](https://github.com/sponsors/drhelius).
 
-![Geargrafx](https://github.com/user-attachments/assets/7db9eab6-e9c4-422d-a75f-3fde73d3d7f2)
+<img src="http://www.geardome.com/files/geargrafx/geargrafx_debug_01.png">
 
 ## Downloads
 
