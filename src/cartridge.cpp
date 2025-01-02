@@ -78,6 +78,11 @@ bool Cartridge::IsReady()
     return m_ready;
 }
 
+bool Cartridge::IsSGX()
+{
+    return m_is_sgx;
+}
+
 int Cartridge::GetROMSize()
 {
     return m_rom_size;
