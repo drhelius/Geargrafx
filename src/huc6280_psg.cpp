@@ -17,6 +17,7 @@
  *
  */
 
+#include <math.h>
 #include <algorithm>
 #include "huc6280_psg.h"
 
