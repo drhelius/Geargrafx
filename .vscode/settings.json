@@ -9,6 +9,7 @@
     },
     "cmake.configureOnOpen": false,
     "files.associations": {
+        "MLTable": "yaml",
         "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
@@ -84,6 +85,7 @@
         "print": "cpp",
         "queue": "cpp",
         "stack": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "cassert": "cpp"
     }
 }
