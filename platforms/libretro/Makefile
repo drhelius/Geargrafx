@@ -326,7 +326,7 @@ ifeq ($(DEBUG), 1)
 	CXXFLAGS += -O0 -DDEBUG -g
 else
 	BUILD_CONFIG = Release
-	CXXFLAGS += -O3
+	CXXFLAGS += -O3 -DNDEBUG
 endif
 
 GIT_VERSION ?= "$(shell git describe --abbrev=7 --dirty --always --tags || echo unknown)"

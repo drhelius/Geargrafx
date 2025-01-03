@@ -20,8 +20,8 @@
 #ifndef LOG_H
 #define	LOG_H
 
-#include <cstdio>
-#include <cstdarg>
+#include <stdio.h>
+#include <stdarg.h>
 #include "defines.h"
 
 #if defined(GG_DEBUG)

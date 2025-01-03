@@ -17,8 +17,8 @@
  *
  */
 
-#include <cassert>
 #include <stdlib.h>
+#include <assert.h>
 #include "huc6270.h"
 
 HuC6270::HuC6270(HuC6280* huC6280)

@@ -20,8 +20,8 @@
 #ifndef GUI_DEBUG_TEXT_H
 #define	GUI_DEBUG_TEXT_H
 
-#include <cstdio>
-#include <cstdarg>
+#include <stdio.h>
+#include <stdarg.h>
 #include "imgui/imgui.h"
 
 const char k_color_marker_start = '{';

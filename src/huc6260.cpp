@@ -17,13 +17,14 @@
  *
  */
 
+#include <assert.h>
 #include "huc6260.h"
 
 HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
 {
     m_huc6280 = huc6280;
     m_huc6270 = huc6270;
-    m_pixel_format = GG_PIXEL_RGB888;
+    m_pixel_format = GG_PIXEL_RGBA8888;
     m_state.CR = &m_control_register;
     m_state.CTA = &m_color_table_address;
     m_state.HPOS = &m_hpos;
@@ -67,8 +68,8 @@ void HuC6260::InitPalettes()
         m_bgr888_palette[i][1] = green;
         m_bgr888_palette[i][2] = red;
 
-        green = ((i >> 6) & 0x07) * 31 / 7;
-        red = ((i >> 3) & 0x07) * 63 / 7;
+        green = ((i >> 6) & 0x07) * 63 / 7;
+        red = ((i >> 3) & 0x07) * 31 / 7;
         blue = (i & 0x07) * 31 / 7;
         m_rgb565_palette[i] = (red << 11) | (green << 5) | blue;
         m_bgr565_palette[i] = (blue << 11) | (green << 5) | red;
@@ -127,18 +128,7 @@ bool HuC6260::Clock()
             if ((pixel & 0x10F) == 0)
                 pixel = 0;
 
-            u16 color = m_color_table[pixel];
-            u8 red = m_rgb888_palette[color][0];
-            u8 green = m_rgb888_palette[color][1];
-            u8 blue = m_rgb888_palette[color][2];
-
-            int component = m_pixel_index * 4;
-            m_frame_buffer[component + 0] = red;
-            m_frame_buffer[component + 1] = green;
-            m_frame_buffer[component + 2] = blue;
-            m_frame_buffer[component + 3] = 255;
-
-            m_pixel_index++;
+            WritePixel(pixel);
         }
 
         m_pixel_x = (m_pixel_x + 1) % k_huc6260_full_line_width[m_speed];
@@ -244,4 +234,87 @@ void HuC6260::SetScanlineEnd(int scanline_end)
 void HuC6260::SetOverscan(bool overscan)
 {
     m_overscan = overscan ? 1 : 0;
+}
+
+void HuC6260::WritePixel(u16 pixel)
+{
+    assert(pixel < 512);
+
+    if (pixel >= 512)
+    {
+        Debug("HuC6260: Invalid pixel value %04X\n", pixel);
+        pixel = 0;
+    }
+
+    u16 color = m_color_table[pixel];
+
+    assert(color < 512);
+
+    if (color >= 512)
+    {
+        Debug("HuC6260: Invalid color value %04X\n", color);
+        color = 0;
+    }
+
+    switch (m_pixel_format)
+    {
+        case GG_PIXEL_RGB565:
+            {
+                int byte = m_pixel_index * 2;
+                u16 color_16 = m_rgb565_palette[color];
+                m_frame_buffer[byte + 0] = color_16 & 0xFF;
+                m_frame_buffer[byte + 1] = (color_16 >> 8) & 0xFF;
+            }
+            break;
+        case GG_PIXEL_RGBA8888:
+            {
+                int byte = m_pixel_index * 4;
+                u8 red = m_rgb888_palette[color][0];
+                u8 green = m_rgb888_palette[color][1];
+                u8 blue = m_rgb888_palette[color][2];
+                m_frame_buffer[byte + 0] = red;
+                m_frame_buffer[byte + 1] = green;
+                m_frame_buffer[byte + 2] = blue;
+                m_frame_buffer[byte + 3] = 255;
+            }
+            break;
+        case GG_PIXEL_RGB555:
+            {
+                int byte = m_pixel_index * 2;
+                u16 color_16 = m_rgb555_palette[color];
+                m_frame_buffer[byte + 0] = color_16 & 0xFF;
+                m_frame_buffer[byte + 1] = (color_16 >> 8) & 0xFF;
+            }
+            break;
+        case GG_PIXEL_BGR565:
+            {
+                int byte = m_pixel_index * 2;
+                u16 color_16 = m_bgr565_palette[color];
+                m_frame_buffer[byte + 0] = color_16 & 0xFF;
+                m_frame_buffer[byte + 1] = (color_16 >> 8) & 0xFF;
+            }
+            break;
+        case GG_PIXEL_BGR555:
+            {
+                int byte = m_pixel_index * 2;
+                u16 color_16 = m_bgr555_palette[color];
+                m_frame_buffer[byte + 0] = color_16 & 0xFF;
+                m_frame_buffer[byte + 1] = (color_16 >> 8) & 0xFF;
+            }
+            break;
+        case GG_PIXEL_BGRA8888:
+            {
+                int byte = m_pixel_index * 4;
+                u8 blue = m_bgr888_palette[color][0];
+                u8 green = m_bgr888_palette[color][1];
+                u8 red = m_bgr888_palette[color][2];
+                m_frame_buffer[byte + 0] = blue;
+                m_frame_buffer[byte + 1] = green;
+                m_frame_buffer[byte + 2] = red;
+                m_frame_buffer[byte + 3] = 255;
+            }
+            break;
+    }
+
+    m_pixel_index++;
 }

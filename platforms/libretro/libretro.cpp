@@ -437,20 +437,26 @@ static void update_input(void)
     // Get current state
     for (int j = 0; j < MAX_PADS; j++)
     {
+        int up_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_UP);
+        int down_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_DOWN);
+        int left_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_LEFT);
+        int right_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_RIGHT);
+
         if (allow_up_down)
         {
-            joypad_current[j][0] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_UP)     ? 1 : 0;
-            joypad_current[j][1] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN)   ? 1 : 0;
-            joypad_current[j][2] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT)   ? 1 : 0;
-            joypad_current[j][3] = joypad_bits[j] & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT)  ? 1 : 0;
+            joypad_current[j][0] = up_pressed;
+            joypad_current[j][1] = down_pressed;
+            joypad_current[j][2] = left_pressed;
+            joypad_current[j][3] = right_pressed;
         }
         else
         {
-            joypad_current[j][0] = (IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_UP) && IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_DOWN)) ? 1 : 0;
-            joypad_current[j][1] = (IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_DOWN) && IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_UP)) ? 1 : 0;
-            joypad_current[j][2] = (IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_LEFT) && IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_RIGHT)) ? 1 : 0;
-            joypad_current[j][3] = (IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_RIGHT) && IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_LEFT)) ? 1 : 0;
+            joypad_current[j][0] = (up_pressed && (!down_pressed || joypad_old[j][0])) ? 1 : 0;
+            joypad_current[j][1] = (down_pressed && (!up_pressed || joypad_old[j][1])) ? 1 : 0;
+            joypad_current[j][2] = (left_pressed && (!right_pressed || joypad_old[j][2])) ? 1 : 0;
+            joypad_current[j][3] = (right_pressed && (!left_pressed || joypad_old[j][3])) ? 1 : 0;
         }
+
         joypad_current[j][4] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_A);
         joypad_current[j][5] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_B);
         joypad_current[j][6] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_SELECT);

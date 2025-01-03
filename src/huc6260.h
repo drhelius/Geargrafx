@@ -57,7 +57,7 @@ public:
 public:
     HuC6260(HuC6270* huc6270, HuC6280* huc6280);
     ~HuC6260();
-    void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGB888);
+    void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     void InitPalettes();
     void Reset();
     bool Clock();
@@ -73,6 +73,9 @@ public:
     void SetScanlineStart(int scanline_start);
     void SetScanlineEnd(int scanline_end);
     void SetOverscan(bool overscan);
+
+private:
+    void WritePixel(u16 pixel);
 
 private:
     HuC6270* m_huc6270;
