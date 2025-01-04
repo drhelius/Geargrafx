@@ -22,8 +22,10 @@
 
 #include "common.h"
 
-#define GG_GAMEDB_NONE 0x00
-#define GG_GAMEDB_SGX  0x01
+#define GG_GAMEDB_NONE          0x00
+#define GG_GAMEDB_SGX_REQUIRED  0x01
+#define GG_GAMEDB_SGX_OPTIONAL  0x02
+#define GG_GAMEDB_SF2_MAPPER    0x04
 
 struct GG_Game_DB_Entry
 {
@@ -34,12 +36,19 @@ struct GG_Game_DB_Entry
 
 const GG_Game_DB_Entry k_game_database[] =
 {
-    { 0xBEBFE042, "Darius Plus (J) (SGX)", GG_GAMEDB_SGX},
-    { 0x4C2126B0, "Aldynes (J) (SGX)", GG_GAMEDB_SGX},
-    { 0x8C4588E2, "1941 - Counter Attack (J) (SGX)", GG_GAMEDB_SGX},
-    { 0x1F041166, "Madouou Granzort (J) (SGX)", GG_GAMEDB_SGX},
-    { 0xB486A8ED, "Daimakaimura (J) (SGX)", GG_GAMEDB_SGX},
-    { 0x3B13AF61, "Battle Ace (J) (SGX)", GG_GAMEDB_SGX},
+    // SGX
+    { 0x8C4588E2, "1941 - Counter Attack (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
+    { 0x4C2126B0, "Aldynes (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
+    { 0x3B13AF61, "Battle Ace (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
+    { 0xB486A8ED, "Daimakaimura (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
+    { 0x1F041166, "Madouou Granzort (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
+
+    // OPTIONAL SGX
+    { 0xBEBFE042, "Darius Plus (J) (SGX)", GG_GAMEDB_SGX_OPTIONAL},
+
+    // SF2 MAPPER
+    { 0xD15CB6BB, "Street Fighter II' - Champion Edition (J)", GG_GAMEDB_SF2_MAPPER},
+
     {0, 0, GG_GAMEDB_NONE}
 };
 

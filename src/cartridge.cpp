@@ -17,12 +17,13 @@
  *
  */
 
-#include "cartridge.h"
-#include "miniz/miniz.h"
-#include "game_db.h"
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <assert.h>
+#include "cartridge.h"
+#include "miniz/miniz.h"
+#include "game_db.h"
 
 Cartridge::Cartridge()
 {
@@ -185,6 +186,8 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size)
             Debug("MCGENJIN mapper detected.");
         }
 
+        assert((size % 0x2000) == 0);
+
         if ((size % 0x2000) != 0)
         {
             Log("Invalid size found: %d (0x%X) bytes", size, size);
@@ -195,12 +198,6 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size)
         memcpy(m_rom, buffer, m_rom_size);
 
         GatherROMInfo();
-
-        if (m_is_sgx)
-        {
-            Log("SuperGrafx (SGX) games are not supported yet.");
-            return false;
-        }
 
         InitRomMAP();
 
@@ -300,10 +297,16 @@ void Cartridge::GatherInfoFromDB()
             found = true;
             Log("ROM found in database: %s. CRC: %08X", k_game_database[i].title, m_crc);
 
-            if (k_game_database[i].flags & GG_GAMEDB_SGX)
+            if (k_game_database[i].flags & GG_GAMEDB_SGX_REQUIRED)
             {
                 m_is_sgx = true;
                 Log("ROM is a SuperGrafx (SGX) game.");
+            }
+
+            if (k_game_database[i].flags & GG_GAMEDB_SGX_OPTIONAL)
+            {
+                m_is_sgx = true;
+                Log("ROM is a SuperGrafx (SGX) optional game.");
             }
         }
         else
@@ -318,8 +321,10 @@ void Cartridge::GatherInfoFromDB()
 
 void Cartridge::InitRomMAP()
 {
-    if(m_rom_size == 0x60000)
+    if (m_rom_bank_count == 0x30)
     {
+        Debug("Mapping 384KB ROM");
+
         for(int x = 0; x < 64; x++)
         {
             int bank = x & 0x1F;
@@ -329,13 +334,15 @@ void Cartridge::InitRomMAP()
 
         for(int x = 64; x < 128; x++)
         {
-            int bank = (x & 0x0F) + 32;
+            int bank = (x & 0x0F) + 0x20;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &m_rom[bank_address];
         }
     }
-    else if (m_rom_size == 0x80000)
+    else if (m_rom_bank_count == 0x40)
     {
+        Debug("Mapping 512KB ROM");
+
         for(int x = 0; x < 64; x++)
         {
             int bank = x & 0x3F;
@@ -345,16 +352,36 @@ void Cartridge::InitRomMAP()
 
         for(int x = 64; x < 128; x++)
         {
-            int bank = (x & 0x1F) + 32;
+            int bank = (x & 0x1F) + 0x20;
+            int bank_address = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_address];
+        }
+    }
+    else if (m_rom_bank_count == 0x60)
+    {
+        Debug("Mapping 768KB ROM");
+
+        for(int x = 0; x < 64; x++)
+        {
+            int bank = x & 0x3F;
+            int bank_address = bank * 0x2000;
+            m_rom_map[x] = &m_rom[bank_address];
+        }
+
+        for(int x = 64; x < 128; x++)
+        {
+            int bank = (x & 0x1F) + 0x40;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &m_rom[bank_address];
         }
     }
     else
     {
+        Debug("Default mapping ROM");
+
         for(int x = 0; x < 128; x++)
         {
-            int bank = x % (m_rom_size / 0x2000);
+            int bank = x % m_rom_bank_count;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &m_rom[bank_address];
         }
