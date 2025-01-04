@@ -8,17 +8,18 @@
             "linux": {
                 "program": "${workspaceFolder}/platforms/linux/geargrafx",
                 "cwd": "${workspaceFolder}/platforms/linux",
-                "MIMode": "gdb"
+                "MIMode": "gdb",
+                "externalConsole": false,
             },
             "osx": {
                 "program": "${workspaceFolder}/platforms/macos/geargrafx",
                 "cwd": "${workspaceFolder}/platforms/macos",
-                "MIMode": "lldb"
+                "MIMode": "lldb",
+                "externalConsole": true
             },
             "args": [],
             "stopAtEntry": false,
             "environment": [],
-            "externalConsole": false,
             "preLaunchTask": "Build (DEBUG)",
             "setupCommands": [
                 {
