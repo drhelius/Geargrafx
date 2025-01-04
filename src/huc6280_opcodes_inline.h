@@ -438,37 +438,13 @@ inline void HuC6280::OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2
 inline void HuC6280::OPCodes_TAM()
 {
     u8 bits = Fetch8();
-
-    if ((bits == 0) || (bits & (bits - 1)))
-    {
-        Debug("Invalid TAM bit: %02X", bits);
-    }
-
-    for (int i = 0; i < 8; i++)
-    {
-        if ((bits & (0x01 << i)) != 0)
-        {
-            m_memory->SetMpr(i, m_A.GetValue());
-        }
-    }
+    m_memory->SetMprTAM(bits, m_A.GetValue());
 }
 
 inline void HuC6280::OPCodes_TMA()
 {
     u8 bits = Fetch8();
-
-    if ((bits == 0) || (bits & (bits - 1)))
-    {
-        Debug("Invalid TMA bit: %02X", bits);
-    }
-
-    for (int i = 0; i < 8; i++)
-    {
-        if ((bits & (0x01 << i)) != 0)
-        {
-            m_A.SetValue(m_memory->GetMpr(i));
-        }
-    }
+    m_A.SetValue(m_memory->GetMprTMA(bits));
 }
 
 inline void HuC6280::OPCodes_Transfer(EightBitRegister* source, EightBitRegister* dest)

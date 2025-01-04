@@ -57,6 +57,8 @@ public:
     void Write(u16 address, u8 value);
     void SetMpr(u8 index, u8 value);
     u8 GetMpr(u8 index);
+    void SetMprTAM(u8 bits, u8 value);
+    u8 GetMprTMA(u8 bits);
     u32 GetPhysicalAddress(u16 address);
     u8 GetBank(u16 address);
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
@@ -76,6 +78,7 @@ private:
     u8* m_wram;
     GG_Disassembler_Record** m_disassembler;
     u8 m_io_buffer;
+    u8 m_mpr_buffer;
     u8* m_test_memory;
 };
 

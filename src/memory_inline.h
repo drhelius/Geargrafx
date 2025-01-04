@@ -20,6 +20,7 @@
 #ifndef MEMORY_INLINE_H
 #define	MEMORY_INLINE_H
 
+#include <assert.h>
 #include "memory.h"
 #include "cartridge.h"
 #include "huc6260.h"
@@ -259,12 +260,69 @@ inline void Memory::Write(u16 address, u8 value)
 
 inline void Memory::SetMpr(u8 index, u8 value)
 {
-    m_mpr[index & 0x07] = value;
+    assert(index < 8);
+    m_mpr[index] = value;
 }
 
 inline u8 Memory::GetMpr(u8 index)
 {
-    return m_mpr[index & 0x07];
+    assert(index < 8);
+    return m_mpr[index];
+}
+
+inline void Memory::SetMprTAM(u8 bits, u8 value)
+{
+    assert((bits != 0) && !(bits & (bits - 1)));
+
+    if(bits == 0)
+    {
+        Debug("No TAM bit: %02X", bits);
+        return;
+    }
+
+    if (bits & (bits - 1))
+    {
+        Debug("Invalid TAM bits: %02X", bits);
+    }
+
+    m_mpr_buffer = value;
+
+    for (int i = 0; i < 8; i++)
+    {
+        if ((bits & (0x01 << i)) != 0)
+        {
+            m_mpr[i] = value;
+        }
+    }
+}
+
+inline u8 Memory::GetMprTMA(u8 bits)
+{
+    assert((bits != 0) && !(bits & (bits - 1)));
+
+    if(bits == 0)
+    {
+        Debug("No TAM bit: %02X", bits);
+        return m_mpr_buffer;
+    }
+
+    if (bits & (bits - 1))
+    {
+        Debug("Invalid TAM bits: %02X", bits);
+    }
+
+    u8 ret = 0;
+
+    for (int i = 0; i < 8; i++)
+    {
+        if ((bits & (0x01 << i)) != 0)
+        {
+            ret |= m_mpr[i];
+        }
+    }
+
+    m_mpr_buffer = ret;
+    return ret;
 }
 
 inline u32 Memory::GetPhysicalAddress(u16 address)

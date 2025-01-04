@@ -75,6 +75,7 @@ void Memory::Init()
 void Memory::Reset()
 {
     m_io_buffer = 0xFF;
+    m_mpr_buffer = 0x00;
     m_mpr[7] = 0x00;
 
     for (int i = 0; i < 7; i++)
