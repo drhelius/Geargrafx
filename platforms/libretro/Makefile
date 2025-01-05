@@ -329,8 +329,8 @@ else
 	CXXFLAGS += -O3 -DNDEBUG
 endif
 
-GIT_VERSION ?= "$(shell git describe --abbrev=7 --dirty --always --tags || echo unknown)"
-ifneq ($(GIT_VERSION)," unknown")
+GIT_VERSION ?= $(shell git describe --abbrev=7 --dirty --always --tags || echo unknown)
+ifneq ($(GIT_VERSION), unknown)
 	CXXFLAGS += -DEMULATOR_BUILD=\"$(GIT_VERSION)\"
 endif
 
