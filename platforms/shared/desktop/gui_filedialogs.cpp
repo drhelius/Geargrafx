@@ -24,15 +24,25 @@
 #include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
 #include "gui_debug_trace_logger.h"
+#include "application.h"
 #include "config.h"
 #include "emu.h"
 #include "nfd/nfd.h"
+#include "nfd/nfd_sdl2.h"
+
+static void file_dialog_set_native_window(SDL_Window* window, nfdwindowhandle_t* native_window);
 
 void gui_file_dialog_open_rom(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "ROM Files", "pce,sgx,rom,bin,zip" } };
-    nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, config_emulator.last_open_path.c_str());
+    nfdopendialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = config_emulator.last_open_path.c_str();
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         std::string path = outPath;
@@ -51,7 +61,13 @@ void gui_file_dialog_load_ram(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "RAM Files", "sav" } };
-    nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, NULL);
+    nfdopendialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = config_emulator.last_open_path.c_str();
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         emu_load_ram(outPath);
@@ -67,7 +83,14 @@ void gui_file_dialog_save_ram(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "RAM Files", "sav" } };
-    nfdresult_t result = NFD_SaveDialog(&outPath, filterItem, 1, NULL, NULL);
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = config_emulator.last_open_path.c_str();
+    args.defaultName = NULL;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         emu_save_ram(outPath);
@@ -83,7 +106,13 @@ void gui_file_dialog_load_state(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "Save State Files", "state" } };
-    nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, NULL);
+    nfdopendialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = config_emulator.last_open_path.c_str();
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         std::string message("Loading state from ");
@@ -102,7 +131,14 @@ void gui_file_dialog_save_state(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "Save State Files", "state" } };
-    nfdresult_t result = NFD_SaveDialog(&outPath, filterItem, 1, NULL, NULL);
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = config_emulator.last_open_path.c_str();
+    args.defaultName = NULL;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         std::string message("Saving state to ");
@@ -120,7 +156,11 @@ void gui_file_dialog_save_state(void)
 void gui_file_dialog_choose_savestate_path(void)
 {
     nfdchar_t *outPath;
-    nfdresult_t result = NFD_PickFolder(&outPath, config_emulator.savestates_path.c_str());
+    nfdpickfolderu8args_t args = { };
+    args.defaultPath = config_emulator.savestates_path.c_str();
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         config_emulator.savestates_path.assign(outPath);
@@ -136,7 +176,13 @@ void gui_file_dialog_load_symbols(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "Symbol Files", "sym" } };
-    nfdresult_t result = NFD_OpenDialog(&outPath, filterItem, 1, NULL);
+    nfdopendialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = NULL;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         gui_debug_reset_symbols();
@@ -153,7 +199,14 @@ void gui_file_dialog_save_screenshot(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "PNG Files", "png" } };
-    nfdresult_t result = NFD_SaveDialog(&outPath, filterItem, 1, NULL, NULL);
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = NULL;
+    args.defaultName = NULL;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         gui_action_save_screenshot(outPath);
@@ -169,7 +222,14 @@ void gui_file_dialog_save_memory_dump(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "Memory Dump Files", "txt" } };
-    nfdresult_t result = NFD_SaveDialog(&outPath, filterItem, 1, NULL, NULL);
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = NULL;
+    args.defaultName = NULL;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         gui_debug_save_memory_dump(outPath);
@@ -185,7 +245,14 @@ void gui_file_dialog_save_disassembler(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "Disassembler Files", "txt" } };
-    nfdresult_t result = NFD_SaveDialog(&outPath, filterItem, 1, NULL, NULL);
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = NULL;
+    args.defaultName = NULL;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         gui_debug_save_disassembler(outPath);
@@ -201,7 +268,14 @@ void gui_file_dialog_save_log(void)
 {
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "Log Files", "txt" } };
-    nfdresult_t result = NFD_SaveDialog(&outPath, filterItem, 1, NULL, NULL);
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = NULL;
+    args.defaultName = NULL;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
         gui_debug_save_log(outPath);
@@ -210,5 +284,13 @@ void gui_file_dialog_save_log(void)
     else if (result != NFD_CANCEL)
     {
         Log("Save Log Error: %s", NFD_GetError());
+    }
+}
+
+static void file_dialog_set_native_window(SDL_Window* window, nfdwindowhandle_t* native_window)
+{
+    if (!NFD_GetNativeWindowFromSDLWindow(window, native_window))
+    {
+        Log("NFD_GetNativeWindowFromSDLWindow failed: %s\n", SDL_GetError());
     }
 }
