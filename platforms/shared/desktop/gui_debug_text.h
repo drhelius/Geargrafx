@@ -26,6 +26,36 @@
 
 const char k_color_marker_start = '{';
 const char k_color_marker_end = '}';
+
+static void RemoveColorFromString(char* str)
+{
+    char* result = str;
+    char* index = str;
+
+    while(*index != '\0')
+    {
+        if(*index == k_color_marker_start)
+        {
+            while(*index != k_color_marker_end && *index != '\0')
+            {
+                index++;
+            }
+
+            if(*index == k_color_marker_end)
+            {
+                index++;
+            }
+        }
+        else
+        {
+            *result = *index;
+            result++;
+            index++;
+        }
+    }
+
+    *result = '\0';
+}
  
 static bool ProcessInlineHexColor(const char* start, const char* end, ImVec4& color)
 {

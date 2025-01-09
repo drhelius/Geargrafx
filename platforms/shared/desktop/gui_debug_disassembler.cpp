@@ -268,7 +268,20 @@ void gui_debug_save_disassembler(const char* file_path)
             if (record->subroutine || record->irq)
                 fprintf(file, "\n");
 
-            fprintf(file, "%06X-%02X:    %s\n", i, record->bank, record->name);
+            char name[64];
+            strcpy(name, record->name);
+            RemoveColorFromString(name);
+
+            int len = strlen(name);
+            char spaces[32];
+            int offset = 28 - len;
+            if (offset < 0)
+                offset = 0;
+            for (int i = 0; i < offset; i++)
+                spaces[i] = ' ';
+            spaces[offset] = 0;
+
+            fprintf(file, "%06X-%02X:    %s%s;%s\n", i, record->bank, name, spaces, record->bytes);
 
             if (is_return_instruction(record->opcodes[0]))
                 fprintf(file, "\n");
