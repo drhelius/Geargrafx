@@ -124,7 +124,7 @@ void gui_debug_window_psg(void)
                     psg_state->CHANNELS[channel].mute = !psg_state->CHANNELS[channel].mute;
                 }
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                    ImGui::SetTooltip("Mute / Unmute");
+                    ImGui::SetTooltip("Mute");
 
                 snprintf(label, 32, "%s##exc%d", ICON_MD_STAR, channel);
 
@@ -145,7 +145,7 @@ void gui_debug_window_psg(void)
                 ImGui::PopStyleColor();
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 {
-                    ImGui::SetTooltip("Mute Others");
+                    ImGui::SetTooltip("Solo");
                 }
                 ImGui::PopFont();
                 ImGui::PopStyleColor();
