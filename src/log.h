@@ -29,14 +29,14 @@
         #include <android/log.h>
         #define printf(...) __android_log_print(ANDROID_LOG_DEBUG, GG_TITLE, __VA_ARGS__);
     #endif
-    #define Debug(msg, ...) (Log_func(true, msg, ##__VA_ARGS__))
+    #define Debug(msg, ...) (Log_func(msg, ##__VA_ARGS__))
 #else
     #define Debug(msg, ...)
 #endif
 
-#define Log(msg, ...) (Log_func(false, msg, ##__VA_ARGS__))
+#define Log(msg, ...) (Log_func(msg, ##__VA_ARGS__))
 
-inline void Log_func(bool debug, const char* const msg, ...)
+inline void Log_func(const char* const msg, ...)
 {
     static int count = 1;
     char buffer[512];
@@ -45,14 +45,13 @@ inline void Log_func(bool debug, const char* const msg, ...)
     vsnprintf(buffer, 512, msg, args);
     va_end(args);
 
-    if (debug)
-    {
-        printf("%d: [DEBUG] %s\n", count, buffer);
-        count++;
-    }
-    else
-        printf("%s\n", buffer);
-    
+#if defined(GG_DEBUG)
+    printf("%d: %s\n", count, buffer);
+    count++;
+#else
+    printf("%s\n", buffer);
+#endif
+
     fflush(stdout);
 }
 
