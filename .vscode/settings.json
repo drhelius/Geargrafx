@@ -2,6 +2,7 @@
     "files.exclude": {
         "**/*.o": true,
         "**/*.so": true,
+        "**/*.dylib": true,
         "**/geargrafx": true,
         "**/geargrafx-tests": true,
         "**/binary_to_compressed_c": true,
