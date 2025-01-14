@@ -290,7 +290,7 @@ void GeargrafxCore::ResetSound()
 
 // void GeargrafxCore::SaveRam(const char*, bool)
 // {
-//     // TODO
+//     // TODO Implement save ram
 // }
 
 // void GeargrafxCore::LoadRam()
@@ -300,11 +300,12 @@ void GeargrafxCore::ResetSound()
 
 // void GeargrafxCore::LoadRam(const char*, bool)
 // {
-//     // TODO
+//     // TODO Implement load ram
 // }
 
 // void GeargrafxCore::SaveState(int index)
 // {
+//     TODO Implement save states
 //     Log("Creating save state %d...", index);
 
 //     SaveState(NULL, index);

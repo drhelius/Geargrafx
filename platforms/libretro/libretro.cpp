@@ -307,7 +307,7 @@ void retro_unload_game(void)
 
 unsigned retro_get_region(void)
 {
-    // TODO
+    // TODO [libretro] Implement region detection
     return RETRO_REGION_NTSC;
 }
 
@@ -321,19 +321,19 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
 size_t retro_serialize_size(void)
 {
-    // TODO
+    // TODO [libretro] Implement save states
     return 0;
 }
 
 bool retro_serialize(void *data, size_t size)
 {
-    // TODO
+    // TODO [libretro] Implement save states
     return false;
 }
 
 bool retro_unserialize(const void *data, size_t size)
 {
-    // TODO
+    // TODO [libretro] Implement save states
     return false;
 }
 
@@ -345,7 +345,7 @@ void *retro_get_memory_data(unsigned id)
             return NULL;
         case RETRO_MEMORY_SYSTEM_RAM:
             return NULL;
-            // TODO
+            // TODO [libretro] Implement memory access for cheevos
             //return core->GetMemory()->GetRam();
     }
 
@@ -367,12 +367,12 @@ size_t retro_get_memory_size(unsigned id)
 
 void retro_cheat_reset(void)
 {
-    // TODO
+    // TODO [libretro] Implement cheats
 }
 
 void retro_cheat_set(unsigned index, bool enabled, const char *code)
 {
-    // TODO
+    // TODO [libretro] Implement cheats
 }
 
 static void set_controller_info(void)
