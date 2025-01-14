@@ -167,7 +167,7 @@ inline void Memory::Write(u16 address, u8 value)
     u32 physical_address = (mpr_value << 13) | (address & 0x1FFF);
 
     // 0x00 - 0x7F
-    if (mpr_value < 0x7F)
+    if (mpr_value < 0x80)
     {
         // HuCard ROM
         Debug("Attempted write to HuCard ROM at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
