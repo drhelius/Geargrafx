@@ -52,9 +52,9 @@ inline void HuC6280::AssertIRQ1(bool asserted)
 {
     m_irq1_asserted = asserted;
     if (m_irq1_asserted)
-        SetBit(m_interrupt_request_register, 1);
+        m_interrupt_request_register = SetBit(m_interrupt_request_register, 1);
     else
-        UnsetBit(m_interrupt_request_register, 1);
+        m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 1);
 }
 
 inline void HuC6280::AssertIRQ2(bool asserted)
@@ -62,9 +62,9 @@ inline void HuC6280::AssertIRQ2(bool asserted)
     Debug("IRQ2 asserted: %s", asserted ? "true" : "false");
     m_irq2_asserted = asserted;
     if (m_irq2_asserted)
-        SetBit(m_interrupt_request_register, 0);
+        m_interrupt_request_register = SetBit(m_interrupt_request_register, 0);
     else
-        UnsetBit(m_interrupt_request_register, 0);
+        m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 0);
 }
 
 inline void HuC6280::RequestNMI()
@@ -83,7 +83,7 @@ inline u8 HuC6280:: ReadInterruptRegister(u32 address)
     if ((address & 1) == 0)
     {
         // Acknowledge TIQ
-        UnsetBit(m_interrupt_request_register, 2);
+        m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 2);
         m_timer_irq = false;
         return m_interrupt_disable_register;
     }
@@ -102,7 +102,7 @@ inline void HuC6280::WriteInterruptRegister(u32 address, u8 value)
     else
     {
         // Acknowledge TIQ
-        UnsetBit(m_interrupt_request_register, 2);
+        m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 2);
         m_timer_irq = false;
     }
 }
