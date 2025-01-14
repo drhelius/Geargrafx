@@ -100,7 +100,7 @@ void HuC6260::Reset()
 
     for (int i = 0; i < 512; i++)
     {
-        m_color_table[i] = 0;
+        m_color_table[i] = rand() & 0x1FF;
     }
 }
 
