@@ -94,8 +94,8 @@
     <ClCompile Include="..\shared\desktop\nfd\nfd_win.cpp">
       <Filter>desktop\nfd</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\audio\sound_queue.cpp">
-      <Filter>audio</Filter>
+    <ClCompile Include="..\shared\desktop\sound_queue.cpp">
+      <Filter>desktop</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\audio.cpp">
       <Filter>src</Filter>
@@ -243,8 +243,8 @@
     <ClInclude Include="..\shared\desktop\mINI\ini.h">
       <Filter>desktop\mINI</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\audio\sound_queue.h">
-      <Filter>audio</Filter>
+    <ClInclude Include="..\shared\desktop\sound_queue.h">
+      <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\audio.h">
       <Filter>src</Filter>
@@ -349,9 +349,6 @@
     </Filter>
     <Filter Include="desktop">
       <UniqueIdentifier>{b305c14e-49f4-4f2f-9d40-5b15a839fbb7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="audio">
-      <UniqueIdentifier>{c8dae10e-4945-4204-9ecb-41eb990aeed0}</UniqueIdentifier>
     </Filter>
     <Filter Include="desktop\imgui">
       <UniqueIdentifier>{2845bb6f-3a7e-4dd9-a512-26cc2d70d318}</UniqueIdentifier>

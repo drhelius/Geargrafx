@@ -20,7 +20,7 @@
 #include "emu.h"
 
 #include "../../../src/geargrafx.h"
-#include "../audio/sound_queue.h"
+#include "sound_queue.h"
 #include "config.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION

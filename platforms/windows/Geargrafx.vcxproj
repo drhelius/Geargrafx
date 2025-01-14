@@ -31,7 +31,7 @@
     <ClCompile Include="..\..\src\huc6280.cpp" />
     <ClCompile Include="..\..\src\input.cpp" />
     <ClCompile Include="..\..\src\memory.cpp" />
-    <ClCompile Include="..\shared\audio\sound_queue.cpp" />
+    <ClCompile Include="..\shared\desktop\sound_queue.cpp" />
     <ClCompile Include="..\shared\desktop\application.cpp" />
     <ClCompile Include="..\shared\desktop\config.cpp" />
     <ClCompile Include="..\shared\desktop\emu.cpp" />
@@ -93,7 +93,7 @@
     <ClInclude Include="..\..\src\huc6280_timing.h" />
     <ClInclude Include="..\..\src\huc6280.h" />
     <ClInclude Include="..\..\src\types.h" />
-    <ClInclude Include="..\shared\audio\sound_queue.h" />
+    <ClInclude Include="..\shared\desktop\sound_queue.h" />
     <ClInclude Include="..\shared\desktop\application.h" />
     <ClInclude Include="..\shared\desktop\backers.h" />
     <ClInclude Include="..\shared\desktop\config.h" />

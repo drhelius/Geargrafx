@@ -1,6 +1,5 @@
 SRC_DIR = ../../src
 DESKTOP_SRC_DIR=../shared/desktop
-AUDIO_SRC_DIR=../shared/audio
 
 SOURCES_C := \
     $(SRC_DIR)/miniz/miniz.c \
@@ -35,7 +34,7 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/imgui/implot.cpp \
     $(DESKTOP_SRC_DIR)/imgui/implot_items.cpp \
     $(DESKTOP_SRC_DIR)/imgui/implot_demo.cpp \
-    $(AUDIO_SRC_DIR)/sound_queue.cpp \
+    $(DESKTOP_SRC_DIR)/sound_queue.cpp \
     $(SRC_DIR)/geargrafx_core.cpp \
     $(SRC_DIR)/audio.cpp \
     $(SRC_DIR)/cartridge.cpp \
