@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+#include <stdlib.h>
 #include "huc6260.h"
 
 HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
