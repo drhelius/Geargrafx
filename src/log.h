@@ -38,7 +38,6 @@
 
 inline void Log_func(const char* const msg, ...)
 {
-    static int count = 1;
     char buffer[512];
     va_list args;
     va_start(args, msg);
@@ -46,6 +45,7 @@ inline void Log_func(const char* const msg, ...)
     va_end(args);
 
 #if defined(GG_DEBUG)
+    static int count = 1;
     printf("%d: %s\n", count, buffer);
     count++;
 #else
