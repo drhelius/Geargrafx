@@ -108,6 +108,7 @@ void config_read(void)
     config_debug.show_screen = read_bool("Debug", "Screen", true);
     config_debug.show_memory = read_bool("Debug", "Memory", false);
     config_debug.show_processor = read_bool("Debug", "Processor", true);
+    config_debug.show_call_stack = read_bool("Debug", "CallStack", false);
     config_debug.show_huc6260_info = read_bool("Debug", "HuC6260Info", false);
     config_debug.show_huc6260_palettes = read_bool("Debug", "HuC6260Palettes", false);
     config_debug.show_huc6270_registers = read_bool("Debug", "HuC6270Registers", false);
@@ -231,6 +232,7 @@ void config_write(void)
     write_bool("Debug", "Screen", config_debug.show_screen);
     write_bool("Debug", "Memory", config_debug.show_memory);
     write_bool("Debug", "Processor", config_debug.show_processor);
+    write_bool("Debug", "CallStack", config_debug.show_call_stack);
     write_bool("Debug", "HuC6260Info", config_debug.show_huc6260_info);
     write_bool("Debug", "HuC6260Palettes", config_debug.show_huc6260_palettes);
     write_bool("Debug", "HuC6270Registers", config_debug.show_huc6270_registers);

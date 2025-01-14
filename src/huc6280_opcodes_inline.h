@@ -171,8 +171,8 @@ inline void HuC6280::OPCodes_BIT_Immediate(u16 address)
 
 inline void HuC6280::OPCodes_BRK()
 {
-    m_PC.Increment();
-    StackPush16(m_PC.GetValue());
+    u16 pc = m_PC.GetValue();
+    StackPush16(pc + 1);
 
 #if !defined(GG_TESTING)
     ClearFlag(FLAG_TRANSFER);
@@ -189,13 +189,26 @@ inline void HuC6280::OPCodes_BRK()
     m_PC.SetLow(m_memory->Read(0xFFF6));
     m_PC.SetHigh(m_memory->Read(0xFFF7));
 #endif
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    u16 dest = m_PC.GetValue();
+    PushCallStack(pc - 1, dest, pc + 1);
+#endif
 }
 
 inline void HuC6280::OPCodes_Subroutine()
 {
-    StackPush16(m_PC.GetValue());
+    u16 pc = m_PC.GetValue();
     s8 displacement = RelativeAddressing();
-    m_PC.SetValue(static_cast<u16>(m_PC.GetValue() + displacement));
+    u16 dest = static_cast<u16>(m_PC.GetValue() + displacement);
+
+    StackPush16(pc);
+    m_PC.SetValue(dest);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    PushCallStack(pc - 1, dest, pc);
+#endif
+
 }
 
 inline void HuC6280::OPCodes_CMP(EightBitRegister* reg, u8 value)

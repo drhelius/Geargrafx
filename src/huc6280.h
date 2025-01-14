@@ -91,6 +91,13 @@ public:
         bool range;
     };
 
+    struct GG_CallStackEntry
+    {
+        u16 src;
+        u16 dest;
+        u16 back;
+    };
+
 public:
     HuC6280();
     ~HuC6280();
@@ -120,7 +127,7 @@ public:
     bool IsBreakpoint(int type, u16 address);
     std::vector<GG_Breakpoint>* GetBreakpoints();
     void ClearDisassemblerCallStack();
-    std::stack<u16>* GetDisassemblerCallStack();
+    std::stack<GG_CallStackEntry>* GetDisassemblerCallStack();
     void CheckMemoryBreakpoints(int type, u16 address, bool read);
 
 private:
@@ -165,13 +172,14 @@ private:
     std::vector<GG_Breakpoint> m_breakpoints;
     GG_Breakpoint m_run_to_breakpoint;
     bool m_run_to_breakpoint_requested;
-    std::stack<u16> m_disassembler_call_stack;
+    std::stack<GG_CallStackEntry> m_disassembler_call_stack;
 
 private:
     void ClockTimer();
 
     void CheckBreakpoints();
-    void UpdateDisassemblerCallStack();
+    void PushCallStack(u16 src, u16 dest, u16 back);
+    void PopCallStack();
 
     u8 Fetch8();
     u16 Fetch16();

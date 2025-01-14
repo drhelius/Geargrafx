@@ -109,8 +109,6 @@ unsigned int HuC6280::TickOPCode()
     m_skip_flag_transfer_clear = false;
     m_cycles = 0;
 
-    UpdateDisassemblerCallStack();
-
     u8 opcode = Fetch8();
     (this->*m_opcodes[opcode])();
 
@@ -178,7 +176,8 @@ unsigned int HuC6280::TickIRQ()
 
     if (irq_pending)
     {
-        StackPush16(m_PC.GetValue());
+        u16 pc = m_PC.GetValue();
+        StackPush16(pc);
         StackPush8(m_P.GetValue() & ~FLAG_BREAK);
         SetFlag(FLAG_INTERRUPT);
         ClearFlag(FLAG_DECIMAL | FLAG_TRANSFER);
@@ -189,6 +188,8 @@ unsigned int HuC6280::TickIRQ()
 #if !defined(GG_DISABLE_DISASSEMBLER)
         if (m_breakpoints_irq_enabled)
             m_cpu_breakpoint_hit = true;
+        u16 dest = m_PC.GetValue();
+        PushCallStack(pc, dest, pc);
 #endif
     }
 
@@ -231,7 +232,7 @@ void HuC6280::ClockTimer()
             {
                 m_timer_reload_requested = true;
                 m_timer_irq = true;
-                SetBit(m_interrupt_request_register, 2);
+                m_interrupt_request_register = SetBit(m_interrupt_request_register, 2);
             }
         }
     }
@@ -564,7 +565,7 @@ void HuC6280::ClearDisassemblerCallStack()
         m_disassembler_call_stack.pop();
 }
 
-std::stack<u16>* HuC6280::GetDisassemblerCallStack()
+std::stack<HuC6280::GG_CallStackEntry>* HuC6280::GetDisassemblerCallStack()
 {
     return &m_disassembler_call_stack;
 }
@@ -668,27 +669,27 @@ void HuC6280::CheckBreakpoints()
 #endif
 }
 
-void HuC6280::UpdateDisassemblerCallStack()
+void HuC6280::PushCallStack(u16 src, u16 dest, u16 back)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
-
-    u16 address = m_PC.GetValue();
-    u8 opcode = m_memory->Read(address);
-
-    // BSR rr, JSR hhll
-    if (opcode == 0x44 || opcode == 0x20)
+    GG_CallStackEntry entry;
+    entry.src = src;
+    entry.dest = dest;
+    entry.back = back;
+    if (m_disassembler_call_stack.size() < 256)
+        m_disassembler_call_stack.push(entry);
+    else
     {
-        u8 opcode_size = k_huc6280_opcode_sizes[opcode];
-        if (m_disassembler_call_stack.size() < 256)
-            m_disassembler_call_stack.push(address + opcode_size);
+        //Debug("** HuC6280 --> Disassembler Call Stack Overflow");
     }
-    // RTS
-    else if (opcode == 0x60)
-    {
-        if (m_disassembler_call_stack.size() > 0)
-            m_disassembler_call_stack.pop();
-    }
+#endif
+}
 
+void HuC6280::PopCallStack()
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (!m_disassembler_call_stack.empty())
+        m_disassembler_call_stack.pop();
 #endif
 }
 

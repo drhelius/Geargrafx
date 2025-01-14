@@ -197,7 +197,7 @@ bool emu_is_audio_open(void)
 
 void emu_save_ram(const char* file_path)
 {
-    // TODO
+    // TODO Implement save ram to file
     // if (!emu_is_empty())
     //     geargrafx->SaveRam(file_path, true);
     UNUSED(file_path);
@@ -205,7 +205,7 @@ void emu_save_ram(const char* file_path)
 
 void emu_load_ram(const char* file_path)
 {
-    // TODO
+    // TODO Implement load ram from file
     // if (!emu_is_empty())
     // {
     //     save_ram();
@@ -217,7 +217,7 @@ void emu_load_ram(const char* file_path)
 
 void emu_save_state_slot(int index)
 {
-    // TODO
+    // TODO Implement save states
     // if (!emu_is_empty())
     // {
     //     if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
@@ -230,7 +230,7 @@ void emu_save_state_slot(int index)
 
 void emu_load_state_slot(int index)
 {
-    // TODO
+    // TODO Implement save states
     // if (!emu_is_empty())
     // {
     //     if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
@@ -243,7 +243,7 @@ void emu_load_state_slot(int index)
 
 void emu_save_state_file(const char* file_path)
 {
-    // TODO
+    // TODO Implement save states
     // if (!emu_is_empty())
     //     geargrafx->SaveState(file_path, -1);
     UNUSED(file_path);
@@ -251,7 +251,7 @@ void emu_save_state_file(const char* file_path)
 
 void emu_load_state_file(const char* file_path)
 {
-    // TODO
+    // TODO Implement save states
     // if (!emu_is_empty())
     //     geargrafx->LoadState(file_path, -1);
     UNUSED(file_path);
@@ -317,11 +317,12 @@ void emu_debug_step_into(void)
 void emu_debug_step_out(void)
 {
     HuC6280* processor = emu_get_core()->GetHuC6280();
-    std::stack<u16>* call_stack = processor->GetDisassemblerCallStack();
+    std::stack<HuC6280::GG_CallStackEntry>* call_stack = processor->GetDisassemblerCallStack();
 
     if (call_stack->size() > 0)
     {
-        u16 return_address = call_stack->top();
+        HuC6280::GG_CallStackEntry entry = call_stack->top();
+        u16 return_address = entry.back;
         processor->AddRunToBreakpoint(return_address);
         emu_debug_command = Debug_Command_Continue;
     }

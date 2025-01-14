@@ -38,6 +38,7 @@ EXTERN void gui_debug_runtocursor(void);
 EXTERN void gui_debug_go_back(void);
 EXTERN void gui_debug_window_disassembler(void);
 EXTERN void gui_debug_save_disassembler(const char* file_path);
+EXTERN void gui_debug_window_call_stack(void);
 
 #undef GUI_DEBUG_DISASSEMBLER_IMPORT
 #undef EXTERN

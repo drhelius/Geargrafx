@@ -533,7 +533,7 @@ static void prepare_drawable_lines(void)
                     disassembler_lines.push_back(line);
                     fixed_symbol_found = true;
                 }
-            }                
+            }
 
             if (config_debug.dis_show_symbols && config_debug.dis_show_auto_symbols && !fixed_symbol_found)
             {
@@ -1276,4 +1276,86 @@ static void add_bookmark_popup(void)
 
         ImGui::EndPopup();
     }
+}
+
+void gui_debug_window_call_stack(void)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::SetNextWindowPos(ImVec2(340, 168), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(330, 240), ImGuiCond_FirstUseEver);
+
+    ImGui::Begin("Call Stack", &config_debug.show_call_stack);
+
+    GeargrafxCore* core = emu_get_core();
+    Memory* memory = core->GetMemory();
+    HuC6280* processor = core->GetHuC6280();
+    std::stack<HuC6280::GG_CallStackEntry> temp_stack = *processor->GetDisassemblerCallStack();
+
+    char symbol_text[64] = { };
+
+    ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Resizable;
+
+    if (ImGui::BeginTable("call_stack", 3, flags))
+    {
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableSetupColumn("Function", ImGuiTableColumnFlags_WidthStretch, 2.0f);
+        ImGui::TableSetupColumn("Source", ImGuiTableColumnFlags_WidthStretch, 0.5f);
+        ImGui::TableSetupColumn("Return", ImGuiTableColumnFlags_WidthStretch, 0.5f);
+        ImGui::TableHeadersRow();
+
+        ImGui::PushFont(gui_default_font);
+
+        while (!temp_stack.empty())
+        {
+            ImGui::TableNextRow();
+
+            HuC6280::GG_CallStackEntry entry = temp_stack.top();
+            temp_stack.pop();
+
+            Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(entry.dest);
+
+            if (IsValidPointer(record) && (record->name[0] != 0))
+            {
+                DebugSymbol* symbol = fixed_symbols[record->bank][entry.dest];
+
+                if (IsValidPointer(symbol))
+                    snprintf(symbol_text, sizeof(symbol_text), "%s", symbol->text);
+                else 
+                {
+                    DebugSymbol* symbol = dynamic_symbols[record->bank][entry.dest];
+
+                    if (IsValidPointer(symbol))
+                        snprintf(symbol_text, sizeof(symbol_text), "%s", symbol->text);
+                    else
+                        snprintf(symbol_text, sizeof(symbol_text), "");
+                }
+            }
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(cyan, "$%04X", entry.dest);
+            ImGui::SameLine();
+            ImGui::TextColored(green, "%s", symbol_text);
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(cyan, "$%04X", entry.src);
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(cyan, "$%04X", entry.back);
+        }
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::TextColored(gray, "----- Bottom of Stack");
+        ImGui::TableNextColumn();
+        ImGui::TextColored(gray, "-----");
+        ImGui::TableNextColumn();
+        ImGui::TextColored(gray, "-----");
+
+        ImGui::PopFont();
+
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+    ImGui::PopStyleVar();
 }

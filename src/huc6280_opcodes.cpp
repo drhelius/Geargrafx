@@ -216,9 +216,14 @@ void HuC6280::OPCode0x1F()
 void HuC6280::OPCode0x20()
 {
     // JSR $nn
-    u16 target = AbsoluteAddressing();
-    StackPush16(m_PC.GetValue() - 1);
-    m_PC.SetValue(target);
+    u16 dest = AbsoluteAddressing();
+    u16 pc = m_PC.GetValue();
+    StackPush16(pc - 1);
+    m_PC.SetValue(dest);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    PushCallStack(pc - 3, dest, pc);
+#endif
 }
 
 void HuC6280::OPCode0x21()
@@ -417,6 +422,9 @@ void HuC6280::OPCode0x40()
 #if defined(GG_TESTING)
     ClearFlag(FLAG_BREAK);
 #endif
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    PopCallStack();
+#endif
 }
 
 void HuC6280::OPCode0x41()
@@ -606,6 +614,9 @@ void HuC6280::OPCode0x60()
 {
     // RTS
     m_PC.SetValue(StackPop16() + 1);
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    PopCallStack();
+#endif
 }
 
 void HuC6280::OPCode0x61()

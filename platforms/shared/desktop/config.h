@@ -107,6 +107,7 @@ struct config_Debug
     bool show_screen = true;
     bool show_disassembler = true;
     bool show_processor = true;
+    bool show_call_stack = false;
     bool show_memory = false;
     bool show_huc6260_info = false;
     bool show_huc6260_palettes = false;
