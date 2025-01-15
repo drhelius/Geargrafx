@@ -30,6 +30,12 @@
 #define APPLICATION_IMPORT
 #include "application.h"
 
+#if defined(GG_DEBUG)
+#define WINDOW_TITLE GG_TITLE " " GG_VERSION " (DEBUG)"
+#else
+#define WINDOW_TITLE GG_TITLE " " GG_VERSION
+#endif
+
 static SDL_GLContext gl_context;
 static bool running = true;
 static bool paused_when_focus_lost = false;
@@ -132,9 +138,11 @@ void application_trigger_fit_to_content(int width, int height)
     SDL_SetWindowSize(application_sdl_window, width, height);
 }
 
-void application_update_title(char* title)
+void application_update_title_with_rom(const char* rom)
 {
-    SDL_SetWindowTitle(application_sdl_window, title);
+    char final_title[256];
+    snprintf(final_title, 256, "%s - %s", WINDOW_TITLE, rom);
+    SDL_SetWindowTitle(application_sdl_window, final_title);
 }
 
 static int sdl_init(void)
@@ -167,7 +175,7 @@ static int sdl_init(void)
     if (config_emulator.maximized)
         window_flags = (SDL_WindowFlags)(window_flags | SDL_WINDOW_MAXIMIZED);
 
-    application_sdl_window = SDL_CreateWindow(GG_TITLE " " GG_VERSION, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config_emulator.window_width, config_emulator.window_height, window_flags);
+    application_sdl_window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config_emulator.window_width, config_emulator.window_height, window_flags);
     gl_context = SDL_GL_CreateContext(application_sdl_window);
     SDL_GL_MakeCurrent(application_sdl_window, gl_context);
     SDL_GL_SetSwapInterval(0);

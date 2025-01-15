@@ -265,11 +265,7 @@ void gui_load_rom(const char* path)
     }
 
     if (!emu_is_empty())
-    {
-        char title[256];
-        snprintf(title, 256, "%s %s - %s", GG_TITLE, GG_VERSION, emu_get_core()->GetCartridge()->GetFileName());
-        application_update_title(title);
-    }
+        application_update_title_with_rom(emu_get_core()->GetCartridge()->GetFileName());
 }
 
 void gui_set_status_message(const char* message, u32 milliseconds)
