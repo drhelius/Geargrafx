@@ -272,7 +272,7 @@ void gui_debug_save_disassembler(const char* file_path)
             strcpy(name, record->name);
             RemoveColorFromString(name);
 
-            int len = strlen(name);
+            int len = (int)strlen(name);
             char spaces[32];
             int offset = 28 - len;
             if (offset < 0)
@@ -1327,7 +1327,7 @@ void gui_debug_window_call_stack(void)
                     if (IsValidPointer(symbol))
                         snprintf(symbol_text, sizeof(symbol_text), "%s", symbol->text);
                     else
-                        snprintf(symbol_text, sizeof(symbol_text), "");
+                        symbol_text[0] = 0;
                 }
             }
 
