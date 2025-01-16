@@ -28,6 +28,7 @@
 #include "huc6280.h"
 #include "input.h"
 #include "audio.h"
+#include "mapper.h"
 
 inline u8 Memory::Read(u16 address, bool block_transfer)
 {
@@ -42,14 +43,18 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
     u8 mpr = address >> 13;
     u16 offset = address & 0x1FFF;
     u8 bank = m_mpr[mpr];
-    //u32 physical_address = (bank << 13) | (address & 0x1FFF);
 
     // 0x00 - 0x7F
     if (bank < 0x80)
     {
         // HuCard ROM
-        u8** rom_map = m_cartridge->GetROMMap();
-        return rom_map[bank][offset];
+        if (IsValidPointer(m_current_mapper))
+            return m_current_mapper->Read(bank, offset);
+        else
+        {
+            u8** rom_map = m_cartridge->GetROMMap();
+            return rom_map[bank][offset];
+        }
     }
     // 0x80 - 0xF6
     else if (bank < 0xF7)
@@ -164,13 +169,19 @@ inline void Memory::Write(u16 address, u8 value)
 
     u8 mpr_index = address >> 13;
     u8 mpr_value = m_mpr[mpr_index];
-    u32 physical_address = (mpr_value << 13) | (address & 0x1FFF);
+    u16 offset = address & 0x1FFF;
+    u32 physical_address = (mpr_value << 13) | offset;
 
     // 0x00 - 0x7F
     if (mpr_value < 0x80)
     {
         // HuCard ROM
-        Debug("Attempted write to HuCard ROM at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
+        if (IsValidPointer(m_current_mapper))
+            m_current_mapper->Write(mpr_value, offset, value);
+        else
+        {
+            Debug("Attempted write to HuCard ROM at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
+        }
     }
     // 0x80 - 0xF6
     else if (mpr_value < 0xF7)
@@ -192,7 +203,7 @@ inline void Memory::Write(u16 address, u8 value)
         {
             Debug("SGX RAM write at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
         }
-        m_wram[physical_address & 0x1FFF] = value;
+        m_wram[offset] = value;
     }
     // 0xFC - 0xFE
     else if (mpr_value < 0xFF)

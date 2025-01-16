@@ -127,7 +127,13 @@
     <ClCompile Include="..\..\src\input.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\mapper.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\memory.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sf2_mapper.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\miniz\miniz.c">
@@ -321,10 +327,16 @@
     <ClInclude Include="..\..\src\log.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\mapper.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\memory.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\memory_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sf2_mapper.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\types.h">

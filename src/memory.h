@@ -28,6 +28,8 @@ class HuC6270;
 class HuC6280;
 class Input;
 class Audio;
+class Mapper;
+class SF2Mapper;
 
 class Memory
 {
@@ -72,6 +74,7 @@ private:
     HuC6270* m_huc6270;
     HuC6280* m_huc6280;
     Cartridge* m_cartridge;
+    SF2Mapper* m_sf2_mapper;
     Input* m_input;
     Audio* m_audio;
     u8 m_mpr[8];
@@ -80,6 +83,7 @@ private:
     u8 m_io_buffer;
     u8 m_mpr_buffer;
     u8* m_test_memory;
+    Mapper* m_current_mapper;
 };
 
 #include "memory_inline.h"

@@ -11,4 +11,6 @@ SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
                 $(SOURCE_DIR)/huc6280_psg.cpp \
                 $(SOURCE_DIR)/huc6280.cpp \
                 $(SOURCE_DIR)/input.cpp \
-                $(SOURCE_DIR)/memory.cpp
+                $(SOURCE_DIR)/mapper.cpp \
+                $(SOURCE_DIR)/memory.cpp \
+                $(SOURCE_DIR)/sf2_mapper.cpp

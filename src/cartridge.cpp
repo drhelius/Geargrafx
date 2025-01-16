@@ -36,6 +36,7 @@ Cartridge::Cartridge()
     m_rom_bank_count = 0;
     m_crc = 0;
     m_is_sgx = false;
+    m_mapper = STANDARD_MAPPER;
 
     m_rom_map = new u8*[128];
     for (int i = 0; i < 128; i++)
@@ -64,6 +65,7 @@ void Cartridge::Reset()
     m_rom_bank_count = 0;
     m_crc = 0;
     m_is_sgx = false;
+    m_mapper = STANDARD_MAPPER;
 
     for (int i = 0; i < 128; i++)
         InitPointer(m_rom_map[i]);
@@ -82,6 +84,11 @@ bool Cartridge::IsReady()
 bool Cartridge::IsSGX()
 {
     return m_is_sgx;
+}
+
+Cartridge::CartridgeMapper Cartridge::GetMapper()
+{
+    return m_mapper;
 }
 
 int Cartridge::GetROMSize()
@@ -281,6 +288,12 @@ void Cartridge::GatherROMInfo()
     Log("ROM CRC32: %08X", m_crc);
 
     GatherInfoFromDB();
+
+    if ((m_mapper == STANDARD_MAPPER) && (m_rom_size > 0x100000))
+    {
+        m_mapper = SF2_MAPPER;
+        Log("ROM is bigger than 1MB. Forcing SF2 Mapper.");
+    }
 }
 
 void Cartridge::GatherInfoFromDB()
@@ -307,6 +320,17 @@ void Cartridge::GatherInfoFromDB()
             {
                 m_is_sgx = true;
                 Log("ROM is a SuperGrafx (SGX) optional game.");
+            }
+
+            if (k_game_database[i].flags & GG_GAMEDB_SF2_MAPPER)
+            {
+                m_mapper = SF2_MAPPER;
+                Log("ROM uses Street Fighter II mapper.");
+            }
+            else
+            {
+                m_mapper = STANDARD_MAPPER;
+                Log("ROM uses standard mapper.");
             }
         }
         else

@@ -30,7 +30,9 @@
     <ClCompile Include="..\..\src\huc6280_psg.cpp" />
     <ClCompile Include="..\..\src\huc6280.cpp" />
     <ClCompile Include="..\..\src\input.cpp" />
+    <ClCompile Include="..\..\src\mapper.cpp" />
     <ClCompile Include="..\..\src\memory.cpp" />
+    <ClCompile Include="..\..\src\sf2_mapper.cpp" />
     <ClCompile Include="..\shared\desktop\sound_queue.cpp" />
     <ClCompile Include="..\shared\desktop\application.cpp" />
     <ClCompile Include="..\shared\desktop\config.cpp" />
@@ -77,6 +79,7 @@
     <ClInclude Include="..\..\src\input_inline.h" />
     <ClInclude Include="..\..\src\input.h" />
     <ClInclude Include="..\..\src\log.h" />
+    <ClInclude Include="..\..\src\mapper.h" />
     <ClInclude Include="..\..\src\memory_inline.h" />
     <ClInclude Include="..\..\src\memory.h" />
     <ClInclude Include="..\..\src\huc6260_inline.h" />
@@ -92,6 +95,7 @@
     <ClInclude Include="..\..\src\huc6280_registers.h" />
     <ClInclude Include="..\..\src\huc6280_timing.h" />
     <ClInclude Include="..\..\src\huc6280.h" />
+    <ClInclude Include="..\..\src\sf2_mapper.h" />
     <ClInclude Include="..\..\src\types.h" />
     <ClInclude Include="..\shared\desktop\sound_queue.h" />
     <ClInclude Include="..\shared\desktop\application.h" />

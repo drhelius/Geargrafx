@@ -25,6 +25,13 @@
 class Cartridge
 {
 public:
+    enum CartridgeMapper
+    {
+        STANDARD_MAPPER,
+        SF2_MAPPER
+    };
+
+public:
     Cartridge();
     ~Cartridge();
     void Init();
@@ -32,6 +39,7 @@ public:
     u32 GetCRC();
     bool IsReady();
     bool IsSGX();
+    CartridgeMapper GetMapper();
     int GetROMSize();
     int GetROMBankCount();
     const char* GetFilePath();
@@ -59,6 +67,7 @@ private:
     char m_file_extension[512];
     u32 m_crc;
     bool m_is_sgx;
+    CartridgeMapper m_mapper;
 };
 
 #endif /* CARTRIDGE_H */

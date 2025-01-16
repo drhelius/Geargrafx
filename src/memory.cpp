@@ -25,6 +25,7 @@
 #include "cartridge.h"
 #include "input.h"
 #include "audio.h"
+#include "sf2_mapper.h"
 
 Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio)
 {
@@ -37,6 +38,8 @@ Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* 
     InitPointer(m_wram);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
+    InitPointer(m_current_mapper);
+    InitPointer(m_sf2_mapper);
 }
 
 Memory::~Memory()
@@ -51,6 +54,7 @@ Memory::~Memory()
         }
         SafeDeleteArray(m_disassembler);
     }
+    SafeDelete(m_sf2_mapper);
 }
 
 void Memory::Init()
@@ -68,6 +72,9 @@ void Memory::Init()
 #if defined(GG_TESTING)
     m_test_memory = new u8[0x10000];
 #endif
+
+    m_current_mapper = NULL;
+    m_sf2_mapper = new SF2Mapper(m_cartridge);
 
     Reset();
 }
@@ -88,16 +95,20 @@ void Memory::Reset()
     }
 
     for (int i = 0; i < 0x2000; i++)
-    {
         m_wram[i] = 0;
-    }
 
 #if defined(GG_TESTING)
     for (int i = 0; i < 0x10000; i++)
-    {
         m_test_memory[i] = rand() & 0xFF;
-    }
 #endif
+
+    if (m_cartridge->GetMapper() == Cartridge::SF2_MAPPER)
+    {
+        m_sf2_mapper->Reset();
+        m_current_mapper = m_sf2_mapper;
+    }
+    else
+        m_current_mapper = NULL;
 }
 
 Memory::GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address)
