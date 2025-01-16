@@ -422,7 +422,10 @@ void MemEditor::DrawSelectionFrame(int x, int y, int address, ImVec2 cell_pos, I
     ImVec4 frame_color = cyan;
     int start = m_selection_start <= m_selection_end ? m_selection_start : m_selection_end;
     int end = m_selection_end >= m_selection_start ? m_selection_end : m_selection_start;
-    bool multiline = (start / m_bytes_per_row) != (end / m_bytes_per_row);
+    int lines = (end / m_bytes_per_row) - (start / m_bytes_per_row) + 1;
+    bool multiline = lines > 1;
+    int start_x = start % m_bytes_per_row;
+    int end_x = end % m_bytes_per_row;
 
     if (address < start || address > end)
         return;
@@ -444,8 +447,8 @@ void MemEditor::DrawSelectionFrame(int x, int y, int address, ImVec2 cell_pos, I
     if ((address + m_bytes_per_row) > end)
         m_draw_list->AddLine(cell_pos + ImVec2(-1.0f, cell_size.y), cell_pos + ImVec2(cell_size.x, cell_size.y), ImColor(frame_color), 1.0f);
 
-    if (multiline && (address == end) && (x != (m_bytes_per_row - 1)))
-        m_draw_list->AddLine(cell_pos + ImVec2(cell_size.x, 0.0f), cell_pos + ImVec2(cell_size.x + cell_size.x, 0.0f), ImColor(frame_color), 1.0f);
+    if ((address == end) && (x != (m_bytes_per_row - 1)) && ((lines > 2) || (lines > 1 && (end_x >= start_x))))
+         m_draw_list->AddLine(cell_pos + ImVec2(cell_size.x, 0.0f), cell_pos + ImVec2(cell_size.x + cell_size.x, 0.0f), ImColor(frame_color), 1.0f);
 }
 
 void MemEditor::HandleSelection(int address, int row)
