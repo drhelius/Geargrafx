@@ -567,7 +567,8 @@ void HuC6280::OPCode0x57()
 void HuC6280::OPCode0x58()
 {
     // CLI
-    m_cli_requested = true;
+    m_cli_requested = IsSetFlag(FLAG_INTERRUPT);
+    ClearFlag(FLAG_INTERRUPT);
 }
 
 void HuC6280::OPCode0x59()
@@ -760,7 +761,8 @@ void HuC6280::OPCode0x77()
 void HuC6280::OPCode0x78()
 {
     // SEI
-    m_sei_requested = true;
+    m_sei_requested = !IsSetFlag(FLAG_INTERRUPT);;
+    SetFlag(FLAG_INTERRUPT);
 }
 
 void HuC6280::OPCode0x79()

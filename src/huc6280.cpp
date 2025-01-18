@@ -137,16 +137,14 @@ unsigned int HuC6280::TickIRQ()
     u16 irq_pending_low = 0;
     u16 irq_pending_high = 0;
 
-    // NMI
-    if (m_nmi_requested)
-    {
-        irq_pending = true;
-        irq_pending_low = 0xFFFC;
-        irq_pending_high = 0xFFFD;
-        m_nmi_requested = false;
-        m_debug_next_irq = 2;
-    }
-    else if (!IsSetFlag(FLAG_INTERRUPT))
+    bool check_irqs = !IsSetFlag(FLAG_INTERRUPT);
+
+    if (check_irqs && m_cli_requested)
+        check_irqs = false;
+    else if (!check_irqs && m_sei_requested)
+        check_irqs = true;
+
+    if (check_irqs)
     {
         // TIQ
         if (m_timer_irq && !IsSetBit(m_interrupt_disable_register, 2))
@@ -193,17 +191,8 @@ unsigned int HuC6280::TickIRQ()
 #endif
     }
 
-    if (m_cli_requested)
-    {
-        m_cli_requested = false;
-        ClearFlag(FLAG_INTERRUPT);
-    }
-    else if (m_sei_requested)
-    {
-        m_sei_requested = false;
-        SetFlag(FLAG_INTERRUPT);
-    }
-
+    m_cli_requested = false;
+    m_sei_requested = false;
     m_checking_irqs = false;
 
     return m_cycles;
