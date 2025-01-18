@@ -209,35 +209,6 @@ unsigned int HuC6280::TickIRQ()
     return m_cycles;
 }
 
-void HuC6280::ClockTimer()
-{
-    m_timer_cycles++;
-
-    if(m_timer_reload_requested)
-    {
-        m_timer_counter = m_timer_reload;
-        m_timer_reload_requested = false;
-        return;
-    }
-
-    if (m_timer_cycles >= k_huc6280_timer_divisor)
-    {
-        m_timer_cycles = 0;
-
-        if (m_timer_enabled)
-        {
-            m_timer_counter--;
-
-            if (m_timer_counter == 0xFF)
-            {
-                m_timer_reload_requested = true;
-                m_timer_irq = true;
-                m_interrupt_request_register = SetBit(m_interrupt_request_register, 2);
-            }
-        }
-    }
-}
-
 HuC6280::HuC6280_State* HuC6280::GetState()
 {
     return &m_processor_state;
