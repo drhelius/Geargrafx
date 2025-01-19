@@ -95,7 +95,7 @@ void Memory::Reset()
     }
 
     for (int i = 0; i < 0x2000; i++)
-        m_wram[i] = 0;
+        m_wram[i] = rand() & 0xFF;
 
 #if defined(GG_TESTING)
     for (int i = 0; i < 0x10000; i++)
