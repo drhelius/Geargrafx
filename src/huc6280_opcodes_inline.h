@@ -515,38 +515,35 @@ inline void HuC6280::OPCodes_TST(u8 value, u16 address)
 
 inline void HuC6280::OPCodes_TAI()
 {
-    StackPush8(m_Y.GetValue());
-    StackPush8(m_A.GetValue());
-    StackPush8(m_X.GetValue());
+    OPCodes_TransferStart();
 
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
-    u16 alternate = 0;
+    int count = 0;
+
     do
     {
-        m_memory->Write(dest, m_memory->Read(source + alternate, true));
-        alternate ^= 1;
+        m_memory->Write(dest, m_memory->Read(source, true));
+        source += (count & 1) ? -1 : 1;
         dest++;
+        count++;
         length--;
         m_cycles += 6;
     }
     while (length);
 
-    m_X.SetValue(StackPop8());
-    m_A.SetValue(StackPop8());
-    m_Y.SetValue(StackPop8());
+    OPCodes_TransferEnd();
 }
 
 inline void HuC6280::OPCodes_TDD()
 {
-    StackPush8(m_Y.GetValue());
-    StackPush8(m_A.GetValue());
-    StackPush8(m_X.GetValue());
+    OPCodes_TransferStart();
 
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
+
     do
     {
         m_memory->Write(dest, m_memory->Read(source, true));
@@ -557,45 +554,40 @@ inline void HuC6280::OPCodes_TDD()
     }
     while (length);
 
-    m_X.SetValue(StackPop8());
-    m_A.SetValue(StackPop8());
-    m_Y.SetValue(StackPop8());
+    OPCodes_TransferEnd();
 }
 
 inline void HuC6280::OPCodes_TIA()
 {
-    StackPush8(m_Y.GetValue());
-    StackPush8(m_A.GetValue());
-    StackPush8(m_X.GetValue());
+    OPCodes_TransferStart();
 
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
-    u16 alternate = 0;
+    int count = 0;
+
     do
     {
-        m_memory->Write(dest + alternate, m_memory->Read(source, true));
+        m_memory->Write(dest, m_memory->Read(source, true));
         source++;
-        alternate ^= 1;
+        dest += (count & 1) ? -1 : 1;
+        count++;
         length--;
         m_cycles += 6;
     }
     while (length);
 
-    m_X.SetValue(StackPop8());
-    m_A.SetValue(StackPop8());
-    m_Y.SetValue(StackPop8());
+    OPCodes_TransferEnd();
 }
 
 inline void HuC6280::OPCodes_TII()
 {
-    StackPush8(m_Y.GetValue());
-    StackPush8(m_A.GetValue());
-    StackPush8(m_X.GetValue());
+    OPCodes_TransferStart();
 
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
+
     do
     {
         m_memory->Write(dest, m_memory->Read(source, true));
@@ -606,20 +598,17 @@ inline void HuC6280::OPCodes_TII()
     }
     while (length);
 
-    m_X.SetValue(StackPop8());
-    m_A.SetValue(StackPop8());
-    m_Y.SetValue(StackPop8());
+    OPCodes_TransferEnd();
 }
 
 inline void HuC6280::OPCodes_TIN()
 {
-    StackPush8(m_Y.GetValue());
-    StackPush8(m_A.GetValue());
-    StackPush8(m_X.GetValue());
+    OPCodes_TransferStart();
 
     u16 source = Fetch16();
     u16 dest = Fetch16();
     u16 length = Fetch16();
+
     do
     {
         m_memory->Write(dest, m_memory->Read(source, true));
@@ -629,8 +618,20 @@ inline void HuC6280::OPCodes_TIN()
     }
     while (length);
 
-    m_X.SetValue(StackPop8());
+    OPCodes_TransferEnd();
+}
+
+inline void HuC6280::OPCodes_TransferStart()
+{
+    StackPush8(m_Y.GetValue());
+    StackPush8(m_X.GetValue());
+    StackPush8(m_A.GetValue());
+}
+
+inline void HuC6280::OPCodes_TransferEnd()
+{
     m_A.SetValue(StackPop8());
+    m_X.SetValue(StackPop8());
     m_Y.SetValue(StackPop8());
 }
 

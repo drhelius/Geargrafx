@@ -257,6 +257,8 @@ private:
     void OPCodes_TIA();
     void OPCodes_TII();
     void OPCodes_TIN();
+    void OPCodes_TransferStart();
+    void OPCodes_TransferEnd();
 
     void InitOPCodeFunctors();
 
