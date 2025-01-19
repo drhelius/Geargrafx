@@ -66,7 +66,7 @@ inline u16 HuC6270::Clock()
     return pixel;
 }
 
-inline u8 HuC6270::ReadRegister(u32 address)
+inline u8 HuC6270::ReadRegister(u16 address)
 {
     switch (address & 0x03)
     {
@@ -118,7 +118,7 @@ inline u8 HuC6270::ReadRegister(u32 address)
     }
 }
 
-inline void HuC6270::WriteRegister(u32 address, u8 value)
+inline void HuC6270::WriteRegister(u16 address, u8 value)
 {
     switch (address & 0x03)
     {

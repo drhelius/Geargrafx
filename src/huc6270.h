@@ -69,8 +69,8 @@ public:
     u16 Clock();
     void SetHSync(bool active);
     void SetVSync(bool active);
-    u8 ReadRegister(u32 address);
-    void WriteRegister(u32 address, u8 value);
+    u8 ReadRegister(u16 address);
+    void WriteRegister(u16 address, u8 value);
     HuC6270_State* GetState();
     u16* GetVRAM();
     u16* GetSAT();

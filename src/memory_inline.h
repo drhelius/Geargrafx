@@ -60,14 +60,14 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
     else if (bank < 0xF7)
     {
         // Unused
-        Debug("Unused read at %06X, bank=%02X", offset, bank);
+        Debug("Unused read at %04X, bank=%02X", address, bank);
         return 0xFF;
     }
     // 0xF7
     else if (bank < 0xF8)
     {
         // Backup RAM
-        Debug("Backup RAM read at %06X, bank=%02X", offset, bank);
+        Debug("Backup RAM read at %04X, bank=%02X", address, bank);
         return 0xFF;
     }
     // 0xF8 - 0xFB
@@ -76,7 +76,7 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
         // RAM
         if (bank > 0xF8)
         {
-            Debug("SGX RAM read at %06X, bank=%02X", offset, bank);
+            Debug("SGX RAM read at %04X, bank=%02X", address, bank);
         }
         return m_wram[offset];
     }
@@ -84,7 +84,7 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
     else if (bank < 0xFF)
     {
         // Unused
-        Debug("Unused read at %06X, bank=%02X", offset, bank);
+        Debug("Unused read at %04X, bank=%02X", address, bank);
         return 0xFF;
     }
     // 0xFF
@@ -103,7 +103,6 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
                 return m_huc6260->ReadRegister(offset);
             case 0x0800:
                 // PSG
-                //Debug("PSG read at %06X", physical_address);
                 return block_transfer ? 0x00 : m_io_buffer;
             case 0x0C00:
                 // Timer Counter
@@ -135,7 +134,7 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
                         case 0:
                         case 1:
                         {
-                            Debug("Invalid interrupt register read at %06X", offset);
+                            Debug("Invalid interrupt register read at %04X", address);
                             return m_io_buffer;
                         }
                         case 2:
@@ -149,13 +148,14 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
             }
             case 0x1800:
                 // Unused
-                Debug("Unused hardware read at %06X", offset);
+                Debug("Unused hardware read at %04X", address);
                 return 0xFF;
             case 0x1C00:
                 // Unused
-                Debug("Unused hardware read at %06X", offset);
+                Debug("Unused hardware read at %04X", address);
                 return 0xFF;
             default:
+                Debug("Invalid hardware read at %04X", address);
                 return 0xFF;
         }
     }
@@ -175,7 +175,6 @@ inline void Memory::Write(u16 address, u8 value)
     u8 mpr_index = address >> 13;
     u8 mpr_value = m_mpr[mpr_index];
     u16 offset = address & 0x1FFF;
-    u32 physical_address = (mpr_value << 13) | offset;
 
     // 0x00 - 0x7F
     if (mpr_value < 0x80)
@@ -185,20 +184,20 @@ inline void Memory::Write(u16 address, u8 value)
             m_current_mapper->Write(mpr_value, offset, value);
         else
         {
-            Debug("Attempted write to HuCard ROM at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
+            Debug("Attempted write to HuCard ROM at %04X, value=%02X, bank=%02X", address, value, mpr_value);
         }
     }
     // 0x80 - 0xF6
     else if (mpr_value < 0xF7)
     {
         // Unused
-        Debug("Unused write at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
+        Debug("Unused write at %04X, value=%02X, bank=%02X", address, value, mpr_value);
     }
     // 0xF7
     else if (mpr_value < 0xF8)
     {
         // Savegame RAM
-        Debug("Savegame RAM write at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
+        Debug("Savegame RAM write at %04X, value=%02X, bank=%02X", address, value, mpr_value);
     }
     // 0xF8 - 0xFB
     else if (mpr_value < 0xFC)
@@ -206,7 +205,7 @@ inline void Memory::Write(u16 address, u8 value)
         // RAM
         if (mpr_value > 0xF8)
         {
-            Debug("SGX RAM write at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
+            Debug("SGX RAM write at %04X, value=%02X, bank=%02X", address, value, mpr_value);
         }
         m_wram[offset] = value;
     }
@@ -214,32 +213,31 @@ inline void Memory::Write(u16 address, u8 value)
     else if (mpr_value < 0xFF)
     {
         // Unused
-        Debug("Unused write at %06X, value=%02X, bank=%02X", physical_address, value, mpr_value);
+        Debug("Unused write at %04X, value=%02X, bank=%02X", address, value, mpr_value);
     }
     else
     {
         // Hardware Page
-        switch (physical_address & 0x001C00)
+        switch (offset & 0x1C00)
         {
             case 0x0000:
                 // HuC6270
                 m_huc6280->InjectCycles(1);
-                m_huc6270->WriteRegister(physical_address, value);
+                m_huc6270->WriteRegister(offset, value);
                 break;
             case 0x0400:
                 // HuC6260
                 m_huc6280->InjectCycles(1);
-                m_huc6260->WriteRegister(physical_address, value);
+                m_huc6260->WriteRegister(offset, value);
                 break;
             case 0x0800:
                 // PSG
-                //Debug("PSG write at %06X, value=%02X", physical_address, value);
-                m_audio->WritePSG(physical_address, value);
+                m_audio->WritePSG(offset, value);
                 m_io_buffer = value;
                 break;
             case 0x0C00:
                 // Timer
-                m_huc6280->WriteTimerRegister(physical_address, value);
+                m_huc6280->WriteTimerRegister(offset, value);
                 m_io_buffer = value;
                 break;
             case 0x1000:
@@ -254,13 +252,13 @@ inline void Memory::Write(u16 address, u8 value)
                     case 0:
                     case 1:
                     {
-                        Debug("Invalid interrupt register write at %06X, value=%02X", physical_address, value);
+                        Debug("Invalid interrupt register write at %04X, value=%02X", address, value);
                         break;
                     }
                     case 2:
                     case 3:
                     {
-                        m_huc6280->WriteInterruptRegister(physical_address, value);
+                        m_huc6280->WriteInterruptRegister(offset, value);
                         break;
                     }
                 }
@@ -269,13 +267,14 @@ inline void Memory::Write(u16 address, u8 value)
             }
             case 0x1800:
                 // Unused
-                Debug("Unused hardware write at %06X, value=%02X", physical_address, value);
+                Debug("Unused hardware write at %04X, value=%02X", address, value);
                 break;
             case 0x1C00:
                 // Unused
-                Debug("Unused hardware write at %06X, value=%02X", physical_address, value);
+                Debug("Unused hardware write at %04X, value=%02X", address, value);
                 break;
             default:
+                Debug("Invalid hardware write at %04X, value=%02X", address, value);
                 break;
         }
     }

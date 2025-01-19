@@ -61,8 +61,8 @@ public:
     void InitPalettes();
     void Reset();
     bool Clock();
-    u8 ReadRegister(u32 address);
-    void WriteRegister(u32 address, u8 value);
+    u8 ReadRegister(u16 address);
+    void WriteRegister(u16 address, u8 value);
     HuC6260_State* GetState();
     HuC6260_Speed GetSpeed();
     int GetClockDivider();

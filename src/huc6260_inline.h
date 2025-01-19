@@ -24,7 +24,7 @@
 #include "huc6270.h"
 #include "huc6280.h"
 
-inline u8 HuC6260::ReadRegister(u32 address)
+inline u8 HuC6260::ReadRegister(u16 address)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
             m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER, address & 0x07, true);
@@ -51,7 +51,7 @@ inline u8 HuC6260::ReadRegister(u32 address)
     return ret;
 }
 
-inline void HuC6260::WriteRegister(u32 address, u8 value)
+inline void HuC6260::WriteRegister(u16 address, u8 value)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
             m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER, address & 0x07, false);

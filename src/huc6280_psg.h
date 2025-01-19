@@ -68,7 +68,7 @@ public:
     void Init();
     void Reset();
     void Clock();
-    void Write(u32 address, u8 value);
+    void Write(u16 address, u8 value);
     int EndFrame(s16* sample_buffer);
     HuC6280PSG_State* GetState();
 

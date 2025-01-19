@@ -27,7 +27,7 @@ inline void HuC6280PSG::Clock()
     m_elapsed_cycles++;
 }
 
-inline void HuC6280PSG::Write(u32 address, u8 value)
+inline void HuC6280PSG::Write(u16 address, u8 value)
 {
     Sync();
 
