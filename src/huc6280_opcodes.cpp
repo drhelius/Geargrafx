@@ -41,7 +41,7 @@ void HuC6280::OPCode0x02()
 void HuC6280::OPCode0x03()
 {
     // ST0 #nn
-    OPCodes_STN(0, ImmediateAddressing());
+    m_huc6270->WriteRegister(0, ImmediateAddressing());
 }
 
 void HuC6280::OPCode0x04()
@@ -139,7 +139,7 @@ void HuC6280::OPCode0x12()
 void HuC6280::OPCode0x13()
 {
     // ST1 #nn
-    OPCodes_STN(2, ImmediateAddressing());
+    m_huc6270->WriteRegister(2, ImmediateAddressing());
 }
 
 void HuC6280::OPCode0x14()
@@ -241,7 +241,7 @@ void HuC6280::OPCode0x22()
 void HuC6280::OPCode0x23()
 {
     // ST2 #nn
-    OPCodes_STN(3, ImmediateAddressing());
+    m_huc6270->WriteRegister(3, ImmediateAddressing());
 }
 
 void HuC6280::OPCode0x24()

@@ -431,11 +431,6 @@ inline void HuC6280::OPCodes_Store(EightBitRegister* reg, u16 address)
     m_memory->Write(address, value);
 }
 
-inline void HuC6280::OPCodes_STN(u8 reg, u8 value)
-{
-    m_huc6270->WriteRegister(0x1FE000 | reg, value);
-}
-
 inline void HuC6280::OPCodes_STZ(u16 address)
 {
     m_memory->Write(address, 0x00);

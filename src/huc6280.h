@@ -243,7 +243,6 @@ private:
     void OPCodes_SBC(u8 value);
     void OPCodes_SMB(u8 bit, u16 address);
     void OPCodes_Store(EightBitRegister* reg, u16 address);
-    void OPCodes_STN(u8 reg, u8 value);
     void OPCodes_STZ(u16 address);
     void OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2);
     void OPCodes_TAM();
