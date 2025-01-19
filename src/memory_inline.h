@@ -130,15 +130,20 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
                     return 0x00;
                 else
                 {
-                    if(!(address & 2))
+                    switch (address & 0x03)
                     {
-                        Debug("Invalid interrupt register read at %06X", offset);
-                        return m_io_buffer;
-                    }
-                    else
-                    {
-                        m_io_buffer = (m_huc6280->ReadInterruptRegister(offset) & 0x07) | (m_io_buffer & 0xF8);
-                        return m_io_buffer;
+                        case 0:
+                        case 1:
+                        {
+                            Debug("Invalid interrupt register read at %06X", offset);
+                            return m_io_buffer;
+                        }
+                        case 2:
+                        case 3:
+                        {
+                            m_io_buffer = (m_huc6280->ReadInterruptRegister(offset) & 0x07) | (m_io_buffer & 0xF8);
+                            return m_io_buffer;
+                        }
                     }
                 }
             }
@@ -244,15 +249,22 @@ inline void Memory::Write(u16 address, u8 value)
                 break;
             case 0x1400:
             {
-                if(!(address & 2))
+                switch (address & 0x03)
                 {
-                    Debug("Invalid interrupt register write at %06X, value=%02X", physical_address, value);
+                    case 0:
+                    case 1:
+                    {
+                        Debug("Invalid interrupt register write at %06X, value=%02X", physical_address, value);
+                        break;
+                    }
+                    case 2:
+                    case 3:
+                    {
+                        m_huc6280->WriteInterruptRegister(physical_address, value);
+                        break;
+                    }
                 }
-                else
-                {
-                    m_huc6280->WriteInterruptRegister(physical_address, value);
-                    m_io_buffer = value;
-                }
+                m_io_buffer = value;
                 break;
             }
             case 0x1800:

@@ -106,10 +106,10 @@ public:
     void AssertIRQ1(bool asserted);
     void AssertIRQ2(bool asserted);
     void InjectCycles(unsigned int cycles);
-    u8 ReadInterruptRegister(u32 address);
-    void WriteInterruptRegister(u32 address, u8 value);
+    u8 ReadInterruptRegister(u16 address);
+    void WriteInterruptRegister(u16 address, u8 value);
     u8 ReadTimerRegister();
-    void WriteTimerRegister(u32 address, u8 value);
+    void WriteTimerRegister(u16 address, u8 value);
     HuC6280_State* GetState();
     void DisassembleNextOPCode();
     void EnableBreakpoints(bool enable, bool irqs);

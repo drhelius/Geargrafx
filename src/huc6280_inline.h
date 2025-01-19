@@ -80,27 +80,18 @@ inline void HuC6280::InjectCycles(unsigned int cycles)
     m_cycles += cycles;
 }
 
-inline u8 HuC6280:: ReadInterruptRegister(u32 address)
+inline u8 HuC6280:: ReadInterruptRegister(u16 address)
 {
     if ((address & 1) == 0)
-    {
-        // Acknowledge TIQ
-        m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 2);
-        m_timer_irq = false;
         return m_interrupt_disable_register;
-    }
     else
-    {
         return m_interrupt_request_register;
-    }
 }
 
-inline void HuC6280::WriteInterruptRegister(u32 address, u8 value)
+inline void HuC6280::WriteInterruptRegister(u16 address, u8 value)
 {
     if ((address & 1) == 0)
-    {
         m_interrupt_disable_register = value & 0x07;
-    }
     else
     {
         // Acknowledge TIQ
@@ -139,7 +130,7 @@ inline u8 HuC6280::ReadTimerRegister()
         return m_timer_counter;
 }
 
-inline void HuC6280::WriteTimerRegister(u32 address, u8 value)
+inline void HuC6280::WriteTimerRegister(u16 address, u8 value)
 {
     if (address & 0x01)
     {
