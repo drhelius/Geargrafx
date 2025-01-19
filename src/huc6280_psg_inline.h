@@ -67,7 +67,7 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
             }
 
             // DDA on, channel off
-            if (IsSetBit(m_ch->control, 6) && !IsSetBit(value, 8))
+            if (IsSetBit(m_ch->control, 6) && !IsSetBit(value, 7))
             {
                 m_ch->wave_index = 0;
             }
