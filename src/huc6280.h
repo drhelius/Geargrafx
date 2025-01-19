@@ -63,7 +63,6 @@ public:
         u8* TIMER_RELOAD;
         bool* IRQ1;
         bool* IRQ2;
-        bool* NMI;
         u8* IDR;
         u8* IRR;
         unsigned int* CYCLES;
@@ -104,11 +103,8 @@ public:
     void Init(Memory* memory, HuC6270* huc6270);
     void Reset();
     bool Clock();
-    unsigned int TickOPCode();
-    unsigned int TickIRQ();
     void AssertIRQ1(bool asserted);
     void AssertIRQ2(bool asserted);
-    void RequestNMI();
     void InjectCycles(unsigned int cycles);
     u8 ReadInterruptRegister(u32 address);
     void WriteInterruptRegister(u32 address, u8 value);
@@ -144,10 +140,12 @@ private:
     unsigned int m_clock;
     int m_clock_cycles;
     unsigned int m_last_instruction_cycles;
-    bool m_checking_irqs;
+    bool m_after_cli;
+    int m_irq_pending;
     bool m_irq1_asserted;
+    bool m_force_irq1;
     bool m_irq2_asserted;
-    bool m_nmi_requested;
+    bool m_force_irq2;
     bool m_cli_requested;
     bool m_sei_requested;
     int m_speed;
@@ -175,7 +173,12 @@ private:
     std::stack<GG_CallStackEntry> m_disassembler_call_stack;
 
 private:
+    unsigned int TickOPCode();
+    unsigned int TickIRQ();
+    void CheckIRQs();
+
     void ClockTimer();
+
 
     void CheckBreakpoints();
     void PushCallStack(u16 src, u16 dest, u16 back);

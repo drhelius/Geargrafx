@@ -569,6 +569,7 @@ void HuC6280::OPCode0x58()
     // CLI
     m_cli_requested = IsSetFlag(FLAG_INTERRUPT);
     ClearFlag(FLAG_INTERRUPT);
+    m_after_cli = true;
 }
 
 void HuC6280::OPCode0x59()

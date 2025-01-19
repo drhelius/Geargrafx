@@ -33,7 +33,7 @@ inline bool HuC6280::Clock()
     {
         if (m_clock_cycles <= 0)
         {
-            if (m_checking_irqs)
+            if (m_irq_pending != 0)
                 m_clock_cycles += TickIRQ();
             else
                 m_clock_cycles += TickOPCode();
@@ -50,7 +50,11 @@ inline bool HuC6280::Clock()
 
 inline void HuC6280::AssertIRQ1(bool asserted)
 {
+    if (m_after_cli && m_irq1_asserted && !asserted)
+        m_force_irq1 = true;
+
     m_irq1_asserted = asserted;
+
     if (m_irq1_asserted)
         m_interrupt_request_register = SetBit(m_interrupt_request_register, 1);
     else
@@ -59,18 +63,15 @@ inline void HuC6280::AssertIRQ1(bool asserted)
 
 inline void HuC6280::AssertIRQ2(bool asserted)
 {
-    Debug("IRQ2 asserted: %s", asserted ? "true" : "false");
+    if (m_after_cli && m_irq2_asserted && !asserted)
+        m_force_irq2 = true;
+
     m_irq2_asserted = asserted;
+
     if (m_irq2_asserted)
         m_interrupt_request_register = SetBit(m_interrupt_request_register, 0);
     else
         m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 0);
-}
-
-inline void HuC6280::RequestNMI()
-{
-    Debug("NMI requested");
-    m_nmi_requested = true;
 }
 
 inline void HuC6280::InjectCycles(unsigned int cycles)
