@@ -29,20 +29,15 @@ inline void HuC6280PSG::Clock()
 
 inline void HuC6280PSG::Write(u32 address, u8 value)
 {
-    int reg = address & 0x0F;
-
-    // Channel select
-    if (reg == 0)
-    {
-        m_channel_select = value & 0x07;
-        m_ch = &m_channels[m_channel_select];
-        return;
-    }
-
     Sync();
 
-    switch (reg)
+    switch (address & 0x0F)
     {
+    // Channel select
+    case 0:
+        m_channel_select = value & 0x07;
+        m_ch = &m_channels[m_channel_select];
+        break;
     // Main amplitude
     case 1:
         m_main_amplitude = value;
@@ -65,21 +60,18 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
     case 4:
         if (m_channel_select < 6)
         {
-            // DDA on to off
-            if ((m_ch->control & 0x40) && (!(value & 0x40))) 
+            // Channel enable/disable
+            if (IsSetBit(m_ch->control, 7) != IsSetBit(value, 7))
             {
-                m_ch->wave_index = 0;
                 m_ch->counter = m_ch->frequency;
             }
-            // Channel off to on
-            if ((!(m_ch->control & 0x80)) && (value & 0x80)) 
+
+            // DDA on, channel off
+            if (IsSetBit(m_ch->control, 6) && !IsSetBit(value, 8))
             {
-                // DDA off
-                if (!(value & 0x40))
-                {
-                    m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
-                }
+                m_ch->wave_index = 0;
             }
+
             m_ch->control = value;
         }
         break;
@@ -97,20 +89,16 @@ inline void HuC6280PSG::Write(u32 address, u8 value)
             int data = value & 0x1F;
             m_ch->wave = data;
 
-            // DDA off
-            if(!(m_ch->control & 0x40))
-            {
-                m_ch->wave_data[m_ch->wave_index] = data;
-            }
-
-            // Channel off, DDA off
-            if(!(m_ch->control & 0xC0))
-                m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
-
             // DDA on
-            if (m_ch->control & 0x40) 
+            if (IsSetBit(m_ch->control, 6))
             {
                 m_ch->dda = data;
+            }
+            // DDA off, Channel off
+            else if(!IsSetBit(m_ch->control, 7))
+            {
+                m_ch->wave_data[m_ch->wave_index] = data;
+                m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
             }
         }
         break;
