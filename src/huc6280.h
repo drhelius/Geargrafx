@@ -153,7 +153,6 @@ private:
     HuC6270* m_huc6270;
     HuC6280_State m_processor_state;
     bool m_timer_enabled;
-    bool m_timer_reload_requested;
     unsigned int m_timer_cycles;
     u8 m_timer_counter;
     u8 m_timer_reload;

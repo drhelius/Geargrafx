@@ -91,7 +91,6 @@ void HuC6280::Reset()
     m_speed = 0;
     m_timer_cycles = 0;
     m_timer_enabled = false;
-    m_timer_reload_requested = false;
     m_timer_counter = 0;
     m_timer_reload = 0;
     m_timer_irq = false;

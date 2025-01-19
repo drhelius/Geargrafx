@@ -25,7 +25,8 @@
 
 inline bool HuC6280::Clock()
 {
-    ClockTimer();
+    if (m_clock % 3 == 0)
+        ClockTimer();
 
     bool instruction_completed = false;
 
@@ -110,69 +111,48 @@ inline void HuC6280::WriteInterruptRegister(u32 address, u8 value)
 
 inline void HuC6280::ClockTimer()
 {
-    m_timer_cycles++;
-
-    if(m_timer_reload_requested)
-    {
-        m_timer_counter = m_timer_reload;
-        m_timer_reload_requested = false;
+    if (!m_timer_enabled)
         return;
-    }
 
-    if (m_timer_cycles >= k_huc6280_timer_divisor)
+    m_timer_cycles -= 3;
+
+    if (m_timer_cycles == 0)
     {
-        m_timer_cycles = 0;
+        m_timer_cycles = k_huc6280_timer_divisor;
 
-        if (m_timer_enabled)
+        if (m_timer_counter == 0)
         {
-            m_timer_counter--;
-
-            if (m_timer_counter == 0xFF)
-            {
-                m_timer_reload_requested = true;
-                m_timer_irq = true;
-                m_interrupt_request_register = SetBit(m_interrupt_request_register, 2);
-            }
+            m_timer_counter = m_timer_reload;
+            m_timer_irq = true;
+            m_interrupt_request_register = SetBit(m_interrupt_request_register, 2);
         }
+        else
+            m_timer_counter--;
     }
 }
 
 inline u8 HuC6280::ReadTimerRegister()
 {
-    // Debug("Timer register read (counter): %02X", m_timer_counter);
-    return m_timer_counter;
+    if(m_timer_counter == 0 && m_timer_cycles <= 5 * 3)
+        return 0x7F;
+    else
+        return m_timer_counter;
 }
 
 inline void HuC6280::WriteTimerRegister(u32 address, u8 value)
 {
-    // Debug("Timer register write at %06X, value=%02X", address, value);
-
-    switch (address & 0x01)
+    if (address & 0x01)
     {
-        case 0:
+        bool enabled = (value & 0x01);
+        if (m_timer_enabled != enabled)
         {
-            m_timer_reload = value & 0x7F;
-            // Debug("Timer reload: %02X", m_timer_reload);
-            break;
-        }
-        case 1:
-        {
-            bool enabled = (value & 0x01);
-            if (!m_timer_enabled && enabled)
-            {
-                m_timer_counter = m_timer_reload;
-                m_timer_cycles = 0;
-                m_timer_reload_requested = false;
-                // Debug("Timer reload when enabled: %02X", m_timer_reload);
-            }
             m_timer_enabled = enabled;
-            // Debug("Timer enabled: %s", m_timer_enabled ? "true" : "false");
-            break;
+            m_timer_counter = m_timer_reload;
+            m_timer_cycles = k_huc6280_timer_divisor;
         }
-        default:
-            Debug("Invalid timer register write at %06X, value=%02X", address, value);
-            break;
     }
+    else
+        m_timer_reload = value & 0x7F;
 }
 
 inline u8 HuC6280::Fetch8()
