@@ -40,11 +40,8 @@ HuC6280::HuC6280()
     m_processor_state.PC = &m_PC;
     m_processor_state.SPEED = &m_speed;
     m_processor_state.TIMER = &m_timer_enabled;
-    m_processor_state.TIMER_IRQ = &m_timer_irq;
     m_processor_state.TIMER_COUNTER = &m_timer_counter;
     m_processor_state.TIMER_RELOAD = &m_timer_reload;
-    m_processor_state.IRQ1 = &m_irq1_asserted;
-    m_processor_state.IRQ2 = &m_irq2_asserted;
     m_processor_state.IDR = &m_interrupt_disable_register;
     m_processor_state.IRR = &m_interrupt_request_register;
     m_processor_state.CYCLES = &m_last_instruction_cycles;
@@ -80,20 +77,13 @@ void HuC6280::Reset()
     m_clock = 0;
     m_clock_cycles = 0;
     m_last_instruction_cycles = 0;
-    m_after_cli = false;
     m_irq_pending = 0;
-    m_irq1_asserted = false;
-    m_force_irq1 = false;
-    m_irq2_asserted = false;
-    m_force_irq2 = false;
-    m_cli_requested = false;
-    m_sei_requested = false;
     m_speed = 0;
+    m_transfer = false;
     m_timer_cycles = 0;
     m_timer_enabled = false;
     m_timer_counter = 0;
     m_timer_reload = 0;
-    m_timer_irq = false;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
     m_skip_flag_transfer_clear = false;
@@ -102,126 +92,6 @@ void HuC6280::Reset()
     m_run_to_breakpoint_hit = false;
     m_run_to_breakpoint_requested = false;
     ClearDisassemblerCallStack();
-}
-
-unsigned int HuC6280::TickOPCode()
-{
-    m_memory_breakpoint_hit = false;
-    m_skip_flag_transfer_clear = false;
-    m_cycles = 0;
-
-    u8 opcode = Fetch8();
-    (this->*m_opcodes[opcode])();
-
-#if defined(GG_TESTING)
-    SetFlag(FLAG_TRANSFER);
-#else
-    if (!m_skip_flag_transfer_clear)
-        ClearFlag(FLAG_TRANSFER);
-#endif
-
-    DisassembleNextOPCode();
-
-    m_cycles += k_huc6280_opcode_cycles[opcode];
-
-    m_last_instruction_cycles = m_cycles;
-
-    CheckIRQs();
-
-
-
-    return m_cycles;
-}
-
-void HuC6280::CheckIRQs()
-{
-    bool check_irqs = !IsSetFlag(FLAG_INTERRUPT);
-
-    if (m_force_irq1 || m_force_irq2)
-        check_irqs = true;
-    else if (check_irqs && m_cli_requested)
-        check_irqs = false;
-    else if (!check_irqs && m_sei_requested)
-        check_irqs = true;
-
-    if (!m_cli_requested)
-        m_after_cli = false;
-
-    m_cli_requested = false;
-    m_sei_requested = false;
-
-    if (check_irqs)
-    {
-        // TIQ
-        if (m_timer_irq && !IsSetBit(m_interrupt_disable_register, 2))
-        {
-            m_irq_pending = SetBit(m_irq_pending, 2);
-        }
-        // IRQ1
-        if ((m_irq1_asserted || m_force_irq1) && !IsSetBit(m_interrupt_disable_register, 1))
-        {
-            m_force_irq1 = false;
-            m_irq_pending = SetBit(m_irq_pending, 1);
-        }
-        // IRQ2
-        if ((m_irq2_asserted || m_force_irq2) && !IsSetBit(m_interrupt_disable_register, 0))
-        {
-            m_force_irq2 = false;
-            m_irq_pending = SetBit(m_irq_pending, 0);
-        }
-    }
-}
-
-unsigned int HuC6280::TickIRQ()
-{
-    assert(m_irq_pending != 0);
-
-    m_cycles = 0;
-    u16 irq_pending_low = 0;
-    u16 irq_pending_high = 0;
-
-    // TIQ
-    if (IsSetBit(m_irq_pending, 2))
-    {
-        m_irq_pending = UnsetBit(m_irq_pending, 2);
-        irq_pending_low = 0xFFFA;
-        irq_pending_high = 0xFFFB;
-        m_debug_next_irq = 3;
-    }
-    // IRQ1
-    else if (IsSetBit(m_irq_pending, 1))
-    {
-        m_irq_pending = UnsetBit(m_irq_pending, 1);
-        irq_pending_low = 0xFFF8;
-        irq_pending_high = 0xFFF9;
-        m_debug_next_irq = 4;
-    }
-    // IRQ2
-    else if (IsSetBit(m_irq_pending, 0))
-    {
-        m_irq_pending = UnsetBit(m_irq_pending, 0);
-        irq_pending_low = 0xFFF6;
-        irq_pending_high = 0xFFF7;
-        m_debug_next_irq = 5;
-    }
-
-    u16 pc = m_PC.GetValue();
-    StackPush16(pc);
-    StackPush8(m_P.GetValue() & ~FLAG_BREAK);
-    SetFlag(FLAG_INTERRUPT);
-    ClearFlag(FLAG_DECIMAL | FLAG_TRANSFER);
-    m_PC.SetLow(m_memory->Read(irq_pending_low));
-    m_PC.SetHigh(m_memory->Read(irq_pending_high));
-    m_cycles += 8;
-    DisassembleNextOPCode();
-#if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_breakpoints_irq_enabled)
-        m_cpu_breakpoint_hit = true;
-    u16 dest = m_PC.GetValue();
-    PushCallStack(pc, dest, pc);
-#endif
-
-    return m_cycles;
 }
 
 HuC6280::HuC6280_State* HuC6280::GetState()

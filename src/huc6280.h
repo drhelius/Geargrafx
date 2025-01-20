@@ -58,11 +58,8 @@ public:
         EightBitRegister* P;
         int* SPEED;
         bool* TIMER;
-        bool* TIMER_IRQ;
         u8* TIMER_COUNTER;
         u8* TIMER_RELOAD;
-        bool* IRQ1;
-        bool* IRQ2;
         u8* IDR;
         u8* IRR;
         unsigned int* CYCLES;
@@ -140,15 +137,9 @@ private:
     unsigned int m_clock;
     int m_clock_cycles;
     unsigned int m_last_instruction_cycles;
-    bool m_after_cli;
     int m_irq_pending;
-    bool m_irq1_asserted;
-    bool m_force_irq1;
-    bool m_irq2_asserted;
-    bool m_force_irq2;
-    bool m_cli_requested;
-    bool m_sei_requested;
     int m_speed;
+    bool m_transfer;
     Memory* m_memory;
     HuC6270* m_huc6270;
     HuC6280_State m_processor_state;
@@ -156,7 +147,6 @@ private:
     unsigned int m_timer_cycles;
     u8 m_timer_counter;
     u8 m_timer_reload;
-    bool m_timer_irq;
     u8 m_interrupt_disable_register;
     u8 m_interrupt_request_register;
     bool m_skip_flag_transfer_clear;
@@ -178,10 +168,12 @@ private:
 
     void ClockTimer();
 
-
     void CheckBreakpoints();
     void PushCallStack(u16 src, u16 dest, u16 back);
     void PopCallStack();
+
+    u8 MemoryRead(u16 address, bool block_transfer = false);
+    void MemoryWrite(u16 address, u8 value);
 
     u8 Fetch8();
     u16 Fetch16();

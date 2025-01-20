@@ -35,7 +35,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
     if (IsSetFlag(FLAG_TRANSFER))
     {
         address = ZeroPageX();
-        a = m_memory->Read(address);
+        a = MemoryRead(address);
         m_cycles += 3;
     }
     else
@@ -83,7 +83,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
 
 #if !defined(GG_TESTING)
     if (IsSetFlag(FLAG_TRANSFER))
-        m_memory->Write(address, final_result);
+        MemoryWrite(address, final_result);
     else
 #endif
         m_A.SetValue(final_result);
@@ -96,9 +96,9 @@ inline void HuC6280::OPCodes_AND(u8 value)
     if (IsSetFlag(FLAG_TRANSFER))
     {
         u16 address = ZeroPageX();
-        u8 a = m_memory->Read(address);
+        u8 a = MemoryRead(address);
         result = a & value;
-        m_memory->Write(address, result);
+        MemoryWrite(address, result);
         m_cycles += 3;
     }
     else
@@ -124,9 +124,9 @@ inline void HuC6280::OPCodes_ASL_Accumulator()
 
 inline void HuC6280::OPCodes_ASL_Memory(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = static_cast<u8>(value << 1);
-    m_memory->Write(address, result);
+    MemoryWrite(address, result);
     SetOrClearZNFlags(result);
     if ((value & 0x80) != 0)
         SetFlag(FLAG_CARRY);
@@ -150,7 +150,7 @@ inline void HuC6280::OPcodes_Branch(bool condition)
 
 inline void HuC6280::OPCodes_BIT(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = m_A.GetValue() & value;
     ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
     u8 flags = m_P.GetValue();
@@ -161,7 +161,7 @@ inline void HuC6280::OPCodes_BIT(u16 address)
 
 inline void HuC6280::OPCodes_BIT_Immediate(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = m_A.GetValue() & value;
     ClearFlag(FLAG_ZERO);
     u8 flags = m_P.GetValue();
@@ -183,11 +183,11 @@ inline void HuC6280::OPCodes_BRK()
     SetFlag(FLAG_INTERRUPT);
 
 #if defined(GG_TESTING)
-    m_PC.SetLow(m_memory->Read(0xFFFE));
-    m_PC.SetHigh(m_memory->Read(0xFFFF));
+    m_PC.SetLow(MemoryRead(0xFFFE));
+    m_PC.SetHigh(MemoryRead(0xFFFF));
 #else
-    m_PC.SetLow(m_memory->Read(0xFFF6));
-    m_PC.SetHigh(m_memory->Read(0xFFF7));
+    m_PC.SetLow(MemoryRead(0xFFF6));
+    m_PC.SetHigh(MemoryRead(0xFFF7));
 #endif
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
@@ -224,9 +224,9 @@ inline void HuC6280::OPCodes_CMP(EightBitRegister* reg, u8 value)
 
 inline void HuC6280::OPCodes_DEC_Mem(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = value - 1;
-    m_memory->Write(address, result);
+    MemoryWrite(address, result);
     SetOrClearZNFlags(result);
 }
 
@@ -243,9 +243,9 @@ inline void HuC6280::OPCodes_EOR(u8 value)
     if (IsSetFlag(FLAG_TRANSFER))
     {
         u16 address = ZeroPageX();
-        u8 a = m_memory->Read(address);
+        u8 a = MemoryRead(address);
         result = a ^ value;
-        m_memory->Write(address, result);
+        MemoryWrite(address, result);
         m_cycles += 3;
     }
     else
@@ -259,9 +259,9 @@ inline void HuC6280::OPCodes_EOR(u8 value)
 
 inline void HuC6280::OPCodes_INC_Mem(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = value + 1;
-    m_memory->Write(address, result);
+    MemoryWrite(address, result);
     SetOrClearZNFlags(result);
 }
 
@@ -291,9 +291,9 @@ inline void HuC6280::OPCodes_LSR_Accumulator()
 
 inline void HuC6280::OPCodes_LSR_Memory(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = value >> 1;
-    m_memory->Write(address, result);
+    MemoryWrite(address, result);
     SetOrClearZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
@@ -309,9 +309,9 @@ inline void HuC6280::OPCodes_ORA(u8 value)
     if (IsSetFlag(FLAG_TRANSFER))
     {
         u16 address = ZeroPageX();
-        u8 a = m_memory->Read(address);
+        u8 a = MemoryRead(address);
         result = a | value;
-        m_memory->Write(address, result);
+        MemoryWrite(address, result);
         m_cycles += 3;
     }
     else
@@ -325,8 +325,8 @@ inline void HuC6280::OPCodes_ORA(u8 value)
 
 inline void HuC6280::OPCodes_RMB(u8 bit, u16 address)
 {
-    u8 result = UnsetBit(m_memory->Read(address), bit);
-    m_memory->Write(address, result);
+    u8 result = UnsetBit(MemoryRead(address), bit);
+    MemoryWrite(address, result);
 }
 
 inline void HuC6280::OPCodes_ROL_Accumulator()
@@ -344,10 +344,10 @@ inline void HuC6280::OPCodes_ROL_Accumulator()
 
 inline void HuC6280::OPCodes_ROL_Memory(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = static_cast<u8>(value << 1);
     result |= IsSetFlag(FLAG_CARRY) ? 0x01 : 0x00;
-    m_memory->Write(address, result);
+    MemoryWrite(address, result);
     SetOrClearZNFlags(result);
     if ((value & 0x80) != 0)
         SetFlag(FLAG_CARRY);
@@ -370,10 +370,10 @@ inline void HuC6280::OPCodes_ROR_Accumulator()
 
 inline void HuC6280::OPCodes_ROR_Memory(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = value >> 1;
     result |= IsSetFlag(FLAG_CARRY) ? 0x80 : 0x00;
-    m_memory->Write(address, result);
+    MemoryWrite(address, result);
     SetOrClearZNFlags(result);
     if ((value & 0x01) != 0)
         SetFlag(FLAG_CARRY);
@@ -421,19 +421,19 @@ inline void HuC6280::OPCodes_SBC(u8 value)
 
 inline void HuC6280::OPCodes_SMB(u8 bit, u16 address)
 {
-    u8 result = SetBit(m_memory->Read(address), bit);
-    m_memory->Write(address, result);
+    u8 result = SetBit(MemoryRead(address), bit);
+    MemoryWrite(address, result);
 }
 
 inline void HuC6280::OPCodes_Store(EightBitRegister* reg, u16 address)
 {
     u8 value = reg->GetValue();
-    m_memory->Write(address, value);
+    MemoryWrite(address, value);
 }
 
 inline void HuC6280::OPCodes_STZ(u16 address)
 {
-    m_memory->Write(address, 0x00);
+    MemoryWrite(address, 0x00);
 }
 
 inline void HuC6280::OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2)
@@ -464,9 +464,9 @@ inline void HuC6280::OPCodes_Transfer(EightBitRegister* source, EightBitRegister
 
 inline void HuC6280::OPCodes_TRB(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = ~m_A.GetValue() & value;
-    m_memory->Write(address, result);
+    MemoryWrite(address, result);
 #if defined(GG_TESTING)
     ClearFlag(FLAG_ZERO);
 #else
@@ -482,9 +482,9 @@ inline void HuC6280::OPCodes_TRB(u16 address)
 
 inline void HuC6280::OPCodes_TSB(u16 address)
 {
-    u8 value = m_memory->Read(address);
+    u8 value = MemoryRead(address);
     u8 result = m_A.GetValue() | value;
-    m_memory->Write(address, result);
+    MemoryWrite(address, result);
 #if defined(GG_TESTING)
     ClearFlag(FLAG_ZERO);
 #else
@@ -500,7 +500,7 @@ inline void HuC6280::OPCodes_TSB(u16 address)
 
 inline void HuC6280::OPCodes_TST(u8 value, u16 address)
 {
-    u8 mem = m_memory->Read(address);
+    u8 mem = MemoryRead(address);
     ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
     u8 flags = m_P.GetValue();
     flags |= (value & mem) ? 0 : FLAG_ZERO;
@@ -519,7 +519,7 @@ inline void HuC6280::OPCodes_TAI()
 
     do
     {
-        m_memory->Write(dest, m_memory->Read(source, true));
+        MemoryWrite(dest, MemoryRead(source, true));
         source += (count & 1) ? -1 : 1;
         dest++;
         count++;
@@ -541,7 +541,7 @@ inline void HuC6280::OPCodes_TDD()
 
     do
     {
-        m_memory->Write(dest, m_memory->Read(source, true));
+        MemoryWrite(dest, MemoryRead(source, true));
         source--;
         dest--;
         length--;
@@ -563,7 +563,7 @@ inline void HuC6280::OPCodes_TIA()
 
     do
     {
-        m_memory->Write(dest, m_memory->Read(source, true));
+        MemoryWrite(dest, MemoryRead(source, true));
         source++;
         dest += (count & 1) ? -1 : 1;
         count++;
@@ -585,7 +585,7 @@ inline void HuC6280::OPCodes_TII()
 
     do
     {
-        m_memory->Write(dest, m_memory->Read(source, true));
+        MemoryWrite(dest, MemoryRead(source, true));
         source++;
         dest++;
         length--;
@@ -606,7 +606,7 @@ inline void HuC6280::OPCodes_TIN()
 
     do
     {
-        m_memory->Write(dest, m_memory->Read(source, true));
+        MemoryWrite(dest, MemoryRead(source, true));
         source++;
         length--;
         m_cycles += 6;
@@ -618,6 +618,7 @@ inline void HuC6280::OPCodes_TIN()
 
 inline void HuC6280::OPCodes_TransferStart()
 {
+    m_transfer = true;
     StackPush8(m_Y.GetValue());
     StackPush8(m_X.GetValue());
     StackPush8(m_A.GetValue());

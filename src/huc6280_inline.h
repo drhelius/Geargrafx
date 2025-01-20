@@ -21,6 +21,7 @@
 #define HUC6280_INLINE_H
 
 #include "huc6280.h"
+#include "huc6280_timing.h"
 #include "memory.h"
 
 inline bool HuC6280::Clock()
@@ -35,10 +36,17 @@ inline bool HuC6280::Clock()
         if (m_clock_cycles <= 0)
         {
             if (m_irq_pending != 0)
+            {
                 m_clock_cycles += TickIRQ();
+                if (m_clock_cycles == 0)
+                    m_clock_cycles += TickOPCode();
+            }
             else
                 m_clock_cycles += TickOPCode();
         }
+
+        if (m_transfer)
+            CheckIRQs();
 
         m_clock_cycles--;
         instruction_completed = (m_clock_cycles == 0);
@@ -49,14 +57,83 @@ inline bool HuC6280::Clock()
     return instruction_completed;
 }
 
+inline unsigned int HuC6280::TickOPCode()
+{
+    m_transfer = false;
+    m_memory_breakpoint_hit = false;
+    m_skip_flag_transfer_clear = false;
+    m_cycles = 0;
+
+    u8 opcode = Fetch8();
+    (this->*m_opcodes[opcode])();
+
+#if defined(GG_TESTING)
+    SetFlag(FLAG_TRANSFER);
+#else
+    if (!m_skip_flag_transfer_clear)
+        ClearFlag(FLAG_TRANSFER);
+#endif
+
+    DisassembleNextOPCode();
+
+    m_cycles += k_huc6280_opcode_cycles[opcode];
+
+    m_last_instruction_cycles = m_cycles;
+
+    return m_cycles;
+}
+
+inline unsigned int HuC6280::TickIRQ()
+{
+    assert(m_irq_pending != 0);
+
+    m_cycles = 0;
+    u16 vector = 0;
+
+    // TIQ
+    if (IsSetBit(m_irq_pending, 2) && IsSetBit(m_interrupt_request_register, 2))
+    {
+        vector = 0xFFFA;
+        m_debug_next_irq = 3;
+    }
+    // IRQ1
+    else if (IsSetBit(m_irq_pending, 1))
+    {
+        vector = 0xFFF8;
+        m_debug_next_irq = 4;
+    }
+    // IRQ2
+    else if (IsSetBit(m_irq_pending, 0))
+    {
+        vector = 0xFFF6;
+        m_debug_next_irq = 5;
+    }
+    else
+        return 0;
+
+    u16 pc = m_PC.GetValue();
+    StackPush16(pc);
+    StackPush8(m_P.GetValue() & ~FLAG_BREAK);
+    SetFlag(FLAG_INTERRUPT);
+    ClearFlag(FLAG_DECIMAL | FLAG_TRANSFER);
+    m_PC.SetLow(MemoryRead(vector));
+    m_PC.SetHigh(MemoryRead(vector + 1));
+    m_cycles += 8;
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    DisassembleNextOPCode();
+    if (m_breakpoints_irq_enabled)
+        m_cpu_breakpoint_hit = true;
+    u16 dest = m_PC.GetValue();
+    PushCallStack(pc, dest, pc);
+#endif
+
+    return m_cycles;
+}
+
 inline void HuC6280::AssertIRQ1(bool asserted)
 {
-    if (m_after_cli && m_irq1_asserted && !asserted)
-        m_force_irq1 = true;
-
-    m_irq1_asserted = asserted;
-
-    if (m_irq1_asserted)
+    if (asserted)
         m_interrupt_request_register = SetBit(m_interrupt_request_register, 1);
     else
         m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 1);
@@ -64,12 +141,7 @@ inline void HuC6280::AssertIRQ1(bool asserted)
 
 inline void HuC6280::AssertIRQ2(bool asserted)
 {
-    if (m_after_cli && m_irq2_asserted && !asserted)
-        m_force_irq2 = true;
-
-    m_irq2_asserted = asserted;
-
-    if (m_irq2_asserted)
+    if (asserted)
         m_interrupt_request_register = SetBit(m_interrupt_request_register, 0);
     else
         m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 0);
@@ -78,6 +150,24 @@ inline void HuC6280::AssertIRQ2(bool asserted)
 inline void HuC6280::InjectCycles(unsigned int cycles)
 {
     m_cycles += cycles;
+    CheckIRQs();
+}
+
+inline void HuC6280::CheckIRQs()
+{
+    m_irq_pending = IsSetFlag(FLAG_INTERRUPT) ? 0 : m_interrupt_request_register & ~m_interrupt_disable_register;
+}
+
+inline u8 HuC6280::MemoryRead(u16 address, bool block_transfer)
+{
+    CheckIRQs();
+    return m_memory->Read(address, block_transfer);
+}
+
+inline void HuC6280::MemoryWrite(u16 address, u8 value)
+{
+    CheckIRQs();
+    m_memory->Write(address, value);
 }
 
 inline u8 HuC6280:: ReadInterruptRegister(u16 address)
@@ -96,7 +186,6 @@ inline void HuC6280::WriteInterruptRegister(u16 address, u8 value)
     {
         // Acknowledge TIQ
         m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 2);
-        m_timer_irq = false;
     }
 }
 
@@ -114,7 +203,6 @@ inline void HuC6280::ClockTimer()
         if (m_timer_counter == 0)
         {
             m_timer_counter = m_timer_reload;
-            m_timer_irq = true;
             m_interrupt_request_register = SetBit(m_interrupt_request_register, 2);
         }
         else
@@ -148,7 +236,7 @@ inline void HuC6280::WriteTimerRegister(u16 address, u8 value)
 
 inline u8 HuC6280::Fetch8()
 {
-    u8 value = m_memory->Read(m_PC.GetValue());
+    u8 value = MemoryRead(m_PC.GetValue());
     m_PC.Increment();
     return value;
 }
@@ -156,8 +244,8 @@ inline u8 HuC6280::Fetch8()
 inline u16 HuC6280::Fetch16()
 {
     u16 pc = m_PC.GetValue();
-    u8 l = m_memory->Read(pc);
-    u8 h = m_memory->Read(pc + 1);
+    u8 l = MemoryRead(pc);
+    u8 h = MemoryRead(pc + 1);
     m_PC.SetValue(pc + 2);
     return Address16(h , l);
 }
@@ -210,31 +298,31 @@ inline bool HuC6280::IsSetFlag(u8 flag)
 
 inline void HuC6280::StackPush16(u16 value)
 {
-    m_memory->Write(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value >> 8));
+    MemoryWrite(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value >> 8));
     m_S.Decrement();
-    m_memory->Write(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value & 0x00FF));
+    MemoryWrite(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value & 0x00FF));
     m_S.Decrement();
 }
 
 inline void HuC6280::StackPush8(u8 value)
 {
-    m_memory->Write(STACK_ADDR | m_S.GetValue(), value);
+    MemoryWrite(STACK_ADDR | m_S.GetValue(), value);
     m_S.Decrement();
 }
 
 inline u16 HuC6280::StackPop16()
 {
     m_S.Increment();
-    u8 l = m_memory->Read(STACK_ADDR | m_S.GetValue());
+    u8 l = MemoryRead(STACK_ADDR | m_S.GetValue());
     m_S.Increment();
-    u8 h = m_memory->Read(STACK_ADDR | m_S.GetValue());
+    u8 h = MemoryRead(STACK_ADDR | m_S.GetValue());
     return Address16(h , l);
 }
 
 inline u8 HuC6280::StackPop8()
 {
     m_S.Increment();
-    return m_memory->Read(STACK_ADDR | m_S.GetValue());
+    return MemoryRead(STACK_ADDR | m_S.GetValue());
 }
 
 inline u8 HuC6280::ImmediateAddressing()
@@ -262,24 +350,24 @@ inline u16 HuC6280::ZeroPageRelativeAddressing()
 inline u16 HuC6280::ZeroPageIndirectAddressing()
 {
     u16 address = ZeroPageAddressing();
-    u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read((address + 1) & 0x20FF);
+    u8 l = MemoryRead(address);
+    u8 h = MemoryRead((address + 1) & 0x20FF);
     return Address16(h, l);
 }
 
 inline u16 HuC6280::ZeroPageIndexedIndirectAddressing()
 {
     u16 address = (ZeroPageAddressing() + m_X.GetValue()) & 0x20FF;
-    u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read((address + 1) & 0x20FF);
+    u8 l = MemoryRead(address);
+    u8 h = MemoryRead((address + 1) & 0x20FF);
     return Address16(h, l);
 }
 
 inline u16 HuC6280::ZeroPageIndirectIndexedAddressing()
 {
     u16 address = ZeroPageAddressing();
-    u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read((address + 1) & 0x20FF);
+    u8 l = MemoryRead(address);
+    u8 h = MemoryRead((address + 1) & 0x20FF);
     return Address16(h, l) + m_Y.GetValue();
 }
 
@@ -303,16 +391,16 @@ inline u16 HuC6280::AbsoluteAddressing(EightBitRegister* reg)
 inline u16 HuC6280::AbsoluteIndirectAddressing()
 {
     u16 address = Fetch16();
-    u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read(address + 1);
+    u8 l = MemoryRead(address);
+    u8 h = MemoryRead(address + 1);
     return Address16(h, l);
 }
 
 inline u16 HuC6280::AbsoluteIndexedIndirectAddressing()
 {
     u16 address = Fetch16() + m_X.GetValue();
-    u8 l = m_memory->Read(address);
-    u8 h = m_memory->Read(address + 1);
+    u8 l = MemoryRead(address);
+    u8 h = MemoryRead(address + 1);
     return Address16(h, l);
 }
 

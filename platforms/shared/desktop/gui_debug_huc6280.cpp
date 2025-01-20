@@ -100,7 +100,7 @@ void gui_debug_window_huc6280(void)
             ImGui::Text(" $%02X", memory->GetMpr(0));
             ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(0)));
             get_bank_name(0, memory->GetMpr(0), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, "%s", mpr_name);
+            ImGui::TextColored(gray, " %s", mpr_name);
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", mpr_tooltip);
 
@@ -109,7 +109,7 @@ void gui_debug_window_huc6280(void)
             ImGui::Text(" $%02X", memory->GetMpr(1));
             ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(1)));
             get_bank_name(1, memory->GetMpr(1), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, "%s", mpr_name);
+            ImGui::TextColored(gray, " %s", mpr_name);
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", mpr_tooltip);
     
@@ -118,7 +118,7 @@ void gui_debug_window_huc6280(void)
             ImGui::Text(" $%02X", memory->GetMpr(2));
             ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(2)));
             get_bank_name(2, memory->GetMpr(2), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, "%s", mpr_name);
+            ImGui::TextColored(gray, " %s", mpr_name);
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", mpr_tooltip);
 
@@ -127,7 +127,7 @@ void gui_debug_window_huc6280(void)
             ImGui::Text(" $%02X", memory->GetMpr(3));
             ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(3)));
             get_bank_name(3, memory->GetMpr(3), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, "%s", mpr_name);
+            ImGui::TextColored(gray, " %s", mpr_name);
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", mpr_tooltip);
 
@@ -145,7 +145,7 @@ void gui_debug_window_huc6280(void)
             ImGui::Text(" $%02X", memory->GetMpr(5));
             ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(5)));
             get_bank_name(5, memory->GetMpr(5), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, "%s", mpr_name);
+            ImGui::TextColored(gray, " %s", mpr_name);
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", mpr_tooltip);
 
@@ -163,7 +163,7 @@ void gui_debug_window_huc6280(void)
             ImGui::Text(" $%02X", memory->GetMpr(7));
             ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(7)));
             get_bank_name(7, memory->GetMpr(7), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, "%s", mpr_name);
+            ImGui::TextColored(gray, " %s", mpr_name);
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("%s", mpr_tooltip);
 
@@ -205,25 +205,25 @@ void gui_debug_window_huc6280(void)
 
         ImGui::TableNextColumn();
 
-        ImGui::TextColored(magenta, " IRQ1:"); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->IDR & 0x02 ? red : green, *proc_state->IDR & 0x02 ? "OFF" : "ON "); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->IRQ1 ? green : gray, "ACTIVE");
+        ImGui::TextColored(magenta, "IRQ1:"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IDR & 0x02 ? gray : green, *proc_state->IDR & 0x02 ? "OFF" : "ON "); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IRR & 0x02 ? green : gray, "ASSERTED");
 
-        ImGui::TextColored(magenta, " IRQ2:"); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->IDR & 0x01 ? red : green, *proc_state->IDR & 0x01 ? "OFF" : "ON "); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->IRQ2 ? green : gray, "ACTIVE");
+        ImGui::TextColored(magenta, "IRQ2:"); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IDR & 0x01 ? gray : green, *proc_state->IDR & 0x01 ? "OFF" : "ON "); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IRR & 0x01 ? green : gray, "ASSERTED");
 
-        ImGui::TextColored(magenta, " TIQ: "); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->IDR & 0x04 ? red : green, *proc_state->IDR & 0x04 ? "OFF" : "ON "); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->TIMER_IRQ ? green : gray, "ACTIVE");
-
-        ImGui::TableNextColumn();
-        ImGui::TextColored(input->GetSel() ? orange : gray, " I/O SEL"); ImGui::SameLine();
-        ImGui::TextColored(input->GetClr() ? orange : gray, " I/O CLR"); ImGui::SameLine();
+        ImGui::TextColored(magenta, "TIQ: "); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IDR & 0x04 ? gray : green, *proc_state->IDR & 0x04 ? "OFF" : "ON "); ImGui::SameLine();
+        ImGui::TextColored(*proc_state->IRR & 0x04 ? green : gray, "ASSERTED");
 
         ImGui::TableNextColumn();
-        ImGui::TextColored(!*proc_state->SPEED ? green : gray, " 1.79 MHz"); ImGui::SameLine();
-        ImGui::TextColored(*proc_state->SPEED ? green : gray, "7.16 MHz");
+        ImGui::TextColored(input->GetSel() ? green : gray, " I/O SEL"); ImGui::SameLine();
+        ImGui::TextColored(input->GetClr() ? green : gray, " I/O CLR"); ImGui::SameLine();
+
+        ImGui::TableNextColumn();
+        ImGui::TextColored(cyan, " SPEED:"); ImGui::SameLine();
+        ImGui::TextColored(orange, *proc_state->SPEED ? " 7.16 MHz" : " 1.79 MHz");
 
         ImGui::EndTable();
     }
