@@ -42,7 +42,7 @@ struct DisassemblerLine
     u16 address;
     bool is_breakpoint;
     Memory::GG_Disassembler_Record* record;
-    char name_with_symbol[64];
+    char name_enhanced[64];
     int name_real_length;
     DebugSymbol* symbol;
 };
@@ -83,6 +83,7 @@ static void add_breakpoint(int type);
 static void request_goto_address(u16 addr);
 static bool is_return_instruction(u8 opcode);
 static void replace_symbols(DisassemblerLine* line, const char* color);
+static void replace_labels(DisassemblerLine* line, const char* color, const char* original_color);
 static void draw_instruction_name(DisassemblerLine* line, bool is_pc);
 static void disassembler_menu(void);
 static void add_bookmark_popup(void);
@@ -553,7 +554,7 @@ static void prepare_drawable_lines(void)
             line.symbol = NULL;
             line.is_breakpoint = false;
             line.record = record;
-            snprintf(line.name_with_symbol, 64, "%s", line.record->name);
+            snprintf(line.name_enhanced, 64, "%s", line.record->name);
 
             std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
 
@@ -946,7 +947,7 @@ static void replace_symbols(DisassemblerLine* line, const char* color)
         if (pos != std::string::npos)
         {
             instr.replace(pos, 5, color + symbol);
-            snprintf(line->name_with_symbol, 64, "%s", instr.c_str());
+            snprintf(line->name_enhanced, 64, "%s", instr.c_str());
             symbol_found = true;
         }
     }
@@ -966,9 +967,37 @@ static void replace_symbols(DisassemblerLine* line, const char* color)
         if (pos != std::string::npos)
         {
             instr.replace(pos, 5, color + symbol);
-            snprintf(line->name_with_symbol, 64, "%s", instr.c_str());
+            snprintf(line->name_enhanced, 64, "%s", instr.c_str());
         }
 
+    }
+}
+
+static void replace_labels(DisassemblerLine* line, const char* color, const char* original_color)
+{
+    u16 hardware_offset = 0x0000;
+
+    for (int i = 0; i < 8; i++)
+    {
+        if (emu_get_core()->GetMemory()->GetMpr(i) == 0xFF)
+        {
+            hardware_offset = i * 0x2000;
+            break;
+        }
+    }
+
+    for (int i = 0; i < k_debug_label_count; i++)
+    {
+        std::string instr = line->record->name;
+        std::string label = k_debug_labels[i].label;
+        char label_address[6];
+        snprintf(label_address, 6, "$%04X", k_debug_labels[i].address + hardware_offset);
+        size_t pos = instr.find(label_address);
+        if (pos != std::string::npos)
+        {
+            instr.replace(pos, 5, color + label + label_address + original_color);
+            snprintf(line->name_enhanced, 64, "%s", instr.c_str());
+        }
     }
 }
 
@@ -977,29 +1006,34 @@ static const char* const c_white = "{FFFFFF}";
 static const char* const c_red = "{FA2573}";
 static const char* const c_green = "{1AE51A}";
 static const char* const c_blue = "{3466FF}";
+static const char* const c_orange = "{FD9820}";
 
 static void draw_instruction_name(DisassemblerLine* line, bool is_pc)
 {
     const char* color;
     const char* symbol_color;
+    const char* label_color;
     const char* extra_color;
 
     if (is_pc)
     {
         color = c_yellow;
         symbol_color = c_yellow;
+        label_color = c_yellow;
         extra_color = c_yellow;
     }
     else if (line->is_breakpoint)
     {
         color = c_red;
         symbol_color = c_red;
+        label_color = c_red;
         extra_color = c_red;
     }
     else
     {
         color = c_white;
         symbol_color = c_green;
+        label_color = c_orange;
         extra_color = c_blue;
     }
 
@@ -1008,8 +1042,12 @@ static void draw_instruction_name(DisassemblerLine* line, bool is_pc)
         replace_symbols(line, symbol_color);
     }
 
-    const char* name = config_debug.dis_replace_symbols ? line->name_with_symbol : line->record->name;
-    std::string instr = name;
+    if (config_debug.dis_replace_labels)
+    {
+        replace_labels(line, label_color, color);
+    }
+
+    std::string instr = line->name_enhanced;
     size_t pos = instr.find("{}");
     if (pos != std::string::npos)
         instr.replace(pos, 2, extra_color);
@@ -1183,6 +1221,7 @@ static void disassembler_menu(void)
     {
         ImGui::MenuItem("Automatic Symbols", NULL, &config_debug.dis_show_auto_symbols);
         ImGui::MenuItem("Replace Address With Symbol", NULL, &config_debug.dis_replace_symbols);
+        ImGui::MenuItem("Replace Address With Label", NULL, &config_debug.dis_replace_labels);
 
         ImGui::Separator();
 

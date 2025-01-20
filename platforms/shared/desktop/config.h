@@ -129,6 +129,7 @@ struct config_Debug
     bool dis_show_bank = true;
     bool dis_show_auto_symbols = true;
     bool dis_replace_symbols = true;
+    bool dis_replace_labels = true;
     int font_size = 0;
     bool multi_viewport = false;
 };

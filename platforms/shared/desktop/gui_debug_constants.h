@@ -21,6 +21,7 @@
 #define	GUI_DEBUG_CONSTANTS_H
 
 #include "imgui/imgui.h"
+#include "../../../src/geargrafx.h"
 
 static const ImVec4 cyan =          ImVec4(0.10f, 0.90f, 0.90f, 1.0f);
 static const ImVec4 dark_cyan =     ImVec4(0.00f, 0.30f, 0.30f, 1.0f);
@@ -43,5 +44,39 @@ static const ImVec4 gray =          ImVec4(0.50f, 0.50f, 0.50f, 1.0f);
 static const ImVec4 mid_gray =      ImVec4(0.40f, 0.40f, 0.40f, 1.0f);
 static const ImVec4 dark_gray =     ImVec4(0.10f, 0.10f, 0.10f, 1.0f);
 static const ImVec4 black =         ImVec4(0.00f, 0.00f, 0.00f, 1.0f);
+
+struct stDebugLabel
+{
+    u16 address;
+    const char* label;
+};
+
+static const int k_debug_label_count = 23;
+static const stDebugLabel k_debug_labels[k_debug_label_count] = 
+{
+    { 0x0000, "VDC_ADDRESS_" },
+    { 0x0002, "VDC_DATA_LO_" },
+    { 0x0003, "VDC_DATA_HI_" },
+    { 0x0400, "VCE_CONTROL_" },
+    { 0x0402, "VCE_ADDR_LO_" },
+    { 0x0403, "VCE_ADDR_HI_" },
+    { 0x0404, "VCE_DATA_LO_" },
+    { 0x0405, "VCE_DATA_HI_" },
+    { 0x0800, "PSG_CH_SELECT_" },
+    { 0x0801, "PSG_MAIN_VOL_" },
+    { 0x0802, "PSG_FREQ_LO_" },
+    { 0x0803, "PSG_FREQ_HI_" },
+    { 0x0804, "PSG_CH_CTRL_" },
+    { 0x0805, "PSG_CH_VOL_" },
+    { 0x0806, "PSG_CH_DATA_" },
+    { 0x0807, "PSG_NOISE_" },
+    { 0x0808, "PSG_LFO_FREQ_" },
+    { 0x0809, "PSG_LFO_CTRL_" },
+    { 0x0C00, "TIMER_COUNTER_" },
+    { 0x0C01, "TIMER_CONTROL_" },
+    { 0x1000, "JOYPAD_" },
+    { 0x1402, "IRQ_DISABLE_" },
+    { 0x1403, "IRQ_STATUS_" }
+};
 
 #endif	/* GUI_DEBUG_CONSTANTS_H */
