@@ -45,11 +45,11 @@ void gui_debug_window_huc6260_info(void)
 
     ImGui::TextColored(magenta, "SPEED    "); ImGui::SameLine();
     const char* speed[] = { "5.36 MHz", "7.16 MHz", "10.8 MHz" };
-    ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
+    ImGui::TextColored(orange, "%s", speed[huc6260->GetSpeed()]);
 
     ImGui::TextColored(magenta, "SIGNALS  "); ImGui::SameLine();
-    ImGui::TextColored(*huc6260_state->HSYNC ? gray : orange, "HSYNC"); ImGui::SameLine();
-    ImGui::TextColored(*huc6260_state->VSYNC ? gray : orange, "VSYNC");
+    ImGui::TextColored(*huc6260_state->HSYNC ? gray : green, "HSYNC"); ImGui::SameLine();
+    ImGui::TextColored(*huc6260_state->VSYNC ? gray : green, "VSYNC");
 
     int vpos = *huc6260_state->VPOS;// - 259;
     // if (vpos < 0)

@@ -222,7 +222,7 @@ void gui_debug_window_huc6280(void)
         ImGui::TextColored(input->GetClr() ? green : gray, " I/O CLR"); ImGui::SameLine();
 
         ImGui::TableNextColumn();
-        ImGui::TextColored(cyan, " SPEED:"); ImGui::SameLine();
+        ImGui::TextColored(magenta, " SPEED:"); ImGui::SameLine();
         ImGui::TextColored(orange, *proc_state->SPEED ? " 7.16 MHz" : " 1.79 MHz");
 
         ImGui::EndTable();

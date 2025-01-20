@@ -46,18 +46,18 @@ void gui_debug_window_huc6270_info(void)
 
     ImGui::TextColored(magenta, "SPEED   "); ImGui::SameLine();
     const char* speed[] = { "5.36 MHz", "7.16 MHz", "10.8 MHz" };
-    ImGui::TextColored(green, "%s", speed[huc6260->GetSpeed()]);
+    ImGui::TextColored(orange, "%s", speed[huc6260->GetSpeed()]);
 
     ImGui::TextColored(magenta, "X,Y     "); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6270_state->HPOS, *huc6270_state->VPOS, *huc6270_state->HPOS, *huc6270_state->VPOS);
 
     const char* h_states[] = { "HDS1", "HDS2", "HDS3", "HDW1", "HDW1", "HDE ", "HSW " };
     ImGui::TextColored(magenta, "H STATE "); ImGui::SameLine();
-    ImGui::TextColored(orange, "%s", h_states[*huc6270_state->H_STATE]);
+    ImGui::TextColored(blue, "%s", h_states[*huc6270_state->H_STATE]);
 
     const char* v_states[] = { "VDS", "VDW", "VCR", "VSW" };
     ImGui::TextColored(magenta, "V STATE "); ImGui::SameLine();
-    ImGui::TextColored(orange, "%s", v_states[*huc6270_state->V_STATE]);
+    ImGui::TextColored(blue, "%s", v_states[*huc6270_state->V_STATE]);
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "CONTROL REGISTRY"); ImGui::Separator();
 
@@ -76,10 +76,10 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(white, "%02X", k_huc6270_read_write_increment[(huc6270_state->R[HUC6270_REG_CR] >> 11) & 0x03]);
 
     ImGui::TextColored(magenta, "INT REQ "); ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_COLLISION ? orange : gray, "COLL"); ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW ? orange : gray, "OVER"); ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE ? orange : gray, "SCAN"); ImGui::SameLine();
-    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_VBLANK ? orange : gray, "VERT");
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_COLLISION ? yellow : gray, "COLL"); ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW ? yellow : gray, "OVER"); ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE ? yellow : gray, "SCAN"); ImGui::SameLine();
+    ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_VBLANK ? yellow : gray, "VERT");
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "STATUS REGISTRY"); ImGui::Separator(); 
 

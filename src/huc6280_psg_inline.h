@@ -86,18 +86,17 @@ inline void HuC6280PSG::Write(u16 address, u8 value)
     case 6:
         if (m_channel_select < 6)
         {
-            int data = value & 0x1F;
-            m_ch->wave = data;
+            m_ch->wave = value & 0x1F;
 
             // DDA on
             if (IsSetBit(m_ch->control, 6))
             {
-                m_ch->dda = data;
+                m_ch->dda = value & 0x1F;
             }
             // DDA off, Channel off
             else if(!IsSetBit(m_ch->control, 7))
             {
-                m_ch->wave_data[m_ch->wave_index] = data;
+                m_ch->wave_data[m_ch->wave_index] = value & 0x1F;
                 m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
             }
         }
