@@ -58,10 +58,24 @@ void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
     m_joypads[controller] |= key;
 }
 
-// void Input::SaveState(std::ostream& stream)
-// {
-// }
+void Input::SaveState(std::ostream& stream)
+{
+    using namespace std;
+    stream.write(reinterpret_cast<const char*> (&m_clr), sizeof(m_clr));
+    stream.write(reinterpret_cast<const char*> (&m_sel), sizeof(m_sel));
+    stream.write(reinterpret_cast<const char*> (m_joypads), sizeof(m_joypads));
+    stream.write(reinterpret_cast<const char*> (&m_register), sizeof(m_register));
+    stream.write(reinterpret_cast<const char*> (&m_pce_jap), sizeof(m_pce_jap));
+    stream.write(reinterpret_cast<const char*> (&m_cdrom), sizeof(m_cdrom));
+}
 
-// void Input::LoadState(std::istream& stream)
-// {
-// }
+void Input::LoadState(std::istream& stream)
+{
+    using namespace std;
+    stream.read(reinterpret_cast<char*> (&m_clr), sizeof(m_clr));
+    stream.read(reinterpret_cast<char*> (&m_sel), sizeof(m_sel));
+    stream.read(reinterpret_cast<char*> (m_joypads), sizeof(m_joypads));
+    stream.read(reinterpret_cast<char*> (&m_register), sizeof(m_register));
+    stream.read(reinterpret_cast<char*> (&m_pce_jap), sizeof(m_pce_jap));
+    stream.read(reinterpret_cast<char*> (&m_cdrom), sizeof(m_cdrom));
+}

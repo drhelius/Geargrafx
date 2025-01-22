@@ -19,6 +19,9 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include "geargrafx_core.h"
 #include "common.h"
 #include "cartridge.h"
@@ -303,255 +306,319 @@ void GeargrafxCore::ResetSound()
 //     // TODO Implement load ram
 // }
 
-// void GeargrafxCore::SaveState(int index)
-// {
-//     TODO Implement save states
-//     Log("Creating save state %d...", index);
-
-//     SaveState(NULL, index);
-
-//     Log("Save state %d created", index);
-// }
-
-// void GeargrafxCore::SaveState(const char* szPath, int index)
-// {
-//     Log("Creating save state...");
-
-//     using namespace std;
-
-//     size_t size;
-//     SaveState(NULL, size);
-
-//     u8* buffer = new u8[size];
-//     string path = "";
-
-//     if (IsValidPointer(szPath))
-//     {
-//         path += szPath;
-//         path += "/";
-//         path += m_cartridge->GetFileName();
-//     }
-//     else
-//     {
-//         path = m_cartridge->GetFilePath();
-//     }
-
-//     string::size_type i = path.rfind('.', path.length());
-
-//     if (i != string::npos) {
-//         path.replace(i + 1, 3, "state");
-//     }
-
-//     stringstream sstm;
-
-//     if (index < 0)
-//         sstm << szPath;
-//     else
-//         sstm << path << index;
-
-//     Log("Save state file: %s", sstm.str().c_str());
-
-//     ofstream file(sstm.str().c_str(), ios::out | ios::binary);
-
-//     SaveState(file, size);
-
-//     SafeDeleteArray(buffer);
-
-//     file.close();
-
-//     Log("Save state created");
-// }
-
-// bool GeargrafxCore::SaveState(u8* buffer, size_t& size)
-// {
-//     bool ret = false;
-
-//     if (m_cartridge->IsReady())
-//     {
-//         using namespace std;
-
-//         stringstream stream;
-
-//         if (SaveState(stream, size))
-//             ret = true;
-
-//         if (IsValidPointer(buffer))
-//         {
-//             Log("Saving state to buffer [%d bytes]...", size);
-//             memcpy(buffer, stream.str().c_str(), size);
-//             ret = true;
-//         }
-//     }
-//     else
-//     {
-//         Log("Invalid rom.");
-//     }
-
-//     return ret;
-// }
-
-// bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size)
-// {
-//     if (m_cartridge->IsReady())
-//     {
-//         Log("Gathering save state data...");
-
-//         m_memory->SaveState(stream);
-//         m_processor->SaveState(stream);
-//         m_audio->SaveState(stream);
-//         m_video->SaveState(stream);
-//         m_input->SaveState(stream);
-
-//         size = static_cast<size_t>(stream.tellp());
-//         size += (sizeof(u32) * 2);
-
-//         u32 header_magic = GC_SAVESTATE_MAGIC;
-//         u32 header_size = static_cast<u32>(size);
-
-//         stream.write(reinterpret_cast<const char*> (&header_magic), sizeof(header_magic));
-//         stream.write(reinterpret_cast<const char*> (&header_size), sizeof(header_size));
-
-//         Log("Save state size: %d", static_cast<size_t>(stream.tellp()));
-
-//         return true;
-//     }
-
-//     Log("Invalid rom.");
-
-//     return false;
-// }
-
-// void GeargrafxCore::LoadState(int index)
-// {
-//     Log("Loading save state %d...", index);
-
-//     LoadState(NULL, index);
-
-//     Log("State %d file loaded", index);
-// }
-
-// void GeargrafxCore::LoadState(const char* szPath, int index)
-// {
-//     Log("Loading save state...");
-
-//     using namespace std;
-
-//     string sav_path = "";
-
-//     if (IsValidPointer(szPath))
-//     {
-//         sav_path += szPath;
-//         sav_path += "/";
-//         sav_path += m_cartridge->GetFileName();
-//     }
-//     else
-//     {
-//         sav_path = m_cartridge->GetFilePath();
-//     }
-
-//     string rom_path = sav_path;
-
-//     string::size_type i = sav_path.rfind('.', sav_path.length());
-
-//     if (i != string::npos) {
-//         sav_path.replace(i + 1, 3, "state");
-//     }
-
-//     std::stringstream sstm;
-
-//     if (index < 0)
-//         sstm << szPath;
-//     else
-//         sstm << sav_path << index;
-
-//     Log("Opening save file: %s", sstm.str().c_str());
-
-//     ifstream file;
-
-//     file.open(sstm.str().c_str(), ios::in | ios::binary);
-
-//     if (!file.fail())
-//     {
-//         if (LoadState(file))
-//         {
-//             Log("Save state loaded");
-//         }
-//     }
-//     else
-//     {
-//         Log("Save state file doesn't exist");
-//     }
-
-//     file.close();
-// }
-
-// bool GeargrafxCore::LoadState(const u8* buffer, size_t size)
-// {
-//     if (m_cartridge->IsReady() && (size > 0) && IsValidPointer(buffer))
-//     {
-//         Log("Gathering load state data [%d bytes]...", size);
-
-//         using namespace std;
-
-//         stringstream stream;
-
-//         stream.write(reinterpret_cast<const char*> (buffer), size);
-
-//         return LoadState(stream);
-//     }
-
-//     Log("Invalid rom or memory.");
-
-//     return false;
-// }
-
-// bool GeargrafxCore::LoadState(std::istream& stream)
-// {
-//     if (m_cartridge->IsReady())
-//     {
-//         using namespace std;
-
-//         u32 header_magic = 0;
-//         u32 header_size = 0;
-
-//         stream.seekg(0, ios::end);
-//         size_t size = static_cast<size_t>(stream.tellg());
-//         stream.seekg(0, ios::beg);
-
-//         Log("Load state stream size: %d", size);
-
-//         stream.seekg(size - (2 * sizeof(u32)), ios::beg);
-//         stream.read(reinterpret_cast<char*> (&header_magic), sizeof(header_magic));
-//         stream.read(reinterpret_cast<char*> (&header_size), sizeof(header_size));
-//         stream.seekg(0, ios::beg);
-
-//         Log("Load state magic: 0x%08x", header_magic);
-//         Log("Load state size: %d", header_size);
-
-//         if ((header_size == size) && (header_magic == GC_SAVESTATE_MAGIC))
-//         {
-//             Log("Loading state...");
-
-//             m_memory->LoadState(stream);
-//             m_processor->LoadState(stream);
-//             m_audio->LoadState(stream);
-//             m_video->LoadState(stream);
-//             m_input->LoadState(stream);
-
-//             return true;
-//         }
-//         else
-//         {
-//             Log("Invalid save state size or header");
-//         }
-//     }
-//     else
-//     {
-//         Log("Invalid rom");
-//     }
-
-//     return false;
-// }
+std::string GeargrafxCore::GetSaveStatePath(const char* path, int index)
+{
+    using namespace std;
+    string full_path;
+
+    if (IsValidPointer(path))
+    {
+        full_path = path;
+        full_path += "/";
+        full_path += m_cartridge->GetFileName();
+    }
+    else
+        full_path = m_cartridge->GetFilePath();
+
+    string::size_type dot_index = full_path.rfind('.');
+
+    if (dot_index != string::npos)
+        full_path.replace(dot_index + 1, full_path.length() - dot_index - 1, "state");
+
+    if (index >= 0)
+        full_path += to_string(index);
+
+    return full_path;
+}
+
+void GeargrafxCore::SaveState(const char* path, int index, bool screenshot)
+{
+    using namespace std;
+    string full_path = GetSaveStatePath(path, index);
+
+    ofstream stream(full_path.c_str(), ios::out | ios::binary);
+
+    size_t size;
+    SaveState(stream, size, screenshot);
+}
+
+bool GeargrafxCore::SaveState(u8* buffer, size_t& size, bool screenshot)
+{
+    using namespace std;
+
+    if (!m_cartridge->IsReady())
+    {
+        Log("Cartridge is not ready when trying to save state");
+        return false;
+    }
+
+    stringstream stream;
+
+    if (SaveState(stream, size, screenshot))
+    {
+        if (IsValidPointer(buffer))
+        {
+            Log("Saving state to buffer [%d bytes]...", size);
+            memcpy(buffer, stream.str().c_str(), size);
+        }
+        else
+        {
+            Debug("Calculating state size: %d bytes", size);
+        }
+    }
+
+    return true;
+}
+
+bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screenshot)
+{
+    using namespace std;
+
+    if (!m_cartridge->IsReady())
+    {
+        Log("Cartridge is not ready when trying to save state");
+        return false;
+    }
+
+    Debug("Gathering save state data...");
+
+    stream.write(reinterpret_cast<const char*> (&m_clock), sizeof(m_clock));
+    m_memory->SaveState(stream);
+    m_huc6260->SaveState(stream);
+    m_huc6270->SaveState(stream);
+    m_huc6280->SaveState(stream);
+    m_audio->SaveState(stream);
+    m_input->SaveState(stream);
+
+    GG_SaveState_Header header;
+    header.magic = GG_SAVESTATE_MAGIC;
+    header.version = GG_SAVESTATE_VERSION;
+    header.timestamp = time(NULL);
+    strncpy(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name));
+    header.rom_crc = m_cartridge->GetCRC();
+
+    if (screenshot)
+    {
+        header.screenshot_width = m_huc6260->GetCurrentLineWidth();
+        header.screenshot_height = m_huc6260->GetCurrentHeight();
+
+        int bytes_per_pixel = 2;
+        if (m_huc6260->GetPixelFormat() == GG_PIXEL_RGBA8888 || m_huc6260->GetPixelFormat() == GG_PIXEL_BGRA8888)
+            bytes_per_pixel = 4;
+
+        u8* frame_buffer = m_huc6260->GetBuffer();
+
+        header.screenshot_size = header.screenshot_width * header.screenshot_height * bytes_per_pixel;
+        stream.write(reinterpret_cast<const char*>(frame_buffer), header.screenshot_size);
+    }
+    else
+    {
+        header.screenshot_size = 0;
+        header.screenshot_width = 0;
+        header.screenshot_height = 0;
+    }
+
+    size = static_cast<size_t>(stream.tellp());
+    size += sizeof(header);
+    header.size = static_cast<u32>(size);
+
+    stream.write(reinterpret_cast<const char*>(&header), sizeof(header));
+
+    Log("Save state size: %d", static_cast<size_t>(stream.tellp()));
+
+    return true;
+}
+
+void GeargrafxCore::LoadState(const char* path, int index)
+{
+    using namespace std;
+    string full_path = GetSaveStatePath(path, index);
+
+    ifstream stream;
+    stream.open(full_path.c_str(), ios::in | ios::binary);
+
+    if (!stream.fail())
+    {
+        LoadState(stream);
+    }
+    else
+    {
+        Log("Load state file doesn't exist");
+    }
+
+    stream.close();
+}
+
+bool GeargrafxCore::LoadState(const u8* buffer, size_t size)
+{
+    using namespace std;
+
+    if (!m_cartridge->IsReady())
+    {
+        Log("Cartridge is not ready when trying to load state");
+        return false;
+    }
+
+    if (!IsValidPointer(buffer) || (size == 0))
+    {
+        Log("Invalid load state buffer");
+        return false;
+    }
+
+    stringstream stream;
+    stream.write(reinterpret_cast<const char*> (buffer), size);
+
+    return LoadState(stream);
+}
+
+bool GeargrafxCore::LoadState(std::istream& stream)
+{
+    using namespace std;
+
+    if (!m_cartridge->IsReady())
+    {
+        Log("Cartridge is not ready when trying to load state");
+        return false;
+    }
+
+    GG_SaveState_Header header;
+
+    stream.seekg(0, ios::end);
+    size_t size = static_cast<size_t>(stream.tellg());
+    stream.seekg(0, ios::beg);
+
+    stream.seekg(size - sizeof(header), ios::beg);
+    stream.read(reinterpret_cast<char*> (&header), sizeof(header));
+    stream.seekg(0, ios::beg);
+
+    Debug("Load state stream size: %d", size);
+    Debug("Load state header magic: 0x%08x", header.magic);
+    Debug("Load state header version: %d", header.version);
+    Debug("Load state header size: %d", header.size);
+    Debug("Load state header timestamp: %d", header.timestamp);
+    Debug("Load state header rom crc: 0x%08x", header.rom_crc);
+    Debug("Load state header screenshot size: %d", header.screenshot_size);
+
+    if ((header.magic != GG_SAVESTATE_MAGIC))
+    {
+        Log("Invalid save state");
+        return false;
+    }
+
+    if (header.version != GG_SAVESTATE_VERSION)
+    {
+        Log("Invalid save state version");
+        return false;
+    }
+
+    if (header.size != size)
+    {
+        Log("Invalid save state size");
+        return false;
+    }
+
+    if (header.rom_crc != m_cartridge->GetCRC())
+    {
+        Log("Invalid save state rom crc");
+        return false;
+    }
+
+    Log("Loading state...");
+
+    stream.read(reinterpret_cast<char*> (&m_clock), sizeof(m_clock));
+    m_memory->LoadState(stream);
+    m_huc6260->LoadState(stream);
+    m_huc6270->LoadState(stream);
+    m_huc6280->LoadState(stream);
+    m_audio->LoadState(stream);
+    m_input->LoadState(stream);
+
+    return true;
+}
+
+bool GeargrafxCore::GetSaveStateHeader(int index, const char* path, GG_SaveState_Header* header)
+{
+    using namespace std;
+
+    string full_path = GetSaveStatePath(path, index);
+
+    ifstream stream;
+    stream.open(full_path.c_str(), ios::in | ios::binary);
+
+    if (stream.fail())
+    {
+        Log("Savestate file doesn't exist");
+        stream.close();
+        return false;
+    }
+
+    stream.seekg(0, ios::end);
+    size_t savestate_size = static_cast<size_t>(stream.tellg());
+    stream.seekg(0, ios::beg);
+
+    stream.seekg(savestate_size - sizeof(GG_SaveState_Header), ios::beg);
+    stream.read(reinterpret_cast<char*> (header), sizeof(GG_SaveState_Header));
+    stream.seekg(0, ios::beg);
+
+    return true;
+}
+
+bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveState_Screenshot* screenshot)
+{
+    using namespace std;
+
+    if (!IsValidPointer(screenshot->data) || (screenshot->size == 0))
+    {
+        Log("Invalid save state screenshot buffer");
+        return false;
+    }
+
+    string full_path = GetSaveStatePath(path, index);
+
+    ifstream stream;
+    stream.open(full_path.c_str(), ios::in | ios::binary);
+
+    if (stream.fail())
+    {
+        Log("Screenshot file doesn't exist");
+        stream.close();
+        return false;
+    }
+
+    GG_SaveState_Header header;
+
+    stream.seekg(0, ios::end);
+    size_t savestate_size = static_cast<size_t>(stream.tellg());
+    stream.seekg(0, ios::beg);
+
+    stream.seekg(savestate_size - sizeof(header), ios::beg);
+    stream.read(reinterpret_cast<char*> (&header), sizeof(header));
+    stream.seekg(0, ios::beg);
+
+    if (header.screenshot_size == 0)
+    {
+        Log("No screenshot data");
+        stream.close();
+        return false;
+    }
+
+    if (screenshot->size < header.screenshot_size)
+    {
+        Log("Invalid screenshot buffer size");
+        stream.close();
+        return false;
+    }
+
+    screenshot->size = header.screenshot_size;
+    screenshot->width = header.screenshot_width;
+    screenshot->height = header.screenshot_height;
+
+    stream.seekg(savestate_size - sizeof(header) - screenshot->size, ios::beg);
+    stream.read(reinterpret_cast<char*> (screenshot->data), screenshot->size);
+    stream.close();
+
+    return true;
+}
 
 void GeargrafxCore::Reset()
 {

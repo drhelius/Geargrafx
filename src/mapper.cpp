@@ -18,6 +18,7 @@
  */
 
 #include "mapper.h"
+#include "log.h"
 
 Mapper::Mapper(Cartridge* cartridge)
 {
@@ -26,4 +27,14 @@ Mapper::Mapper(Cartridge* cartridge)
 
 Mapper::~Mapper()
 {
+}
+
+void Mapper::SaveState(std::ostream&)
+{
+    Debug("Mapper::SaveState not implemented");
+}
+
+void Mapper::LoadState(std::istream&)
+{
+    Debug("Mapper::LoadState not implemented");
 }

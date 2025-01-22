@@ -27,6 +27,7 @@
 #include "config.h"
 #include "application.h"
 #include "emu.h"
+#include "renderer.h"
 #include "../../../src/geargrafx.h"
 
 static char savefiles_path[4096] = "";
@@ -50,6 +51,7 @@ static void menu_about(void);
 static void file_dialogs(void);
 static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int player);
 static void gamepad_configuration_item(const char* text, int* button, int player);
+static void draw_savestate_slot_info(int slot);
 
 void gui_init_menus(void)
 {
@@ -165,6 +167,10 @@ static void menu_geargrafx(void)
             ImGui::PushItemWidth(100.0f);
             ImGui::Combo("##slot", &config_emulator.save_slot, "Slot 1\0Slot 2\0Slot 3\0Slot 4\0Slot 5\0\0");
             ImGui::PopItemWidth();
+
+            ImGui::Separator();
+            draw_savestate_slot_info(config_emulator.save_slot);
+
             ImGui::EndMenu();
         }
 
@@ -182,6 +188,14 @@ static void menu_geargrafx(void)
             message += std::to_string(config_emulator.save_slot + 1);
             gui_set_status_message(message.c_str(), 3000);
             emu_load_state_slot(config_emulator.save_slot + 1);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("Slot: %d", config_emulator.save_slot + 1);
+            ImGui::Separator();
+            draw_savestate_slot_info(config_emulator.save_slot);
+            ImGui::EndTooltip();
         }
 
         ImGui::Separator();
@@ -638,5 +652,27 @@ static void gamepad_configuration_item(const char* text, int* button, int player
     if (ImGui::Button(remove_label))
     {
         *button = SDL_CONTROLLER_BUTTON_INVALID;
+    }
+}
+
+static void draw_savestate_slot_info(int slot)
+{
+    if (emu_savestates[slot].rom_name[0] != 0)
+    {
+        ImGui::Text("%s", emu_savestates[slot].rom_name);
+        char date[64];
+        GetDateTimeString(emu_savestates[slot].timestamp, date, sizeof(date));
+        ImGui::Text("%s", date);
+
+        if (IsValidPointer(emu_savestates_screenshots[slot].data))
+        {
+            float width = emu_savestates_screenshots[slot].width;
+            float height = emu_savestates_screenshots[slot].height;
+            ImGui::Image((ImTextureID)(intptr_t)renderer_emu_savestates[slot], ImVec2((height / 3.0f) * 4.0f, height), ImVec2(0, 0), ImVec2(width / 512.0f, height / 512.0f));
+        }
+    }
+    else
+    {
+        ImGui::TextColored(ImVec4(0.50f, 0.50f, 0.50f, 1.0f), "Slot %d is empty", slot + 1);
     }
 }

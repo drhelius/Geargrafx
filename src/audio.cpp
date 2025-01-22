@@ -82,12 +82,16 @@ HuC6280PSG* Audio::GetPSG()
     return m_psg;
 }
 
-// void Audio::SaveState(std::ostream& stream)
-// {
-//     stream.write(reinterpret_cast<const char*> (&m_elapsed_cycles), sizeof(m_ElapsedCycles));
-// }
+void Audio::SaveState(std::ostream& stream)
+{
+    using namespace std;
+    stream.write(reinterpret_cast<const char*> (m_psg_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
+    m_psg->SaveState(stream);
+}
 
-// void Audio::LoadState(std::istream& stream)
-// {
-//     stream.read(reinterpret_cast<char*> (&m_elapsed_cycles), sizeof(m_ElapsedCycles));
-// }
+void Audio::LoadState(std::istream& stream)
+{
+    using namespace std;
+    stream.read(reinterpret_cast<char*> (m_psg_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
+    m_psg->LoadState(stream);
+}

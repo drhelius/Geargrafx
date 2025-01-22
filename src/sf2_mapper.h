@@ -33,6 +33,8 @@ public:
     virtual u8 Read(u8 bank, u16 address);
     virtual void Write(u8 bank, u16 address, u8 value);
     virtual void Reset();
+    virtual void SaveState(std::ostream& stream);
+    virtual void LoadState(std::istream& stream);
 
 private:
     int m_bank;

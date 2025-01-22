@@ -20,6 +20,8 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include <iostream>
+#include <fstream>
 #include "types.h"
 
 class HuC6280PSG;
@@ -36,8 +38,8 @@ public:
     void WritePSG(u32 address, u8 value);
     void EndFrame(s16* sample_buffer, int* sample_count);
     HuC6280PSG* GetPSG();
-    // void SaveState(std::ostream& stream);
-    // void LoadState(std::istream& stream);
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
     bool m_mute;

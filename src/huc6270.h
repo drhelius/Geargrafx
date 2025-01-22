@@ -20,6 +20,8 @@
 #ifndef HUC6270_H
 #define HUC6270_H
 
+#include <iostream>
+#include <fstream>
 #include "huc6270_defines.h"
 #include "common.h"
 
@@ -55,10 +57,10 @@ public:
         u16* SR;
         u16* R;
         u16* READ_BUFFER;
-        int* HPOS;
-        int* VPOS;
-        int* V_STATE;
-        int* H_STATE;
+        s32* HPOS;
+        s32* VPOS;
+        s32* V_STATE;
+        s32* H_STATE;
     };
 
 public:
@@ -75,12 +77,14 @@ public:
     u16* GetVRAM();
     u16* GetSAT();
     void SetNoSpriteLimit(bool no_sprite_limit);
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
 
     struct HuC6270_Sprite_Data
     {
-        int index;
+        s32 index;
         u16 x;
         u16 flags;
         u8 palette;
@@ -98,13 +102,13 @@ private:
     u16 m_read_buffer;
     bool m_trigger_sat_transfer;
     bool m_auto_sat_transfer;
-    int m_sat_transfer_pending;
-    int m_hpos;
-    int m_vpos;
-    int m_bg_offset_y;
-    int m_bg_counter_y;
+    s32 m_sat_transfer_pending;
+    s32 m_hpos;
+    s32 m_vpos;
+    s32 m_bg_offset_y;
+    s32 m_bg_counter_y;
     bool m_increment_bg_counter_y;
-    int m_raster_line;
+    s32 m_raster_line;
     u16 m_latched_bxr;
     u16 m_latched_hds;
     u16 m_latched_hdw;
@@ -116,17 +120,17 @@ private:
     u16 m_latched_vsw;
     u16 m_latched_mwr;
     u16 m_latched_cr;
-    int m_v_state;
-    int m_h_state;
-    int m_lines_to_next_v_state;
-    int m_clocks_to_next_h_state;
+    s32 m_v_state;
+    s32 m_h_state;
+    s32 m_lines_to_next_v_state;
+    s32 m_clocks_to_next_h_state;
     bool m_vblank_triggered;
     bool m_active_line;
     u16 m_line_buffer[1024];
     u16 m_line_buffer_sprites[1024];
-    int m_line_buffer_index;
+    s32 m_line_buffer_index;
     bool m_no_sprite_limit;
-    int m_sprite_count;
+    s32 m_sprite_count;
     HuC6270_Sprite_Data m_sprites[128];
 
 private:

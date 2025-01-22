@@ -97,7 +97,7 @@ void HuC6260::Reset()
     m_hsync = false;
     m_vsync = false;
     m_blur = 0;
-    m_black_and_white = false;
+    m_black_and_white = 0;
 
     for (int i = 0; i < 512; i++)
     {
@@ -204,6 +204,11 @@ void HuC6260::SetBuffer(u8* frame_buffer)
     m_frame_buffer = frame_buffer;
 }
 
+u8* HuC6260::GetBuffer()
+{
+    return m_frame_buffer;
+}
+
 int HuC6260::GetCurrentLineWidth()
 {
 #if defined(HUC6260_DEBUG)
@@ -235,6 +240,11 @@ void HuC6260::SetScanlineEnd(int scanline_end)
 void HuC6260::SetOverscan(bool overscan)
 {
     m_overscan = overscan ? 1 : 0;
+}
+
+GG_Pixel_Format HuC6260::GetPixelFormat()
+{
+    return m_pixel_format;
 }
 
 void HuC6260::WritePixel(u16 pixel)
@@ -318,4 +328,42 @@ void HuC6260::WritePixel(u16 pixel)
     }
 
     m_pixel_index++;
+}
+
+void HuC6260::SaveState(std::ostream& stream)
+{
+    using namespace std;
+    stream.write(reinterpret_cast<const char*> (&m_control_register), sizeof(m_control_register));
+    stream.write(reinterpret_cast<const char*> (&m_color_table_address), sizeof(m_color_table_address));
+    stream.write(reinterpret_cast<const char*> (&m_speed), sizeof(m_speed));
+    stream.write(reinterpret_cast<const char*> (&m_clock_divider), sizeof(m_clock_divider));
+    stream.write(reinterpret_cast<const char*> (m_color_table), sizeof(u16) * 512);
+    stream.write(reinterpret_cast<const char*> (&m_hpos), sizeof(m_hpos));
+    stream.write(reinterpret_cast<const char*> (&m_vpos), sizeof(m_vpos));
+    stream.write(reinterpret_cast<const char*> (&m_pixel_index), sizeof(m_pixel_index));
+    stream.write(reinterpret_cast<const char*> (&m_pixel_clock), sizeof(m_pixel_clock));
+    stream.write(reinterpret_cast<const char*> (&m_pixel_x), sizeof(m_pixel_x));
+    stream.write(reinterpret_cast<const char*> (&m_hsync), sizeof(m_hsync));
+    stream.write(reinterpret_cast<const char*> (&m_vsync), sizeof(m_vsync));
+    stream.write(reinterpret_cast<const char*> (&m_blur), sizeof(m_blur));
+    stream.write(reinterpret_cast<const char*> (&m_black_and_white), sizeof(m_black_and_white));
+}
+
+void HuC6260::LoadState(std::istream& stream)
+{
+    using namespace std;
+    stream.read(reinterpret_cast<char*> (&m_control_register), sizeof(m_control_register));
+    stream.read(reinterpret_cast<char*> (&m_color_table_address), sizeof(m_color_table_address));
+    stream.read(reinterpret_cast<char*> (&m_speed), sizeof(m_speed));
+    stream.read(reinterpret_cast<char*> (&m_clock_divider), sizeof(m_clock_divider));
+    stream.read(reinterpret_cast<char*> (m_color_table), sizeof(u16) * 512);
+    stream.read(reinterpret_cast<char*> (&m_hpos), sizeof(m_hpos));
+    stream.read(reinterpret_cast<char*> (&m_vpos), sizeof(m_vpos));
+    stream.read(reinterpret_cast<char*> (&m_pixel_index), sizeof(m_pixel_index));
+    stream.read(reinterpret_cast<char*> (&m_pixel_clock), sizeof(m_pixel_clock));
+    stream.read(reinterpret_cast<char*> (&m_pixel_x), sizeof(m_pixel_x));
+    stream.read(reinterpret_cast<char*> (&m_hsync), sizeof(m_hsync));
+    stream.read(reinterpret_cast<char*> (&m_vsync), sizeof(m_vsync));
+    stream.read(reinterpret_cast<char*> (&m_blur), sizeof(m_blur));
+    stream.read(reinterpret_cast<char*> (&m_black_and_white), sizeof(m_black_and_white));
 }

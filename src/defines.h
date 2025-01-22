@@ -35,11 +35,12 @@
 "  \\____|\\___|\\__,_|_|  \\__, |_|  \\__,_|_| /_/\\_\\\n" \
 "                       |___/                    \n"
 
-#define GG_CLOCK_RATE 21477273
-
 #if defined(DEBUG)
     #define GG_DEBUG 1
 #endif
+
+#define GG_SAVESTATE_VERSION 1
+#define GG_SAVESTATE_MAGIC 0x82190619
 
 #if !defined(NULL)
     #define NULL 0

@@ -42,6 +42,7 @@ static void destroy_debug(void);
 static void update_debug(void);
 static void update_debug_background(void);
 static void update_debug_sprites(void);
+static void update_savestates_data(void);
 
 void emu_init(void)
 {
@@ -56,6 +57,9 @@ void emu_init(void)
 
     sound_queue = new SoundQueue();
     sound_queue->Start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT);
+
+    for (int i = 0; i < 5; i++)
+        InitPointer(emu_savestates_screenshots[i].data);
 
     audio_enabled = true;
     emu_audio_sync = true;
@@ -77,6 +81,9 @@ void emu_destroy(void)
     SafeDelete(geargrafx);
     SafeDeleteArray(emu_frame_buffer);
     destroy_debug();
+
+    for (int i = 0; i < 5; i++)
+        SafeDeleteArray(emu_savestates_screenshots[i].data);
 }
 
 void emu_load_rom(const char* file_path)
@@ -87,6 +94,8 @@ void emu_load_rom(const char* file_path)
     save_ram();
     geargrafx->LoadROM(file_path);
     load_ram();
+
+    update_savestates_data();
 }
 
 void emu_update(void)
@@ -217,44 +226,38 @@ void emu_load_ram(const char* file_path)
 
 void emu_save_state_slot(int index)
 {
-    // TODO Implement save states
-    // if (!emu_is_empty())
-    // {
-    //     if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
-    //         geargrafx->SaveState(emu_savestates_path, index);
-    //     else
-    //         geargrafx->SaveState(index);
-    // }
-    UNUSED(index);
+    if (!emu_is_empty())
+    {
+        if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
+            geargrafx->SaveState(emu_savestates_path, index, true);
+        else
+            geargrafx->SaveState(NULL, index, true);
+
+        update_savestates_data();
+    }
 }
 
 void emu_load_state_slot(int index)
 {
-    // TODO Implement save states
-    // if (!emu_is_empty())
-    // {
-    //     if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
-    //         geargrafx->LoadState(emu_savestates_path, index);
-    //     else
-    //         geargrafx->LoadState(index);
-    // }
-    UNUSED(index);
+    if (!emu_is_empty())
+    {
+        if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
+            geargrafx->LoadState(emu_savestates_path, index);
+        else
+            geargrafx->LoadState(NULL, index);
+    }
 }
 
 void emu_save_state_file(const char* file_path)
 {
-    // TODO Implement save states
-    // if (!emu_is_empty())
-    //     geargrafx->SaveState(file_path, -1);
-    UNUSED(file_path);
+    if (!emu_is_empty())
+        geargrafx->SaveState(file_path, -1, true);
 }
 
 void emu_load_state_file(const char* file_path)
 {
-    // TODO Implement save states
-    // if (!emu_is_empty())
-    //     geargrafx->LoadState(file_path, -1);
-    UNUSED(file_path);
+    if (!emu_is_empty())
+        geargrafx->LoadState(file_path);
 }
 
 void emu_get_runtime(GG_Runtime_Info& runtime)
@@ -579,6 +582,30 @@ static void update_debug_sprites(void)
                 emu_debug_sprite_buffers[i][pixel_index + 2] = blue;
                 emu_debug_sprite_buffers[i][pixel_index + 3] = 255;
             }
+        }
+    }
+}
+
+static void update_savestates_data(void)
+{
+    if (emu_is_empty())
+        return;
+
+    bool using_path = (emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, ""));
+
+    for (int i = 0; i < 5; i++)
+    {
+        emu_savestates[i].rom_name[0] = 0;
+        SafeDeleteArray(emu_savestates_screenshots[i].data);
+
+        if (!geargrafx->GetSaveStateHeader(i + 1, using_path ? emu_savestates_path : NULL, &emu_savestates[i]))
+            continue;
+
+        if (emu_savestates[i].screenshot_size > 0)
+        {
+            emu_savestates_screenshots[i].data = new u8[emu_savestates[i].screenshot_size];
+            emu_savestates_screenshots[i].size = emu_savestates[i].screenshot_size;
+            geargrafx->GetSaveStateScreenshot(i + 1, using_path ? emu_savestates_path : NULL, &emu_savestates_screenshots[i]);
         }
     }
 }

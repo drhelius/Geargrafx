@@ -20,6 +20,8 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+#include <iostream>
+#include <fstream>
 #include "common.h"
 
 class Input
@@ -35,8 +37,8 @@ public:
     u8 GetIORegister();
     bool GetSel();
     bool GetClr();
-    // void SaveState(std::ostream& stream);
-    // void LoadState(std::istream& stream);
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
     bool m_clr;

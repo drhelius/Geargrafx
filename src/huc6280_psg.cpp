@@ -57,7 +57,6 @@ void HuC6280PSG::Reset()
 {
     m_elapsed_cycles = 0;
     m_buffer_index = 0;
-    m_cycles_per_sample = GG_AUDIO_CYCLES_PER_SAMPLE;
     m_sample_cycle_counter = 0;
     m_frame_samples = 0;
 
@@ -76,7 +75,6 @@ void HuC6280PSG::Reset()
         m_channels[i].wave = 0;
         m_channels[i].wave_index = 0;
         m_channels[i].noise_control = 0;
-        m_channels[i].noise_frequency = 0;
         m_channels[i].noise_seed = 1;
         m_channels[i].noise_counter = 0;
         m_channels[i].counter = 0;
@@ -147,13 +145,13 @@ void HuC6280PSG::Sync()
             u8 right_vol = ch->amplitude & 0x0F;
             u8 channel_vol = (ch->control >> 1) & 0x0F;
 
-            int temp_left_vol = std::min(0x0F, (0x0F - main_left_vol) + (0x0F - left_vol) + (0x0F - channel_vol));
-            int temp_right_vol = std::min(0x0F, (0x0F - main_right_vol) + (0x0F - right_vol) + (0x0F - channel_vol));
+            u8 temp_left_vol = std::min(0x0F, (0x0F - main_left_vol) + (0x0F - left_vol) + (0x0F - channel_vol));
+            u8 temp_right_vol = std::min(0x0F, (0x0F - main_right_vol) + (0x0F - right_vol) + (0x0F - channel_vol));
 
-            int final_left_vol = m_volume_lut[(temp_left_vol << 1) | (~ch->control & 0x01)];
-            int final_right_vol = m_volume_lut[(temp_right_vol << 1) | (~ch->control & 0x01)];
+            u16 final_left_vol = m_volume_lut[(temp_left_vol << 1) | (~ch->control & 0x01)];
+            u16 final_right_vol = m_volume_lut[(temp_right_vol << 1) | (~ch->control & 0x01)];
 
-            int data = 0;
+            s8 data = 0;
 
             // Noise
             if ((i >=4) && (ch->noise_control & 0x80))
@@ -165,7 +163,7 @@ void HuC6280PSG::Sync()
                 if (ch->noise_counter <= 0)
                 {
                     ch->noise_counter = freq << 6;
-                    const u32 seed = ch->noise_seed;
+                    u32 seed = ch->noise_seed;
                     ch->noise_seed = (seed >> 1) | ((IsSetBit(seed, 0) ^ IsSetBit(seed, 1) ^ IsSetBit(seed, 11) ^ IsSetBit(seed, 12) ^ IsSetBit(seed, 17)) << 17);
                 }
             }
@@ -220,7 +218,7 @@ void HuC6280PSG::Sync()
                 // No LFO
                 else
                 {
-                    int freq = ch->frequency ? ch->frequency : 0x1000;
+                    u16 freq = ch->frequency ? ch->frequency : 0x1000;
 
                     if (freq > 7)
                         data = ch->wave_data[ch->wave_index];
@@ -243,9 +241,9 @@ void HuC6280PSG::Sync()
 
         m_sample_cycle_counter++;
 
-        if (m_sample_cycle_counter >= m_cycles_per_sample)
+        if (m_sample_cycle_counter >= GG_AUDIO_CYCLES_PER_SAMPLE)
         {
-            m_sample_cycle_counter -= m_cycles_per_sample;
+            m_sample_cycle_counter -= GG_AUDIO_CYCLES_PER_SAMPLE;
 
             for (int i = 0; i < 6; i++)
             {
@@ -279,4 +277,64 @@ void HuC6280PSG::ComputeVolumeLUT()
 
     m_volume_lut[30] = 0;
     m_volume_lut[31] = 0;
+}
+
+void HuC6280PSG::SaveState(std::ostream& stream)
+{
+    stream.write(reinterpret_cast<const char*> (&m_channel_select), sizeof(m_channel_select));
+    stream.write(reinterpret_cast<const char*> (&m_main_amplitude), sizeof(m_main_amplitude));
+    stream.write(reinterpret_cast<const char*> (&m_lfo_frequency), sizeof(m_lfo_frequency));
+    stream.write(reinterpret_cast<const char*> (&m_lfo_control), sizeof(m_lfo_control));
+    stream.write(reinterpret_cast<const char*> (&m_elapsed_cycles), sizeof(m_elapsed_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+    stream.write(reinterpret_cast<const char*> (&m_frame_samples), sizeof(m_frame_samples));
+    stream.write(reinterpret_cast<const char*> (&m_buffer_index), sizeof(m_buffer_index));
+
+    for (int i = 0; i < 6; i++)
+    {
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].frequency), sizeof(m_channels[i].frequency));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].control), sizeof(m_channels[i].control));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].amplitude), sizeof(m_channels[i].amplitude));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].wave), sizeof(m_channels[i].wave));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].wave_index), sizeof(m_channels[i].wave_index));
+        stream.write(reinterpret_cast<const char*> (m_channels[i].wave_data), sizeof(m_channels[i].wave_data));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].noise_control), sizeof(m_channels[i].noise_control));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].noise_seed), sizeof(m_channels[i].noise_seed));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].noise_counter), sizeof(m_channels[i].noise_counter));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].counter), sizeof(m_channels[i].counter));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].dda), sizeof(m_channels[i].dda));
+        stream.write(reinterpret_cast<const char*> (m_channels[i].output), sizeof(m_channels[i].output));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].left_sample), sizeof(m_channels[i].left_sample));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].right_sample), sizeof(m_channels[i].right_sample));
+    }
+}
+
+void HuC6280PSG::LoadState(std::istream& stream)
+{
+    stream.read(reinterpret_cast<char*> (&m_channel_select), sizeof(m_channel_select));
+    stream.read(reinterpret_cast<char*> (&m_main_amplitude), sizeof(m_main_amplitude));
+    stream.read(reinterpret_cast<char*> (&m_lfo_frequency), sizeof(m_lfo_frequency));
+    stream.read(reinterpret_cast<char*> (&m_lfo_control), sizeof(m_lfo_control));
+    stream.read(reinterpret_cast<char*> (&m_elapsed_cycles), sizeof(m_elapsed_cycles));
+    stream.read(reinterpret_cast<char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+    stream.read(reinterpret_cast<char*> (&m_frame_samples), sizeof(m_frame_samples));
+    stream.read(reinterpret_cast<char*> (&m_buffer_index), sizeof(m_buffer_index));
+
+    for (int i = 0; i < 6; i++)
+    {
+        stream.read(reinterpret_cast<char*> (&m_channels[i].frequency), sizeof(m_channels[i].frequency));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].control), sizeof(m_channels[i].control));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].amplitude), sizeof(m_channels[i].amplitude));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].wave), sizeof(m_channels[i].wave));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].wave_index), sizeof(m_channels[i].wave_index));
+        stream.read(reinterpret_cast<char*> (m_channels[i].wave_data), sizeof(m_channels[i].wave_data));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].noise_control), sizeof(m_channels[i].noise_control));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].noise_seed), sizeof(m_channels[i].noise_seed));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].noise_counter), sizeof(m_channels[i].noise_counter));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].counter), sizeof(m_channels[i].counter));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].dda), sizeof(m_channels[i].dda));
+        stream.read(reinterpret_cast<char*> (m_channels[i].output), sizeof(m_channels[i].output));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].left_sample), sizeof(m_channels[i].left_sample));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].right_sample), sizeof(m_channels[i].right_sample));
+    }
 }

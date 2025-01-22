@@ -72,4 +72,25 @@ enum GG_Controllers
     GG_CONTROLLER_2 = 1
 };
 
+struct GG_SaveState_Header
+{
+    u32 magic;
+    u32 version;
+    u32 size;
+    s64 timestamp;
+    char rom_name[128];
+    u32 rom_crc;
+    u32 screenshot_size;
+    u16 screenshot_width;
+    u16 screenshot_height;
+};
+
+struct GG_SaveState_Screenshot
+{
+    u32 width;
+    u32 height;
+    u32 size;
+    u8* data;
+};
+
 #endif /* TYPES_H */

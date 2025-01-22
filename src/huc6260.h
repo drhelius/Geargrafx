@@ -20,6 +20,8 @@
 #ifndef HUC6260_H
 #define HUC6260_H
 
+#include <iostream>
+#include <fstream>
 #include "common.h"
 
 #define HUC6260_LINE_LENGTH 1365
@@ -40,9 +42,9 @@ public:
     {
         u8* CR;
         u16* CTA;
-        int* HPOS;
-        int* VPOS;
-        int* PIXEL_INDEX;
+        s32* HPOS;
+        s32* VPOS;
+        s32* PIXEL_INDEX;
         bool* HSYNC;
         bool* VSYNC;
     };
@@ -68,11 +70,15 @@ public:
     int GetClockDivider();
     u16* GetColorTable();
     void SetBuffer(u8* frame_buffer);
+    u8* GetBuffer();
     int GetCurrentLineWidth();
     int GetCurrentHeight();
     void SetScanlineStart(int scanline_start);
     void SetScanlineEnd(int scanline_end);
     void SetOverscan(bool overscan);
+    GG_Pixel_Format GetPixelFormat();
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
     void WritePixel(u16 pixel);
@@ -83,19 +89,19 @@ private:
     HuC6260_State m_state;
     u8 m_control_register;
     u16 m_color_table_address;
-    int m_speed;
-    int m_clock_divider;
+    s32 m_speed;
+    s32 m_clock_divider;
     u16* m_color_table;
     u8* m_frame_buffer;
-    int m_hpos;
-    int m_vpos;
-    int m_pixel_index;
-    int m_pixel_clock;
-    int m_pixel_x;
+    s32 m_hpos;
+    s32 m_vpos;
+    s32 m_pixel_index;
+    s32 m_pixel_clock;
+    s32 m_pixel_x;
     bool m_hsync;
     bool m_vsync;
-    int m_blur;
-    bool m_black_and_white;
+    s32 m_blur;
+    u32 m_black_and_white;
     int m_overscan;
     int m_scanline_start;
     int m_scanline_end;

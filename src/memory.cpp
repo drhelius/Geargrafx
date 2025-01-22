@@ -163,3 +163,25 @@ Memory::GG_Disassembler_Record** Memory::GetAllDisassemblerRecords()
 {
     return m_disassembler;
 }
+
+void Memory::SaveState(std::ostream& stream)
+{
+    using namespace std;
+    stream.write(reinterpret_cast<const char*> (m_mpr), sizeof(m_mpr));
+    stream.write(reinterpret_cast<const char*> (m_wram), sizeof(u8) * 0x2000);
+    stream.write(reinterpret_cast<const char*> (&m_io_buffer), sizeof(m_io_buffer));
+    stream.write(reinterpret_cast<const char*> (&m_mpr_buffer), sizeof(m_mpr_buffer));
+    if (IsValidPointer(m_current_mapper))
+        m_current_mapper->SaveState(stream);
+}
+
+void Memory::LoadState(std::istream& stream)
+{
+    using namespace std;
+    stream.read(reinterpret_cast<char*> (m_mpr), sizeof(m_mpr));
+    stream.read(reinterpret_cast<char*> (m_wram), sizeof(u8) * 0x2000);
+    stream.read(reinterpret_cast<char*> (&m_io_buffer), sizeof(m_io_buffer));
+    stream.read(reinterpret_cast<char*> (&m_mpr_buffer), sizeof(m_mpr_buffer));
+    if (IsValidPointer(m_current_mapper))
+        m_current_mapper->LoadState(stream);
+}

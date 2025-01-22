@@ -22,6 +22,8 @@
 
 #include <vector>
 #include <stack>
+#include <iostream>
+#include <fstream>
 #include "common.h"
 #include "huc6280_registers.h"
 
@@ -56,13 +58,13 @@ public:
         EightBitRegister* Y;
         EightBitRegister* S;
         EightBitRegister* P;
-        int* SPEED;
+        s32* SPEED;
         bool* TIMER;
         u8* TIMER_COUNTER;
         u8* TIMER_RELOAD;
         u8* IDR;
         u8* IRR;
-        unsigned int* CYCLES;
+        u32* CYCLES;
     };
 
     enum GG_Breakpoint_Type
@@ -122,6 +124,8 @@ public:
     void ClearDisassemblerCallStack();
     std::stack<GG_CallStackEntry>* GetDisassemblerCallStack();
     void CheckMemoryBreakpoints(int type, u16 address, bool read);
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
     typedef void (HuC6280::*opcodeptr) (void);
@@ -133,24 +137,24 @@ private:
     EightBitRegister m_S;
     EightBitRegister m_P;
     u8 m_zn_flags_lut[256];
-    unsigned int m_cycles;
-    unsigned int m_clock;
-    int m_clock_cycles;
-    unsigned int m_last_instruction_cycles;
-    int m_irq_pending;
-    int m_speed;
+    u32 m_cycles;
+    u32 m_clock;
+    s32 m_clock_cycles;
+    u32 m_last_instruction_cycles;
+    s32 m_irq_pending;
+    s32 m_speed;
     bool m_transfer;
     Memory* m_memory;
     HuC6270* m_huc6270;
     HuC6280_State m_processor_state;
     bool m_timer_enabled;
-    unsigned int m_timer_cycles;
+    u32 m_timer_cycles;
     u8 m_timer_counter;
     u8 m_timer_reload;
     u8 m_interrupt_disable_register;
     u8 m_interrupt_request_register;
     bool m_skip_flag_transfer_clear;
-    int m_debug_next_irq;
+    s32 m_debug_next_irq;
     bool m_breakpoints_enabled;
     bool m_breakpoints_irq_enabled;
     bool m_cpu_breakpoint_hit;
@@ -162,8 +166,8 @@ private:
     std::stack<GG_CallStackEntry> m_disassembler_call_stack;
 
 private:
-    unsigned int TickOPCode();
-    unsigned int TickIRQ();
+    u32 TickOPCode();
+    u32 TickIRQ();
     void CheckIRQs();
 
     void ClockTimer();

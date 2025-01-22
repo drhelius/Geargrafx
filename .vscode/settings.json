@@ -87,7 +87,8 @@
         "queue": "cpp",
         "stack": "cpp",
         "variant": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "__config": "cpp"
     },
     "todo-tree.tree.showBadges": true,
     "todo-tree.tree.disableCompactFolders": false,

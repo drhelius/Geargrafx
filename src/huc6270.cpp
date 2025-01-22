@@ -88,7 +88,6 @@ void HuC6270::Reset()
     m_no_sprite_limit = false;
     m_sprite_count = 0;
 
-
     for (int i = 0; i < HUC6270_VRAM_SIZE; i++)
     {
         m_vram[i] = 0;
@@ -521,5 +520,107 @@ void HuC6270::FetchSprites()
 
             m_sprite_count++;
         }
+    }
+}
+
+void HuC6270::SaveState(std::ostream& stream)
+{
+    using namespace std;
+    stream.write(reinterpret_cast<const char*> (m_vram), sizeof(u16) * HUC6270_VRAM_SIZE);
+    stream.write(reinterpret_cast<const char*> (&m_address_register), sizeof(m_address_register));
+    stream.write(reinterpret_cast<const char*> (&m_status_register), sizeof(m_status_register));
+    stream.write(reinterpret_cast<const char*> (m_register), sizeof(m_register));
+    stream.write(reinterpret_cast<const char*> (m_sat), sizeof(u16) * HUC6270_SAT_SIZE);
+    stream.write(reinterpret_cast<const char*> (&m_read_buffer), sizeof(m_read_buffer));
+    stream.write(reinterpret_cast<const char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
+    stream.write(reinterpret_cast<const char*> (&m_auto_sat_transfer), sizeof(m_auto_sat_transfer));
+    stream.write(reinterpret_cast<const char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
+    stream.write(reinterpret_cast<const char*> (&m_hpos), sizeof(m_hpos));
+    stream.write(reinterpret_cast<const char*> (&m_vpos), sizeof(m_vpos));
+    stream.write(reinterpret_cast<const char*> (&m_bg_offset_y), sizeof(m_bg_offset_y));
+    stream.write(reinterpret_cast<const char*> (&m_bg_counter_y), sizeof(m_bg_counter_y));
+    stream.write(reinterpret_cast<const char*> (&m_increment_bg_counter_y), sizeof(m_increment_bg_counter_y));
+    stream.write(reinterpret_cast<const char*> (&m_raster_line), sizeof(m_raster_line));
+    stream.write(reinterpret_cast<const char*> (&m_latched_bxr), sizeof(m_latched_bxr));
+    stream.write(reinterpret_cast<const char*> (&m_latched_hds), sizeof(m_latched_hds));
+    stream.write(reinterpret_cast<const char*> (&m_latched_hdw), sizeof(m_latched_hdw));
+    stream.write(reinterpret_cast<const char*> (&m_latched_hde), sizeof(m_latched_hde));
+    stream.write(reinterpret_cast<const char*> (&m_latched_hsw), sizeof(m_latched_hsw));
+    stream.write(reinterpret_cast<const char*> (&m_latched_vds), sizeof(m_latched_vds));
+    stream.write(reinterpret_cast<const char*> (&m_latched_vdw), sizeof(m_latched_vdw));
+    stream.write(reinterpret_cast<const char*> (&m_latched_vcr), sizeof(m_latched_vcr));
+    stream.write(reinterpret_cast<const char*> (&m_latched_vsw), sizeof(m_latched_vsw));
+    stream.write(reinterpret_cast<const char*> (&m_latched_mwr), sizeof(m_latched_mwr));
+    stream.write(reinterpret_cast<const char*> (&m_latched_cr), sizeof(m_latched_cr));
+    stream.write(reinterpret_cast<const char*> (&m_v_state), sizeof(m_v_state));
+    stream.write(reinterpret_cast<const char*> (&m_h_state), sizeof(m_h_state));
+    stream.write(reinterpret_cast<const char*> (&m_lines_to_next_v_state), sizeof(m_lines_to_next_v_state));
+    stream.write(reinterpret_cast<const char*> (&m_clocks_to_next_h_state), sizeof(m_clocks_to_next_h_state));
+    stream.write(reinterpret_cast<const char*> (&m_vblank_triggered), sizeof(m_vblank_triggered));
+    stream.write(reinterpret_cast<const char*> (&m_active_line), sizeof(m_active_line));
+    stream.write(reinterpret_cast<const char*> (m_line_buffer), sizeof(u16) * 1024);
+    stream.write(reinterpret_cast<const char*> (m_line_buffer_sprites), sizeof(u16) * 1024);
+    stream.write(reinterpret_cast<const char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
+    stream.write(reinterpret_cast<const char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
+    stream.write(reinterpret_cast<const char*> (&m_sprite_count), sizeof(m_sprite_count));
+
+    for (int i = 0; i < 128; i++)
+    {
+        stream.write(reinterpret_cast<const char*> (&m_sprites[i].index), sizeof(m_sprites[i].index));
+        stream.write(reinterpret_cast<const char*> (&m_sprites[i].x), sizeof(m_sprites[i].x));
+        stream.write(reinterpret_cast<const char*> (&m_sprites[i].flags), sizeof(m_sprites[i].flags));
+        stream.write(reinterpret_cast<const char*> (&m_sprites[i].palette), sizeof(m_sprites[i].palette));
+        stream.write(reinterpret_cast<const char*> (m_sprites[i].data), sizeof(m_sprites[i].data));
+    }
+}
+
+void HuC6270::LoadState(std::istream& stream)
+{
+    using namespace std;
+    stream.read(reinterpret_cast<char*> (m_vram), sizeof(u16) * HUC6270_VRAM_SIZE);
+    stream.read(reinterpret_cast<char*> (&m_address_register), sizeof(m_address_register));
+    stream.read(reinterpret_cast<char*> (&m_status_register), sizeof(m_status_register));
+    stream.read(reinterpret_cast<char*> (m_register), sizeof(m_register));
+    stream.read(reinterpret_cast<char*> (m_sat), sizeof(u16) * HUC6270_SAT_SIZE);
+    stream.read(reinterpret_cast<char*> (&m_read_buffer), sizeof(m_read_buffer));
+    stream.read(reinterpret_cast<char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
+    stream.read(reinterpret_cast<char*> (&m_auto_sat_transfer), sizeof(m_auto_sat_transfer));
+    stream.read(reinterpret_cast<char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
+    stream.read(reinterpret_cast<char*> (&m_hpos), sizeof(m_hpos));
+    stream.read(reinterpret_cast<char*> (&m_vpos), sizeof(m_vpos));
+    stream.read(reinterpret_cast<char*> (&m_bg_offset_y), sizeof(m_bg_offset_y));
+    stream.read(reinterpret_cast<char*> (&m_bg_counter_y), sizeof(m_bg_counter_y));
+    stream.read(reinterpret_cast<char*> (&m_increment_bg_counter_y), sizeof(m_increment_bg_counter_y));
+    stream.read(reinterpret_cast<char*> (&m_raster_line), sizeof(m_raster_line));
+    stream.read(reinterpret_cast<char*> (&m_latched_bxr), sizeof(m_latched_bxr));
+    stream.read(reinterpret_cast<char*> (&m_latched_hds), sizeof(m_latched_hds));
+    stream.read(reinterpret_cast<char*> (&m_latched_hdw), sizeof(m_latched_hdw));
+    stream.read(reinterpret_cast<char*> (&m_latched_hde), sizeof(m_latched_hde));
+    stream.read(reinterpret_cast<char*> (&m_latched_hsw), sizeof(m_latched_hsw));
+    stream.read(reinterpret_cast<char*> (&m_latched_vds), sizeof(m_latched_vds));
+    stream.read(reinterpret_cast<char*> (&m_latched_vdw), sizeof(m_latched_vdw));
+    stream.read(reinterpret_cast<char*> (&m_latched_vcr), sizeof(m_latched_vcr));
+    stream.read(reinterpret_cast<char*> (&m_latched_vsw), sizeof(m_latched_vsw));
+    stream.read(reinterpret_cast<char*> (&m_latched_mwr), sizeof(m_latched_mwr));
+    stream.read(reinterpret_cast<char*> (&m_latched_cr), sizeof(m_latched_cr));
+    stream.read(reinterpret_cast<char*> (&m_v_state), sizeof(m_v_state));
+    stream.read(reinterpret_cast<char*> (&m_h_state), sizeof(m_h_state));
+    stream.read(reinterpret_cast<char*> (&m_lines_to_next_v_state), sizeof(m_lines_to_next_v_state));
+    stream.read(reinterpret_cast<char*> (&m_clocks_to_next_h_state), sizeof(m_clocks_to_next_h_state));
+    stream.read(reinterpret_cast<char*> (&m_vblank_triggered), sizeof(m_vblank_triggered));
+    stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
+    stream.read(reinterpret_cast<char*> (m_line_buffer), sizeof(u16) * 1024);
+    stream.read(reinterpret_cast<char*> (m_line_buffer_sprites), sizeof(u16) * 1024);
+    stream.read(reinterpret_cast<char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
+    stream.read(reinterpret_cast<char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
+    stream.read(reinterpret_cast<char*> (&m_sprite_count), sizeof(m_sprite_count));
+
+    for (int i = 0; i < 128; i++)
+    {
+        stream.read(reinterpret_cast<char*> (&m_sprites[i].index), sizeof(m_sprites[i].index));
+        stream.read(reinterpret_cast<char*> (&m_sprites[i].x), sizeof(m_sprites[i].x));
+        stream.read(reinterpret_cast<char*> (&m_sprites[i].flags), sizeof(m_sprites[i].flags));
+        stream.read(reinterpret_cast<char*> (&m_sprites[i].palette), sizeof(m_sprites[i].palette));
+        stream.read(reinterpret_cast<char*> (m_sprites[i].data), sizeof(m_sprites[i].data));
     }
 }

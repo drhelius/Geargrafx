@@ -20,6 +20,8 @@
 #ifndef GEARGRAFX_CORE_H
 #define GEARGRAFX_CORE_H
 
+#include <iostream>
+#include <fstream>
 #include "types.h"
 
 class Audio;
@@ -71,14 +73,12 @@ public:
     // void SaveRam(const char* path, bool full_path = false);
     // void LoadRam();
     // void LoadRam(const char* path, bool full_path = false);
-    // void SaveState(int index);
-    // void SaveState(const char* path, int index);
-    // bool SaveState(u8* buffer, size_t& size);
-    // bool SaveState(std::ostream& stream, size_t& size);
-    // void LoadState(int index);
-    // void LoadState(const char* path, int index);
-    // bool LoadState(const u8* buffer, size_t size);
-    // bool LoadState(std::istream& stream);
+    void SaveState(const char* path = NULL, int index = -1, bool screenshot = false);
+    bool SaveState(u8* buffer, size_t& size, bool screenshot = false);
+    void LoadState(const char* path = NULL, int index = -1);
+    bool LoadState(const u8* buffer, size_t size);
+    bool GetSaveStateHeader(int index, const char* path, GG_SaveState_Header* header);
+    bool GetSaveStateScreenshot(int index, const char* path, GG_SaveState_Screenshot* screenshot);
     void ResetSound();
     bool GetRuntimeInfo(GG_Runtime_Info& runtime_info);
     Memory* GetMemory();
@@ -92,6 +92,9 @@ public:
 
 private:
     void Reset();
+    bool SaveState(std::ostream& stream, size_t& size, bool screenshot);
+    bool LoadState(std::istream& stream);
+    std::string GetSaveStatePath(const char* path, int index);
 
 private:
     Memory* m_memory;
@@ -102,7 +105,7 @@ private:
     Input* m_input;
     Cartridge* m_cartridge;
     bool m_paused;
-    int m_clock;
+    u64 m_clock;
     GG_Debug_Callback m_debug_callback;
 };
 

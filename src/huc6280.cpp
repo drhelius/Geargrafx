@@ -534,10 +534,10 @@ void HuC6280::PushCallStack(u16 src, u16 dest, u16 back)
     entry.back = back;
     if (m_disassembler_call_stack.size() < 256)
         m_disassembler_call_stack.push(entry);
-    else
-    {
-        //Debug("** HuC6280 --> Disassembler Call Stack Overflow");
-    }
+    // else
+    // {
+    //     //Debug("** HuC6280 --> Disassembler Call Stack Overflow");
+    // }
 #endif
 }
 
@@ -560,4 +560,56 @@ void HuC6280::CreateZNFlagsTable()
         if (i & 0x80)
             m_zn_flags_lut[i] |= FLAG_NEGATIVE;
     }
+}
+
+void HuC6280::SaveState(std::ostream& stream)
+{
+    m_PC.SaveState(stream);
+    m_A.SaveState(stream);
+    m_X.SaveState(stream);
+    m_Y.SaveState(stream);
+    m_S.SaveState(stream);
+    m_P.SaveState(stream);
+
+    stream.write(reinterpret_cast<const char*> (&m_cycles), sizeof(m_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_clock), sizeof(m_clock));
+    stream.write(reinterpret_cast<const char*> (&m_clock_cycles), sizeof(m_clock_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_last_instruction_cycles), sizeof(m_last_instruction_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_irq_pending), sizeof(m_irq_pending));
+    stream.write(reinterpret_cast<const char*> (&m_speed), sizeof(m_speed));
+    stream.write(reinterpret_cast<const char*> (&m_transfer), sizeof(m_transfer));
+    stream.write(reinterpret_cast<const char*> (&m_timer_enabled), sizeof(m_timer_enabled));
+    stream.write(reinterpret_cast<const char*> (&m_timer_cycles), sizeof(m_timer_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_timer_counter), sizeof(m_timer_counter));
+    stream.write(reinterpret_cast<const char*> (&m_timer_reload), sizeof(m_timer_reload));
+    stream.write(reinterpret_cast<const char*> (&m_interrupt_disable_register), sizeof(m_interrupt_disable_register));
+    stream.write(reinterpret_cast<const char*> (&m_interrupt_request_register), sizeof(m_interrupt_request_register));
+    stream.write(reinterpret_cast<const char*> (&m_skip_flag_transfer_clear), sizeof(m_skip_flag_transfer_clear));
+    stream.write(reinterpret_cast<const char*> (&m_debug_next_irq), sizeof(m_debug_next_irq));
+}
+
+void HuC6280::LoadState(std::istream& stream)
+{
+    m_PC.LoadState(stream);
+    m_A.LoadState(stream);
+    m_X.LoadState(stream);
+    m_Y.LoadState(stream);
+    m_S.LoadState(stream);
+    m_P.LoadState(stream);
+
+    stream.read(reinterpret_cast<char*> (&m_cycles), sizeof(m_cycles));
+    stream.read(reinterpret_cast<char*> (&m_clock), sizeof(m_clock));
+    stream.read(reinterpret_cast<char*> (&m_clock_cycles), sizeof(m_clock_cycles));
+    stream.read(reinterpret_cast<char*> (&m_last_instruction_cycles), sizeof(m_last_instruction_cycles));
+    stream.read(reinterpret_cast<char*> (&m_irq_pending), sizeof(m_irq_pending));
+    stream.read(reinterpret_cast<char*> (&m_speed), sizeof(m_speed));
+    stream.read(reinterpret_cast<char*> (&m_transfer), sizeof(m_transfer));
+    stream.read(reinterpret_cast<char*> (&m_timer_enabled), sizeof(m_timer_enabled));
+    stream.read(reinterpret_cast<char*> (&m_timer_cycles), sizeof(m_timer_cycles));
+    stream.read(reinterpret_cast<char*> (&m_timer_counter), sizeof(m_timer_counter));
+    stream.read(reinterpret_cast<char*> (&m_timer_reload), sizeof(m_timer_reload));
+    stream.read(reinterpret_cast<char*> (&m_interrupt_disable_register), sizeof(m_interrupt_disable_register));
+    stream.read(reinterpret_cast<char*> (&m_interrupt_request_register), sizeof(m_interrupt_request_register));
+    stream.read(reinterpret_cast<char*> (&m_skip_flag_transfer_clear), sizeof(m_skip_flag_transfer_clear));
+    stream.read(reinterpret_cast<char*> (&m_debug_next_irq), sizeof(m_debug_next_irq));
 }

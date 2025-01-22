@@ -20,6 +20,8 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include <iostream>
+#include <fstream>
 #include "common.h"
 
 class Cartridge;
@@ -68,6 +70,8 @@ public:
     void ResetDisassemblerRecords();
     u8* GetWram();
     GG_Disassembler_Record** GetAllDisassemblerRecords();
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
     HuC6260* m_huc6260;

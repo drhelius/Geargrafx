@@ -64,7 +64,7 @@ inline void HuC6260::WriteRegister(u16 address, u8 value)
             m_control_register = value;
             m_speed = m_control_register & 0x03;
             m_blur = (m_control_register >> 2) & 0x01;
-            m_black_and_white = IsSetBit(m_control_register, 7);
+            m_black_and_white = (m_control_register >> 7) & 0x01;
 
             switch (m_speed)
             {

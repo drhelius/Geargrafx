@@ -63,3 +63,18 @@ void SF2Mapper::Reset()
     m_bank = 0;
     m_bank_address = 0;
 }
+
+void SF2Mapper::SaveState(std::ostream& stream)
+{
+    using namespace std;
+    stream.write(reinterpret_cast<const char*> (&m_bank), sizeof(m_bank));
+    stream.write(reinterpret_cast<const char*> (&m_bank_address), sizeof(m_bank_address));
+
+}
+
+void SF2Mapper::LoadState(std::istream& stream)
+{
+    using namespace std;
+    stream.read(reinterpret_cast<char*> (&m_bank), sizeof(m_bank));
+    stream.read(reinterpret_cast<char*> (&m_bank_address), sizeof(m_bank_address));
+}

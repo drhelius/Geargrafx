@@ -20,12 +20,15 @@
 #ifndef HUC6280_PSG_H
 #define HUC6280_PSG_H
 
+#include <iostream>
+#include <fstream>
 #include "common.h"
 
+#define GG_MASTER_CLOCK_RATE 21477273
 #define GG_AUDIO_SAMPLE_RATE 44100
 #define GG_AUDIO_BUFFER_SIZE 2048
 #define GG_AUDIO_BUFFER_COUNT 3
-#define GG_AUDIO_CLOCK_RATE (GG_CLOCK_RATE / 6)
+#define GG_AUDIO_CLOCK_RATE (GG_MASTER_CLOCK_RATE / 6)
 #define GG_AUDIO_CYCLES_PER_SAMPLE (GG_AUDIO_CLOCK_RATE / GG_AUDIO_SAMPLE_RATE)
 
 class HuC6280PSG
@@ -40,10 +43,9 @@ public:
         u8 wave_index;
         u8 wave_data[32];
         u8 noise_control;
-        u32 noise_frequency;
         u32 noise_seed;
-        int noise_counter;
-        int counter;
+        s32 noise_counter;
+        s32 counter;
         s16 dda;
         s16 output[GG_AUDIO_BUFFER_SIZE];
         s16 left_sample;
@@ -58,8 +60,8 @@ public:
         u8* MAIN_AMPLITUDE;
         u8* LFO_FREQUENCY;
         u8* LFO_CONTROL;
-        int* BUFFER_INDEX;
-        int* FRAME_SAMPLES;
+        s32* BUFFER_INDEX;
+        s32* FRAME_SAMPLES;
     };
 
 public:
@@ -71,6 +73,8 @@ public:
     void Write(u16 address, u8 value);
     int EndFrame(s16* sample_buffer);
     HuC6280PSG_State* GetState();
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
     void Sync();
@@ -84,11 +88,10 @@ private:
     u8 m_main_amplitude;
     u8 m_lfo_frequency;
     u8 m_lfo_control;
-    int m_elapsed_cycles;
-    int m_sample_cycle_counter;
-    int m_frame_samples;
-    int m_cycles_per_sample;
-    int m_buffer_index;
+    s32 m_elapsed_cycles;
+    s32 m_sample_cycle_counter;
+    s32 m_frame_samples;
+    s32 m_buffer_index;
     u16 m_volume_lut[32];
 };
 

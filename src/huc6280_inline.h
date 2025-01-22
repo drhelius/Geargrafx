@@ -57,7 +57,7 @@ inline bool HuC6280::Clock()
     return instruction_completed;
 }
 
-inline unsigned int HuC6280::TickOPCode()
+inline u32 HuC6280::TickOPCode()
 {
     m_transfer = false;
     m_memory_breakpoint_hit = false;
@@ -83,7 +83,7 @@ inline unsigned int HuC6280::TickOPCode()
     return m_cycles;
 }
 
-inline unsigned int HuC6280::TickIRQ()
+inline u32 HuC6280::TickIRQ()
 {
     assert(m_irq_pending != 0);
 

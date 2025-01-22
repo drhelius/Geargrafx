@@ -38,6 +38,8 @@ enum Debug_Command
 
 
 EXTERN u8* emu_frame_buffer;
+EXTERN GG_SaveState_Header emu_savestates[5];
+EXTERN GG_SaveState_Screenshot emu_savestates_screenshots[5];
 EXTERN u8* emu_debug_sprite_buffers[64];
 EXTERN u8* emu_debug_background_buffer;
 EXTERN int emu_debug_background_buffer_width;

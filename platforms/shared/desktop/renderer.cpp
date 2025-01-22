@@ -48,6 +48,7 @@ static u32 scanlines[16] = {
 static void init_ogl_gui(void);
 static void init_ogl_emu(void);
 static void init_ogl_debug(void);
+static void init_ogl_savestates(void);
 static void init_scanlines_texture(void);
 static void render_gui(void);
 static void render_emu_normal(void);
@@ -56,6 +57,7 @@ static void render_emu_bilinear(void);
 static void render_quad(void);
 static void update_system_texture(void);
 static void update_debug_textures(void);
+static void update_savestates_textures(void);
 static void render_scanlines(void);
 
 void renderer_init(void)
@@ -77,6 +79,7 @@ void renderer_init(void)
     init_ogl_gui();
     init_ogl_emu();
     init_ogl_debug();
+    init_ogl_savestates();
 
     first_frame = true;
 }
@@ -89,6 +92,8 @@ void renderer_destroy(void)
     glDeleteTextures(1, &scanlines_texture);
     glDeleteTextures(1, &renderer_emu_debug_huc6270_background);
     glDeleteTextures(64, renderer_emu_debug_huc6270_sprites);
+    glDeleteTextures(5, renderer_emu_savestates);
+
     ImGui_ImplOpenGL2_Shutdown();
 }
 
@@ -105,6 +110,8 @@ void renderer_render(void)
     {
         update_debug_textures();
     }
+
+    update_savestates_textures();
 
     if (config_video.mix_frames)
         render_emu_mix();
@@ -183,6 +190,18 @@ static void init_ogl_debug(void)
         glGenTextures(1, &renderer_emu_debug_huc6270_sprites[s]);
         glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_sprites[s]);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_sprite_buffers[s]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    }
+}
+
+static void init_ogl_savestates(void)
+{
+    for (int i = 0; i < 5; i++)
+    {
+        glGenTextures(1, &renderer_emu_savestates[i]);
+        glBindTexture(GL_TEXTURE_2D, renderer_emu_savestates[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
@@ -281,6 +300,20 @@ static void update_debug_textures(void)
         glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_sprites[s]);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emu_debug_sprite_widths[s], emu_debug_sprite_heights[s],
                 GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_sprite_buffers[s]);
+    }
+}
+
+static void update_savestates_textures(void)
+{
+    for (int i = 0; i < 5; i++)
+    {
+        if (IsValidPointer(emu_savestates_screenshots[i].data))
+        {
+            int width = emu_savestates_screenshots[i].width;
+            int height = emu_savestates_screenshots[i].height;
+            glBindTexture(GL_TEXTURE_2D, renderer_emu_savestates[i]);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_savestates_screenshots[i].data);
+        }
     }
 }
 

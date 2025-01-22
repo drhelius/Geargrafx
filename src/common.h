@@ -20,6 +20,7 @@
 #ifndef COMMON_H
 #define	COMMON_H
 
+#include <time.h>
 #include "defines.h"
 #include "types.h"
 #include "log.h"
@@ -39,6 +40,18 @@ inline unsigned int Pow2Ceil(u16 n)
     n |= n >> 8;
     ++n;
     return n;
+}
+
+inline void GetDateTimeString(time_t timestamp, char* buffer, size_t size)
+{
+    struct tm* timeinfo = localtime(&timestamp);
+    strftime(buffer, size, "%Y-%m-%d %H:%M:%S", timeinfo);
+}
+
+inline void GetCurrentDateTimeString(char* buffer, size_t size)
+{
+    time_t timestamp = time(NULL);
+    GetDateTimeString(timestamp, buffer, size);
 }
 
 #endif /* COMMON_H */

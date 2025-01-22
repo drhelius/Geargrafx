@@ -32,6 +32,8 @@ public:
     void Increment(u8 value);
     void Decrement();
     void Decrement(u8 value);
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
     u8 m_value;
@@ -67,6 +69,16 @@ inline void EightBitRegister::Decrement(u8 value)
     m_value -= value;
 }
 
+inline void EightBitRegister::SaveState(std::ostream& stream)
+{
+    stream.write(reinterpret_cast<const char*> (&m_value), sizeof(m_value));
+}
+
+inline void EightBitRegister::LoadState(std::istream& stream)
+{
+    stream.read(reinterpret_cast<char*> (&m_value), sizeof(m_value));
+}
+
 //////////////////////////////////////////////////////////////////////////
 
 class SixteenBitRegister
@@ -83,6 +95,8 @@ public:
     void Increment(u16 value);
     void Decrement();
     void Decrement(u16 value);
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
     u16 m_value;
@@ -136,6 +150,16 @@ inline void SixteenBitRegister::Decrement()
 inline void SixteenBitRegister::Decrement(u16 value)
 {
     m_value -= value;
+}
+
+inline void SixteenBitRegister::SaveState(std::ostream& stream)
+{
+    stream.write(reinterpret_cast<const char*> (&m_value), sizeof(m_value));
+}
+
+inline void SixteenBitRegister::LoadState(std::istream& stream)
+{
+    stream.read(reinterpret_cast<char*> (&m_value), sizeof(m_value));
 }
 
 #endif /* HUC6280_REGISTERS_H */
