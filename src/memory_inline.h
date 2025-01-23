@@ -135,15 +135,16 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
                         case 1:
                         {
                             Debug("Invalid interrupt register read at %04X", address);
-                            return m_io_buffer;
+                            break;
                         }
                         case 2:
                         case 3:
                         {
                             m_io_buffer = (m_huc6280->ReadInterruptRegister(offset) & 0x07) | (m_io_buffer & 0xF8);
-                            return m_io_buffer;
+                            break;
                         }
                     }
+                    return m_io_buffer;
                 }
             }
             case 0x1800:
