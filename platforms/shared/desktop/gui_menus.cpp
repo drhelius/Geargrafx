@@ -666,8 +666,8 @@ static void draw_savestate_slot_info(int slot)
 
         if (IsValidPointer(emu_savestates_screenshots[slot].data))
         {
-            float width = emu_savestates_screenshots[slot].width;
-            float height = emu_savestates_screenshots[slot].height;
+            float width = (float)emu_savestates_screenshots[slot].width;
+            float height = (float)emu_savestates_screenshots[slot].height;
             ImGui::Image((ImTextureID)(intptr_t)renderer_emu_savestates[slot], ImVec2((height / 3.0f) * 4.0f, height), ImVec2(0, 0), ImVec2(width / 512.0f, height / 512.0f));
         }
     }

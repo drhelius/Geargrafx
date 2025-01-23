@@ -46,7 +46,7 @@ public:
         u32 noise_seed;
         s32 noise_counter;
         s32 counter;
-        s16 dda;
+        s8 dda;
         s16 output[GG_AUDIO_BUFFER_SIZE];
         s16 left_sample;
         s16 right_sample;
