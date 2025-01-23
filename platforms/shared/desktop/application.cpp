@@ -155,7 +155,7 @@ static int sdl_init(void)
     
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
-        Log("Error: %s\n", SDL_GetError());
+        Log("ERROR: %s\n", SDL_GetError());
         return 1;
     }
 
@@ -202,7 +202,7 @@ static int sdl_init(void)
             application_gamepad[gamepads_found] = SDL_GameControllerOpen(i);
             if(!application_gamepad[gamepads_found])
             {
-                Log("Warning: Unable to open game controller %d! SDL Error: %s\n", gamepads_found, SDL_GetError());
+                Log("ERROR: Unable to open game controller %d! SDL Error: %s\n", gamepads_found, SDL_GetError());
             }
             else
             {

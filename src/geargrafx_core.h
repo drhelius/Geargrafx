@@ -73,9 +73,9 @@ public:
     // void SaveRam(const char* path, bool full_path = false);
     // void LoadRam();
     // void LoadRam(const char* path, bool full_path = false);
-    void SaveState(const char* path = NULL, int index = -1, bool screenshot = false);
+    bool SaveState(const char* path = NULL, int index = -1, bool screenshot = false);
     bool SaveState(u8* buffer, size_t& size, bool screenshot = false);
-    void LoadState(const char* path = NULL, int index = -1);
+    bool LoadState(const char* path = NULL, int index = -1);
     bool LoadState(const u8* buffer, size_t size);
     bool GetSaveStateHeader(int index, const char* path, GG_SaveState_Header* header);
     bool GetSaveStateScreenshot(int index, const char* path, GG_SaveState_Screenshot* screenshot);

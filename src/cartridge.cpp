@@ -165,7 +165,7 @@ bool Cartridge::LoadFromFile(const char* path)
     }
     else
     {
-        Log("There was a problem loading the file %s...", path);
+        Log("ERROR: There was a problem loading the file %s...", path);
         m_ready = false;
     }
 
@@ -197,7 +197,7 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size)
 
         if ((size % 0x2000) != 0)
         {
-            Log("Invalid size found: %d (0x%X) bytes", size, size);
+            Log("ERROR: Invalid size found: %d (0x%X) bytes", size, size);
         }
 
         m_rom_size = size;
@@ -216,7 +216,7 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size)
     }
     else
     {
-        Log("Unable to load ROM from buffer: Buffer invalid %p. Size: %d", buffer, size);
+        Log("ERROR: Unable to load ROM from buffer: Buffer invalid %p. Size: %d", buffer, size);
         return false;
     }
 }
@@ -234,7 +234,7 @@ bool Cartridge::LoadFromZipFile(const u8* buffer, int size)
     status = mz_zip_reader_init_mem(&zip_archive, (void*) buffer, size, 0);
     if (!status)
     {
-        Log("mz_zip_reader_init_mem() failed!");
+        Log("ERROR: mz_zip_reader_init_mem() failed!");
         return false;
     }
 
@@ -243,7 +243,7 @@ bool Cartridge::LoadFromZipFile(const u8* buffer, int size)
         mz_zip_archive_file_stat file_stat;
         if (!mz_zip_reader_file_stat(&zip_archive, i, &file_stat))
         {
-            Log("mz_zip_reader_file_stat() failed!");
+            Log("ERROR: mz_zip_reader_file_stat() failed!");
             mz_zip_reader_end(&zip_archive);
             return false;
         }
@@ -262,7 +262,7 @@ bool Cartridge::LoadFromZipFile(const u8* buffer, int size)
             p = mz_zip_reader_extract_file_to_heap(&zip_archive, file_stat.m_filename, &uncomp_size, 0);
             if (!p)
             {
-                Log("mz_zip_reader_extract_file_to_heap() failed!");
+                Log("ERROR: mz_zip_reader_extract_file_to_heap() failed!");
                 mz_zip_reader_end(&zip_archive);
                 return false;
             }
