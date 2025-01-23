@@ -321,20 +321,19 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
 size_t retro_serialize_size(void)
 {
-    // TODO [libretro] Implement save states
-    return 0;
+    size_t size = 0;
+    core->SaveState(NULL, size);
+    return size;
 }
 
 bool retro_serialize(void *data, size_t size)
 {
-    // TODO [libretro] Implement save states
-    return false;
+    return core->SaveState(reinterpret_cast<u8*>(data), size);
 }
 
 bool retro_unserialize(const void *data, size_t size)
 {
-    // TODO [libretro] Implement save states
-    return false;
+    return core->LoadState(reinterpret_cast<const u8*>(data), size);
 }
 
 void *retro_get_memory_data(unsigned id)
