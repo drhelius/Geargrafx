@@ -399,21 +399,21 @@ static void menu_input(void)
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("Player 2"))
-            {
-                keyboard_configuration_item("Left:", &config_input[1].key_left, 1);
-                keyboard_configuration_item("Right:", &config_input[1].key_right, 1);
-                keyboard_configuration_item("Up:", &config_input[1].key_up, 1);
-                keyboard_configuration_item("Down:", &config_input[1].key_down, 1);
-                keyboard_configuration_item("Select:", &config_input[1].key_select, 1);
-                keyboard_configuration_item("Run:", &config_input[1].key_run, 1);
-                keyboard_configuration_item("1:", &config_input[1].key_1, 1);
-                keyboard_configuration_item("2:", &config_input[1].key_2, 1);
+            // if (ImGui::BeginMenu("Player 2"))
+            // {
+            //     keyboard_configuration_item("Left:", &config_input[1].key_left, 1);
+            //     keyboard_configuration_item("Right:", &config_input[1].key_right, 1);
+            //     keyboard_configuration_item("Up:", &config_input[1].key_up, 1);
+            //     keyboard_configuration_item("Down:", &config_input[1].key_down, 1);
+            //     keyboard_configuration_item("Select:", &config_input[1].key_select, 1);
+            //     keyboard_configuration_item("Run:", &config_input[1].key_run, 1);
+            //     keyboard_configuration_item("1:", &config_input[1].key_1, 1);
+            //     keyboard_configuration_item("2:", &config_input[1].key_2, 1);
 
-                gui_popup_modal_keyboard();
+            //     gui_popup_modal_keyboard();
 
-                ImGui::EndMenu();
-            }
+            //     ImGui::EndMenu();
+            // }
 
             ImGui::EndMenu();
         }
@@ -447,33 +447,33 @@ static void menu_input(void)
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("Player 2"))
-            {
-                ImGui::MenuItem("Enable Gamepad P2", "", &config_input[1].gamepad);
+            // if (ImGui::BeginMenu("Player 2"))
+            // {
+            //     ImGui::MenuItem("Enable Gamepad P2", "", &config_input[1].gamepad);
 
-                if (ImGui::BeginMenu("Directional Controls"))
-                {
-                    ImGui::PushItemWidth(150.0f);
-                    ImGui::Combo("##directional", &config_input[1].gamepad_directional, "D-pad\0Left Analog Stick\0\0");
-                    ImGui::PopItemWidth();
-                    ImGui::EndMenu();
-                }
+            //     if (ImGui::BeginMenu("Directional Controls"))
+            //     {
+            //         ImGui::PushItemWidth(150.0f);
+            //         ImGui::Combo("##directional", &config_input[1].gamepad_directional, "D-pad\0Left Analog Stick\0\0");
+            //         ImGui::PopItemWidth();
+            //         ImGui::EndMenu();
+            //     }
 
-                if (ImGui::BeginMenu("Button Configuration"))
-                {
-                    gamepad_configuration_item("Select:", &config_input[1].gamepad_select, 1);
-                    gamepad_configuration_item("Run:", &config_input[1].gamepad_run, 1);
-                    gamepad_configuration_item("1:", &config_input[1].gamepad_1, 1);
-                    gamepad_configuration_item("2:", &config_input[1].gamepad_2, 1);
+            //     if (ImGui::BeginMenu("Button Configuration"))
+            //     {
+            //         gamepad_configuration_item("Select:", &config_input[1].gamepad_select, 1);
+            //         gamepad_configuration_item("Run:", &config_input[1].gamepad_run, 1);
+            //         gamepad_configuration_item("1:", &config_input[1].gamepad_1, 1);
+            //         gamepad_configuration_item("2:", &config_input[1].gamepad_2, 1);
 
 
-                    gui_popup_modal_gamepad(1);
+            //         gui_popup_modal_gamepad(1);
 
-                    ImGui::EndMenu();
-                }
+            //         ImGui::EndMenu();
+            //     }
 
-                ImGui::EndMenu();
-            }
+            //     ImGui::EndMenu();
+            // }
 
             ImGui::EndMenu();
         }
