@@ -8,30 +8,50 @@
 [![GitHub](https://img.shields.io/github/license/drhelius/Geargrafx)](https://github.com/drhelius/Geargrafx/blob/main/LICENSE)
 [![Twitter Follow](https://img.shields.io/twitter/follow/drhelius)](https://twitter.com/drhelius)
 
-> IN DEVELOPMENT: Not intended to be used now!
+Gearcoleco is a cross-platform TurboGrafx-16 / PC Engine emulator written in C++ that runs on Windows, macOS, Linux, BSD and RetroArch.
 
 This is an open source project with its ongoing development made possible thanks to the support by these awesome [backers](backers.md). If you find it useful, please, consider [sponsoring](https://github.com/sponsors/drhelius).
+
+Don't hesitate to report bugs or ask for new features by [openning an issue](https://github.com/drhelius/Geargrafx/issues). 
 
 <img src="http://www.geardome.com/files/geargrafx/geargrafx_debug_02.png">
 
 ## Downloads
 
-- **Latest Builds**: [here](https://github.com/drhelius/Geargrafx/actions/workflows/geargrafx.yml)
 - **Windows**:
-  - [Geargrafx-0.0.5-windows-x64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-windows-x64.zip)
-  - [Geargrafx-0.0.5-windows-arm64.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-windows-arm64.zip)
+  - [Geargrafx-1.0.0-windows-x64.zip](https://github.com/drhelius/Geargrafx/releases/download/1.0.0/Geargrafx-1.0.0-windows-x64.zip)
+  - [Geargrafx-1.0.0-windows-arm64.zip](https://github.com/drhelius/Geargrafx/releases/download/1.0.0/Geargrafx-1.0.0-windows-arm64.zip)
   - NOTE: If you have errors you may need to install:
     - [Microsoft Visual C++ Redistributable](https://go.microsoft.com/fwlink/?LinkId=746572)
     - [OpenGL Compatibility Pack](https://apps.microsoft.com/detail/9nqpsl29bfff)
 - **macOS**:
-  - [Geargrafx-0.0.5-macos-arm.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-macos-arm.zip)
-  - [Geargrafx-0.0.5-macos-intel.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-macos-intel.zip)
-  - NOTE: macOS 12 or later.
+  - [Geargrafx-1.0.0-macos-arm.zip](https://github.com/drhelius/Geargrafx/releases/download/1.0.0/Geargrafx-1.0.0-macos-arm.zip)
+  - [Geargrafx-1.0.0-macos-intel.zip](https://github.com/drhelius/Geargrafx/releases/download/1.0.0/Geargrafx-1.0.0-macos-intel.zip)
 - **Linux**:
-  - [Geargrafx-0.0.5-ubuntu-24.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-ubuntu-24.04.zip)
-  - [Geargrafx-0.0.5-ubuntu-22.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-ubuntu-22.04.zip)
-  - [Geargrafx-0.0.5-ubuntu-20.04.zip](https://github.com/drhelius/Geargrafx/releases/download/0.0.5/Geargrafx-0.0.5-ubuntu-20.04.zip) 
+  - [Geargrafx-1.0.0-ubuntu-24.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.0.0/Geargrafx-1.0.0-ubuntu-24.04.zip)
+  - [Geargrafx-1.0.0-ubuntu-22.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.0.0/Geargrafx-1.0.0-ubuntu-22.04.zip)
+  - [Geargrafx-1.0.0-ubuntu-20.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.0.0/Geargrafx-1.0.0-ubuntu-20.04.zip) 
   - NOTE: You may need to install `libsdl2` and `libglew`
+
+## Features
+
+- Save states with preview.
+- Compressed rom support (ZIP).
+- Supported platforms (standalone): Windows, Linux, BSD and macOS.
+- Supported platforms (libretro): Windows, Linux, macOS, Raspberry Pi, Android, iOS, tvOS, PlayStation Vita, PlayStation 3, Nintendo 3DS, Nintendo GameCube, Nintendo Wii, Nintendo WiiU, Nintendo Switch, Emscripten, Classic Mini systems (NES, SNES, C64, ...), OpenDingux, RetroFW and QNX.
+- Full debugger with just-in-time disassembler, cpu breakpoints, memory access breakpoints, code navigation (goto address, JP JR and CALL double clicking), debug symbols, debug labels, memory editor, register inspector, PSG state and video viewer including registries, tiles, sprites and backgrounds.
+- Windows and Linux *Portable Mode*.
+- Rom loading from the command line by adding the rom path as an argument.
+- Support for modern game controllers through [gamecontrollerdb.txt](https://github.com/mdqinc/SDL_GameControllerDB) file located in the same directory as the application binary.
+
+## Tips
+
+- *Mouse Cursor*: Automatically hides when hovering main output window or when Main Menu is disabled. 
+- *Portable Mode*: Create an empty file named `portable.ini` in the same directory as the application binary to enable portable mode.
+- *Docking windows*: In debug mode you can dock windows together by pressing SHIFT and drag'n drop a window into another.
+- *Debug multi-viewport*: In Windows or macOS you can enable "multi-viewport" in debug menu. You must restart the emulator for the change to take effect. Once enabled you can drag debugger windows outside the main window. 
+- *Debug Symbols*: The emulator always tries to load a symbol file at the same time a rom is being loaded. For example, for ```path_to_rom_file.rom``` it tries to load ```path_to_rom_file.sym```. It is also possible to load a symbol file using the GUI or using the CLI.
+- *Command Line Usage*: ```geargrafx [rom_file] [symbol_file]```
 
 ## Build Instructions
 
