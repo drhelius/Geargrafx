@@ -95,10 +95,28 @@ void gui_action_save_screenshot(const char* path)
         if (file_path.find_last_of(".") == string::npos)
             file_path += ".png";
     }
-    else if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
-         file_path = file_path.assign(emu_savestates_path)+ "/" + string(emu_get_core()->GetCartridge()->GetFileName()) + " - " + date_time + ".png";
     else
-         file_path = file_path.assign(emu_get_core()->GetCartridge()->GetFilePath()) + " - " + date_time + ".png";
+    {
+        switch ((Directory_Location)config_emulator.screenshots_dir_option)
+        {
+            default:
+            case Directory_Location_Default:
+            {
+                file_path = file_path.assign(config_root_path)+ "/" + string(emu_get_core()->GetCartridge()->GetFileName()) + " - " + date_time + ".png";
+                break;
+            }
+            case Directory_Location_ROM:
+            {
+                file_path = file_path.assign(emu_get_core()->GetCartridge()->GetFilePath()) + " - " + date_time + ".png";
+                break;
+            }
+            case Directory_Location_Custom:
+            {
+                file_path = file_path.assign(config_emulator.screenshots_path)+ "/" + string(emu_get_core()->GetCartridge()->GetFileName()) + " - " + date_time + ".png";
+                break;
+            }
+        }
+    }
 
     emu_save_screenshot(file_path.c_str());
 

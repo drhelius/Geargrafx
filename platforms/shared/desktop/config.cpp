@@ -143,6 +143,8 @@ void config_read(void)
     config_emulator.savefiles_path = read_string("Emulator", "SaveFilesPath");
     config_emulator.savestates_dir_option = read_int("Emulator", "SaveStatesDirOption", 0);
     config_emulator.savestates_path = read_string("Emulator", "SaveStatesPath");
+    config_emulator.screenshots_dir_option = read_int("Emulator", "ScreenshotDirOption", 0);
+    config_emulator.screenshots_path = read_string("Emulator", "ScreenshotPath");
     config_emulator.last_open_path = read_string("Emulator", "LastOpenPath");
     config_emulator.window_width = read_int("Emulator", "WindowWidth", 770);
     config_emulator.window_height = read_int("Emulator", "WindowHeight", 600);
@@ -155,6 +157,10 @@ void config_read(void)
     if (config_emulator.savestates_path.empty())
     {
         config_emulator.savestates_path = config_root_path;
+    }
+    if (config_emulator.screenshots_path.empty())
+    {
+        config_emulator.screenshots_path = config_root_path;
     }
 
     for (int i = 0; i < config_max_recent_roms; i++)
@@ -268,6 +274,8 @@ void config_write(void)
     write_string("Emulator", "SaveFilesPath", config_emulator.savefiles_path);
     write_int("Emulator", "SaveStatesDirOption", config_emulator.savestates_dir_option);
     write_string("Emulator", "SaveStatesPath", config_emulator.savestates_path);
+    write_int("Emulator", "ScreenshotDirOption", config_emulator.screenshots_dir_option);
+    write_string("Emulator", "ScreenshotPath", config_emulator.screenshots_path);
     write_string("Emulator", "LastOpenPath", config_emulator.last_open_path);
     write_int("Emulator", "WindowWidth", config_emulator.window_width);
     write_int("Emulator", "WindowHeight", config_emulator.window_height);

@@ -106,9 +106,19 @@ const char* Cartridge::GetFilePath()
     return m_file_path;
 }
 
+const char* Cartridge::GetFileDirectory()
+{
+    return m_file_directory;
+}
+
 const char* Cartridge::GetFileName()
 {
     return m_file_name;
+}
+
+const char* Cartridge::GetFileExtension()
+{
+    return m_file_extension;
 }
 
 u8* Cartridge::GetROM()
@@ -129,20 +139,28 @@ bool Cartridge::LoadFromFile(const char* path)
 
     Reset();
 
-    string pathstr(path);
+    string fullpath(path);
+    string directory;
     string filename;
     string extension;
 
-    size_t pos = pathstr.find_last_of("/\\");
+    size_t pos = fullpath.find_last_of("/\\");
     if (pos != string::npos)
-        filename = pathstr.substr(pos + 1);
+    {
+        filename = fullpath.substr(pos + 1);
+        directory = fullpath.substr(0, pos);
+    }
     else
-        filename = pathstr;
+    {
+        filename = fullpath;
+        directory = "";
+    }
 
-    extension = pathstr.substr(pathstr.find_last_of(".") + 1);
+    extension = fullpath.substr(fullpath.find_last_of(".") + 1);
     transform(extension.begin(), extension.end(), extension.begin(), (int(*)(int)) tolower);
 
     snprintf(m_file_path, sizeof(m_file_path), "%s", path);
+    snprintf(m_file_directory, sizeof(m_file_directory), "%s", directory.c_str());
     snprintf(m_file_name, sizeof(m_file_name), "%s", filename.c_str());
     snprintf(m_file_extension, sizeof(m_file_extension), "%s", extension.c_str());
 

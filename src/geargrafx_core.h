@@ -101,7 +101,7 @@ private:
     HuC6260* m_huc6260;
     HuC6270* m_huc6270;
     HuC6280* m_huc6280;
-    Audio* m_audio;    
+    Audio* m_audio;
     Input* m_input;
     Cartridge* m_cartridge;
     bool m_paused;

@@ -50,6 +50,8 @@ struct config_Emulator
     std::string savefiles_path;
     int savestates_dir_option = 0;
     std::string savestates_path;
+    int screenshots_dir_option = 0;
+    std::string screenshots_path;
     std::string last_open_path;
     int window_width = 770;
     int window_height = 600;

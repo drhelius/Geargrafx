@@ -42,7 +42,6 @@ static void destroy_debug(void);
 static void update_debug(void);
 static void update_debug_background(void);
 static void update_debug_sprites(void);
-static void update_savestates_data(void);
 
 void emu_init(void)
 {
@@ -63,10 +62,6 @@ void emu_init(void)
 
     audio_enabled = true;
     emu_audio_sync = true;
-    emu_savefiles_dir_option = 0;
-    emu_savestates_dir_option = 0;
-    emu_savefiles_path[0] = 0;
-    emu_savestates_path[0] = 0;
     emu_debug_disable_breakpoints = false;
     emu_debug_irq_breakpoints = false;
     emu_debug_command = Debug_Command_None;
@@ -228,10 +223,25 @@ void emu_save_state_slot(int index)
 {
     if (!emu_is_empty())
     {
-        if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
-            geargrafx->SaveState(emu_savestates_path, index, true);
-        else
-            geargrafx->SaveState(NULL, index, true);
+        switch ((Directory_Location)config_emulator.savestates_dir_option)
+        {
+            default:
+            case Directory_Location_Default:
+            {
+                geargrafx->SaveState(config_root_path, index, true);
+                break;
+            }
+            case Directory_Location_ROM:
+            {
+                geargrafx->SaveState(NULL, index, true);
+                break;
+            }
+            case Directory_Location_Custom:
+            {
+                geargrafx->SaveState(config_emulator.savestates_path.c_str(), index, true);
+                break;
+            }
+        }
 
         update_savestates_data();
     }
@@ -241,10 +251,25 @@ void emu_load_state_slot(int index)
 {
     if (!emu_is_empty())
     {
-        if ((emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, "")))
-            geargrafx->LoadState(emu_savestates_path, index);
-        else
-            geargrafx->LoadState(NULL, index);
+        switch ((Directory_Location)config_emulator.savestates_dir_option)
+        {
+            default:
+            case Directory_Location_Default:
+            {
+                geargrafx->LoadState(config_root_path, index);
+                break;
+            }
+            case Directory_Location_ROM:
+            {
+                geargrafx->LoadState(NULL, index);
+                break;
+            }
+            case Directory_Location_Custom:
+            {
+                geargrafx->LoadState(config_emulator.savestates_path.c_str(), index);
+                break;
+            }
+        }
     }
 }
 
@@ -259,6 +284,51 @@ void emu_load_state_file(const char* file_path)
     if (!emu_is_empty())
         geargrafx->LoadState(file_path);
 }
+
+void update_savestates_data(void)
+{
+    if (emu_is_empty())
+        return;
+
+    for (int i = 0; i < 5; i++)
+    {
+        emu_savestates[i].rom_name[0] = 0;
+        SafeDeleteArray(emu_savestates_screenshots[i].data);
+
+        const char* dir = NULL;
+
+        switch ((Directory_Location)config_emulator.savestates_dir_option)
+        {
+            default:
+            case Directory_Location_Default:
+            {
+                dir = config_root_path;
+                break;
+            }
+            case Directory_Location_ROM:
+            {
+                dir = NULL;
+                break;
+            }
+            case Directory_Location_Custom:
+            {
+                dir = config_emulator.savestates_path.c_str();
+                break;
+            }
+        }
+
+        if (!geargrafx->GetSaveStateHeader(i + 1, dir, &emu_savestates[i]))
+            continue;
+
+        if (emu_savestates[i].screenshot_size > 0)
+        {
+            emu_savestates_screenshots[i].data = new u8[emu_savestates[i].screenshot_size];
+            emu_savestates_screenshots[i].size = emu_savestates[i].screenshot_size;
+            geargrafx->GetSaveStateScreenshot(i + 1, dir, &emu_savestates_screenshots[i]);
+        }
+    }
+}
+
 
 void emu_get_runtime(GG_Runtime_Info& runtime)
 {
@@ -582,30 +652,6 @@ static void update_debug_sprites(void)
                 emu_debug_sprite_buffers[i][pixel_index + 2] = blue;
                 emu_debug_sprite_buffers[i][pixel_index + 3] = 255;
             }
-        }
-    }
-}
-
-static void update_savestates_data(void)
-{
-    if (emu_is_empty())
-        return;
-
-    bool using_path = (emu_savestates_dir_option == 0) && (strcmp(emu_savestates_path, ""));
-
-    for (int i = 0; i < 5; i++)
-    {
-        emu_savestates[i].rom_name[0] = 0;
-        SafeDeleteArray(emu_savestates_screenshots[i].data);
-
-        if (!geargrafx->GetSaveStateHeader(i + 1, using_path ? emu_savestates_path : NULL, &emu_savestates[i]))
-            continue;
-
-        if (emu_savestates[i].screenshot_size > 0)
-        {
-            emu_savestates_screenshots[i].data = new u8[emu_savestates[i].screenshot_size];
-            emu_savestates_screenshots[i].size = emu_savestates[i].screenshot_size;
-            geargrafx->GetSaveStateScreenshot(i + 1, using_path ? emu_savestates_path : NULL, &emu_savestates_screenshots[i]);
         }
     }
 }

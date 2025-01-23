@@ -64,11 +64,6 @@ int application_init(const char* rom_file, const char* symbol_file)
     int ret = sdl_init();
     emu_init();
 
-    strcpy(emu_savefiles_path, config_emulator.savefiles_path.c_str());
-    strcpy(emu_savestates_path, config_emulator.savestates_path.c_str());
-    emu_savefiles_dir_option = config_emulator.savefiles_dir_option;
-    emu_savestates_dir_option = config_emulator.savestates_dir_option;
-    
     gui_init();
 
     ImGui_ImplSDL2_InitForOpenGL(application_sdl_window, gl_context);

@@ -36,6 +36,12 @@ enum Debug_Command
     Debug_Command_None
 };
 
+enum Directory_Location
+{
+    Directory_Location_Default = 0,
+    Directory_Location_ROM = 1,
+    Directory_Location_Custom = 2
+};
 
 EXTERN u8* emu_frame_buffer;
 EXTERN GG_SaveState_Header emu_savestates[5];
@@ -52,10 +58,6 @@ EXTERN bool emu_debug_pc_changed;
 EXTERN bool emu_audio_sync;
 EXTERN bool emu_debug_disable_breakpoints;
 EXTERN bool emu_debug_irq_breakpoints;
-EXTERN bool emu_savefiles_dir_option;
-EXTERN bool emu_savestates_dir_option;
-EXTERN char emu_savefiles_path[4096];
-EXTERN char emu_savestates_path[4096];
 
 EXTERN void emu_init(void);
 EXTERN void emu_destroy(void);
@@ -79,6 +81,7 @@ EXTERN void emu_save_state_slot(int index);
 EXTERN void emu_load_state_slot(int index);
 EXTERN void emu_save_state_file(const char* file_path);
 EXTERN void emu_load_state_file(const char* file_path);
+EXTERN void update_savestates_data(void);
 EXTERN void emu_get_runtime(GG_Runtime_Info& runtime);
 EXTERN void emu_get_info(char* info, int buffer_size);
 EXTERN GeargrafxCore* emu_get_core(void);

@@ -43,6 +43,7 @@ public:
     int GetROMSize();
     int GetROMBankCount();
     const char* GetFilePath();
+    const char* GetFileDirectory();
     const char* GetFileName();
     const char* GetFileExtension();
     u8* GetROM();
@@ -63,6 +64,7 @@ private:
     int m_rom_bank_count;
     bool m_ready;
     char m_file_path[512];
+    char m_file_directory[512];
     char m_file_name[512];
     char m_file_extension[512];
     u32 m_crc;
