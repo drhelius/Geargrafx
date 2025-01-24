@@ -53,7 +53,7 @@ static void init_scanlines_texture(void);
 static void render_gui(void);
 static void render_emu_normal(void);
 static void render_emu_mix(void);
-static void render_emu_bilinear(void);
+static void update_emu_texture(void);
 static void render_quad(void);
 static void update_system_texture(void);
 static void update_debug_textures(void);
@@ -121,7 +121,7 @@ void renderer_render(void)
     if (config_video.scanlines)
         render_scanlines();
 
-    render_emu_bilinear();
+    update_emu_texture();
 
     ImVec4 clear_color = ImVec4(0.1f, 0.1f, 0.1f, 1.00f);
 
@@ -317,7 +317,7 @@ static void update_savestates_textures(void)
     }
 }
 
-static void render_emu_bilinear(void)
+static void update_emu_texture(void)
 {
     glBindTexture(GL_TEXTURE_2D, renderer_emu_texture);
 
