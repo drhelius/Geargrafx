@@ -305,7 +305,7 @@ static void main_window(void)
             ratio = (float)runtime.screen_width / (float)runtime.screen_height;
     }
 
-    if (!config_debug.debug && config_video.scale == 5)
+    if (!config_debug.debug && config_video.scale == 3)
     {
         ratio = (float)w / (float)h;
     }
@@ -316,34 +316,38 @@ static void main_window(void)
 
     if (config_debug.debug)
     {
-        if ((config_video.scale > 0) && (config_video.scale < 4))
-            scale_multiplier = config_video.scale;
+        if ((config_video.scale != 0))
+            scale_multiplier = config_video.scale_manual;
         else
             scale_multiplier = 1;
     }
     else
     {
-        if ((config_video.scale > 0) && (config_video.scale < 4))
+        switch (config_video.scale)
         {
-            scale_multiplier = config_video.scale;
-        }
-        else if (config_video.scale == 0)
+        case 0:
         {
             int factor_w = w / w_corrected;
             int factor_h = h / h_corrected;
             scale_multiplier = (factor_w < factor_h) ? factor_w : factor_h;
+            break;
         }
-        else if (config_video.scale == 4)
-        {
+        case 1:
+            scale_multiplier = config_video.scale_manual;
+            break;
+        case 2:
             scale_multiplier = 1;
             h_corrected = h;
             w_corrected = (int)(h * ratio);
-        }
-        else if (config_video.scale == 5)
-        {
+            break;
+        case 3:
             scale_multiplier = 1;
             w_corrected = w;
             h_corrected = h;
+            break;
+        default:
+            scale_multiplier = 1;
+            break;
         }
     }
 

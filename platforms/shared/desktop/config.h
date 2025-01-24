@@ -61,6 +61,7 @@ struct config_Emulator
 struct config_Video
 {
     int scale = 0;
+    int scale_manual = 1;
     int ratio = 1;
     int overscan = 0;
     int scanline_start = 0;

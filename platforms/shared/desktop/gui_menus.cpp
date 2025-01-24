@@ -361,7 +361,9 @@ static void menu_video(void)
         if (ImGui::BeginMenu("Scale"))
         {
             ImGui::PushItemWidth(250.0f);
-            ImGui::Combo("##scale", &config_video.scale, "Integer Scale (Auto)\0Integer Scale (X1)\0Integer Scale (X2)\0Integer Scale (X3)\0Scale to Window Height\0Scale to Window Width & Height\0\0");
+            ImGui::Combo("##scale", &config_video.scale, "Integer Scale (Auto)\0Integer Scale (Manual)\0Scale to Window Height\0Scale to Window Width & Height\0\0");
+            if (config_video.scale == 1)
+                ImGui::SliderInt("##scale_manual", &config_video.scale_manual, 1, 10);
             ImGui::PopItemWidth();
             ImGui::EndMenu();
         }
