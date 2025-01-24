@@ -8,7 +8,7 @@
 [![GitHub](https://img.shields.io/github/license/drhelius/Geargrafx)](https://github.com/drhelius/Geargrafx/blob/main/LICENSE)
 [![Twitter Follow](https://img.shields.io/twitter/follow/drhelius)](https://twitter.com/drhelius)
 
-Gearcoleco is a cross-platform TurboGrafx-16 / PC Engine emulator written in C++ that runs on Windows, macOS, Linux, BSD and RetroArch.
+Geargrafx is a cross-platform TurboGrafx-16 / PC Engine emulator written in C++ that runs on Windows, macOS, Linux, BSD and RetroArch.
 
 This is an open source project with its ongoing development made possible thanks to the support by these awesome [backers](backers.md). If you find it useful, please, consider [sponsoring](https://github.com/sponsors/drhelius).
 
@@ -39,7 +39,7 @@ Don't hesitate to report bugs or ask for new features by [openning an issue](htt
 - Compressed rom support (ZIP).
 - Supported platforms (standalone): Windows, Linux, BSD and macOS.
 - Supported platforms (libretro): Windows, Linux, macOS, Raspberry Pi, Android, iOS, tvOS, PlayStation Vita, PlayStation 3, Nintendo 3DS, Nintendo GameCube, Nintendo Wii, Nintendo WiiU, Nintendo Switch, Emscripten, Classic Mini systems (NES, SNES, C64, ...), OpenDingux, RetroFW and QNX.
-- Full debugger with just-in-time disassembler, cpu breakpoints, memory access breakpoints, code navigation (goto address, JP JR and CALL double clicking), debug symbols, debug labels, memory editor, register inspector, PSG state and video viewer including registries, tiles, sprites and backgrounds.
+- Full debugger with just-in-time disassembler, cpu breakpoints, memory access breakpoints, code navigation (goto address, JP JR and CALL double clicking), debug symbols, automatic labels, memory editor, PSG inspector and video viewer including registries, tiles, sprites and backgrounds.
 - Windows and Linux *Portable Mode*.
 - Rom loading from the command line by adding the rom path as an argument.
 - Support for modern game controllers through [gamecontrollerdb.txt](https://github.com/mdqinc/SDL_GameControllerDB) file located in the same directory as the application binary.
