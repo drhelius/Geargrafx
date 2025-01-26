@@ -66,6 +66,7 @@
     <ClCompile Include="..\shared\desktop\renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\huc6280_names.h" />
     <ClInclude Include="..\..\src\miniz\miniz.h" />
     <ClInclude Include="..\..\src\audio_inline.h" />
     <ClInclude Include="..\..\src\audio.h" />
@@ -97,6 +98,9 @@
     <ClInclude Include="..\..\src\huc6280.h" />
     <ClInclude Include="..\..\src\sf2_mapper.h" />
     <ClInclude Include="..\..\src\types.h" />
+    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_sdl2.h" />
+    <ClInclude Include="..\shared\desktop\keyboard.h" />
+    <ClInclude Include="..\shared\desktop\nfd\nfd_sdl2.h" />
     <ClInclude Include="..\shared\desktop\sound_queue.h" />
     <ClInclude Include="..\shared\desktop\application.h" />
     <ClInclude Include="..\shared\desktop\backers.h" />

@@ -354,6 +354,18 @@
     <ClInclude Include="..\..\src\miniz\miniz.h">
       <Filter>src\miniz</Filter>
     </ClInclude>
+    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_sdl2.h">
+      <Filter>desktop\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\nfd\nfd_sdl2.h">
+      <Filter>desktop\nfd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\keyboard.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6280_names.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
