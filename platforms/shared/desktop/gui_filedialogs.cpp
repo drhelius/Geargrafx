@@ -24,6 +24,7 @@
 #include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
 #include "gui_debug_trace_logger.h"
+#include "gui_menus.h"
 #include "application.h"
 #include "config.h"
 #include "emu.h"
@@ -163,7 +164,9 @@ void gui_file_dialog_choose_savestate_path(void)
     nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
+        strncpy(gui_savestates_path, outPath, sizeof(gui_savestates_path));
         config_emulator.savestates_path.assign(outPath);
+        update_savestates_data();
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)
@@ -182,8 +185,8 @@ void gui_file_dialog_choose_screenshot_path(void)
     nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
+        strncpy(gui_screenshots_path, outPath, sizeof(gui_screenshots_path));
         config_emulator.screenshots_path.assign(outPath);
-        update_savestates_data();
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)

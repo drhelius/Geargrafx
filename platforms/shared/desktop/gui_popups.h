@@ -29,7 +29,6 @@
 EXTERN void gui_popup_modal_keyboard();
 EXTERN void gui_popup_modal_gamepad(int pad);
 EXTERN void gui_popup_modal_about(void);
-EXTERN void gui_popup_modal_bios(void);
 EXTERN void gui_show_info(void);
 EXTERN void gui_show_fps(void);
 

@@ -30,9 +30,6 @@
 #include "renderer.h"
 #include "../../../src/geargrafx.h"
 
-static char savefiles_path[4096] = "";
-static char savestates_path[4096] = "";
-static char screenshots_path[4096] = "";
 static bool open_rom = false;
 static bool open_ram = false;
 static bool save_ram = false;
@@ -57,9 +54,9 @@ static void draw_savestate_slot_info(int slot);
 
 void gui_init_menus(void)
 {
-    strcpy(savefiles_path, config_emulator.savefiles_path.c_str());
-    strcpy(savestates_path, config_emulator.savestates_path.c_str());
-    strcpy(screenshots_path, config_emulator.screenshots_path.c_str());
+    strcpy(gui_savefiles_path, config_emulator.savefiles_path.c_str());
+    strcpy(gui_savestates_path, config_emulator.savestates_path.c_str());
+    strcpy(gui_screenshots_path, config_emulator.screenshots_path.c_str());
     gui_shortcut_open_rom = false;
 }
 
@@ -231,93 +228,87 @@ static void menu_emulator(void)
     {
         gui_in_use = true;
 
-        if (ImGui::BeginMenu("Directories"))
+        if (ImGui::BeginMenu("Save States Dir"))
         {
-            if (ImGui::BeginMenu("Save States"))
+            ImGui::PushItemWidth(220.0f);
+            if (ImGui::Combo("##savestate_option", &config_emulator.savestates_dir_option, "Default Location\0Same as ROM\0Custom Location\0\0"))
             {
-                ImGui::PushItemWidth(220.0f);
-                if (ImGui::Combo("##savestate_option", &config_emulator.savestates_dir_option, "Default Location\0Same as ROM\0Custom Location\0\0"))
-                {
-                    update_savestates_data();
-                }
-
-                switch ((Directory_Location)config_emulator.savestates_dir_option)
-                {
-                    case Directory_Location_Default:
-                    {
-                        ImGui::Text("%s", config_root_path);
-                        break;
-                    }
-                    case Directory_Location_ROM:
-                    {
-                        if (emu_get_core()->GetCartridge()->IsReady())
-                            ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
-                        break;
-                    }
-                    case Directory_Location_Custom:
-                    {
-                        if (ImGui::MenuItem("Choose..."))
-                        {
-                            choose_savestates_path = true;
-                        }
-
-                        ImGui::PushItemWidth(450);
-                        if (ImGui::InputText("##savestate_path", savestates_path, IM_ARRAYSIZE(savestates_path), ImGuiInputTextFlags_AutoSelectAll))
-                        {
-                            config_emulator.savestates_path.assign(savestates_path);
-                            update_savestates_data();
-                        }
-                        ImGui::PopItemWidth();
-                        break;
-                    }
-                }
-
-                ImGui::EndMenu();
+                update_savestates_data();
             }
 
-            // if (ImGui::BeginMenu("RAM Saves"))
-            // {
-            //     ImGui::EndMenu();
-            // }
-
-            if (ImGui::BeginMenu("Screenshots"))
+            switch ((Directory_Location)config_emulator.savestates_dir_option)
             {
-                ImGui::PushItemWidth(220.0f);
-                ImGui::Combo("##screenshots_option", &config_emulator.screenshots_dir_option, "Default Location\0Same as ROM\0Custom Location\0\0");
-
-                switch ((Directory_Location)config_emulator.screenshots_dir_option)
+                case Directory_Location_Default:
                 {
-                    case Directory_Location_Default:
-                    {
-                        ImGui::Text("%s", config_root_path);
-                        break;
-                    }
-                    case Directory_Location_ROM:
-                    {
-                        if (emu_get_core()->GetCartridge()->IsReady())
-                            ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
-                        break;
-                    }
-                    case Directory_Location_Custom:
-                    {
-                        if (ImGui::MenuItem("Choose..."))
-                        {
-                            choose_screenshots_path = true;
-                        }
-
-                        ImGui::PushItemWidth(450);
-                        if (ImGui::InputText("##screenshots_path", screenshots_path, IM_ARRAYSIZE(screenshots_path), ImGuiInputTextFlags_AutoSelectAll))
-                        {
-                            config_emulator.screenshots_path.assign(screenshots_path);
-                        }
-                        ImGui::PopItemWidth();
-                        break;
-                    }
+                    ImGui::Text("%s", config_root_path);
+                    break;
                 }
+                case Directory_Location_ROM:
+                {
+                    if (emu_get_core()->GetCartridge()->IsReady())
+                        ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
+                    break;
+                }
+                case Directory_Location_Custom:
+                {
+                    if (ImGui::MenuItem("Choose..."))
+                    {
+                        choose_savestates_path = true;
+                    }
 
-                ImGui::EndMenu();
+                    ImGui::PushItemWidth(450);
+                    if (ImGui::InputText("##savestate_path", gui_savestates_path, IM_ARRAYSIZE(gui_savestates_path), ImGuiInputTextFlags_AutoSelectAll))
+                    {
+                        config_emulator.savestates_path.assign(gui_savestates_path);
+                        update_savestates_data();
+                    }
+                    ImGui::PopItemWidth();
+                    break;
+                }
             }
 
+            ImGui::EndMenu();
+        }
+
+        // if (ImGui::BeginMenu("RAM Saves Dir"))
+        // {
+        //     ImGui::EndMenu();
+        // }
+
+        if (ImGui::BeginMenu("Screenshots Dir"))
+        {
+            ImGui::PushItemWidth(220.0f);
+            ImGui::Combo("##screenshots_option", &config_emulator.screenshots_dir_option, "Default Location\0Same as ROM\0Custom Location\0\0");
+
+            switch ((Directory_Location)config_emulator.screenshots_dir_option)
+            {
+                case Directory_Location_Default:
+                {
+                    ImGui::Text("%s", config_root_path);
+                    break;
+                }
+                case Directory_Location_ROM:
+                {
+                    if (emu_get_core()->GetCartridge()->IsReady())
+                        ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
+                    break;
+                }
+                case Directory_Location_Custom:
+                {
+                    if (ImGui::MenuItem("Choose..."))
+                    {
+                        choose_screenshots_path = true;
+                    }
+
+                    ImGui::PushItemWidth(450);
+                    if (ImGui::InputText("##screenshots_path", gui_screenshots_path, IM_ARRAYSIZE(gui_screenshots_path), ImGuiInputTextFlags_AutoSelectAll))
+                    {
+                        config_emulator.screenshots_path.assign(gui_screenshots_path);
+                    }
+                    ImGui::PopItemWidth();
+                    break;
+                }
+            }
 
             ImGui::EndMenu();
         }
