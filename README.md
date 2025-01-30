@@ -50,7 +50,7 @@ Don't hesitate to report bugs or ask for new features by [openning an issue](htt
 - *Portable Mode*: Create an empty file named `portable.ini` in the same directory as the application binary to enable portable mode.
 - *Docking windows*: In debug mode you can dock windows together by pressing SHIFT and drag'n drop a window into another.
 - *Debug multi-viewport*: In Windows or macOS you can enable "multi-viewport" in debug menu. You must restart the emulator for the change to take effect. Once enabled you can drag debugger windows outside the main window. 
-- *Debug Symbols*: The emulator always tries to load a symbol file at the same time a rom is being loaded. For example, for ```path_to_rom_file.rom``` it tries to load ```path_to_rom_file.sym```. It is also possible to load a symbol file using the GUI or using the CLI.
+- *Debug Symbols*: The emulator always tries to load a symbol file at the same time a rom is being loaded. For example, for ```path_to_rom_file.rom``` it tries to load ```path_to_rom_file.sym```. It is also possible to load a symbol file using the GUI or using the CLI. It supports PCEAS, wla-dx and vasm file formats.
 - *Command Line Usage*: ```geargrafx [rom_file] [symbol_file]```
 
 ## Build Instructions
