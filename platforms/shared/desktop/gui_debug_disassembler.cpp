@@ -188,6 +188,30 @@ void gui_debug_load_symbols_file(const char* file_path)
                 continue;
             }
 
+            if (line.find("Sections:") != std::string::npos)
+            {
+                valid_section = false;
+                continue;
+            }
+
+            if (line.find("Source:") != std::string::npos)
+            {
+                valid_section = false;
+                continue;
+            }
+
+            if (line.find("Symbols by name:") != std::string::npos)
+            {
+                valid_section = false;
+                continue;
+            }
+
+            if (line.find("Symbols by value:") != std::string::npos)
+            {
+                valid_section = true;
+                continue;
+            }
+
             if (valid_section)
                 add_symbol(line.c_str());
         }
