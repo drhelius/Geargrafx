@@ -65,6 +65,7 @@ public:
     u8 GetMprTMA(u8 bits);
     u32 GetPhysicalAddress(u16 address);
     u8 GetBank(u16 address);
+    void SetResetValues(int mpr, int wram);
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
     GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
     void ResetDisassemblerRecords();
@@ -88,6 +89,8 @@ private:
     u8 m_mpr_buffer;
     u8* m_test_memory;
     Mapper* m_current_mapper;
+    int m_mpr_reset_value;
+    int m_wram_reset_value;
 };
 
 #include "memory_inline.h"

@@ -136,6 +136,10 @@ struct config_Debug
     bool dis_replace_labels = true;
     int font_size = 0;
     bool multi_viewport = false;
+    int reset_ram = 0;
+    int reset_registers = 0;
+    int reset_color_table = 0;
+    int reset_mpr = 0;
 };
 
 EXTERN mINI::INIFile* config_ini_file;

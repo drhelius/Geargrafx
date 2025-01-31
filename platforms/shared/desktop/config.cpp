@@ -132,6 +132,10 @@ void config_read(void)
     config_debug.dis_replace_labels = read_bool("Debug", "DisReplaceLabels", true);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
+    config_debug.reset_ram = read_int("Debug", "InitRam", 0);
+    config_debug.reset_registers = read_int("Debug", "InitRegisters", 0);
+    config_debug.reset_color_table = read_int("Debug", "InitColorTable", 0);
+    config_debug.reset_mpr = read_int("Debug", "InitMPR", 0);
 
     config_emulator.maximized = read_bool("Emulator", "Maximized", false);
     config_emulator.fullscreen = read_bool("Emulator", "FullScreen", false);
@@ -267,6 +271,10 @@ void config_write(void)
     write_bool("Debug", "DisReplaceLabels", config_debug.dis_replace_labels);
     write_int("Debug", "FontSize", config_debug.font_size);
     write_bool("Debug", "MultiViewport", config_debug.multi_viewport);
+    write_int("Debug", "InitRam", config_debug.reset_ram);
+    write_int("Debug", "InitRegisters", config_debug.reset_registers);
+    write_int("Debug", "InitColorTable", config_debug.reset_color_table);
+    write_int("Debug", "InitMPR", config_debug.reset_mpr);
 
     write_bool("Emulator", "Maximized", config_emulator.maximized);
     write_bool("Emulator", "FullScreen", config_emulator.fullscreen);

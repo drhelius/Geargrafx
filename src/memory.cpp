@@ -40,6 +40,8 @@ Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* 
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
     InitPointer(m_sf2_mapper);
+    m_mpr_reset_value = -1;
+    m_wram_reset_value = -1;
 }
 
 Memory::~Memory()
@@ -87,15 +89,25 @@ void Memory::Reset()
 
     for (int i = 0; i < 7; i++)
     {
-        do
+        if (m_mpr_reset_value < 0)
         {
-            m_mpr[i] = rand() & 0xFF;
+            do
+            {
+                m_mpr[i] = rand() & 0xFF;
+            }
+            while (m_mpr[i] == 0x00);
         }
-        while (m_mpr[i] == 0x00);
+        else
+            m_mpr[i] = m_mpr_reset_value & 0xFF;
     }
 
     for (int i = 0; i < 0x2000; i++)
-        m_wram[i] = rand() & 0xFF;
+    {
+        if (m_wram_reset_value < 0)
+            m_wram[i] = rand() & 0xFF;
+        else
+            m_wram[i] = m_wram_reset_value & 0xFF;
+    }
 
 #if defined(GG_TESTING)
     for (int i = 0; i < 0x10000; i++)
@@ -109,6 +121,12 @@ void Memory::Reset()
     }
     else
         m_current_mapper = NULL;
+}
+
+void Memory::SetResetValues(int mpr, int wram)
+{
+    m_mpr_reset_value = mpr;
+    m_wram_reset_value = wram;
 }
 
 Memory::GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address)

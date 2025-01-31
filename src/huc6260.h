@@ -77,6 +77,7 @@ public:
     void SetScanlineEnd(int scanline_end);
     void SetOverscan(bool overscan);
     GG_Pixel_Format GetPixelFormat();
+    void SetResetValue(int value);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -112,6 +113,7 @@ private:
     u16 m_bgr565_palette[512];
     u16 m_rgb555_palette[512];
     u16 m_bgr555_palette[512];
+    int m_reset_value;
 };
 
 static const HuC6260::HuC6260_Speed k_huc6260_speed[4] = {

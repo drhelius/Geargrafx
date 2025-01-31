@@ -39,6 +39,7 @@ HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
     m_overscan = 0;
     m_scanline_start = 0;
     m_scanline_end = 239;
+    m_reset_value = -1;
 }
 
 HuC6260::~HuC6260()
@@ -101,7 +102,10 @@ void HuC6260::Reset()
 
     for (int i = 0; i < 512; i++)
     {
-        m_color_table[i] = rand() & 0x1FF;
+        if (m_reset_value < 0)
+            m_color_table[i] = rand() & 0x1FF;
+        else
+            m_color_table[i] = m_reset_value & 0x1FF;
     }
 }
 
@@ -245,6 +249,11 @@ void HuC6260::SetOverscan(bool overscan)
 GG_Pixel_Format HuC6260::GetPixelFormat()
 {
     return m_pixel_format;
+}
+
+void HuC6260::SetResetValue(int value)
+{
+    m_reset_value = value;
 }
 
 void HuC6260::WritePixel(u16 pixel)

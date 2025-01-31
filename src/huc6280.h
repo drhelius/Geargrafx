@@ -111,6 +111,7 @@ public:
     void WriteTimerRegister(u16 address, u8 value);
     HuC6280_State* GetState();
     void DisassembleNextOPCode();
+    void SetResetValue(int value);
     void EnableBreakpoints(bool enable, bool irqs);
     bool BreakpointHit();
     bool RunToBreakpointHit();
@@ -164,6 +165,7 @@ private:
     GG_Breakpoint m_run_to_breakpoint;
     bool m_run_to_breakpoint_requested;
     std::stack<GG_CallStackEntry> m_disassembler_call_stack;
+    int m_reset_value;
 
 private:
     u32 TickOPCode();

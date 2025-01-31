@@ -51,6 +51,7 @@ static void file_dialogs(void);
 static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int player);
 static void gamepad_configuration_item(const char* text, int* button, int player);
 static void draw_savestate_slot_info(int slot);
+static int get_reset_value(int option);
 
 void gui_init_menus(void)
 {
@@ -58,6 +59,10 @@ void gui_init_menus(void)
     strcpy(gui_savestates_path, config_emulator.savestates_path.c_str());
     strcpy(gui_screenshots_path, config_emulator.screenshots_path.c_str());
     gui_shortcut_open_rom = false;
+
+    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram));
+    emu_get_core()->GetHuC6260()->SetResetValue(get_reset_value(config_debug.reset_color_table));
+    emu_get_core()->GetHuC6280()->SetResetValue(get_reset_value(config_debug.reset_registers));
 }
 
 void gui_main_menu(void)
@@ -586,6 +591,57 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
+        if (ImGui::BeginMenu("Reset Values"))
+        {
+            if (ImGui::BeginMenu("RAM"))
+            {
+                ImGui::PushItemWidth(100.0f);
+                if (ImGui::Combo("##init_ram", &config_debug.reset_ram, "Random\0 0x00\0 0xFF\0\0"))
+                {
+                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram));
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Registers"))
+            {
+                ImGui::PushItemWidth(100.0f);
+                if (ImGui::Combo("##init_registers", &config_debug.reset_registers, "Random\0 0x00\0 0xFF\0\0"))
+                {
+                    emu_get_core()->GetHuC6280()->SetResetValue(get_reset_value(config_debug.reset_registers));
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Palettes"))
+            {
+                ImGui::PushItemWidth(100.0f);
+                if (ImGui::Combo("##init_color_table", &config_debug.reset_color_table, "Random\0 0x0000\0 0x01FF\0\0"))
+                {
+                    emu_get_core()->GetHuC6260()->SetResetValue(get_reset_value(config_debug.reset_color_table));
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("MPRs"))
+            {
+                ImGui::PushItemWidth(100.0f);
+                if (ImGui::Combo("##init_mpr", &config_debug.reset_mpr, "Random\0 0x00\0 0xFF\0\0"))
+                {
+                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram));
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
         ImGui::MenuItem("Show Output Screen", "", &config_debug.show_screen, config_debug.debug);
         ImGui::MenuItem("Show Disassembler", "", &config_debug.show_disassembler, config_debug.debug);
         ImGui::MenuItem("Show HuC6280 Status", "", &config_debug.show_processor, config_debug.debug);
@@ -738,5 +794,20 @@ static void draw_savestate_slot_info(int slot)
     else
     {
         ImGui::TextColored(ImVec4(0.50f, 0.50f, 0.50f, 1.0f), "Slot %d is empty", slot + 1);
+    }
+}
+
+static int get_reset_value(int option)
+{
+    switch (option)
+    {
+        case 0:
+            return -1;
+        case 1:
+            return 0x0000;
+        case 2:
+            return 0xFFFF;
+        default:
+            return -1;
     }
 }

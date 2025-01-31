@@ -32,6 +32,7 @@ HuC6280::HuC6280()
     InitOPCodeFunctors();
     m_breakpoints_enabled = false;
     m_breakpoints_irq_enabled = false;
+    m_reset_value = -1;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
     m_processor_state.Y = &m_Y;
@@ -64,11 +65,24 @@ void HuC6280::Reset()
     m_PC.SetHigh(m_memory->Read(0xFFFF));
     m_debug_next_irq = 1;
     DisassembleNextOPCode();
-    m_A.SetValue(rand() & 0xFF);
-    m_X.SetValue(rand() & 0xFF);
-    m_Y.SetValue(rand() & 0xFF);
-    m_S.SetValue(rand() & 0xFF);
-    m_P.SetValue(rand() & 0xFF);
+
+    if (m_reset_value < 0)
+    {
+        m_A.SetValue(rand() & 0xFF);
+        m_X.SetValue(rand() & 0xFF);
+        m_Y.SetValue(rand() & 0xFF);
+        m_S.SetValue(rand() & 0xFF);
+        m_P.SetValue(rand() & 0xFF);
+    }
+    else
+    {
+        m_A.SetValue(m_reset_value & 0xFF);
+        m_X.SetValue(m_reset_value & 0xFF);
+        m_Y.SetValue(m_reset_value & 0xFF);
+        m_S.SetValue(m_reset_value & 0xFF);
+        m_P.SetValue(m_reset_value & 0xFF);
+    }
+
     ClearFlag(FLAG_TRANSFER);
     ClearFlag(FLAG_DECIMAL);
     SetFlag(FLAG_INTERRUPT);
@@ -261,6 +275,11 @@ void HuC6280::DisassembleNextOPCode()
         strncpy(record->segment, "???", 5);
     }
 #endif
+}
+
+void HuC6280::SetResetValue(int value)
+{
+    m_reset_value = value;
 }
 
 void HuC6280::EnableBreakpoints(bool enable, bool irqs)
