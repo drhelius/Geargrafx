@@ -20,6 +20,8 @@
 #ifndef GUI_DEBUG_DISASSEMBLER_H
 #define	GUI_DEBUG_DISASSEMBLER_H
 
+#include "../../../src/geargrafx.h"
+
 #ifdef GUI_DEBUG_DISASSEMBLER_IMPORT
     #define EXTERN
 #else
@@ -36,6 +38,7 @@ EXTERN void gui_debug_toggle_breakpoint(void);
 EXTERN void gui_debug_add_bookmark(void);
 EXTERN void gui_debug_add_symbol(void);
 EXTERN void gui_debug_runtocursor(void);
+EXTERN void gui_debug_runto_address(u16 address);
 EXTERN void gui_debug_go_back(void);
 EXTERN void gui_debug_window_disassembler(void);
 EXTERN void gui_debug_save_disassembler(const char* file_path);

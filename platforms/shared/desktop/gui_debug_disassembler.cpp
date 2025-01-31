@@ -64,6 +64,7 @@ static char new_breakpoint_buffer[10] = "";
 static bool new_breakpoint_read = false;
 static bool new_breakpoint_write = false;
 static bool new_breakpoint_execute = true;
+static char runto_address[5] = "";
 static char goto_address[5] = "";
 static bool goto_address_requested = false;
 static u16 goto_address_target = 0;
@@ -230,7 +231,7 @@ void gui_debug_load_symbols_file(const char* file_path)
 
 void gui_debug_toggle_breakpoint(void)
 {
-    if (selected_address > 0)
+    if (selected_address >= 0)
     {
         if (emu_get_core()->GetHuC6280()->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, selected_address))
             emu_get_core()->GetHuC6280()->RemoveBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, selected_address);
@@ -251,11 +252,15 @@ void gui_debug_add_symbol(void)
 
 void gui_debug_runtocursor(void)
 {
-    if (selected_address > 0)
+    if (selected_address >= 0)
     {
-        emu_get_core()->GetHuC6280()->AddRunToBreakpoint(selected_address);
+        gui_debug_runto_address(selected_address);
     }
+}
 
+void gui_debug_runto_address(u16 address)
+{
+    emu_get_core()->GetHuC6280()->AddRunToBreakpoint(address);
     emu_debug_continue();
 }
 
@@ -1132,21 +1137,17 @@ static void disassembler_menu(void)
 
         if (ImGui::BeginMenu("Go To Address..."))
         {
+            bool go = false;
             ImGui::PushItemWidth(45);
             if (ImGui::InputTextWithHint("##goto_address", "XXXX", goto_address, IM_ARRAYSIZE(goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
-            {
-                try
-                {
-                    request_goto_address((u16)std::stoul(goto_address, 0, 16));
-                }
-                catch(const std::invalid_argument&)
-                {
-                }
-                goto_address[0] = 0;
-            }
+                go = true;
+
             ImGui::PopItemWidth();
             ImGui::SameLine();
             if (ImGui::Button("Go!", ImVec2(40, 0)))
+                go = true;
+
+            if (go)
             {
                 try
                 {
@@ -1205,6 +1206,35 @@ static void disassembler_menu(void)
         if (ImGui::MenuItem("Reset", "CTRL+R"))
         {
             emu_reset();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("Run To Address..."))
+        {
+            bool go = false;
+            ImGui::PushItemWidth(45);
+            if (ImGui::InputTextWithHint("##runto_address", "XXXX", runto_address, IM_ARRAYSIZE(runto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+                go = true;
+
+            ImGui::PopItemWidth();
+            ImGui::SameLine();
+            if (ImGui::Button("Go!", ImVec2(40, 0)))
+                go = true;
+
+            if (go)
+            {
+                try
+                {
+                    gui_debug_runto_address((u16)std::stoul(runto_address, 0, 16));
+                }
+                catch(const std::invalid_argument&)
+                {
+                }
+                runto_address[0] = 0;
+            }
+
+            ImGui::EndMenu();
         }
 
         ImGui::EndMenu();
