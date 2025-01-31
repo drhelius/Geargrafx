@@ -34,6 +34,7 @@ EXTERN void gui_debug_reset_breakpoints(void);
 EXTERN void gui_debug_load_symbols_file(const char* file_path);
 EXTERN void gui_debug_toggle_breakpoint(void);
 EXTERN void gui_debug_add_bookmark(void);
+EXTERN void gui_debug_add_symbol(void);
 EXTERN void gui_debug_runtocursor(void);
 EXTERN void gui_debug_go_back(void);
 EXTERN void gui_debug_window_disassembler(void);
