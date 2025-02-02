@@ -59,5 +59,7 @@ void gui_debug_windows(void)
             gui_debug_window_psg();
         if (config_debug.show_trace_logger)
             gui_debug_window_trace_logger();
+
+        gui_debug_window_watches();
     }
 }

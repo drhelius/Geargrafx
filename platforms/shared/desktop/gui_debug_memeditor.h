@@ -34,11 +34,18 @@ public:
         char name[32];
     };
 
+    struct Watch
+    {
+        int address;
+        char notes[128];
+    };
+
 public:
     MemEditor();
     ~MemEditor();
 
-    void Draw(uint8_t* mem_data, int mem_size, int base_display_addr = 0x0000, int word = 1, bool ascii = true, bool preview = true, bool options = true, bool cursors = true);
+    void Draw(const char* title, uint8_t* mem_data, int mem_size, int base_display_addr = 0x0000, int word = 1, bool ascii = true, bool preview = true, bool options = true, bool cursors = true);
+    void DrawWatchWindow();
     void Copy();
     void Paste();
     void JumpToAddress(int address);
@@ -49,7 +56,12 @@ public:
     void AddBookmark();
     void RemoveBookmarks();
     std::vector<Bookmark>* GetBookmarks();
+    void OpenWatchWindow();
+    void AddWatch();
+    void RemoveWatches();
     void SetGuiFont(ImFont* gui_font);
+    void BookMarkPopup();
+    void WatchPopup();
 
 private:
     bool IsColumnSeparator(int current_column, int column_count);
@@ -65,9 +77,10 @@ private:
     void DrawDataPreviewAsBin(int data);
     int DataPreviewSize();
     void DrawContexMenu(int address, bool cell_hovered);
-    void BookMarkPopup();
+    void WatchWindow();
 
 private:
+    char m_title[32];
     float m_separator_column_width;
     int m_selection_start;
     int m_selection_end;
@@ -89,6 +102,9 @@ private:
     char m_goto_address[7];
     bool m_add_bookmark;
     std::vector<Bookmark> m_bookmarks;
+    bool m_watch_window;
+    bool m_add_watch;
+    std::vector<Watch> m_watches;
     ImFont* m_gui_font;
     ImDrawList* m_draw_list;
 };

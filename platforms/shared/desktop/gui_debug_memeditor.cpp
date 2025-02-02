@@ -45,6 +45,8 @@ MemEditor::MemEditor()
     m_mem_word = 1;
     m_goto_address[0] = 0;
     m_add_bookmark = false;
+    m_watch_window = false;
+    m_add_watch = false;
     m_draw_list = 0;
 }
 
@@ -53,8 +55,9 @@ MemEditor::~MemEditor()
 
 }
 
-void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int word, bool ascii, bool preview, bool options, bool cursors)
+void MemEditor::Draw(const char* title, uint8_t* mem_data, int mem_size, int base_display_addr, int word, bool ascii, bool preview, bool options, bool cursors)
 {
+    snprintf(m_title, sizeof(m_title), "%s", title);
     m_mem_data = mem_data;
     m_mem_size = mem_size;
     m_mem_base_addr = base_display_addr;
@@ -378,8 +381,12 @@ void MemEditor::Draw(uint8_t* mem_data, int mem_size, int base_display_addr, int
         DrawDataPreview(m_selection_start);
     if (options)
         DrawOptions();
+}
 
-    BookMarkPopup();
+void MemEditor::DrawWatchWindow()
+{
+    if (m_watch_window)
+        WatchWindow();
 }
 
 bool MemEditor::IsColumnSeparator(int current_column, int column_count)
@@ -726,6 +733,11 @@ void MemEditor::DrawContexMenu(int address, bool cell_hovered)
             m_add_bookmark = true;
         }
 
+        if (ImGui::Selectable("Add Watch..."))
+        {
+            m_add_watch = true;
+        }
+
         if (m_gui_font != NULL)
             ImGui::PopFont();
 
@@ -735,16 +747,19 @@ void MemEditor::DrawContexMenu(int address, bool cell_hovered)
 
 void MemEditor::BookMarkPopup()
 {
+    char popup_title[64];
+    snprintf(popup_title, 64, "Add %s Bookmark", m_title);
+
     if (m_add_bookmark)
     {
-        ImGui::OpenPopup("Add Bookmark");
+        ImGui::OpenPopup(popup_title);
         m_add_bookmark = false;
     }
 
     if (m_gui_font != NULL)
         ImGui::PushFont(m_gui_font);
 
-    if (ImGui::BeginPopupModal("Add Bookmark", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal(popup_title, NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         static char address[9] = "";
         static char name[32] = "";
@@ -796,6 +811,195 @@ void MemEditor::BookMarkPopup()
 
     if (m_gui_font != NULL)
             ImGui::PopFont();
+}
+
+void MemEditor::WatchPopup()
+{
+    char popup_title[64];
+    snprintf(popup_title, 64, "Add %s Watch", m_title);
+
+    if (m_add_watch)
+    {
+        ImGui::OpenPopup(popup_title);
+        m_add_watch = false;
+    }
+
+    if (m_gui_font != NULL)
+        ImGui::PushFont(m_gui_font);
+
+    if (ImGui::BeginPopupModal(popup_title, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        static char address[9] = "";
+        static char notes[128] = "";
+        int bookmark_address = m_selection_start;
+
+        if (bookmark_address > 0)
+            snprintf(address, 9, "%06X", bookmark_address);
+
+        ImGui::Text("Address:");
+        ImGui::PushItemWidth(70);
+        ImGui::InputTextWithHint("##bookaddr", "XXXXXX", address, 7, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+
+        ImGui::Text("Notes:");
+        ImGui::PushItemWidth(200);ImGui::SetItemDefaultFocus();
+        ImGui::InputText("##name", notes, IM_ARRAYSIZE(notes));
+
+        ImGui::Separator();
+
+        if (ImGui::Button("OK", ImVec2(90, 0)))
+        {
+            try
+            {
+                bookmark_address = (int)std::stoul(address, 0, 16);
+
+                Watch watch;
+                watch.address = bookmark_address;
+                snprintf(watch.notes, 128, "%s", notes);
+                m_watches.push_back(watch);
+
+                ImGui::CloseCurrentPopup();
+                address[0] = 0;
+                notes[0] = 0;
+
+                m_watch_window = true;
+            }
+            catch(const std::invalid_argument&)
+            {
+            }
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(90, 0)))
+            ImGui::CloseCurrentPopup();
+
+        ImGui::EndPopup();
+    }
+
+    if (m_gui_font != NULL)
+            ImGui::PopFont();
+}
+
+void MemEditor::WatchWindow()
+{
+    ImVec4 addr_color = cyan;
+    ImVec4 notes_color = orange;
+    ImVec4 normal_color = white;
+    ImVec4 gray_color = mid_gray;
+
+    if (m_gui_font != NULL)
+        ImGui::PushFont(m_gui_font);
+
+    ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
+    char window_title[64];
+    snprintf(window_title, 64, "%s Watches", m_title);
+    ImGui::Begin(window_title, &m_watch_window);
+
+    if (ImGui::Button("Add Watch"))
+    {
+        m_add_watch = true;
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Remove All"))
+    {
+        RemoveWatches();
+    }
+
+    ImGui::Separator();
+
+    if (m_gui_font != NULL)
+        ImGui::PopFont();
+
+    ImVec2 character_size = ImGui::CalcTextSize("0");
+
+    int remove = -1;
+
+    if (ImGui::BeginTable("##hex", 5, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoKeepColumnsVisible | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
+    {
+        ImGui::TableSetupColumn("ADDRESS");
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, character_size.x);
+
+        ImGui::TableSetupColumn("VALUE", ImGuiTableColumnFlags_WidthFixed, character_size.x * ((m_mem_word * 2) + 1));
+
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, character_size.x);
+        ImGui::TableSetupColumn("NOTES");
+
+        int total_rows = (int)m_watches.size();
+
+        ImGuiListClipper clipper;
+        clipper.Begin(total_rows);
+
+        while (clipper.Step())
+        {
+            for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
+            {
+                Watch watch = m_watches[row];
+
+                ImGui::TableNextRow();
+                int address = watch.address;
+                if (address < 0)
+                    address = 0;
+                else if (address >= m_mem_size)
+                    address = m_mem_size - 1;
+
+                ImGui::TableNextColumn();
+
+                char remove_id[64];
+                snprintf(remove_id, 64, "X##remove_%s_%d", m_title, row);
+
+                if (ImGui::SmallButton(remove_id))
+                {
+                    remove = row;
+                }
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::BeginTooltip();
+                    ImGui::Text("Remove watch");
+                    ImGui::EndTooltip();
+                }
+
+                ImGui::SameLine();
+
+                char single_addr[32];
+                snprintf(single_addr, 32, "%s:  ", m_hex_mem_format);
+                ImGui::TextColored(addr_color, single_addr, address);
+                ImGui::TableNextColumn();
+                ImGui::TableNextColumn();
+
+                uint16_t data = 0;
+
+                if (m_mem_word == 1)
+                    data = m_mem_data[address];
+                else if (m_mem_word == 2)
+                {
+                    uint16_t* mem_data_16 = (uint16_t*)m_mem_data;
+                    data = mem_data_16[address];
+                }
+
+                bool gray_out = m_gray_out_zeros && (data == 0);
+                ImVec4 color = gray_out ? gray_color : normal_color;
+
+                if (m_mem_word == 1)
+                    ImGui::TextColored(color, m_uppercase_hex ? "%02X" : "%02x", data);
+                else if (m_mem_word == 2)
+                    ImGui::TextColored(color, m_uppercase_hex ? "%04X" : "%04x", data);
+
+                ImGui::TableNextColumn();
+                ImGui::TableNextColumn();
+
+                ImGui::TextColored(notes_color, "%s", watch.notes);
+            }
+        }
+        ImGui::EndTable();
+    }
+
+    if (remove >= 0)
+    {
+        m_watches.erase(m_watches.begin() + remove);
+    }
+
+    ImGui::End();
 }
 
 void MemEditor::Copy()
@@ -926,9 +1130,24 @@ void MemEditor::RemoveBookmarks()
     m_bookmarks.clear();
 }
 
+void MemEditor::RemoveWatches()
+{
+    m_watches.clear();
+}
+
 std::vector<MemEditor::Bookmark>* MemEditor::GetBookmarks()
 {
     return &m_bookmarks;
+}
+
+void MemEditor::OpenWatchWindow()
+{
+    m_watch_window = true;
+}
+
+void MemEditor::AddWatch()
+{
+    m_add_watch = true;
 }
 
 void MemEditor::SetGuiFont(ImFont* gui_font)

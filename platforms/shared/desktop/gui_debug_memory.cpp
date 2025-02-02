@@ -34,12 +34,15 @@ static int current_mem_edit = 0;
 static char set_value_buffer[5] = {0};
 
 static void memory_editor_menu(void);
+static void draw_tabs(void);
 
 void gui_debug_window_memory(void)
 {
     for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
     {
         mem_edit[i].SetGuiFont(gui_roboto_font);
+        mem_edit[i].WatchPopup();
+        mem_edit[i].BookMarkPopup();
     }
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
@@ -50,85 +53,24 @@ void gui_debug_window_memory(void)
 
     memory_editor_menu();
 
-    GeargrafxCore* core = emu_get_core();
-    Memory* memory = core->GetMemory();
-    Cartridge* cart = core->GetCartridge();
-    HuC6260* huc6260 = core->GetHuC6260();
-    HuC6270* huc6270 = core->GetHuC6270();
-
     if (ImGui::BeginTabBar("##memory_tabs", ImGuiTabBarFlags_None))
     {
-        if (ImGui::BeginTabItem("RAM", NULL, mem_edit_select == MEMORY_EDITOR_RAM ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        {
-            ImGui::PushFont(gui_default_font);
-             if (mem_edit_select == MEMORY_EDITOR_RAM)
-                mem_edit_select = -1;
-            current_mem_edit = MEMORY_EDITOR_RAM;
-            mem_edit[current_mem_edit].Draw(memory->GetWram(), 0x2000);
-            ImGui::PopFont();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("ZERO PAGE", NULL, mem_edit_select == MEMORY_EDITOR_ZERO_PAGE ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        {
-            ImGui::PushFont(gui_default_font);
-             if (mem_edit_select == MEMORY_EDITOR_ZERO_PAGE)
-                mem_edit_select = -1;
-            current_mem_edit = MEMORY_EDITOR_ZERO_PAGE;
-            mem_edit[current_mem_edit].Draw(memory->GetWram(), 0x100);
-            ImGui::PopFont();
-            ImGui::EndTabItem();
-        }
-
-        if (IsValidPointer(cart->GetROM()) && ImGui::BeginTabItem("ROM", NULL, mem_edit_select == MEMORY_EDITOR_ROM ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        {
-            ImGui::PushFont(gui_default_font);
-            if (mem_edit_select == MEMORY_EDITOR_ROM)
-                mem_edit_select = -1;
-            current_mem_edit = MEMORY_EDITOR_ROM;
-            mem_edit[current_mem_edit].Draw(cart->GetROM(), cart->GetROMSize());
-            ImGui::PopFont();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("VRAM", NULL, mem_edit_select == MEMORY_EDITOR_VRAM ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        {
-            ImGui::PushFont(gui_default_font);
-            if (mem_edit_select == MEMORY_EDITOR_VRAM)
-                mem_edit_select = -1;
-            current_mem_edit = MEMORY_EDITOR_VRAM;
-            mem_edit[current_mem_edit].Draw((u8*)huc6270->GetVRAM(), HUC6270_VRAM_SIZE, 0, 2);
-            ImGui::PopFont();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("SAT", NULL, mem_edit_select == MEMORY_EDITOR_SAT ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        {
-            ImGui::PushFont(gui_default_font);
-            if (mem_edit_select == MEMORY_EDITOR_SAT)
-                mem_edit_select = -1;
-            current_mem_edit = MEMORY_EDITOR_SAT;
-            mem_edit[current_mem_edit].Draw((u8*)huc6270->GetSAT(), HUC6270_SAT_SIZE, 0, 2);
-            ImGui::PopFont();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("PALETTES", NULL, mem_edit_select == MEMORY_EDITOR_PALETTES ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-        {
-            ImGui::PushFont(gui_default_font);
-            if (mem_edit_select == MEMORY_EDITOR_PALETTES)
-                mem_edit_select = -1;
-            current_mem_edit = MEMORY_EDITOR_PALETTES;
-            mem_edit[current_mem_edit].Draw((u8*)huc6260->GetColorTable(), 512, 0, 2);
-            ImGui::PopFont();
-            ImGui::EndTabItem();
-        }
-
+        draw_tabs();
         ImGui::EndTabBar();
     }
 
     ImGui::End();
     ImGui::PopStyleVar();
+}
+
+void gui_debug_window_watches(void)
+{
+    for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
+    {
+        ImGui::PushFont(gui_default_font);
+        mem_edit[i].DrawWatchWindow();
+        ImGui::PopFont();
+    }
 }
 
 void gui_debug_copy_memory(void)
@@ -155,6 +97,81 @@ void gui_debug_memory_goto(int editor, int address)
 void gui_debug_save_memory_dump(const char* file_path)
 {
     mem_edit[current_mem_edit].SaveToFile(file_path);
+}
+
+static void draw_tabs(void)
+{
+    GeargrafxCore* core = emu_get_core();
+    Memory* memory = core->GetMemory();
+    Cartridge* cart = core->GetCartridge();
+    HuC6260* huc6260 = core->GetHuC6260();
+    HuC6270* huc6270 = core->GetHuC6270();
+
+    if (ImGui::BeginTabItem("RAM", NULL, mem_edit_select == MEMORY_EDITOR_RAM ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+    {
+        ImGui::PushFont(gui_default_font);
+            if (mem_edit_select == MEMORY_EDITOR_RAM)
+            mem_edit_select = -1;
+        current_mem_edit = MEMORY_EDITOR_RAM;
+        mem_edit[current_mem_edit].Draw("RAM",memory->GetWram(), 0x2000);
+        ImGui::PopFont();
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("ZERO PAGE", NULL, mem_edit_select == MEMORY_EDITOR_ZERO_PAGE ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+    {
+        ImGui::PushFont(gui_default_font);
+            if (mem_edit_select == MEMORY_EDITOR_ZERO_PAGE)
+            mem_edit_select = -1;
+        current_mem_edit = MEMORY_EDITOR_ZERO_PAGE;
+        mem_edit[current_mem_edit].Draw("ZERO PAGE", memory->GetWram(), 0x100);
+        ImGui::PopFont();
+        ImGui::EndTabItem();
+    }
+
+    if (IsValidPointer(cart->GetROM()) && ImGui::BeginTabItem("ROM", NULL, mem_edit_select == MEMORY_EDITOR_ROM ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+    {
+        ImGui::PushFont(gui_default_font);
+        if (mem_edit_select == MEMORY_EDITOR_ROM)
+            mem_edit_select = -1;
+        current_mem_edit = MEMORY_EDITOR_ROM;
+        mem_edit[current_mem_edit].Draw("ROM", cart->GetROM(), cart->GetROMSize());
+        ImGui::PopFont();
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("VRAM", NULL, mem_edit_select == MEMORY_EDITOR_VRAM ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+    {
+        ImGui::PushFont(gui_default_font);
+        if (mem_edit_select == MEMORY_EDITOR_VRAM)
+            mem_edit_select = -1;
+        current_mem_edit = MEMORY_EDITOR_VRAM;
+        mem_edit[current_mem_edit].Draw("VRAM", (u8*)huc6270->GetVRAM(), HUC6270_VRAM_SIZE, 0, 2);
+        ImGui::PopFont();
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("SAT", NULL, mem_edit_select == MEMORY_EDITOR_SAT ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+    {
+        ImGui::PushFont(gui_default_font);
+        if (mem_edit_select == MEMORY_EDITOR_SAT)
+            mem_edit_select = -1;
+        current_mem_edit = MEMORY_EDITOR_SAT;
+        mem_edit[current_mem_edit].Draw("SAT", (u8*)huc6270->GetSAT(), HUC6270_SAT_SIZE, 0, 2);
+        ImGui::PopFont();
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("PALETTES", NULL, mem_edit_select == MEMORY_EDITOR_PALETTES ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
+    {
+        ImGui::PushFont(gui_default_font);
+        if (mem_edit_select == MEMORY_EDITOR_PALETTES)
+            mem_edit_select = -1;
+        current_mem_edit = MEMORY_EDITOR_PALETTES;
+        mem_edit[current_mem_edit].Draw("PALETTES", (u8*)huc6260->GetColorTable(), 512, 0, 2);
+        ImGui::PopFont();
+        ImGui::EndTabItem();
+    }
 }
 
 static void memory_editor_menu(void)
@@ -258,6 +275,26 @@ static void memory_editor_menu(void)
             {
                 mem_edit[current_mem_edit].JumpToAddress(bookmark->address);
             }
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Watches"))
+    {
+        if (ImGui::MenuItem("Open Watch Window"))
+        {
+            mem_edit[current_mem_edit].OpenWatchWindow();
+        }
+
+        if (ImGui::MenuItem("Add Watch"))
+        {
+            mem_edit[current_mem_edit].AddWatch();
+        }
+
+        if (ImGui::MenuItem("Clear All"))
+        {
+            mem_edit[current_mem_edit].RemoveWatches();
         }
 
         ImGui::EndMenu();

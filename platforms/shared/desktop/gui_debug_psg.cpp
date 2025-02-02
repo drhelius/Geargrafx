@@ -273,7 +273,7 @@ void gui_debug_window_psg(void)
 
                 ImGui::BeginChild("##waveform", ImVec2(ImGui::GetWindowWidth() - 20, 60), true);
 
-                mem_edit[channel].Draw(psg_channel->wave_data, 32, 0, 1, false, false, false, false);
+                mem_edit[channel].Draw("WAVEFORM", psg_channel->wave_data, 32, 0, 1, false, false, false, false);
 
                 ImGui::EndChild();
 
