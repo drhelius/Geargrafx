@@ -479,6 +479,12 @@ static void draw_breakpoints(void)
                ImGui::PopID();
                continue;
             }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Remove breakpoint");
+                ImGui::EndTooltip();
+            }
 
             ImGui::PopID();
 
@@ -490,6 +496,12 @@ static void draw_breakpoints(void)
                 brk->enabled = !brk->enabled;
             }
             ImGui::PopID();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text(brk->enabled ? "Disable breakpoint" : "Enable breakpoint");
+                ImGui::EndTooltip();
+            }
 
             ImGui::SameLine(); ImGui::TextColored(brk->enabled ? red : gray, "%s", k_breakpoint_types[brk->type]); ImGui::SameLine();
 
