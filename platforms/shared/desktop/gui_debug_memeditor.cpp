@@ -44,6 +44,7 @@ MemEditor::MemEditor()
     m_mem_base_addr = 0;
     m_mem_word = 1;
     m_goto_address[0] = 0;
+    m_find_next[0] = 0;
     m_add_bookmark = false;
     m_watch_window = false;
     m_add_watch = false;
@@ -509,12 +510,41 @@ void MemEditor::DrawCursors()
         }
     }
     ImGui::SameLine();
-    if (ImGui::Button("Go!", ImVec2(30, 0)))
+    if (ImGui::Button("GoTo"))
     {
         try
         {
             JumpToAddress((int)std::stoul(m_goto_address, 0, 16));
             m_goto_address[0] = 0;
+        }
+        catch(const std::invalid_argument&)
+        {
+        }
+    }
+
+    ImGui::SameLine();
+    ImGui::TextColored(dark_gray, "|");
+    ImGui::SameLine();
+
+    ImGui::PushItemWidth(40);
+    if (ImGui::InputTextWithHint("##findnext", "XXXX", m_find_next, IM_ARRAYSIZE(m_find_next), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+    {
+        try
+        {
+            int find_value = (int)std::stoul(m_find_next, 0, 16);
+            FindNextValue(find_value);
+        }
+        catch(const std::invalid_argument&)
+        {
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Find Next"))
+    {
+        try
+        {
+            int find_value = (int)std::stoul(m_find_next, 0, 16);
+            FindNextValue(find_value);
         }
         catch(const std::invalid_argument&)
         {
@@ -1071,6 +1101,36 @@ void MemEditor::JumpToAddress(int address)
 {
     if (address >= m_mem_base_addr && address < (m_mem_base_addr + m_mem_size))
         m_jump_to_address = address - m_mem_base_addr;
+}
+
+void MemEditor::FindNextValue(int value)
+{
+    if (m_mem_word == 1)
+        value &= 0xFF;
+    else if (m_mem_word == 2)
+        value &= 0xFFFF;
+
+    int start = m_selection_start + 1;
+
+    for (int i = 0; i < m_mem_size; i++)
+    {
+        int index = (start + i) % m_mem_size;
+        uint16_t data = 0;
+
+        if (m_mem_word == 1)
+            data = m_mem_data[index];
+        else if (m_mem_word == 2)
+        {
+            uint16_t* mem_data_16 = (uint16_t*)m_mem_data;
+            data = mem_data_16[index];
+        }
+
+        if (data == (uint16_t)value)
+        {
+            JumpToAddress(index);
+            break;
+        }
+    }
 }
 
 void MemEditor::SelectAll()

@@ -49,6 +49,7 @@ public:
     void Copy();
     void Paste();
     void JumpToAddress(int address);
+    void FindNextValue(int value);
     void SelectAll();
     void ClearSelection();
     void SetValueToSelection(int value);
@@ -100,6 +101,7 @@ private:
     char m_hex_mem_format[8];
     int m_mem_word;
     char m_goto_address[7];
+    char m_find_next[5];
     bool m_add_bookmark;
     std::vector<Bookmark> m_bookmarks;
     bool m_watch_window;
