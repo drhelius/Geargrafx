@@ -1248,7 +1248,7 @@ void MemEditor::SearchWindow()
         ImGui::TableHeadersRow();
 
         ImGuiListClipper clipper;
-        clipper.Begin(m_search_results.size());
+        clipper.Begin((int)m_search_results.size());
 
         while (clipper.Step())
         {

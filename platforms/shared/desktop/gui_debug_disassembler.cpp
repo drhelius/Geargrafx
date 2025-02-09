@@ -1351,7 +1351,7 @@ static void add_bookmark_popup(void)
         static bool bookmark_modified = false;
         u16 bookmark_address = (u16)selected_address;
 
-        if (!bookmark_modified && bookmark_address >= 0)
+        if (!bookmark_modified && selected_address >= 0)
             snprintf(address_bookmark, 5, "%04X", bookmark_address);
 
         ImGui::Text("Name:");

@@ -412,7 +412,7 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     header.magic = GG_SAVESTATE_MAGIC;
     header.version = GG_SAVESTATE_VERSION;
     header.timestamp = time(NULL);
-    strncpy(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name));
+    strncpy(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name) - 1);
     header.rom_crc = m_cartridge->GetCRC();
 
     Debug("Save state header magic: 0x%08x", header.magic);
