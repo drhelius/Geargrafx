@@ -25,6 +25,7 @@
 #include "../../../src/geargrafx.h"
 #include "gui_debug_constants.h"
 #include "gui_debug_text.h"
+#include "gui_debug_memory.h"
 #include "gui.h"
 #include "gui_filedialogs.h"
 #include "config.h"
@@ -131,10 +132,8 @@ void gui_debug_disassembler_destroy(void)
     SafeDeleteArray(dynamic_symbols);
 }
 
-void gui_debug_reset(void)
+void gui_debug_disassembler_reset(void)
 {
-    gui_debug_reset_breakpoints();
-    gui_debug_reset_symbols();
     selected_address = -1;
     selected_bank = -1;
 }
@@ -388,6 +387,7 @@ static void draw_controls(void)
     if (ImGui::Button(ICON_MD_INPUT))
     {
         emu_debug_step_frame();
+        gui_debug_memory_step_frame();
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
@@ -1208,6 +1208,7 @@ static void disassembler_menu(void)
         if (ImGui::MenuItem("Step Frame", "F6"))
         {
             emu_debug_step_frame();
+            gui_debug_memory_step_frame();
         }
 
         if (ImGui::MenuItem("Run to Cursor", "F8"))
@@ -1231,7 +1232,7 @@ static void disassembler_menu(void)
 
             ImGui::PopItemWidth();
             ImGui::SameLine();
-            if (ImGui::Button("Go!", ImVec2(40, 0)))
+            if (ImGui::Button("Run!", ImVec2(50, 0)))
                 go = true;
 
             if (go)

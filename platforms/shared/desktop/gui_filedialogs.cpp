@@ -255,7 +255,7 @@ void gui_file_dialog_save_memory_dump(void)
     nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
-        gui_debug_save_memory_dump(outPath);
+        gui_debug_memory_save_dump(outPath);
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)

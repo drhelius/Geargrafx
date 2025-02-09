@@ -20,6 +20,8 @@
 #ifndef GUI_DEBUG_MEMORY_H
 #define	GUI_DEBUG_MEMORY_H
 
+#include "../../../src/geargrafx.h"
+
 #ifdef GUI_DEBUG_MEMORY_IMPORT
     #define EXTERN
 #else
@@ -37,13 +39,17 @@ enum Memory_Editor_Tabs
     MEMORY_EDITOR_MAX
 };
 
+EXTERN void gui_debug_memory_init(void);
+EXTERN void gui_debug_memory_reset(void);
 EXTERN void gui_debug_window_memory(void);
-EXTERN void gui_debug_window_watches(void);
-EXTERN void gui_debug_copy_memory(void);
-EXTERN void gui_debug_paste_memory(void);
-EXTERN void gui_debug_select_all(void);
+EXTERN void gui_debug_memory_search_window(void);
+EXTERN void gui_debug_memory_watches_window(void);
+EXTERN void gui_debug_memory_step_frame(void);
+EXTERN void gui_debug_memory_copy(void);
+EXTERN void gui_debug_memory_paste(void);
+EXTERN void gui_debug_memory_select_all(void);
 EXTERN void gui_debug_memory_goto(int editor, int address);
-EXTERN void gui_debug_save_memory_dump(const char* file_path);
+EXTERN void gui_debug_memory_save_dump(const char* file_path);
 
 #undef GUI_DEBUG_MEMORY_IMPORT
 #undef EXTERN

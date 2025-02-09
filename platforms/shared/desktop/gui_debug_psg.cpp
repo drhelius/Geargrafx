@@ -42,6 +42,16 @@ void gui_debug_psg_init(void)
 {
     wave_buffer_left = new float[GG_AUDIO_BUFFER_SIZE];
     wave_buffer_right = new float[GG_AUDIO_BUFFER_SIZE];
+
+    GeargrafxCore* core = emu_get_core();
+    HuC6280PSG* psg = core->GetAudio()->GetPSG();
+    HuC6280PSG::HuC6280PSG_State* psg_state = psg->GetState();
+
+    for (int channel = 0; channel < 6; channel++)
+    {
+        HuC6280PSG::HuC6280PSG_Channel* psg_channel = &psg_state->CHANNELS[channel];
+        mem_edit[channel].Reset("WAVEFORM", psg_channel->wave_data, 32, 0, 1);
+    }
 }
 
 void gui_debug_psg_destroy(void)
@@ -273,7 +283,7 @@ void gui_debug_window_psg(void)
 
                 ImGui::BeginChild("##waveform", ImVec2(ImGui::GetWindowWidth() - 20, 60), true);
 
-                mem_edit[channel].Draw("WAVEFORM", psg_channel->wave_data, 32, 0, 1, false, false, false, false);
+                mem_edit[channel].Draw(false, false, false, false);
 
                 ImGui::EndChild();
 

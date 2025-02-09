@@ -26,6 +26,7 @@
 
 MemEditor::MemEditor()
 {
+    m_title[0] = 0;
     m_separator_column_width = 8.0f;
     m_selection_start = 0;
     m_selection_end = 0;
@@ -39,45 +40,71 @@ MemEditor::MemEditor()
     m_preview_data_type = 0;
     m_preview_endianess = 0;
     m_jump_to_address = -1;
-    m_mem_data = NULL;
+    InitPointer(m_mem_data);
     m_mem_size = 0;
     m_mem_base_addr = 0;
+    m_hex_addr_format[0] = 0;
+    m_hex_addr_digits = 2;
     m_mem_word = 1;
     m_goto_address[0] = 0;
     m_find_next[0] = 0;
     m_add_bookmark = false;
     m_watch_window = false;
     m_add_watch = false;
-    m_draw_list = 0;
+    InitPointer(m_gui_font);
+    InitPointer(m_draw_list);
+    m_search_window = false;
+    m_search_operator = 0;
+    m_search_compare_type = 0;
+    m_search_data_type = 0;
+    m_search_compare_specific_value_str[0] = 0;
+    m_search_compare_specific_value = 0;
+    m_search_compare_specific_address_str[0] = 0;
+    m_search_compare_specific_address = 0;
+    InitPointer(m_search_data);
+    m_search_auto = false;
 }
 
 MemEditor::~MemEditor()
 {
-
+    SafeDeleteArray(m_search_data);
 }
 
-void MemEditor::Draw(const char* title, uint8_t* mem_data, int mem_size, int base_display_addr, int word, bool ascii, bool preview, bool options, bool cursors)
+void MemEditor::Reset(const char* title, uint8_t* mem_data, int mem_size, int base_display_addr, int word)
 {
+    if (!IsValidPointer(mem_data))
+        return;
+
     snprintf(m_title, sizeof(m_title), "%s", title);
     m_mem_data = mem_data;
     m_mem_size = mem_size;
     m_mem_base_addr = base_display_addr;
     m_mem_word = word;
-    if (m_mem_word > 2)
+
+    if (m_mem_word < 1)
+        m_mem_word = 1;
+    else if (m_mem_word > 2)
         m_mem_word = 2;
 
-    if ((m_mem_word > 1) && ((m_preview_data_type < 2) || (m_preview_data_type > 3)))
-        m_preview_data_type = 2;
-
-    uint8_t hex_digits = 1;
+    m_hex_addr_digits = 1;
     int size = m_mem_size - 1;
 
     while (size >>= 4)
     {
-        hex_digits++;
+        m_hex_addr_digits++;
     }
 
-    snprintf(m_hex_mem_format, 8, "%%0%dX", hex_digits);
+    snprintf(m_hex_addr_format, 8, "%%0%dX", m_hex_addr_digits);
+
+    SafeDeleteArray(m_search_data);
+    m_search_data = new u_int8_t[m_mem_size * m_mem_word];
+    memcpy(m_search_data, m_mem_data, m_mem_size * m_mem_word);
+}
+
+void MemEditor::Draw(bool ascii, bool preview, bool options, bool cursors)
+{
+    if ((m_mem_word > 1) && ((m_preview_data_type < 2) || (m_preview_data_type > 3)))
+        m_preview_data_type = 2;
 
     ImVec4 addr_color = cyan;
     ImVec4 ascii_color = magenta;
@@ -114,7 +141,7 @@ void MemEditor::Draw(const char* title, uint8_t* mem_data, int mem_size, int bas
         if (ImGui::BeginTable("##header", byte_column_count, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoKeepColumnsVisible))
         {
             char addr_spaces[32];
-            int addr_padding = hex_digits - 2;
+            int addr_padding = m_hex_addr_digits - 2;
             snprintf(addr_spaces, 32, "ADDR %*s", addr_padding, "");
             ImGui::TableSetupColumn(addr_spaces);
             ImGui::TableSetupColumn("");
@@ -183,7 +210,7 @@ void MemEditor::Draw(const char* title, uint8_t* mem_data, int mem_size, int bas
 
                     ImGui::TableNextColumn();
                     char single_addr[32];
-                    snprintf(single_addr, 32, "%s:  ", m_hex_mem_format);                    
+                    snprintf(single_addr, 32, "%s:  ", m_hex_addr_format);
                     ImGui::Text(single_addr, address + m_mem_base_addr);
                     ImGui::TableNextColumn();
 
@@ -297,8 +324,7 @@ void MemEditor::Draw(const char* title, uint8_t* mem_data, int mem_size, int bas
                                 m_set_keyboard_here = true;
                             }
 
-
-                            DrawContexMenu(byte_address, cell_hovered);
+                            DrawContexMenu(byte_address, cell_hovered, options);
                         }
 
                         ImGui::PopItemWidth();
@@ -390,6 +416,12 @@ void MemEditor::DrawWatchWindow()
         WatchWindow();
 }
 
+void MemEditor::DrawSearchWindow()
+{
+    if (m_search_window)
+        SearchWindow();
+}
+
 bool MemEditor::IsColumnSeparator(int current_column, int column_count)
 {
     return (current_column > 0) && (current_column < column_count) && ((current_column % 4) == 0);
@@ -477,7 +509,7 @@ void MemEditor::HandleSelection(int address, int row)
             }
         }
     }
-    else if (ImGui::IsMouseDown(ImGuiMouseButton_Left))// || ImGui::IsMouseDown(ImGuiMouseButton_Right))
+    else if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
     {
         m_selection_start = address;
         m_selection_end = address;
@@ -498,7 +530,12 @@ void MemEditor::HandleSelection(int address, int row)
 void MemEditor::DrawCursors()
 {
     ImGui::PushItemWidth(55);
-    if (ImGui::InputTextWithHint("##gotoaddr", "XXXXXX", m_goto_address, IM_ARRAYSIZE(m_goto_address), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+    char buf[32];
+    snprintf(buf, 32, m_hex_addr_format, 0);
+    ImVec2 character_size = ImGui::CalcTextSize("0");
+
+    ImGui::PushItemWidth((character_size.x * (strlen(buf) + 1)) + 2);
+    if (ImGui::InputTextWithHint("##gotoaddr", buf, m_goto_address, m_hex_addr_digits + 1, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
     {
         try
         {
@@ -526,8 +563,8 @@ void MemEditor::DrawCursors()
     ImGui::TextColored(dark_gray, "|");
     ImGui::SameLine();
 
-    ImGui::PushItemWidth(40);
-    if (ImGui::InputTextWithHint("##findnext", "XXXX", m_find_next, IM_ARRAYSIZE(m_find_next), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+    ImGui::PushItemWidth((m_mem_word == 1 ? character_size.x * 3 : character_size.x * 5) + 2);
+    if (ImGui::InputTextWithHint("##findnext", m_mem_word == 1 ? "00" : "0000", m_find_next, m_mem_word == 1 ? 3 : 5, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
     {
         try
         {
@@ -558,9 +595,9 @@ void MemEditor::DrawCursors()
     char single_addr[32];
     char selection_text[32];
     char all_text[128];
-    snprintf(range_addr, 32, "%s-%s", m_hex_mem_format, m_hex_mem_format);
+    snprintf(range_addr, 32, "%s-%s", m_hex_addr_format, m_hex_addr_format);
     snprintf(region_text, 32, range_addr, m_mem_base_addr, m_mem_base_addr + m_mem_size - 1);
-    snprintf(single_addr, 32, "%s", m_hex_mem_format);
+    snprintf(single_addr, 32, "%s", m_hex_addr_format);
     if (m_selection_start == m_selection_end)
         snprintf(selection_text, 32, single_addr, m_mem_base_addr + m_selection_start);
     else
@@ -727,7 +764,7 @@ int MemEditor::DataPreviewSize()
     }
 }
 
-void MemEditor::DrawContexMenu(int address, bool cell_hovered)
+void MemEditor::DrawContexMenu(int address, bool cell_hovered, bool options)
 {
     char id[16];
     snprintf(id, 16, "##context_%d", address);
@@ -758,14 +795,17 @@ void MemEditor::DrawContexMenu(int address, bool cell_hovered)
             SelectAll();
         }
 
-        if (ImGui::Selectable("Add Bookmark..."))
+        if (options)
         {
-            m_add_bookmark = true;
-        }
+            if (ImGui::Selectable("Add Bookmark..."))
+            {
+                m_add_bookmark = true;
+            }
 
-        if (ImGui::Selectable("Add Watch..."))
-        {
-            m_add_watch = true;
+            if (ImGui::Selectable("Add Watch..."))
+            {
+                m_add_watch = true;
+            }
         }
 
         if (m_gui_font != NULL)
@@ -793,18 +833,24 @@ void MemEditor::BookMarkPopup()
     {
         static char address[9] = "";
         static char name[32] = "";
-        int bookmark_address = m_selection_start;
+        int bookmark_address = m_selection_start + m_mem_base_addr;
 
-        if (bookmark_address > 0)
-            snprintf(address, 9, "%06X", bookmark_address);
+        if (bookmark_address >= 0)
+            snprintf(address, 9, m_hex_addr_format, bookmark_address);
 
         ImGui::Text("Name:");
-        ImGui::PushItemWidth(200);ImGui::SetItemDefaultFocus();
+        ImGui::PushItemWidth(200);
+        ImGui::SetItemDefaultFocus();
         ImGui::InputText("##name", name, IM_ARRAYSIZE(name));
 
         ImGui::Text("Address:");
-        ImGui::PushItemWidth(70);
-        ImGui::InputTextWithHint("##bookaddr", "XXXXXX", address, 7, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+
+        char buf[32];
+        snprintf(buf, 32, m_hex_addr_format, 0);
+        ImVec2 character_size = ImGui::CalcTextSize("0");
+
+        ImGui::PushItemWidth(character_size.x * (strlen(buf) + 1));
+        ImGui::InputTextWithHint("##bookaddr", buf, address, m_hex_addr_digits + 1, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 
         ImGui::Separator();
 
@@ -819,12 +865,15 @@ void MemEditor::BookMarkPopup()
                     snprintf(name, 32, "Bookmark_%06X", bookmark_address);
                 }
 
-                Bookmark bookmark;
-                bookmark.address = bookmark_address;
-                snprintf(bookmark.name, 32, "%s", name);
-                m_bookmarks.push_back(bookmark);
-                ImGui::CloseCurrentPopup();
+                if (bookmark_address >= m_mem_base_addr && bookmark_address < (m_mem_base_addr + m_mem_size))
+                {
+                    Bookmark bookmark;
+                    bookmark.address = bookmark_address;
+                    snprintf(bookmark.name, 32, "%s", name);
+                    m_bookmarks.push_back(bookmark);
+                }
 
+                ImGui::CloseCurrentPopup();
                 address[0] = 0;
                 name[0] = 0;
             }
@@ -861,17 +910,24 @@ void MemEditor::WatchPopup()
     {
         static char address[9] = "";
         static char notes[128] = "";
-        int bookmark_address = m_selection_start;
+        int watch_address = m_selection_start + m_mem_base_addr;
 
-        if (bookmark_address > 0)
-            snprintf(address, 9, "%06X", bookmark_address);
+        if (watch_address >= 0)
+            snprintf(address, 9, m_hex_addr_format, watch_address);
 
         ImGui::Text("Address:");
-        ImGui::PushItemWidth(70);
-        ImGui::InputTextWithHint("##bookaddr", "XXXXXX", address, 7, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
 
-        ImGui::Text("Notes:");
-        ImGui::PushItemWidth(200);ImGui::SetItemDefaultFocus();
+        char buf[32];
+        snprintf(buf, 32, m_hex_addr_format, 0);
+        ImVec2 character_size = ImGui::CalcTextSize("0");
+
+        ImGui::PushItemWidth(character_size.x * (strlen(buf) + 1));
+        ImGui::SetItemDefaultFocus();
+
+        ImGui::InputTextWithHint("##bookaddr", buf, address, m_hex_addr_digits + 1, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase);
+
+        ImGui::Text("Description:");
+        ImGui::PushItemWidth(200);
         ImGui::InputText("##name", notes, IM_ARRAYSIZE(notes));
 
         ImGui::Separator();
@@ -880,12 +936,15 @@ void MemEditor::WatchPopup()
         {
             try
             {
-                bookmark_address = (int)std::stoul(address, 0, 16);
+                watch_address = (int)std::stoul(address, 0, 16);
 
-                Watch watch;
-                watch.address = bookmark_address;
-                snprintf(watch.notes, 128, "%s", notes);
-                m_watches.push_back(watch);
+                if (watch_address >= m_mem_base_addr && watch_address < (m_mem_base_addr + m_mem_size))
+                {
+                    Watch watch;
+                    watch.address = watch_address;
+                    snprintf(watch.notes, 128, "%s", notes);
+                    m_watches.push_back(watch);
+                }
 
                 ImGui::CloseCurrentPopup();
                 address[0] = 0;
@@ -909,10 +968,26 @@ void MemEditor::WatchPopup()
             ImGui::PopFont();
 }
 
+void MemEditor::SearchCapture()
+{
+    memcpy(m_search_data, m_mem_data, m_mem_size);
+}
+
+void MemEditor::StepFrame()
+{
+    if (m_search_auto)
+        SearchCapture();
+}
+
+int MemEditor::GetWordBytes()
+{
+    return m_mem_word;
+}
+
 void MemEditor::WatchWindow()
 {
     ImVec4 addr_color = cyan;
-    ImVec4 notes_color = orange;
+    ImVec4 notes_color = violet;
     ImVec4 normal_color = white;
     ImVec4 gray_color = mid_gray;
 
@@ -967,12 +1042,6 @@ void MemEditor::WatchWindow()
                 Watch watch = m_watches[row];
 
                 ImGui::TableNextRow();
-                int address = watch.address;
-                if (address < 0)
-                    address = 0;
-                else if (address >= m_mem_size)
-                    address = m_mem_size - 1;
-
                 ImGui::TableNextColumn();
 
                 char remove_id[64];
@@ -992,12 +1061,13 @@ void MemEditor::WatchWindow()
                 ImGui::SameLine();
 
                 char single_addr[32];
-                snprintf(single_addr, 32, "%s:  ", m_hex_mem_format);
-                ImGui::TextColored(addr_color, single_addr, address);
+                snprintf(single_addr, 32, "%s:  ", m_hex_addr_format);
+                ImGui::TextColored(addr_color, single_addr, watch.address);
                 ImGui::TableNextColumn();
                 ImGui::TableNextColumn();
 
                 uint16_t data = 0;
+                int address = watch.address - m_mem_base_addr;
 
                 if (m_mem_word == 1)
                     data = m_mem_data[address];
@@ -1030,6 +1100,323 @@ void MemEditor::WatchWindow()
     }
 
     ImGui::End();
+}
+
+void MemEditor::SearchWindow()
+{
+    ImVec4 addr_color = cyan;
+    ImVec4 value_color = white;
+    ImVec4 prev_color = orange;
+
+    if (m_gui_font != NULL)
+        ImGui::PushFont(m_gui_font);
+
+    ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
+    char window_title[64];
+    snprintf(window_title, 64, "%s Search", m_title);
+    ImGui::Begin(window_title, &m_search_window);
+
+    ImGui::PushItemWidth(240);
+    const char* search_opeartors[] = {"Value is less than", "Value is greater than", "Value is equal to", "Value is not equal to", "Value is less than or equal to", "Value is greater than or equal to"};
+    ImGui::Combo("##search_op", &m_search_operator, search_opeartors, IM_ARRAYSIZE(search_opeartors));
+
+    ImGui::PushItemWidth(160);
+    const char* search_compare_types[] = {"Previous snapshot", "Specific value", "Specific address"};
+    ImGui::Combo("##search_comp", &m_search_compare_type, search_compare_types, IM_ARRAYSIZE(search_compare_types));
+
+    if (m_search_compare_type == 1)
+    {
+        ImGui::SameLine();
+
+        switch (m_search_data_type)
+        {
+            // Hexadecimal
+            case 0:
+            {
+                const char* buf = m_mem_word == 1 ? "00" : "0000";
+                ImVec2 character_size = ImGui::CalcTextSize("0");
+                ImGui::PushItemWidth(character_size.x * (strlen(buf) + 1));
+
+                if (ImGui::InputTextWithHint("##search_value", buf, m_search_compare_specific_value_str, m_mem_word == 1 ? 3 : 5, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+                {
+                    try
+                    {
+                        m_search_compare_specific_value = (int)std::stoul(m_search_compare_specific_value_str, 0, 16);
+                    }
+                    catch(const std::invalid_argument&)
+                    {
+                    }
+                }
+                break;
+            }
+            // Signed
+            case 1:
+            {
+                ImVec2 character_size = ImGui::CalcTextSize("0000000");
+                ImGui::PushItemWidth(character_size.x);
+                if (ImGui::InputScalar("##search_value", ImGuiDataType_S32, &m_search_compare_specific_value, NULL, NULL, NULL, ImGuiInputTextFlags_AutoSelectAll))
+                {
+                    int max_value = m_mem_word == 1 ? INT8_MAX : INT16_MAX;
+                    int min_value = m_mem_word == 1 ? INT8_MIN : INT16_MIN;
+                    if (m_search_compare_specific_value > max_value)
+                        m_search_compare_specific_value = max_value;
+                    else if (m_search_compare_specific_value < min_value)
+                        m_search_compare_specific_value = min_value;
+                }
+                break;
+            }
+            // Unsigned
+            case 2:
+            {
+                ImVec2 character_size = ImGui::CalcTextSize("0000000");
+                ImGui::PushItemWidth(character_size.x);
+                if (ImGui::InputScalar("##search_value", ImGuiDataType_U32, &m_search_compare_specific_value, NULL, NULL, NULL, ImGuiInputTextFlags_AutoSelectAll))
+                {
+                    int max_value = m_mem_word == 1 ? UINT8_MAX : UINT16_MAX;
+                    if (m_search_compare_specific_value < 0)
+                        m_search_compare_specific_value = 0;
+                    if (m_search_compare_specific_value > max_value)
+                        m_search_compare_specific_value = max_value;
+                }
+                break;
+            }
+        }
+    }
+    else if (m_search_compare_type == 2)
+    {
+        ImGui::SameLine();
+
+        char buf[32];
+        snprintf(buf, 32, m_hex_addr_format, 0);
+        ImVec2 character_size = ImGui::CalcTextSize("0");
+
+        ImGui::PushItemWidth(character_size.x * (strlen(buf) + 1));
+
+        if (ImGui::InputTextWithHint("##search_address", buf, m_search_compare_specific_address_str, m_hex_addr_digits + 1, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+        {
+            try
+            {
+                m_search_compare_specific_address = (int)std::stoul(m_search_compare_specific_address_str, 0, 16);
+                if (m_search_compare_specific_address < 0)
+                    m_search_compare_specific_address = 0;
+                else if (m_search_compare_specific_address >= m_mem_size)
+                    m_search_compare_specific_address = m_mem_size - 1;
+            }
+            catch(const std::invalid_argument&)
+            {
+            }
+        }
+    }
+
+    ImGui::PushItemWidth(140);
+    const char* search_types[] = {"Hexadecimal", "Signed", "Unsigned"};
+    ImGui::Combo("##search_type", &m_search_data_type, search_types, IM_ARRAYSIZE(search_types));
+
+    if (ImGui::Button("Capture"))
+    {
+        SearchCapture();
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::Text("Take a snapshot of current memory\nThis will be used when comparing to previous values");
+        ImGui::EndTooltip();
+    }
+
+    ImGui::SameLine();
+    ImGui::Checkbox("Auto Capture", &m_search_auto);
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::Text("Automatically takes a snapshot each\ntime \"Step Frame (F6)\" is pressed");
+        ImGui::EndTooltip();
+    }
+
+    ImGui::Separator();
+
+    if (m_gui_font != NULL)
+        ImGui::PopFont();
+
+    CalculateSearchResults();
+
+    if (ImGui::BeginTable("##hex", 3, ImGuiTableFlags_NoKeepColumnsVisible | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
+    {
+        ImGui::TableSetupScrollFreeze(0, 1);
+        ImGui::TableSetupColumn("ADDRESS");
+        ImGui::TableSetupColumn("VALUE");
+        ImGui::TableSetupColumn("PREVIOUS");
+        ImGui::TableHeadersRow();
+
+        ImGuiListClipper clipper;
+        clipper.Begin(m_search_results.size());
+
+        while (clipper.Step())
+        {
+            for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
+            {
+                Search result = m_search_results[row];
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+
+                char single_addr[32];
+                snprintf(single_addr, 32, "%s:  ", m_hex_addr_format);
+                ImGui::TextColored(addr_color, single_addr, result.address + m_mem_base_addr);
+                ImGui::TableNextColumn();
+
+                DrawSearchValue(result.value, value_color);
+                ImGui::TableNextColumn();
+
+                DrawSearchValue(result.prev_value, prev_color);
+            }
+        }
+        ImGui::EndTable();
+    }
+
+    ImGui::End();
+}
+
+void MemEditor::CalculateSearchResults()
+{
+    if (!IsValidPointer(m_search_data) || !IsValidPointer(m_mem_data))
+        return;
+
+    m_search_results.clear();
+
+    for (int i = 0; i < m_mem_size; i++)
+    {
+        int compare_value = 0;
+        int current_value = 0;
+        int search_value = 0;
+        uint16_t* mem_data_16 = (uint16_t*)m_mem_data;
+        uint16_t* search_data_16 = (uint16_t*)m_search_data;
+
+        if (m_mem_word == 1)
+        {
+            if (m_search_data_type == 1)
+            {
+                current_value = (int8_t)m_mem_data[i];
+                search_value = (int8_t)m_search_data[i];
+            }
+            else
+            {
+                current_value = m_mem_data[i];
+                search_value = m_search_data[i];
+            }
+        }
+        else if (m_mem_word == 2)
+        {
+            if (m_search_data_type == 1)
+            {
+                current_value = (int16_t)mem_data_16[i];
+                search_value = (int16_t)search_data_16[i];
+            }
+            else
+            {
+                current_value = mem_data_16[i];
+                search_value = search_data_16[i];
+            }
+        }
+
+        switch (m_search_compare_type)
+        {
+            // Previous
+            case 0:
+                compare_value = search_value;
+                break;
+            // Specific
+            case 1:
+                compare_value = m_search_compare_specific_value;
+                break;
+            // Specific address
+            case 2:
+                if (m_mem_word == 1)
+                    compare_value = m_mem_data[m_search_compare_specific_address];
+                else if (m_mem_word == 2)
+                    compare_value = mem_data_16[m_search_compare_specific_address];
+                break;
+        }
+
+        bool found = false;
+
+        switch (m_search_operator)
+        {
+            // <
+            case 0:
+            {
+                found = (current_value < compare_value);
+                break;
+            }
+            // >
+            case 1:
+            {
+                found = (current_value > compare_value);
+                break;
+            }
+            // ==
+            case 2:
+            {
+                found = (current_value == compare_value);
+                break;
+            }
+            // !=
+            case 3:
+            {
+                found = (current_value != compare_value);
+                break;
+            }
+            // <=
+            case 4:
+            {
+                found = (current_value <= compare_value);
+                break;
+            }
+            // >=
+            case 5:
+            {
+                found = (current_value >= compare_value);
+                break;
+            }
+        }
+
+        if (found)
+        {
+            Search result;
+            result.address = i;
+            result.value = current_value;
+            result.prev_value = search_value;
+            m_search_results.push_back(result);
+        }
+    }
+}
+
+void MemEditor::DrawSearchValue(int value, ImVec4 color)
+{
+    ImVec4 gray_color = mid_gray;
+    bool gray_out = m_gray_out_zeros && (value == 0);
+    ImVec4 final_color = gray_out ? gray_color : color;
+
+    switch (m_search_data_type)
+    {
+        case 0:
+            if (m_mem_word == 1)
+                ImGui::TextColored(final_color, m_uppercase_hex ? "%02X" : "%02x", value);
+            else if (m_mem_word == 2)
+                ImGui::TextColored(final_color, m_uppercase_hex ? "%04X" : "%04x", value);
+            break;
+        case 1:
+            if (m_mem_word == 1)
+                ImGui::TextColored(final_color, "%d", (int8_t)value);
+            else if (m_mem_word == 2)
+                ImGui::TextColored(final_color, "%d", (int16_t)value);
+            break;
+        case 2:
+            if (m_mem_word == 1)
+                ImGui::TextColored(final_color, "%u", (uint8_t)value);
+            else if (m_mem_word == 2)
+                ImGui::TextColored(final_color, "%u", (uint16_t)value);
+            break;
+    }
 }
 
 void MemEditor::Copy()
@@ -1127,7 +1514,7 @@ void MemEditor::FindNextValue(int value)
 
         if (data == (uint16_t)value)
         {
-            JumpToAddress(index);
+            JumpToAddress(index + m_mem_base_addr);
             break;
         }
     }
@@ -1203,6 +1590,14 @@ std::vector<MemEditor::Bookmark>* MemEditor::GetBookmarks()
 void MemEditor::OpenWatchWindow()
 {
     m_watch_window = true;
+}
+
+void MemEditor::OpenSearchWindow()
+{
+    if (!m_search_window)
+        SearchCapture();
+
+    m_search_window = true;
 }
 
 void MemEditor::AddWatch()

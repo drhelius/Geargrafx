@@ -31,6 +31,27 @@
 #include "gui_debug_trace_logger.h"
 #include "config.h"
 
+
+void gui_debug_init(void)
+{
+    gui_debug_disassembler_init();
+    gui_debug_memory_init();
+    gui_debug_psg_init();
+}
+
+void gui_debug_reset(void)
+{
+    gui_debug_disassembler_reset();
+    gui_debug_memory_reset();
+    gui_debug_reset_breakpoints();
+    gui_debug_reset_symbols();
+}
+
+void gui_debug_callback(GeargrafxCore::GG_Debug_State* state)
+{
+    gui_debug_trace_logger_update(state);
+}
+
 void gui_debug_windows(void)
 {
     if (config_debug.debug)
@@ -60,6 +81,7 @@ void gui_debug_windows(void)
         if (config_debug.show_trace_logger)
             gui_debug_window_trace_logger();
 
-        gui_debug_window_watches();
+        gui_debug_memory_watches_window();
+        gui_debug_memory_search_window();
     }
 }

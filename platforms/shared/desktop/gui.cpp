@@ -105,11 +105,9 @@ void gui_init(void)
     emu_set_scanline_start_end(
                 config_debug.debug ? 0 : config_video.scanline_start,
                 config_debug.debug ? 239 : config_video.scanline_end);
-    emu_debug_set_callback(gui_debug_trace_logger_update);
+    emu_debug_set_callback(gui_debug_callback);
 
-    gui_debug_disassembler_init();
-    gui_debug_psg_init();
-
+    gui_debug_init();
     gui_init_menus();
 }
 
@@ -198,7 +196,10 @@ void gui_shortcut(gui_ShortCutEvent event)
         break;
     case gui_ShortcutDebugStepFrame:
         if (config_debug.debug)
+        {
             emu_debug_step_frame();
+            gui_debug_memory_step_frame();
+        }
         break;
     case gui_ShortcutDebugBreak:
         if (config_debug.debug)
@@ -221,13 +222,13 @@ void gui_shortcut(gui_ShortCutEvent event)
             gui_debug_toggle_breakpoint();
         break;
     case gui_ShortcutDebugCopy:
-        gui_debug_copy_memory();
+        gui_debug_memory_copy();
         break;
     case gui_ShortcutDebugPaste:
-        gui_debug_paste_memory();
+        gui_debug_memory_paste();
         break;
     case gui_ShortcutDebugSelectAll:
-        gui_debug_select_all();
+        gui_debug_memory_select_all();
         break;
     case gui_ShortcutShowMainMenu:
         config_emulator.show_menu = !config_emulator.show_menu;
