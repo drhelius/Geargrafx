@@ -92,6 +92,8 @@ static void draw_instruction_name(DisassemblerLine* line, bool is_pc);
 static void disassembler_menu(void);
 static void add_bookmark_popup(void);
 static void add_symbol_popup(void);
+static void save_full_disassembler(FILE* file);
+static void save_current_disassembler(FILE* file);
 
 void gui_debug_disassembler_init(void)
 {
@@ -291,40 +293,16 @@ void gui_debug_window_disassembler(void)
     ImGui::PopStyleVar();
 }
 
-void gui_debug_save_disassembler(const char* file_path)
+void gui_debug_save_disassembler(const char* file_path, bool full)
 {
     FILE* file = fopen(file_path, "w");
 
-    Memory* memory = emu_get_core()->GetMemory();
-    Memory::GG_Disassembler_Record** records = memory->GetAllDisassemblerRecords();
-
-    for (int i = 0; i < 0x200000; i++)
+    if (IsValidPointer(file))
     {
-        Memory::GG_Disassembler_Record* record = records[i];
-
-        if (IsValidPointer(record) && (record->name[0] != 0))
-        {
-            if (record->subroutine || record->irq)
-                fprintf(file, "\n");
-
-            char name[64];
-            strcpy(name, record->name);
-            RemoveColorFromString(name);
-
-            int len = (int)strlen(name);
-            char spaces[32];
-            int offset = 28 - len;
-            if (offset < 0)
-                offset = 0;
-            for (int i = 0; i < offset; i++)
-                spaces[i] = ' ';
-            spaces[offset] = 0;
-
-            fprintf(file, "%06X-%02X:    %s%s;%s\n", i, record->bank, name, spaces, record->bytes);
-
-            if (is_return_instruction(record->opcodes[0]))
-                fprintf(file, "\n");
-        }
+        if (full)
+            save_full_disassembler(file);
+        else
+            save_current_disassembler(file);
     }
 
     fclose(file);
@@ -1051,8 +1029,8 @@ static void replace_labels(DisassemblerLine* line, const char* color, const char
     {
         std::string instr = line->record->name;
         std::string label = k_debug_labels[i].label;
-        char label_address[6];
-        snprintf(label_address, 6, "$%04X", k_debug_labels[i].address + hardware_offset);
+        char label_address[7];
+        snprintf(label_address, 7, "$%04X", k_debug_labels[i].address + hardware_offset);
         size_t pos = instr.find(label_address);
         if (pos != std::string::npos)
         {
@@ -1122,9 +1100,14 @@ static void disassembler_menu(void)
 
     if (ImGui::BeginMenu("File"))
     {
-        if (ImGui::MenuItem("Save Code As..."))
+        if (ImGui::MenuItem("Save All Disassembled Code As..."))
         {
-            gui_file_dialog_save_disassembler();
+            gui_file_dialog_save_disassembler(true);
+        }
+
+        if (ImGui::MenuItem("Save Current View As..."))
+        {
+            gui_file_dialog_save_disassembler(false);
         }
 
         ImGui::EndMenu();
@@ -1564,4 +1547,102 @@ void gui_debug_window_call_stack(void)
 
     ImGui::End();
     ImGui::PopStyleVar();
+}
+
+static void save_full_disassembler(FILE* file)
+{
+    Memory* memory = emu_get_core()->GetMemory();
+    Memory::GG_Disassembler_Record** records = memory->GetAllDisassemblerRecords();
+
+    for (int i = 0; i < 0x200000; i++)
+    {
+        Memory::GG_Disassembler_Record* record = records[i];
+
+        if (IsValidPointer(record) && (record->name[0] != 0))
+        {
+            if (record->subroutine || record->irq)
+                fprintf(file, "\n");
+
+            char name[64];
+            strcpy(name, record->name);
+            RemoveColorFromString(name);
+
+            int len = (int)strlen(name);
+            char spaces[32];
+            int offset = 28 - len;
+            if (offset < 0)
+                offset = 0;
+            for (int i = 0; i < offset; i++)
+                spaces[i] = ' ';
+            spaces[offset] = 0;
+
+            fprintf(file, "%06X-%02X:    %s%s;%s\n", i, record->bank, name, spaces, record->bytes);
+
+            if (is_return_instruction(record->opcodes[0]))
+                fprintf(file, "\n");
+        }
+    }
+}
+
+static void save_current_disassembler(FILE* file)
+{
+    int total_lines = (int)disassembler_lines.size();
+
+    for (int i = 0; i < total_lines; i++)
+    {
+        DisassemblerLine line = disassembler_lines[i];
+
+        if (line.symbol)
+        {
+            fprintf(file, "%s:\n", line.symbol->text);
+            continue;
+        }
+
+        fprintf(file, "  ");
+
+        if (config_debug.dis_show_segment)
+            fprintf(file, "%s ", line.record->segment);
+        if (config_debug.dis_show_bank)
+            fprintf(file, "%02X ", line.record->bank);
+
+        fprintf(file, " %04X ", line.address);
+
+        if (config_debug.dis_replace_symbols && line.record->jump)
+        {
+            replace_symbols(&line, "");
+        }
+
+        if (config_debug.dis_replace_labels)
+        {
+            replace_labels(&line, "", "");
+        }
+
+        std::string instr = line.name_enhanced;
+        size_t pos = instr.find("{}");
+        if (pos != std::string::npos)
+            instr.replace(pos, 2, "");
+
+        fprintf(file, "   %s ", instr.c_str());
+
+        if (config_debug.dis_show_mem)
+        {
+            int len = (int)instr.length();
+            char spaces[39];
+            int offset = 38 - len;
+            if (offset < 0)
+                offset = 0;
+            for (int i = 0; (i < offset) && (i < 38); i++)
+                spaces[i] = ' ';
+            spaces[offset] = 0;
+
+            fprintf(file, "%s;%s", spaces, line.record->bytes);
+        }
+
+        fprintf(file, "\n");
+
+        if (is_return_instruction(line.record->opcodes[0]))
+        {
+            fprintf(file, "\n\n");
+        }
+    }
 }
