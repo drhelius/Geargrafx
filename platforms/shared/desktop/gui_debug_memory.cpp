@@ -133,9 +133,12 @@ void gui_debug_memory_goto(int editor, int address)
     mem_edit[mem_edit_select].JumpToAddress(address);
 }
 
-void gui_debug_memory_save_dump(const char* file_path)
+void gui_debug_memory_save_dump(const char* file_path, bool binary)
 {
-    mem_edit[current_mem_edit].SaveToFile(file_path);
+    if (binary)
+        mem_edit[current_mem_edit].SaveToBinaryFile(file_path);
+    else
+        mem_edit[current_mem_edit].SaveToTextFile(file_path);
 }
 
 static void draw_tabs(void)
@@ -216,9 +219,14 @@ static void memory_editor_menu(void)
 
     if (ImGui::BeginMenu("File"))
     {
-        if (ImGui::MenuItem("Save Memory As..."))
+        if (ImGui::MenuItem("Save Memory As Text..."))
         {
-            gui_file_dialog_save_memory_dump();
+            gui_file_dialog_save_memory_dump(false);
+        }
+
+        if (ImGui::MenuItem("Save Memory As Binary..."))
+        {
+            gui_file_dialog_save_memory_dump(true);
         }
 
         ImGui::EndMenu();

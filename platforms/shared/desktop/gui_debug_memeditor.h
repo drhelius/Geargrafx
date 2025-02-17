@@ -62,7 +62,8 @@ public:
     void SelectAll();
     void ClearSelection();
     void SetValueToSelection(int value);
-    void SaveToFile(const char* file_path);
+    void SaveToTextFile(const char* file_path);
+    void SaveToBinaryFile(const char* file_path);
     void AddBookmark();
     void RemoveBookmarks();
     std::vector<Bookmark>* GetBookmarks();

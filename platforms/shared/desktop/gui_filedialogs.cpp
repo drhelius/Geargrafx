@@ -241,10 +241,10 @@ void gui_file_dialog_save_screenshot(void)
     }
 }
 
-void gui_file_dialog_save_memory_dump(void)
+void gui_file_dialog_save_memory_dump(bool binary)
 {
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Memory Dump Files", "txt" } };
+    nfdfilteritem_t filterItem[1] = { { "Memory Dump Files", binary ? "bin" : "txt" } };
     nfdsavedialogu8args_t args = { };
     args.filterList = filterItem;
     args.filterCount = 1;
@@ -255,7 +255,7 @@ void gui_file_dialog_save_memory_dump(void)
     nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
-        gui_debug_memory_save_dump(outPath);
+        gui_debug_memory_save_dump(outPath, binary);
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)

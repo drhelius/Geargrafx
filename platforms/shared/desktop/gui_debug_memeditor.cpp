@@ -1544,25 +1544,54 @@ void MemEditor::SetValueToSelection(int value)
     }
 }
 
-void MemEditor::SaveToFile(const char* file_path)
+void MemEditor::SaveToTextFile(const char* file_path)
 {
-    int size = m_mem_size * m_mem_word;
-    int row = m_bytes_per_row * m_mem_word;
-
+    int total_bytes = m_mem_size * m_mem_word;
+    int row_bytes   = m_bytes_per_row * m_mem_word;
     FILE* file = fopen(file_path, "w");
 
     if (file)
     {
-        for (int i = 0; i < (size - 1); i++)
+        int row_count = (total_bytes + row_bytes - 1) / row_bytes;
+        for (int r = 0; r < row_count; r++)
         {
-            fprintf(file, "%02X ", m_mem_data[i]);
+            int current_address = m_mem_base_addr + (r * m_bytes_per_row);
 
-            if ((i % row) == (row - 1))
-                fprintf(file, "\n");
+            fprintf(file, m_hex_addr_format, current_address);
+            fprintf(file, ":    ");
+
+            int row_start = r * row_bytes;
+            int row_end = row_start + row_bytes;
+            if (row_end > total_bytes)
+                row_end = total_bytes;
+
+            if (m_mem_word == 1)
+                for (int i = row_start; i < row_end; i++)
+                    fprintf(file, "%02X ", m_mem_data[i]);
+            else if (m_mem_word == 2)
+            {
+                int word_count = (row_end - row_start) / 2;
+                uint16_t* mem_data_16 = (uint16_t*)m_mem_data;
+                int word_start = row_start / 2;
+                for (int i = 0; i < word_count; i++)
+                    fprintf(file, "%04X ", mem_data_16[word_start + i]);
+            }
+            fprintf(file, "\n");
         }
 
-        fprintf(file, "%02X", m_mem_data[(size - 1)]);
+        fclose(file);
+    }
+}
 
+void MemEditor::SaveToBinaryFile(const char* file_path)
+{
+    int size = m_mem_size * m_mem_word;
+
+    FILE* file = fopen(file_path, "wb");
+
+    if (file)
+    {
+        fwrite(m_mem_data, m_mem_word, size, file);
         fclose(file);
     }
 }

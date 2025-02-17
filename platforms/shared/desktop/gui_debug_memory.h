@@ -49,7 +49,7 @@ EXTERN void gui_debug_memory_copy(void);
 EXTERN void gui_debug_memory_paste(void);
 EXTERN void gui_debug_memory_select_all(void);
 EXTERN void gui_debug_memory_goto(int editor, int address);
-EXTERN void gui_debug_memory_save_dump(const char* file_path);
+EXTERN void gui_debug_memory_save_dump(const char* file_path, bool binary);
 
 #undef GUI_DEBUG_MEMORY_IMPORT
 #undef EXTERN
