@@ -1,18 +1,18 @@
 # Geargrafx
 
-[![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/drhelius/Geargrafx/geargrafx.yml)](https://github.com/drhelius/Geargrafx/actions/workflows/geargrafx.yml)
-[![GitHub tag (with filter)](https://img.shields.io/github/v/tag/drhelius/Geargrafx?label=version)](https://github.com/drhelius/Geargrafx/releases)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/drhelius/Geargrafx/geargrafx.yml)](https://github.com/drhelius/Geargrafx/actions/workflows/geargrafx.yml)
+[![GitHub Releases)](https://img.shields.io/github/v/tag/drhelius/Geargrafx?label=version)](https://github.com/drhelius/Geargrafx/releases)
 [![commits)](https://img.shields.io/github/commit-activity/t/drhelius/Geargrafx)](https://github.com/drhelius/Geargrafx/commits/main)
 [![GitHub contributors](https://img.shields.io/github/contributors/drhelius/Geargrafx)](https://github.com/drhelius/Geargrafx/graphs/contributors)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/drhelius)](https://github.com/sponsors/drhelius)
-[![GitHub](https://img.shields.io/github/license/drhelius/Geargrafx)](https://github.com/drhelius/Geargrafx/blob/main/LICENSE)
-[![Twitter Follow](https://img.shields.io/twitter/follow/drhelius)](https://twitter.com/drhelius)
+[![License](https://img.shields.io/github/license/drhelius/Geargrafx)](https://github.com/drhelius/Geargrafx/blob/main/LICENSE)
+[![Twitter Follow](https://img.shields.io/twitter/follow/drhelius)](https://x.com/drhelius)
 
 Geargrafx is a cross-platform TurboGrafx-16 / PC Engine emulator written in C++ that runs on Windows, macOS, Linux, BSD and RetroArch.
 
-This is an open source project with its ongoing development made possible thanks to the support by these awesome [backers](backers.md). If you find it useful, please, consider [sponsoring](https://github.com/sponsors/drhelius).
+This is an open source project with its ongoing development made possible thanks to the support by these awesome [backers](backers.md). If you find it useful, please consider [sponsoring](https://github.com/sponsors/drhelius).
 
-Don't hesitate to report bugs or ask for new features by [openning an issue](https://github.com/drhelius/Geargrafx/issues). 
+Don't hesitate to report bugs or ask for new features by [opening an issue](https://github.com/drhelius/Geargrafx/issues).
 
 <img src="http://www.geardome.com/files/geargrafx/geargrafx_debug_02.png">
 
@@ -32,6 +32,7 @@ Don't hesitate to report bugs or ask for new features by [openning an issue](htt
   - [Geargrafx-1.0.0-ubuntu-22.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.0.0/Geargrafx-1.0.0-ubuntu-22.04.zip)
   - [Geargrafx-1.0.0-ubuntu-20.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.0.0/Geargrafx-1.0.0-ubuntu-20.04.zip) 
   - NOTE: You may need to install `libsdl2` and `libglew`
+- **RetroArch**: [Libretro core documentation](https://docs.libretro.com/library/geargrafx/).
 
 ## Features
 
@@ -39,19 +40,26 @@ Don't hesitate to report bugs or ask for new features by [openning an issue](htt
 - Compressed rom support (ZIP).
 - Supported platforms (standalone): Windows, Linux, BSD and macOS.
 - Supported platforms (libretro): Windows, Linux, macOS, Raspberry Pi, Android, iOS, tvOS, PlayStation Vita, PlayStation 3, Nintendo 3DS, Nintendo GameCube, Nintendo Wii, Nintendo WiiU, Nintendo Switch, Emscripten, Classic Mini systems (NES, SNES, C64, ...), OpenDingux, RetroFW and QNX.
-- Full debugger with just-in-time disassembler, cpu breakpoints, memory access breakpoints, code navigation (goto address, JP JR and CALL double clicking), debug symbols, automatic labels, memory editor, PSG inspector and video viewer including registries, tiles, sprites and backgrounds.
+- Full debugger with just-in-time disassembler, CPU breakpoints, memory access breakpoints, code navigation (goto address, JP JR and CALL double clicking), debug symbols, automatic labels, memory editor, PSG inspector and video viewer including registries, tiles, sprites and backgrounds.
 - Windows and Linux *Portable Mode*.
-- Rom loading from the command line by adding the rom path as an argument.
+- ROM loading from the command line by adding the ROM path as an argument.
 - Support for modern game controllers through [gamecontrollerdb.txt](https://github.com/mdqinc/SDL_GameControllerDB) file located in the same directory as the application binary.
 
 ## Tips
 
-- *Mouse Cursor*: Automatically hides when hovering main output window or when Main Menu is disabled. 
-- *Portable Mode*: Create an empty file named `portable.ini` in the same directory as the application binary to enable portable mode.
-- *Docking windows*: In debug mode you can dock windows together by pressing SHIFT and drag'n drop a window into another.
-- *Debug multi-viewport*: In Windows or macOS you can enable "multi-viewport" in debug menu. You must restart the emulator for the change to take effect. Once enabled you can drag debugger windows outside the main window. 
-- *Debug Symbols*: The emulator always tries to load a symbol file at the same time a rom is being loaded. For example, for ```path_to_rom_file.rom``` it tries to load ```path_to_rom_file.sym```. It is also possible to load a symbol file using the GUI or using the CLI. It supports PCEAS, wla-dx and vasm file formats.
-- *Command Line Usage*: ```geargrafx [rom_file] [symbol_file]```
+### Basic Usage
+- **Mouse Cursor**: Automatically hides when hovering over the main output window or when Main Menu is disabled.
+- **Portable Mode**: Create an empty file named `portable.ini` in the same directory as the application binary to enable portable mode.
+
+### Debugging Features
+- **Docking Windows**: In debug mode, you can dock windows together by pressing SHIFT and dragging a window onto another.
+- **Multi-viewport**: In Windows or macOS, you can enable "multi-viewport" in the debug menu. You must restart the emulator for the change to take effect. Once enabled, you can drag debugger windows outside the main window.
+- **Debug Symbols**: The emulator automatically tries to load a symbol file when loading a ROM. For example, for ```path_to_rom_file.rom``` it tries to load ```path_to_rom_file.sym```. You can also load a symbol file using the GUI or the CLI. It supports PCEAS, wla-dx and vasm file formats.
+
+### Command Line Usage
+```
+geargrafx [rom_file] [symbol_file]
+```
 
 ## Build Instructions
 
@@ -85,6 +93,14 @@ make
 
 ``` shell
 sudo dnf install @development-tools gcc-c++ SDL2-devel glew-devel gtk3-devel
+cd platforms/linux
+make
+```
+
+- Arch Linux:
+
+``` shell
+sudo pacman -S base-devel sdl2 glew gtk3
 cd platforms/linux
 make
 ```
@@ -129,7 +145,7 @@ make
 
 Thank you to all the people who have already contributed to Geargrafx!
 
-[![Contributors](https://contrib.rocks/image?repo=drhelius/geargrafx)]("https://github.com/drhelius/geargrafx/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=drhelius/geargrafx)](https://github.com/drhelius/geargrafx/graphs/contributors)
 
 ## License
 
