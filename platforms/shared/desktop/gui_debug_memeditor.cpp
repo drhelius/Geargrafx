@@ -984,6 +984,11 @@ int MemEditor::GetWordBytes()
     return m_mem_word;
 }
 
+char* MemEditor::GetTitle()
+{
+    return m_title;
+}
+
 void MemEditor::WatchWindow()
 {
     ImVec4 addr_color = cyan;

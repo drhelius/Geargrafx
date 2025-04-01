@@ -77,6 +77,7 @@ public:
     void SearchCapture();
     void StepFrame();
     int GetWordBytes();
+    char* GetTitle();
 
 private:
     bool IsColumnSeparator(int current_column, int column_count);
