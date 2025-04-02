@@ -87,7 +87,7 @@ void MemEditor::Reset(const char* title, uint8_t* mem_data, int mem_size, int ba
         m_mem_word = 2;
 
     m_hex_addr_digits = 1;
-    int size = m_mem_size - 1;
+    int size = m_mem_base_addr + m_mem_size - 1;
 
     while (size >>= 4)
     {
@@ -833,10 +833,10 @@ void MemEditor::BookMarkPopup()
     {
         static char address[9] = "";
         static char name[32] = "";
-        int bookmark_address = m_selection_start + m_mem_base_addr;
+        int initial_address = m_selection_start + m_mem_base_addr;
 
-        if (bookmark_address >= 0)
-            snprintf(address, 9, m_hex_addr_format, bookmark_address);
+        if (address[0] == 0 && initial_address >= 0)
+            snprintf(address, 9, m_hex_addr_format, initial_address);
 
         ImGui::Text("Name:");
         ImGui::PushItemWidth(200);
@@ -846,7 +846,7 @@ void MemEditor::BookMarkPopup()
         ImGui::Text("Address:");
 
         char buf[32];
-        snprintf(buf, 32, m_hex_addr_format, 0);
+        snprintf(buf, 32, m_hex_addr_format, m_mem_base_addr);
         ImVec2 character_size = ImGui::CalcTextSize("0");
 
         ImGui::PushItemWidth(character_size.x * (strlen(buf) + 1));
@@ -858,7 +858,7 @@ void MemEditor::BookMarkPopup()
         {
             try
             {
-                bookmark_address = (int)std::stoul(address, 0, 16);
+                int bookmark_address = (int)std::stoul(address, 0, 16);
 
                 if (strlen(name) == 0)
                 {
@@ -883,8 +883,12 @@ void MemEditor::BookMarkPopup()
         }
 
         ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(90, 0))) { ImGui::CloseCurrentPopup(); }
-
+        if (ImGui::Button("Cancel", ImVec2(90, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+            address[0] = 0;
+            name[0] = 0;
+        }
         ImGui::EndPopup();
     }
 
@@ -910,15 +914,15 @@ void MemEditor::WatchPopup()
     {
         static char address[9] = "";
         static char notes[128] = "";
-        int watch_address = m_selection_start + m_mem_base_addr;
+        int initial_address = m_selection_start + m_mem_base_addr;
 
-        if (watch_address >= 0)
-            snprintf(address, 9, m_hex_addr_format, watch_address);
+        if (address[0] == 0 && initial_address >= 0)
+            snprintf(address, 9, m_hex_addr_format, initial_address);
 
         ImGui::Text("Address:");
 
         char buf[32];
-        snprintf(buf, 32, m_hex_addr_format, 0);
+        snprintf(buf, 32, m_hex_addr_format, m_mem_base_addr);
         ImVec2 character_size = ImGui::CalcTextSize("0");
 
         ImGui::PushItemWidth(character_size.x * (strlen(buf) + 1));
@@ -936,7 +940,7 @@ void MemEditor::WatchPopup()
         {
             try
             {
-                watch_address = (int)std::stoul(address, 0, 16);
+                int watch_address = (int)std::stoul(address, 0, 16);
 
                 if (watch_address >= m_mem_base_addr && watch_address < (m_mem_base_addr + m_mem_size))
                 {
@@ -959,8 +963,11 @@ void MemEditor::WatchPopup()
 
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(90, 0)))
+        {
             ImGui::CloseCurrentPopup();
-
+            address[0] = 0;
+            notes[0] = 0;
+        }
         ImGui::EndPopup();
     }
 

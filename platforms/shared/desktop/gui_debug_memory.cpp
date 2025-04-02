@@ -277,19 +277,24 @@ static void memory_editor_menu(void)
         ImGui::EndMenu();
     }
 
+    char label[64];
+
     if (ImGui::BeginMenu("Watches"))
     {
-        if (ImGui::MenuItem("Open Watch Window"))
+        snprintf(label, 64, "Open %s Watch Window", mem_edit[current_mem_edit].GetTitle());
+        if (ImGui::MenuItem(label))
         {
             mem_edit[current_mem_edit].OpenWatchWindow();
         }
 
-        if (ImGui::MenuItem("Add Watch"))
+        snprintf(label, 64, "Add %s Watch", mem_edit[current_mem_edit].GetTitle());
+        if (ImGui::MenuItem(label))
         {
             mem_edit[current_mem_edit].AddWatch();
         }
 
-        if (ImGui::MenuItem("Clear All"))
+        snprintf(label, 64, "Clear All %s Watches", mem_edit[current_mem_edit].GetTitle());
+        if (ImGui::MenuItem(label))
         {
             mem_edit[current_mem_edit].RemoveWatches();
         }
@@ -299,7 +304,8 @@ static void memory_editor_menu(void)
 
     if (ImGui::BeginMenu("Search"))
     {
-        if (ImGui::MenuItem("Open Search Window"))
+        snprintf(label, 64, "Open %s Search Window", mem_edit[current_mem_edit].GetTitle());
+        if (ImGui::MenuItem(label))
         {
             mem_edit[current_mem_edit].OpenSearchWindow();
         }
