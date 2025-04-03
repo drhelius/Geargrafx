@@ -132,7 +132,7 @@ void config_read(void)
     config_debug.dis_replace_labels = read_bool("Debug", "DisReplaceLabels", true);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
-    config_debug.reset_ram = read_int("Debug", "InitRam", 0);
+    config_debug.reset_ram = read_int("Debug", "InitRam", 1);
     config_debug.reset_registers = read_int("Debug", "InitRegisters", 0);
     config_debug.reset_color_table = read_int("Debug", "InitColorTable", 0);
     config_debug.reset_mpr = read_int("Debug", "InitMPR", 0);

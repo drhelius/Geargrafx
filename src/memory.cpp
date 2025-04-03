@@ -41,7 +41,7 @@ Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* 
     InitPointer(m_current_mapper);
     InitPointer(m_sf2_mapper);
     m_mpr_reset_value = -1;
-    m_wram_reset_value = -1;
+    m_wram_reset_value = 0;
 }
 
 Memory::~Memory()
