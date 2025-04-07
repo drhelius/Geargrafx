@@ -42,7 +42,7 @@ struct DisassemblerLine
 {
     u16 address;
     bool is_breakpoint;
-    Memory::GG_Disassembler_Record* record;
+    GG_Disassembler_Record* record;
     char name_enhanced[64];
     int name_real_length;
     DebugSymbol* symbol;
@@ -82,7 +82,7 @@ static void prepare_drawable_lines(void);
 static void draw_disassembly(void);
 static void draw_context_menu(DisassemblerLine* line);
 static void add_symbol(const char* line);
-static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address);
+static void add_auto_symbol(GG_Disassembler_Record* record, u16 address);
 static void add_breakpoint(int type);
 static void request_goto_address(u16 addr);
 static bool is_return_instruction(u8 opcode);
@@ -496,7 +496,7 @@ static void draw_breakpoints(void)
                 ImGui::SameLine(0, 2); ImGui::TextColored(brk->enabled && brk->execute ? orange : gray, "X");
             }
 
-            Memory::GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(brk->address1);
+            GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(brk->address1);
 
             if (brk->execute && IsValidPointer(record))
             {
@@ -538,7 +538,7 @@ static void prepare_drawable_lines(void)
 
     for (int i = 0; i < 0x10000; i++)
     {
-        Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
+        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
 
         if (IsValidPointer(record) && (record->name[0] != 0))
             add_auto_symbol(record, i);
@@ -546,7 +546,7 @@ static void prepare_drawable_lines(void)
 
     for (int i = 0; i < 0x10000; i++)
     {
-        Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
+        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
 
         if (IsValidPointer(record) && (record->name[0] != 0))
         {
@@ -891,7 +891,7 @@ static const char* k_irq_symbol_format[6] = {
     "IRQ2_BRK_%02X_%04X"
 };
 
-static void add_auto_symbol(Memory::GG_Disassembler_Record* record, u16 address)
+static void add_auto_symbol(GG_Disassembler_Record* record, u16 address)
 {
     DebugSymbol s;
     s.bank = record->bank;
@@ -1359,7 +1359,7 @@ static void add_bookmark_popup(void)
                 if (strlen(name_bookmark) == 0)
                 {
                     Memory* memory = emu_get_core()->GetMemory();
-                    Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(bookmark_address);
+                    GG_Disassembler_Record* record = memory->GetDisassemblerRecord(bookmark_address);
 
                     if (IsValidPointer(record) && (record->name[0] != 0))
                     {
@@ -1501,7 +1501,7 @@ void gui_debug_window_call_stack(void)
             HuC6280::GG_CallStackEntry entry = temp_stack.top();
             temp_stack.pop();
 
-            Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(entry.dest);
+            GG_Disassembler_Record* record = memory->GetDisassemblerRecord(entry.dest);
 
             if (IsValidPointer(record) && (record->name[0] != 0))
             {
@@ -1552,11 +1552,11 @@ void gui_debug_window_call_stack(void)
 static void save_full_disassembler(FILE* file)
 {
     Memory* memory = emu_get_core()->GetMemory();
-    Memory::GG_Disassembler_Record** records = memory->GetAllDisassemblerRecords();
+    GG_Disassembler_Record** records = memory->GetAllDisassemblerRecords();
 
     for (int i = 0; i < 0x200000; i++)
     {
-        Memory::GG_Disassembler_Record* record = records[i];
+        GG_Disassembler_Record* record = records[i];
 
         if (IsValidPointer(record) && (record->name[0] != 0))
         {

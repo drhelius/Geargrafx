@@ -93,4 +93,20 @@ struct GG_SaveState_Screenshot
     u8* data;
 };
 
+struct GG_Disassembler_Record
+{
+    u32 address;
+    u8 bank;
+    char name[64];
+    char bytes[25];
+    char segment[5];
+    u8 opcodes[7];
+    int size;
+    bool jump;
+    u16 jump_address;
+    u8 jump_bank;
+    bool subroutine;
+    int irq;
+};
+
 #endif /* TYPES_H */

@@ -367,7 +367,7 @@ void emu_debug_step_over(void)
     HuC6280::HuC6280_State* proc_state = processor->GetState();
     Memory* memory = emu_get_core()->GetMemory();
     u16 pc = proc_state->PC->GetValue();
-    Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(proc_state->PC->GetValue());
+    GG_Disassembler_Record* record = memory->GetDisassemblerRecord(proc_state->PC->GetValue());
 
     if (IsValidPointer(record) && record->subroutine)
     {

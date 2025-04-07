@@ -36,23 +36,6 @@ class SF2Mapper;
 class Memory
 {
 public:
-    struct GG_Disassembler_Record
-    {
-        u32 address;
-        u8 bank;
-        char name[64];
-        char bytes[25];
-        char segment[5];
-        u8 opcodes[7];
-        int size;
-        bool jump;
-        u16 jump_address;
-        u8 jump_bank;
-        bool subroutine;
-        int irq;
-    };
-
-public:
     Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio);
     ~Memory();
     void Init();

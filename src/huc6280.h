@@ -213,6 +213,8 @@ private:
     u16 AbsoluteIndirectAddressing();
     u16 AbsoluteIndexedIndirectAddressing();
 
+    void PopulateDisassemblerRecord(GG_Disassembler_Record* record, u8 opcode, u16 address);
+
     void UnofficialOPCode();
     void OPCodes_ADC(u8 value);
     void OPCodes_AND(u8 value);

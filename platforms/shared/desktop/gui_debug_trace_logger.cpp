@@ -108,7 +108,7 @@ void gui_debug_trace_logger_update(GeargrafxCore::GG_Debug_State* state)
         }
 
         Memory* memory = emu_get_core()->GetMemory();
-        Memory::GG_Disassembler_Record* record = memory->GetDisassemblerRecord(state->PC);
+        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(state->PC);
 
         if (!IsValidPointer(record))
             return;
