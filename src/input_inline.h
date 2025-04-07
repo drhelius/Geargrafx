@@ -29,8 +29,8 @@ inline u8 Input::ReadK()
 
 inline void Input::WriteO(u8 value)
 {
-    m_sel = IsSetBit(value, 0);
-    m_clr = IsSetBit(value, 1);
+    m_sel = IS_SET_BIT(value, 0);
+    m_clr = IS_SET_BIT(value, 1);
     UpdateRegister();
 }
 
@@ -54,10 +54,10 @@ inline void Input::UpdateRegister()
     m_register = 0x30;
 
     if (m_pce_jap)
-        m_register = SetBit(m_register, 6);
+        m_register = SET_BIT(m_register, 6);
 
     if (!m_cdrom)
-        m_register = SetBit(m_register, 7);
+        m_register = SET_BIT(m_register, 7);
 
     //if (!m_clr)
     {

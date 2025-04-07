@@ -93,19 +93,19 @@ inline u32 HuC6280::TickIRQ()
     u16 vector = 0;
 
     // TIQ
-    if (IsSetBit(m_irq_pending, 2) && IsSetBit(m_interrupt_request_register, 2))
+    if (IS_SET_BIT(m_irq_pending, 2) && IS_SET_BIT(m_interrupt_request_register, 2))
     {
         vector = 0xFFFA;
         m_debug_next_irq = 3;
     }
     // IRQ1
-    else if (IsSetBit(m_irq_pending, 1))
+    else if (IS_SET_BIT(m_irq_pending, 1))
     {
         vector = 0xFFF8;
         m_debug_next_irq = 4;
     }
     // IRQ2
-    else if (IsSetBit(m_irq_pending, 0))
+    else if (IS_SET_BIT(m_irq_pending, 0))
     {
         vector = 0xFFF6;
         m_debug_next_irq = 5;
@@ -136,17 +136,17 @@ inline u32 HuC6280::TickIRQ()
 inline void HuC6280::AssertIRQ1(bool asserted)
 {
     if (asserted)
-        m_interrupt_request_register = SetBit(m_interrupt_request_register, 1);
+        m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 1);
     else
-        m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 1);
+        m_interrupt_request_register = UNSET_BIT(m_interrupt_request_register, 1);
 }
 
 inline void HuC6280::AssertIRQ2(bool asserted)
 {
     if (asserted)
-        m_interrupt_request_register = SetBit(m_interrupt_request_register, 0);
+        m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 0);
     else
-        m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 0);
+        m_interrupt_request_register = UNSET_BIT(m_interrupt_request_register, 0);
 }
 
 inline void HuC6280::InjectCycles(unsigned int cycles)
@@ -187,7 +187,7 @@ inline void HuC6280::WriteInterruptRegister(u16 address, u8 value)
     else
     {
         // Acknowledge TIQ
-        m_interrupt_request_register = UnsetBit(m_interrupt_request_register, 2);
+        m_interrupt_request_register = UNSET_BIT(m_interrupt_request_register, 2);
     }
 }
 
@@ -205,7 +205,7 @@ inline void HuC6280::ClockTimer()
         if (m_timer_counter == 0)
         {
             m_timer_counter = m_timer_reload;
-            m_interrupt_request_register = SetBit(m_interrupt_request_register, 2);
+            m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 2);
         }
         else
             m_timer_counter--;

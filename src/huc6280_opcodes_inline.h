@@ -325,7 +325,7 @@ inline void HuC6280::OPCodes_ORA(u8 value)
 
 inline void HuC6280::OPCodes_RMB(u8 bit, u16 address)
 {
-    u8 result = UnsetBit(MemoryRead(address), bit);
+    u8 result = UNSET_BIT(MemoryRead(address), bit);
     MemoryWrite(address, result);
 }
 
@@ -421,7 +421,7 @@ inline void HuC6280::OPCodes_SBC(u8 value)
 
 inline void HuC6280::OPCodes_SMB(u8 bit, u16 address)
 {
-    u8 result = SetBit(MemoryRead(address), bit);
+    u8 result = SET_BIT(MemoryRead(address), bit);
     MemoryWrite(address, result);
 }
 

@@ -157,14 +157,14 @@ void HuC6280PSG::Sync()
             if ((i >=4) && (ch->noise_control & 0x80))
             {
                 u32 freq = (ch->noise_control & 0x1F) ^ 0x1F;
-                data = IsSetBit(ch->noise_seed, 0) ? 0x1F : 0;
+                data = IS_SET_BIT(ch->noise_seed, 0) ? 0x1F : 0;
                 ch->noise_counter--;
 
                 if (ch->noise_counter <= 0)
                 {
                     ch->noise_counter = freq << 6;
                     u32 seed = ch->noise_seed;
-                    ch->noise_seed = (seed >> 1) | ((IsSetBit(seed, 0) ^ IsSetBit(seed, 1) ^ IsSetBit(seed, 11) ^ IsSetBit(seed, 12) ^ IsSetBit(seed, 17)) << 17);
+                    ch->noise_seed = (seed >> 1) | ((IS_SET_BIT(seed, 0) ^ IS_SET_BIT(seed, 1) ^ IS_SET_BIT(seed, 11) ^ IS_SET_BIT(seed, 12) ^ IS_SET_BIT(seed, 17)) << 17);
                 }
             }
             // DDA

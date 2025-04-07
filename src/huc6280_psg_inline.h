@@ -61,13 +61,13 @@ inline void HuC6280PSG::Write(u16 address, u8 value)
         if (m_channel_select < 6)
         {
             // Channel enable/disable
-            if (IsSetBit(m_ch->control, 7) != IsSetBit(value, 7))
+            if (IS_SET_BIT(m_ch->control, 7) != IS_SET_BIT(value, 7))
             {
                 m_ch->counter = m_ch->frequency;
             }
 
             // DDA on, channel off
-            if (IsSetBit(m_ch->control, 6) && !IsSetBit(value, 7))
+            if (IS_SET_BIT(m_ch->control, 6) && !IS_SET_BIT(value, 7))
             {
                 m_ch->wave_index = 0;
             }
@@ -89,12 +89,12 @@ inline void HuC6280PSG::Write(u16 address, u8 value)
             m_ch->wave = value & 0x1F;
 
             // DDA on
-            if (IsSetBit(m_ch->control, 6))
+            if (IS_SET_BIT(m_ch->control, 6))
             {
                 m_ch->dda = value & 0x1F;
             }
             // DDA off, Channel off
-            else if(!IsSetBit(m_ch->control, 7))
+            else if(!IS_SET_BIT(m_ch->control, 7))
             {
                 m_ch->wave_data[m_ch->wave_index] = value & 0x1F;
                 m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);

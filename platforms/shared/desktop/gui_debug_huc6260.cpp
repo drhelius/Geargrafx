@@ -68,10 +68,10 @@ void gui_debug_window_huc6260_info(void)
     ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6260_state->CTA, BYTE_TO_BINARY(*huc6260_state->CTA >> 8), BYTE_TO_BINARY(*huc6260_state->CTA & 0xFF));
 
     ImGui::TextColored(magenta, "BLUR     "); ImGui::SameLine();
-    ImGui::TextColored(IsSetBit(*huc6260_state->CR, 2) ? green : gray, "%s", IsSetBit(*huc6260_state->CR, 2) ? "ON" : "OFF");
+    ImGui::TextColored(IS_SET_BIT(*huc6260_state->CR, 2) ? green : gray, "%s", IS_SET_BIT(*huc6260_state->CR, 2) ? "ON" : "OFF");
 
     ImGui::TextColored(magenta, "B&W      "); ImGui::SameLine();
-    ImGui::TextColored(IsSetBit(*huc6260_state->CR, 7) ? green : gray, "%s", IsSetBit(*huc6260_state->CR, 7) ? "ON" : "OFF");
+    ImGui::TextColored(IS_SET_BIT(*huc6260_state->CR, 7) ? green : gray, "%s", IS_SET_BIT(*huc6260_state->CR, 7) ? "ON" : "OFF");
 
     ImGui::PopFont();
 
