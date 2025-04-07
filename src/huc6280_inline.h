@@ -20,6 +20,7 @@
 #ifndef HUC6280_INLINE_H
 #define HUC6280_INLINE_H
 
+#include <string.h>
 #include "huc6280.h"
 #include "huc6280_timing.h"
 #include "huc6280_names.h"
