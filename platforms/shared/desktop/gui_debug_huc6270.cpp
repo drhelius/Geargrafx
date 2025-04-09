@@ -44,38 +44,38 @@ void gui_debug_window_huc6270_info(void)
     HuC6270* huc6270 = core->GetHuC6270();
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
 
-    ImGui::TextColored(magenta, "SPEED   "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SPEED   "); ImGui::SameLine();
     const char* speed[] = { "5.36 MHz", "7.16 MHz", "10.8 MHz" };
     ImGui::TextColored(orange, "%s", speed[huc6260->GetSpeed()]);
 
-    ImGui::TextColored(magenta, "X,Y     "); ImGui::SameLine();
+    ImGui::TextColored(violet, "X,Y     "); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6270_state->HPOS, *huc6270_state->VPOS, *huc6270_state->HPOS, *huc6270_state->VPOS);
 
     const char* h_states[] = { "HDS1", "HDS2", "HDS3", "HDW1", "HDW1", "HDE ", "HSW " };
-    ImGui::TextColored(magenta, "H STATE "); ImGui::SameLine();
+    ImGui::TextColored(violet, "H STATE "); ImGui::SameLine();
     ImGui::TextColored(blue, "%s", h_states[*huc6270_state->H_STATE]);
 
     const char* v_states[] = { "VDS", "VDW", "VCR", "VSW" };
-    ImGui::TextColored(magenta, "V STATE "); ImGui::SameLine();
+    ImGui::TextColored(violet, "V STATE "); ImGui::SameLine();
     ImGui::TextColored(blue, "%s", v_states[*huc6270_state->V_STATE]);
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "CONTROL REGISTRY"); ImGui::Separator();
 
-    ImGui::TextColored(magenta, "BACKGRND"); ImGui::SameLine();
+    ImGui::TextColored(violet, "BACKGRND"); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & 0x0080 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_CR] & 0x0080 ? "ON " : "OFF"); ImGui::SameLine();
 
-    ImGui::TextColored(magenta, " SPRITES"); ImGui::SameLine();
+    ImGui::TextColored(violet, " SPRITES"); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & 0x0040 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_CR] & 0x0040 ? "ON" : "OFF");
 
-    ImGui::TextColored(magenta, "DISP OUT"); ImGui::SameLine();
+    ImGui::TextColored(violet, "DISP OUT"); ImGui::SameLine();
     const char* disp_output[] = { "DISP", "~BURST", "~INTHSYNC", "INVALID" };
     u16 disp_out_value = (huc6270_state->R[HUC6270_REG_CR] >> 8) & 0x03;
     ImGui::TextColored(disp_out_value == 3 ? red : white, "%s", disp_output[disp_out_value]);
 
-    ImGui::TextColored(magenta, "R/W INC "); ImGui::SameLine();
+    ImGui::TextColored(violet, "R/W INC "); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", k_huc6270_read_write_increment[(huc6270_state->R[HUC6270_REG_CR] >> 11) & 0x03]);
 
-    ImGui::TextColored(magenta, "INT REQ "); ImGui::SameLine();
+    ImGui::TextColored(violet, "INT REQ "); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_COLLISION ? yellow : gray, "COLL"); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW ? yellow : gray, "OVER"); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE ? yellow : gray, "SCAN"); ImGui::SameLine();
@@ -83,79 +83,79 @@ void gui_debug_window_huc6270_info(void)
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "STATUS REGISTRY"); ImGui::Separator(); 
 
-    ImGui::TextColored(magenta, "INT ACT "); ImGui::SameLine();
+    ImGui::TextColored(violet, "INT ACT "); ImGui::SameLine();
     ImGui::TextColored(*huc6270_state->SR & HUC6270_STATUS_COLLISION ? green : gray, "COLL"); ImGui::SameLine();
     ImGui::TextColored(*huc6270_state->SR & HUC6270_STATUS_OVERFLOW ? green : gray, "OVER"); ImGui::SameLine();
     ImGui::TextColored(*huc6270_state->SR & HUC6270_STATUS_SCANLINE ? green : gray, "SCAN"); ImGui::SameLine();
     ImGui::TextColored(*huc6270_state->SR & HUC6270_STATUS_VBLANK ? green : gray, "VERT");
 
-    ImGui::TextColored(magenta, "SAT TX  "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SAT TX  "); ImGui::SameLine();
     ImGui::TextColored(*huc6270_state->SR & HUC6270_STATUS_SAT_END ? green : gray, "%s", *huc6270_state->SR & HUC6270_STATUS_SAT_END ? "YES" : "NO ");  ImGui::SameLine();
 
-    ImGui::TextColored(magenta, " VRAM TX "); ImGui::SameLine();
+    ImGui::TextColored(violet, " VRAM TX "); ImGui::SameLine();
     ImGui::TextColored(*huc6270_state->SR & HUC6270_STATUS_VRAM_END ? green : gray, "%s", *huc6270_state->SR & HUC6270_STATUS_VRAM_END ? "YES" : "NO");
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "DISPLAY GEOMETRY"); ImGui::Separator(); 
 
-    ImGui::TextColored(magenta, "SCREEN      "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SCREEN      "); ImGui::SameLine();
     ImGui::TextColored(white, "%dx%d", k_huc6270_screen_size_x[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07], k_huc6270_screen_size_y[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07]);
 
-    ImGui::TextColored(magenta, "VRAM WIDTH  "); ImGui::SameLine();
+    ImGui::TextColored(violet, "VRAM WIDTH  "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", huc6270_state->R[HUC6270_REG_MWR] & 0x03);
 
-    ImGui::TextColored(magenta, "SPRITE WIDTH"); ImGui::SameLine();
+    ImGui::TextColored(violet, "SPRITE WIDTH"); ImGui::SameLine();
     ImGui::TextColored(white, "%d", (huc6270_state->R[HUC6270_REG_MWR] >> 2) & 0x03);
 
-    ImGui::TextColored(magenta, "CG MODE     "); ImGui::SameLine();
+    ImGui::TextColored(violet, "CG MODE     "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", (huc6270_state->R[HUC6270_REG_MWR] >> 7) & 0x01);
 
-    ImGui::TextColored(magenta, "HDS"); ImGui::SameLine();
+    ImGui::TextColored(violet, "HDS"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", (huc6270_state->R[HUC6270_REG_HSR] >> 8) & 0x7F); ImGui::SameLine();
 
-    ImGui::TextColored(magenta, "HDW"); ImGui::SameLine();
+    ImGui::TextColored(violet, "HDW"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_HDR] & 0x7F); ImGui::SameLine();
 
-    ImGui::TextColored(magenta, "HDE"); ImGui::SameLine();
+    ImGui::TextColored(violet, "HDE"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", (huc6270_state->R[HUC6270_REG_HDR] >> 8) & 0x7F); ImGui::SameLine();
 
-    ImGui::TextColored(magenta, "HSW"); ImGui::SameLine();
+    ImGui::TextColored(violet, "HSW"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_HSR] & 0x1F);
 
-    ImGui::TextColored(magenta, "VSW"); ImGui::SameLine();
+    ImGui::TextColored(violet, "VSW"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_VSR] & 0x1F); ImGui::SameLine();
 
-    ImGui::TextColored(magenta, "VDS"); ImGui::SameLine();
+    ImGui::TextColored(violet, "VDS"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", (huc6270_state->R[HUC6270_REG_VSR] >> 8) & 0xFF); ImGui::SameLine();
 
-    ImGui::TextColored(magenta, "VDW"); ImGui::SameLine();
+    ImGui::TextColored(violet, "VDW"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_VDR] & 0x1FF); ImGui::SameLine();
 
-    ImGui::TextColored(magenta, "VCR"); ImGui::SameLine();
+    ImGui::TextColored(violet, "VCR"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_VCR] & 0xFF);
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "SCROLLING"); ImGui::Separator(); 
 
-    ImGui::TextColored(magenta, "X,Y     "); ImGui::SameLine();
+    ImGui::TextColored(violet, "X,Y     "); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%04d,%04d)", huc6270_state->R[HUC6270_REG_BXR], huc6270_state->R[HUC6270_REG_BYR], huc6270_state->R[HUC6270_REG_BXR], huc6270_state->R[HUC6270_REG_BYR]);
 
-    ImGui::TextColored(magenta, "LINE DET"); ImGui::SameLine();
+    ImGui::TextColored(violet, "LINE DET"); ImGui::SameLine();
     ImGui::TextColored(white, "%03X (%04d)", huc6270_state->R[HUC6270_REG_RCR], huc6270_state->R[HUC6270_REG_RCR]); 
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "TRANSFER CONTROL"); ImGui::Separator(); 
 
-    ImGui::TextColored(magenta, "SAT IRQ "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SAT IRQ "); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_DCR] & 0x0001 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_DCR] & 0x0001 ? "ON" : "OFF");
 
-    ImGui::TextColored(magenta, "VRAM IRQ"); ImGui::SameLine();
+    ImGui::TextColored(violet, "VRAM IRQ"); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_DCR] & 0x0002 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_DCR] & 0x0002 ? "ON" : "OFF");
 
-    ImGui::TextColored(magenta, "SRC     "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SRC     "); ImGui::SameLine();
     ImGui::TextColored(white, "%s", huc6270_state->R[HUC6270_REG_DCR] & 0x0004 ? "DEC" : "INC");
 
-    ImGui::TextColored(magenta, "DEST    "); ImGui::SameLine();
+    ImGui::TextColored(violet, "DEST    "); ImGui::SameLine();
     ImGui::TextColored(white, "%s", huc6270_state->R[HUC6270_REG_DCR] & 0x0008 ? "DEC" : "INC");
 
-    ImGui::TextColored(magenta, "SAT     "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SAT     "); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_DCR] & 0x0010 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_DCR] & 0x0010 ? "AUTO" : "OFF");
 
     ImGui::PopFont();
@@ -254,23 +254,23 @@ void gui_debug_window_huc6270_background(void)
         ImGui::TableNextColumn();
         ImGui::PushFont(gui_default_font);
 
-        ImGui::TextColored(magenta, "ENABLED  ");
+        ImGui::TextColored(violet, "ENABLED  ");
 
         ImGui::SameLine();
         ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & 0x0080 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_CR] & 0x0080 ? "YES" : "NO");
 
         ImGui::SameLine();
-        ImGui::TextColored(magenta, "        SCREEN");
+        ImGui::TextColored(violet, "        SCREEN");
 
         ImGui::SameLine();
         ImGui::TextColored(white, "%dx%d", k_huc6270_screen_size_x[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07], k_huc6270_screen_size_y[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07]);
 
-        ImGui::TextColored(magenta, "SCROLL X "); 
+        ImGui::TextColored(violet, "SCROLL X "); 
 
         ImGui::SameLine();
         ImGui::TextColored(white, "%02X (%03d)", huc6270_state->R[HUC6270_REG_BXR], huc6270_state->R[HUC6270_REG_BXR]);
 
-        ImGui::TextColored(magenta, "SCROLL Y "); 
+        ImGui::TextColored(violet, "SCROLL Y "); 
 
         ImGui::SameLine();
         ImGui::TextColored(white, "%02X (%03d)", huc6270_state->R[HUC6270_REG_BYR], huc6270_state->R[HUC6270_REG_BYR]);
@@ -336,15 +336,15 @@ void gui_debug_window_huc6270_background(void)
 
                 ImGui::PushFont(gui_default_font);
 
-                ImGui::TextColored(orange, "TILE INDEX   ");
+                ImGui::TextColored(magenta, "TILE INDEX   ");
                 ImGui::SameLine();
                 ImGui::TextColored(white, "%03X", tile_index);
 
-                ImGui::TextColored(orange, "TILE ADDRESS ");
+                ImGui::TextColored(magenta, "TILE ADDRESS ");
                 ImGui::SameLine();
                 ImGui::TextColored(white, "%03X", tile_index * 16);
 
-                ImGui::TextColored(orange, "COLOR TABLE  ");
+                ImGui::TextColored(magenta, "COLOR TABLE  ");
                 ImGui::SameLine();
                 ImGui::TextColored(white, "%01X", color_table);
 
@@ -468,34 +468,34 @@ void gui_debug_window_huc6270_sprites(void)
 
             ImGui::TextColored(cyan, "DETAILS:");
             ImGui::Separator();
-            ImGui::TextColored(magenta, " SAT ENTRY:"); ImGui::SameLine();
+            ImGui::TextColored(violet, " SAT ENTRY:"); ImGui::SameLine();
             ImGui::Text("%d", s);
 
-            ImGui::TextColored(magenta, " SPRITE X: "); ImGui::SameLine();
+            ImGui::TextColored(violet, " SPRITE X: "); ImGui::SameLine();
             ImGui::Text("%03X (%d)", sprite_x, sprite_x);
 
-            ImGui::TextColored(magenta, " SPRITE Y: "); ImGui::SameLine();
+            ImGui::TextColored(violet, " SPRITE Y: "); ImGui::SameLine();
             ImGui::Text("%03X (%d)", sprite_y, sprite_y);
 
-            ImGui::TextColored(magenta, " SIZE:     "); ImGui::SameLine();
+            ImGui::TextColored(violet, " SIZE:     "); ImGui::SameLine();
             ImGui::Text("%dx%d", width, height);
 
-            ImGui::TextColored(magenta, " PATTERN:  "); ImGui::SameLine();
+            ImGui::TextColored(violet, " PATTERN:  "); ImGui::SameLine();
             ImGui::Text("%03X (%d)", pattern, pattern);
 
-            ImGui::TextColored(magenta, " VRAM ADDR:"); ImGui::SameLine();
+            ImGui::TextColored(violet, " VRAM ADDR:"); ImGui::SameLine();
             ImGui::Text("$%04X", pattern << 6);
 
-            ImGui::TextColored(magenta, " PALETTE:  "); ImGui::SameLine();
+            ImGui::TextColored(violet, " PALETTE:  "); ImGui::SameLine();
             ImGui::Text("%01X (%d)", palette, palette);
 
-            ImGui::TextColored(magenta, " H FLIP:   "); ImGui::SameLine();
+            ImGui::TextColored(violet, " H FLIP:   "); ImGui::SameLine();
             ImGui::TextColored(h_flip ? green : gray, "%s", h_flip ? "YES" : "NO ");
 
-            ImGui::TextColored(magenta, " V FLIP:   "); ImGui::SameLine();
+            ImGui::TextColored(violet, " V FLIP:   "); ImGui::SameLine();
             ImGui::TextColored(v_flip ? green : gray, "%s", v_flip ? "YES" : "NO ");
 
-            ImGui::TextColored(magenta, " PRIORITY: "); ImGui::SameLine();
+            ImGui::TextColored(violet, " PRIORITY: "); ImGui::SameLine();
             ImGui::TextColored(priority ? green : gray, "%s", priority ? "YES" : "NO ");
 
             if (ImGui::IsMouseClicked(0))

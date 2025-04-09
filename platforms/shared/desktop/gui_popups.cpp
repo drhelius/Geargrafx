@@ -94,7 +94,7 @@ void gui_popup_modal_about(void)
         ImGui::PushFont(gui_default_font);
         ImGui::TextColored(cyan, "%s\n", GG_TITLE_ASCII);
 
-        ImGui::TextColored(orange, "  By Ignacio Sánchez (DrHelius)");
+        ImGui::TextColored(violet, "  By Ignacio Sánchez (DrHelius)");
         ImGui::Text(" "); ImGui::SameLine();
         ImGui::TextLinkOpenURL("https://github.com/drhelius/Geargrafx");
         ImGui::Text(" "); ImGui::SameLine();

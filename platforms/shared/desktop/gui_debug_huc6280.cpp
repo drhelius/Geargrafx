@@ -52,7 +52,7 @@ void gui_debug_window_huc6280(void)
     {
         ImGui::TableNextColumn();
         ImGui::TextColored(cyan, "      STATUS");
-        ImGui::TextColored(orange, "  N V T B D I Z C");
+        ImGui::TextColored(magenta, "  N V T B D I Z C");
         ImGui::Text("  " BYTE_TO_BINARY_PATTERN_ALL_SPACED, BYTE_TO_BINARY(proc_state->P->GetValue()));
 
         ImGui::TableNextColumn();
@@ -222,7 +222,7 @@ void gui_debug_window_huc6280(void)
         ImGui::TextColored(input->GetClr() ? green : gray, " I/O CLR"); ImGui::SameLine();
 
         ImGui::TableNextColumn();
-        ImGui::TextColored(magenta, " SPEED:"); ImGui::SameLine();
+        ImGui::TextColored(violet, " SPEED:"); ImGui::SameLine();
         ImGui::TextColored(orange, *proc_state->SPEED ? " 7.16 MHz" : " 1.79 MHz");
 
         ImGui::EndTable();
