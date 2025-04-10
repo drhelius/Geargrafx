@@ -91,7 +91,11 @@ void HuC6280::Reset()
     m_last_instruction_cycles = 0;
     m_irq_pending = 0;
     m_speed = 0;
-    m_transfer = false;
+    m_transfer_state = 0;
+    m_transfer_count = 0;
+    m_transfer_length = 0;
+    m_transfer_source = 0;
+    m_transfer_dest = 0;
     m_timer_cycles = 0;
     m_timer_enabled = false;
     m_timer_counter = 0;
@@ -337,7 +341,11 @@ void HuC6280::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_last_instruction_cycles), sizeof(m_last_instruction_cycles));
     stream.write(reinterpret_cast<const char*> (&m_irq_pending), sizeof(m_irq_pending));
     stream.write(reinterpret_cast<const char*> (&m_speed), sizeof(m_speed));
-    stream.write(reinterpret_cast<const char*> (&m_transfer), sizeof(m_transfer));
+    stream.write(reinterpret_cast<const char*> (&m_transfer_state), sizeof(m_transfer_state));
+    stream.write(reinterpret_cast<const char*> (&m_transfer_count), sizeof(m_transfer_count));
+    stream.write(reinterpret_cast<const char*> (&m_transfer_length), sizeof(m_transfer_length));
+    stream.write(reinterpret_cast<const char*> (&m_transfer_source), sizeof(m_transfer_source));
+    stream.write(reinterpret_cast<const char*> (&m_transfer_dest), sizeof(m_transfer_dest));
     stream.write(reinterpret_cast<const char*> (&m_timer_enabled), sizeof(m_timer_enabled));
     stream.write(reinterpret_cast<const char*> (&m_timer_cycles), sizeof(m_timer_cycles));
     stream.write(reinterpret_cast<const char*> (&m_timer_counter), sizeof(m_timer_counter));
@@ -363,7 +371,11 @@ void HuC6280::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_last_instruction_cycles), sizeof(m_last_instruction_cycles));
     stream.read(reinterpret_cast<char*> (&m_irq_pending), sizeof(m_irq_pending));
     stream.read(reinterpret_cast<char*> (&m_speed), sizeof(m_speed));
-    stream.read(reinterpret_cast<char*> (&m_transfer), sizeof(m_transfer));
+    stream.read(reinterpret_cast<char*> (&m_transfer_state), sizeof(m_transfer_state));
+    stream.read(reinterpret_cast<char*> (&m_transfer_count), sizeof(m_transfer_count));
+    stream.read(reinterpret_cast<char*> (&m_transfer_length), sizeof(m_transfer_length));
+    stream.read(reinterpret_cast<char*> (&m_transfer_source), sizeof(m_transfer_source));
+    stream.read(reinterpret_cast<char*> (&m_transfer_dest), sizeof(m_transfer_dest));
     stream.read(reinterpret_cast<char*> (&m_timer_enabled), sizeof(m_timer_enabled));
     stream.read(reinterpret_cast<char*> (&m_timer_cycles), sizeof(m_timer_cycles));
     stream.read(reinterpret_cast<char*> (&m_timer_counter), sizeof(m_timer_counter));

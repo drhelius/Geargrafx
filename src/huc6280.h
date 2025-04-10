@@ -144,7 +144,11 @@ private:
     u32 m_last_instruction_cycles;
     s32 m_irq_pending;
     s32 m_speed;
-    bool m_transfer;
+    int m_transfer_state;
+    int m_transfer_count;
+    u16 m_transfer_length;
+    u16 m_transfer_source;
+    u16 m_transfer_dest;
     Memory* m_memory;
     HuC6270* m_huc6270;
     HuC6280_State m_processor_state;

@@ -37,7 +37,7 @@ inline bool HuC6280::Clock()
     {
         if (m_clock_cycles <= 0)
         {
-            if (m_irq_pending != 0)
+            if ((m_irq_pending != 0) && (m_transfer_state == 0))
             {
                 m_clock_cycles += TickIRQ();
                 if (m_clock_cycles == 0)
@@ -47,11 +47,8 @@ inline bool HuC6280::Clock()
                 m_clock_cycles += TickOPCode();
         }
 
-        if (m_transfer)
-            CheckIRQs();
-
         m_clock_cycles--;
-        instruction_completed = (m_clock_cycles == 0);
+        instruction_completed = ((m_clock_cycles == 0) && (m_transfer_state == 0));
     }
 
     m_clock = (m_clock + 1) % 12;
@@ -61,7 +58,6 @@ inline bool HuC6280::Clock()
 
 inline u32 HuC6280::TickOPCode()
 {
-    m_transfer = false;
     m_memory_breakpoint_hit = false;
     m_skip_flag_transfer_clear = false;
     m_cycles = 0;

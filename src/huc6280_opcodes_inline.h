@@ -510,125 +510,180 @@ inline void HuC6280::OPCodes_TST(u8 value, u16 address)
 
 inline void HuC6280::OPCodes_TAI()
 {
-    OPCodes_TransferStart();
-
-    u16 source = Fetch16();
-    u16 dest = Fetch16();
-    u16 length = Fetch16();
-    int count = 0;
-
-    do
+    if (m_transfer_state == 0)
     {
-        MemoryWrite(dest, MemoryRead(source, true));
-        source += (count & 1) ? -1 : 1;
-        dest++;
-        count++;
-        length--;
-        m_cycles += 6;
+        OPCodes_TransferStart();
+        return;
     }
-    while (length);
 
-    OPCodes_TransferEnd();
+    if (m_transfer_state == 2)
+    {
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        m_transfer_source += (m_transfer_count & 1) ? -1 : 1;
+        m_transfer_dest++;
+        m_transfer_count++;
+        m_transfer_length--;
+        m_cycles += 6;
+
+        if (m_transfer_length == 0)
+            m_transfer_state = 1;
+
+        m_PC.Decrement();
+        return;
+    }
+
+    if (m_transfer_state == 1)
+    {
+        OPCodes_TransferEnd();
+        return;
+    }
 }
 
 inline void HuC6280::OPCodes_TDD()
 {
-    OPCodes_TransferStart();
-
-    u16 source = Fetch16();
-    u16 dest = Fetch16();
-    u16 length = Fetch16();
-
-    do
+    if (m_transfer_state == 0)
     {
-        MemoryWrite(dest, MemoryRead(source, true));
-        source--;
-        dest--;
-        length--;
-        m_cycles += 6;
+        OPCodes_TransferStart();
+        return;
     }
-    while (length);
 
-    OPCodes_TransferEnd();
+    if (m_transfer_state == 2)
+    {
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        m_transfer_source--;
+        m_transfer_dest--;
+        m_transfer_length--;
+        m_cycles += 6;
+
+        if (m_transfer_length == 0)
+            m_transfer_state = 1;
+
+        m_PC.Decrement();
+        return;
+    }
+
+    if (m_transfer_state == 1)
+    {
+        OPCodes_TransferEnd();
+        return;
+    }
 }
 
 inline void HuC6280::OPCodes_TIA()
 {
-    OPCodes_TransferStart();
-
-    u16 source = Fetch16();
-    u16 dest = Fetch16();
-    u16 length = Fetch16();
-    int count = 0;
-
-    do
+    if (m_transfer_state == 0)
     {
-        MemoryWrite(dest, MemoryRead(source, true));
-        source++;
-        dest += (count & 1) ? -1 : 1;
-        count++;
-        length--;
-        m_cycles += 6;
+        OPCodes_TransferStart();
+        return;
     }
-    while (length);
 
-    OPCodes_TransferEnd();
+    if (m_transfer_state == 2)
+    {
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        m_transfer_source++;
+        m_transfer_dest += (m_transfer_count & 1) ? -1 : 1;
+        m_transfer_count++;
+        m_transfer_length--;
+        m_cycles += 6;
+
+        if (m_transfer_length == 0)
+            m_transfer_state = 1;
+
+        m_PC.Decrement();
+        return;
+    }
+
+    if (m_transfer_state == 1)
+    {
+        OPCodes_TransferEnd();
+        return;
+    }
 }
 
 inline void HuC6280::OPCodes_TII()
 {
-    OPCodes_TransferStart();
-
-    u16 source = Fetch16();
-    u16 dest = Fetch16();
-    u16 length = Fetch16();
-
-    do
+    if (m_transfer_state == 0)
     {
-        MemoryWrite(dest, MemoryRead(source, true));
-        source++;
-        dest++;
-        length--;
-        m_cycles += 6;
+        OPCodes_TransferStart();
+        return;
     }
-    while (length);
 
-    OPCodes_TransferEnd();
+    if (m_transfer_state == 2)
+    {
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        m_transfer_source++;
+        m_transfer_dest++;
+        m_transfer_length--;
+        m_cycles += 6;
+
+        if (m_transfer_length == 0)
+            m_transfer_state = 1;
+
+        m_PC.Decrement();
+        return;
+    }
+
+    if (m_transfer_state == 1)
+    {
+        OPCodes_TransferEnd();
+        return;
+    }
 }
 
 inline void HuC6280::OPCodes_TIN()
 {
-    OPCodes_TransferStart();
-
-    u16 source = Fetch16();
-    u16 dest = Fetch16();
-    u16 length = Fetch16();
-
-    do
+    if (m_transfer_state == 0)
     {
-        MemoryWrite(dest, MemoryRead(source, true));
-        source++;
-        length--;
-        m_cycles += 6;
+        OPCodes_TransferStart();
+        return;
     }
-    while (length);
 
-    OPCodes_TransferEnd();
+    if (m_transfer_state == 2)
+    {
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        m_transfer_source++;
+        m_transfer_length--;
+        m_cycles += 6;
+
+        if (m_transfer_length == 0)
+            m_transfer_state = 1;
+
+        m_PC.Decrement();
+        return;
+    }
+
+    if (m_transfer_state == 1)
+    {
+        OPCodes_TransferEnd();
+        return;
+    }
 }
 
 inline void HuC6280::OPCodes_TransferStart()
 {
-    m_transfer = true;
+    m_transfer_state = 2;
+
     StackPush8(m_Y.GetValue());
     StackPush8(m_X.GetValue());
     StackPush8(m_A.GetValue());
+
+    m_transfer_source = Fetch16();
+    m_transfer_dest = Fetch16();
+    m_transfer_length = Fetch16();
+    m_transfer_count = 0;
+
+    m_PC.SetValue(m_PC.GetValue() - 7);
+    m_cycles += 14;
 }
 
 inline void HuC6280::OPCodes_TransferEnd()
 {
+    m_transfer_state = 0;
     m_A.SetValue(StackPop8());
     m_X.SetValue(StackPop8());
     m_Y.SetValue(StackPop8());
+    m_PC.SetValue(m_PC.GetValue() + 6);
+    m_cycles += 3;
 }
 
 inline void HuC6280::UnofficialOPCode()
