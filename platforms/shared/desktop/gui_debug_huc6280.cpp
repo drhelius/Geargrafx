@@ -23,6 +23,7 @@
 #include "imgui/imgui.h"
 #include "../../../src/geargrafx.h"
 #include "gui_debug_constants.h"
+#include "gui_debug_memory.h"
 #include "gui.h"
 #include "config.h"
 #include "emu.h"
@@ -32,6 +33,7 @@ static char mpr_name[16] = { };
 static char mpr_tooltip[128] = { };
 
 static void get_bank_name(u8 mpr, u8 mpr_value, char *name, char* tooltip);
+static void goto_address(u8 mpr_value);
 
 void gui_debug_window_huc6280(void)
 {
@@ -62,12 +64,26 @@ void gui_debug_window_huc6280(void)
 
         ImGui::TableNextColumn();
         ImGui::TextColored(yellow, " PHYS PC"); ImGui::SameLine();
+        if (ImGui::IsItemClicked())
+        {
+            gui_debug_memory_goto(MEMORY_EDITOR_ROM, memory->GetPhysicalAddress(proc_state->PC->GetValue()));
+        }
         ImGui::Text("= $%06X", memory->GetPhysicalAddress(proc_state->PC->GetValue()));
+        if (ImGui::IsItemClicked())
+        {
+            gui_debug_memory_goto(MEMORY_EDITOR_ROM, memory->GetPhysicalAddress(proc_state->PC->GetValue()));
+        }
 
         ImGui::TableNextColumn();
         ImGui::TextColored(yellow, "    SP"); ImGui::SameLine();
+        if (ImGui::IsItemClicked())
+            gui_debug_memory_goto(MEMORY_EDITOR_RAM, (STACK_ADDR - 0x2000) | proc_state->S->GetValue());
         ImGui::Text("= $%04X", STACK_ADDR | proc_state->S->GetValue());
+        if (ImGui::IsItemClicked())
+            gui_debug_memory_goto(MEMORY_EDITOR_RAM, (STACK_ADDR - 0x2000) | proc_state->S->GetValue());
         ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(0x21), BYTE_TO_BINARY(proc_state->S->GetValue()));
+        if (ImGui::IsItemClicked())
+            gui_debug_memory_goto(MEMORY_EDITOR_RAM, (STACK_ADDR - 0x2000) | proc_state->S->GetValue());
 
         ImGui::TableNextColumn();
 
@@ -95,77 +111,31 @@ void gui_debug_window_huc6280(void)
             ImGui::Text("   $%02X", proc_state->Y->GetValue());
             ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->Y->GetValue()));
 
-            ImGui::TableNextColumn();
-            ImGui::TextColored(violet, "MPR0"); ImGui::SameLine();
-            ImGui::Text(" $%02X", memory->GetMpr(0));
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(0)));
-            get_bank_name(0, memory->GetMpr(0), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, " %s", mpr_name);
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", mpr_tooltip);
-
-            ImGui::TableNextColumn();
-            ImGui::TextColored(violet, "MPR1"); ImGui::SameLine();
-            ImGui::Text(" $%02X", memory->GetMpr(1));
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(1)));
-            get_bank_name(1, memory->GetMpr(1), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, " %s", mpr_name);
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", mpr_tooltip);
-    
-            ImGui::TableNextColumn();
-            ImGui::TextColored(violet, "MPR2"); ImGui::SameLine();
-            ImGui::Text(" $%02X", memory->GetMpr(2));
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(2)));
-            get_bank_name(2, memory->GetMpr(2), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, " %s", mpr_name);
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", mpr_tooltip);
-
-            ImGui::TableNextColumn();
-            ImGui::TextColored(violet, "MPR3"); ImGui::SameLine();
-            ImGui::Text(" $%02X", memory->GetMpr(3));
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(3)));
-            get_bank_name(3, memory->GetMpr(3), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, " %s", mpr_name);
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", mpr_tooltip);
-
-            ImGui::TableNextColumn();
-            ImGui::TextColored(violet, "MPR4"); ImGui::SameLine();
-            ImGui::Text(" $%02X", memory->GetMpr(4));
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(4)));
-            get_bank_name(4, memory->GetMpr(4), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, " %s", mpr_name);
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", mpr_tooltip);
-
-            ImGui::TableNextColumn();
-            ImGui::TextColored(violet, "MPR5"); ImGui::SameLine();
-            ImGui::Text(" $%02X", memory->GetMpr(5));
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(5)));
-            get_bank_name(5, memory->GetMpr(5), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, " %s", mpr_name);
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", mpr_tooltip);
-
-            ImGui::TableNextColumn();
-            ImGui::TextColored(violet, "MPR6"); ImGui::SameLine();
-            ImGui::Text(" $%02X", memory->GetMpr(6));
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(6)));
-            get_bank_name(6, memory->GetMpr(6), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, " %s", mpr_name);
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", mpr_tooltip);
-
-            ImGui::TableNextColumn();
-            ImGui::TextColored(violet, "MPR7"); ImGui::SameLine();
-            ImGui::Text(" $%02X", memory->GetMpr(7));
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(7)));
-            get_bank_name(7, memory->GetMpr(7), mpr_name, mpr_tooltip);
-            ImGui::TextColored(gray, " %s", mpr_name);
-            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("%s", mpr_tooltip);
+            for (u8 i = 0; i < 8; i++)
+            {
+                char label[8];
+                snprintf(label, sizeof(label), "MPR%d", i);
+                ImGui::TableNextColumn();
+                ImGui::TextColored(violet, "%s", label); ImGui::SameLine();
+                if (ImGui::IsItemClicked())
+                    goto_address(memory->GetMpr(i));
+                ImGui::Text(" $%02X", memory->GetMpr(i));
+                if (ImGui::IsItemClicked())
+                    goto_address(memory->GetMpr(i));
+                ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(i)));
+                get_bank_name(i, memory->GetMpr(i), mpr_name, mpr_tooltip);
+                if (ImGui::IsItemClicked())
+                    goto_address(memory->GetMpr(i));
+                ImGui::TextColored(brown, " %s", mpr_name);
+                if (ImGui::IsItemClicked())
+                    goto_address(memory->GetMpr(i));
+                if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Text, yellow);
+                    ImGui::SetTooltip("%s", mpr_tooltip);
+                    ImGui::PopStyleColor();
+                }
+            }
 
             ImGui::TableNextColumn();
             ImGui::TextColored(red, "I/O "); ImGui::SameLine();
@@ -278,5 +248,22 @@ static void get_bank_name(u8 mpr, u8 mpr_value, char *name, char* tooltip)
     {
         snprintf(name, 16, "HARDWARE");
         snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X", cpu_address, cpu_address + 0x1FFF);
+    }
+}
+
+static void goto_address(u8 mpr_value)
+{
+    // 0x00 - 0x7F
+    if (mpr_value < 0x80)
+    {
+        u32 rom_address = mpr_value << 13;
+        gui_debug_memory_goto(MEMORY_EDITOR_ROM, rom_address);
+    }
+    // 0xF8 - 0xFB
+    else if (mpr_value < 0xFC)
+    {
+        u8 ram_bank = mpr_value - 0xF8;
+        u16 ram_address = ram_bank << 13;
+        gui_debug_memory_goto(MEMORY_EDITOR_RAM, ram_address);
     }
 }

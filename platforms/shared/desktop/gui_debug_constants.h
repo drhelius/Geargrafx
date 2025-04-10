@@ -29,8 +29,8 @@ static const ImVec4 magenta =       ImVec4(1.00f, 0.50f, 0.96f, 1.0f);
 static const ImVec4 dark_magenta =  ImVec4(0.30f, 0.18f, 0.27f, 1.0f);
 static const ImVec4 yellow =        ImVec4(1.00f, 0.90f, 0.05f, 1.0f);
 static const ImVec4 dark_yellow =   ImVec4(0.30f, 0.25f, 0.00f, 1.0f);
-static const ImVec4 orange =        ImVec4(0.99f, 0.59f, 0.12f, 1.0f);
-static const ImVec4 dark_orange =   ImVec4(0.30f, 0.20f, 0.03f, 1.0f);
+static const ImVec4 orange =        ImVec4(1.00f, 0.50f, 0.00f, 1.0f);
+static const ImVec4 dark_orange =   ImVec4(0.60f, 0.20f, 0.00f, 1.0f);
 static const ImVec4 red =           ImVec4(0.98f, 0.15f, 0.45f, 1.0f);
 static const ImVec4 dark_red =      ImVec4(0.30f, 0.04f, 0.16f, 1.0f);
 static const ImVec4 green =         ImVec4(0.10f, 0.90f, 0.10f, 1.0f);
@@ -44,6 +44,8 @@ static const ImVec4 gray =          ImVec4(0.50f, 0.50f, 0.50f, 1.0f);
 static const ImVec4 mid_gray =      ImVec4(0.40f, 0.40f, 0.40f, 1.0f);
 static const ImVec4 dark_gray =     ImVec4(0.10f, 0.10f, 0.10f, 1.0f);
 static const ImVec4 black =         ImVec4(0.00f, 0.00f, 0.00f, 1.0f);
+static const ImVec4 brown =         ImVec4(0.68f, 0.50f, 0.36f, 1.0f);
+static const ImVec4 dark_brown =    ImVec4(0.38f, 0.20f, 0.06f, 1.0f);
 
 struct stDebugLabel
 {
