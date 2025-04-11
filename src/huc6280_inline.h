@@ -48,7 +48,7 @@ inline bool HuC6280::Clock()
         }
 
         m_clock_cycles--;
-        instruction_completed = ((m_clock_cycles == 0) && (m_transfer_state == 0));
+        instruction_completed = ((m_clock_cycles == 0) && (m_transfer_state == 0) && (m_irq_pending == 0));
     }
 
     m_clock = (m_clock + 1) % 12;
