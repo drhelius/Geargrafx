@@ -382,40 +382,51 @@ inline void HuC6280::OPCodes_ROR_Memory(u16 address)
 
 inline void HuC6280::OPCodes_SBC(u8 value)
 {
-    value = ~value;
-    s32 result;
+    u16 result = 0;
 
     if (IsSetFlag(FLAG_DECIMAL))
     {
         m_cycles++;
 
-        result = (m_A.GetValue() & 0x0F) + (value & 0x0F) + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
+        u16 bin_result = m_A.GetValue() + ~value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
+        u16 tmp = (m_A.GetValue() & 0x0f) - (value & 0x0f) - (IsSetFlag(FLAG_CARRY) ? 0 : 1);
+        result = m_A.GetValue() - value - (IsSetFlag(FLAG_CARRY) ? 0 : 1);
 
-        if(result <= 0x0F)
+        if (result & 0x8000)
+            result -= 0x60;
+
+        if (tmp & 0x8000)
             result -= 0x06;
 
-        result = (m_A.GetValue() & 0xF0) + (value & 0xF0) + (result > 0x0F ? 0x10 : 0) + (result & 0x0F);
+#if defined(GG_TESTING)
+        if ((m_A.GetValue() ^ bin_result) & (~value ^ bin_result) & 0x80)
+            SetFlag(FLAG_OVERFLOW);
+        else
+            ClearFlag(FLAG_OVERFLOW);
+#endif
 
-        if(result <= 0xFF)
-            result -= 0x60;
+        if ((u16)result <= (u16)m_A.GetValue() || (result & 0xff0) == 0xff0)
+            SetFlag(FLAG_CARRY);
+        else
+            ClearFlag(FLAG_CARRY);
     }
     else
     {
+        value = ~value;
         result = (u16)m_A.GetValue() + (u16)value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
 
         if(~(m_A.GetValue() ^ value) & (m_A.GetValue() ^ result) & 0x80)
             SetFlag(FLAG_OVERFLOW);
         else
             ClearFlag(FLAG_OVERFLOW);
+
+        if(result > 0xFF)
+            SetFlag(FLAG_CARRY);
+        else
+            ClearFlag(FLAG_CARRY);
     }
 
     SetOrClearZNFlags((u8)result);
-
-    if(result > 0xFF)
-        SetFlag(FLAG_CARRY);
-    else
-        ClearFlag(FLAG_CARRY);
-
     m_A.SetValue((u8)result);
 }
 
