@@ -102,6 +102,7 @@ public:
     void Init(Memory* memory, HuC6270* huc6270);
     void Reset();
     bool Clock();
+    u32 TickOPCode();
     void AssertIRQ1(bool asserted);
     void AssertIRQ2(bool asserted);
     void InjectCycles(unsigned int cycles);
@@ -172,7 +173,7 @@ private:
     int m_reset_value;
 
 private:
-    u32 TickOPCode();
+    
     u32 TickIRQ();
     void CheckIRQs();
 

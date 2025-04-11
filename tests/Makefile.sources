@@ -1,7 +1,8 @@
 SRC_DIR = ../src
 TEST_SRC_DIR=.
 
-SOURCES_C :=
+SOURCES_C := \
+    $(SRC_DIR)/miniz/miniz.c \
 
 SOURCES_CXX := \
     $(TEST_SRC_DIR)/main.cpp \
@@ -15,4 +16,6 @@ SOURCES_CXX := \
     $(SRC_DIR)/huc6280_opcodes.cpp \
     $(SRC_DIR)/huc6280_psg.cpp \
     $(SRC_DIR)/input.cpp \
+    $(SRC_DIR)/mapper.cpp \
     $(SRC_DIR)/memory.cpp \
+    $(SRC_DIR)/sf2_mapper.cpp \

@@ -28,7 +28,6 @@
 inline void HuC6280::OPCodes_ADC(u8 value)
 {
     u8 a;
-    u8 final_result;
 
 #if !defined(GG_TESTING)
     u16 address = 0;
@@ -40,45 +39,45 @@ inline void HuC6280::OPCodes_ADC(u8 value)
     }
     else
 #endif
+        a = m_A.GetValue();
 
-    a = m_A.GetValue();
-
+    u16 result = 0;
     if (IsSetFlag(FLAG_DECIMAL))
     {
         m_cycles++;
 
-        int c = IsSetFlag(FLAG_CARRY) ? 1 : 0;
-        int lo =  (a & 0x0f) + (value & 0x0f) + c;
-        int hi = (a & 0xf0) + (value & 0xf0);
+        result = (u16)(a & 0x0F) + (u16)(value & 0x0F) + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
+        if(result > 0x09)
+            result += 0x06;
+        result = (u16)(a & 0xF0) + (u16)(value & 0xF0) + (result > 0x0F ? 0x10 : 0) + (result & 0x0F);
 
-        if (lo > 0x09)
-        {
-            hi += 0x10;
-            lo += 0x06;
-        }
-        if (hi > 0x90)
-            hi += 0x60;
-        if (hi & 0xff00)
-            SetFlag(FLAG_CARRY);
+#if defined(GG_TESTING)
+        if(~(a ^ value) & ((result & 0xFF) ^ a) & 0x80)
+            SetFlag(FLAG_OVERFLOW);
         else
-            ClearFlag(FLAG_CARRY);
+            ClearFlag(FLAG_OVERFLOW);
+#endif
 
-        final_result = static_cast<u8>((lo & 0x0f) + (hi & 0xf0));
-        SetOrClearZNFlags(final_result);
+        if(result > 0x9F)
+            result += 0x60;
     }
     else
     {
-        int result = a + value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
-        final_result = static_cast<u8>(result & 0xFF);
+        result = a + value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
 
-        ClearFlag(FLAG_ZERO | FLAG_CARRY | FLAG_OVERFLOW | FLAG_NEGATIVE);
+        if(~(a ^ value) & (a ^ result) & 0x80)
+            SetFlag(FLAG_OVERFLOW);
+        else
+            ClearFlag(FLAG_OVERFLOW);
+    }
 
-        u8 flags = m_P.GetValue();
-        flags |= ((((a ^ value) & 0x80) ^ 0x80) & ((a ^ result) & 0x80)) >> 1;
-        flags |= (result >> 8) & FLAG_CARRY;
-        m_P.SetValue(flags);
+    u8 final_result = static_cast<u8>(result & 0xFF);
 
-        SetZNFlags(final_result);
+    ClearFlag(FLAG_ZERO | FLAG_CARRY | FLAG_NEGATIVE);
+    SetZNFlags(final_result);
+
+    if(result > 0xFF) {
+        SetFlag(FLAG_CARRY);
     }
 
 #if !defined(GG_TESTING)
@@ -383,40 +382,41 @@ inline void HuC6280::OPCodes_ROR_Memory(u16 address)
 
 inline void HuC6280::OPCodes_SBC(u8 value)
 {
+    value = ~value;
+    s32 result;
+
     if (IsSetFlag(FLAG_DECIMAL))
     {
         m_cycles++;
 
-        int carry = IsSetFlag(FLAG_CARRY) ? 0 : 1;
-        u8 m = (m_A.GetValue() & 0xF) - (value & 0xF) - carry;
-        u8 n = (m_A.GetValue() >> 4) - (value >> 4) - ((m >> 4) & 1);
-        u8 res = (n << 4) | (m & 0xF);
-        if(m & 0x10)
-            res -= 0x06;
-        if(n & 0x10)
-            res -= 0x60;
-        m_A.SetValue(res);
-        ClearFlag(FLAG_ZERO | FLAG_CARRY | FLAG_NEGATIVE);
-        u8 flags = m_P.GetValue();
-        flags |= ((n >> 4) & 0x1) ^ 1;
-        m_P.SetValue(flags);
-        SetZNFlags(res);
+        result = (m_A.GetValue() & 0x0F) + (value & 0x0F) + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
+
+        if(result <= 0x0F)
+            result -= 0x06;
+
+        result = (m_A.GetValue() & 0xF0) + (value & 0xF0) + (result > 0x0F ? 0x10 : 0) + (result & 0x0F);
+
+        if(result <= 0xFF)
+            result -= 0x60;
     }
     else
     {
-        int result = m_A.GetValue() - value - (IsSetFlag(FLAG_CARRY) ? 0x00 : 0x01);
-        u8 final_result = static_cast<u8>(result & 0xFF);
-        SetOrClearZNFlags(final_result);
-        if ((result & 0x100) == 0)
-            SetFlag(FLAG_CARRY);
-        else
-            ClearFlag(FLAG_CARRY);
-        if ((((m_A.GetValue() ^ value) & 0x80) != 0) && (((m_A.GetValue() ^ result) & 0x80) != 0))
+        result = (u16)m_A.GetValue() + (u16)value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
+
+        if(~(m_A.GetValue() ^ value) & (m_A.GetValue() ^ result) & 0x80)
             SetFlag(FLAG_OVERFLOW);
         else
             ClearFlag(FLAG_OVERFLOW);
-        m_A.SetValue(final_result);
     }
+
+    SetOrClearZNFlags((u8)result);
+
+    if(result > 0xFF)
+        SetFlag(FLAG_CARRY);
+    else
+        ClearFlag(FLAG_CARRY);
+
+    m_A.SetValue((u8)result);
 }
 
 inline void HuC6280::OPCodes_SMB(u8 bit, u16 address)

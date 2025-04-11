@@ -1,6 +1,7 @@
 include Makefile.sources
 
 TARGET_NAME = geargrafx-tests
+GIT_VERSION := $(shell git describe --abbrev=7 --dirty --always --tags)
 UNAME_S := $(shell uname -s)
 PLATFORM = "undefined"
 
@@ -16,7 +17,7 @@ else
 endif
 
 CPPFLAGS += -I../ -I../../
-CPPFLAGS += -Wall -Wextra -Wformat -DGG_TESTING=1 -DGG_DISABLE_DISASSEMBLER=1
+CPPFLAGS += -Wall -Wextra -Wformat -DGG_TESTING=1 -DGG_DISABLE_DISASSEMBLER=1 -DEMULATOR_BUILD=\"$(GIT_VERSION)\"
 CXXFLAGS += -std=c++11
 CFLAGS += -std=c99
 
