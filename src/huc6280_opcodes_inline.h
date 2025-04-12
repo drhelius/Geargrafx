@@ -388,7 +388,6 @@ inline void HuC6280::OPCodes_SBC(u8 value)
     {
         m_cycles++;
 
-        u16 bin_result = m_A.GetValue() + ~value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
         u16 tmp = (m_A.GetValue() & 0x0f) - (value & 0x0f) - (IsSetFlag(FLAG_CARRY) ? 0 : 1);
         result = m_A.GetValue() - value - (IsSetFlag(FLAG_CARRY) ? 0 : 1);
 
@@ -399,6 +398,7 @@ inline void HuC6280::OPCodes_SBC(u8 value)
             result -= 0x06;
 
 #if defined(GG_TESTING)
+        u16 bin_result = m_A.GetValue() + ~value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
         if ((m_A.GetValue() ^ bin_result) & (~value ^ bin_result) & 0x80)
             SetFlag(FLAG_OVERFLOW);
         else
@@ -514,7 +514,7 @@ inline void HuC6280::OPCodes_TST(u8 value, u16 address)
     u8 mem = MemoryRead(address);
     ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
     u8 flags = m_P.GetValue();
-    flags |= (value & mem) ? 0 : FLAG_ZERO;
+    flags |= ((value & mem) ? 0 : FLAG_ZERO);
     flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
     m_P.SetValue(flags);
 }
