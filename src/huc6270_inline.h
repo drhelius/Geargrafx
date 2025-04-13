@@ -32,9 +32,11 @@ inline u16 HuC6270::Clock()
 
         if (m_sat_transfer_pending == 0)
         {
-            m_status_register |= HUC6270_STATUS_SAT_END;
+            m_status_register &= ~HUC6270_STATUS_BUSY;
+
             if (m_register[HUC6270_REG_DCR] & 0x01)
             {
+                m_status_register |= HUC6270_STATUS_SAT_END;
                 m_huc6280->AssertIRQ1(true);
             }
         }
