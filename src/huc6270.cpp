@@ -300,7 +300,7 @@ void HuC6270::VBlankIRQ()
         m_huc6280->AssertIRQ1(true);
     }
 
-    if (m_trigger_sat_transfer || m_auto_sat_transfer)
+    if (m_trigger_sat_transfer || (m_register[HUC6270_REG_DCR] & 0x10))
     {
         m_trigger_sat_transfer = false;
         m_auto_sat_transfer = m_register[HUC6270_REG_DCR] & 0x10;
@@ -313,6 +313,7 @@ void HuC6270::VBlankIRQ()
         }
 
         m_sat_transfer_pending = 1024;
+        m_status_register |= HUC6270_STATUS_BUSY;
     }
 }
 
