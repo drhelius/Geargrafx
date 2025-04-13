@@ -1042,37 +1042,34 @@ static void replace_labels(DisassemblerLine* line, const char* color, const char
     }
 }
 
-static const char* const c_yellow = "{FFE60C}";
-static const char* const c_white = "{FFFFFF}";
-static const char* const c_red = "{FA2573}";
-static const char* const c_green = "{1AE51A}";
-static const char* const c_blue = "{3466FF}";
-static const char* const c_orange = "{FD9820}";
-
 static void draw_instruction_name(DisassemblerLine* line, bool is_pc)
 {
-    const char* color;
+    const char* name_color;
+    const char* operands_color;
     const char* symbol_color;
     const char* label_color;
     const char* extra_color;
 
     if (is_pc)
     {
-        color = c_yellow;
+        name_color = c_yellow;
+        operands_color = c_yellow;
         symbol_color = c_yellow;
         label_color = c_yellow;
         extra_color = c_yellow;
     }
     else if (line->is_breakpoint)
     {
-        color = c_red;
+        name_color = c_red;
+        operands_color = c_red;
         symbol_color = c_red;
         label_color = c_red;
         extra_color = c_red;
     }
     else
     {
-        color = c_white;
+        name_color = c_white;
+        operands_color = c_brown;
         symbol_color = c_green;
         label_color = c_orange;
         extra_color = c_blue;
@@ -1085,15 +1082,21 @@ static void draw_instruction_name(DisassemblerLine* line, bool is_pc)
 
     if (config_debug.dis_replace_labels)
     {
-        replace_labels(line, label_color, color);
+        replace_labels(line, label_color, operands_color);
     }
 
     std::string instr = line->name_enhanced;
-    size_t pos = instr.find("{}");
+    size_t pos = instr.find("{n}");
     if (pos != std::string::npos)
-        instr.replace(pos, 2, extra_color);
+        instr.replace(pos, 3, name_color);
+    pos = instr.find("{e}");
+    if (pos != std::string::npos)
+        instr.replace(pos, 3, extra_color);
+    pos = instr.find("{o}");
+    if (pos != std::string::npos)
+        instr.replace(pos, 3, operands_color);
 
-    line->name_real_length = TextColoredEx("%s%s", color, instr.c_str());
+    line->name_real_length = TextColoredEx("%s%s", name_color, instr.c_str());
 }
 
 static void disassembler_menu(void)
