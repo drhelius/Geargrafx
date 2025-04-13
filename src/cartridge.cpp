@@ -169,10 +169,39 @@ bool Cartridge::LoadFromFile(const char* path)
     if (file.is_open())
     {
         int size = static_cast<int> (file.tellg());
+
+        if (size <= 0)
+        {
+            Log("ERROR: Unable to open file %s. Size: %d", path, size);
+            file.close();
+            return false;
+        }
+
+        if (file.bad() || file.fail() || !file.good() || file.eof())
+        {
+            Log("ERROR: Unable to open file %s. Bad file!", path);
+            file.close();
+            return false;
+        }
+
         char* memblock = new char[size];
         file.seekg(0, ios::beg);
         file.read(memblock, size);
         file.close();
+
+        for (int i = 0; i < size; i++)
+        {
+            if (memblock[i] != 0)
+                break;
+
+            if (i == size - 1)
+            {
+                Log("ERROR: File %s is empty!", path);
+                file.close();
+                SafeDeleteArray(memblock);
+                return false;
+            }
+        }
 
         if (extension == "zip")
             m_ready = LoadFromZipFile(reinterpret_cast<u8*> (memblock), size);
