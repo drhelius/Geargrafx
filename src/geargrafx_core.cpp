@@ -128,8 +128,8 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
             m_audio->Clock();
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-        if (debug_enable && debug->step_debugger && instruction_completed)
-            stop = true;
+        if (debug_enable && debug->step_debugger)
+            stop = instruction_completed;
 
         if (debug_enable && instruction_completed && m_huc6280->BreakpointHit())
             stop = true;
