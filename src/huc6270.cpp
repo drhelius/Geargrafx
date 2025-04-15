@@ -60,7 +60,7 @@ void HuC6270::Reset()
     m_status_register = 0;
     m_read_buffer = 0xFFFF;
     m_trigger_sat_transfer = false;
-    m_sat_transfer_pending = -1;
+    m_sat_transfer_pending = 0;
     m_hpos = 0;
     m_vpos = 0;
     m_bg_offset_y = 0;
@@ -302,13 +302,6 @@ void HuC6270::VBlankIRQ()
     if (m_trigger_sat_transfer || (m_register[HUC6270_REG_DCR] & 0x10))
     {
         m_trigger_sat_transfer = false;
-
-        u16 satb = m_register[HUC6270_REG_DVSSR];
-
-        for (int i = 0; i < HUC6270_SAT_SIZE; i++)
-        {
-            m_sat[i] = m_vram[(satb + i) & 0x7FFF];
-        }
 
         m_sat_transfer_pending = 1024;
         m_status_register |= HUC6270_STATUS_BUSY;

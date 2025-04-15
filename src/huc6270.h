@@ -101,7 +101,7 @@ private:
     u16* m_sat;
     u16 m_read_buffer;
     bool m_trigger_sat_transfer;
-    s32 m_sat_transfer_pending;
+    u16 m_sat_transfer_pending;
     s32 m_hpos;
     s32 m_vpos;
     s32 m_bg_offset_y;
@@ -133,6 +133,7 @@ private:
     HuC6270_Sprite_Data m_sprites[128];
 
 private:
+    void SATTransfer();
     void NextVerticalState();
     void NextHorizontalState();
     void VBlankIRQ();

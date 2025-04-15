@@ -26,21 +26,7 @@
 
 inline u16 HuC6270::Clock()
 {
-    if (m_sat_transfer_pending > 0)
-    {
-        m_sat_transfer_pending--;
-
-        if (m_sat_transfer_pending == 0)
-        {
-            m_status_register &= ~HUC6270_STATUS_BUSY;
-
-            if (m_register[HUC6270_REG_DCR] & 0x01)
-            {
-                m_status_register |= HUC6270_STATUS_SAT_END;
-                m_huc6280->AssertIRQ1(true);
-            }
-        }
-    }
+    SATTransfer();
 
     u16 pixel = 0x100;
 
@@ -231,6 +217,32 @@ inline void HuC6270::WriteRegister(u16 address, u8 value)
         default:
             Debug("[PC=%04X] HuC6270 invalid write at %06X, value=%02X", m_huc6280->GetState()->PC->GetValue(), address, value);
             break;
+    }
+}
+
+inline void HuC6270::SATTransfer()
+{
+    if (m_sat_transfer_pending > 0)
+    {
+        m_sat_transfer_pending--;
+
+        if ((m_sat_transfer_pending & 3) == 0)
+        {
+            u16 satb = m_register[HUC6270_REG_DVSSR];
+            int i = 255 - (m_sat_transfer_pending >> 2);
+            m_sat[i] = m_vram[(satb + i) & 0x7FFF];
+        }
+
+        if (m_sat_transfer_pending == 0)
+        {
+            m_status_register &= ~HUC6270_STATUS_BUSY;
+
+            if (m_register[HUC6270_REG_DCR] & 0x01)
+            {
+                m_status_register |= HUC6270_STATUS_SAT_END;
+                m_huc6280->AssertIRQ1(true);
+            }
+        }
     }
 }
 
