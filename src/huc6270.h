@@ -101,7 +101,6 @@ private:
     u16* m_sat;
     u16 m_read_buffer;
     bool m_trigger_sat_transfer;
-    bool m_auto_sat_transfer;
     s32 m_sat_transfer_pending;
     s32 m_hpos;
     s32 m_vpos;

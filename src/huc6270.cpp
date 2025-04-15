@@ -60,7 +60,6 @@ void HuC6270::Reset()
     m_status_register = 0;
     m_read_buffer = 0xFFFF;
     m_trigger_sat_transfer = false;
-    m_auto_sat_transfer = false;
     m_sat_transfer_pending = -1;
     m_hpos = 0;
     m_vpos = 0;
@@ -303,7 +302,6 @@ void HuC6270::VBlankIRQ()
     if (m_trigger_sat_transfer || (m_register[HUC6270_REG_DCR] & 0x10))
     {
         m_trigger_sat_transfer = false;
-        m_auto_sat_transfer = m_register[HUC6270_REG_DCR] & 0x10;
 
         u16 satb = m_register[HUC6270_REG_DVSSR];
 
@@ -534,7 +532,6 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (m_sat), sizeof(u16) * HUC6270_SAT_SIZE);
     stream.write(reinterpret_cast<const char*> (&m_read_buffer), sizeof(m_read_buffer));
     stream.write(reinterpret_cast<const char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
-    stream.write(reinterpret_cast<const char*> (&m_auto_sat_transfer), sizeof(m_auto_sat_transfer));
     stream.write(reinterpret_cast<const char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
     stream.write(reinterpret_cast<const char*> (&m_hpos), sizeof(m_hpos));
     stream.write(reinterpret_cast<const char*> (&m_vpos), sizeof(m_vpos));
@@ -585,7 +582,6 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (m_sat), sizeof(u16) * HUC6270_SAT_SIZE);
     stream.read(reinterpret_cast<char*> (&m_read_buffer), sizeof(m_read_buffer));
     stream.read(reinterpret_cast<char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
-    stream.read(reinterpret_cast<char*> (&m_auto_sat_transfer), sizeof(m_auto_sat_transfer));
     stream.read(reinterpret_cast<char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
     stream.read(reinterpret_cast<char*> (&m_hpos), sizeof(m_hpos));
     stream.read(reinterpret_cast<char*> (&m_vpos), sizeof(m_vpos));
