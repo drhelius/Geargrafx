@@ -95,8 +95,8 @@ void HuC6260::Reset()
     m_pixel_index = 0;
     m_pixel_clock = 0;
     m_pixel_x = 0;
-    m_hsync = false;
-    m_vsync = false;
+    m_hsync = true;
+    m_vsync = true;
     m_blur = 0;
     m_black_and_white = 0;
 

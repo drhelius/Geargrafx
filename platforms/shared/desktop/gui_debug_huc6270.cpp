@@ -51,7 +51,7 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(violet, "X,Y     "); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6270_state->HPOS, *huc6270_state->VPOS, *huc6270_state->HPOS, *huc6270_state->VPOS);
 
-    const char* h_states[] = { "HDS1", "HDS2", "HDS3", "HDW1", "HDW1", "HDE ", "HSW " };
+    const char* h_states[] = { "HDS", "HDS", "HDS", "HDW", "HDW", "HDE", "HSW" };
     ImGui::TextColored(violet, "H STATE "); ImGui::SameLine();
     ImGui::TextColored(blue, "%s", h_states[*huc6270_state->H_STATE]);
 
@@ -155,7 +155,7 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(violet, "DEST    "); ImGui::SameLine();
     ImGui::TextColored(white, "%s", huc6270_state->R[HUC6270_REG_DCR] & 0x0008 ? "DEC" : "INC");
 
-    ImGui::TextColored(violet, "SAT     "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SAT TX  "); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_DCR] & 0x0010 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_DCR] & 0x0010 ? "AUTO" : "OFF");
 
     ImGui::PopFont();

@@ -47,9 +47,10 @@ void gui_debug_window_huc6260_info(void)
     const char* speed[] = { "5.36 MHz", "7.16 MHz", "10.8 MHz" };
     ImGui::TextColored(orange, "%s", speed[huc6260->GetSpeed()]);
 
-    ImGui::TextColored(violet, "SIGNALS  "); ImGui::SameLine();
-    ImGui::TextColored(*huc6260_state->HSYNC ? gray : green, "HSYNC"); ImGui::SameLine();
-    ImGui::TextColored(*huc6260_state->VSYNC ? gray : green, "VSYNC");
+    ImGui::TextColored(violet, "HSYNC    "); ImGui::SameLine();
+    ImGui::TextColored(*huc6260_state->HSYNC ? red : green, *huc6260_state->HSYNC ? "HIGH" : "LOW");
+    ImGui::TextColored(violet, "VSYNC    "); ImGui::SameLine();
+    ImGui::TextColored(*huc6260_state->VSYNC ? red : green, *huc6260_state->VSYNC ? "HIGH" : "LOW");
 
     int vpos = *huc6260_state->VPOS;// - 259;
     // if (vpos < 0)
@@ -57,6 +58,9 @@ void gui_debug_window_huc6260_info(void)
 
     ImGui::TextColored(violet, "HPOS,VPOS"); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6260_state->HPOS, vpos, *huc6260_state->HPOS, vpos);
+
+    ImGui::TextColored(violet, "LINES    "); ImGui::SameLine();
+    ImGui::TextColored(white, "%d", IS_SET_BIT(*huc6260_state->CR, 2) ? 263 : 262);
 
     ImGui::TextColored(violet, "PIXEL    "); ImGui::SameLine();
     ImGui::TextColored(white, "%0X", *huc6260_state->PIXEL_INDEX);
