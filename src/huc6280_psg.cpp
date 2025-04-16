@@ -134,9 +134,23 @@ void HuC6280PSG::Sync()
         for (int i = 0; i < 6; i++)
         {
             HuC6280PSG_Channel* ch = &m_channels[i];
-
             ch->left_sample = 0;
             ch->right_sample = 0;
+            s8 noise_data = 0;
+
+            if (i >= 4)
+            {
+                noise_data = IS_SET_BIT(ch->noise_seed, 0) ? 0x1F : 0;
+                ch->noise_counter--;
+
+                if (ch->noise_counter <= 0)
+                {
+                    u32 freq = (ch->noise_control & 0x1F) ^ 0x1F;
+                    ch->noise_counter = freq << 6;
+                    u32 seed = ch->noise_seed;
+                    ch->noise_seed = (seed >> 1) | ((IS_SET_BIT(seed, 0) ^ IS_SET_BIT(seed, 1) ^ IS_SET_BIT(seed, 11) ^ IS_SET_BIT(seed, 12) ^ IS_SET_BIT(seed, 17)) << 17);
+                }
+            }
 
             if (!(ch->control & 0x80))
                 continue;
@@ -156,16 +170,7 @@ void HuC6280PSG::Sync()
             // Noise
             if ((i >=4) && (ch->noise_control & 0x80))
             {
-                u32 freq = (ch->noise_control & 0x1F) ^ 0x1F;
-                data = IS_SET_BIT(ch->noise_seed, 0) ? 0x1F : 0;
-                ch->noise_counter--;
-
-                if (ch->noise_counter <= 0)
-                {
-                    ch->noise_counter = freq << 6;
-                    u32 seed = ch->noise_seed;
-                    ch->noise_seed = (seed >> 1) | ((IS_SET_BIT(seed, 0) ^ IS_SET_BIT(seed, 1) ^ IS_SET_BIT(seed, 11) ^ IS_SET_BIT(seed, 12) ^ IS_SET_BIT(seed, 17)) << 17);
-                }
+                data = noise_data;
             }
             // DDA
             else if (ch->control & 0x40)
