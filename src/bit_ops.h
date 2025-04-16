@@ -29,13 +29,14 @@
 #define IS_SET_BIT(value, bit) (((value) & (1U << (bit))) != 0)
 #define FLIP_BIT(value, bit) ((value) ^ (1U << (bit)))
 
-inline u8 ReverseBits(const u8 value)
+static const u8 k_bitops_reverse_lut[16] = {
+    0x0, 0x8, 0x4, 0xC, 0x2, 0xA, 0x6, 0xE,
+    0x1, 0x9, 0x5, 0xD, 0x3, 0xB, 0x7, 0xF
+};
+
+INLINE u8 ReverseBits(const u8 value)
 {
-    static const u8 lookup[16] = {
-        0x0, 0x8, 0x4, 0xC, 0x2, 0xA, 0x6, 0xE,
-        0x1, 0x9, 0x5, 0xD, 0x3, 0xB, 0x7, 0xF
-    };
-    return (lookup[value & 0xF] << 4) | lookup[value >> 4];
+    return (k_bitops_reverse_lut[value & 0xF] << 4) | k_bitops_reverse_lut[value >> 4];
 }
 
 #endif /* BIT_OPS_H */

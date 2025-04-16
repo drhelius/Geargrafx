@@ -39,42 +39,42 @@ private:
     u8 m_value;
 };
 
-inline u8 EightBitRegister::GetValue() const
+INLINE u8 EightBitRegister::GetValue() const
 {
     return m_value;
 }
 
-inline void EightBitRegister::SetValue(u8 value)
+INLINE void EightBitRegister::SetValue(u8 value)
 {
     m_value = value;
 }
 
-inline void EightBitRegister::Increment()
+INLINE void EightBitRegister::Increment()
 {
     m_value++;
 }
 
-inline void EightBitRegister::Increment(u8 value)
+INLINE void EightBitRegister::Increment(u8 value)
 {
     m_value += value;
 }
 
-inline void EightBitRegister::Decrement()
+INLINE void EightBitRegister::Decrement()
 {
     m_value--;
 }
 
-inline void EightBitRegister::Decrement(u8 value)
+INLINE void EightBitRegister::Decrement(u8 value)
 {
     m_value -= value;
 }
 
-inline void EightBitRegister::SaveState(std::ostream& stream)
+INLINE void EightBitRegister::SaveState(std::ostream& stream)
 {
     stream.write(reinterpret_cast<const char*> (&m_value), sizeof(m_value));
 }
 
-inline void EightBitRegister::LoadState(std::istream& stream)
+INLINE void EightBitRegister::LoadState(std::istream& stream)
 {
     stream.read(reinterpret_cast<char*> (&m_value), sizeof(m_value));
 }
@@ -102,62 +102,62 @@ private:
     u16 m_value;
 };
 
-inline u8 SixteenBitRegister::GetLow() const
+INLINE u8 SixteenBitRegister::GetLow() const
 {
     return static_cast<u8>(m_value & 0x00FF);
 }
 
-inline u8 SixteenBitRegister::GetHigh() const
+INLINE u8 SixteenBitRegister::GetHigh() const
 {
     return static_cast<u8>((m_value >> 8) & 0x00FF);
 }
 
-inline u16 SixteenBitRegister::GetValue() const
+INLINE u16 SixteenBitRegister::GetValue() const
 {
     return m_value;
 }
 
-inline void SixteenBitRegister::SetLow(u8 low)
+INLINE void SixteenBitRegister::SetLow(u8 low)
 {
     m_value = (m_value & 0xFF00) | low;
 }
 
-inline void SixteenBitRegister::SetHigh(u8 high)
+INLINE void SixteenBitRegister::SetHigh(u8 high)
 {
     m_value = static_cast<u16>(high << 8) | (m_value & 0x00FF);
 }
 
-inline void SixteenBitRegister::SetValue(u16 value)
+INLINE void SixteenBitRegister::SetValue(u16 value)
 {
     m_value = value;
 }
 
-inline void SixteenBitRegister::Increment()
+INLINE void SixteenBitRegister::Increment()
 {
     m_value++;
 }
 
-inline void SixteenBitRegister::Increment(u16 value)
+INLINE void SixteenBitRegister::Increment(u16 value)
 {
     m_value += value;
 }
 
-inline void SixteenBitRegister::Decrement()
+INLINE void SixteenBitRegister::Decrement()
 {
     m_value--;
 }
 
-inline void SixteenBitRegister::Decrement(u16 value)
+INLINE void SixteenBitRegister::Decrement(u16 value)
 {
     m_value -= value;
 }
 
-inline void SixteenBitRegister::SaveState(std::ostream& stream)
+INLINE void SixteenBitRegister::SaveState(std::ostream& stream)
 {
     stream.write(reinterpret_cast<const char*> (&m_value), sizeof(m_value));
 }
 
-inline void SixteenBitRegister::LoadState(std::istream& stream)
+INLINE void SixteenBitRegister::LoadState(std::istream& stream)
 {
     stream.read(reinterpret_cast<char*> (&m_value), sizeof(m_value));
 }

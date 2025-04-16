@@ -414,7 +414,7 @@ static void push_recent_rom(std::string path)
         }
     }
 
-    slot = std::min(slot, config_max_recent_roms - 1);
+    slot = MIN(slot, config_max_recent_roms - 1);
 
     for (int i = slot; i > 0; i--)
     {

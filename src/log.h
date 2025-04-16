@@ -36,7 +36,7 @@
 
 #define Log(msg, ...) (Log_func(msg, ##__VA_ARGS__))
 
-inline void Log_func(const char* const msg, ...)
+INLINE void Log_func(const char* const msg, ...)
 {
     char buffer[512];
     va_list args;

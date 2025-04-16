@@ -30,7 +30,7 @@
 #include "audio.h"
 #include "mapper.h"
 
-inline u8 Memory::Read(u16 address, bool block_transfer)
+INLINE u8 Memory::Read(u16 address, bool block_transfer)
 {
 #if defined(GG_TESTING)
     return m_test_memory[address];
@@ -162,7 +162,7 @@ inline u8 Memory::Read(u16 address, bool block_transfer)
     }
 }
 
-inline void Memory::Write(u16 address, u8 value)
+INLINE void Memory::Write(u16 address, u8 value)
 {
 #if defined(GG_TESTING)
     m_test_memory[address] = value;
@@ -281,19 +281,19 @@ inline void Memory::Write(u16 address, u8 value)
     }
 }
 
-inline void Memory::SetMpr(u8 index, u8 value)
+INLINE void Memory::SetMpr(u8 index, u8 value)
 {
     assert(index < 8);
     m_mpr[index] = value;
 }
 
-inline u8 Memory::GetMpr(u8 index)
+INLINE u8 Memory::GetMpr(u8 index)
 {
     assert(index < 8);
     return m_mpr[index];
 }
 
-inline void Memory::SetMprTAM(u8 bits, u8 value)
+INLINE void Memory::SetMprTAM(u8 bits, u8 value)
 {
     assert((bits != 0) && !(bits & (bits - 1)));
 
@@ -319,7 +319,7 @@ inline void Memory::SetMprTAM(u8 bits, u8 value)
     }
 }
 
-inline u8 Memory::GetMprTMA(u8 bits)
+INLINE u8 Memory::GetMprTMA(u8 bits)
 {
     assert((bits != 0) && !(bits & (bits - 1)));
 
@@ -348,22 +348,22 @@ inline u8 Memory::GetMprTMA(u8 bits)
     return ret;
 }
 
-inline u32 Memory::GetPhysicalAddress(u16 address)
+INLINE u32 Memory::GetPhysicalAddress(u16 address)
 {
     return (GetBank(address) << 13) | (address & 0x1FFF);
 }
 
-inline u8 Memory::GetBank(u16 address)
+INLINE u8 Memory::GetBank(u16 address)
 {
     return m_mpr[(address >> 13) & 0x07];
 }
 
-inline GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address)
+INLINE GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address)
 {
     return m_disassembler[GetPhysicalAddress(address)];
 }
 
-inline GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
+INLINE GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
 {
     u32 physical_address = GetPhysicalAddress(address);
 

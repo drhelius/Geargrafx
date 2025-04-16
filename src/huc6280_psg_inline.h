@@ -22,12 +22,12 @@
 
 #include "huc6280_psg.h"
 
-inline void HuC6280PSG::Clock()
+INLINE void HuC6280PSG::Clock()
 {
     m_elapsed_cycles++;
 }
 
-inline void HuC6280PSG::Write(u16 address, u8 value)
+INLINE void HuC6280PSG::Write(u16 address, u8 value)
 {
     Sync();
 

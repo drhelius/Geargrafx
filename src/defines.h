@@ -54,6 +54,10 @@
 
 #define UNUSED(expr) (void)(expr)
 
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define CLAMP(value, min, max) MIN(MAX(value, min), max)
+
 #if defined(MSB_FIRST) || defined(__BIG_ENDIAN__) || (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
     #define GG_BIG_ENDIAN
 #else

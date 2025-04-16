@@ -24,7 +24,7 @@
 #include "huc6260.h"
 #include "huc6280.h"
 
-inline u16 HuC6270::Clock()
+INLINE u16 HuC6270::Clock()
 {
     if (m_sat_transfer_pending > 0)
         SATTransfer();
@@ -57,7 +57,7 @@ inline u16 HuC6270::Clock()
     return pixel;
 }
 
-inline u8 HuC6270::ReadRegister(u16 address)
+INLINE u8 HuC6270::ReadRegister(u16 address)
 {
     switch (address & 0x03)
     {
@@ -109,7 +109,7 @@ inline u8 HuC6270::ReadRegister(u16 address)
     }
 }
 
-inline void HuC6270::WriteRegister(u16 address, u8 value)
+INLINE void HuC6270::WriteRegister(u16 address, u8 value)
 {
     switch (address & 0x03)
     {
@@ -202,7 +202,7 @@ inline void HuC6270::WriteRegister(u16 address, u8 value)
     }
 }
 
-inline void HuC6270::SetHSync(bool active)
+INLINE void HuC6270::SetHSync(bool active)
 {
     // High to low
     if (!active)
@@ -219,7 +219,7 @@ inline void HuC6270::SetHSync(bool active)
     }
 }
 
-inline void HuC6270::SetVSync(bool active)
+INLINE void HuC6270::SetVSync(bool active)
 {
     // High to low
     if (!active)
@@ -244,7 +244,7 @@ inline void HuC6270::SetVSync(bool active)
     }
 }
 
-inline void HuC6270::NextVerticalState()
+INLINE void HuC6270::NextVerticalState()
 {
     m_v_state = (m_v_state + 1) % HuC6270_VERTICAL_STATE_COUNT;
 
@@ -276,7 +276,7 @@ inline void HuC6270::NextVerticalState()
     }
 }
 
-inline void HuC6270::NextHorizontalState()
+INLINE void HuC6270::NextHorizontalState()
 {
     m_h_state = (m_h_state + 1) % HuC6270_HORIZONTAL_STATE_COUNT;
 
@@ -357,7 +357,7 @@ inline void HuC6270::NextHorizontalState()
     }
 }
 
-inline void HuC6270::VBlankIRQ()
+INLINE void HuC6270::VBlankIRQ()
 {
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_VBLANK)
     {
@@ -375,9 +375,9 @@ inline void HuC6270::VBlankIRQ()
     }
 }
 
-inline void HuC6270::RenderLine()
+INLINE void HuC6270::RenderLine()
 {
-    int width = std::min(1024, (m_latched_hdw + 1) << 3);
+    int width = MIN(1024, (m_latched_hdw + 1) << 3);
 
     if((m_latched_cr & 0x80) == 0)
     {
@@ -400,7 +400,7 @@ inline void HuC6270::RenderLine()
     }
 }
 
-inline void HuC6270::SATTransfer()
+INLINE void HuC6270::SATTransfer()
 {
     m_sat_transfer_pending--;
 
@@ -423,7 +423,7 @@ inline void HuC6270::SATTransfer()
     }
 }
 
-inline void HuC6270::VRAMTransfer()
+INLINE void HuC6270::VRAMTransfer()
 {
     m_vram_transfer_pending--;
 
@@ -456,7 +456,7 @@ inline void HuC6270::VRAMTransfer()
     }
 }
 
-inline void HuC6270::RCRIRQ()
+INLINE void HuC6270::RCRIRQ()
 {
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
     {
@@ -469,7 +469,7 @@ inline void HuC6270::RCRIRQ()
     }
 }
 
-inline void HuC6270::OverflowIRQ()
+INLINE void HuC6270::OverflowIRQ()
 {
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW)
     {
@@ -478,7 +478,7 @@ inline void HuC6270::OverflowIRQ()
     }
 }
 
-inline void HuC6270::SpriteCollisionIRQ()
+INLINE void HuC6270::SpriteCollisionIRQ()
 {
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_COLLISION)
     {
@@ -487,7 +487,7 @@ inline void HuC6270::SpriteCollisionIRQ()
     }
 }
 
-inline int HuC6270::ClocksToBYRLatch()
+INLINE int HuC6270::ClocksToBYRLatch()
 {
     int ret = 1;
     if (m_latched_hds > 2)
@@ -495,7 +495,7 @@ inline int HuC6270::ClocksToBYRLatch()
     return ret;
 }
 
-inline int HuC6270::ClocksToBXRLatch()
+INLINE int HuC6270::ClocksToBXRLatch()
 {
     int ret = 2;
     if(m_latched_hds > 2)
@@ -503,22 +503,22 @@ inline int HuC6270::ClocksToBXRLatch()
     return ret;
 }
 
-inline HuC6270::HuC6270_State* HuC6270::GetState()
+INLINE HuC6270::HuC6270_State* HuC6270::GetState()
 {
     return &m_state;
 }
 
-inline u16* HuC6270::GetVRAM()
+INLINE u16* HuC6270::GetVRAM()
 {
     return m_vram;
 }
 
-inline u16* HuC6270::GetSAT()
+INLINE u16* HuC6270::GetSAT()
 {
     return m_sat;
 }
 
-inline void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
+INLINE void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
 {
     m_no_sprite_limit = no_sprite_limit;
 }

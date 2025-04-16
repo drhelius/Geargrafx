@@ -120,6 +120,8 @@ void emu_update(void)
 
         if (emu_debug_command != Debug_Command_Continue)
             emu_debug_command = Debug_Command_None;
+
+        update_debug();
     }
     else
         geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
@@ -128,8 +130,6 @@ void emu_update(void)
     {
         sound_queue->Write(audio_buffer, sampleCount, emu_audio_sync);
     }
-
-    update_debug();
 }
 
 void emu_key_pressed(GG_Controllers controller, GG_Keys key)

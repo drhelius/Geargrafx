@@ -22,34 +22,34 @@
 
 #include "input.h"
 
-inline u8 Input::ReadK()
+INLINE u8 Input::ReadK()
 {
     return m_register;
 }
 
-inline void Input::WriteO(u8 value)
+INLINE void Input::WriteO(u8 value)
 {
     m_sel = IS_SET_BIT(value, 0);
     m_clr = IS_SET_BIT(value, 1);
     UpdateRegister();
 }
 
-inline u8 Input::GetIORegister()
+INLINE u8 Input::GetIORegister()
 {
     return m_register;
 }
 
-inline bool Input::GetSel()
+INLINE bool Input::GetSel()
 {
     return m_sel;
 }
 
-inline  bool Input::GetClr()
+INLINE  bool Input::GetClr()
 {
     return m_clr;
 }
 
-inline void Input::UpdateRegister()
+INLINE void Input::UpdateRegister()
 {
     m_register = 0x30;
 

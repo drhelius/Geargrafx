@@ -26,7 +26,7 @@
 #include "huc6280_names.h"
 #include "memory.h"
 
-inline bool HuC6280::Clock()
+INLINE bool HuC6280::Clock()
 {
     if (m_clock % 3 == 0)
         ClockTimer();
@@ -56,7 +56,7 @@ inline bool HuC6280::Clock()
     return instruction_completed;
 }
 
-inline u32 HuC6280::TickOPCode()
+INLINE u32 HuC6280::TickOPCode()
 {
     m_memory_breakpoint_hit = false;
     m_skip_flag_transfer_clear = false;
@@ -81,7 +81,7 @@ inline u32 HuC6280::TickOPCode()
     return m_cycles;
 }
 
-inline u32 HuC6280::TickIRQ()
+INLINE u32 HuC6280::TickIRQ()
 {
     assert(m_irq_pending != 0);
 
@@ -129,7 +129,7 @@ inline u32 HuC6280::TickIRQ()
     return m_cycles;
 }
 
-inline void HuC6280::AssertIRQ1(bool asserted)
+INLINE void HuC6280::AssertIRQ1(bool asserted)
 {
     if (asserted)
         m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 1);
@@ -137,7 +137,7 @@ inline void HuC6280::AssertIRQ1(bool asserted)
         m_interrupt_request_register = UNSET_BIT(m_interrupt_request_register, 1);
 }
 
-inline void HuC6280::AssertIRQ2(bool asserted)
+INLINE void HuC6280::AssertIRQ2(bool asserted)
 {
     if (asserted)
         m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 0);
@@ -145,30 +145,30 @@ inline void HuC6280::AssertIRQ2(bool asserted)
         m_interrupt_request_register = UNSET_BIT(m_interrupt_request_register, 0);
 }
 
-inline void HuC6280::InjectCycles(unsigned int cycles)
+INLINE void HuC6280::InjectCycles(unsigned int cycles)
 {
     m_cycles += cycles;
     CheckIRQs();
 }
 
-inline void HuC6280::CheckIRQs()
+INLINE void HuC6280::CheckIRQs()
 {
     m_irq_pending = IsSetFlag(FLAG_INTERRUPT) ? 0 : m_interrupt_request_register & ~m_interrupt_disable_register;
 }
 
-inline u8 HuC6280::MemoryRead(u16 address, bool block_transfer)
+INLINE u8 HuC6280::MemoryRead(u16 address, bool block_transfer)
 {
     CheckIRQs();
     return m_memory->Read(address, block_transfer);
 }
 
-inline void HuC6280::MemoryWrite(u16 address, u8 value)
+INLINE void HuC6280::MemoryWrite(u16 address, u8 value)
 {
     CheckIRQs();
     m_memory->Write(address, value);
 }
 
-inline u8 HuC6280:: ReadInterruptRegister(u16 address)
+INLINE u8 HuC6280:: ReadInterruptRegister(u16 address)
 {
     if ((address & 1) == 0)
         return m_interrupt_disable_register;
@@ -176,7 +176,7 @@ inline u8 HuC6280:: ReadInterruptRegister(u16 address)
         return m_interrupt_request_register;
 }
 
-inline void HuC6280::WriteInterruptRegister(u16 address, u8 value)
+INLINE void HuC6280::WriteInterruptRegister(u16 address, u8 value)
 {
     if ((address & 1) == 0)
         m_interrupt_disable_register = value & 0x07;
@@ -187,7 +187,7 @@ inline void HuC6280::WriteInterruptRegister(u16 address, u8 value)
     }
 }
 
-inline void HuC6280::ClockTimer()
+INLINE void HuC6280::ClockTimer()
 {
     if (!m_timer_enabled)
         return;
@@ -208,7 +208,7 @@ inline void HuC6280::ClockTimer()
     }
 }
 
-inline u8 HuC6280::ReadTimerRegister()
+INLINE u8 HuC6280::ReadTimerRegister()
 {
     if(m_timer_counter == 0 && m_timer_cycles <= 5 * 3)
         return 0x7F;
@@ -216,7 +216,7 @@ inline u8 HuC6280::ReadTimerRegister()
         return m_timer_counter;
 }
 
-inline void HuC6280::WriteTimerRegister(u16 address, u8 value)
+INLINE void HuC6280::WriteTimerRegister(u16 address, u8 value)
 {
     if (address & 0x01)
     {
@@ -232,14 +232,14 @@ inline void HuC6280::WriteTimerRegister(u16 address, u8 value)
         m_timer_reload = value & 0x7F;
 }
 
-inline u8 HuC6280::Fetch8()
+INLINE u8 HuC6280::Fetch8()
 {
     u8 value = MemoryRead(m_PC.GetValue());
     m_PC.Increment();
     return value;
 }
 
-inline u16 HuC6280::Fetch16()
+INLINE u16 HuC6280::Fetch16()
 {
     u16 pc = m_PC.GetValue();
     u8 l = MemoryRead(pc);
@@ -248,53 +248,53 @@ inline u16 HuC6280::Fetch16()
     return Address16(h , l);
 }
 
-inline u16 HuC6280::Address16(u8 high, u8 low)
+INLINE u16 HuC6280::Address16(u8 high, u8 low)
 {
     return static_cast<u16>(high << 8 ) | low;
 }
 
-inline bool HuC6280::PageCrossed(u16 old_address, u16 new_address)
+INLINE bool HuC6280::PageCrossed(u16 old_address, u16 new_address)
 {
     return (old_address ^ new_address) > 0x00FF;
 }
 
-inline u16 HuC6280::ZeroPageX()
+INLINE u16 HuC6280::ZeroPageX()
 {
     return ZERO_PAGE_ADDR | m_X.GetValue();
 }
 
-inline void HuC6280::SetOrClearZNFlags(u8 result)
+INLINE void HuC6280::SetOrClearZNFlags(u8 result)
 {
     ClearFlag(FLAG_ZERO | FLAG_NEGATIVE);
     m_P.SetValue(m_P.GetValue() | m_zn_flags_lut[result]);
 }
 
-inline void HuC6280::SetZNFlags(u8 result)
+INLINE void HuC6280::SetZNFlags(u8 result)
 {
     m_P.SetValue(m_P.GetValue() | m_zn_flags_lut[result]);
 }
 
-inline void HuC6280::SetOverflowFlag(u8 result)
+INLINE void HuC6280::SetOverflowFlag(u8 result)
 {
     m_P.SetValue((m_P.GetValue() & 0xBF) | (result & 0x40));
 }
 
-inline void HuC6280::SetFlag(u8 flag)
+INLINE void HuC6280::SetFlag(u8 flag)
 {
     m_P.SetValue(m_P.GetValue() | flag);
 }
 
-inline void HuC6280::ClearFlag(u8 flag)
+INLINE void HuC6280::ClearFlag(u8 flag)
 {
     m_P.SetValue(m_P.GetValue() & (~flag));
 }
 
-inline bool HuC6280::IsSetFlag(u8 flag)
+INLINE bool HuC6280::IsSetFlag(u8 flag)
 {
     return (m_P.GetValue() & flag) != 0;
 }
 
-inline void HuC6280::StackPush16(u16 value)
+INLINE void HuC6280::StackPush16(u16 value)
 {
     MemoryWrite(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value >> 8));
     m_S.Decrement();
@@ -302,13 +302,13 @@ inline void HuC6280::StackPush16(u16 value)
     m_S.Decrement();
 }
 
-inline void HuC6280::StackPush8(u8 value)
+INLINE void HuC6280::StackPush8(u8 value)
 {
     MemoryWrite(STACK_ADDR | m_S.GetValue(), value);
     m_S.Decrement();
 }
 
-inline u16 HuC6280::StackPop16()
+INLINE u16 HuC6280::StackPop16()
 {
     m_S.Increment();
     u8 l = MemoryRead(STACK_ADDR | m_S.GetValue());
@@ -317,35 +317,35 @@ inline u16 HuC6280::StackPop16()
     return Address16(h , l);
 }
 
-inline u8 HuC6280::StackPop8()
+INLINE u8 HuC6280::StackPop8()
 {
     m_S.Increment();
     return MemoryRead(STACK_ADDR | m_S.GetValue());
 }
 
-inline u8 HuC6280::ImmediateAddressing()
+INLINE u8 HuC6280::ImmediateAddressing()
 {
     return Fetch8();
 }
 
-inline u16 HuC6280::ZeroPageAddressing()
+INLINE u16 HuC6280::ZeroPageAddressing()
 {
     return ZERO_PAGE_ADDR | Fetch8();
 }
 
-inline u16 HuC6280::ZeroPageAddressing(EightBitRegister* reg)
+INLINE u16 HuC6280::ZeroPageAddressing(EightBitRegister* reg)
 {
     return ZERO_PAGE_ADDR | ((Fetch8() + reg->GetValue()) & 0xFF);
 }
 
-inline u16 HuC6280::ZeroPageRelativeAddressing()
+INLINE u16 HuC6280::ZeroPageRelativeAddressing()
 {
     u16 address = ZeroPageAddressing();
     s8 offset = static_cast<s8>(Fetch8());
     return address + offset;
 }
 
-inline u16 HuC6280::ZeroPageIndirectAddressing()
+INLINE u16 HuC6280::ZeroPageIndirectAddressing()
 {
     u16 address = ZeroPageAddressing();
     u8 l = MemoryRead(address);
@@ -353,7 +353,7 @@ inline u16 HuC6280::ZeroPageIndirectAddressing()
     return Address16(h, l);
 }
 
-inline u16 HuC6280::ZeroPageIndexedIndirectAddressing()
+INLINE u16 HuC6280::ZeroPageIndexedIndirectAddressing()
 {
     u16 address = (ZeroPageAddressing() + m_X.GetValue()) & 0x20FF;
     u8 l = MemoryRead(address);
@@ -361,7 +361,7 @@ inline u16 HuC6280::ZeroPageIndexedIndirectAddressing()
     return Address16(h, l);
 }
 
-inline u16 HuC6280::ZeroPageIndirectIndexedAddressing()
+INLINE u16 HuC6280::ZeroPageIndirectIndexedAddressing()
 {
     u16 address = ZeroPageAddressing();
     u8 l = MemoryRead(address);
@@ -369,24 +369,24 @@ inline u16 HuC6280::ZeroPageIndirectIndexedAddressing()
     return Address16(h, l) + m_Y.GetValue();
 }
 
-inline s8 HuC6280::RelativeAddressing()
+INLINE s8 HuC6280::RelativeAddressing()
 {
     return static_cast<s8>(Fetch8());
 }
 
-inline u16 HuC6280::AbsoluteAddressing()
+INLINE u16 HuC6280::AbsoluteAddressing()
 {
     return Fetch16();
 }
 
-inline u16 HuC6280::AbsoluteAddressing(EightBitRegister* reg)
+INLINE u16 HuC6280::AbsoluteAddressing(EightBitRegister* reg)
 {
     u16 address = Fetch16();
     u16 result = address + reg->GetValue();
     return result;
 }
 
-inline u16 HuC6280::AbsoluteIndirectAddressing()
+INLINE u16 HuC6280::AbsoluteIndirectAddressing()
 {
     u16 address = Fetch16();
     u8 l = MemoryRead(address);
@@ -394,7 +394,7 @@ inline u16 HuC6280::AbsoluteIndirectAddressing()
     return Address16(h, l);
 }
 
-inline u16 HuC6280::AbsoluteIndexedIndirectAddressing()
+INLINE u16 HuC6280::AbsoluteIndexedIndirectAddressing()
 {
     u16 address = Fetch16() + m_X.GetValue();
     u8 l = MemoryRead(address);
@@ -402,22 +402,22 @@ inline u16 HuC6280::AbsoluteIndexedIndirectAddressing()
     return Address16(h, l);
 }
 
-inline bool HuC6280::RunToBreakpointHit()
+INLINE bool HuC6280::RunToBreakpointHit()
 {
     return m_run_to_breakpoint_hit && (m_clock_cycles == 0);
 }
 
-inline std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints()
+INLINE std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints()
 {
     return &m_breakpoints;
 }
 
-inline std::stack<HuC6280::GG_CallStackEntry>* HuC6280::GetDisassemblerCallStack()
+INLINE std::stack<HuC6280::GG_CallStackEntry>* HuC6280::GetDisassemblerCallStack()
 {
     return &m_disassembler_call_stack;
 }
 
-inline void HuC6280::PushCallStack(u16 src, u16 dest, u16 back)
+INLINE void HuC6280::PushCallStack(u16 src, u16 dest, u16 back)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
     GG_CallStackEntry entry;
@@ -437,7 +437,7 @@ inline void HuC6280::PushCallStack(u16 src, u16 dest, u16 back)
 #endif
 }
 
-inline void HuC6280::PopCallStack()
+INLINE void HuC6280::PopCallStack()
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
     if (!m_disassembler_call_stack.empty())
@@ -445,7 +445,7 @@ inline void HuC6280::PopCallStack()
 #endif
 }
 
-inline void HuC6280::CheckBreakpoints()
+INLINE void HuC6280::CheckBreakpoints()
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
 
@@ -499,7 +499,7 @@ inline void HuC6280::CheckBreakpoints()
 #endif
 }
 
-inline void HuC6280::DisassembleNextOPCode()
+INLINE void HuC6280::DisassembleNextOPCode()
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
 
@@ -541,7 +541,7 @@ inline void HuC6280::DisassembleNextOPCode()
 #endif
 }
 
-inline void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, u8 opcode, u16 address)
+INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, u8 opcode, u16 address)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
     u8 opcode_size = k_huc6280_opcode_sizes[opcode];

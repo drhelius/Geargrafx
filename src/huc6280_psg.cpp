@@ -159,8 +159,8 @@ void HuC6280PSG::Sync()
             u8 right_vol = ch->amplitude & 0x0F;
             u8 channel_vol = (ch->control >> 1) & 0x0F;
 
-            u8 temp_left_vol = std::min(0x0F, (0x0F - main_left_vol) + (0x0F - left_vol) + (0x0F - channel_vol));
-            u8 temp_right_vol = std::min(0x0F, (0x0F - main_right_vol) + (0x0F - right_vol) + (0x0F - channel_vol));
+            u8 temp_left_vol = MIN(0x0F, (0x0F - main_left_vol) + (0x0F - left_vol) + (0x0F - channel_vol));
+            u8 temp_right_vol = MIN(0x0F, (0x0F - main_right_vol) + (0x0F - right_vol) + (0x0F - channel_vol));
 
             u16 final_left_vol = m_volume_lut[(temp_left_vol << 1) | (~ch->control & 0x01)];
             u16 final_right_vol = m_volume_lut[(temp_right_vol << 1) | (~ch->control & 0x01)];

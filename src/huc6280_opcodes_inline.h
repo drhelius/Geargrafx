@@ -25,7 +25,7 @@
 #include "memory.h"
 #include "huc6280_names.h"
 
-inline void HuC6280::OPCodes_ADC(u8 value)
+INLINE void HuC6280::OPCodes_ADC(u8 value)
 {
     u8 a;
 
@@ -88,7 +88,7 @@ inline void HuC6280::OPCodes_ADC(u8 value)
         m_A.SetValue(final_result);
 }
 
-inline void HuC6280::OPCodes_AND(u8 value)
+INLINE void HuC6280::OPCodes_AND(u8 value)
 {
     u8 result;
 #if !defined(GG_TESTING)
@@ -109,7 +109,7 @@ inline void HuC6280::OPCodes_AND(u8 value)
     SetOrClearZNFlags(result);
 }
 
-inline void HuC6280::OPCodes_ASL_Accumulator()
+INLINE void HuC6280::OPCodes_ASL_Accumulator()
 {
     u8 value = m_A.GetValue();
     u8 result = static_cast<u8>(value << 1);
@@ -121,7 +121,7 @@ inline void HuC6280::OPCodes_ASL_Accumulator()
         ClearFlag(FLAG_CARRY);
 }
 
-inline void HuC6280::OPCodes_ASL_Memory(u16 address)
+INLINE void HuC6280::OPCodes_ASL_Memory(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = static_cast<u8>(value << 1);
@@ -133,7 +133,7 @@ inline void HuC6280::OPCodes_ASL_Memory(u16 address)
         ClearFlag(FLAG_CARRY);
 }
 
-inline void HuC6280::OPcodes_Branch(bool condition)
+INLINE void HuC6280::OPcodes_Branch(bool condition)
 {
     if (condition)
     {
@@ -147,7 +147,7 @@ inline void HuC6280::OPcodes_Branch(bool condition)
         m_PC.Increment();
 }
 
-inline void HuC6280::OPCodes_BIT(u16 address)
+INLINE void HuC6280::OPCodes_BIT(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = m_A.GetValue() & value;
@@ -158,7 +158,7 @@ inline void HuC6280::OPCodes_BIT(u16 address)
     m_P.SetValue(flags);
 }
 
-inline void HuC6280::OPCodes_BIT_Immediate(u16 address)
+INLINE void HuC6280::OPCodes_BIT_Immediate(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = m_A.GetValue() & value;
@@ -168,7 +168,7 @@ inline void HuC6280::OPCodes_BIT_Immediate(u16 address)
     m_P.SetValue(flags);
 }
 
-inline void HuC6280::OPCodes_BRK()
+INLINE void HuC6280::OPCodes_BRK()
 {
     u16 pc = m_PC.GetValue();
     StackPush16(pc + 1);
@@ -195,7 +195,7 @@ inline void HuC6280::OPCodes_BRK()
 #endif
 }
 
-inline void HuC6280::OPCodes_Subroutine()
+INLINE void HuC6280::OPCodes_Subroutine()
 {
     u16 pc = m_PC.GetValue();
     s8 displacement = RelativeAddressing();
@@ -210,7 +210,7 @@ inline void HuC6280::OPCodes_Subroutine()
 
 }
 
-inline void HuC6280::OPCodes_CMP(EightBitRegister* reg, u8 value)
+INLINE void HuC6280::OPCodes_CMP(EightBitRegister* reg, u8 value)
 {
     u8 reg_value = reg->GetValue();
     u8 result = reg_value - value;
@@ -221,7 +221,7 @@ inline void HuC6280::OPCodes_CMP(EightBitRegister* reg, u8 value)
         ClearFlag(FLAG_CARRY);
 }
 
-inline void HuC6280::OPCodes_DEC_Mem(u16 address)
+INLINE void HuC6280::OPCodes_DEC_Mem(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = value - 1;
@@ -229,13 +229,13 @@ inline void HuC6280::OPCodes_DEC_Mem(u16 address)
     SetOrClearZNFlags(result);
 }
 
-inline void HuC6280::OPCodes_DEC_Reg(EightBitRegister* reg)
+INLINE void HuC6280::OPCodes_DEC_Reg(EightBitRegister* reg)
 {
     reg->Decrement();
     SetOrClearZNFlags(reg->GetValue());
 }
 
-inline void HuC6280::OPCodes_EOR(u8 value)
+INLINE void HuC6280::OPCodes_EOR(u8 value)
 {
     u8 result;
 #if !defined(GG_TESTING)
@@ -256,7 +256,7 @@ inline void HuC6280::OPCodes_EOR(u8 value)
     SetOrClearZNFlags(result);
 }
 
-inline void HuC6280::OPCodes_INC_Mem(u16 address)
+INLINE void HuC6280::OPCodes_INC_Mem(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = value + 1;
@@ -264,19 +264,19 @@ inline void HuC6280::OPCodes_INC_Mem(u16 address)
     SetOrClearZNFlags(result);
 }
 
-inline void HuC6280::OPCodes_INC_Reg(EightBitRegister* reg)
+INLINE void HuC6280::OPCodes_INC_Reg(EightBitRegister* reg)
 {
     reg->Increment();
     SetOrClearZNFlags(reg->GetValue());
 }
 
-inline void HuC6280::OPCodes_LD(EightBitRegister* reg, u8 value)
+INLINE void HuC6280::OPCodes_LD(EightBitRegister* reg, u8 value)
 {
     reg->SetValue(value);
     SetOrClearZNFlags(value);
 }
 
-inline void HuC6280::OPCodes_LSR_Accumulator()
+INLINE void HuC6280::OPCodes_LSR_Accumulator()
 {
     u8 value = m_A.GetValue();
     u8 result = value >> 1;
@@ -288,7 +288,7 @@ inline void HuC6280::OPCodes_LSR_Accumulator()
         ClearFlag(FLAG_CARRY);
 }
 
-inline void HuC6280::OPCodes_LSR_Memory(u16 address)
+INLINE void HuC6280::OPCodes_LSR_Memory(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = value >> 1;
@@ -300,7 +300,7 @@ inline void HuC6280::OPCodes_LSR_Memory(u16 address)
         ClearFlag(FLAG_CARRY);
 }
 
-inline void HuC6280::OPCodes_ORA(u8 value)
+INLINE void HuC6280::OPCodes_ORA(u8 value)
 {
     u8 result;
 
@@ -322,13 +322,13 @@ inline void HuC6280::OPCodes_ORA(u8 value)
     SetOrClearZNFlags(result);
 }
 
-inline void HuC6280::OPCodes_RMB(u8 bit, u16 address)
+INLINE void HuC6280::OPCodes_RMB(u8 bit, u16 address)
 {
     u8 result = UNSET_BIT(MemoryRead(address), bit);
     MemoryWrite(address, result);
 }
 
-inline void HuC6280::OPCodes_ROL_Accumulator()
+INLINE void HuC6280::OPCodes_ROL_Accumulator()
 {
     u8 value = m_A.GetValue();
     u8 result = static_cast<u8>(value << 1);
@@ -341,7 +341,7 @@ inline void HuC6280::OPCodes_ROL_Accumulator()
         ClearFlag(FLAG_CARRY);
 }
 
-inline void HuC6280::OPCodes_ROL_Memory(u16 address)
+INLINE void HuC6280::OPCodes_ROL_Memory(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = static_cast<u8>(value << 1);
@@ -354,7 +354,7 @@ inline void HuC6280::OPCodes_ROL_Memory(u16 address)
         ClearFlag(FLAG_CARRY);
 }
 
-inline void HuC6280::OPCodes_ROR_Accumulator()
+INLINE void HuC6280::OPCodes_ROR_Accumulator()
 {
     u8 value = m_A.GetValue();
     u8 result = value >> 1;
@@ -367,7 +367,7 @@ inline void HuC6280::OPCodes_ROR_Accumulator()
         ClearFlag(FLAG_CARRY);
 }
 
-inline void HuC6280::OPCodes_ROR_Memory(u16 address)
+INLINE void HuC6280::OPCodes_ROR_Memory(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = value >> 1;
@@ -380,7 +380,7 @@ inline void HuC6280::OPCodes_ROR_Memory(u16 address)
         ClearFlag(FLAG_CARRY);
 }
 
-inline void HuC6280::OPCodes_SBC(u8 value)
+INLINE void HuC6280::OPCodes_SBC(u8 value)
 {
     u16 result = 0;
 
@@ -430,50 +430,50 @@ inline void HuC6280::OPCodes_SBC(u8 value)
     m_A.SetValue((u8)result);
 }
 
-inline void HuC6280::OPCodes_SMB(u8 bit, u16 address)
+INLINE void HuC6280::OPCodes_SMB(u8 bit, u16 address)
 {
     u8 result = SET_BIT(MemoryRead(address), bit);
     MemoryWrite(address, result);
 }
 
-inline void HuC6280::OPCodes_Store(EightBitRegister* reg, u16 address)
+INLINE void HuC6280::OPCodes_Store(EightBitRegister* reg, u16 address)
 {
     u8 value = reg->GetValue();
     MemoryWrite(address, value);
 }
 
-inline void HuC6280::OPCodes_STZ(u16 address)
+INLINE void HuC6280::OPCodes_STZ(u16 address)
 {
     MemoryWrite(address, 0x00);
 }
 
-inline void HuC6280::OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2)
+INLINE void HuC6280::OPCodes_Swap(EightBitRegister* reg1, EightBitRegister* reg2)
 {
     u8 temp = reg1->GetValue();
     reg1->SetValue(reg2->GetValue());
     reg2->SetValue(temp);
 }
 
-inline void HuC6280::OPCodes_TAM()
+INLINE void HuC6280::OPCodes_TAM()
 {
     u8 bits = Fetch8();
     m_memory->SetMprTAM(bits, m_A.GetValue());
 }
 
-inline void HuC6280::OPCodes_TMA()
+INLINE void HuC6280::OPCodes_TMA()
 {
     u8 bits = Fetch8();
     m_A.SetValue(m_memory->GetMprTMA(bits));
 }
 
-inline void HuC6280::OPCodes_Transfer(EightBitRegister* source, EightBitRegister* dest)
+INLINE void HuC6280::OPCodes_Transfer(EightBitRegister* source, EightBitRegister* dest)
 {
     u8 value = source->GetValue();
     dest->SetValue(value);
     SetOrClearZNFlags(value);
 }
 
-inline void HuC6280::OPCodes_TRB(u16 address)
+INLINE void HuC6280::OPCodes_TRB(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = ~m_A.GetValue() & value;
@@ -491,7 +491,7 @@ inline void HuC6280::OPCodes_TRB(u16 address)
     m_P.SetValue(flags);
 }
 
-inline void HuC6280::OPCodes_TSB(u16 address)
+INLINE void HuC6280::OPCodes_TSB(u16 address)
 {
     u8 value = MemoryRead(address);
     u8 result = m_A.GetValue() | value;
@@ -509,7 +509,7 @@ inline void HuC6280::OPCodes_TSB(u16 address)
     m_P.SetValue(flags);
 }
 
-inline void HuC6280::OPCodes_TST(u8 value, u16 address)
+INLINE void HuC6280::OPCodes_TST(u8 value, u16 address)
 {
     u8 mem = MemoryRead(address);
     ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
@@ -519,7 +519,7 @@ inline void HuC6280::OPCodes_TST(u8 value, u16 address)
     m_P.SetValue(flags);
 }
 
-inline void HuC6280::OPCodes_TAI()
+INLINE void HuC6280::OPCodes_TAI()
 {
     if (m_transfer_state == 0)
     {
@@ -550,7 +550,7 @@ inline void HuC6280::OPCodes_TAI()
     }
 }
 
-inline void HuC6280::OPCodes_TDD()
+INLINE void HuC6280::OPCodes_TDD()
 {
     if (m_transfer_state == 0)
     {
@@ -580,7 +580,7 @@ inline void HuC6280::OPCodes_TDD()
     }
 }
 
-inline void HuC6280::OPCodes_TIA()
+INLINE void HuC6280::OPCodes_TIA()
 {
     if (m_transfer_state == 0)
     {
@@ -611,7 +611,7 @@ inline void HuC6280::OPCodes_TIA()
     }
 }
 
-inline void HuC6280::OPCodes_TII()
+INLINE void HuC6280::OPCodes_TII()
 {
     if (m_transfer_state == 0)
     {
@@ -641,7 +641,7 @@ inline void HuC6280::OPCodes_TII()
     }
 }
 
-inline void HuC6280::OPCodes_TIN()
+INLINE void HuC6280::OPCodes_TIN()
 {
     if (m_transfer_state == 0)
     {
@@ -670,7 +670,7 @@ inline void HuC6280::OPCodes_TIN()
     }
 }
 
-inline void HuC6280::OPCodes_TransferStart()
+INLINE void HuC6280::OPCodes_TransferStart()
 {
     m_transfer_state = 2;
 
@@ -687,7 +687,7 @@ inline void HuC6280::OPCodes_TransferStart()
     m_cycles += 14;
 }
 
-inline void HuC6280::OPCodes_TransferEnd()
+INLINE void HuC6280::OPCodes_TransferEnd()
 {
     m_transfer_state = 0;
     m_A.SetValue(StackPop8());
@@ -697,7 +697,7 @@ inline void HuC6280::OPCodes_TransferEnd()
     m_cycles += 3;
 }
 
-inline void HuC6280::UnofficialOPCode()
+INLINE void HuC6280::UnofficialOPCode()
 {
 #if defined(GG_DEBUG)
     u16 opcode_address = m_PC.GetValue() - 1;

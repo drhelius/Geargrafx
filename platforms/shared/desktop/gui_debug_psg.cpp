@@ -189,8 +189,8 @@ void gui_debug_window_psg(void)
                 }
 
                 int half_window_size = 100;
-                int x_min_left = std::max(0, trigger_left - half_window_size);
-                int x_max_left = std::min(data_size, trigger_left + half_window_size);
+                int x_min_left = MAX(0, trigger_left - half_window_size);
+                int x_max_left = MIN(data_size, trigger_left + half_window_size);
 
                 ImPlotAxisFlags flags = ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
 
@@ -205,8 +205,8 @@ void gui_debug_window_psg(void)
 
                 ImGui::SameLine();
 
-                int x_min_right = std::max(0, trigger_right - half_window_size);
-                int x_max_right = std::min(data_size, trigger_right + half_window_size);
+                int x_min_right = MAX(0, trigger_right - half_window_size);
+                int x_max_right = MIN(data_size, trigger_right + half_window_size);
 
                 if (ImPlot::BeginPlot("Right wave", ImVec2(80, 50), ImPlotFlags_CanvasOnly))
                 {
