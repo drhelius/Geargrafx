@@ -102,6 +102,9 @@ private:
     u16 m_read_buffer;
     bool m_trigger_sat_transfer;
     u16 m_sat_transfer_pending;
+    u32 m_vram_transfer_pending;
+    u16 m_vram_transfer_src;
+    u16 m_vram_transfer_dest;
     s32 m_hpos;
     s32 m_vpos;
     s32 m_bg_offset_y;
@@ -134,6 +137,7 @@ private:
 
 private:
     void SATTransfer();
+    void VRAMTransfer();
     void NextVerticalState();
     void NextHorizontalState();
     void VBlankIRQ();

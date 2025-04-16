@@ -26,7 +26,10 @@
 
 inline u16 HuC6270::Clock()
 {
-    SATTransfer();
+    if (m_sat_transfer_pending > 0)
+        SATTransfer();
+    if (m_vram_transfer_pending > 0)
+        VRAMTransfer();
 
     u16 pixel = 0x100;
 
@@ -180,31 +183,10 @@ inline void HuC6270::WriteRegister(u16 address, u8 value)
                 case HUC6270_REG_LENR:
                     if (msb)
                     {
-                        s16 src_increment = m_register[HUC6270_REG_DCR] & 0x02 ? -1 : 1;
-                        s16 dest_increment = m_register[HUC6270_REG_DCR] & 0x04 ? -1 : 1;
-
-                        do
-                        {
-                            if (m_register[HUC6270_REG_DESR] >= 0x8000)
-                            {
-                                Debug("[PC=%04X] HuC6270 ignoring write VRAM-DMA out of bounds: %04X", m_huc6280->GetState()->PC->GetValue(), m_register[HUC6270_REG_DESR], value);
-                            }
-                            else
-                            {
-                                m_vram[m_register[HUC6270_REG_DESR] & 0x7FFF] = m_vram[m_register[HUC6270_REG_SOUR] & 0x7FFF];
-                            }
-
-                            m_register[HUC6270_REG_SOUR] += src_increment;
-                            m_register[HUC6270_REG_DESR] += dest_increment;
-                            m_register[HUC6270_REG_LENR]--;
-                        }
-                        while (m_register[HUC6270_REG_LENR] != 0xFFFF);
-
-                        m_status_register |= HUC6270_STATUS_VRAM_END;
-                        if (m_register[HUC6270_REG_DCR] & 0x02)
-                        {
-                            m_huc6280->AssertIRQ1(true);
-                        }
+                        m_vram_transfer_pending = 4 * (m_register[HUC6270_REG_LENR] + 1);
+                        m_vram_transfer_src = m_register[HUC6270_REG_SOUR];
+                        m_vram_transfer_dest = m_register[HUC6270_REG_DESR];
+                        m_status_register |= HUC6270_STATUS_BUSY;
                     }
                     break;
                 // 0x13
@@ -420,16 +402,13 @@ inline void HuC6270::RenderLine()
 
 inline void HuC6270::SATTransfer()
 {
-    if (m_sat_transfer_pending > 0)
-    {
-        m_sat_transfer_pending--;
+    m_sat_transfer_pending--;
 
-        if ((m_sat_transfer_pending & 3) == 0)
-        {
-            u16 satb = m_register[HUC6270_REG_DVSSR];
-            int i = 255 - (m_sat_transfer_pending >> 2);
-            m_sat[i] = m_vram[(satb + i) & 0x7FFF];
-        }
+    if ((m_sat_transfer_pending & 3) == 0)
+    {
+        u16 satb = m_register[HUC6270_REG_DVSSR];
+        int i = 255 - (m_sat_transfer_pending >> 2);
+        m_sat[i] = m_vram[(satb + i) & 0x7FFF];
 
         if (m_sat_transfer_pending == 0)
         {
@@ -438,6 +417,39 @@ inline void HuC6270::SATTransfer()
             if (m_register[HUC6270_REG_DCR] & 0x01)
             {
                 m_status_register |= HUC6270_STATUS_SAT_END;
+                m_huc6280->AssertIRQ1(true);
+            }
+        }
+    }
+}
+
+inline void HuC6270::VRAMTransfer()
+{
+    m_vram_transfer_pending--;
+
+    if ((m_vram_transfer_pending & 3) == 0)
+    {
+        if (m_vram_transfer_dest < 0x8000)
+        {
+            m_vram[m_vram_transfer_dest & 0x7FFF] = m_vram[m_vram_transfer_src & 0x7FFF];
+        }
+        else
+        {
+            Debug("[PC=%04X] HuC6270 ignoring write VRAM-DMA out of bounds: %04X", m_huc6280->GetState()->PC->GetValue(), m_register[HUC6270_REG_DESR]);
+        }
+
+        s8 src_increment = IS_SET_BIT(m_register[HUC6270_REG_DCR], 2) ? -1 : 1;
+        s8 dest_increment = IS_SET_BIT(m_register[HUC6270_REG_DCR], 3) ? -1 : 1;
+        m_vram_transfer_src += src_increment;
+        m_vram_transfer_dest += dest_increment;
+
+        if (m_vram_transfer_pending == 0)
+        {
+            m_status_register &= ~HUC6270_STATUS_BUSY;
+
+            if (m_register[HUC6270_REG_DCR] & 0x02)
+            {
+                m_status_register |= HUC6270_STATUS_VRAM_END;
                 m_huc6280->AssertIRQ1(true);
             }
         }

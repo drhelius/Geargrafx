@@ -61,6 +61,9 @@ void HuC6270::Reset()
     m_read_buffer = 0xFFFF;
     m_trigger_sat_transfer = false;
     m_sat_transfer_pending = 0;
+    m_vram_transfer_pending = 0;
+    m_vram_transfer_src = 0;
+    m_vram_transfer_dest = 0;
     m_hpos = 0;
     m_vpos = 0;
     m_bg_offset_y = 0;
@@ -308,6 +311,9 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_read_buffer), sizeof(m_read_buffer));
     stream.write(reinterpret_cast<const char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
     stream.write(reinterpret_cast<const char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
+    stream.write(reinterpret_cast<const char*> (&m_vram_transfer_pending), sizeof(m_vram_transfer_pending));
+    stream.write(reinterpret_cast<const char*> (&m_vram_transfer_src), sizeof(m_vram_transfer_src));
+    stream.write(reinterpret_cast<const char*> (&m_vram_transfer_dest), sizeof(m_vram_transfer_dest));
     stream.write(reinterpret_cast<const char*> (&m_hpos), sizeof(m_hpos));
     stream.write(reinterpret_cast<const char*> (&m_vpos), sizeof(m_vpos));
     stream.write(reinterpret_cast<const char*> (&m_bg_offset_y), sizeof(m_bg_offset_y));
@@ -358,6 +364,9 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_read_buffer), sizeof(m_read_buffer));
     stream.read(reinterpret_cast<char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
     stream.read(reinterpret_cast<char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
+    stream.read(reinterpret_cast<char*> (&m_vram_transfer_pending), sizeof(m_vram_transfer_pending));
+    stream.read(reinterpret_cast<char*> (&m_vram_transfer_src), sizeof(m_vram_transfer_src));
+    stream.read(reinterpret_cast<char*> (&m_vram_transfer_dest), sizeof(m_vram_transfer_dest));
     stream.read(reinterpret_cast<char*> (&m_hpos), sizeof(m_hpos));
     stream.read(reinterpret_cast<char*> (&m_vpos), sizeof(m_vpos));
     stream.read(reinterpret_cast<char*> (&m_bg_offset_y), sizeof(m_bg_offset_y));
