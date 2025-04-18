@@ -22,10 +22,11 @@
 
 #include "common.h"
 
-#define GG_GAMEDB_NONE          0x00
-#define GG_GAMEDB_SGX_REQUIRED  0x01
-#define GG_GAMEDB_SGX_OPTIONAL  0x02
-#define GG_GAMEDB_SF2_MAPPER    0x04
+#define GG_GAMEDB_NONE              0x00
+#define GG_GAMEDB_SGX_REQUIRED      0x01
+#define GG_GAMEDB_SGX_OPTIONAL      0x02
+#define GG_GAMEDB_SF2_MAPPER        0x04
+#define GG_GAMEDB_CARD_RAM_8000     0x08
 
 struct GG_Game_DB_Entry
 {
@@ -48,6 +49,9 @@ const GG_Game_DB_Entry k_game_database[] =
 
     // SF2 MAPPER
     { 0xD15CB6BB, "Street Fighter II' - Champion Edition (J)", GG_GAMEDB_SF2_MAPPER},
+
+    // CARD RAM SIZE = 0x8000
+    { 0x083C956A, "Populous (J)", GG_GAMEDB_CARD_RAM_8000},
 
     {0, 0, GG_GAMEDB_NONE}
 };

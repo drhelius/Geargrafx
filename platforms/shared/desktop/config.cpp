@@ -138,6 +138,7 @@ void config_read(void)
     config_debug.font_size = read_int("Debug", "FontSize", 0);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
     config_debug.reset_ram = read_int("Debug", "InitRam", 1);
+    config_debug.reset_card_ram = read_int("Debug", "InitCardRam", 1);
     config_debug.reset_registers = read_int("Debug", "InitRegisters", 0);
     config_debug.reset_color_table = read_int("Debug", "InitColorTable", 0);
     config_debug.reset_mpr = read_int("Debug", "InitMPR", 0);
@@ -277,6 +278,7 @@ void config_write(void)
     write_int("Debug", "FontSize", config_debug.font_size);
     write_bool("Debug", "MultiViewport", config_debug.multi_viewport);
     write_int("Debug", "InitRam", config_debug.reset_ram);
+    write_int("Debug", "InitCardRam", config_debug.reset_card_ram);
     write_int("Debug", "InitRegisters", config_debug.reset_registers);
     write_int("Debug", "InitColorTable", config_debug.reset_color_table);
     write_int("Debug", "InitMPR", config_debug.reset_mpr);

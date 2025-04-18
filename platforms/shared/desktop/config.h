@@ -137,6 +137,7 @@ struct config_Debug
     int font_size = 0;
     bool multi_viewport = false;
     int reset_ram = 1;
+    int reset_card_ram = 1;
     int reset_registers = 0;
     int reset_color_table = 0;
     int reset_mpr = 0;

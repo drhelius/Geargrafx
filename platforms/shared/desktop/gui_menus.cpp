@@ -60,7 +60,7 @@ void gui_init_menus(void)
     strcpy(gui_screenshots_path, config_emulator.screenshots_path.c_str());
     gui_shortcut_open_rom = false;
 
-    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram));
+    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
     emu_get_core()->GetHuC6260()->SetResetValue(get_reset_value(config_debug.reset_color_table));
     emu_get_core()->GetHuC6280()->SetResetValue(get_reset_value(config_debug.reset_registers));
 }
@@ -592,14 +592,25 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
-        if (ImGui::BeginMenu("Reset Values"))
+        if (ImGui::BeginMenu("Reset Values", config_debug.debug))
         {
             if (ImGui::BeginMenu("RAM"))
             {
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_ram", &config_debug.reset_ram, "Random\0 0x00\0 0xFF\0\0"))
                 {
-                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram));
+                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Card RAM"))
+            {
+                ImGui::PushItemWidth(100.0f);
+                if (ImGui::Combo("##init_card_ram", &config_debug.reset_card_ram, "Random\0 0x00\0 0xFF\0\0"))
+                {
+                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
@@ -632,7 +643,7 @@ static void menu_debug(void)
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_mpr", &config_debug.reset_mpr, "Random\0 0x00\0 0xFF\0\0"))
                 {
-                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram));
+                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();

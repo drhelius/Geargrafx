@@ -40,9 +40,9 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
     m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, address, true);
 #endif
 
-    u8 mpr = address >> 13;
+    u8 mpr_index = address >> 13;
+    u8 bank = m_mpr[mpr_index];
     u16 offset = address & 0x1FFF;
-    u8 bank = m_mpr[mpr];
 
     // 0x00 - 0x7F
     if (bank < 0x80)
@@ -50,6 +50,10 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
         // HuCard ROM
         if (IsValidPointer(m_current_mapper))
             return m_current_mapper->Read(bank, offset);
+        else if ((m_card_ram_size > 0) && (bank >= m_card_ram_start) && (bank <= m_card_ram_end))
+        {
+            return m_card_ram_map[bank - m_card_ram_start][offset];
+        }
         else
         {
             u8** rom_map = m_cartridge->GetROMMap();
@@ -174,47 +178,51 @@ INLINE void Memory::Write(u16 address, u8 value)
 #endif
 
     u8 mpr_index = address >> 13;
-    u8 mpr_value = m_mpr[mpr_index];
+    u8 bank = m_mpr[mpr_index];
     u16 offset = address & 0x1FFF;
 
     // 0x00 - 0x7F
-    if (mpr_value < 0x80)
+    if (bank < 0x80)
     {
         // HuCard ROM
         if (IsValidPointer(m_current_mapper))
-            m_current_mapper->Write(mpr_value, offset, value);
+            m_current_mapper->Write(bank, offset, value);
+        else if ((m_card_ram_size > 0) && (bank >= m_card_ram_start) && (bank <= m_card_ram_end))
+        {
+            m_card_ram_map[bank - m_card_ram_start][offset] = value;
+        }
         else
         {
-            Debug("Attempted write to HuCard ROM at %04X, value=%02X, bank=%02X", address, value, mpr_value);
+            Debug("Attempted write to HuCard ROM at %04X, value=%02X, bank=%02X", address, value, bank);
         }
     }
     // 0x80 - 0xF6
-    else if (mpr_value < 0xF7)
+    else if (bank < 0xF7)
     {
         // Unused
-        Debug("Unused write at %04X, value=%02X, bank=%02X", address, value, mpr_value);
+        Debug("Unused write at %04X, value=%02X, bank=%02X", address, value, bank);
     }
     // 0xF7
-    else if (mpr_value < 0xF8)
+    else if (bank < 0xF8)
     {
         // Savegame RAM
-        Debug("Savegame RAM write at %04X, value=%02X, bank=%02X", address, value, mpr_value);
+        Debug("Savegame RAM write at %04X, value=%02X, bank=%02X", address, value, bank);
     }
     // 0xF8 - 0xFB
-    else if (mpr_value < 0xFC)
+    else if (bank < 0xFC)
     {
         // RAM
-        if (mpr_value > 0xF8)
+        if (bank > 0xF8)
         {
-            Debug("SGX RAM write at %04X, value=%02X, bank=%02X", address, value, mpr_value);
+            Debug("SGX RAM write at %04X, value=%02X, bank=%02X", address, value, bank);
         }
         m_wram[offset] = value;
     }
     // 0xFC - 0xFE
-    else if (mpr_value < 0xFF)
+    else if (bank < 0xFF)
     {
         // Unused
-        Debug("Unused write at %04X, value=%02X, bank=%02X", address, value, mpr_value);
+        Debug("Unused write at %04X, value=%02X, bank=%02X", address, value, bank);
     }
     else
     {

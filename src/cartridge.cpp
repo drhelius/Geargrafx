@@ -29,6 +29,7 @@ Cartridge::Cartridge()
 {
     InitPointer(m_rom);
     m_rom_size = 0;
+    m_card_ram_size = 0;
     m_ready = false;
     m_file_path[0] = 0;
     m_file_name[0] = 0;
@@ -58,6 +59,7 @@ void Cartridge::Reset()
 {
     SafeDeleteArray(m_rom);
     m_rom_size = 0;
+    m_card_ram_size = 0;
     m_ready = false;
     m_file_path[0] = 0;
     m_file_name[0] = 0;
@@ -99,6 +101,11 @@ int Cartridge::GetROMSize()
 int Cartridge::GetROMBankCount()
 {
     return m_rom_bank_count;
+}
+
+int Cartridge::GetCardRAMSize()
+{
+    return m_card_ram_size;
 }
 
 const char* Cartridge::GetFilePath()
@@ -356,6 +363,12 @@ void Cartridge::GatherInfoFromDB()
         {
             found = true;
             Log("ROM found in database: %s. CRC: %08X", k_game_database[i].title, m_crc);
+
+            if (k_game_database[i].flags & GG_GAMEDB_CARD_RAM_8000)
+            {
+                m_card_ram_size = 0x8000;
+                Log("ROM has 32KB of cartridge RAM");
+            }
 
             if (k_game_database[i].flags & GG_GAMEDB_SGX_REQUIRED)
             {

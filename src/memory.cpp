@@ -36,17 +36,22 @@ Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* 
     m_input = input;
     m_audio = audio;
     InitPointer(m_wram);
+    InitPointer(m_card_ram);
+    InitPointer(m_card_ram_map);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
     InitPointer(m_sf2_mapper);
     m_mpr_reset_value = -1;
     m_wram_reset_value = 0;
+    m_card_ram_reset_value = 0;
 }
 
 Memory::~Memory()
 {
     SafeDeleteArray(m_wram);
+    SafeDeleteArray(m_card_ram);
+    SafeDeleteArray(m_card_ram_map);
     SafeDeleteArray(m_test_memory);
     if (IsValidPointer(m_disassembler))
     {
@@ -62,6 +67,8 @@ Memory::~Memory()
 void Memory::Init()
 {
     m_wram = new u8[0x2000];
+    m_card_ram = new u8[0x8000];
+    m_card_ram_map = new u8*[0x20];
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_disassembler = new GG_Disassembler_Record*[0x200000];
@@ -121,10 +128,42 @@ void Memory::Reset()
     }
     else
         m_current_mapper = NULL;
+
+    m_card_ram_size = MIN(m_cartridge->GetCardRAMSize(), 0x8000);
+
+    if (m_card_ram_size == 0x8000)
+    {
+        m_card_ram_start = 0x40;
+        m_card_ram_end = 0x5F;
+    }
+    else
+    {
+        m_card_ram_start = 0x00;
+        m_card_ram_end = 0x00;
+    }
+
+    if (m_card_ram_size > 0)
+    {
+        for (int i = 0; i < m_card_ram_size; i++)
+        {
+            if (m_card_ram_reset_value < 0)
+                m_card_ram[i] = rand() & 0xFF;
+            else
+                m_card_ram[i] = m_card_ram_reset_value & 0xFF;
+        }
+
+        int ram_card_banks = MIN(m_card_ram_end - m_card_ram_start + 1, 0x20);
+
+        for (int i = 0; i < ram_card_banks; i++)
+        {
+            m_card_ram_map[i] = &m_card_ram[(i * 0x2000) % m_card_ram_size];
+        }
+    }
 }
 
-void Memory::SetResetValues(int mpr, int wram)
+void Memory::SetResetValues(int mpr, int wram, int card_ram)
 {
+    m_card_ram_reset_value = card_ram;
     m_mpr_reset_value = mpr;
     m_wram_reset_value = wram;
 }
@@ -238,6 +277,10 @@ void Memory::SaveState(std::ostream& stream)
     using namespace std;
     stream.write(reinterpret_cast<const char*> (m_mpr), sizeof(m_mpr));
     stream.write(reinterpret_cast<const char*> (m_wram), sizeof(u8) * 0x2000);
+    stream.write(reinterpret_cast<const char*> (m_card_ram), sizeof(u8) * 0x8000);
+    stream.write(reinterpret_cast<const char*> (&m_card_ram_size), sizeof(m_card_ram_size));
+    stream.write(reinterpret_cast<const char*> (&m_card_ram_start), sizeof(m_card_ram_start));
+    stream.write(reinterpret_cast<const char*> (&m_card_ram_end), sizeof(m_card_ram_end));
     stream.write(reinterpret_cast<const char*> (&m_io_buffer), sizeof(m_io_buffer));
     stream.write(reinterpret_cast<const char*> (&m_mpr_buffer), sizeof(m_mpr_buffer));
     if (IsValidPointer(m_current_mapper))
@@ -249,6 +292,10 @@ void Memory::LoadState(std::istream& stream)
     using namespace std;
     stream.read(reinterpret_cast<char*> (m_mpr), sizeof(m_mpr));
     stream.read(reinterpret_cast<char*> (m_wram), sizeof(u8) * 0x2000);
+    stream.read(reinterpret_cast<char*> (m_card_ram), sizeof(u8) * 0x8000);
+    stream.read(reinterpret_cast<char*> (&m_card_ram_size), sizeof(m_card_ram_size));
+    stream.read(reinterpret_cast<char*> (&m_card_ram_start), sizeof(m_card_ram_start));
+    stream.read(reinterpret_cast<char*> (&m_card_ram_end), sizeof(m_card_ram_end));
     stream.read(reinterpret_cast<char*> (&m_io_buffer), sizeof(m_io_buffer));
     stream.read(reinterpret_cast<char*> (&m_mpr_buffer), sizeof(m_mpr_buffer));
     if (IsValidPointer(m_current_mapper))

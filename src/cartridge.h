@@ -42,6 +42,7 @@ public:
     CartridgeMapper GetMapper();
     int GetROMSize();
     int GetROMBankCount();
+    int GetCardRAMSize();
     const char* GetFilePath();
     const char* GetFileDirectory();
     const char* GetFileName();
@@ -62,6 +63,7 @@ private:
     u8** m_rom_map;
     int m_rom_size;
     int m_rom_bank_count;
+    int m_card_ram_size;
     bool m_ready;
     char m_file_path[512];
     char m_file_directory[512];

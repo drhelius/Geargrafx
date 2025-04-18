@@ -48,7 +48,7 @@ public:
     u8 GetMprTMA(u8 bits);
     u32 GetPhysicalAddress(u16 address);
     u8 GetBank(u16 address);
-    void SetResetValues(int mpr, int wram);
+    void SetResetValues(int mpr, int wram, int card_ram);
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
     GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
     void ResetDisassemblerRecords();
@@ -67,6 +67,11 @@ private:
     Audio* m_audio;
     u8 m_mpr[8];
     u8* m_wram;
+    u8* m_card_ram;
+    u8** m_card_ram_map;
+    int m_card_ram_size;
+    u8 m_card_ram_start;
+    u8 m_card_ram_end;
     GG_Disassembler_Record** m_disassembler;
     u8 m_io_buffer;
     u8 m_mpr_buffer;
@@ -74,6 +79,7 @@ private:
     Mapper* m_current_mapper;
     int m_mpr_reset_value;
     int m_wram_reset_value;
+    int m_card_ram_reset_value;
 };
 
 #include "memory_inline.h"
