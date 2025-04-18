@@ -63,8 +63,8 @@ public:
     void InitPalettes();
     void Reset();
     bool Clock();
-    u8 ReadRegister(u16 address);
-    void WriteRegister(u16 address, u8 value);
+    NO_INLINE u8 ReadRegister(u16 address);
+    NO_INLINE void WriteRegister(u16 address, u8 value);
     HuC6260_State* GetState();
     HuC6260_Speed GetSpeed();
     int GetClockDivider();
@@ -82,7 +82,7 @@ public:
     void LoadState(std::istream& stream);
 
 private:
-    void WritePixel(u16 pixel);
+    NO_INLINE void WritePixel(u16 pixel);
 
 private:
     HuC6270* m_huc6270;

@@ -426,10 +426,6 @@ INLINE void HuC6280::PushCallStack(u16 src, u16 dest, u16 back)
     entry.back = back;
     if (m_disassembler_call_stack.size() < 256)
         m_disassembler_call_stack.push(entry);
-    // else
-    // {
-    //     //Debug("** HuC6280 --> Disassembler Call Stack Overflow");
-    // }
 #else
     UNUSED(src);
     UNUSED(dest);

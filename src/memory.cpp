@@ -139,6 +139,61 @@ void Memory::ResetDisassemblerRecords()
 #endif
 }
 
+void Memory::SetMprTAM(u8 bits, u8 value)
+{
+    assert((bits != 0) && !(bits & (bits - 1)));
+
+    if(bits == 0)
+    {
+        Debug("No TAM bit: %02X", bits);
+        return;
+    }
+
+    if (bits & (bits - 1))
+    {
+        Debug("Invalid TAM bits: %02X", bits);
+    }
+
+    m_mpr_buffer = value;
+
+    for (int i = 0; i < 8; i++)
+    {
+        if ((bits & (0x01 << i)) != 0)
+        {
+            m_mpr[i] = value;
+        }
+    }
+}
+
+u8 Memory::GetMprTMA(u8 bits)
+{
+    assert((bits != 0) && !(bits & (bits - 1)));
+
+    if(bits == 0)
+    {
+        Debug("No TAM bit: %02X", bits);
+        return m_mpr_buffer;
+    }
+
+    if (bits & (bits - 1))
+    {
+        Debug("Invalid TAM bits: %02X", bits);
+    }
+
+    u8 ret = 0;
+
+    for (int i = 0; i < 8; i++)
+    {
+        if ((bits & (0x01 << i)) != 0)
+        {
+            ret |= m_mpr[i];
+        }
+    }
+
+    m_mpr_buffer = ret;
+    return ret;
+}
+
 u8* Memory::GetWram()
 {
     return m_wram;
@@ -148,6 +203,35 @@ GG_Disassembler_Record** Memory::GetAllDisassemblerRecords()
 {
     return m_disassembler;
 }
+
+GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
+{
+    u32 physical_address = GetPhysicalAddress(address);
+
+    GG_Disassembler_Record* record = m_disassembler[physical_address];
+
+    if (!IsValidPointer(record))
+    {
+        record = new GG_Disassembler_Record();
+        record->address = physical_address;
+        record->bank = GetBank(address);
+        record->segment[0] = 0;
+        record->name[0] = 0;
+        record->bytes[0] = 0;
+        record->size = 0;
+        for (int i = 0; i < 7; i++)
+            record->opcodes[i] = 0;
+        record->jump = false;
+        record->jump_address = 0;
+        record->jump_bank = 0;
+        record->subroutine = false;
+        record->irq = 0;
+        m_disassembler[physical_address] = record;
+    }
+
+    return record;
+}
+
 
 void Memory::SaveState(std::ostream& stream)
 {

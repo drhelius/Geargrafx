@@ -71,8 +71,8 @@ public:
     u16 Clock();
     void SetHSync(bool active);
     void SetVSync(bool active);
-    u8 ReadRegister(u16 address);
-    void WriteRegister(u16 address, u8 value);
+    NO_INLINE u8 ReadRegister(u16 address);
+    NO_INLINE void WriteRegister(u16 address, u8 value);
     HuC6270_State* GetState();
     u16* GetVRAM();
     u16* GetSAT();
@@ -136,10 +136,10 @@ private:
     HuC6270_Sprite_Data m_sprites[128];
 
 private:
-    void SATTransfer();
-    void VRAMTransfer();
-    void NextVerticalState();
-    void NextHorizontalState();
+    NO_INLINE void SATTransfer();
+    NO_INLINE void VRAMTransfer();
+    NO_INLINE void NextVerticalState();
+    NO_INLINE void NextHorizontalState();
     void VBlankIRQ();
     void RCRIRQ();
     void OverflowIRQ();
