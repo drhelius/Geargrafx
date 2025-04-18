@@ -94,31 +94,6 @@ void HuC6280PSG::Reset()
     }
 }
 
-int HuC6280PSG::EndFrame(s16* sample_buffer)
-{
-    Sync();
-
-    int samples = 0;
-
-    if (IsValidPointer(sample_buffer))
-    {
-        samples = m_buffer_index;
-        m_frame_samples = m_buffer_index;
-
-        for (int s = 0; s < samples; s++)
-        {
-            s16 final_sample = 0;
-            for (int i = 0; i < 6; i++)
-                final_sample += m_channels[i].output[s];
-            sample_buffer[s] = final_sample;
-        }
-    }
-
-    m_buffer_index = 0;
-
-    return samples;
-}
-
 void HuC6280PSG::Write(u16 address, u8 value)
 {
     Sync();
@@ -361,6 +336,31 @@ void HuC6280PSG::Sync()
     }
 
     m_elapsed_cycles = 0;
+}
+
+int HuC6280PSG::EndFrame(s16* sample_buffer)
+{
+    Sync();
+
+    int samples = 0;
+
+    if (IsValidPointer(sample_buffer))
+    {
+        samples = m_buffer_index;
+        m_frame_samples = m_buffer_index;
+
+        for (int s = 0; s < samples; s++)
+        {
+            s16 final_sample = 0;
+            for (int i = 0; i < 6; i++)
+                final_sample += m_channels[i].output[s];
+            sample_buffer[s] = final_sample;
+        }
+    }
+
+    m_buffer_index = 0;
+
+    return samples;
 }
 
 void HuC6280PSG::ComputeVolumeLUT()

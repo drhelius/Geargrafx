@@ -171,6 +171,4 @@ INLINE void HuC6260::SetResetValue(int value)
     m_reset_value = value;
 }
 
-
-
 #endif /* HUC6260_INLINE_H */

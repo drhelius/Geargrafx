@@ -118,6 +118,48 @@ void HuC6270::Reset()
     }
 }
 
+void HuC6270::SetHSync(bool active)
+{
+    // High to low
+    if (!active)
+    {
+        HUC6270_DEBUG("HSYNC H to L");
+    }
+    // Low to high
+    else
+    {
+        m_h_state = HuC6270_HORIZONTAL_STATE_HSW;
+        m_clocks_to_next_h_state = 8;
+
+        HUC6270_DEBUG("HSYNC L to H");
+    }
+}
+
+void HuC6270::SetVSync(bool active)
+{
+    // High to low
+    if (!active)
+    {
+        m_latched_mwr = m_register[HUC6270_REG_MWR];
+        m_latched_vds = HUC6270_VAR_VDS;
+        m_latched_vdw = HUC6270_VAR_VDW;
+        m_latched_vcr = HUC6270_VAR_VCR;
+        m_latched_vsw = HUC6270_VAR_VSW;
+
+        m_v_state = HuC6270_VERTICAL_STATE_VSW;
+        m_lines_to_next_v_state = m_latched_vsw + 1;
+
+        m_increment_bg_counter_y = false;
+
+        HUC6270_DEBUG("+++ VSYNC H to L");
+    }
+    // Low to high
+    else
+    {
+        HUC6270_DEBUG("+++ VSYNC L to H");
+    }
+}
+
 u8 HuC6270::ReadRegister(u16 address)
 {
     switch (address & 0x03)
@@ -263,6 +305,62 @@ void HuC6270::WriteRegister(u16 address, u8 value)
     }
 }
 
+void HuC6270::SATTransfer()
+{
+    m_sat_transfer_pending--;
+
+    if ((m_sat_transfer_pending & 3) == 0)
+    {
+        u16 satb = m_register[HUC6270_REG_DVSSR];
+        int i = 255 - (m_sat_transfer_pending >> 2);
+        m_sat[i] = m_vram[(satb + i) & 0x7FFF];
+
+        if (m_sat_transfer_pending == 0)
+        {
+            m_status_register &= ~HUC6270_STATUS_BUSY;
+
+            if (m_register[HUC6270_REG_DCR] & 0x01)
+            {
+                m_status_register |= HUC6270_STATUS_SAT_END;
+                m_huc6280->AssertIRQ1(true);
+            }
+        }
+    }
+}
+
+void HuC6270::VRAMTransfer()
+{
+    m_vram_transfer_pending--;
+
+    if ((m_vram_transfer_pending & 3) == 0)
+    {
+        if (m_vram_transfer_dest < 0x8000)
+        {
+            m_vram[m_vram_transfer_dest & 0x7FFF] = m_vram[m_vram_transfer_src & 0x7FFF];
+        }
+        else
+        {
+            Debug("[PC=%04X] HuC6270 ignoring write VRAM-DMA out of bounds: %04X", m_huc6280->GetState()->PC->GetValue(), m_register[HUC6270_REG_DESR]);
+        }
+
+        s8 src_increment = IS_SET_BIT(m_register[HUC6270_REG_DCR], 2) ? -1 : 1;
+        s8 dest_increment = IS_SET_BIT(m_register[HUC6270_REG_DCR], 3) ? -1 : 1;
+        m_vram_transfer_src += src_increment;
+        m_vram_transfer_dest += dest_increment;
+
+        if (m_vram_transfer_pending == 0)
+        {
+            m_status_register &= ~HUC6270_STATUS_BUSY;
+
+            if (m_register[HUC6270_REG_DCR] & 0x02)
+            {
+                m_status_register |= HUC6270_STATUS_VRAM_END;
+                m_huc6280->AssertIRQ1(true);
+            }
+        }
+    }
+}
+
 void HuC6270::NextVerticalState()
 {
     m_v_state = (m_v_state + 1) % HuC6270_VERTICAL_STATE_COUNT;
@@ -373,104 +471,6 @@ void HuC6270::NextHorizontalState()
             m_clocks_to_next_h_state = (m_latched_hsw + 1) << 3;
             HUC6270_DEBUG("HSW");
             break;
-    }
-}
-
-void HuC6270::SATTransfer()
-{
-    m_sat_transfer_pending--;
-
-    if ((m_sat_transfer_pending & 3) == 0)
-    {
-        u16 satb = m_register[HUC6270_REG_DVSSR];
-        int i = 255 - (m_sat_transfer_pending >> 2);
-        m_sat[i] = m_vram[(satb + i) & 0x7FFF];
-
-        if (m_sat_transfer_pending == 0)
-        {
-            m_status_register &= ~HUC6270_STATUS_BUSY;
-
-            if (m_register[HUC6270_REG_DCR] & 0x01)
-            {
-                m_status_register |= HUC6270_STATUS_SAT_END;
-                m_huc6280->AssertIRQ1(true);
-            }
-        }
-    }
-}
-
-void HuC6270::VRAMTransfer()
-{
-    m_vram_transfer_pending--;
-
-    if ((m_vram_transfer_pending & 3) == 0)
-    {
-        if (m_vram_transfer_dest < 0x8000)
-        {
-            m_vram[m_vram_transfer_dest & 0x7FFF] = m_vram[m_vram_transfer_src & 0x7FFF];
-        }
-        else
-        {
-            Debug("[PC=%04X] HuC6270 ignoring write VRAM-DMA out of bounds: %04X", m_huc6280->GetState()->PC->GetValue(), m_register[HUC6270_REG_DESR]);
-        }
-
-        s8 src_increment = IS_SET_BIT(m_register[HUC6270_REG_DCR], 2) ? -1 : 1;
-        s8 dest_increment = IS_SET_BIT(m_register[HUC6270_REG_DCR], 3) ? -1 : 1;
-        m_vram_transfer_src += src_increment;
-        m_vram_transfer_dest += dest_increment;
-
-        if (m_vram_transfer_pending == 0)
-        {
-            m_status_register &= ~HUC6270_STATUS_BUSY;
-
-            if (m_register[HUC6270_REG_DCR] & 0x02)
-            {
-                m_status_register |= HUC6270_STATUS_VRAM_END;
-                m_huc6280->AssertIRQ1(true);
-            }
-        }
-    }
-}
-
-void HuC6270::SetHSync(bool active)
-{
-    // High to low
-    if (!active)
-    {
-        HUC6270_DEBUG("HSYNC H to L");
-    }
-    // Low to high
-    else
-    {
-        m_h_state = HuC6270_HORIZONTAL_STATE_HSW;
-        m_clocks_to_next_h_state = 8;
-
-        HUC6270_DEBUG("HSYNC L to H");
-    }
-}
-
-void HuC6270::SetVSync(bool active)
-{
-    // High to low
-    if (!active)
-    {
-        m_latched_mwr = m_register[HUC6270_REG_MWR];
-        m_latched_vds = HUC6270_VAR_VDS;
-        m_latched_vdw = HUC6270_VAR_VDW;
-        m_latched_vcr = HUC6270_VAR_VCR;
-        m_latched_vsw = HUC6270_VAR_VSW;
-
-        m_v_state = HuC6270_VERTICAL_STATE_VSW;
-        m_lines_to_next_v_state = m_latched_vsw + 1;
-
-        m_increment_bg_counter_y = false;
-
-        HUC6270_DEBUG("+++ VSYNC H to L");
-    }
-    // Low to high
-    else
-    {
-        HUC6270_DEBUG("+++ VSYNC L to H");
     }
 }
 

@@ -57,6 +57,26 @@ INLINE u16 HuC6270::Clock()
     return pixel;
 }
 
+INLINE HuC6270::HuC6270_State* HuC6270::GetState()
+{
+    return &m_state;
+}
+
+INLINE u16* HuC6270::GetVRAM()
+{
+    return m_vram;
+}
+
+INLINE u16* HuC6270::GetSAT()
+{
+    return m_sat;
+}
+
+INLINE void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
+{
+    m_no_sprite_limit = no_sprite_limit;
+}
+
 INLINE void HuC6270::RCRIRQ()
 {
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
@@ -102,26 +122,6 @@ INLINE int HuC6270::ClocksToBXRLatch()
     if(m_latched_hds > 2)
         ret = 1;
     return ret;
-}
-
-INLINE HuC6270::HuC6270_State* HuC6270::GetState()
-{
-    return &m_state;
-}
-
-INLINE u16* HuC6270::GetVRAM()
-{
-    return m_vram;
-}
-
-INLINE u16* HuC6270::GetSAT()
-{
-    return m_sat;
-}
-
-INLINE void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
-{
-    m_no_sprite_limit = no_sprite_limit;
 }
 
 #endif /* HUC6270_INLINE_H */

@@ -129,6 +129,11 @@ INLINE u32 HuC6280::TickIRQ()
     return m_cycles;
 }
 
+INLINE void HuC6280::CheckIRQs()
+{
+    m_irq_pending = IsSetFlag(FLAG_INTERRUPT) ? 0 : m_interrupt_request_register & ~m_interrupt_disable_register;
+}
+
 INLINE void HuC6280::AssertIRQ1(bool asserted)
 {
     if (asserted)
@@ -149,11 +154,6 @@ INLINE void HuC6280::InjectCycles(unsigned int cycles)
 {
     m_cycles += cycles;
     CheckIRQs();
-}
-
-INLINE void HuC6280::CheckIRQs()
-{
-    m_irq_pending = IsSetFlag(FLAG_INTERRUPT) ? 0 : m_interrupt_request_register & ~m_interrupt_disable_register;
 }
 
 INLINE u8 HuC6280::MemoryRead(u16 address, bool block_transfer)
