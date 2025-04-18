@@ -103,6 +103,11 @@ void config_read(void)
 
     Log("Loading settings from %s", config_emu_file_path);
 
+#if defined(GG_DISABLE_DISASSEMBLER)
+        config_debug.debug = false;
+#else
+        config_debug.debug = read_bool("Debug", "Debug", false);
+#endif
     config_debug.debug = read_bool("Debug", "Debug", false);
     config_debug.show_disassembler = read_bool("Debug", "Disassembler", true);
     config_debug.show_screen = read_bool("Debug", "Screen", true);
