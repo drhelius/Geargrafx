@@ -49,12 +49,14 @@ void gui_debug_memory_reset(void)
     HuC6260* huc6260 = core->GetHuC6260();
     HuC6270* huc6270 = core->GetHuC6270();
 
-    mem_edit[0].Reset("RAM", memory->GetWram(), 0x2000);
-    mem_edit[1].Reset("ZERO PAGE", memory->GetWram(), 0x100);
+    mem_edit[0].Reset("RAM", memory->GetWorkingRAM(), 0x2000);
+    mem_edit[1].Reset("ZERO PAGE", memory->GetWorkingRAM(), 0x100);
     mem_edit[2].Reset("ROM", cart->GetROM(), cart->GetROMSize());
     mem_edit[3].Reset("VRAM", (u8*)huc6270->GetVRAM(), HUC6270_VRAM_SIZE, 0, 2);
     mem_edit[4].Reset("SAT", (u8*)huc6270->GetSAT(), HUC6270_SAT_SIZE, 0, 2);
     mem_edit[5].Reset("PALETTES", (u8*)huc6260->GetColorTable(), 512, 0, 2);
+    mem_edit[6].Reset("CARD RAM", memory->GetCardRAM(), memory->GetCardRAMSize());
+    mem_edit[7].Reset("BACKUP RAM", memory->GetBackupRAM(), 0x800);
 }
 
 void gui_debug_window_memory(void)
@@ -149,6 +151,12 @@ static void draw_tabs(void)
     for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
     {
         if (i == MEMORY_EDITOR_ROM && !IsValidPointer(cart->GetROM()))
+            continue;
+
+        if (i == MEMORY_EDITOR_CARD_RAM && core->GetMemory()->GetCardRAMSize() == 0)
+            continue;
+
+        if (i == MEMORY_EDITOR_BACKUP_RAM && !core->GetMemory()->IsBackupRamEnabled())
             continue;
 
         if (ImGui::BeginTabItem(mem_edit[i].GetTitle(), NULL, mem_edit_select == i ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))

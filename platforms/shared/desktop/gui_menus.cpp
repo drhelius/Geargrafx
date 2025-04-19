@@ -39,6 +39,7 @@ static bool open_about = false;
 static bool save_screenshot = false;
 static bool choose_savestates_path = false;
 static bool choose_screenshots_path = false;
+static bool choose_backup_ram_path = false;
 
 static void menu_geargrafx(void);
 static void menu_emulator(void);
@@ -58,11 +59,14 @@ void gui_init_menus(void)
     strcpy(gui_savefiles_path, config_emulator.savefiles_path.c_str());
     strcpy(gui_savestates_path, config_emulator.savestates_path.c_str());
     strcpy(gui_screenshots_path, config_emulator.screenshots_path.c_str());
+    strcpy(gui_backup_ram_path, config_emulator.backup_ram_path.c_str());
     gui_shortcut_open_rom = false;
 
     emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
     emu_get_core()->GetHuC6260()->SetResetValue(get_reset_value(config_debug.reset_color_table));
     emu_get_core()->GetHuC6280()->SetResetValue(get_reset_value(config_debug.reset_registers));
+    emu_get_core()->GetMemory()->EnableBackupRam(config_emulator.backup_ram);
+    emu_get_core()->GetInput()->EnableCDROM(config_emulator.backup_ram);
 }
 
 void gui_main_menu(void)
@@ -152,6 +156,18 @@ static void menu_geargrafx(void)
             ImGui::Combo("##fwd", &config_emulator.ffwd_speed, "X 1.5\0X 2\0X 2.5\0X 3\0Unlimited\0\0");
             ImGui::PopItemWidth();
             ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Save RAM As..."))
+        {
+            save_ram = true;
+        }
+
+        if (ImGui::MenuItem("Load RAM From..."))
+        {
+            open_ram = true;
         }
 
         ImGui::Separator();
@@ -275,10 +291,43 @@ static void menu_emulator(void)
             ImGui::EndMenu();
         }
 
-        // if (ImGui::BeginMenu("RAM Saves Dir"))
-        // {
-        //     ImGui::EndMenu();
-        // }
+        if (ImGui::BeginMenu("Backup RAM Dir"))
+        {
+            ImGui::PushItemWidth(220.0f);
+            ImGui::Combo("##backup_ram_option", &config_emulator.backup_ram_dir_option, "Default Location\0Same as ROM\0Custom Location\0\0");
+
+            switch ((Directory_Location)config_emulator.backup_ram_dir_option)
+            {
+                case Directory_Location_Default:
+                {
+                    ImGui::Text("%s", config_root_path);
+                    break;
+                }
+                case Directory_Location_ROM:
+                {
+                    if (emu_get_core()->GetCartridge()->IsReady())
+                        ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
+                    break;
+                }
+                case Directory_Location_Custom:
+                {
+                    if (ImGui::MenuItem("Choose..."))
+                    {
+                        choose_backup_ram_path = true;
+                    }
+
+                    ImGui::PushItemWidth(450);
+                    if (ImGui::InputText("##backup_ram_path", gui_backup_ram_path, IM_ARRAYSIZE(gui_backup_ram_path), ImGuiInputTextFlags_AutoSelectAll))
+                    {
+                        config_emulator.backup_ram_path.assign(gui_backup_ram_path);
+                    }
+                    ImGui::PopItemWidth();
+                    break;
+                }
+            }
+
+            ImGui::EndMenu();
+        }
 
         if (ImGui::BeginMenu("Screenshots Dir"))
         {
@@ -316,6 +365,19 @@ static void menu_emulator(void)
             }
 
             ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Force Japanese PC Engine", "", &config_emulator.pce_jap))
+        {
+            emu_get_core()->GetInput()->EnablePCEJap(config_emulator.pce_jap);
+        }
+
+        if (ImGui::MenuItem("Enable Backup RAM", "", &config_emulator.backup_ram))
+        {
+            emu_get_core()->GetMemory()->EnableBackupRam(config_emulator.backup_ram);
+            emu_get_core()->GetInput()->EnableCDROM(config_emulator.backup_ram);
         }
 
         ImGui::Separator();
@@ -726,6 +788,8 @@ static void file_dialogs(void)
         gui_file_dialog_choose_savestate_path();
     if (choose_screenshots_path)
         gui_file_dialog_choose_screenshot_path();
+    if (choose_backup_ram_path)
+        gui_file_dialog_choose_backup_ram_path();
     if (open_about)
     {
         gui_dialog_in_use = true;

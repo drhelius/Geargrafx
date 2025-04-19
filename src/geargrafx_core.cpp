@@ -187,18 +187,7 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
     runtime_info.screen_width = m_huc6260->GetCurrentLineWidth();
     runtime_info.screen_height = m_huc6260->GetCurrentHeight();
 
-    if (m_cartridge->IsReady())
-    {
-    //     // if (m_video->GetOverscan() == Video::OverscanFull284)
-    //     //     runtime_info.screen_width = GC_RESOLUTION_WIDTH + GC_RESOLUTION_SMS_OVERSCAN_H_284_L + GC_RESOLUTION_SMS_OVERSCAN_H_284_R;
-    //     // if (m_video->GetOverscan() == Video::OverscanFull320)
-    //     //     runtime_info.screen_width = GC_RESOLUTION_WIDTH + GC_RESOLUTION_SMS_OVERSCAN_H_320_L + GC_RESOLUTION_SMS_OVERSCAN_H_320_R;
-    //     // if (m_video->GetOverscan() != Video::OverscanDisabled)
-    //     //     runtime_info.screen_height = GC_RESOLUTION_HEIGHT + (2 * (m_cartridge->IsPAL() ? GC_RESOLUTION_OVERSCAN_V_PAL : GC_RESOLUTION_OVERSCAN_V));
-        return true;
-    }
-
-    return false;
+    return m_cartridge->IsReady();
 }
 
 Memory* GeargrafxCore::GetMemory()
@@ -287,25 +276,93 @@ void GeargrafxCore::ResetSound()
     m_audio->Reset();
 }
 
-// void GeargrafxCore::SaveRam()
-// {
-//     SaveRam(NULL);
-// }
+void GeargrafxCore::SaveRam()
+{
+    SaveRam(NULL);
+}
 
-// void GeargrafxCore::SaveRam(const char*, bool)
-// {
-//     // TODO Implement save ram
-// }
+void GeargrafxCore::SaveRam(const char* path, bool full_path)
+{
+    if (m_cartridge->IsReady() && m_memory->IsBackupRamUsed())
+    {
+        using namespace std;
+        string final_path;
 
-// void GeargrafxCore::LoadRam()
-// {
-//     LoadRam(NULL);
-// }
+        if (IsValidPointer(path))
+        {
+            final_path = path;
+            if (!full_path)
+                final_path += "/";
+                final_path += m_cartridge->GetFileName();
+        }
+        else
+            final_path = m_cartridge->GetFilePath();
 
-// void GeargrafxCore::LoadRam(const char*, bool)
-// {
-//     // TODO Implement load ram
-// }
+        string::size_type i = final_path.rfind('.', final_path.length());
+        if (i != string::npos)
+            final_path.replace(i, final_path.length() - i, ".sav");
+
+        Log("Saving RAM file: %s", final_path.c_str());
+
+        ofstream file(final_path.c_str(), ios::out | ios::binary);
+        m_memory->SaveRam(file);
+
+        Debug("RAM saved");
+    }
+}
+
+void GeargrafxCore::LoadRam()
+{
+    LoadRam(NULL);
+}
+
+void GeargrafxCore::LoadRam(const char* path, bool full_path)
+{
+    if (m_cartridge->IsReady())
+    {
+        using namespace std;
+        string final_path;
+
+        if (IsValidPointer(path))
+        {
+            final_path = path;
+            if (!full_path)
+                final_path += "/";
+                final_path += m_cartridge->GetFileName();
+        }
+        else
+            final_path = m_cartridge->GetFilePath();
+
+        string::size_type i = final_path.rfind('.', final_path.length());
+        if (i != string::npos)
+            final_path.replace(i, final_path.length() - i, ".sav");
+
+        Log("Loading RAM file: %s", final_path.c_str());
+
+        ifstream file(final_path.c_str(), ios::in | ios::binary);
+
+        if (!file.fail())
+        {
+            file.seekg(0, file.end);
+            s32 file_size = (s32)file.tellg();
+            file.seekg(0, file.beg);
+
+            if (m_memory->LoadRam(file, file_size))
+            {
+                Debug("RAM loaded");
+            }
+            else
+            {
+                Log("ERROR: Failed to load RAM from %s", final_path.c_str());
+                Log("ERROR: Invalid RAM size: %d", file_size);
+            }
+        }
+        else
+        {
+            Log("RAM file doesn't exist: %s", final_path.c_str());
+        }
+    }
+}
 
 std::string GeargrafxCore::GetSaveStatePath(const char* path, int index)
 {

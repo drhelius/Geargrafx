@@ -72,7 +72,7 @@ MemEditor::~MemEditor()
 
 void MemEditor::Reset(const char* title, uint8_t* mem_data, int mem_size, int base_display_addr, int word)
 {
-    if (!IsValidPointer(mem_data))
+    if (!IsValidPointer(mem_data) || (mem_size <= 0))
         return;
 
     snprintf(m_title, sizeof(m_title), "%s", title);

@@ -51,11 +51,15 @@ struct config_Emulator
     int savestates_dir_option = 0;
     std::string savestates_path;
     int screenshots_dir_option = 0;
+    std::string backup_ram_path;
+    int backup_ram_dir_option = 0;
     std::string screenshots_path;
     std::string last_open_path;
     int window_width = 770;
     int window_height = 600;
     bool status_messages = false;
+    bool backup_ram = true;
+    bool pce_jap = false;
 };
 
 struct config_Video

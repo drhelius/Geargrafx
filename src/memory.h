@@ -52,8 +52,18 @@ public:
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
     GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
     void ResetDisassemblerRecords();
-    u8* GetWram();
+    u8* GetWorkingRAM();
+    u8* GetCardRAM();
+    u8* GetBackupRAM();
+    int GetWorkingRAMSize();
+    int GetCardRAMSize();
+    int GetBackupRAMSize();
     GG_Disassembler_Record** GetAllDisassemblerRecords();
+    void EnableBackupRam(bool enable);
+    bool IsBackupRamEnabled();
+    bool IsBackupRamUsed();
+    void SaveRam(std::ostream &file);
+    bool LoadRam(std::istream &file, s32 file_size);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -69,9 +79,11 @@ private:
     u8* m_wram;
     u8* m_card_ram;
     u8** m_card_ram_map;
+    u8* m_backup_ram;
     int m_card_ram_size;
     u8 m_card_ram_start;
     u8 m_card_ram_end;
+    bool m_backup_ram_enabled;
     GG_Disassembler_Record** m_disassembler;
     u8 m_io_buffer;
     u8 m_mpr_buffer;
@@ -81,6 +93,8 @@ private:
     int m_wram_reset_value;
     int m_card_ram_reset_value;
 };
+
+static const u8 k_backup_ram_init_string[8] = { 'H', 'U', 'B', 'M', 0x00, 0x88, 0x10, 0x80 };
 
 #include "memory_inline.h"
 

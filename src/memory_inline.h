@@ -71,8 +71,15 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
     else if (bank < 0xF8)
     {
         // Backup RAM
-        Debug("Backup RAM read at %04X, bank=%02X", address, bank);
-        return 0xFF;
+        if (m_backup_ram_enabled && (offset < 0x800))
+        {
+            return m_backup_ram[offset];
+        }
+        else
+        {
+            Debug("Invalid Backup RAM read at %04X, bank=%02X", address, bank);
+            return 0xFF;
+        }
     }
     // 0xF8 - 0xFB
     else if (bank < 0xFC)
@@ -205,8 +212,14 @@ INLINE void Memory::Write(u16 address, u8 value)
     // 0xF7
     else if (bank < 0xF8)
     {
-        // Savegame RAM
-        Debug("Savegame RAM write at %04X, value=%02X, bank=%02X", address, value, bank);
+        if (m_backup_ram_enabled && (offset < 0x800))
+        {
+            m_backup_ram[offset] = value;
+        }
+        else
+        {
+            Debug("Invalid Backup RAM write at %04X, value=%02X, bank=%02X", address, value, bank);
+        }
     }
     // 0xF8 - 0xFB
     else if (bank < 0xFC)
@@ -314,6 +327,66 @@ INLINE u8 Memory::GetBank(u16 address)
 INLINE GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address)
 {
     return m_disassembler[GetPhysicalAddress(address)];
+}
+
+INLINE u8* Memory::GetWorkingRAM()
+{
+    return m_wram;
+}
+
+INLINE u8* Memory::GetCardRAM()
+{
+    return m_card_ram;
+}
+
+INLINE u8* Memory::GetBackupRAM()
+{
+    return m_backup_ram;
+}
+
+INLINE int Memory::GetWorkingRAMSize()
+{
+    return 0x2000;
+}
+
+INLINE int Memory::GetCardRAMSize()
+{
+    return m_card_ram_size;
+}
+
+INLINE int Memory::GetBackupRAMSize()
+{
+    return IsBackupRamUsed() ? 0x800 : 0;
+}
+
+INLINE GG_Disassembler_Record** Memory::GetAllDisassemblerRecords()
+{
+    return m_disassembler;
+}
+
+INLINE void Memory::EnableBackupRam(bool enable)
+{
+    m_backup_ram_enabled = enable;
+}
+
+INLINE bool Memory::IsBackupRamEnabled()
+{
+    return m_backup_ram_enabled;
+}
+
+INLINE bool Memory::IsBackupRamUsed()
+{
+    if(!m_backup_ram_enabled)
+        return false;
+
+    if(memcmp(m_backup_ram, k_backup_ram_init_string, 8))
+        return true;
+
+    for(int i = 8; i < 0x800; i++)
+        if(m_backup_ram[i])
+        return true;
+
+    return false;
 }
 
 #endif /* MEMORY_INLINE_H */

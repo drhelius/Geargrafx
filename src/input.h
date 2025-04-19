@@ -37,6 +37,8 @@ public:
     u8 GetIORegister();
     bool GetSel();
     bool GetClr();
+    void EnablePCEJap(bool enable);
+    void EnableCDROM(bool enable);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 

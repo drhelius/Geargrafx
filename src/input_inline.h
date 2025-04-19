@@ -49,6 +49,16 @@ INLINE  bool Input::GetClr()
     return m_clr;
 }
 
+INLINE void Input::EnablePCEJap(bool enable)
+{
+    m_pce_jap = enable;
+}
+
+INLINE void Input::EnableCDROM(bool enable)
+{
+    m_cdrom = enable;
+}
+
 INLINE void Input::UpdateRegister()
 {
     m_register = 0x30;

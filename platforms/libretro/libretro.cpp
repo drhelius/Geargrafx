@@ -229,8 +229,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
     info->geometry.base_width   = runtime_info.screen_width;
     info->geometry.base_height  = runtime_info.screen_height;
-    info->geometry.max_width    = 1024;//HUC6270_MAX_RESOLUTION_WIDTH;
-    info->geometry.max_height   = 512;//HUC6270_MAX_RESOLUTION_HEIGHT;
+    info->geometry.max_width    = 1024;
+    info->geometry.max_height   = 512;
     info->geometry.aspect_ratio = aspect_ratio;
     info->timing.fps            = 59.82;
     info->timing.sample_rate    = 44100.0;
@@ -341,11 +341,11 @@ void *retro_get_memory_data(unsigned id)
     switch (id)
     {
         case RETRO_MEMORY_SAVE_RAM:
-            return NULL;
+            return core->GetMemory()->GetBackupRAM();
         case RETRO_MEMORY_SYSTEM_RAM:
-            return NULL;
-            // TODO [libretro] Implement memory access for cheevos
-            //return core->GetMemory()->GetRam();
+            return core->GetMemory()->GetWorkingRAM();
+        case RETRO_MEMORY_VIDEO_RAM:
+            return (u8*)core->GetHuC6270()->GetVRAM();
     }
 
     return NULL;
@@ -356,9 +356,11 @@ size_t retro_get_memory_size(unsigned id)
     switch (id)
     {
         case RETRO_MEMORY_SAVE_RAM:
-            return 0;
+            return core->GetMemory()->GetBackupRAMSize();
         case RETRO_MEMORY_SYSTEM_RAM:
-            return 0;
+            return core->GetMemory()->GetWorkingRAMSize();
+        case RETRO_MEMORY_VIDEO_RAM:
+            return HUC6270_VRAM_SIZE * 2;
     }
 
     return 0;

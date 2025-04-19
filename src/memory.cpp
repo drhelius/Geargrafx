@@ -38,6 +38,7 @@ Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* 
     InitPointer(m_wram);
     InitPointer(m_card_ram);
     InitPointer(m_card_ram_map);
+    InitPointer(m_backup_ram);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
@@ -45,6 +46,10 @@ Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* 
     m_mpr_reset_value = -1;
     m_wram_reset_value = 0;
     m_card_ram_reset_value = 0;
+    m_backup_ram_enabled = true;
+    m_card_ram_size = 0;
+    m_card_ram_start = 0;
+    m_card_ram_end = 0;
 }
 
 Memory::~Memory()
@@ -52,6 +57,7 @@ Memory::~Memory()
     SafeDeleteArray(m_wram);
     SafeDeleteArray(m_card_ram);
     SafeDeleteArray(m_card_ram_map);
+    SafeDeleteArray(m_backup_ram);
     SafeDeleteArray(m_test_memory);
     if (IsValidPointer(m_disassembler))
     {
@@ -69,6 +75,7 @@ void Memory::Init()
     m_wram = new u8[0x2000];
     m_card_ram = new u8[0x8000];
     m_card_ram_map = new u8*[0x20];
+    m_backup_ram = new u8[0x800];
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_disassembler = new GG_Disassembler_Record*[0x200000];
@@ -159,6 +166,9 @@ void Memory::Reset()
             m_card_ram_map[i] = &m_card_ram[(i * 0x2000) % m_card_ram_size];
         }
     }
+
+    memset(m_backup_ram, 0x00, 0x800);
+    memcpy(m_backup_ram, k_backup_ram_init_string, 8);
 }
 
 void Memory::SetResetValues(int mpr, int wram, int card_ram)
@@ -233,16 +243,6 @@ u8 Memory::GetMprTMA(u8 bits)
     return ret;
 }
 
-u8* Memory::GetWram()
-{
-    return m_wram;
-}
-
-GG_Disassembler_Record** Memory::GetAllDisassemblerRecords()
-{
-    return m_disassembler;
-}
-
 GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
 {
     u32 physical_address = GetPhysicalAddress(address);
@@ -271,6 +271,27 @@ GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
     return record;
 }
 
+void Memory::SaveRam(std::ostream &file)
+{
+    Debug("Saving backup RAM to file");
+
+    file.write(reinterpret_cast<const char*> (m_backup_ram), sizeof(u8) * 0x800);
+}
+
+bool Memory::LoadRam(std::istream &file, s32 file_size)
+{
+    Debug("Loading backup RAM from file");
+
+    if (file_size != 0x800)
+    {
+        Log("Invalid backup RAM size: %d", file_size);
+        return false;
+    }
+
+    file.read(reinterpret_cast<char*> (m_backup_ram), sizeof(u8) * 0x800);
+
+    return true;
+}
 
 void Memory::SaveState(std::ostream& stream)
 {
@@ -281,6 +302,8 @@ void Memory::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_card_ram_size), sizeof(m_card_ram_size));
     stream.write(reinterpret_cast<const char*> (&m_card_ram_start), sizeof(m_card_ram_start));
     stream.write(reinterpret_cast<const char*> (&m_card_ram_end), sizeof(m_card_ram_end));
+    stream.write(reinterpret_cast<const char*> (m_backup_ram), sizeof(u8) * 0x800);
+    stream.write(reinterpret_cast<const char*> (&m_backup_ram_enabled), sizeof(m_backup_ram_enabled));
     stream.write(reinterpret_cast<const char*> (&m_io_buffer), sizeof(m_io_buffer));
     stream.write(reinterpret_cast<const char*> (&m_mpr_buffer), sizeof(m_mpr_buffer));
     if (IsValidPointer(m_current_mapper))
@@ -296,6 +319,8 @@ void Memory::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_card_ram_size), sizeof(m_card_ram_size));
     stream.read(reinterpret_cast<char*> (&m_card_ram_start), sizeof(m_card_ram_start));
     stream.read(reinterpret_cast<char*> (&m_card_ram_end), sizeof(m_card_ram_end));
+    stream.read(reinterpret_cast<char*> (m_backup_ram), sizeof(u8) * 0x800);
+    stream.read(reinterpret_cast<char*> (&m_backup_ram_enabled), sizeof(m_backup_ram_enabled));
     stream.read(reinterpret_cast<char*> (&m_io_buffer), sizeof(m_io_buffer));
     stream.read(reinterpret_cast<char*> (&m_mpr_buffer), sizeof(m_mpr_buffer));
     if (IsValidPointer(m_current_mapper))

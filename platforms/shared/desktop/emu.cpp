@@ -37,6 +37,7 @@ static bool audio_enabled;
 static void save_ram(void);
 static void load_ram(void);
 static void reset_buffers(void);
+static const char* get_configurated_dir(int option, const char* path); 
 static void init_debug(void);
 static void destroy_debug(void);
 static void update_debug(void);
@@ -201,21 +202,18 @@ bool emu_is_audio_open(void)
 
 void emu_save_ram(const char* file_path)
 {
-    // TODO Implement save ram to file
-    // if (!emu_is_empty())
-    //     geargrafx->SaveRam(file_path, true);
-    UNUSED(file_path);
+    if (!emu_is_empty())
+        geargrafx->SaveRam(file_path, true);
 }
 
 void emu_load_ram(const char* file_path)
 {
-    // TODO Implement load ram from file
-    // if (!emu_is_empty())
-    // {
-    //     save_ram();
-    //     geargrafx->ResetROM(&config);
-    //     geargrafx->LoadRam(file_path, true);
-    // }
+    if (!emu_is_empty())
+    {
+        save_ram();
+        geargrafx->ResetROM(false);
+        geargrafx->LoadRam(file_path, true);
+    }
     UNUSED(file_path);
 }
 
@@ -223,26 +221,8 @@ void emu_save_state_slot(int index)
 {
     if (!emu_is_empty())
     {
-        switch ((Directory_Location)config_emulator.savestates_dir_option)
-        {
-            default:
-            case Directory_Location_Default:
-            {
-                geargrafx->SaveState(config_root_path, index, true);
-                break;
-            }
-            case Directory_Location_ROM:
-            {
-                geargrafx->SaveState(NULL, index, true);
-                break;
-            }
-            case Directory_Location_Custom:
-            {
-                geargrafx->SaveState(config_emulator.savestates_path.c_str(), index, true);
-                break;
-            }
-        }
-
+        const char* dir = get_configurated_dir(config_emulator.savestates_dir_option, config_emulator.savestates_path.c_str());
+        geargrafx->SaveState(dir, index, true);
         update_savestates_data();
     }
 }
@@ -251,25 +231,8 @@ void emu_load_state_slot(int index)
 {
     if (!emu_is_empty())
     {
-        switch ((Directory_Location)config_emulator.savestates_dir_option)
-        {
-            default:
-            case Directory_Location_Default:
-            {
-                geargrafx->LoadState(config_root_path, index);
-                break;
-            }
-            case Directory_Location_ROM:
-            {
-                geargrafx->LoadState(NULL, index);
-                break;
-            }
-            case Directory_Location_Custom:
-            {
-                geargrafx->LoadState(config_emulator.savestates_path.c_str(), index);
-                break;
-            }
-        }
+        const char* dir = get_configurated_dir(config_emulator.savestates_dir_option, config_emulator.savestates_path.c_str());
+        geargrafx->LoadState(dir, index);
     }
 }
 
@@ -295,27 +258,7 @@ void update_savestates_data(void)
         emu_savestates[i].rom_name[0] = 0;
         SafeDeleteArray(emu_savestates_screenshots[i].data);
 
-        const char* dir = NULL;
-
-        switch ((Directory_Location)config_emulator.savestates_dir_option)
-        {
-            default:
-            case Directory_Location_Default:
-            {
-                dir = config_root_path;
-                break;
-            }
-            case Directory_Location_ROM:
-            {
-                dir = NULL;
-                break;
-            }
-            case Directory_Location_Custom:
-            {
-                dir = config_emulator.savestates_path.c_str();
-                break;
-            }
-        }
+        const char* dir = get_configurated_dir(config_emulator.savestates_dir_option, config_emulator.savestates_path.c_str());
 
         if (!geargrafx->GetSaveStateHeader(i + 1, dir, &emu_savestates[i]))
             continue;
@@ -460,18 +403,14 @@ void emu_save_screenshot(const char* file_path)
 
 static void save_ram(void)
 {
-    // if ((emu_savefiles_dir_option == 0) && (strcmp(emu_savefiles_path, "")))
-    //     geargrafx->SaveRam(emu_savefiles_path);
-    // else
-    //     geargrafx->SaveRam();
+    const char* dir = get_configurated_dir(config_emulator.backup_ram_dir_option, config_emulator.backup_ram_path.c_str());
+    geargrafx->SaveRam(dir);
 }
 
 static void load_ram(void)
 {
-    // if ((emu_savefiles_dir_option == 0) && (strcmp(emu_savefiles_path, "")))
-    //     geargrafx->LoadRam(emu_savefiles_path);
-    // else
-    //     geargrafx->LoadRam();
+    const char* dir = get_configurated_dir(config_emulator.backup_ram_dir_option, config_emulator.backup_ram_path.c_str());
+    geargrafx->LoadRam(dir);
 }
 
 static void reset_buffers(void)
@@ -495,6 +434,20 @@ static void reset_buffers(void)
 
         emu_debug_sprite_widths[i] = 16;
         emu_debug_sprite_heights[i] = 16;
+    }
+}
+
+static const char* get_configurated_dir(int location, const char* path)
+{
+    switch ((Directory_Location)location)
+    {
+        default:
+        case Directory_Location_Default:
+            return config_root_path;
+        case Directory_Location_ROM:
+            return NULL;
+        case Directory_Location_Custom:
+            return path;
     }
 }
 
