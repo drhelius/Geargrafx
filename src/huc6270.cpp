@@ -632,6 +632,8 @@ void HuC6270::FetchSprites()
                     break;
             }
 
+            bool mode1 = ((m_latched_mwr >> 2) & 0x03) == 1;
+            int mode1_offset = mode1 ? (m_sat[sprite_offset + 2] & 1) << 5 : 0;
             int cgx = (flags >> 8) & 0x01;
             u16 width = k_huc6270_sprite_width[cgx];
             u16 sprite_x = m_sat[sprite_offset + 1] & 0x3FF;
@@ -651,19 +653,19 @@ void HuC6270::FetchSprites()
 
             if (width == 16)
             {
-                u16 line_start = sprite_address + tile_line_offset + offset_y;
+                u16 line_start = sprite_address + tile_line_offset + offset_y + mode1_offset;
                 m_sprites[m_sprite_count].index = i;
                 m_sprites[m_sprite_count].x = sprite_x;
                 m_sprites[m_sprite_count].flags = flags;
                 m_sprites[m_sprite_count].palette = palette;
                 m_sprites[m_sprite_count].data[0] = m_vram[line_start + 0];
                 m_sprites[m_sprite_count].data[1] = m_vram[line_start + 16];
-                m_sprites[m_sprite_count].data[2] = m_vram[line_start + 32];
-                m_sprites[m_sprite_count].data[3] = m_vram[line_start + 48];
+                m_sprites[m_sprite_count].data[2] = mode1 ? 0 : m_vram[line_start + 32];
+                m_sprites[m_sprite_count].data[3] = mode1 ? 0 : m_vram[line_start + 48];
             }
             else
             {
-                u16 line_start = sprite_address + tile_line_offset + offset_y;
+                u16 line_start = sprite_address + tile_line_offset + offset_y + mode1_offset;
                 u16 line = line_start + (x_flip ? 64 : 0);
                 m_sprites[m_sprite_count].index = i;
                 m_sprites[m_sprite_count].x = sprite_x;
@@ -671,8 +673,8 @@ void HuC6270::FetchSprites()
                 m_sprites[m_sprite_count].palette = palette;
                 m_sprites[m_sprite_count].data[0] = m_vram[line + 0];
                 m_sprites[m_sprite_count].data[1] = m_vram[line + 16];
-                m_sprites[m_sprite_count].data[2] = m_vram[line + 32];
-                m_sprites[m_sprite_count].data[3] = m_vram[line + 48];
+                m_sprites[m_sprite_count].data[2] = mode1 ? 0 : m_vram[line + 32];
+                m_sprites[m_sprite_count].data[3] = mode1 ? 0 : m_vram[line + 48];
 
                 m_sprite_count++;
 
@@ -690,8 +692,8 @@ void HuC6270::FetchSprites()
                 m_sprites[m_sprite_count].palette = palette;
                 m_sprites[m_sprite_count].data[0] = m_vram[line + 0];
                 m_sprites[m_sprite_count].data[1] = m_vram[line + 16];
-                m_sprites[m_sprite_count].data[2] = m_vram[line + 32];
-                m_sprites[m_sprite_count].data[3] = m_vram[line + 48];
+                m_sprites[m_sprite_count].data[2] = mode1 ? 0 : m_vram[line + 32];
+                m_sprites[m_sprite_count].data[3] = mode1 ? 0 : m_vram[line + 48];
             }
 
             m_sprite_count++;

@@ -558,6 +558,8 @@ static void update_debug_sprites(void)
         pattern &= k_huc6270_sprite_mask_width[cgx];
         pattern &= k_huc6270_sprite_mask_height[cgy];
         u16 sprite_address = pattern << 6;
+        bool mode1 = ((huc6270->GetState()->R[HUC6270_REG_MWR] >> 2) & 0x03) == 1;
+        int mode1_offset = mode1 ? (sat[sprite_offset + 2] & 1) << 5 : 0;
 
         emu_debug_sprite_widths[i] = width;
         emu_debug_sprite_heights[i] = height;
@@ -575,12 +577,12 @@ static void update_debug_sprites(void)
                 int flipped_x = x_flip ? (width - 1 - x) : x;
                 int tile_x = flipped_x >> 4;
                 int tile_x_offset = tile_x * 64;
-                int line = line_start + tile_x_offset;
+                int line = line_start + tile_x_offset + mode1_offset;
 
                 u16 plane1 = vram[line + 0];
                 u16 plane2 = vram[line + 16];
-                u16 plane3 = vram[line + 32];
-                u16 plane4 = vram[line + 48];
+                u16 plane3 = mode1 ? 0 : vram[line + 32];
+                u16 plane4 = mode1 ? 0 : vram[line + 48];
 
                 int pixel_x = 15 - (flipped_x & 0xF);
                 u16 pixel = ((plane1 >> pixel_x) & 0x01) | (((plane2 >> pixel_x) & 0x01) << 1) | (((plane3 >> pixel_x) & 0x01) << 2) | (((plane4 >> pixel_x) & 0x01) << 3);
