@@ -97,16 +97,16 @@ void gui_debug_window_huc6270_info(void)
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "DISPLAY GEOMETRY"); ImGui::Separator(); 
 
-    ImGui::TextColored(violet, "SCREEN      "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SCREEN           "); ImGui::SameLine();
     ImGui::TextColored(white, "%dx%d", k_huc6270_screen_size_x[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07], k_huc6270_screen_size_y[(huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07]);
 
-    ImGui::TextColored(violet, "VRAM WIDTH  "); ImGui::SameLine();
+    ImGui::TextColored(violet, "VRAM WIDTH MODE  "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", huc6270_state->R[HUC6270_REG_MWR] & 0x03);
 
-    ImGui::TextColored(violet, "SPRITE WIDTH"); ImGui::SameLine();
+    ImGui::TextColored(violet, "SPRITE WIDTH MODE"); ImGui::SameLine();
     ImGui::TextColored(white, "%d", (huc6270_state->R[HUC6270_REG_MWR] >> 2) & 0x03);
 
-    ImGui::TextColored(violet, "CG MODE     "); ImGui::SameLine();
+    ImGui::TextColored(violet, "CG MODE          "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", (huc6270_state->R[HUC6270_REG_MWR] >> 7) & 0x01);
 
     ImGui::TextColored(violet, "HDS"); ImGui::SameLine();
