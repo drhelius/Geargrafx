@@ -515,7 +515,7 @@ INLINE void HuC6280::OPCodes_TST(u8 value, u16 address)
     ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
     u8 flags = m_P.GetValue();
     flags |= ((value & mem) ? 0 : FLAG_ZERO);
-    flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
+    flags |= (mem & (FLAG_OVERFLOW | FLAG_NEGATIVE));
     m_P.SetValue(flags);
 }
 
