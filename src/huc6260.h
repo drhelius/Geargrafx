@@ -108,11 +108,10 @@ private:
     int m_scanline_end;
     GG_Pixel_Format m_pixel_format;
     u8 m_rgb888_palette[512][3];
-    u8 m_bgr888_palette[512][3];
-    u16 m_rgb565_palette[512];
-    u16 m_bgr565_palette[512];
-    u16 m_rgb555_palette[512];
-    u16 m_bgr555_palette[512];
+    u8 m_rgb565_palette[512][2];
+    u8 m_bgr565_palette[512][2];
+    u8 m_rgb555_palette[512][2];
+    u8 m_bgr555_palette[512][2];
     int m_reset_value;
 };
 
