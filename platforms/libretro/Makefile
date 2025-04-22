@@ -338,10 +338,10 @@ include Makefile.common
 
 OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
-INCLUDES += -I$(SOURCE_DIR)
+INCLUDES += -I$(CORE_DIR)
 
-CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(fpic)
-CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(fpic)
+CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(INCLUDES) $(fpic)
+CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(INCLUDES) $(fpic)
 
 all: $(TARGET)
 	@echo Build complete: $(TARGET_NAME) $(BUILD_CONFIG) - $(GIT_VERSION) - $(platform)
@@ -350,7 +350,7 @@ $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(CXX) $(fpic) $(SHARED) $(INCLUDES) -o $@ $(OBJECTS) $(LDFLAGS)
+	$(CXX) $(fpic) $(SHARED) -o $@ $(OBJECTS) $(LDFLAGS)
 endif
 
 %.o: %.cpp

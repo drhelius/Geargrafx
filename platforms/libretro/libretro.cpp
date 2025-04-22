@@ -152,7 +152,12 @@ void retro_init(void)
     log_cb(RETRO_LOG_INFO, "%s (%s) libretro\n", GG_TITLE, GG_VERSION);
 
     core = new GeargrafxCore();
+
+#ifdef PS2
+    core->Init(GG_PIXEL_BGR555);
+#else
     core->Init(GG_PIXEL_RGB565);
+#endif
 
     frame_buffer = new u8[HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT * 2];
 
@@ -293,6 +298,9 @@ bool retro_load_game(const struct retro_game_info *info)
         log_cb(RETRO_LOG_ERROR, "RGB565 is not supported.\n");
         return false;
     }
+
+    bool achievements = true;
+    environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements);
 
     Cartridge* cart = core->GetCartridge();
     log_cb(RETRO_LOG_INFO, "CRC: %08X\n", cart->GetCRC());
