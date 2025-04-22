@@ -45,7 +45,7 @@ static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 
 static struct retro_log_callback logging;
-static retro_log_printf_t log_cb;
+retro_log_printf_t log_cb;
 
 static char retro_system_directory[4096];
 static char retro_game_path[4096];
@@ -302,10 +302,6 @@ bool retro_load_game(const struct retro_game_info *info)
     bool achievements = true;
     environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements);
 
-    Cartridge* cart = core->GetCartridge();
-    log_cb(RETRO_LOG_INFO, "CRC: %08X\n", cart->GetCRC());
-    log_cb(RETRO_LOG_INFO, "System: %s\n", cart->IsSGX() ? "Super Grafx" : "PC Engine");
-
     return true;
 }
 
@@ -364,10 +360,13 @@ size_t retro_get_memory_size(unsigned id)
     switch (id)
     {
         case RETRO_MEMORY_SAVE_RAM:
+            log_cb(RETRO_LOG_DEBUG, "RETRO_MEMORY_SAVE_RAM: %u\n", core->GetMemory()->GetBackupRAMSize());
             return core->GetMemory()->GetBackupRAMSize();
         case RETRO_MEMORY_SYSTEM_RAM:
+            log_cb(RETRO_LOG_DEBUG, "RETRO_MEMORY_SYSTEM_RAM: %u\n", core->GetMemory()->GetWorkingRAMSize());
             return core->GetMemory()->GetWorkingRAMSize();
         case RETRO_MEMORY_VIDEO_RAM:
+            log_cb(RETRO_LOG_DEBUG, "RETRO_MEMORY_VIDEO_RAM: %u\n", HUC6270_VRAM_SIZE * 2);
             return HUC6270_VRAM_SIZE * 2;
     }
 
