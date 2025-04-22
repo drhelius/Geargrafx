@@ -70,6 +70,7 @@ struct config_Video
     int overscan = 0;
     int scanline_start = 0;
     int scanline_end = 239;
+    bool composite_palette = false;
     bool fps = false;
     bool bilinear = false;
     bool sprite_limit = false;

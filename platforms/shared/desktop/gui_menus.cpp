@@ -479,7 +479,13 @@ static void menu_video(void)
 
         ImGui::Separator();
 
+        if (ImGui::MenuItem("Composite Colors", "", &config_video.composite_palette))
+        {
+            emu_set_composite_palette(config_video.composite_palette);
+        }
+
         ImGui::MenuItem("Bilinear Filtering", "", &config_video.bilinear);
+
         if (ImGui::MenuItem("Disable Sprite Limit", "", &config_video.sprite_limit))
         {
             emu_video_no_sprite_limit(config_video.sprite_limit);

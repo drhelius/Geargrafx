@@ -196,6 +196,7 @@ void config_read(void)
     config_video.overscan = read_int("Video", "Overscan", 0);
     config_video.scanline_start = read_int("Video", "ScanlineStart", 0);
     config_video.scanline_end = read_int("Video", "ScanlineEnd", 239);
+    config_video.composite_palette = read_bool("Video", "CompositePalette", false);
     config_video.fps = read_bool("Video", "FPS", false);
     config_video.bilinear = read_bool("Video", "Bilinear", false);
     config_video.sprite_limit = read_bool("Video", "SpriteLimit", false);
@@ -328,6 +329,7 @@ void config_write(void)
     write_int("Video", "Overscan", config_video.overscan);
     write_int("Video", "ScanlineStart", config_video.scanline_start);
     write_int("Video", "ScanlineEnd", config_video.scanline_end);
+    write_bool("Video", "CompositePalette", config_video.composite_palette);
     write_bool("Video", "FPS", config_video.fps);
     write_bool("Video", "Bilinear", config_video.bilinear);
     write_bool("Video", "SpriteLimit", config_video.sprite_limit);

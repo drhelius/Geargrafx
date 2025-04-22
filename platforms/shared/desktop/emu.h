@@ -92,7 +92,7 @@ EXTERN void emu_debug_step_frame(void);
 EXTERN void emu_debug_break(void);
 EXTERN void emu_debug_continue(void);
 EXTERN void emu_debug_set_callback(GeargrafxCore::GG_Debug_Callback callback);
-
+EXTERN void emu_set_composite_palette(bool enabled);
 EXTERN void emu_video_no_sprite_limit(bool enabled);
 EXTERN void emu_set_overscan(int overscan);
 EXTERN void emu_set_scanline_start_end(int start, int end);

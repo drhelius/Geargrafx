@@ -171,4 +171,9 @@ INLINE void HuC6260::SetResetValue(int value)
     m_reset_value = value;
 }
 
+INLINE void HuC6260::SetCompositePalette(bool enable)
+{
+    m_palette = enable ? 1 : 0;
+}
+
 #endif /* HUC6260_INLINE_H */

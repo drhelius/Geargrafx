@@ -35,16 +35,23 @@ HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
     m_state.VSYNC = &m_vsync;
     InitPointer(m_color_table);
     InitPointer(m_frame_buffer);
+    InitPointer(m_rgb888_palette);
+    InitPointer(m_rgb565_palette);
+    InitPointer(m_bgr565_palette);
+    InitPointer(m_rgb555_palette);
+    InitPointer(m_bgr555_palette);
 
     m_overscan = 0;
     m_scanline_start = 0;
     m_scanline_end = 239;
     m_reset_value = -1;
+    m_palette = 0;
 }
 
 HuC6260::~HuC6260()
 {
     SafeDeleteArray(m_color_table);
+    DeletePalettes();
 }
 
 void HuC6260::Init(GG_Pixel_Format pixel_format)
@@ -58,34 +65,171 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
 
 void HuC6260::InitPalettes()
 {
+    m_rgb888_palette = new u8**[2];
+    for (int i = 0; i < 2; i++)
+    {
+        m_rgb888_palette[i] = new u8*[512];
+        for (int j = 0; j < 512; j++)
+            m_rgb888_palette[i][j] = new u8[3];
+    }
+
+    m_rgb565_palette = new u8**[2];
+    for (int i = 0; i < 2; i++)
+    {
+        m_rgb565_palette[i] = new u8*[512];
+        for (int j = 0; j < 512; j++)
+            m_rgb565_palette[i][j] = new u8[2];
+    }
+
+    m_bgr565_palette = new u8**[2];
+    for (int i = 0; i < 2; i++)
+    {
+        m_bgr565_palette[i] = new u8*[512];
+        for (int j = 0; j < 512; j++)
+            m_bgr565_palette[i][j] = new u8[2];
+    }
+
+    m_rgb555_palette = new u8**[2];
+    for (int i = 0; i < 2; i++)
+    {
+        m_rgb555_palette[i] = new u8*[512];
+        for (int j = 0; j < 512; j++)
+            m_rgb555_palette[i][j] = new u8[2];
+    }
+
+    m_bgr555_palette = new u8**[2];
+    for (int i = 0; i < 2; i++)
+    {
+        m_bgr555_palette[i] = new u8*[512];
+        for (int j = 0; j < 512; j++)
+            m_bgr555_palette[i][j] = new u8[2];
+    }
+
     for (int i = 0; i < 512; i++)
     {
         u8 green = ((i >> 6) & 0x07) * 255 / 7;
         u8 red = ((i >> 3) & 0x07) * 255 / 7;
         u8 blue = (i & 0x07) * 255 / 7;
-        m_rgb888_palette[i][0] = red;
-        m_rgb888_palette[i][1] = green;
-        m_rgb888_palette[i][2] = blue;
+        m_rgb888_palette[0][i][0] = red;
+        m_rgb888_palette[0][i][1] = green;
+        m_rgb888_palette[0][i][2] = blue;
 
         green = ((i >> 6) & 0x07) * 63 / 7;
         red = ((i >> 3) & 0x07) * 31 / 7;
         blue = (i & 0x07) * 31 / 7;
         u16 rgb565 = (red << 11) | (green << 5) | blue;
-        m_rgb565_palette[i][0] = rgb565 & 0xFF;
-        m_rgb565_palette[i][1] = (rgb565 >> 8) & 0xFF;
+        m_rgb565_palette[0][i][0] = rgb565 & 0xFF;
+        m_rgb565_palette[0][i][1] = (rgb565 >> 8) & 0xFF;
         u16 bgr565 = (blue << 11) | (green << 5) | red;
-        m_bgr565_palette[i][0] = bgr565 & 0xFF;
-        m_bgr565_palette[i][1] = (bgr565 >> 8) & 0xFF;
+        m_bgr565_palette[0][i][0] = bgr565 & 0xFF;
+        m_bgr565_palette[0][i][1] = (bgr565 >> 8) & 0xFF;
 
         green = ((i >> 6) & 0x07) * 31 / 7;
         red = ((i >> 3) & 0x07) * 31 / 7;
         blue = (i & 0x07) * 31 / 7;
         u16 rgb555 = (red << 10) | (green << 5) | blue;
-        m_rgb555_palette[i][0] = rgb555 & 0xFF;
-        m_rgb555_palette[i][1] = (rgb555 >> 8) & 0xFF;
+        m_rgb555_palette[0][i][0] = rgb555 & 0xFF;
+        m_rgb555_palette[0][i][1] = (rgb555 >> 8) & 0xFF;
         u16 bgr555 = (blue << 10) | (green << 5) | red;
-        m_bgr555_palette[i][0] = bgr555 & 0xFF;
-        m_bgr555_palette[i][1] = (bgr555 >> 8) & 0xFF;
+        m_bgr555_palette[0][i][0] = bgr555 & 0xFF;
+        m_bgr555_palette[0][i][1] = (bgr555 >> 8) & 0xFF;
+
+        m_rgb888_palette[1][i][0] = k_rgb888_palette_composite[i][0];
+        m_rgb888_palette[1][i][1] = k_rgb888_palette_composite[i][1];
+        m_rgb888_palette[1][i][2] = k_rgb888_palette_composite[i][2];
+
+        red = k_rgb888_palette_composite[i][0] * 31 / 255;
+        green = k_rgb888_palette_composite[i][1] * 63 / 255;
+        blue = k_rgb888_palette_composite[i][2] * 31 / 255;
+        rgb565 = (red << 11) | (green << 5) | blue;
+        m_rgb565_palette[1][i][0] = rgb565 & 0xFF;
+        m_rgb565_palette[1][i][1] = (rgb565 >> 8) & 0xFF;
+        bgr565 = (blue << 11) | (green << 5) | red;
+        m_bgr565_palette[1][i][0] = bgr565 & 0xFF;
+        m_bgr565_palette[1][i][1] = (bgr565 >> 8) & 0xFF;
+
+        red = k_rgb888_palette_composite[i][0] * 31 / 255;
+        green = k_rgb888_palette_composite[i][1] * 31 / 255;
+        blue = k_rgb888_palette_composite[i][2] * 31 / 255;
+        rgb555 = (red << 10) | (green << 5) | blue;
+        m_rgb555_palette[1][i][0] = rgb555 & 0xFF;
+        m_rgb555_palette[1][i][1] = (rgb555 >> 8) & 0xFF;
+        bgr555 = (blue << 10) | (green << 5) | red;
+        m_bgr555_palette[1][i][0] = bgr555 & 0xFF;
+        m_bgr555_palette[1][i][1] = (bgr555 >> 8) & 0xFF;
+    }
+}
+
+void HuC6260::DeletePalettes()
+{
+    if (IsValidPointer(m_rgb888_palette))
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            if (IsValidPointer(m_rgb888_palette[i]))
+            {
+                for (int j = 0; j < 512; j++)
+                    SafeDeleteArray(m_rgb888_palette[i][j]);
+                SafeDeleteArray(m_rgb888_palette[i]);
+            }
+        }
+        SafeDeleteArray(m_rgb888_palette);
+    }
+
+    if (IsValidPointer(m_rgb565_palette))
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            if (IsValidPointer(m_rgb565_palette[i]))
+            {
+                for (int j = 0; j < 512; j++)
+                    SafeDeleteArray(m_rgb565_palette[i][j]);
+                SafeDeleteArray(m_rgb565_palette[i]);
+            }
+        }
+        SafeDeleteArray(m_rgb565_palette);
+    }
+
+    if (IsValidPointer(m_bgr565_palette))
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            if (IsValidPointer(m_bgr565_palette[i]))
+            {
+                for (int j = 0; j < 512; j++)
+                    SafeDeleteArray(m_bgr565_palette[i][j]);
+                SafeDeleteArray(m_bgr565_palette[i]);
+            }
+        }
+        SafeDeleteArray(m_bgr565_palette);
+    }
+
+    if (IsValidPointer(m_rgb555_palette))
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            if (IsValidPointer(m_rgb555_palette[i]))
+            {
+                for (int j = 0; j < 512; j++)
+                    SafeDeleteArray(m_rgb555_palette[i][j]);
+                SafeDeleteArray(m_rgb555_palette[i]);
+            }
+        }
+        SafeDeleteArray(m_rgb555_palette);
+    }
+
+    if (IsValidPointer(m_bgr555_palette))
+    {
+        for (int i = 0; i < 2; i++)
+        {
+            if (IsValidPointer(m_bgr555_palette[i]))
+            {
+                for (int j = 0; j < 512; j++)
+                    SafeDeleteArray(m_bgr555_palette[i][j]);
+                SafeDeleteArray(m_bgr555_palette[i]);
+            }
+        }
+        SafeDeleteArray(m_bgr555_palette);
     }
 }
 
@@ -224,46 +368,46 @@ void HuC6260::WritePixel(u16 pixel)
         case GG_PIXEL_RGB565:
             {
                 int byte = m_pixel_index * 2;
-                m_frame_buffer[byte + 0] = m_rgb565_palette[color][0];
-                m_frame_buffer[byte + 1] = m_rgb565_palette[color][1];
+                m_frame_buffer[byte + 0] = m_rgb565_palette[m_palette][color][0];
+                m_frame_buffer[byte + 1] = m_rgb565_palette[m_palette][color][1];
             }
             break;
         case GG_PIXEL_RGBA8888:
             {
                 int byte = m_pixel_index * 4;
-                m_frame_buffer[byte + 0] = m_rgb888_palette[color][0];
-                m_frame_buffer[byte + 1] = m_rgb888_palette[color][1];
-                m_frame_buffer[byte + 2] = m_rgb888_palette[color][2];
+                m_frame_buffer[byte + 0] = m_rgb888_palette[m_palette][color][0];
+                m_frame_buffer[byte + 1] = m_rgb888_palette[m_palette][color][1];
+                m_frame_buffer[byte + 2] = m_rgb888_palette[m_palette][color][2];
                 m_frame_buffer[byte + 3] = 255;
             }
             break;
         case GG_PIXEL_RGB555:
             {
                 int byte = m_pixel_index * 2;
-                m_frame_buffer[byte + 0] = m_rgb555_palette[color][0];
-                m_frame_buffer[byte + 1] = m_rgb555_palette[color][1];
+                m_frame_buffer[byte + 0] = m_rgb555_palette[m_palette][color][0];
+                m_frame_buffer[byte + 1] = m_rgb555_palette[m_palette][color][1];
             }
             break;
         case GG_PIXEL_BGR565:
             {
                 int byte = m_pixel_index * 2;
-                m_frame_buffer[byte + 0] = m_bgr565_palette[color][0];
-                m_frame_buffer[byte + 1] = m_bgr565_palette[color][1];
+                m_frame_buffer[byte + 0] = m_bgr565_palette[m_palette][color][0];
+                m_frame_buffer[byte + 1] = m_bgr565_palette[m_palette][color][1];
             }
             break;
         case GG_PIXEL_BGR555:
             {
                 int byte = m_pixel_index * 2;
-                m_frame_buffer[byte + 0] = m_bgr555_palette[color][0];
-                m_frame_buffer[byte + 1] = m_bgr555_palette[color][1];
+                m_frame_buffer[byte + 0] = m_bgr555_palette[m_palette][color][0];
+                m_frame_buffer[byte + 1] = m_bgr555_palette[m_palette][color][1];
             }
             break;
         case GG_PIXEL_BGRA8888:
             {
                 int byte = m_pixel_index * 4;
-                m_frame_buffer[byte + 0] = m_rgb888_palette[color][2];
-                m_frame_buffer[byte + 1] = m_rgb888_palette[color][1];
-                m_frame_buffer[byte + 2] = m_rgb888_palette[color][0];
+                m_frame_buffer[byte + 0] = m_rgb888_palette[m_palette][color][2];
+                m_frame_buffer[byte + 1] = m_rgb888_palette[m_palette][color][1];
+                m_frame_buffer[byte + 2] = m_rgb888_palette[m_palette][color][0];
                 m_frame_buffer[byte + 3] = 255;
             }
             break;
