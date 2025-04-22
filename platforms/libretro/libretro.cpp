@@ -489,9 +489,14 @@ static void update_input(void)
 static void set_variabless(void)
 {
     struct retro_variable vars[] = {
-        { "geargrafx_aspect_ratio", "Aspect Ratio (restart); 1:1 PAR|4:3 DAR|16:9 DAR|16:10 DAR" },
+        { "geargrafx_aspect_ratio", "Aspect Ratio; 1:1 PAR|4:3 DAR|16:9 DAR|16:10 DAR" },
         { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
+        { "geargrafx_scanline_start", "Scanline Start; 0|1|2|3|4|5|6|7|8|9" },
+        { "geargrafx_scanline_end", "Scanline End; 239|238|237|236|235|234|233|232|231|230" },
+        { "geargrafx_composite_colors", "Composite Colors; Disabled|Enabled" },
+        { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
+        { "geargrafx_force_pce_jap", "Force Japanese PC Engine (restart); Disabled|Enabled" },
         { NULL }
     };
 
@@ -536,5 +541,48 @@ static void check_variables(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         core->GetHuC6270()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_scanline_start";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int scanline_start = atoi(var.value);
+        core->GetHuC6260()->SetScanlineStart(scanline_start);
+    }
+
+    var.key = "geargrafx_scanline_end";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int scanline_end = atoi(var.value);
+        core->GetHuC6260()->SetScanlineEnd(scanline_end);
+    }
+
+    var.key = "geargrafx_composite_colors";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetHuC6260()->SetCompositePalette(strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_backup_ram";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetMemory()->EnableBackupRam(strcmp(var.value, "Enabled") == 0);
+        core->GetInput()->EnableCDROM(strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_force_pce_jap";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetInput()->EnablePCEJap(strcmp(var.value, "Enabled") == 0);
     }
 }
