@@ -490,13 +490,14 @@ static void set_variabless(void)
 {
     struct retro_variable vars[] = {
         { "geargrafx_aspect_ratio", "Aspect Ratio; 1:1 PAR|4:3 DAR|16:9 DAR|16:10 DAR" },
-        { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
-        { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
+        { "geargrafx_overscan", "Overscan; Disabled|Enabled" },
         { "geargrafx_scanline_start", "Scanline Start; 0|1|2|3|4|5|6|7|8|9" },
         { "geargrafx_scanline_end", "Scanline End; 239|238|237|236|235|234|233|232|231|230" },
         { "geargrafx_composite_colors", "Composite Colors; Disabled|Enabled" },
         { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
         { "geargrafx_force_pce_jap", "Force Japanese PC Engine (restart); Disabled|Enabled" },
+        { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
+        { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
         { NULL }
     };
 
@@ -506,17 +507,6 @@ static void set_variabless(void)
 static void check_variables(void)
 {
     struct retro_variable var = {0};
-
-    var.key = "geargrafx_up_down_allowed";
-    var.value = NULL;
-
-    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-    {
-        if (strcmp(var.value, "Enabled") == 0)
-            allow_up_down = true;
-        else
-            allow_up_down = false;
-    }
 
     var.key = "geargrafx_aspect_ratio";
     var.value = NULL;
@@ -535,12 +525,11 @@ static void check_variables(void)
             aspect_ratio = 0.0f;
     }
 
-    var.key = "geargrafx_no_sprite_limit";
+    var.key = "geargrafx_overscan";
     var.value = NULL;
-
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        core->GetHuC6270()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
+        core->GetHuC6260()->SetOverscan(strcmp(var.value, "Enabled") == 0);
     }
 
     var.key = "geargrafx_scanline_start";
@@ -574,8 +563,9 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        core->GetMemory()->EnableBackupRam(strcmp(var.value, "Enabled") == 0);
-        core->GetInput()->EnableCDROM(strcmp(var.value, "Enabled") == 0);
+        bool enabled = (strcmp(var.value, "Enabled") == 0);
+        core->GetMemory()->EnableBackupRam(enabled);
+        core->GetInput()->EnableCDROM(enabled);
     }
 
     var.key = "geargrafx_force_pce_jap";
@@ -584,5 +574,24 @@ static void check_variables(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         core->GetInput()->EnablePCEJap(strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_no_sprite_limit";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetHuC6270()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_up_down_allowed";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (strcmp(var.value, "Enabled") == 0)
+            allow_up_down = true;
+        else
+            allow_up_down = false;
     }
 }
