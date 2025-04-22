@@ -356,7 +356,7 @@ INLINE int Memory::GetCardRAMSize()
 
 INLINE int Memory::GetBackupRAMSize()
 {
-    return IsBackupRamUsed() ? 0x800 : 0;
+    return 0x800;
 }
 
 INLINE GG_Disassembler_Record** Memory::GetAllDisassemblerRecords()
@@ -378,9 +378,6 @@ INLINE bool Memory::IsBackupRamUsed()
 {
     if(!m_backup_ram_enabled)
         return false;
-
-    if(memcmp(m_backup_ram, k_backup_ram_init_string, 8))
-        return true;
 
     for(int i = 8; i < 0x800; i++)
         if(m_backup_ram[i])
