@@ -162,6 +162,16 @@ static const int k_huc6270_screen_size_x[8] = { 32, 64, 128, 128, 32, 64, 128, 1
 static const int k_huc6270_screen_size_y[8] = { 32, 32, 32, 32, 64, 64, 64, 64 };
 static const int k_huc6270_screen_size_x_pixels[8] = { 32 * 8, 64 * 8, 128 * 8, 128 * 8, 32 * 8, 64 * 8, 128 * 8, 128 * 8 };
 static const int k_huc6270_screen_size_y_pixels[8] = { 32 * 8, 32 * 8, 32 * 8, 32 * 8, 64 * 8, 64 * 8, 64 * 8, 64 * 8 };
+static const int k_huc6270_screen_size_x_pixels_mask[8] = {
+    k_huc6270_screen_size_x_pixels[0] - 1, k_huc6270_screen_size_x_pixels[1] - 1,
+    k_huc6270_screen_size_x_pixels[2] - 1, k_huc6270_screen_size_x_pixels[3] - 1,
+    k_huc6270_screen_size_x_pixels[4] - 1, k_huc6270_screen_size_x_pixels[5] - 1,
+    k_huc6270_screen_size_x_pixels[6] - 1, k_huc6270_screen_size_x_pixels[7] - 1 };
+static const int k_huc6270_screen_size_y_pixels_mask[8] = {
+    k_huc6270_screen_size_y_pixels[0] - 1, k_huc6270_screen_size_y_pixels[1] - 1,
+    k_huc6270_screen_size_y_pixels[2] - 1, k_huc6270_screen_size_y_pixels[3] - 1,
+    k_huc6270_screen_size_y_pixels[4] - 1, k_huc6270_screen_size_y_pixels[5] - 1,
+    k_huc6270_screen_size_y_pixels[6] - 1, k_huc6270_screen_size_y_pixels[7] - 1 };
 static const int k_huc6270_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
 static const int k_huc6270_sprite_width[2] = { 16, 32 };
 static const int k_huc6270_sprite_height[4] = { 16, 32, 64, 64 };
