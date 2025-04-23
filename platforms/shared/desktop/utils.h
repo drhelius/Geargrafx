@@ -33,4 +33,19 @@
   (byte & 0x02 ? '1' : '0'), \
   (byte & 0x01 ? '1' : '0')
 
+static inline int get_reset_value(int option)
+{
+    switch (option)
+    {
+        case 0:
+            return -1;
+        case 1:
+            return 0x0000;
+        case 2:
+            return 0xFFFF;
+        default:
+            return -1;
+    }
+}
+
 #endif /* UTILS_H */

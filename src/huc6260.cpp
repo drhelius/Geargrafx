@@ -43,7 +43,7 @@ HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
 
     m_overscan = 0;
     m_scanline_start = 0;
-    m_scanline_end = 239;
+    m_scanline_end = 241;
     m_reset_value = -1;
     m_palette = 0;
 }

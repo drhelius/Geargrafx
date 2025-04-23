@@ -28,6 +28,7 @@
 #include "application.h"
 #include "emu.h"
 #include "renderer.h"
+#include "utils.h"
 #include "../../../src/geargrafx.h"
 
 static bool open_rom = false;
@@ -52,21 +53,10 @@ static void file_dialogs(void);
 static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int player);
 static void gamepad_configuration_item(const char* text, int* button, int player);
 static void draw_savestate_slot_info(int slot);
-static int get_reset_value(int option);
 
 void gui_init_menus(void)
 {
-    strcpy(gui_savefiles_path, config_emulator.savefiles_path.c_str());
-    strcpy(gui_savestates_path, config_emulator.savestates_path.c_str());
-    strcpy(gui_screenshots_path, config_emulator.screenshots_path.c_str());
-    strcpy(gui_backup_ram_path, config_emulator.backup_ram_path.c_str());
     gui_shortcut_open_rom = false;
-
-    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
-    emu_get_core()->GetHuC6260()->SetResetValue(get_reset_value(config_debug.reset_color_table));
-    emu_get_core()->GetHuC6280()->SetResetValue(get_reset_value(config_debug.reset_registers));
-    emu_get_core()->GetMemory()->EnableBackupRam(config_emulator.backup_ram);
-    emu_get_core()->GetInput()->EnableCDROM(config_emulator.backup_ram);
 }
 
 void gui_main_menu(void)
@@ -266,7 +256,7 @@ static void menu_emulator(void)
                 }
                 case Directory_Location_ROM:
                 {
-                    if (emu_get_core()->GetCartridge()->IsReady())
+                    if (!emu_is_empty())
                         ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
                     break;
                 }
@@ -305,7 +295,7 @@ static void menu_emulator(void)
                 }
                 case Directory_Location_ROM:
                 {
-                    if (emu_get_core()->GetCartridge()->IsReady())
+                    if (!emu_is_empty())
                         ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
                     break;
                 }
@@ -343,7 +333,7 @@ static void menu_emulator(void)
                 }
                 case Directory_Location_ROM:
                 {
-                    if (emu_get_core()->GetCartridge()->IsReady())
+                    if (!emu_is_empty())
                         ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
                     break;
                 }
@@ -371,13 +361,12 @@ static void menu_emulator(void)
 
         if (ImGui::MenuItem("Force Japanese PC Engine", "", &config_emulator.pce_jap))
         {
-            emu_get_core()->GetInput()->EnablePCEJap(config_emulator.pce_jap);
+            emu_set_pce_japanese(config_emulator.pce_jap);
         }
 
         if (ImGui::MenuItem("Enable Backup RAM", "", &config_emulator.backup_ram))
         {
-            emu_get_core()->GetMemory()->EnableBackupRam(config_emulator.backup_ram);
-            emu_get_core()->GetInput()->EnableCDROM(config_emulator.backup_ram);
+            emu_set_backup_ram(config_emulator.backup_ram);
         }
 
         ImGui::Separator();
@@ -428,7 +417,7 @@ static void menu_video(void)
 
         if (ImGui::BeginMenu("Aspect Ratio"))
         {
-            ImGui::PushItemWidth(160.0f);
+            ImGui::PushItemWidth(190.0f);
             ImGui::Combo("##ratio", &config_video.ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0\0");
             ImGui::PopItemWidth();
             ImGui::EndMenu();
@@ -445,19 +434,48 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Scanline Start/End"))
+        if (ImGui::BeginMenu("Scanline Count"))
         {
-            if (ImGui::SliderInt("##scanline_start", &config_video.scanline_start, 0, 239, "Start = %d"))
+            ImGui::PushItemWidth(110.0f);
+            if (ImGui::Combo("##scanline_mode", &config_video.scanline_mode, "Mode 224p\0Mode 240p\0Manual\0\0"))
             {
-                emu_set_scanline_start_end(
-                config_debug.debug ? 0 : config_video.scanline_start,
-                config_debug.debug ? 239 : config_video.scanline_end);
+                if (config_video.scanline_mode == 0)
+                {
+                    config_video.scanline_start = 11;
+                    config_video.scanline_end = 234;
+                }
+                else if (config_video.scanline_mode == 1)
+                {
+                    config_video.scanline_start = 2;
+                    config_video.scanline_end = 241;
+                }
+                emu_set_scanline_start_end(config_video.scanline_start, config_video.scanline_end);
             }
-            if (ImGui::SliderInt("##scanline_end", &config_video.scanline_end, 0, 239, "End = %d"))
+
+            if (config_video.scanline_mode == 2)
             {
-                emu_set_scanline_start_end(
-                config_debug.debug ? 0 : config_video.scanline_start,
-                config_debug.debug ? 239 : config_video.scanline_end);
+                ImGui::PushItemWidth(200.0f);
+                if (ImGui::SliderInt("##scanline_start", &config_video.scanline_start, 0, 241, "Start = %d"))
+                {
+                    emu_set_scanline_start_end(
+                    config_debug.debug ? 0 : config_video.scanline_start,
+                    config_debug.debug ? 241 : config_video.scanline_end);
+                }
+                if (ImGui::SliderInt("##scanline_end", &config_video.scanline_end, 0, 241, "End = %d"))
+                {
+                    emu_set_scanline_start_end(
+                    config_debug.debug ? 0 : config_video.scanline_start,
+                    config_debug.debug ? 241 : config_video.scanline_end);
+                }
+                if (ImGui::Button("Show all scanlines"))
+                {
+                    if (!config_debug.debug)
+                    {
+                        config_video.scanline_start = 0;
+                        config_video.scanline_end = 241;
+                        emu_set_scanline_start_end(config_video.scanline_start, config_video.scanline_end);
+                    }
+                }
             }
             ImGui::EndMenu();
         }
@@ -655,7 +673,7 @@ static void menu_debug(void)
             emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
             emu_set_scanline_start_end(
                 config_debug.debug ? 0 : config_video.scanline_start,
-                config_debug.debug ? 239 : config_video.scanline_end);
+                config_debug.debug ? 241 : config_video.scanline_end);
         }
 
         ImGui::Separator();
@@ -667,7 +685,7 @@ static void menu_debug(void)
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_ram", &config_debug.reset_ram, "Random\0 0x00\0 0xFF\0\0"))
                 {
-                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+                    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
@@ -678,7 +696,7 @@ static void menu_debug(void)
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_card_ram", &config_debug.reset_card_ram, "Random\0 0x00\0 0xFF\0\0"))
                 {
-                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+                    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
@@ -689,7 +707,7 @@ static void menu_debug(void)
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_registers", &config_debug.reset_registers, "Random\0 0x00\0 0xFF\0\0"))
                 {
-                    emu_get_core()->GetHuC6280()->SetResetValue(get_reset_value(config_debug.reset_registers));
+                    emu_set_huc6280_registers_reset_value(get_reset_value(config_debug.reset_registers));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
@@ -700,7 +718,7 @@ static void menu_debug(void)
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_color_table", &config_debug.reset_color_table, "Random\0 0x0000\0 0x01FF\0\0"))
                 {
-                    emu_get_core()->GetHuC6260()->SetResetValue(get_reset_value(config_debug.reset_color_table));
+                    emu_set_huc6260_color_table_reset_value(get_reset_value(config_debug.reset_color_table));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
@@ -711,7 +729,7 @@ static void menu_debug(void)
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_mpr", &config_debug.reset_mpr, "Random\0 0x00\0 0xFF\0\0"))
                 {
-                    emu_get_core()->GetMemory()->SetResetValues(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+                    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
@@ -877,20 +895,5 @@ static void draw_savestate_slot_info(int slot)
     else
     {
         ImGui::TextColored(ImVec4(0.50f, 0.50f, 0.50f, 1.0f), "Slot %d is empty", slot + 1);
-    }
-}
-
-static int get_reset_value(int option)
-{
-    switch (option)
-    {
-        case 0:
-            return -1;
-        case 1:
-            return 0x0000;
-        case 2:
-            return 0xFFFF;
-        default:
-            return -1;
     }
 }

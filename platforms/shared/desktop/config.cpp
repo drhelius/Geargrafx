@@ -195,8 +195,9 @@ void config_read(void)
     config_video.scale_manual = read_int("Video", "ScaleManual", 1);
     config_video.ratio = read_int("Video", "AspectRatio", 1);
     config_video.overscan = read_int("Video", "Overscan", 0);
-    config_video.scanline_start = read_int("Video", "ScanlineStart", 0);
-    config_video.scanline_end = read_int("Video", "ScanlineEnd", 239);
+    config_video.scanline_mode = read_int("Video", "ScanlineMode", 0);
+    config_video.scanline_start = read_int("Video", "ScanlineStart", 11);
+    config_video.scanline_end = read_int("Video", "ScanlineEnd", 234);
     config_video.composite_palette = read_bool("Video", "CompositePalette", false);
     config_video.fps = read_bool("Video", "FPS", false);
     config_video.bilinear = read_bool("Video", "Bilinear", false);
@@ -208,7 +209,7 @@ void config_read(void)
     config_video.scanlines_intensity = read_float("Video", "ScanlinesIntensity", 0.10f);
 
     config_video.sync = read_bool("Video", "Sync", true);
-    
+
     config_audio.enable = read_bool("Audio", "Enable", true);
     config_audio.sync = read_bool("Audio", "Sync", true);
 
@@ -328,6 +329,7 @@ void config_write(void)
     write_int("Video", "ScaleManual", config_video.scale_manual);
     write_int("Video", "AspectRatio", config_video.ratio);
     write_int("Video", "Overscan", config_video.overscan);
+    write_int("Video", "ScanlineMode", config_video.scanline_mode);
     write_int("Video", "ScanlineStart", config_video.scanline_start);
     write_int("Video", "ScanlineEnd", config_video.scanline_end);
     write_bool("Video", "CompositePalette", config_video.composite_palette);

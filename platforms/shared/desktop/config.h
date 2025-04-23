@@ -68,8 +68,9 @@ struct config_Video
     int scale_manual = 1;
     int ratio = 1;
     int overscan = 0;
-    int scanline_start = 0;
-    int scanline_end = 239;
+    int scanline_mode = 0;
+    int scanline_start = 11;
+    int scanline_end = 234;
     bool composite_palette = false;
     bool fps = false;
     bool bilinear = false;

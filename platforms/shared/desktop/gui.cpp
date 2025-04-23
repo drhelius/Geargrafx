@@ -28,6 +28,7 @@
 #include "application.h"
 #include "emu.h"
 #include "renderer.h"
+#include "utils.h"
 #include "../../../src/geargrafx.h"
 
 #define GUI_IMPORT
@@ -101,11 +102,24 @@ void gui_init(void)
     set_style();
 
     emu_audio_mute(!config_audio.enable);
+    emu_set_composite_palette(config_video.composite_palette);
+    emu_video_no_sprite_limit(config_video.sprite_limit);
     emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
     emu_set_scanline_start_end(
                 config_debug.debug ? 0 : config_video.scanline_start,
-                config_debug.debug ? 239 : config_video.scanline_end);
+                config_debug.debug ? 241 : config_video.scanline_end);
+    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+    emu_set_huc6260_color_table_reset_value(get_reset_value(config_debug.reset_color_table));
+    emu_set_huc6280_registers_reset_value(get_reset_value(config_debug.reset_registers));
+    emu_set_pce_japanese(config_emulator.backup_ram);
+    emu_set_backup_ram(config_emulator.backup_ram);
+    emu_set_composite_palette(config_video.composite_palette);
     emu_debug_set_callback(gui_debug_callback);
+
+    strcpy(gui_savefiles_path, config_emulator.savefiles_path.c_str());
+    strcpy(gui_savestates_path, config_emulator.savestates_path.c_str());
+    strcpy(gui_screenshots_path, config_emulator.screenshots_path.c_str());
+    strcpy(gui_backup_ram_path, config_emulator.backup_ram_path.c_str());
 
     gui_debug_init();
     gui_init_menus();

@@ -142,18 +142,18 @@ INLINE int HuC6260::GetCurrentHeight()
 #if defined(HUC6260_DEBUG)
     return 263;
 #else
-    return CLAMP(240 - m_scanline_start - (239 - m_scanline_end), 1, 240);
+    return CLAMP(242 - m_scanline_start - (241 - m_scanline_end), 1, 242);
 #endif
 }
 
 INLINE void HuC6260::SetScanlineStart(int scanline_start)
 {
-    m_scanline_start = CLAMP(scanline_start, 0, 239);
+    m_scanline_start = CLAMP(scanline_start, 0, 241);
 }
 
 INLINE void HuC6260::SetScanlineEnd(int scanline_end)
 {
-    m_scanline_end = CLAMP(scanline_end, 0, 239);
+    m_scanline_end = CLAMP(scanline_end, 0, 241);
 }
 
 INLINE void HuC6260::SetOverscan(bool overscan)

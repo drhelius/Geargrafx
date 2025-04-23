@@ -491,8 +491,9 @@ static void set_variabless(void)
     struct retro_variable vars[] = {
         { "geargrafx_aspect_ratio", "Aspect Ratio; 1:1 PAR|4:3 DAR|16:9 DAR|16:10 DAR" },
         { "geargrafx_overscan", "Overscan; Disabled|Enabled" },
-        { "geargrafx_scanline_start", "Scanline Start; 0|1|2|3|4|5|6|7|8|9" },
-        { "geargrafx_scanline_end", "Scanline End; 239|238|237|236|235|234|233|232|231|230" },
+        { "geargrafx_scanline_count", "Scanline Count; 224p|240p|Manual" },
+        { "geargrafx_scanline_start", "Scanline Start (Manual); 0|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
+        { "geargrafx_scanline_end", "Scanline End (Manual); 241|240|239|238|237|236|235|234|233|232|231|230" },
         { "geargrafx_composite_colors", "Composite Colors; Disabled|Enabled" },
         { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
         { "geargrafx_force_pce_jap", "Force Japanese PC Engine (restart); Disabled|Enabled" },
@@ -532,12 +533,15 @@ static void check_variables(void)
         core->GetHuC6260()->SetOverscan(strcmp(var.value, "Enabled") == 0);
     }
 
+    int scanline_start = 0;
+    int scanline_end = 241;
+
     var.key = "geargrafx_scanline_start";
     var.value = NULL;
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        int scanline_start = atoi(var.value);
+        scanline_start = atoi(var.value);
         core->GetHuC6260()->SetScanlineStart(scanline_start);
     }
 
@@ -546,8 +550,30 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        int scanline_end = atoi(var.value);
+        scanline_end = atoi(var.value);
         core->GetHuC6260()->SetScanlineEnd(scanline_end);
+    }
+
+    var.key = "geargrafx_scanline_count";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (strcmp(var.value, "224p") == 0)
+        {
+            core->GetHuC6260()->SetScanlineStart(11);
+            core->GetHuC6260()->SetScanlineEnd(234);
+        }
+        else if (strcmp(var.value, "240p") == 0)
+        {
+            core->GetHuC6260()->SetScanlineStart(2);
+            core->GetHuC6260()->SetScanlineEnd(241);
+        }
+        else
+        {
+            core->GetHuC6260()->SetScanlineStart(scanline_start);
+            core->GetHuC6260()->SetScanlineEnd(scanline_end);
+        }
     }
 
     var.key = "geargrafx_composite_colors";

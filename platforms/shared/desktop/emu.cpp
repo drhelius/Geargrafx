@@ -393,6 +393,32 @@ void emu_set_scanline_start_end(int start, int end)
     geargrafx->GetHuC6260()->SetScanlineEnd(end);
 }
 
+void emu_set_memory_reset_values(int mpr, int wram, int card_ram)
+{
+    geargrafx->GetMemory()->SetResetValues(mpr, wram, card_ram);
+}
+
+void emu_set_huc6260_color_table_reset_value(int value)
+{
+    geargrafx->GetHuC6280()->SetResetValue(value);
+}
+
+void emu_set_huc6280_registers_reset_value(int value)
+{
+    geargrafx->GetHuC6280()->SetResetValue(value);
+}
+
+void emu_set_pce_japanese(bool enabled)
+{
+    geargrafx->GetInput()->EnablePCEJap(enabled);
+}
+
+void emu_set_backup_ram(bool enabled)
+{
+    geargrafx->GetMemory()->EnableBackupRam(enabled);
+    geargrafx->GetInput()->EnableCDROM(enabled);
+}
+
 void emu_save_screenshot(const char* file_path)
 {
     if (!geargrafx->GetCartridge()->IsReady())
