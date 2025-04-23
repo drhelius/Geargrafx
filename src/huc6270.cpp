@@ -526,25 +526,36 @@ void HuC6270::RenderBackground(int width)
     int tile_y = (bg_y & 7);
     int bat_offset = (bg_y >> 3) * screen_size_x;
 
+    u8 byte1 = 0, byte2 = 0, byte3 = 0, byte4 = 0;
+    int prev_tile_col = -1;
+    u16 bat_entry = 0;
+    int tile_index = 0;
+    int color_table = 0;
+    int tile_data = 0;
+
     for (int i = 0; i < width; i++)
     {
         int bg_x = m_latched_bxr + i;
         bg_x &= k_huc6270_screen_size_x_pixels_mask[screen_reg];
+        int tile_col = bg_x >> 3;
 
-        u16 bat_entry = m_vram[bat_offset + (bg_x >> 3)];
-        int tile_index = bat_entry & 0x07FF;
-        int color_table = (bat_entry >> 12) & 0x0F;
-        int tile_data = tile_index << 4;
-        int tile_x = 7 - (bg_x & 7);        
-        int line_start_a = (tile_data + tile_y);
-        int line_start_b = (line_start_a + 8);
-        u8 byte1 = m_vram[line_start_a] & 0xFF;
-        u8 byte2 = m_vram[line_start_a] >> 8;
-        u8 byte3 = m_vram[line_start_b] & 0xFF;
-        u8 byte4 = m_vram[line_start_b] >> 8;
+        if (tile_col != prev_tile_col)
+        {
+            bat_entry = m_vram[bat_offset + tile_col];
+            tile_index = bat_entry & 0x07FF;
+            color_table = (bat_entry >> 12) & 0x0F;
+            tile_data = tile_index << 4;
+            int line_start_a = (tile_data + tile_y);
+            int line_start_b = (line_start_a + 8);
+            byte1 = m_vram[line_start_a] & 0xFF;
+            byte2 = m_vram[line_start_a] >> 8;
+            byte3 = m_vram[line_start_b] & 0xFF;
+            byte4 = m_vram[line_start_b] >> 8;
+            prev_tile_col = tile_col;
+        }
 
+        int tile_x = 7 - (bg_x & 7);
         m_line_buffer[i] = color_table << 4;
-
         m_line_buffer[i] |= ((byte1 >> tile_x) & 0x01) | (((byte2 >> tile_x) & 0x01) << 1) | (((byte3 >> tile_x) & 0x01) << 2) | (((byte4 >> tile_x) & 0x01) << 3);
     }
 }
@@ -559,13 +570,21 @@ void HuC6270::RenderSprites(int width)
     for(int i = (m_sprite_count - 1) ; i >= 0; i--)
     {
         int pos = m_sprites[i].x - 0x20;
+
+        if ((pos + 15) < 0 || pos >= width)
+            continue;
+
         bool priority = (m_sprites[i].flags & 0x0080);
         u16 plane1 = m_sprites[i].data[0];
         u16 plane2 = m_sprites[i].data[1];
         u16 plane3 = m_sprites[i].data[2];
         u16 plane4 = m_sprites[i].data[3];
 
-        for(int x = 0; x < 16; x++)
+
+        int start_x = (pos < 0) ? -pos : 0;
+        int end_x = (pos + 15 >= width) ? (width - pos - 1) : 15;
+
+        for(int x = start_x; x <= end_x; x++)
         {
             int pixel_x;
             if (m_sprites[i].flags & 0x0800)
@@ -578,8 +597,6 @@ void HuC6270::RenderSprites(int width)
             if(pixel & 0x0F)
             {
                 int x_in_screen = pos + x;
-                if((x_in_screen < 0) || (x_in_screen >= width))
-                    continue;
 
                 if (!priority && (m_line_buffer[x_in_screen] & 0x0F))
                     pixel = 0;
