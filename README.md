@@ -25,7 +25,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     - [Microsoft Visual C++ Redistributable](https://go.microsoft.com/fwlink/?LinkId=746572)
     - [OpenGL Compatibility Pack](https://apps.microsoft.com/detail/9nqpsl29bfff)
 - **macOS**:
-  - [Geargrafx-1.1.0-macos-arm.zip](https://githubp.com/drhelius/Geargrafx/releases/download/1.1.0/Geargrafx-1.1.0-macos-arm.zip)
+  - [Geargrafx-1.1.0-macos-arm.zip](https://github.com/drhelius/Geargrafx/releases/download/1.1.0/Geargrafx-1.1.0-macos-arm.zip)
   - [Geargrafx-1.1.0-macos-intel.zip](https://github.com/drhelius/Geargrafx/releases/download/1.1.0/Geargrafx-1.1.0-macos-intel.zip)
 - **Linux**:
   - [Geargrafx-1.1.0-ubuntu-24.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.1.0/Geargrafx-1.1.0-ubuntu-24.04.zip)
