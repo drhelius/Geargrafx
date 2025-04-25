@@ -360,13 +360,10 @@ size_t retro_get_memory_size(unsigned id)
     switch (id)
     {
         case RETRO_MEMORY_SAVE_RAM:
-            log_cb(RETRO_LOG_DEBUG, "RETRO_MEMORY_SAVE_RAM: %u\n", core->GetMemory()->GetBackupRAMSize());
             return core->GetMemory()->GetBackupRAMSize();
         case RETRO_MEMORY_SYSTEM_RAM:
-            log_cb(RETRO_LOG_DEBUG, "RETRO_MEMORY_SYSTEM_RAM: %u\n", core->GetMemory()->GetWorkingRAMSize());
             return core->GetMemory()->GetWorkingRAMSize();
         case RETRO_MEMORY_VIDEO_RAM:
-            log_cb(RETRO_LOG_DEBUG, "RETRO_MEMORY_VIDEO_RAM: %u\n", HUC6270_VRAM_SIZE * 2);
             return HUC6270_VRAM_SIZE * 2;
     }
 
