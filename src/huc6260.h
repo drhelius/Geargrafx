@@ -84,7 +84,7 @@ public:
 private:
     void InitPalettes();
     void DeletePalettes();
-    NO_INLINE void WritePixel(u16 pixel);
+    NO_INLINE void WritePixel(u32 pixel);
 
 private:
     HuC6270* m_huc6270;

@@ -24,14 +24,14 @@
 #include "huc6260.h"
 #include "huc6280.h"
 
-INLINE u16 HuC6270::Clock()
+INLINE u32 HuC6270::Clock()
 {
     if (m_sat_transfer_pending > 0)
         SATTransfer();
     if (m_vram_transfer_pending > 0)
         VRAMTransfer();
 
-    u16 pixel = 0x100;
+    u32 pixel = 0x10000;
 
     if (m_active_line &&
         (m_v_state == HuC6270_VERTICAL_STATE_VDW) &&

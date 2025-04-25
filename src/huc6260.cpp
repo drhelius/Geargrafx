@@ -343,25 +343,31 @@ void HuC6260::WriteRegister(u16 address, u8 value)
     }
 }
 
-void HuC6260::WritePixel(u16 pixel)
+void HuC6260::WritePixel(u32 pixel)
 {
-    assert(pixel < 512);
-
-    if (pixel >= 512)
+    u16 color;
+    if ((pixel & 0x10000) == 0)
     {
-        Debug("HuC6260: Invalid pixel value %04X\n", pixel);
-        pixel = 0;
+        assert(pixel < 512);
+
+        if (pixel >= 512)
+        {
+            Debug("HuC6260: Invalid pixel value %04X\n", pixel);
+            pixel = 0;
+        }
+
+        color = m_color_table[pixel];
+
+        assert(color < 512);
+
+        if (color >= 512)
+        {
+            Debug("HuC6260: Invalid color value %04X\n", color);
+            color = 0;
+        }
     }
-
-    u16 color = m_color_table[pixel];
-
-    assert(color < 512);
-
-    if (color >= 512)
-    {
-        Debug("HuC6260: Invalid color value %04X\n", color);
+    else
         color = 0;
-    }
 
     switch (m_pixel_format)
     {

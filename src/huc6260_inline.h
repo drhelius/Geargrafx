@@ -30,7 +30,7 @@ INLINE bool HuC6260::Clock()
 
     if (m_pixel_clock == 0)
     {
-        u16 pixel = m_huc6270->Clock();
+        u32 pixel = m_huc6270->Clock();
 
 #if defined(HUC6260_DEBUG)
         int start_x = 0;
@@ -46,7 +46,7 @@ INLINE bool HuC6260::Clock()
         if ((m_pixel_x >= start_x) && (m_pixel_x < end_x) && (m_vpos >= start_y) && (m_vpos < end_y))
         {
             if ((pixel & 0x10F) == 0)
-                pixel = 0;
+                pixel &= 0x10000;
 
             WritePixel(pixel);
         }

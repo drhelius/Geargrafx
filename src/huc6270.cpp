@@ -405,7 +405,7 @@ void HuC6270::NextHorizontalState()
             //HUC6270_DEBUG("------ hpos reset: %d", m_hpos);
             m_hpos = 0;
             m_vpos = (m_vpos + 1) % 263;
-            m_active_line = (m_raster_line < 240);
+            m_active_line = (m_raster_line < 242);
             m_latched_hds = HUC6270_VAR_HDS;
             m_latched_hdw = HUC6270_VAR_HDW;
             m_latched_hde = HUC6270_VAR_HDE;
