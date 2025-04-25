@@ -69,7 +69,10 @@ enum GG_Keys
 enum GG_Controllers
 {
     GG_CONTROLLER_1 = 0,
-    GG_CONTROLLER_2 = 1
+    GG_CONTROLLER_2 = 1,
+    GG_CONTROLLER_3 = 2,
+    GG_CONTROLLER_4 = 3,
+    GG_CONTROLLER_5 = 4
 };
 
 struct GG_SaveState_Header

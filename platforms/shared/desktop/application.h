@@ -18,9 +18,10 @@
  */
 
 #ifndef APPLICATION_H
-#define	APPLICATION_H
+#define APPLICATION_H
 
 #include <SDL.h>
+#include "../../../src/geargrafx.h"
 
 #ifdef APPLICATION_IMPORT
     #define EXTERN
@@ -29,7 +30,7 @@
 #endif
 
 EXTERN SDL_Window* application_sdl_window;
-EXTERN SDL_GameController* application_gamepad[2];
+EXTERN SDL_GameController* application_gamepad[GG_MAX_GAMEPADS];
 EXTERN int application_added_gamepad_mappings;
 EXTERN int application_updated_gamepad_mappings;
 EXTERN float application_display_scale;

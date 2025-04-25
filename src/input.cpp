@@ -22,13 +22,14 @@
 
 Input::Input()
 {
+    m_turbo_tap = false;
     m_pce_jap = false;
     m_cdrom = true;
     m_sel = false;
     m_clr = false;
     m_register = 0;
-    m_joypads[0] = 0xFF;
-    m_joypads[1] = 0xFF;
+    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+        m_gamepads[i] = 0xFF;
 }
 
 void Input::Init()
@@ -38,24 +39,25 @@ void Input::Init()
 
 void Input::Reset()
 {
-    m_pce_jap = false;
-    m_cdrom = true;
     m_sel = true;
     m_clr = true;
     m_register = 0;
-    m_joypads[0] = 0xFF;
-    m_joypads[1] = 0XFF;
-    UpdateRegister();
+    m_selected_pad = 0;
+
+    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+        m_gamepads[i] = 0xFF;
+
+    UpdateRegister(0xFF);
 }
 
 void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
 {
-    m_joypads[controller] &= ~key;
+    m_gamepads[controller] &= ~key;
 }
 
 void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
 {
-    m_joypads[controller] |= key;
+    m_gamepads[controller] |= key;
 }
 
 void Input::SaveState(std::ostream& stream)
@@ -63,10 +65,9 @@ void Input::SaveState(std::ostream& stream)
     using namespace std;
     stream.write(reinterpret_cast<const char*> (&m_clr), sizeof(m_clr));
     stream.write(reinterpret_cast<const char*> (&m_sel), sizeof(m_sel));
-    stream.write(reinterpret_cast<const char*> (m_joypads), sizeof(m_joypads));
+    stream.write(reinterpret_cast<const char*> (m_gamepads), sizeof(m_gamepads));
     stream.write(reinterpret_cast<const char*> (&m_register), sizeof(m_register));
-    stream.write(reinterpret_cast<const char*> (&m_pce_jap), sizeof(m_pce_jap));
-    stream.write(reinterpret_cast<const char*> (&m_cdrom), sizeof(m_cdrom));
+    stream.write(reinterpret_cast<const char*> (&m_selected_pad), sizeof(m_selected_pad));
 }
 
 void Input::LoadState(std::istream& stream)
@@ -74,8 +75,7 @@ void Input::LoadState(std::istream& stream)
     using namespace std;
     stream.read(reinterpret_cast<char*> (&m_clr), sizeof(m_clr));
     stream.read(reinterpret_cast<char*> (&m_sel), sizeof(m_sel));
-    stream.read(reinterpret_cast<char*> (m_joypads), sizeof(m_joypads));
+    stream.read(reinterpret_cast<char*> (m_gamepads), sizeof(m_gamepads));
     stream.read(reinterpret_cast<char*> (&m_register), sizeof(m_register));
-    stream.read(reinterpret_cast<char*> (&m_pce_jap), sizeof(m_pce_jap));
-    stream.read(reinterpret_cast<char*> (&m_cdrom), sizeof(m_cdrom));
+    stream.read(reinterpret_cast<char*> (&m_selected_pad), sizeof(m_selected_pad));
 }

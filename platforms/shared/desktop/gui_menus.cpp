@@ -363,6 +363,13 @@ static void menu_emulator(void)
         {
             emu_set_pce_japanese(config_emulator.pce_jap);
         }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("This option is not recommended as many USA games");
+            ImGui::Text("will fail to start if a JAP system is detected");
+            ImGui::EndTooltip();
+        }
 
         if (ImGui::MenuItem("Enable Backup RAM", "", &config_emulator.backup_ram))
         {
@@ -497,17 +504,17 @@ static void menu_video(void)
 
         ImGui::Separator();
 
+        if (ImGui::MenuItem("Disable Sprite Limit", "", &config_video.sprite_limit))
+        {
+            emu_video_no_sprite_limit(config_video.sprite_limit);
+        }
+
         if (ImGui::MenuItem("Composite Colors", "", &config_video.composite_palette))
         {
             emu_set_composite_palette(config_video.composite_palette);
         }
 
         ImGui::MenuItem("Bilinear Filtering", "", &config_video.bilinear);
-
-        if (ImGui::MenuItem("Disable Sprite Limit", "", &config_video.sprite_limit))
-        {
-            emu_video_no_sprite_limit(config_video.sprite_limit);
-        }
 
         if (ImGui::BeginMenu("Screen Ghosting"))
         {
@@ -534,99 +541,114 @@ static void menu_input(void)
     {
         gui_in_use = true;
 
+        if (ImGui::MenuItem("Enable Turbo Tap", "", &config_input.turbo_tap))
+        {
+            emu_set_turbo_tap(config_input.turbo_tap);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("It is recommended to keep this option disabled if");
+            ImGui::Text("you are using the emulator in single player only.");
+            ImGui::EndTooltip();
+        }
+
+        ImGui::Separator();
+
         if (ImGui::BeginMenu("Keyboard"))
         {
             if (ImGui::BeginMenu("Player 1"))
             {
-                keyboard_configuration_item("Left:", &config_input[0].key_left, 0);
-                keyboard_configuration_item("Right:", &config_input[0].key_right, 0);
-                keyboard_configuration_item("Up:", &config_input[0].key_up, 0);
-                keyboard_configuration_item("Down:", &config_input[0].key_down, 0);
-                keyboard_configuration_item("Select:", &config_input[0].key_select, 0);
-                keyboard_configuration_item("Run:", &config_input[0].key_run, 0);
-                keyboard_configuration_item("1:", &config_input[0].key_1, 0);
-                keyboard_configuration_item("2:", &config_input[0].key_2, 0);
+                keyboard_configuration_item("Left:", &config_input_keyboard[0].key_left, 0);
+                keyboard_configuration_item("Right:", &config_input_keyboard[0].key_right, 0);
+                keyboard_configuration_item("Up:", &config_input_keyboard[0].key_up, 0);
+                keyboard_configuration_item("Down:", &config_input_keyboard[0].key_down, 0);
+                keyboard_configuration_item("Select:", &config_input_keyboard[0].key_select, 0);
+                keyboard_configuration_item("Run:", &config_input_keyboard[0].key_run, 0);
+                keyboard_configuration_item("1:", &config_input_keyboard[0].key_1, 0);
+                keyboard_configuration_item("2:", &config_input_keyboard[0].key_2, 0);
 
                 gui_popup_modal_keyboard();
 
                 ImGui::EndMenu();
             }
 
-            // if (ImGui::BeginMenu("Player 2"))
-            // {
-            //     keyboard_configuration_item("Left:", &config_input[1].key_left, 1);
-            //     keyboard_configuration_item("Right:", &config_input[1].key_right, 1);
-            //     keyboard_configuration_item("Up:", &config_input[1].key_up, 1);
-            //     keyboard_configuration_item("Down:", &config_input[1].key_down, 1);
-            //     keyboard_configuration_item("Select:", &config_input[1].key_select, 1);
-            //     keyboard_configuration_item("Run:", &config_input[1].key_run, 1);
-            //     keyboard_configuration_item("1:", &config_input[1].key_1, 1);
-            //     keyboard_configuration_item("2:", &config_input[1].key_2, 1);
+            if (ImGui::BeginMenu("Player 2"))
+            {
+                if (!config_input.turbo_tap)
+                {
+                    ImGui::TextDisabled("Turbo Tap is disabled:");
+                    ImGui::TextDisabled("Keyboard for Player 2 will not be used");
+                    ImGui::Separator();
+                }
 
-            //     gui_popup_modal_keyboard();
+                keyboard_configuration_item("Left:", &config_input_keyboard[1].key_left, 1);
+                keyboard_configuration_item("Right:", &config_input_keyboard[1].key_right, 1);
+                keyboard_configuration_item("Up:", &config_input_keyboard[1].key_up, 1);
+                keyboard_configuration_item("Down:", &config_input_keyboard[1].key_down, 1);
+                keyboard_configuration_item("Select:", &config_input_keyboard[1].key_select, 1);
+                keyboard_configuration_item("Run:", &config_input_keyboard[1].key_run, 1);
+                keyboard_configuration_item("1:", &config_input_keyboard[1].key_1, 1);
+                keyboard_configuration_item("2:", &config_input_keyboard[1].key_2, 1);
 
-            //     ImGui::EndMenu();
-            // }
+                gui_popup_modal_keyboard();
+
+                ImGui::EndMenu();
+            }
 
             ImGui::EndMenu();
         }
 
         if (ImGui::BeginMenu("Gamepads"))
         {
-            if (ImGui::BeginMenu("Player 1"))
+            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
             {
-                ImGui::MenuItem("Enable Gamepad P1", "", &config_input[0].gamepad);
+                char gamepad_name[32];
+                snprintf(gamepad_name, sizeof(gamepad_name), "Player %d", i + 1);
 
-                if (ImGui::BeginMenu("Directional Controls"))
+                if (ImGui::BeginMenu(gamepad_name))
                 {
-                    ImGui::PushItemWidth(150.0f);
-                    ImGui::Combo("##directional", &config_input[0].gamepad_directional, "D-pad\0Left Analog Stick\0\0");
-                    ImGui::PopItemWidth();
+                    if (!config_input_gamepad[i].detected)
+                    {
+                        ImGui::TextDisabled("This gamepad is not detected");
+                        ImGui::Separator();
+                    }
+                    else if (!config_input.turbo_tap && (i > 0))
+                    {
+                        ImGui::TextDisabled("Gamepad detected for Player %d", i + 1);
+                        ImGui::TextDisabled("But Turbo Tap is disabled:");
+                        ImGui::TextDisabled("This gamepad will not be used");
+                        ImGui::Separator();
+                    }
+                    else
+                    {
+                        ImGui::TextDisabled("Gamepad detected for Player %d", i + 1);
+                        ImGui::Separator();
+                    }
+
+                    if (ImGui::BeginMenu("Directional Controls"))
+                    {
+                        ImGui::PushItemWidth(150.0f);
+                        ImGui::Combo("##directional", &config_input_gamepad[i].gamepad_directional, "D-pad\0Left Analog Stick\0\0");
+                        ImGui::PopItemWidth();
+                        ImGui::EndMenu();
+                    }
+
+                    if (ImGui::BeginMenu("Button Configuration"))
+                    {
+                        gamepad_configuration_item("Select:", &config_input_gamepad[i].gamepad_select, 0);
+                        gamepad_configuration_item("Run:", &config_input_gamepad[i].gamepad_run, 0);
+                        gamepad_configuration_item("1:", &config_input_gamepad[i].gamepad_1, 0);
+                        gamepad_configuration_item("2:", &config_input_gamepad[i].gamepad_2, 0);
+
+                        gui_popup_modal_gamepad(i);
+
+                        ImGui::EndMenu();
+                    }
+
                     ImGui::EndMenu();
                 }
-
-                if (ImGui::BeginMenu("Button Configuration"))
-                {
-                    gamepad_configuration_item("Select:", &config_input[0].gamepad_select, 0);
-                    gamepad_configuration_item("Run:", &config_input[0].gamepad_run, 0);
-                    gamepad_configuration_item("1:", &config_input[0].gamepad_1, 0);
-                    gamepad_configuration_item("2:", &config_input[0].gamepad_2, 0);
-
-                    gui_popup_modal_gamepad(0);
-
-                    ImGui::EndMenu();
-                }
-
-                ImGui::EndMenu();
             }
-
-            // if (ImGui::BeginMenu("Player 2"))
-            // {
-            //     ImGui::MenuItem("Enable Gamepad P2", "", &config_input[1].gamepad);
-
-            //     if (ImGui::BeginMenu("Directional Controls"))
-            //     {
-            //         ImGui::PushItemWidth(150.0f);
-            //         ImGui::Combo("##directional", &config_input[1].gamepad_directional, "D-pad\0Left Analog Stick\0\0");
-            //         ImGui::PopItemWidth();
-            //         ImGui::EndMenu();
-            //     }
-
-            //     if (ImGui::BeginMenu("Button Configuration"))
-            //     {
-            //         gamepad_configuration_item("Select:", &config_input[1].gamepad_select, 1);
-            //         gamepad_configuration_item("Run:", &config_input[1].gamepad_run, 1);
-            //         gamepad_configuration_item("1:", &config_input[1].gamepad_1, 1);
-            //         gamepad_configuration_item("2:", &config_input[1].gamepad_2, 1);
-
-
-            //         gui_popup_modal_gamepad(1);
-
-            //         ImGui::EndMenu();
-            //     }
-
-            //     ImGui::EndMenu();
-            // }
 
             ImGui::EndMenu();
         }

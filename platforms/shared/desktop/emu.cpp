@@ -419,6 +419,11 @@ void emu_set_backup_ram(bool enabled)
     geargrafx->GetInput()->EnableCDROM(enabled);
 }
 
+void emu_set_turbo_tap(bool enabled)
+{
+    geargrafx->GetInput()->EnableTurboTap(enabled);
+}
+
 void emu_save_screenshot(const char* file_path)
 {
     if (!geargrafx->GetCartridge()->IsReady())

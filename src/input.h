@@ -24,6 +24,8 @@
 #include <fstream>
 #include "common.h"
 
+#define GG_MAX_GAMEPADS 5
+
 class Input
 {
 public:
@@ -39,19 +41,22 @@ public:
     bool GetClr();
     void EnablePCEJap(bool enable);
     void EnableCDROM(bool enable);
+    void EnableTurboTap(bool enabled);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
 private:
     bool m_clr;
     bool m_sel;
-    u8 m_joypads[2];
+    u8 m_gamepads[GG_MAX_GAMEPADS];
     u8 m_register;
     bool m_pce_jap;
     bool m_cdrom;
+    bool m_turbo_tap;
+    int m_selected_pad;
 
 private:
-    void UpdateRegister();
+    void UpdateRegister(u8 value);
 
 };
 

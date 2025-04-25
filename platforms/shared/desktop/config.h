@@ -91,6 +91,11 @@ struct config_Audio
 
 struct config_Input
 {
+    bool turbo_tap = false;
+};
+
+struct config_Input_Keyboard
+{
     SDL_Scancode key_left;
     SDL_Scancode key_right;
     SDL_Scancode key_up;
@@ -99,7 +104,11 @@ struct config_Input
     SDL_Scancode key_run;
     SDL_Scancode key_1;
     SDL_Scancode key_2;
-    bool gamepad;
+};
+
+struct config_Input_Gamepad
+{
+    bool detected;
     int gamepad_directional;
     bool gamepad_invert_x_axis;
     bool gamepad_invert_y_axis;
@@ -157,7 +166,9 @@ EXTERN char config_imgui_file_path[260];
 EXTERN config_Emulator config_emulator;
 EXTERN config_Video config_video;
 EXTERN config_Audio config_audio;
-EXTERN config_Input config_input[2];
+EXTERN config_Input config_input;
+EXTERN config_Input_Keyboard config_input_keyboard[2];
+EXTERN config_Input_Gamepad config_input_gamepad[GG_MAX_GAMEPADS];
 EXTERN config_Debug config_debug;
 
 EXTERN void config_init(void);

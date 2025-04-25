@@ -34,7 +34,7 @@
 
 #define RETRO_DEVICE_PCE_PAD    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
 
-#define MAX_PADS 1
+#define MAX_PADS GG_MAX_GAMEPADS
 #define JOYPAD_BUTTONS 8
 
 static retro_environment_t environ_cb;
@@ -486,6 +486,7 @@ static void update_input(void)
 static void set_variabless(void)
 {
     struct retro_variable vars[] = {
+        { "geargrafx_turbotap", "TurboTap; Disabled|Enabled" },
         { "geargrafx_aspect_ratio", "Aspect Ratio; 1:1 PAR|4:3 DAR|16:9 DAR|16:10 DAR" },
         { "geargrafx_overscan", "Overscan; Disabled|Enabled" },
         { "geargrafx_scanline_count", "Scanline Count; 224p|240p|Manual" },
@@ -505,6 +506,14 @@ static void set_variabless(void)
 static void check_variables(void)
 {
     struct retro_variable var = {0};
+
+    var.key = "geargrafx_turbotap";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetInput()->EnableTurboTap(strcmp(var.value, "Enabled") == 0);
+    }
 
     var.key = "geargrafx_aspect_ratio";
     var.value = NULL;
