@@ -86,6 +86,7 @@ void HuC6270::Reset()
     m_clocks_to_next_h_state = 1;
     m_vblank_triggered = false;
     m_active_line = false;
+    m_burst_mode = false;
     m_line_buffer_index = 0;
     m_no_sprite_limit = false;
     m_sprite_count = 0;
@@ -411,6 +412,10 @@ void HuC6270::NextHorizontalState()
             m_latched_hsw = HUC6270_VAR_HSW;
             m_latched_cr = HUC6270_VAR_CR;
             m_clocks_to_next_h_state = ClocksToBYRLatch();
+
+            if (m_vpos == 0)
+                m_burst_mode = ((m_latched_cr & 0x00C0) == 0);
+
             HUC6270_DEBUG(">>>\nHDS Start!  HSW: %d, HDW: %d, HDW: %d, HDE: %d", m_latched_hsw, m_latched_hds, m_latched_hdw, m_latched_hde);
             HUC6270_DEBUG("HDS 1");
             break;
@@ -456,7 +461,7 @@ void HuC6270::NextHorizontalState()
             while (m_lines_to_next_v_state <= 0)
                 NextVerticalState();
 
-            if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
+            if ((m_v_state == HuC6270_VERTICAL_STATE_VDW) && !m_burst_mode)
                 FetchSprites();
 
             RCRIRQ();
@@ -506,14 +511,17 @@ void HuC6270::RenderLine()
         }
     }
 
-    if((m_latched_cr & 0x80) != 0)
+    if (!m_burst_mode)
     {
-        RenderBackground(width);
-    }
+        if((m_latched_cr & 0x80) != 0)
+        {
+            RenderBackground(width);
+        }
 
-    if((m_latched_cr & 0x40) != 0)
-    {
-        RenderSprites(width);
+        if((m_latched_cr & 0x40) != 0)
+        {
+            RenderSprites(width);
+        }
     }
 }
 
@@ -755,6 +763,7 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_clocks_to_next_h_state), sizeof(m_clocks_to_next_h_state));
     stream.write(reinterpret_cast<const char*> (&m_vblank_triggered), sizeof(m_vblank_triggered));
     stream.write(reinterpret_cast<const char*> (&m_active_line), sizeof(m_active_line));
+    stream.write(reinterpret_cast<const char*> (&m_burst_mode), sizeof(m_burst_mode));
     stream.write(reinterpret_cast<const char*> (m_line_buffer), sizeof(u16) * 1024);
     stream.write(reinterpret_cast<const char*> (m_line_buffer_sprites), sizeof(u16) * 1024);
     stream.write(reinterpret_cast<const char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
@@ -808,6 +817,7 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_clocks_to_next_h_state), sizeof(m_clocks_to_next_h_state));
     stream.read(reinterpret_cast<char*> (&m_vblank_triggered), sizeof(m_vblank_triggered));
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
+    stream.read(reinterpret_cast<char*> (&m_burst_mode), sizeof(m_burst_mode));
     stream.read(reinterpret_cast<char*> (m_line_buffer), sizeof(u16) * 1024);
     stream.read(reinterpret_cast<char*> (m_line_buffer_sprites), sizeof(u16) * 1024);
     stream.read(reinterpret_cast<char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));

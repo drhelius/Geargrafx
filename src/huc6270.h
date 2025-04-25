@@ -128,6 +128,7 @@ private:
     s32 m_clocks_to_next_h_state;
     bool m_vblank_triggered;
     bool m_active_line;
+    bool m_burst_mode;
     u16 m_line_buffer[1024];
     u16 m_line_buffer_sprites[1024];
     s32 m_line_buffer_index;
