@@ -42,7 +42,7 @@ public:
     void EnablePCEJap(bool enable);
     void EnableCDROM(bool enable);
     void EnableTurboTap(bool enabled);
-    void EnableAvenuePad(bool enabled);
+    void EnableAvenuePad(GG_Controllers controller, bool enabled);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -54,7 +54,7 @@ private:
     bool m_pce_jap;
     bool m_cdrom;
     bool m_turbo_tap;
-    bool m_avenue_pad;
+    bool m_avenue_pad[GG_MAX_GAMEPADS];
     int m_selected_pad;
     bool m_selected_extra_buttons;
 

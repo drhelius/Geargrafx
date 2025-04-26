@@ -72,9 +72,9 @@ INLINE void Input::EnableTurboTap(bool enabled)
     m_turbo_tap = enabled;
 }
 
-INLINE void Input::EnableAvenuePad(bool enabled)
+INLINE void Input::EnableAvenuePad(GG_Controllers controller, bool enabled)
 {
-    m_avenue_pad = enabled;
+    m_avenue_pad[controller] = enabled;
 }
 
 INLINE void Input::UpdateRegister(u8 value)
@@ -97,16 +97,22 @@ INLINE void Input::UpdateRegister(u8 value)
 
         if(m_sel && !prev_clr && m_clr)
             m_selected_pad = 0;
+
+        if (m_selected_pad >= GG_MAX_GAMEPADS)
+        {
+            m_register |= 0x0F;
+            return;
+        }
     }
     else
         m_selected_pad = 0;
 
-    if (m_avenue_pad && prev_clr && !m_clr)
+    if (prev_clr && !m_clr)
         m_selected_extra_buttons = !m_selected_extra_buttons;
 
     if (!m_clr)
     {
-        if (m_avenue_pad && m_selected_extra_buttons)
+        if (m_avenue_pad[m_selected_pad] && m_selected_extra_buttons)
         {
             if (!m_sel)
                 m_register |= ((m_gamepads[m_selected_pad] >> 8) & 0x0F);

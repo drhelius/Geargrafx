@@ -78,6 +78,8 @@ void config_init(void)
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
+        config_input.avenue_pad[i] = false;
+
         config_input_gamepad[i].detected = false;
         config_input_gamepad[i].gamepad_invert_x_axis = false;
         config_input_gamepad[i].gamepad_invert_y_axis = false;
@@ -222,7 +224,13 @@ void config_read(void)
     config_audio.sync = read_bool("Audio", "Sync", true);
 
     config_input.turbo_tap = read_bool("Input", "TurboTap", false);
-    config_input.avenue_pad = read_bool("Input", "AvenuePad", false);
+
+    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+    {
+        char input_group[32];
+        snprintf(input_group, sizeof(input_group), "Input%d", i + 1);
+        config_input.avenue_pad[i] = read_bool(input_group, "AvenuePad", false);
+    }
 
     config_input_keyboard[0].key_left = (SDL_Scancode)read_int("InputKeyboard1", "KeyLeft", SDL_SCANCODE_LEFT);
     config_input_keyboard[0].key_right = (SDL_Scancode)read_int("InputKeyboard1", "KeyRight", SDL_SCANCODE_RIGHT);
@@ -364,7 +372,13 @@ void config_write(void)
     write_bool("Audio", "Sync", config_audio.sync);
 
     write_bool("Input", "TurboTap", config_input.turbo_tap);
-    write_bool("Input", "AvenuePad", config_input.avenue_pad);
+
+    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+    {
+        char input_group[32];
+        snprintf(input_group, sizeof(input_group), "Input%d", i + 1);
+        write_bool(input_group, "AvenuePad", config_input.avenue_pad[i]);
+    }
 
     write_int("InputKeyboard1", "KeyLeft", config_input_keyboard[0].key_left);
     write_int("InputKeyboard1", "KeyRight", config_input_keyboard[0].key_right);

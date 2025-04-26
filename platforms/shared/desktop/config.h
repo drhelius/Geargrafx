@@ -92,7 +92,7 @@ struct config_Audio
 struct config_Input
 {
     bool turbo_tap = false;
-    bool avenue_pad = false;
+    bool avenue_pad[GG_MAX_GAMEPADS];
 };
 
 struct config_Input_Keyboard

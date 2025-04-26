@@ -32,10 +32,13 @@
 // static const char slash = '/';
 // #endif
 
-#define RETRO_DEVICE_PCE_PAD    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
+#define RETRO_DEVICE_PCE_PAD            RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
+#define RETRO_DEVICE_PCE_AVENUE_PAD_6   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
 
 #define MAX_PADS GG_MAX_GAMEPADS
-#define JOYPAD_BUTTONS 8
+#define MAX_BUTTONS 12
+#define PCE_PAD_BUTTONS 8
+#define AVENUE_PAD_6_BUTTONS 12
 
 static retro_environment_t environ_cb;
 static retro_video_refresh_t video_cb;
@@ -61,19 +64,23 @@ static float aspect_ratio = 0.0f;
 static bool allow_up_down = false;
 
 static bool libretro_supports_bitmasks;
-static int joypad_current[MAX_PADS][JOYPAD_BUTTONS];
-static int joypad_old[MAX_PADS][JOYPAD_BUTTONS];
+static int joypad_current[MAX_PADS][MAX_BUTTONS];
+static int joypad_old[MAX_PADS][MAX_BUTTONS];
 static unsigned input_device[MAX_PADS];
 
-static GG_Keys keymap[] = {
+static GG_Keys keymap[MAX_BUTTONS] = {
     GG_KEY_UP,
     GG_KEY_DOWN,
     GG_KEY_LEFT,
     GG_KEY_RIGHT,
-    GG_KEY_1,
-    GG_KEY_2,
+    GG_KEY_I,
+    GG_KEY_II,
     GG_KEY_SELECT,
-    GG_KEY_RUN
+    GG_KEY_RUN,
+    GG_KEY_III,
+    GG_KEY_IV,
+    GG_KEY_V,
+    GG_KEY_VI
 };
 
 static GeargrafxCore* core;
@@ -97,7 +104,6 @@ static int IsButtonPressed(int joypad_bits, int button)
 {
     return (joypad_bits & (1 << button)) ? 1 : 0;
 }
-
 
 unsigned retro_api_version(void)
 {
@@ -163,7 +169,7 @@ void retro_init(void)
 
     for (int i = 0; i < MAX_PADS; i++)
     {
-        for (int j = 0; j < JOYPAD_BUTTONS; j++)
+        for (int j = 0; j < MAX_BUTTONS; j++)
         {
             joypad_current[i][j] = 0;
             joypad_old[i][j] = 0;
@@ -199,6 +205,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
     }
 
     input_device[port] = device;
+    core->GetInput()->EnableAvenuePad((GG_Controllers)port, false);
 
     switch ( device )
     {
@@ -207,7 +214,11 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
             break;
         case RETRO_DEVICE_PCE_PAD:
         case RETRO_DEVICE_JOYPAD:
-            log_cb(RETRO_LOG_INFO, "Controller %u: PCE Pad\n", port);
+            log_cb(RETRO_LOG_INFO, "Controller %u: Normal PCE Pad\n", port);
+            break;
+        case RETRO_DEVICE_PCE_AVENUE_PAD_6:
+            log_cb(RETRO_LOG_INFO, "Controller %u: PCE Avenue Pad 6\n", port);
+            core->GetInput()->EnableAvenuePad((GG_Controllers)port, true);
             break;
         default:
             log_cb(RETRO_LOG_DEBUG, "Setting descriptors for unsupported device.\n");
@@ -383,28 +394,40 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 static void set_controller_info(void)
 {
     static const struct retro_controller_description port[] = {
-        { "Joypad Auto", RETRO_DEVICE_JOYPAD },
-        { "Joypad Port Empty", RETRO_DEVICE_NONE },
-        { "PC engine Pad", RETRO_DEVICE_PCE_PAD }
+        { "PC Engine Pad", RETRO_DEVICE_PCE_PAD },
+        { "PC Engine Avenue Pad 6", RETRO_DEVICE_PCE_AVENUE_PAD_6 }
     };
 
     static const struct retro_controller_info ports[] = {
-        { port, 3 },
+        { port, 2 },
+        { port, 2 },
+        { port, 2 },
+        { port, 2 },
+        { port, 2 },
         { NULL, 0 }
     };
 
     environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
 
     struct retro_input_descriptor joypad[] = {
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "I" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "II" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-        { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Run" },
-
+        #define button_ids(INDEX) \
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "I" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "II" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Run" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "III" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "IV" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "V" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "VI" },
+        button_ids(0)
+        button_ids(1)
+        button_ids(2)
+        button_ids(3)
+        button_ids(4)
         { 0, 0, 0, 0, NULL }
     };
 
@@ -435,7 +458,7 @@ static void update_input(void)
     // Copy previous state
     for (int j = 0; j < MAX_PADS; j++)
     {
-        for (int i = 0; i < JOYPAD_BUTTONS; i++)
+        for (int i = 0; i < MAX_BUTTONS; i++)
             joypad_old[j][i] = joypad_current[j][i];
     }
 
@@ -466,18 +489,37 @@ static void update_input(void)
         joypad_current[j][5] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_B);
         joypad_current[j][6] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_SELECT);
         joypad_current[j][7] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_START);
+        joypad_current[j][8] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_Y);
+        joypad_current[j][9] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_X);
+        joypad_current[j][10] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_L2);
+        joypad_current[j][11] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_R2);
     }
 
     for (int j = 0; j < MAX_PADS; j++)
     {
-        for (int i = 0; i < JOYPAD_BUTTONS; i++)
+        int max_buttons = 0;
+        switch (input_device[j])
+        {
+            case RETRO_DEVICE_PCE_PAD:
+            case RETRO_DEVICE_JOYPAD:
+                max_buttons = PCE_PAD_BUTTONS;
+                break;
+            case RETRO_DEVICE_PCE_AVENUE_PAD_6:
+                max_buttons = AVENUE_PAD_6_BUTTONS;
+                break;
+            default:
+                max_buttons = 0;
+                break;
+        }
+
+        for (int i = 0; i < max_buttons; i++)
         {
             if (joypad_current[j][i] != joypad_old[j][i])
             {
                 if (joypad_current[j][i])
-                    core->KeyPressed(static_cast<GG_Controllers>(j), keymap[i]);
+                    core->KeyPressed((GG_Controllers)j, keymap[i]);
                 else
-                    core->KeyReleased(static_cast<GG_Controllers>(j), keymap[i]);
+                    core->KeyReleased((GG_Controllers)j, keymap[i]);
             }
         }
     }

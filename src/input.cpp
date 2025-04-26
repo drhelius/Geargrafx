@@ -22,7 +22,8 @@
 
 Input::Input()
 {
-    m_avenue_pad = false;
+    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+        m_avenue_pad[i] = false;
     m_turbo_tap = false;
     m_pce_jap = false;
     m_cdrom = true;
@@ -30,9 +31,12 @@ Input::Input()
     m_clr = false;
     m_register = 0;
     m_selected_pad = 0;
-    m_selected_extra_buttons = false;
+
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+    {
         m_gamepads[i] = 0xFFFF;
+        m_selected_extra_buttons = false;
+    }
 }
 
 void Input::Init()
@@ -46,10 +50,12 @@ void Input::Reset()
     m_clr = true;
     m_register = 0;
     m_selected_pad = 0;
-    m_selected_extra_buttons = false;
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+    {
         m_gamepads[i] = 0xFFFF;
+        m_selected_extra_buttons = false;
+    }
 
     UpdateRegister(0xFF);
 }

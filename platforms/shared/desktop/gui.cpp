@@ -115,7 +115,8 @@ void gui_init(void)
     emu_set_backup_ram(config_emulator.backup_ram);
     emu_set_composite_palette(config_video.composite_palette);
     emu_set_turbo_tap(config_input.turbo_tap);
-    emu_set_avenue_pad(config_input.avenue_pad);
+    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+        emu_set_avenue_pad((GG_Controllers)i, config_input.avenue_pad[i]);
     emu_debug_set_callback(gui_debug_callback);
 
     strcpy(gui_savefiles_path, config_emulator.savefiles_path.c_str());

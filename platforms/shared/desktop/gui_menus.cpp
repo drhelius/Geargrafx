@@ -553,18 +553,6 @@ static void menu_input(void)
             ImGui::EndTooltip();
         }
 
-        if (ImGui::MenuItem("Enable Avenue Pad", "", &config_input.avenue_pad))
-        {
-            emu_set_avenue_pad(config_input.avenue_pad);
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("It is recommended to enable this option only for");
-            ImGui::Text("games that support Avenue Pad 6.");
-            ImGui::EndTooltip();
-        }
-
         ImGui::Separator();
 
         if (ImGui::BeginMenu("Keyboard"))
@@ -576,6 +564,20 @@ static void menu_input(void)
 
                 if (ImGui::BeginMenu(keyboard_name))
                 {
+                    if (ImGui::MenuItem("Enable Avenue Pad (6 buttons)", "", &config_input.avenue_pad[i]))
+                    {
+                        emu_set_avenue_pad((GG_Controllers)i, config_input.avenue_pad[i]);
+                    }
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::BeginTooltip();
+                        ImGui::Text("It is recommended to enable this option only for");
+                        ImGui::Text("games that support Avenue Pad 6.");
+                        ImGui::EndTooltip();
+                    }
+
+                    ImGui::Separator();
+
                     keyboard_configuration_item("Left:", &config_input_keyboard[i].key_left, i);
                     keyboard_configuration_item("Right:", &config_input_keyboard[i].key_right, i);
                     keyboard_configuration_item("Up:", &config_input_keyboard[i].key_up, i);
@@ -585,7 +587,7 @@ static void menu_input(void)
                     keyboard_configuration_item("I:", &config_input_keyboard[i].key_I, i);
                     keyboard_configuration_item("II:", &config_input_keyboard[i].key_II, i);
                     ImGui::Separator();
-                    ImGui::TextDisabled("Avenue Pad%s:", config_input.avenue_pad ? "" : " (currently disabled)");
+                    ImGui::TextDisabled("Avenue Pad%s:", config_input.avenue_pad[i] ? "" : " (currently disabled)");
                     keyboard_configuration_item("III:", &config_input_keyboard[i].key_III, i);
                     keyboard_configuration_item("IV:", &config_input_keyboard[i].key_IV, i);
                     keyboard_configuration_item("V:", &config_input_keyboard[i].key_V, i);
@@ -627,6 +629,20 @@ static void menu_input(void)
                         ImGui::Separator();
                     }
 
+                    if (ImGui::MenuItem("Enable Avenue Pad (6 buttons)", "", &config_input.avenue_pad[i]))
+                    {
+                        emu_set_avenue_pad((GG_Controllers)i, config_input.avenue_pad[i]);
+                    }
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::BeginTooltip();
+                        ImGui::Text("It is recommended to enable this option only for");
+                        ImGui::Text("games that support Avenue Pad 6.");
+                        ImGui::EndTooltip();
+                    }
+
+                    ImGui::Separator();
+
                     if (ImGui::BeginMenu("Directional Controls"))
                     {
                         ImGui::PushItemWidth(150.0f);
@@ -642,7 +658,7 @@ static void menu_input(void)
                         gamepad_configuration_item("I:", &config_input_gamepad[i].gamepad_I, i);
                         gamepad_configuration_item("II:", &config_input_gamepad[i].gamepad_II, i);
                         ImGui::Separator();
-                        ImGui::TextDisabled("Avenue Pad%s:", config_input.avenue_pad ? "" : " (currently disabled)");
+                        ImGui::TextDisabled("Avenue Pad%s:", config_input.avenue_pad[i] ? "" : " (currently disabled)");
                         gamepad_configuration_item("III:", &config_input_gamepad[i].gamepad_III, i);
                         gamepad_configuration_item("IV:", &config_input_gamepad[i].gamepad_IV, i);
                         gamepad_configuration_item("V:", &config_input_gamepad[i].gamepad_V, i);
@@ -855,7 +871,7 @@ static void file_dialogs(void)
 static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int player)
 {
     ImGui::Text("%s", text);
-    ImGui::SameLine(100);
+    ImGui::SameLine(120);
 
     char button_label[256];
     snprintf(button_label, 256, "%s##%s%d", SDL_GetKeyName(SDL_GetKeyFromScancode(*key)), text, player);
