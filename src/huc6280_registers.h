@@ -25,7 +25,7 @@
 class EightBitRegister
 {
 public:
-    EightBitRegister() : m_value(0) { }
+    EightBitRegister() { m_value = 0; }
     u8 GetValue() const;
     void SetValue(u8 value);
     void Increment();
@@ -84,13 +84,15 @@ INLINE void EightBitRegister::LoadState(std::istream& stream)
 class SixteenBitRegister
 {
 public:
-    SixteenBitRegister() : m_value(0) { }
-    u8 GetLow() const;
-    u8 GetHigh() const;
-    u16 GetValue() const;
+    SixteenBitRegister() { m_value.v = 0; }
     void SetLow(u8 low);
+    u8 GetLow() const;
     void SetHigh(u8 high);
+    u8 GetHigh() const;
+    u8* GetHighRegister();
+    u8* GetLowRegister();
     void SetValue(u16 value);
+    u16 GetValue() const;
     void Increment();
     void Increment(u16 value);
     void Decrement();
@@ -99,67 +101,91 @@ public:
     void LoadState(std::istream& stream);
 
 private:
-    u16 m_value;
+    union sixteenBit
+    {
+        u16 v;
+        struct
+        {
+#ifdef GG_LITTLE_ENDIAN
+            u8 low;
+            u8 high;
+#else
+            uint8_t high;
+            uint8_t low;
+#endif
+        };
+    } m_value;
 };
 
-INLINE u8 SixteenBitRegister::GetLow() const
-{
-    return static_cast<u8>(m_value & 0x00FF);
-}
-
-INLINE u8 SixteenBitRegister::GetHigh() const
-{
-    return static_cast<u8>((m_value >> 8) & 0x00FF);
-}
-
-INLINE u16 SixteenBitRegister::GetValue() const
-{
-    return m_value;
-}
 
 INLINE void SixteenBitRegister::SetLow(u8 low)
 {
-    m_value = (m_value & 0xFF00) | low;
+    m_value.low = low;
+}
+
+INLINE u8 SixteenBitRegister::GetLow() const
+{
+    return m_value.low;
 }
 
 INLINE void SixteenBitRegister::SetHigh(u8 high)
 {
-    m_value = static_cast<u16>(high << 8) | (m_value & 0x00FF);
+    m_value.high = high;
+}
+
+INLINE u8 SixteenBitRegister::GetHigh() const
+{
+    return m_value.high;
+}
+
+INLINE u8* SixteenBitRegister::GetHighRegister()
+{
+    return &m_value.high;
+}
+
+INLINE u8* SixteenBitRegister::GetLowRegister()
+{
+    return &m_value.low;
 }
 
 INLINE void SixteenBitRegister::SetValue(u16 value)
 {
-    m_value = value;
+    m_value.v = value;
+}
+
+INLINE u16 SixteenBitRegister::GetValue() const
+{
+    return m_value.v;
 }
 
 INLINE void SixteenBitRegister::Increment()
 {
-    m_value++;
+    m_value.v++;
 }
 
 INLINE void SixteenBitRegister::Increment(u16 value)
 {
-    m_value += value;
+    m_value.v += value;
 }
 
 INLINE void SixteenBitRegister::Decrement()
 {
-    m_value--;
+    m_value.v--;
 }
 
 INLINE void SixteenBitRegister::Decrement(u16 value)
 {
-    m_value -= value;
+    m_value.v -= value;
 }
 
 INLINE void SixteenBitRegister::SaveState(std::ostream& stream)
 {
-    stream.write(reinterpret_cast<const char*> (&m_value), sizeof(m_value));
+    stream.write(reinterpret_cast<const char*> (&m_value.v), sizeof(m_value.v));
 }
 
 INLINE void SixteenBitRegister::LoadState(std::istream& stream)
 {
-    stream.read(reinterpret_cast<char*> (&m_value), sizeof(m_value));
+    stream.read(reinterpret_cast<char*> (&m_value.v), sizeof(m_value.v));
 }
 
 #endif /* HUC6280_REGISTERS_H */
