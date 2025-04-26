@@ -22,6 +22,16 @@
 
 #include "input.h"
 
+INLINE void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
+{
+    m_gamepads[controller] &= ~key;
+}
+
+INLINE void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
+{
+    m_gamepads[controller] |= key;
+}
+
 INLINE u8 Input::ReadK()
 {
     return m_register;
@@ -62,6 +72,11 @@ INLINE void Input::EnableTurboTap(bool enabled)
     m_turbo_tap = enabled;
 }
 
+INLINE void Input::EnableAvenuePad(bool enabled)
+{
+    m_avenue_pad = enabled;
+}
+
 INLINE void Input::UpdateRegister(u8 value)
 {
     bool prev_sel = m_sel;
@@ -86,12 +101,23 @@ INLINE void Input::UpdateRegister(u8 value)
     else
         m_selected_pad = 0;
 
+    if (m_avenue_pad && prev_clr && !m_clr)
+        m_selected_extra_buttons = !m_selected_extra_buttons;
+
     if (!m_clr)
     {
-        if (m_sel)
-            m_register |= (m_gamepads[m_selected_pad] >> 4);
+        if (m_avenue_pad && m_selected_extra_buttons)
+        {
+            if (!m_sel)
+                m_register |= ((m_gamepads[m_selected_pad] >> 8) & 0x0F);
+        }
         else
-            m_register |= (m_gamepads[m_selected_pad] & 0x0F);
+        {
+            if (m_sel)
+                m_register |= ((m_gamepads[m_selected_pad] >> 4) & 0x0F);
+            else
+                m_register |= (m_gamepads[m_selected_pad] & 0x0F);
+        }
     }
 }
 

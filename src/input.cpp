@@ -22,14 +22,17 @@
 
 Input::Input()
 {
+    m_avenue_pad = false;
     m_turbo_tap = false;
     m_pce_jap = false;
     m_cdrom = true;
     m_sel = false;
     m_clr = false;
     m_register = 0;
+    m_selected_pad = 0;
+    m_selected_extra_buttons = false;
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-        m_gamepads[i] = 0xFF;
+        m_gamepads[i] = 0xFFFF;
 }
 
 void Input::Init()
@@ -43,21 +46,12 @@ void Input::Reset()
     m_clr = true;
     m_register = 0;
     m_selected_pad = 0;
+    m_selected_extra_buttons = false;
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-        m_gamepads[i] = 0xFF;
+        m_gamepads[i] = 0xFFFF;
 
     UpdateRegister(0xFF);
-}
-
-void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
-{
-    m_gamepads[controller] &= ~key;
-}
-
-void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
-{
-    m_gamepads[controller] |= key;
 }
 
 void Input::SaveState(std::ostream& stream)
@@ -68,6 +62,7 @@ void Input::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (m_gamepads), sizeof(m_gamepads));
     stream.write(reinterpret_cast<const char*> (&m_register), sizeof(m_register));
     stream.write(reinterpret_cast<const char*> (&m_selected_pad), sizeof(m_selected_pad));
+    stream.write(reinterpret_cast<const char*> (&m_selected_extra_buttons), sizeof(m_selected_extra_buttons));
 }
 
 void Input::LoadState(std::istream& stream)
@@ -78,4 +73,5 @@ void Input::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (m_gamepads), sizeof(m_gamepads));
     stream.read(reinterpret_cast<char*> (&m_register), sizeof(m_register));
     stream.read(reinterpret_cast<char*> (&m_selected_pad), sizeof(m_selected_pad));
+    stream.read(reinterpret_cast<char*> (&m_selected_extra_buttons), sizeof(m_selected_extra_buttons));
 }

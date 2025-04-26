@@ -424,6 +424,11 @@ void emu_set_turbo_tap(bool enabled)
     geargrafx->GetInput()->EnableTurboTap(enabled);
 }
 
+void emu_set_avenue_pad(bool enabled)
+{
+    geargrafx->GetInput()->EnableAvenuePad(enabled);
+}
+
 void emu_save_screenshot(const char* file_path)
 {
     if (!geargrafx->GetCartridge()->IsReady())

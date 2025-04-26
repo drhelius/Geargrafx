@@ -396,10 +396,18 @@ static void sdl_events_emu(const SDL_Event* event)
                 if (event->cbutton.which != id)
                     continue;
                 
-                if (event->cbutton.button == config_input_gamepad[i].gamepad_1)
-                    emu_key_pressed(controller, GG_KEY_1);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_2)
-                    emu_key_pressed(controller, GG_KEY_2);
+                if (event->cbutton.button == config_input_gamepad[i].gamepad_I)
+                    emu_key_pressed(controller, GG_KEY_I);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_II)
+                    emu_key_pressed(controller, GG_KEY_II);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_III)
+                    emu_key_pressed(controller, GG_KEY_III);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_IV)
+                    emu_key_pressed(controller, GG_KEY_IV);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_V)
+                    emu_key_pressed(controller, GG_KEY_V);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_VI)
+                    emu_key_pressed(controller, GG_KEY_VI);
                 else if (event->cbutton.button == config_input_gamepad[i].gamepad_run)
                     emu_key_pressed(controller, GG_KEY_RUN);
                 else if (event->cbutton.button == config_input_gamepad[i].gamepad_select)
@@ -433,10 +441,18 @@ static void sdl_events_emu(const SDL_Event* event)
                 if (event->cbutton.which != id)
                     continue;
                 
-                if (event->cbutton.button == config_input_gamepad[i].gamepad_1)
-                    emu_key_released(controller, GG_KEY_1);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_2)
-                    emu_key_released(controller, GG_KEY_2);
+                if (event->cbutton.button == config_input_gamepad[i].gamepad_I)
+                    emu_key_released(controller, GG_KEY_I);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_II)
+                    emu_key_released(controller, GG_KEY_II);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_III)
+                    emu_key_released(controller, GG_KEY_III);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_IV)
+                    emu_key_released(controller, GG_KEY_IV);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_V)
+                    emu_key_released(controller, GG_KEY_V);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_VI)
+                    emu_key_released(controller, GG_KEY_VI);
                 else if (event->cbutton.button == config_input_gamepad[i].gamepad_run)
                     emu_key_released(controller, GG_KEY_RUN);
                 else if (event->cbutton.button == config_input_gamepad[i].gamepad_select)
@@ -537,10 +553,18 @@ static void sdl_events_emu(const SDL_Event* event)
                     emu_key_pressed(controller, GG_KEY_UP);
                 else if (key == config_input_keyboard[i].key_down)
                     emu_key_pressed(controller, GG_KEY_DOWN);
-                else if (key == config_input_keyboard[i].key_1)
-                    emu_key_pressed(controller, GG_KEY_1);
-                else if (key == config_input_keyboard[i].key_2)
-                    emu_key_pressed(controller, GG_KEY_2);
+                else if (key == config_input_keyboard[i].key_I)
+                    emu_key_pressed(controller, GG_KEY_I);
+                else if (key == config_input_keyboard[i].key_II)
+                    emu_key_pressed(controller, GG_KEY_II);
+                else if (key == config_input_keyboard[i].key_III)
+                    emu_key_pressed(controller, GG_KEY_III);
+                else if (key == config_input_keyboard[i].key_IV)
+                    emu_key_pressed(controller, GG_KEY_IV);
+                else if (key == config_input_keyboard[i].key_V)
+                    emu_key_pressed(controller, GG_KEY_V);
+                else if (key == config_input_keyboard[i].key_VI)
+                    emu_key_pressed(controller, GG_KEY_VI);
                 else if (key == config_input_keyboard[i].key_run)
                     emu_key_pressed(controller, GG_KEY_RUN);
                 else if (key == config_input_keyboard[i].key_select)
@@ -565,10 +589,18 @@ static void sdl_events_emu(const SDL_Event* event)
                     emu_key_released(controller, GG_KEY_UP);
                 else if (key == config_input_keyboard[i].key_down)
                     emu_key_released(controller, GG_KEY_DOWN);
-                else if (key == config_input_keyboard[i].key_1)
-                    emu_key_released(controller, GG_KEY_1);
-                else if (key == config_input_keyboard[i].key_2)
-                    emu_key_released(controller, GG_KEY_2);
+                else if (key == config_input_keyboard[i].key_I)
+                    emu_key_released(controller, GG_KEY_I);
+                else if (key == config_input_keyboard[i].key_II)
+                    emu_key_released(controller, GG_KEY_II);
+                else if (key == config_input_keyboard[i].key_III)
+                    emu_key_released(controller, GG_KEY_III);
+                else if (key == config_input_keyboard[i].key_IV)
+                    emu_key_released(controller, GG_KEY_IV);
+                else if (key == config_input_keyboard[i].key_V)
+                    emu_key_released(controller, GG_KEY_V);
+                else if (key == config_input_keyboard[i].key_VI)
+                    emu_key_released(controller, GG_KEY_VI);
                 else if (key == config_input_keyboard[i].key_run)
                     emu_key_released(controller, GG_KEY_RUN);
                 else if (key == config_input_keyboard[i].key_select)

@@ -92,6 +92,7 @@ struct config_Audio
 struct config_Input
 {
     bool turbo_tap = false;
+    bool avenue_pad = false;
 };
 
 struct config_Input_Keyboard
@@ -102,8 +103,12 @@ struct config_Input_Keyboard
     SDL_Scancode key_down;
     SDL_Scancode key_select;
     SDL_Scancode key_run;
-    SDL_Scancode key_1;
-    SDL_Scancode key_2;
+    SDL_Scancode key_I;
+    SDL_Scancode key_II;
+    SDL_Scancode key_III;
+    SDL_Scancode key_IV;
+    SDL_Scancode key_V;
+    SDL_Scancode key_VI;
 };
 
 struct config_Input_Gamepad
@@ -114,8 +119,12 @@ struct config_Input_Gamepad
     bool gamepad_invert_y_axis;
     int gamepad_select;
     int gamepad_run;
-    int gamepad_1;
-    int gamepad_2;
+    int gamepad_I;
+    int gamepad_II;
+    int gamepad_III;
+    int gamepad_IV;
+    int gamepad_V;
+    int gamepad_VI;
     int gamepad_x_axis;
     int gamepad_y_axis;
 };

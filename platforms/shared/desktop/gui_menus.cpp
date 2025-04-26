@@ -553,47 +553,48 @@ static void menu_input(void)
             ImGui::EndTooltip();
         }
 
+        if (ImGui::MenuItem("Enable Avenue Pad", "", &config_input.avenue_pad))
+        {
+            emu_set_avenue_pad(config_input.avenue_pad);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("It is recommended to enable this option only for");
+            ImGui::Text("games that support Avenue Pad 6.");
+            ImGui::EndTooltip();
+        }
+
         ImGui::Separator();
 
         if (ImGui::BeginMenu("Keyboard"))
         {
-            if (ImGui::BeginMenu("Player 1"))
+            for (int i = 0; i < 2; i++)
             {
-                keyboard_configuration_item("Left:", &config_input_keyboard[0].key_left, 0);
-                keyboard_configuration_item("Right:", &config_input_keyboard[0].key_right, 0);
-                keyboard_configuration_item("Up:", &config_input_keyboard[0].key_up, 0);
-                keyboard_configuration_item("Down:", &config_input_keyboard[0].key_down, 0);
-                keyboard_configuration_item("Select:", &config_input_keyboard[0].key_select, 0);
-                keyboard_configuration_item("Run:", &config_input_keyboard[0].key_run, 0);
-                keyboard_configuration_item("1:", &config_input_keyboard[0].key_1, 0);
-                keyboard_configuration_item("2:", &config_input_keyboard[0].key_2, 0);
+                char keyboard_name[32];
+                snprintf(keyboard_name, sizeof(keyboard_name), "Player %d", i + 1);
 
-                gui_popup_modal_keyboard();
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Player 2"))
-            {
-                if (!config_input.turbo_tap)
+                if (ImGui::BeginMenu(keyboard_name))
                 {
-                    ImGui::TextDisabled("Turbo Tap is disabled:");
-                    ImGui::TextDisabled("Keyboard for Player 2 will not be used");
+                    keyboard_configuration_item("Left:", &config_input_keyboard[i].key_left, i);
+                    keyboard_configuration_item("Right:", &config_input_keyboard[i].key_right, i);
+                    keyboard_configuration_item("Up:", &config_input_keyboard[i].key_up, i);
+                    keyboard_configuration_item("Down:", &config_input_keyboard[i].key_down, i);
+                    keyboard_configuration_item("Select:", &config_input_keyboard[i].key_select, i);
+                    keyboard_configuration_item("Run:", &config_input_keyboard[i].key_run, i);
+                    keyboard_configuration_item("I:", &config_input_keyboard[i].key_I, i);
+                    keyboard_configuration_item("II:", &config_input_keyboard[i].key_II, i);
                     ImGui::Separator();
+                    ImGui::TextDisabled("Avenue Pad%s:", config_input.avenue_pad ? "" : " (currently disabled)");
+                    keyboard_configuration_item("III:", &config_input_keyboard[i].key_III, i);
+                    keyboard_configuration_item("IV:", &config_input_keyboard[i].key_IV, i);
+                    keyboard_configuration_item("V:", &config_input_keyboard[i].key_V, i);
+                    keyboard_configuration_item("VI:", &config_input_keyboard[i].key_VI, i);
+
+                    gui_popup_modal_keyboard();
+
+                    ImGui::EndMenu();
                 }
-
-                keyboard_configuration_item("Left:", &config_input_keyboard[1].key_left, 1);
-                keyboard_configuration_item("Right:", &config_input_keyboard[1].key_right, 1);
-                keyboard_configuration_item("Up:", &config_input_keyboard[1].key_up, 1);
-                keyboard_configuration_item("Down:", &config_input_keyboard[1].key_down, 1);
-                keyboard_configuration_item("Select:", &config_input_keyboard[1].key_select, 1);
-                keyboard_configuration_item("Run:", &config_input_keyboard[1].key_run, 1);
-                keyboard_configuration_item("1:", &config_input_keyboard[1].key_1, 1);
-                keyboard_configuration_item("2:", &config_input_keyboard[1].key_2, 1);
-
-                gui_popup_modal_keyboard();
-
-                ImGui::EndMenu();
             }
 
             ImGui::EndMenu();
@@ -636,10 +637,16 @@ static void menu_input(void)
 
                     if (ImGui::BeginMenu("Button Configuration"))
                     {
-                        gamepad_configuration_item("Select:", &config_input_gamepad[i].gamepad_select, 0);
-                        gamepad_configuration_item("Run:", &config_input_gamepad[i].gamepad_run, 0);
-                        gamepad_configuration_item("1:", &config_input_gamepad[i].gamepad_1, 0);
-                        gamepad_configuration_item("2:", &config_input_gamepad[i].gamepad_2, 0);
+                        gamepad_configuration_item("Select:", &config_input_gamepad[i].gamepad_select, i);
+                        gamepad_configuration_item("Run:", &config_input_gamepad[i].gamepad_run, i);
+                        gamepad_configuration_item("I:", &config_input_gamepad[i].gamepad_I, i);
+                        gamepad_configuration_item("II:", &config_input_gamepad[i].gamepad_II, i);
+                        ImGui::Separator();
+                        ImGui::TextDisabled("Avenue Pad%s:", config_input.avenue_pad ? "" : " (currently disabled)");
+                        gamepad_configuration_item("III:", &config_input_gamepad[i].gamepad_III, i);
+                        gamepad_configuration_item("IV:", &config_input_gamepad[i].gamepad_IV, i);
+                        gamepad_configuration_item("V:", &config_input_gamepad[i].gamepad_V, i);
+                        gamepad_configuration_item("VI:", &config_input_gamepad[i].gamepad_VI, i);
 
                         gui_popup_modal_gamepad(i);
 

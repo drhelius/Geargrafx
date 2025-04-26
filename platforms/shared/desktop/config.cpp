@@ -56,8 +56,12 @@ void config_init(void)
     config_input_keyboard[0].key_down = SDL_SCANCODE_DOWN;
     config_input_keyboard[0].key_select = SDL_SCANCODE_A;
     config_input_keyboard[0].key_run = SDL_SCANCODE_S;
-    config_input_keyboard[0].key_1 = SDL_SCANCODE_Z;
-    config_input_keyboard[0].key_2 = SDL_SCANCODE_X;
+    config_input_keyboard[0].key_I = SDL_SCANCODE_Z;
+    config_input_keyboard[0].key_II = SDL_SCANCODE_X;
+    config_input_keyboard[0].key_III = SDL_SCANCODE_C;
+    config_input_keyboard[0].key_IV = SDL_SCANCODE_V;
+    config_input_keyboard[0].key_V = SDL_SCANCODE_B;
+    config_input_keyboard[0].key_VI = SDL_SCANCODE_N;
 
     config_input_keyboard[1].key_left = SDL_SCANCODE_J;
     config_input_keyboard[1].key_right = SDL_SCANCODE_L;
@@ -65,8 +69,12 @@ void config_init(void)
     config_input_keyboard[1].key_down = SDL_SCANCODE_K;
     config_input_keyboard[1].key_select = SDL_SCANCODE_G;
     config_input_keyboard[1].key_run = SDL_SCANCODE_H;
-    config_input_keyboard[1].key_1 = SDL_SCANCODE_V;
-    config_input_keyboard[1].key_2 = SDL_SCANCODE_B;
+    config_input_keyboard[1].key_I = SDL_SCANCODE_T;
+    config_input_keyboard[1].key_II = SDL_SCANCODE_Y;
+    config_input_keyboard[1].key_III = SDL_SCANCODE_5;
+    config_input_keyboard[1].key_IV = SDL_SCANCODE_6;
+    config_input_keyboard[1].key_V = SDL_SCANCODE_7;
+    config_input_keyboard[1].key_VI = SDL_SCANCODE_8;
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -75,8 +83,12 @@ void config_init(void)
         config_input_gamepad[i].gamepad_invert_y_axis = false;
         config_input_gamepad[i].gamepad_select = SDL_CONTROLLER_BUTTON_BACK;
         config_input_gamepad[i].gamepad_run = SDL_CONTROLLER_BUTTON_START;
-        config_input_gamepad[i].gamepad_1 = SDL_CONTROLLER_BUTTON_A;
-        config_input_gamepad[i].gamepad_2 = SDL_CONTROLLER_BUTTON_B;
+        config_input_gamepad[i].gamepad_I = SDL_CONTROLLER_BUTTON_A;
+        config_input_gamepad[i].gamepad_II = SDL_CONTROLLER_BUTTON_B;
+        config_input_gamepad[i].gamepad_III = SDL_CONTROLLER_BUTTON_Y;
+        config_input_gamepad[i].gamepad_IV = SDL_CONTROLLER_BUTTON_X;
+        config_input_gamepad[i].gamepad_V = SDL_CONTROLLER_BUTTON_LEFTSHOULDER;
+        config_input_gamepad[i].gamepad_VI = SDL_CONTROLLER_BUTTON_RIGHTSHOULDER;
         config_input_gamepad[i].gamepad_x_axis = SDL_CONTROLLER_AXIS_LEFTX;
         config_input_gamepad[i].gamepad_y_axis = SDL_CONTROLLER_AXIS_LEFTY;
     }
@@ -210,6 +222,7 @@ void config_read(void)
     config_audio.sync = read_bool("Audio", "Sync", true);
 
     config_input.turbo_tap = read_bool("Input", "TurboTap", false);
+    config_input.avenue_pad = read_bool("Input", "AvenuePad", false);
 
     config_input_keyboard[0].key_left = (SDL_Scancode)read_int("InputKeyboard1", "KeyLeft", SDL_SCANCODE_LEFT);
     config_input_keyboard[0].key_right = (SDL_Scancode)read_int("InputKeyboard1", "KeyRight", SDL_SCANCODE_RIGHT);
@@ -217,8 +230,12 @@ void config_read(void)
     config_input_keyboard[0].key_down = (SDL_Scancode)read_int("InputKeyboard1", "KeyDown", SDL_SCANCODE_DOWN);
     config_input_keyboard[0].key_select = (SDL_Scancode)read_int("InputKeyboard1", "KeySelect", SDL_SCANCODE_A);
     config_input_keyboard[0].key_run = (SDL_Scancode)read_int("InputKeyboard1", "KeyRun", SDL_SCANCODE_S);
-    config_input_keyboard[0].key_1 = (SDL_Scancode)read_int("InputKeyboard1", "Key1", SDL_SCANCODE_Z);
-    config_input_keyboard[0].key_2 = (SDL_Scancode)read_int("InputKeyboard1", "Key2", SDL_SCANCODE_X);
+    config_input_keyboard[0].key_I = (SDL_Scancode)read_int("InputKeyboard1", "KeyI", SDL_SCANCODE_Z);
+    config_input_keyboard[0].key_II = (SDL_Scancode)read_int("InputKeyboard1", "KeyII", SDL_SCANCODE_X);
+    config_input_keyboard[0].key_III = (SDL_Scancode)read_int("InputKeyboard1", "KeyIII", SDL_SCANCODE_C);
+    config_input_keyboard[0].key_IV = (SDL_Scancode)read_int("InputKeyboard1", "KeyIV", SDL_SCANCODE_V);
+    config_input_keyboard[0].key_V = (SDL_Scancode)read_int("InputKeyboard1", "KeyV", SDL_SCANCODE_B);
+    config_input_keyboard[0].key_VI = (SDL_Scancode)read_int("InputKeyboard1", "KeyVI", SDL_SCANCODE_N);
 
     config_input_keyboard[1].key_left = (SDL_Scancode)read_int("InputKeyboard2", "KeyLeft", SDL_SCANCODE_J);
     config_input_keyboard[1].key_right = (SDL_Scancode)read_int("InputKeyboard2", "KeyRight", SDL_SCANCODE_L);
@@ -226,8 +243,12 @@ void config_read(void)
     config_input_keyboard[1].key_down = (SDL_Scancode)read_int("InputKeyboard2", "KeyDown", SDL_SCANCODE_K);
     config_input_keyboard[1].key_select = (SDL_Scancode)read_int("InputKeyboard2", "KeySelect", SDL_SCANCODE_G);
     config_input_keyboard[1].key_run = (SDL_Scancode)read_int("InputKeyboard2", "KeyRun", SDL_SCANCODE_H);
-    config_input_keyboard[1].key_1 = (SDL_Scancode)read_int("InputKeyboard2", "Key1", SDL_SCANCODE_V);
-    config_input_keyboard[1].key_2 = (SDL_Scancode)read_int("InputKeyboard2", "Key2", SDL_SCANCODE_B);
+    config_input_keyboard[1].key_I = (SDL_Scancode)read_int("InputKeyboard2", "KeyI", SDL_SCANCODE_T);
+    config_input_keyboard[1].key_II = (SDL_Scancode)read_int("InputKeyboard2", "KeyII", SDL_SCANCODE_Y);
+    config_input_keyboard[1].key_III = (SDL_Scancode)read_int("InputKeyboard2", "KeyIII", SDL_SCANCODE_5);
+    config_input_keyboard[1].key_IV = (SDL_Scancode)read_int("InputKeyboard2", "KeyIV", SDL_SCANCODE_6);
+    config_input_keyboard[1].key_V = (SDL_Scancode)read_int("InputKeyboard2", "KeyV", SDL_SCANCODE_7);
+    config_input_keyboard[1].key_VI = (SDL_Scancode)read_int("InputKeyboard2", "KeyVI", SDL_SCANCODE_8);
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -241,8 +262,12 @@ void config_read(void)
         config_input_gamepad[i].gamepad_run = read_int(input_group, "GamepadRun", SDL_CONTROLLER_BUTTON_START);
         config_input_gamepad[i].gamepad_x_axis = read_int(input_group, "GamepadX", SDL_CONTROLLER_AXIS_LEFTX);
         config_input_gamepad[i].gamepad_y_axis = read_int(input_group, "GamepadY", SDL_CONTROLLER_AXIS_LEFTY);
-        config_input_gamepad[i].gamepad_1 = read_int(input_group, "Gamepad1", SDL_CONTROLLER_BUTTON_A);
-        config_input_gamepad[i].gamepad_2 = read_int(input_group, "Gamepad2", SDL_CONTROLLER_BUTTON_B);
+        config_input_gamepad[i].gamepad_I = read_int(input_group, "GamepadI", SDL_CONTROLLER_BUTTON_A);
+        config_input_gamepad[i].gamepad_II = read_int(input_group, "GamepadII", SDL_CONTROLLER_BUTTON_B);
+        config_input_gamepad[i].gamepad_III = read_int(input_group, "GamepadIII", SDL_CONTROLLER_BUTTON_Y);
+        config_input_gamepad[i].gamepad_IV = read_int(input_group, "GamepadIV", SDL_CONTROLLER_BUTTON_X);
+        config_input_gamepad[i].gamepad_V = read_int(input_group, "GamepadV", SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+        config_input_gamepad[i].gamepad_VI = read_int(input_group, "GamepadVI", SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
     }
 
     Debug("Settings loaded");
@@ -339,6 +364,7 @@ void config_write(void)
     write_bool("Audio", "Sync", config_audio.sync);
 
     write_bool("Input", "TurboTap", config_input.turbo_tap);
+    write_bool("Input", "AvenuePad", config_input.avenue_pad);
 
     write_int("InputKeyboard1", "KeyLeft", config_input_keyboard[0].key_left);
     write_int("InputKeyboard1", "KeyRight", config_input_keyboard[0].key_right);
@@ -346,8 +372,13 @@ void config_write(void)
     write_int("InputKeyboard1", "KeyDown", config_input_keyboard[0].key_down);
     write_int("InputKeyboard1", "KeySelect", config_input_keyboard[0].key_select);
     write_int("InputKeyboard1", "KeyRun", config_input_keyboard[0].key_run);
-    write_int("InputKeyboard1", "Key1", config_input_keyboard[0].key_1);
-    write_int("InputKeyboard1", "Key2", config_input_keyboard[0].key_2);
+    write_int("InputKeyboard1", "KeyI", config_input_keyboard[0].key_I);
+    write_int("InputKeyboard1", "KeyII", config_input_keyboard[0].key_II);
+    write_int("InputKeyboard1", "KeyIII", config_input_keyboard[0].key_III);
+    write_int("InputKeyboard1", "KeyIV", config_input_keyboard[0].key_IV);
+    write_int("InputKeyboard1", "KeyV", config_input_keyboard[0].key_V);
+    write_int("InputKeyboard1", "KeyVI", config_input_keyboard[0].key_VI);
+
 
     write_int("InputKeyboard2", "KeyLeft", config_input_keyboard[1].key_left);
     write_int("InputKeyboard2", "KeyRight", config_input_keyboard[1].key_right);
@@ -355,8 +386,12 @@ void config_write(void)
     write_int("InputKeyboard2", "KeyDown", config_input_keyboard[1].key_down);
     write_int("InputKeyboard2", "KeySelect", config_input_keyboard[1].key_select);
     write_int("InputKeyboard2", "KeyRun", config_input_keyboard[1].key_run);
-    write_int("InputKeyboard2", "Key1", config_input_keyboard[1].key_1);
-    write_int("InputKeyboard2", "Key2", config_input_keyboard[1].key_2);
+    write_int("InputKeyboard2", "KeyI", config_input_keyboard[1].key_I);
+    write_int("InputKeyboard2", "KeyII", config_input_keyboard[1].key_II);
+    write_int("InputKeyboard2", "KeyIII", config_input_keyboard[1].key_III);
+    write_int("InputKeyboard2", "KeyIV", config_input_keyboard[1].key_IV);
+    write_int("InputKeyboard2", "KeyV", config_input_keyboard[1].key_V);
+    write_int("InputKeyboard2", "KeyVI", config_input_keyboard[1].key_VI);
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -370,8 +405,12 @@ void config_write(void)
         write_int(input_group, "GamepadRun", config_input_gamepad[i].gamepad_run);
         write_int(input_group, "GamepadX", config_input_gamepad[i].gamepad_x_axis);
         write_int(input_group, "GamepadY", config_input_gamepad[i].gamepad_y_axis);
-        write_int(input_group, "Gamepad1", config_input_gamepad[i].gamepad_1);
-        write_int(input_group, "Gamepad2", config_input_gamepad[i].gamepad_2);
+        write_int(input_group, "GamepadI", config_input_gamepad[i].gamepad_I);
+        write_int(input_group, "GamepadII", config_input_gamepad[i].gamepad_II);
+        write_int(input_group, "GamepadIII", config_input_gamepad[i].gamepad_III);
+        write_int(input_group, "GamepadIV", config_input_gamepad[i].gamepad_IV);
+        write_int(input_group, "GamepadV", config_input_gamepad[i].gamepad_V);
+        write_int(input_group, "GamepadVI", config_input_gamepad[i].gamepad_VI);
     }
 
     if (config_ini_file->write(config_ini_data, true))
