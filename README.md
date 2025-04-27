@@ -58,7 +58,13 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 
 ### Command Line Usage
 ```
-geargrafx [rom_file] [symbol_file]
+geargrafx [options] [rom_file] [symbol_file]
+
+Options:
+  -f, --fullscreen    Start in fullscreen mode
+  -w, --windowed      Start in windowed mode with menu visible
+  -v, --version       Display version information
+  -h, --help          Display this help message
 ```
 
 ## Build Instructions
