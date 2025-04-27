@@ -92,7 +92,7 @@ struct config_Audio
 struct config_Input
 {
     bool turbo_tap = false;
-    bool avenue_pad[GG_MAX_GAMEPADS];
+    int controller_type[GG_MAX_GAMEPADS];
 };
 
 struct config_Input_Keyboard
@@ -176,7 +176,7 @@ EXTERN config_Emulator config_emulator;
 EXTERN config_Video config_video;
 EXTERN config_Audio config_audio;
 EXTERN config_Input config_input;
-EXTERN config_Input_Keyboard config_input_keyboard[2];
+EXTERN config_Input_Keyboard config_input_keyboard[GG_MAX_GAMEPADS];
 EXTERN config_Input_Gamepad config_input_gamepad[GG_MAX_GAMEPADS];
 EXTERN config_Debug config_debug;
 

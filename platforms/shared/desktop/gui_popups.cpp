@@ -220,14 +220,6 @@ void gui_popup_modal_about(void)
         ImGui::NewLine();
         ImGui::Separator();
 
-        for (int i = 0; i < 2; i++)
-        {
-            if (application_gamepad[i])
-                ImGui::Text("> Gamepad detected for Player %d", i+1);
-            else
-                ImGui::Text("> No gamepad detected for Player %d", i+1);
-        }
-
         if (application_added_gamepad_mappings || application_updated_gamepad_mappings)
         {
             ImGui::Text("%d game controller mappings added from gamecontrollerdb.txt", application_added_gamepad_mappings);

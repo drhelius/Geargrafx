@@ -552,7 +552,7 @@ static void sdl_events_emu(const SDL_Event* event)
                 break;
             }
 
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
             {
                 GG_Controllers controller = (GG_Controllers)i;
 
@@ -588,7 +588,7 @@ static void sdl_events_emu(const SDL_Event* event)
         {
             int key = event->key.keysym.scancode;
 
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
             {
                 GG_Controllers controller = (GG_Controllers)i;
 

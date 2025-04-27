@@ -553,31 +553,46 @@ static void menu_input(void)
             ImGui::EndTooltip();
         }
 
+        if (ImGui::BeginMenu("Controller Type"))
+        {
+            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+            {
+                char player_name[32];
+                snprintf(player_name, sizeof(player_name), "Player %d", i + 1);
+
+                if (ImGui::BeginMenu(player_name))
+                {
+                    ImGui::PushItemWidth(200.0f);
+                    if (ImGui::Combo("##controller", &config_input.controller_type[i], "Standard Pad (2 buttons)\0Avenue Pad (6 buttons)\0\0"))
+                    {
+                        emu_set_avenue_pad((GG_Controllers)i, config_input.controller_type[i] == 1);
+                    }
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::BeginTooltip();
+                        ImGui::Text("It is recommended to select Avenue Pad");
+                        ImGui::Text("only for games that support it.");
+                        ImGui::EndTooltip();
+                    }
+
+                    ImGui::EndMenu();
+                }
+            }
+
+            ImGui::EndMenu();
+        }
+
         ImGui::Separator();
 
         if (ImGui::BeginMenu("Keyboard"))
         {
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
             {
                 char keyboard_name[32];
                 snprintf(keyboard_name, sizeof(keyboard_name), "Player %d", i + 1);
 
                 if (ImGui::BeginMenu(keyboard_name))
                 {
-                    if (ImGui::MenuItem("Enable Avenue Pad (6 buttons)", "", &config_input.avenue_pad[i]))
-                    {
-                        emu_set_avenue_pad((GG_Controllers)i, config_input.avenue_pad[i]);
-                    }
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::BeginTooltip();
-                        ImGui::Text("It is recommended to enable this option only for");
-                        ImGui::Text("games that support Avenue Pad 6.");
-                        ImGui::EndTooltip();
-                    }
-
-                    ImGui::Separator();
-
                     keyboard_configuration_item("Left:", &config_input_keyboard[i].key_left, i);
                     keyboard_configuration_item("Right:", &config_input_keyboard[i].key_right, i);
                     keyboard_configuration_item("Up:", &config_input_keyboard[i].key_up, i);
@@ -587,7 +602,7 @@ static void menu_input(void)
                     keyboard_configuration_item("I:", &config_input_keyboard[i].key_I, i);
                     keyboard_configuration_item("II:", &config_input_keyboard[i].key_II, i);
                     ImGui::Separator();
-                    ImGui::TextDisabled("Avenue Pad%s:", config_input.avenue_pad[i] ? "" : " (currently disabled)");
+                    ImGui::TextDisabled("Avenue Pad%s:", config_input.controller_type[i] == 1 ? "" : " (currently disabled)");
                     keyboard_configuration_item("III:", &config_input_keyboard[i].key_III, i);
                     keyboard_configuration_item("IV:", &config_input_keyboard[i].key_IV, i);
                     keyboard_configuration_item("V:", &config_input_keyboard[i].key_V, i);
@@ -629,20 +644,6 @@ static void menu_input(void)
                         ImGui::Separator();
                     }
 
-                    if (ImGui::MenuItem("Enable Avenue Pad (6 buttons)", "", &config_input.avenue_pad[i]))
-                    {
-                        emu_set_avenue_pad((GG_Controllers)i, config_input.avenue_pad[i]);
-                    }
-                    if (ImGui::IsItemHovered())
-                    {
-                        ImGui::BeginTooltip();
-                        ImGui::Text("It is recommended to enable this option only for");
-                        ImGui::Text("games that support Avenue Pad 6.");
-                        ImGui::EndTooltip();
-                    }
-
-                    ImGui::Separator();
-
                     if (ImGui::BeginMenu("Directional Controls"))
                     {
                         ImGui::PushItemWidth(150.0f);
@@ -658,7 +659,7 @@ static void menu_input(void)
                         gamepad_configuration_item("I:", &config_input_gamepad[i].gamepad_I, i);
                         gamepad_configuration_item("II:", &config_input_gamepad[i].gamepad_II, i);
                         ImGui::Separator();
-                        ImGui::TextDisabled("Avenue Pad%s:", config_input.avenue_pad[i] ? "" : " (currently disabled)");
+                        ImGui::TextDisabled("Avenue Pad%s:", config_input.controller_type[i] == 1 ? "" : " (currently disabled)");
                         gamepad_configuration_item("III:", &config_input_gamepad[i].gamepad_III, i);
                         gamepad_configuration_item("IV:", &config_input_gamepad[i].gamepad_IV, i);
                         gamepad_configuration_item("V:", &config_input_gamepad[i].gamepad_V, i);

@@ -76,9 +76,25 @@ void config_init(void)
     config_input_keyboard[1].key_V = SDL_SCANCODE_7;
     config_input_keyboard[1].key_VI = SDL_SCANCODE_8;
 
+    for (int i = 2; i < GG_MAX_GAMEPADS; i++)
+    {
+        config_input_keyboard[i].key_left = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_right = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_up = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_down = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_select = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_run = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_I = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_II = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_III = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_IV = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_V = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_VI = SDL_SCANCODE_UNKNOWN;
+    }
+
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
-        config_input.avenue_pad[i] = false;
+        config_input.controller_type[i] = 0;
 
         config_input_gamepad[i].detected = false;
         config_input_gamepad[i].gamepad_invert_x_axis = false;
@@ -229,7 +245,7 @@ void config_read(void)
     {
         char input_group[32];
         snprintf(input_group, sizeof(input_group), "Input%d", i + 1);
-        config_input.avenue_pad[i] = read_bool(input_group, "AvenuePad", false);
+        config_input.controller_type[i] = read_int(input_group, "ControllerType", 0);
     }
 
     config_input_keyboard[0].key_left = (SDL_Scancode)read_int("InputKeyboard1", "KeyLeft", SDL_SCANCODE_LEFT);
@@ -257,6 +273,24 @@ void config_read(void)
     config_input_keyboard[1].key_IV = (SDL_Scancode)read_int("InputKeyboard2", "KeyIV", SDL_SCANCODE_6);
     config_input_keyboard[1].key_V = (SDL_Scancode)read_int("InputKeyboard2", "KeyV", SDL_SCANCODE_7);
     config_input_keyboard[1].key_VI = (SDL_Scancode)read_int("InputKeyboard2", "KeyVI", SDL_SCANCODE_8);
+
+    for (int i = 2; i < GG_MAX_GAMEPADS; i++)
+    {
+        char input_group[32];
+        snprintf(input_group, sizeof(input_group), "InputKeyboard%d", i + 1);
+        config_input_keyboard[i].key_left = (SDL_Scancode)read_int(input_group, "KeyLeft", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_right = (SDL_Scancode)read_int(input_group, "KeyRight", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_up = (SDL_Scancode)read_int(input_group, "KeyUp", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_down = (SDL_Scancode)read_int(input_group, "KeyDown", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_select = (SDL_Scancode)read_int(input_group, "KeySelect", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_run = (SDL_Scancode)read_int(input_group, "KeyRun", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_I = (SDL_Scancode)read_int(input_group, "KeyI", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_II = (SDL_Scancode)read_int(input_group, "KeyII", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_III = (SDL_Scancode)read_int(input_group, "KeyIII", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_IV = (SDL_Scancode)read_int(input_group, "KeyIV", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_V = (SDL_Scancode)read_int(input_group, "KeyV", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_VI = (SDL_Scancode)read_int(input_group, "KeyVI", SDL_SCANCODE_UNKNOWN);
+    }
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -377,7 +411,7 @@ void config_write(void)
     {
         char input_group[32];
         snprintf(input_group, sizeof(input_group), "Input%d", i + 1);
-        write_bool(input_group, "AvenuePad", config_input.avenue_pad[i]);
+        write_int(input_group, "ControllerType", config_input.controller_type[i]);
     }
 
     write_int("InputKeyboard1", "KeyLeft", config_input_keyboard[0].key_left);
@@ -393,7 +427,6 @@ void config_write(void)
     write_int("InputKeyboard1", "KeyV", config_input_keyboard[0].key_V);
     write_int("InputKeyboard1", "KeyVI", config_input_keyboard[0].key_VI);
 
-
     write_int("InputKeyboard2", "KeyLeft", config_input_keyboard[1].key_left);
     write_int("InputKeyboard2", "KeyRight", config_input_keyboard[1].key_right);
     write_int("InputKeyboard2", "KeyUp", config_input_keyboard[1].key_up);
@@ -406,6 +439,24 @@ void config_write(void)
     write_int("InputKeyboard2", "KeyIV", config_input_keyboard[1].key_IV);
     write_int("InputKeyboard2", "KeyV", config_input_keyboard[1].key_V);
     write_int("InputKeyboard2", "KeyVI", config_input_keyboard[1].key_VI);
+
+    for (int i = 2; i < GG_MAX_GAMEPADS; i++)
+    {
+        char input_group[32];
+        snprintf(input_group, sizeof(input_group), "InputKeyboard%d", i + 1);
+        write_int(input_group, "KeyLeft", config_input_keyboard[i].key_left);
+        write_int(input_group, "KeyRight", config_input_keyboard[i].key_right);
+        write_int(input_group, "KeyUp", config_input_keyboard[i].key_up);
+        write_int(input_group, "KeyDown", config_input_keyboard[i].key_down);
+        write_int(input_group, "KeySelect", config_input_keyboard[i].key_select);
+        write_int(input_group, "KeyRun", config_input_keyboard[i].key_run);
+        write_int(input_group, "KeyI", config_input_keyboard[i].key_I);
+        write_int(input_group, "KeyII", config_input_keyboard[i].key_II);
+        write_int(input_group, "KeyIII", config_input_keyboard[i].key_III);
+        write_int(input_group, "KeyIV", config_input_keyboard[i].key_IV);
+        write_int(input_group, "KeyV", config_input_keyboard[i].key_V);
+        write_int(input_group, "KeyVI", config_input_keyboard[i].key_VI);
+    }
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
