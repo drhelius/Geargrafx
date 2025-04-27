@@ -602,7 +602,7 @@ static void menu_input(void)
                     keyboard_configuration_item("I:", &config_input_keyboard[i].key_I, i);
                     keyboard_configuration_item("II:", &config_input_keyboard[i].key_II, i);
                     ImGui::Separator();
-                    ImGui::TextDisabled("Avenue Pad%s:", config_input.controller_type[i] == 1 ? "" : " (currently disabled)");
+                    ImGui::TextDisabled("Avenue Pad%s:", config_input.controller_type[i] == 1 ? "" : " (disabled)");
                     keyboard_configuration_item("III:", &config_input_keyboard[i].key_III, i);
                     keyboard_configuration_item("IV:", &config_input_keyboard[i].key_IV, i);
                     keyboard_configuration_item("V:", &config_input_keyboard[i].key_V, i);
@@ -659,7 +659,7 @@ static void menu_input(void)
                         gamepad_configuration_item("I:", &config_input_gamepad[i].gamepad_I, i);
                         gamepad_configuration_item("II:", &config_input_gamepad[i].gamepad_II, i);
                         ImGui::Separator();
-                        ImGui::TextDisabled("Avenue Pad%s:", config_input.controller_type[i] == 1 ? "" : " (currently disabled)");
+                        ImGui::TextDisabled("Avenue Pad%s:", config_input.controller_type[i] == 1 ? "" : " (disabled)");
                         gamepad_configuration_item("III:", &config_input_gamepad[i].gamepad_III, i);
                         gamepad_configuration_item("IV:", &config_input_gamepad[i].gamepad_IV, i);
                         gamepad_configuration_item("V:", &config_input_gamepad[i].gamepad_V, i);
