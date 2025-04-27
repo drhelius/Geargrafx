@@ -190,7 +190,12 @@ void gui_debug_load_symbols_file(const char* file_path)
 
             if (line.find("[") != std::string::npos)
             {
-                valid_section = (line.find("[labels]") != std::string::npos);
+                valid_section = false;
+                if (line.find("[symbols]") != std::string::npos)
+                    valid_section = true;
+                else if (line.find("[labels]") != std::string::npos)
+                    valid_section = true;
+
                 continue;
             }
 
@@ -825,49 +830,84 @@ static void add_symbol(const char* line)
     DebugSymbol s;
     std::string str(line);
 
+    // Clean up the string
     str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
     str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
     std::replace(str.begin(), str.end(), '\t', ' ');
 
+    // Trim leading/trailing whitespace
     size_t first = str.find_first_not_of(' ');
     if (std::string::npos == first)
-    {
         str = "";
-    }
     else
     {
         size_t last = str.find_last_not_of(' ');
         str = str.substr(first, (last - first + 1));
     }
 
+    // Remove comments
     std::size_t comment = str.find(";");
-
     if (comment != std::string::npos)
-        str = str.substr(0 , comment);
+        str = str.substr(0, comment);
 
-    std::size_t space = str.find_last_of(" ");
+    // Tokenize the string
+    std::vector<std::string> tokens;
+    std::istringstream iss(str);
+    std::string token;
+    while (iss >> token) {
+        tokens.push_back(token);
+    }
 
-    if (space != std::string::npos)
+    // Need at least 2 tokens (bank/address and symbol) for valid format
+    if (tokens.size() >= 2)
     {
-        snprintf(s.text, 64, "%s", str.substr(space + 1 , std::string::npos).c_str());
-        str = str.substr(0, space);
+        std::string bank_str = "0";
+        std::string addr_str;
+        std::string symbol;
 
-        std::replace(str.begin(), str.end(), ' ', ':');
+        // Handle different formats
+        if (tokens.size() >= 4 && tokens[2].find(':') != std::string::npos) {
+            // PCEAS new format: <bank:address> <size> <filenumber:linenumber:columnnumber> <symbolname>
+            std::string addr_part = tokens[0];
+            symbol = tokens[3];
 
-        std::size_t separator = str.find(":");
+            std::size_t separator = addr_part.find(":");
+            if (separator != std::string::npos) {
+                bank_str = addr_part.substr(0, separator);
+                addr_str = addr_part.substr(separator + 1);
+            } else {
+                addr_str = addr_part;
+            }
+        }
+        else if (tokens[0].find(':') != std::string::npos) {
+            // WLA format: <bank:address> <symbolname>
+            std::string addr_part = tokens[0];
+            std::size_t separator = addr_part.find(":");
+
+            bank_str = addr_part.substr(0, separator);
+            addr_str = addr_part.substr(separator + 1);
+            symbol = tokens[1];
+        }
+        else if (tokens.size() >= 3 && tokens[0].length() <= 2) {
+            // PCEAS old format: <bank> <address> <symbolname>
+            bank_str = tokens[0];
+            addr_str = tokens[1];
+            symbol = tokens[2];
+        }
+        else {
+            // VASM format: <address> <symbolname>
+            addr_str = tokens[0];
+            symbol = tokens[1];
+        }
 
         try
         {
-            if (separator != std::string::npos)
-            {
-                s.address = (u16)std::stoul(str.substr(separator + 1 , std::string::npos), 0, 16);
-                s.bank = std::stoul(str.substr(0, separator), 0 , 16);
-            }
-            else
-            {
-                s.address = (u16)std::stoul(str, 0, 16);
-                s.bank = 0;
-            }
+            // Parse bank and address
+            s.bank = std::stoul(bank_str, 0, 16);
+            s.address = (u16)std::stoul(addr_str, 0, 16);
+
+            // Store the symbol
+            snprintf(s.text, 64, "%s", symbol.c_str());
 
             DebugSymbol* new_symbol = new DebugSymbol;
             new_symbol->address = s.address;
@@ -878,6 +918,7 @@ static void add_symbol(const char* line)
         }
         catch(const std::invalid_argument&)
         {
+            // Invalid format - silently ignore
         }
     }
 }
