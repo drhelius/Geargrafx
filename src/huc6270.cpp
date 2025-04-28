@@ -290,7 +290,7 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                         m_vram_transfer_pending = 4 * (m_register[HUC6270_REG_LENR] + 1);
                         m_vram_transfer_src = m_register[HUC6270_REG_SOUR];
                         m_vram_transfer_dest = m_register[HUC6270_REG_DESR];
-                        m_status_register |= HUC6270_STATUS_BUSY;
+                        //m_status_register |= HUC6270_STATUS_BUSY;
                     }
                     break;
                 // 0x13
@@ -493,7 +493,7 @@ void HuC6270::VBlankIRQ()
         m_trigger_sat_transfer = false;
 
         m_sat_transfer_pending = 1024;
-        m_status_register |= HUC6270_STATUS_BUSY;
+        //m_status_register |= HUC6270_STATUS_BUSY;
     }
 }
 
