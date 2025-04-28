@@ -106,7 +106,7 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
         {
             case 0x0000:
                 // HuC6270
-                m_huc6280->InjectCycles(1);
+                m_huc6280->InjectCycles(block_transfer ? 2 : 1);
                 return m_huc6270->ReadRegister(offset);
             case 0x0400:
                 // HuC6260
@@ -173,7 +173,7 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
     }
 }
 
-INLINE void Memory::Write(u16 address, u8 value)
+INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
 {
 #if defined(GG_TESTING)
     m_test_memory[address] = value;
@@ -244,7 +244,7 @@ INLINE void Memory::Write(u16 address, u8 value)
         {
             case 0x0000:
                 // HuC6270
-                m_huc6280->InjectCycles(1);
+                m_huc6280->InjectCycles(block_transfer ? 2 : 1);
                 m_huc6270->WriteRegister(offset, value);
                 break;
             case 0x0400:

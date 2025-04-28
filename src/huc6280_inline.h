@@ -162,10 +162,10 @@ INLINE u8 HuC6280::MemoryRead(u16 address, bool block_transfer)
     return m_memory->Read(address, block_transfer);
 }
 
-INLINE void HuC6280::MemoryWrite(u16 address, u8 value)
+INLINE void HuC6280::MemoryWrite(u16 address, u8 value, bool block_transfer)
 {
     CheckIRQs();
-    m_memory->Write(address, value);
+    m_memory->Write(address, value, block_transfer);
 }
 
 INLINE u8 HuC6280:: ReadInterruptRegister(u16 address)

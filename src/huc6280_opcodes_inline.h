@@ -529,7 +529,7 @@ INLINE void HuC6280::OPCodes_TAI()
 
     if (m_transfer_state == 2)
     {
-        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true), true);
         m_transfer_source += (m_transfer_count & 1) ? -1 : 1;
         m_transfer_dest++;
         m_transfer_count++;
@@ -560,7 +560,7 @@ INLINE void HuC6280::OPCodes_TDD()
 
     if (m_transfer_state == 2)
     {
-        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true), true);
         m_transfer_source--;
         m_transfer_dest--;
         m_transfer_length--;
@@ -590,7 +590,7 @@ INLINE void HuC6280::OPCodes_TIA()
 
     if (m_transfer_state == 2)
     {
-        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true), true);
         m_transfer_source++;
         m_transfer_dest += (m_transfer_count & 1) ? -1 : 1;
         m_transfer_count++;
@@ -621,7 +621,7 @@ INLINE void HuC6280::OPCodes_TII()
 
     if (m_transfer_state == 2)
     {
-        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true), true);
         m_transfer_source++;
         m_transfer_dest++;
         m_transfer_length--;
@@ -651,7 +651,7 @@ INLINE void HuC6280::OPCodes_TIN()
 
     if (m_transfer_state == 2)
     {
-        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true));
+        MemoryWrite(m_transfer_dest, MemoryRead(m_transfer_source, true), true);
         m_transfer_source++;
         m_transfer_length--;
         m_cycles += 6;
