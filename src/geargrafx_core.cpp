@@ -75,7 +75,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_cartridge->Init();
     m_memory->Init();
     m_huc6260->Init(pixel_format);
-    m_huc6270->Init();
+    m_huc6270->Init(m_huc6260);
     m_huc6280->Init(m_memory, m_huc6270);
     m_audio->Init();
     m_input->Init();

@@ -51,11 +51,13 @@ void gui_debug_window_huc6270_info(void)
     ImGui::TextColored(violet, "X,Y     "); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6270_state->HPOS, *huc6270_state->VPOS, *huc6270_state->HPOS, *huc6270_state->VPOS);
 
-    const char* h_states[] = { "HDS", "HDS", "HDS", "HDW", "HDW", "HDE", "HSW" };
+    const char* h_states[] = { "HDS", "HDW", "HDE", "HSW" };
+    assert(*huc6270_state->H_STATE < 4);
     ImGui::TextColored(violet, "H STATE "); ImGui::SameLine();
     ImGui::TextColored(blue, "%s", h_states[*huc6270_state->H_STATE]);
 
     const char* v_states[] = { "VDS", "VDW", "VCR", "VSW" };
+    assert(*huc6270_state->V_STATE < 4);
     ImGui::TextColored(violet, "V STATE "); ImGui::SameLine();
     ImGui::TextColored(blue, "%s", v_states[*huc6270_state->V_STATE]);
 

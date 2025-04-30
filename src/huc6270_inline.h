@@ -34,8 +34,7 @@ INLINE u32 HuC6270::Clock()
     u32 pixel = 0x10000;
 
     if (m_active_line &&
-        (m_v_state == HuC6270_VERTICAL_STATE_VDW) &&
-        (m_h_state == HuC6270_HORIZONTAL_STATE_HDW_1 || m_h_state == HuC6270_HORIZONTAL_STATE_HDW_2))
+        (m_v_state == HuC6270_VERTICAL_STATE_VDW) && (m_h_state == HuC6270_HORIZONTAL_STATE_HDW))
     {
         if (m_line_buffer_index < 512)
         {
@@ -53,6 +52,9 @@ INLINE u32 HuC6270::Clock()
     m_clocks_to_next_h_state--;
     while (m_clocks_to_next_h_state == 0)
         NextHorizontalState();
+
+    if (m_clocks_to_next_event > 0)
+        LineEvents();
 
     return pixel;
 }
@@ -79,11 +81,11 @@ INLINE void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
 
 INLINE void HuC6270::RCRIRQ()
 {
+    HUC6270_DEBUG("  [?] RCR IRQ\t");
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
     {
         if (((int)m_register[HUC6270_REG_RCR] - 64) == m_raster_line)
         {
-            HUC6270_DEBUG("RCR IRQ");
             m_status_register |= HUC6270_STATUS_SCANLINE;
             m_huc6280->AssertIRQ1(true);
         }
@@ -92,6 +94,7 @@ INLINE void HuC6270::RCRIRQ()
 
 INLINE void HuC6270::OverflowIRQ()
 {
+    HUC6270_DEBUG("  [?] SPRITE OV IRQ");
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW)
     {
         m_status_register |= HUC6270_STATUS_OVERFLOW;
@@ -106,22 +109,6 @@ INLINE void HuC6270::SpriteCollisionIRQ()
         m_status_register |= HUC6270_STATUS_COLLISION;
         m_huc6280->AssertIRQ1(true);
     }
-}
-
-INLINE int HuC6270::ClocksToBYRLatch()
-{
-    int ret = 1;
-    if (m_latched_hds > 2)
-        ret += ((m_latched_hds + 1) << 3) - 24 + 2;
-    return ret;
-}
-
-INLINE int HuC6270::ClocksToBXRLatch()
-{
-    int ret = 2;
-    if(m_latched_hds > 2)
-        ret = 1;
-    return ret;
 }
 
 #endif /* HUC6270_INLINE_H */

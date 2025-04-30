@@ -24,6 +24,7 @@
 HuC6270::HuC6270(HuC6280* huC6280)
 {
     m_huc6280 = huC6280;
+    InitPointer(m_huc6260);
     InitPointer(m_vram);
     InitPointer(m_sat);
     m_state.AR = &m_address_register;
@@ -42,8 +43,9 @@ HuC6270::~HuC6270()
     SafeDeleteArray(m_sat);
 }
 
-void HuC6270::Init()
+void HuC6270::Init(HuC6260* huC6260)
 {
+    m_huc6260 = huC6260;
     m_vram = new u16[HUC6270_VRAM_SIZE];
     m_sat = new u16[HUC6270_SAT_SIZE];
     Reset();
@@ -81,9 +83,11 @@ void HuC6270::Reset()
     m_latched_vsw = HUC6270_VAR_VSW;
     m_latched_mwr = 0;
     m_v_state = HuC6270_VERTICAL_STATE_VDS;
-    m_h_state = HuC6270_HORIZONTAL_STATE_HDS_1;
+    m_h_state = HuC6270_HORIZONTAL_STATE_HDS;
+    m_next_event = HuC6270_EVENT_NONE;
     m_lines_to_next_v_state = m_latched_vds + 2;
     m_clocks_to_next_h_state = 1;
+    m_clocks_to_next_event = -1;
     m_vblank_triggered = false;
     m_active_line = false;
     m_burst_mode = false;
@@ -121,18 +125,17 @@ void HuC6270::Reset()
 
 void HuC6270::SetHSync(bool active)
 {
-    // High to low
-    if (!active)
-    {
-        HUC6270_DEBUG("HSYNC H to L");
-    }
     // Low to high
-    else
+    if (active)
     {
-        m_h_state = HuC6270_HORIZONTAL_STATE_HSW;
-        m_clocks_to_next_h_state = 8;
+        EndOfLine();
 
-        HUC6270_DEBUG("HSYNC L to H");
+        HUC6270_DEBUG("  HSW start (force)");
+
+        m_h_state = HuC6270_HORIZONTAL_STATE_HSW;
+        m_clocks_to_next_h_state = m_huc6260->GetClockDivider() == 3 ? 32 : 24;
+
+        HSyncStart();
     }
 }
 
@@ -141,6 +144,8 @@ void HuC6270::SetVSync(bool active)
     // High to low
     if (!active)
     {
+        HUC6270_DEBUG("+++ VerticalSyncStart");
+
         m_latched_mwr = m_register[HUC6270_REG_MWR];
         m_latched_vds = HUC6270_VAR_VDS;
         m_latched_vdw = HUC6270_VAR_VDW;
@@ -151,13 +156,6 @@ void HuC6270::SetVSync(bool active)
         m_lines_to_next_v_state = m_latched_vsw + 1;
 
         m_increment_bg_counter_y = false;
-
-        HUC6270_DEBUG("+++ VSYNC H to L");
-    }
-    // Low to high
-    else
-    {
-        HUC6270_DEBUG("+++ VSYNC L to H");
     }
 }
 
@@ -276,12 +274,12 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                     break;
                 // 0x07
                 case HUC6270_REG_BXR:
-                    HUC6270_DEBUG("**** BXR Set");
+                    //HUC6270_DEBUG("**** BXR Set");
                     break;
                 // 0x08
                 case HUC6270_REG_BYR:
                     m_bg_counter_y = m_register[HUC6270_REG_BYR];
-                    HUC6270_DEBUG("**** BYR Set");
+                    //HUC6270_DEBUG("**** BYR Set");
                     break;
                 // 0x12
                 case HUC6270_REG_LENR:
@@ -304,6 +302,114 @@ void HuC6270::WriteRegister(u16 address, u8 value)
             Debug("[PC=%04X] HuC6270 invalid write at %06X, value=%02X", m_huc6280->GetState()->PC->GetValue(), address, value);
             break;
     }
+}
+void HuC6270::EndOfLine()
+{
+    m_hpos = 0;
+}
+
+void HuC6270::LineEvents()
+{
+    m_clocks_to_next_event--;
+
+    if (m_clocks_to_next_event == 0)
+    {
+        switch (m_next_event)
+        {
+            case HuC6270_EVENT_BYR:
+                HUC6270_DEBUG("  [?] LatchScrollY");
+                m_next_event = HuC6270_EVENT_BXR;
+                m_clocks_to_next_event = 2;
+
+                if (m_increment_bg_counter_y)
+                {
+                    m_increment_bg_counter_y = false;
+                    if(m_raster_line == 0)
+                        m_bg_counter_y = m_register[HUC6270_REG_BYR];
+                    else
+                        m_bg_counter_y++;
+                }
+                m_bg_offset_y = m_bg_counter_y;
+
+                break;
+            case HuC6270_EVENT_BXR:
+                HUC6270_DEBUG("  [?] LatchScrollX");
+                m_next_event = HuC6270_EVENT_HDS;
+                m_clocks_to_next_event = 6;
+
+                m_latched_bxr = m_register[HUC6270_REG_BXR];
+
+                break;
+            case HuC6270_EVENT_HDS:
+                HUC6270_DEBUG("  [?] HdsIrqTrigger");
+                m_next_event = HuC6270_EVENT_NONE;
+                m_clocks_to_next_event = -1;
+
+                if ((m_v_state != HuC6270_VERTICAL_STATE_VDW) && !m_vblank_triggered)
+                {
+                    m_vblank_triggered = true;
+                    VBlankIRQ();
+                }
+                if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
+                    RenderLine();
+
+                break;
+            case HuC6270_EVENT_RCR:
+                HUC6270_DEBUG("  [?] IncRcrCounter");
+                m_next_event = HuC6270_EVENT_NONE;
+                m_clocks_to_next_event = -1;
+
+                m_raster_line++;
+                m_increment_bg_counter_y = true;
+
+                m_lines_to_next_v_state--;
+                while (m_lines_to_next_v_state <= 0)
+                    NextVerticalState();
+
+                if ((m_v_state == HuC6270_VERTICAL_STATE_VDW) && !m_burst_mode)
+                    FetchSprites();
+
+                RCRIRQ();
+
+                break;
+            default:
+                HUC6270_DEBUG("HuC6270 invalid event %d", m_next_event);
+                break;
+        }
+    }
+}
+
+void HuC6270::HSyncStart()
+{
+    HUC6270_DEBUG("--- HorizSyncStart");
+
+    m_latched_hds = HUC6270_VAR_HDS;
+    m_latched_hdw = HUC6270_VAR_HDW;
+    m_latched_hde = HUC6270_VAR_HDE;
+    m_latched_hsw = HUC6270_VAR_HSW;
+    m_latched_cr = HUC6270_VAR_CR;
+
+    m_next_event = HuC6270_EVENT_NONE;
+    m_clocks_to_next_event = -1;
+
+    s32 display_start = m_hpos + m_clocks_to_next_h_state + ((m_latched_hds + 1) << 3);
+
+    HUC6270_DEBUG("  ** displayStart: %d, hc: %d\t", display_start, m_clocks_to_next_h_state);
+
+    s32 event_clocks;
+    if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
+    {
+        m_next_event = HuC6270_EVENT_BYR;
+        event_clocks = 33;
+    }
+    else
+    {
+        m_next_event = HuC6270_EVENT_HDS;
+        event_clocks = 24;
+    }
+
+    m_clocks_to_next_event = display_start - event_clocks - m_hpos;
+    HUC6270_DEBUG("  ** _nextEventCounter: %d, ec: %d\t", m_clocks_to_next_event, event_clocks);
 }
 
 void HuC6270::SATTransfer()
@@ -369,27 +475,28 @@ void HuC6270::NextVerticalState()
     switch (m_v_state)
     {
         case HuC6270_VERTICAL_STATE_VDS:
+            HUC6270_DEBUG(" >> VDS start\t");
             m_lines_to_next_v_state = m_latched_vds + 2;
-            HUC6270_DEBUG("+ VDS");
             break;
         case HuC6270_VERTICAL_STATE_VDW:
             m_lines_to_next_v_state = m_latched_vdw + 1;
             m_raster_line = 0;
             m_vblank_triggered = false;
-            HUC6270_DEBUG("+ VDW");
+
+            HUC6270_DEBUG(" >> VDW start\t");
             break;
         case HuC6270_VERTICAL_STATE_VCR:
+            HUC6270_DEBUG(" >> VDE start\t");
             m_lines_to_next_v_state = m_latched_vcr;
-            HUC6270_DEBUG("+ VCR");
             break;
         case HuC6270_VERTICAL_STATE_VSW:
+            HUC6270_DEBUG(" >> VSW start\t");
             m_lines_to_next_v_state = m_latched_vsw + 1;
             m_latched_mwr = m_register[HUC6270_REG_MWR];
             m_latched_vds = HUC6270_VAR_VDS;
             m_latched_vdw = HUC6270_VAR_VDW;
             m_latched_vcr = HUC6270_VAR_VCR;
             m_latched_vsw = HUC6270_VAR_VSW;
-            HUC6270_DEBUG(">>>\nVSW Start!  VSW: %d, VDS: %d, VDW: %d, VCR: %d", m_latched_vsw, m_latched_vds, m_latched_vdw, m_latched_vcr);
             break;
     }
 }
@@ -400,90 +507,45 @@ void HuC6270::NextHorizontalState()
 
     switch (m_h_state)
     {
-        case HuC6270_HORIZONTAL_STATE_HDS_1:
+        case HuC6270_HORIZONTAL_STATE_HDS:
+            m_clocks_to_next_h_state = (m_latched_hds + 1) << 3;
+
             m_line_buffer_index = 0;
-            //HUC6270_DEBUG("------ hpos reset: %d", m_hpos);
-            m_hpos = 0;
-            m_vpos = (m_vpos + 1) % 263;
-            m_active_line = (m_raster_line < 242);
-            m_latched_hds = HUC6270_VAR_HDS;
-            m_latched_hdw = HUC6270_VAR_HDW;
-            m_latched_hde = HUC6270_VAR_HDE;
-            m_latched_hsw = HUC6270_VAR_HSW;
-            m_latched_cr = HUC6270_VAR_CR;
-            m_clocks_to_next_h_state = ClocksToBYRLatch();
+
+            //m_hpos = 0;
+            m_vpos = (m_vpos + 1) % HUC6270_LINES;
+            m_active_line = (m_raster_line < HUC6270_LINES_ACTIVE);
+
 
             if (m_vpos == 0)
                 m_burst_mode = ((m_latched_cr & 0x00C0) == 0);
 
-            HUC6270_DEBUG(">>>\nHDS Start!  HSW: %d, HDW: %d, HDW: %d, HDE: %d", m_latched_hsw, m_latched_hds, m_latched_hdw, m_latched_hde);
-            HUC6270_DEBUG("HDS 1");
+            HUC6270_DEBUG("  HDS start\t");
             break;
-        case HuC6270_HORIZONTAL_STATE_HDS_2:
-            m_clocks_to_next_h_state = ClocksToBXRLatch();
-
-            if (m_increment_bg_counter_y)
-            {
-                m_increment_bg_counter_y = false;
-                if(m_raster_line == 0)
-                    m_bg_counter_y = m_register[HUC6270_REG_BYR];
-                else
-                    m_bg_counter_y++;
-            }
-            m_bg_offset_y = m_bg_counter_y;
-
-            HUC6270_DEBUG("HDS 2");
-            break;
-        case HuC6270_HORIZONTAL_STATE_HDS_3:
-            m_clocks_to_next_h_state = ((m_latched_hds + 1) << 3) - ClocksToBYRLatch() - ClocksToBXRLatch();
-            assert(m_clocks_to_next_h_state > 0);
-            m_latched_bxr = m_register[HUC6270_REG_BXR];
-            HUC6270_DEBUG("HDS 3");
-            break;
-        case HuC6270_HORIZONTAL_STATE_HDW_1:
-            m_clocks_to_next_h_state = ((m_latched_hdw + 1) << 3) - HUC6270_RCR_IRQ_CYCLES_BEFORE_HDE;
-            if ((m_v_state != HuC6270_VERTICAL_STATE_VDW) && !m_vblank_triggered)
-            {
-                m_vblank_triggered = true;
-                VBlankIRQ();
-            }
-            if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
-                RenderLine();
-            HUC6270_DEBUG("HDW 1");
-            break;
-        case HuC6270_HORIZONTAL_STATE_HDW_2:
-            m_clocks_to_next_h_state = HUC6270_RCR_IRQ_CYCLES_BEFORE_HDE;
-
-            m_raster_line++;
-            m_increment_bg_counter_y = true;
-
-            m_lines_to_next_v_state--;
-            while (m_lines_to_next_v_state <= 0)
-                NextVerticalState();
-
-            if ((m_v_state == HuC6270_VERTICAL_STATE_VDW) && !m_burst_mode)
-                FetchSprites();
-
-            RCRIRQ();
-
-            HUC6270_DEBUG("HDW 2");
+        case HuC6270_HORIZONTAL_STATE_HDW:
+            HUC6270_DEBUG("  HDW start\t");
+            m_clocks_to_next_h_state = (m_latched_hdw + 1) << 3;
+            m_next_event = HuC6270_EVENT_RCR;
+            m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 1;
             break;
         case HuC6270_HORIZONTAL_STATE_HDE:
+            HUC6270_DEBUG("  HDE start\t");
             m_clocks_to_next_h_state = (m_latched_hde + 1) << 3;
-            HUC6270_DEBUG("HDE");
             break;
         case HuC6270_HORIZONTAL_STATE_HSW:
+            //m_hpos = 0;
+            HUC6270_DEBUG("  HSW start\t");
             m_clocks_to_next_h_state = (m_latched_hsw + 1) << 3;
-            HUC6270_DEBUG("HSW");
+            HSyncStart();
             break;
     }
 }
 
 void HuC6270::VBlankIRQ()
 {
+    HUC6270_DEBUG("  [!] VBLANK IRQ");
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_VBLANK)
     {
-        HUC6270_DEBUG("VBlank IRQ");
         m_status_register |= HUC6270_STATUS_VBLANK;
         m_huc6280->AssertIRQ1(true);
     }
@@ -633,7 +695,7 @@ void HuC6270::FetchSprites()
     m_sprite_count = 0;
     bool mode1 = ((m_latched_mwr >> 2) & 0x03) == 1;
 
-    for (int i = 0; i < 64; i++)
+    for (int i = 0; i < HUC6270_SPRITES; i++)
     {
         int sprite_offset = i << 2;
         u16 sat0 = m_sat[sprite_offset + 0];

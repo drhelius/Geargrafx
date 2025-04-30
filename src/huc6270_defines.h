@@ -58,8 +58,6 @@
 #define HUC6270_BOTTOM_BLANKING_START 256
 #define HUC6270_SYNC_START 260
 
-#define HUC6270_RCR_IRQ_CYCLES_BEFORE_HDE 4
-
 #define HUC6270_REG_MAWR  0x00
 #define HUC6270_REG_MARR  0x01
 #define HUC6270_REG_VWR   0x02
@@ -90,7 +88,10 @@
 #define HUC6270_VAR_VCR (m_register[HUC6270_REG_VCR] & 0xFF)
 #define HUC6270_VAR_CR (m_register[HUC6270_REG_CR] & 0x1FFF)
 
-#define HUC6270_DEBUG(...) { }
+//#define HUC6270_DEBUG(...) { }
 //#define HUC6270_DEBUG(x, ...) Debug(x ": h_state=%d clocks_to_next_h_state=%d raster_line=%d v_state=%d lines_to_next_v_state=%d bg_counter_y=%d latched_bxr=%d RCR=%d BXR=%d BYR=%d", ## __VA_ARGS__, m_h_state, m_clocks_to_next_h_state, m_raster_line, m_v_state, m_lines_to_next_v_state, m_bg_counter_y, m_latched_bxr, m_register[HUC6270_REG_RCR], m_register[HUC6270_REG_BXR], m_register[HUC6270_REG_BYR]);
+
+
+#define HUC6270_DEBUG(x, ...) Debug("%d\t" x "\tH: %d\tD: %d\tRCR: %d", m_vpos, ## __VA_ARGS__, 0, m_hpos, m_raster_line);
 
 #endif /* HUC6270_DEFINES_H */

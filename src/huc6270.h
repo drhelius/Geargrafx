@@ -25,6 +25,7 @@
 #include "huc6270_defines.h"
 #include "common.h"
 
+class HuC6260;
 class HuC6280;
 
 class HuC6270
@@ -41,14 +42,20 @@ public:
 
     enum HuC6270_Horizontal_State
     {
-        HuC6270_HORIZONTAL_STATE_HDS_1,
-        HuC6270_HORIZONTAL_STATE_HDS_2,
-        HuC6270_HORIZONTAL_STATE_HDS_3,
-        HuC6270_HORIZONTAL_STATE_HDW_1,
-        HuC6270_HORIZONTAL_STATE_HDW_2,
+        HuC6270_HORIZONTAL_STATE_HDS,
+        HuC6270_HORIZONTAL_STATE_HDW,
         HuC6270_HORIZONTAL_STATE_HDE,
         HuC6270_HORIZONTAL_STATE_HSW,
         HuC6270_HORIZONTAL_STATE_COUNT
+    };
+
+    enum HuC6270_Line_Event
+    {
+        HuC6270_EVENT_NONE,
+        HuC6270_EVENT_BYR,
+        HuC6270_EVENT_BXR,
+        HuC6270_EVENT_HDS,
+        HuC6270_EVENT_RCR
     };
 
     struct HuC6270_State
@@ -66,7 +73,7 @@ public:
 public:
     HuC6270(HuC6280* huC6280);
     ~HuC6270();
-    void Init();
+    void Init(HuC6260* huC6260);
     void Reset();
     u32 Clock();
     void SetHSync(bool active);
@@ -92,6 +99,7 @@ private:
     };
 
 private:
+    HuC6260* m_huc6260;
     HuC6280* m_huc6280;
     HuC6270_State m_state;
     u16* m_vram;
@@ -124,8 +132,10 @@ private:
     u16 m_latched_cr;
     s32 m_v_state;
     s32 m_h_state;
+    s32 m_next_event;
     s32 m_lines_to_next_v_state;
     s32 m_clocks_to_next_h_state;
+    s32 m_clocks_to_next_event;
     bool m_vblank_triggered;
     bool m_active_line;
     bool m_burst_mode;
@@ -137,6 +147,9 @@ private:
     HuC6270_Sprite_Data m_sprites[128];
 
 private:
+    void EndOfLine();
+    void LineEvents();
+    void HSyncStart();
     NO_INLINE void SATTransfer();
     NO_INLINE void VRAMTransfer();
     NO_INLINE void NextVerticalState();
@@ -145,8 +158,6 @@ private:
     void RCRIRQ();
     void OverflowIRQ();
     void SpriteCollisionIRQ();
-    int ClocksToBYRLatch();
-    int ClocksToBXRLatch();
     void RenderLine();
     void RenderBackground(int width);
     void RenderSprites(int width);

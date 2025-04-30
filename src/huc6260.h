@@ -30,7 +30,7 @@
 #define HUC6260_HSYNC_START_HPOS (HUC6260_LINE_LENGTH - HUC6260_HSYNC_LENGTH)
 #define HUC6260_HSYNC_END_HPOS 0
 #define HUC6260_VSYNC_HPOS (HUC6260_HSYNC_START_HPOS + 30)
-//#define HUC6260_DEBUG
+#define HUC6260_DEBUG
 
 class HuC6270;
 class HuC6280;
@@ -122,13 +122,13 @@ static const HuC6260::HuC6260_Speed k_huc6260_speed[4] = {
     HuC6260::HuC6260_SPEED_5_36_MHZ, HuC6260::HuC6260_SPEED_7_16_MHZ,
     HuC6260::HuC6260_SPEED_10_8_MHZ, HuC6260::HuC6260_SPEED_10_8_MHZ };
 
-static const int k_huc6260_total_lines[2] = { 262, 263 };
+static const int k_huc6260_total_lines[2] = { HUC6260_LINES - 1, HUC6260_LINES };
 static const int k_huc6260_full_line_width[4] = { 342, 455, 683, 683 };
 static const int k_huc6260_line_width[2][4] = {
     { 256, 341, 512, 512 },
     { 256 + 24, 341 + 32, 512 + 48, 512 + 48 } };
 static const int k_huc6260_line_offset[2][4] = {
-    { 8 + 24, 8 + 38, 8 + 96, 8 + 96 },
+    { 24 + 24, 24 + 38, 8 + 96, 8 + 96 },
     { 8 + 24 - 12, 8 + 38 - 16, 8 + 96 - 24, 8 + 96 - 24 } };
 
 static uint8_t k_rgb888_palette_composite[512][3] = {

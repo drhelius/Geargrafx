@@ -36,12 +36,12 @@ INLINE bool HuC6260::Clock()
         int start_x = 0;
         int end_x = k_huc6260_full_line_width[m_speed];
         int start_y = 0;
-        int end_y = 263;
+        int end_y = HUC6270_LINES;
 #else
         int start_x = k_huc6260_line_offset[m_overscan][m_speed];
         int end_x = start_x + k_huc6260_line_width[m_overscan][m_speed];
-        int start_y = m_scanline_start + 14;
-        int end_y = m_scanline_end + 14 + 1;
+        int start_y = m_scanline_start + HUC6270_LINES_TOP_BLANKING;
+        int end_y = m_scanline_end + HUC6270_LINES_TOP_BLANKING + 1;
 #endif
         if ((m_pixel_x >= start_x) && (m_pixel_x < end_x) && (m_vpos >= start_y) && (m_vpos < end_y))
         {
@@ -140,20 +140,20 @@ INLINE int HuC6260::GetCurrentLineWidth()
 INLINE int HuC6260::GetCurrentHeight()
 {
 #if defined(HUC6260_DEBUG)
-    return 263;
+    return HUC6270_LINES;
 #else
-    return CLAMP(242 - m_scanline_start - (241 - m_scanline_end), 1, 242);
+    return CLAMP(HUC6270_LINES_ACTIVE - m_scanline_start - ((HUC6270_LINES_ACTIVE - 1) - m_scanline_end), 1, HUC6270_LINES_ACTIVE);
 #endif
 }
 
 INLINE void HuC6260::SetScanlineStart(int scanline_start)
 {
-    m_scanline_start = CLAMP(scanline_start, 0, 241);
+    m_scanline_start = CLAMP(scanline_start, 0, HUC6270_LINES_ACTIVE - 1);
 }
 
 INLINE void HuC6260::SetScanlineEnd(int scanline_end)
 {
-    m_scanline_end = CLAMP(scanline_end, 0, 241);
+    m_scanline_end = CLAMP(scanline_end, 0, HUC6270_LINES_ACTIVE - 1);
 }
 
 INLINE void HuC6260::SetOverscan(bool overscan)

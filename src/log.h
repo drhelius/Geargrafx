@@ -57,7 +57,8 @@ inline void Log_func(const char* const msg, ...)
     }
 #endif
 
-#if defined(GG_DEBUG)
+//#if defined(GG_DEBUG)
+#if 0
     static int count = 1;
     printf("%d: %s\n", count, buffer);
     count++;

@@ -52,15 +52,13 @@ void gui_debug_window_huc6260_info(void)
     ImGui::TextColored(violet, "VSYNC    "); ImGui::SameLine();
     ImGui::TextColored(*huc6260_state->VSYNC ? red : green, *huc6260_state->VSYNC ? "HIGH" : "LOW");
 
-    int vpos = *huc6260_state->VPOS;// - 259;
-    // if (vpos < 0)
-    //     vpos += 263;
+    int vpos = *huc6260_state->VPOS;
 
     ImGui::TextColored(violet, "HPOS,VPOS"); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6260_state->HPOS, vpos, *huc6260_state->HPOS, vpos);
 
     ImGui::TextColored(violet, "LINES    "); ImGui::SameLine();
-    ImGui::TextColored(white, "%d", IS_SET_BIT(*huc6260_state->CR, 2) ? 263 : 262);
+    ImGui::TextColored(white, "%d", IS_SET_BIT(*huc6260_state->CR, 2) ? HUC6270_LINES : (HUC6270_LINES - 1));
 
     ImGui::TextColored(violet, "PIXEL    "); ImGui::SameLine();
     ImGui::TextColored(white, "%0X", *huc6260_state->PIXEL_INDEX);
