@@ -242,7 +242,6 @@ void HuC6260::Reset()
     m_hpos = 0;
     m_vpos = 0;
     m_pixel_index = 0;
-    m_pixel_clock = 0;
     m_pixel_x = 0;
     m_hsync = true;
     m_vsync = true;
@@ -433,7 +432,6 @@ void HuC6260::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_hpos), sizeof(m_hpos));
     stream.write(reinterpret_cast<const char*> (&m_vpos), sizeof(m_vpos));
     stream.write(reinterpret_cast<const char*> (&m_pixel_index), sizeof(m_pixel_index));
-    stream.write(reinterpret_cast<const char*> (&m_pixel_clock), sizeof(m_pixel_clock));
     stream.write(reinterpret_cast<const char*> (&m_pixel_x), sizeof(m_pixel_x));
     stream.write(reinterpret_cast<const char*> (&m_hsync), sizeof(m_hsync));
     stream.write(reinterpret_cast<const char*> (&m_vsync), sizeof(m_vsync));
@@ -452,7 +450,6 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_hpos), sizeof(m_hpos));
     stream.read(reinterpret_cast<char*> (&m_vpos), sizeof(m_vpos));
     stream.read(reinterpret_cast<char*> (&m_pixel_index), sizeof(m_pixel_index));
-    stream.read(reinterpret_cast<char*> (&m_pixel_clock), sizeof(m_pixel_clock));
     stream.read(reinterpret_cast<char*> (&m_pixel_x), sizeof(m_pixel_x));
     stream.read(reinterpret_cast<char*> (&m_hsync), sizeof(m_hsync));
     stream.read(reinterpret_cast<char*> (&m_vsync), sizeof(m_vsync));

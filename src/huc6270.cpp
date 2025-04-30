@@ -58,6 +58,9 @@ void HuC6270::Reset()
         m_register[i] = 0;
     }
 
+    m_register[HUC6270_REG_HDR] = 0x1F & 0x7F;
+    m_register[HUC6270_REG_VDR] = 239 & 0x7F;
+
     m_address_register = 0;
     m_status_register = 0;
     m_read_buffer = 0xFFFF;
@@ -123,40 +126,34 @@ void HuC6270::Reset()
     }
 }
 
-void HuC6270::SetHSync(bool active)
+void HuC6270::SetHSyncHigh()
 {
     // Low to high
-    if (active)
-    {
-        EndOfLine();
+    EndOfLine();
 
-        HUC6270_DEBUG("  HSW start (force)");
+    HUC6270_DEBUG("  HSW start (force)");
 
-        m_h_state = HuC6270_HORIZONTAL_STATE_HSW;
-        m_clocks_to_next_h_state = m_huc6260->GetClockDivider() == 3 ? 32 : 24;
+    m_h_state = HuC6270_HORIZONTAL_STATE_HSW;
+    m_clocks_to_next_h_state = m_huc6260->GetClockDivider() == 3 ? 32 : 24;
 
-        HSyncStart();
-    }
+    HSyncStart();
 }
 
-void HuC6270::SetVSync(bool active)
+void HuC6270::SetVSyncLow()
 {
     // High to low
-    if (!active)
-    {
-        HUC6270_DEBUG("+++ VerticalSyncStart");
+    HUC6270_DEBUG("+++ VerticalSyncStart");
 
-        m_latched_mwr = m_register[HUC6270_REG_MWR];
-        m_latched_vds = HUC6270_VAR_VDS;
-        m_latched_vdw = HUC6270_VAR_VDW;
-        m_latched_vcr = HUC6270_VAR_VCR;
-        m_latched_vsw = HUC6270_VAR_VSW;
+    m_latched_mwr = m_register[HUC6270_REG_MWR];
+    m_latched_vds = HUC6270_VAR_VDS;
+    m_latched_vdw = HUC6270_VAR_VDW;
+    m_latched_vcr = HUC6270_VAR_VCR;
+    m_latched_vsw = HUC6270_VAR_VSW;
 
-        m_v_state = HuC6270_VERTICAL_STATE_VSW;
-        m_lines_to_next_v_state = m_latched_vsw + 1;
+    m_v_state = HuC6270_VERTICAL_STATE_VSW;
+    m_lines_to_next_v_state = m_latched_vsw + 1;
 
-        m_increment_bg_counter_y = false;
-    }
+    m_increment_bg_counter_y = false;
 }
 
 u8 HuC6270::ReadRegister(u16 address)
@@ -394,8 +391,6 @@ void HuC6270::HSyncStart()
 
     s32 display_start = m_hpos + m_clocks_to_next_h_state + ((m_latched_hds + 1) << 3);
 
-    HUC6270_DEBUG("  ** displayStart: %d, hc: %d\t", display_start, m_clocks_to_next_h_state);
-
     s32 event_clocks;
     if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
     {
@@ -409,7 +404,6 @@ void HuC6270::HSyncStart()
     }
 
     m_clocks_to_next_event = display_start - event_clocks - m_hpos;
-    HUC6270_DEBUG("  ** _nextEventCounter: %d, ec: %d\t", m_clocks_to_next_event, event_clocks);
 }
 
 void HuC6270::SATTransfer()

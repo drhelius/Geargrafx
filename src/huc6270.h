@@ -76,8 +76,8 @@ public:
     void Init(HuC6260* huC6260);
     void Reset();
     u32 Clock();
-    void SetHSync(bool active);
-    void SetVSync(bool active);
+    void SetHSyncHigh();
+    void SetVSyncLow();
     NO_INLINE u8 ReadRegister(u16 address);
     NO_INLINE void WriteRegister(u16 address, u8 value);
     HuC6270_State* GetState();

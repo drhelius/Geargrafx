@@ -99,7 +99,6 @@ private:
     s32 m_hpos;
     s32 m_vpos;
     s32 m_pixel_index;
-    s32 m_pixel_clock;
     s32 m_pixel_x;
     bool m_hsync;
     bool m_vsync;
