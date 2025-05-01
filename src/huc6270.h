@@ -118,6 +118,7 @@ private:
     s32 m_bg_offset_y;
     s32 m_bg_counter_y;
     bool m_increment_bg_counter_y;
+    bool m_need_to_increment_raster_line;
     s32 m_raster_line;
     u16 m_latched_bxr;
     u16 m_latched_hds;
@@ -151,6 +152,7 @@ private:
     void EndOfLine();
     void LineEvents();
     void HSyncStart();
+    void IncrementRasterLine();
     NO_INLINE void SATTransfer();
     NO_INLINE void VRAMTransfer();
     NO_INLINE void NextVerticalState();

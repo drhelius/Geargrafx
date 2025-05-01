@@ -74,6 +74,7 @@ void HuC6270::Reset()
     m_bg_offset_y = 0;
     m_bg_counter_y = 0;
     m_increment_bg_counter_y = false;
+    m_need_to_increment_raster_line = false;
     m_raster_line = 0;
     m_latched_bxr = 0;
     m_latched_hds = HUC6270_VAR_HDS;
@@ -307,6 +308,9 @@ void HuC6270::EndOfLine()
     m_hpos = 0;
     m_vpos++;
 
+    if(m_need_to_increment_raster_line)
+        IncrementRasterLine();
+
     if (m_vpos == m_huc6260->GetTotalLines())
     {
         m_vpos = 0;
@@ -372,17 +376,10 @@ void HuC6270::LineEvents()
                 m_next_event = HuC6270_EVENT_NONE;
                 m_clocks_to_next_event = -1;
 
-                m_raster_line++;
-                m_increment_bg_counter_y = true;
-
-                m_lines_to_next_v_state--;
-                while (m_lines_to_next_v_state <= 0)
-                    NextVerticalState();
+                IncrementRasterLine();
 
                 if ((m_v_state == HuC6270_VERTICAL_STATE_VDW) && !m_burst_mode)
                     FetchSprites();
-
-                RCRIRQ();
 
                 break;
             default:
@@ -426,6 +423,19 @@ void HuC6270::HSyncStart()
     }
     else
         m_clocks_to_next_event = display_start - event_clocks - m_hpos;
+}
+
+void HuC6270::IncrementRasterLine()
+{
+    m_raster_line++;
+    m_need_to_increment_raster_line = false;
+    m_increment_bg_counter_y = true;
+
+    m_lines_to_next_v_state--;
+    while (m_lines_to_next_v_state <= 0)
+        NextVerticalState();
+
+    RCRIRQ();
 }
 
 void HuC6270::SATTransfer()
@@ -532,7 +542,7 @@ void HuC6270::NextHorizontalState()
             m_clocks_to_next_h_state = (m_latched_hdw + 1) << 3;
             m_next_event = HuC6270_EVENT_RCR;
             m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 2;
-
+            m_need_to_increment_raster_line = true;
             if (m_active_line)
                 RenderLine();
             break;
@@ -813,6 +823,7 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_bg_offset_y), sizeof(m_bg_offset_y));
     stream.write(reinterpret_cast<const char*> (&m_bg_counter_y), sizeof(m_bg_counter_y));
     stream.write(reinterpret_cast<const char*> (&m_increment_bg_counter_y), sizeof(m_increment_bg_counter_y));
+    stream.write(reinterpret_cast<const char*> (&m_need_to_increment_raster_line), sizeof(m_need_to_increment_raster_line));
     stream.write(reinterpret_cast<const char*> (&m_raster_line), sizeof(m_raster_line));
     stream.write(reinterpret_cast<const char*> (&m_latched_bxr), sizeof(m_latched_bxr));
     stream.write(reinterpret_cast<const char*> (&m_latched_hds), sizeof(m_latched_hds));
@@ -870,6 +881,7 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_bg_offset_y), sizeof(m_bg_offset_y));
     stream.read(reinterpret_cast<char*> (&m_bg_counter_y), sizeof(m_bg_counter_y));
     stream.read(reinterpret_cast<char*> (&m_increment_bg_counter_y), sizeof(m_increment_bg_counter_y));
+    stream.read(reinterpret_cast<char*> (&m_need_to_increment_raster_line), sizeof(m_need_to_increment_raster_line));
     stream.read(reinterpret_cast<char*> (&m_raster_line), sizeof(m_raster_line));
     stream.read(reinterpret_cast<char*> (&m_latched_bxr), sizeof(m_latched_bxr));
     stream.read(reinterpret_cast<char*> (&m_latched_hds), sizeof(m_latched_hds));
