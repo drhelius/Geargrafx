@@ -413,7 +413,13 @@ void HuC6270::HSyncStart()
         event_clocks = 24;
     }
 
-    m_clocks_to_next_event = display_start - event_clocks - m_hpos;
+    if(display_start - event_clocks <= m_hpos)
+    {
+        m_clocks_to_next_event = 1;
+        LineEvents();
+    }
+    else
+        m_clocks_to_next_event = display_start - event_clocks - m_hpos;
 }
 
 void HuC6270::SATTransfer()
@@ -519,7 +525,7 @@ void HuC6270::NextHorizontalState()
             HUC6270_DEBUG("  HDW start\t");
             m_clocks_to_next_h_state = (m_latched_hdw + 1) << 3;
             m_next_event = HuC6270_EVENT_RCR;
-            m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 1;
+            m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 5;
 
             //if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
             // if (m_active_line)
