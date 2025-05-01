@@ -140,13 +140,13 @@ private:
     bool m_vblank_triggered;
     bool m_active_line;
     bool m_burst_mode;
-    u16 m_line_buffer[1024];
-    u16 m_line_buffer_sprites[1024];
+    u16* m_line_buffer;
+    u16* m_line_buffer_sprites;
     s32 m_line_buffer_index;
     bool m_no_sprite_limit;
     s32 m_sprite_count;
     bool m_sprite_overflow;
-    HuC6270_Sprite_Data m_sprites[128];
+    HuC6270_Sprite_Data* m_sprites;
 
 private:
     void EndOfLine();

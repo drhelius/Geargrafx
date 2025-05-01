@@ -27,6 +27,9 @@ HuC6270::HuC6270(HuC6280* huC6280)
     InitPointer(m_huc6260);
     InitPointer(m_vram);
     InitPointer(m_sat);
+    InitPointer(m_line_buffer);
+    InitPointer(m_line_buffer_sprites);
+    InitPointer(m_sprites);
     m_state.AR = &m_address_register;
     m_state.SR = &m_status_register;
     m_state.R = m_register;
@@ -41,6 +44,9 @@ HuC6270::~HuC6270()
 {
     SafeDeleteArray(m_vram);
     SafeDeleteArray(m_sat);
+    SafeDeleteArray(m_line_buffer);
+    SafeDeleteArray(m_line_buffer_sprites);
+    SafeDeleteArray(m_sprites);
 }
 
 void HuC6270::Init(HuC6260* huC6260)
@@ -48,6 +54,9 @@ void HuC6270::Init(HuC6260* huC6260)
     m_huc6260 = huC6260;
     m_vram = new u16[HUC6270_VRAM_SIZE];
     m_sat = new u16[HUC6270_SAT_SIZE];
+    m_line_buffer = new u16[HUC6270_MAX_BACKGROUND_WIDTH];
+    m_line_buffer_sprites = new u16[HUC6270_MAX_BACKGROUND_WIDTH];
+    m_sprites = new HuC6270_Sprite_Data[HUC6270_SPRITES * 2];
     Reset();
 }
 
@@ -843,8 +852,8 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_vblank_triggered), sizeof(m_vblank_triggered));
     stream.write(reinterpret_cast<const char*> (&m_active_line), sizeof(m_active_line));
     stream.write(reinterpret_cast<const char*> (&m_burst_mode), sizeof(m_burst_mode));
-    stream.write(reinterpret_cast<const char*> (m_line_buffer), sizeof(u16) * 1024);
-    stream.write(reinterpret_cast<const char*> (m_line_buffer_sprites), sizeof(u16) * 1024);
+    stream.write(reinterpret_cast<const char*> (m_line_buffer), sizeof(u16) * HUC6270_MAX_BACKGROUND_WIDTH);
+    stream.write(reinterpret_cast<const char*> (m_line_buffer_sprites), sizeof(u16) * HUC6270_MAX_BACKGROUND_WIDTH);
     stream.write(reinterpret_cast<const char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
     stream.write(reinterpret_cast<const char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
     stream.write(reinterpret_cast<const char*> (&m_sprite_count), sizeof(m_sprite_count));
@@ -852,7 +861,7 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_next_event), sizeof(m_next_event));
     stream.write(reinterpret_cast<const char*> (&m_clocks_to_next_event), sizeof(m_clocks_to_next_event));
 
-    for (int i = 0; i < 128; i++)
+    for (int i = 0; i < (HUC6270_MAX_SPRITE_HEIGHT * 2); i++)
     {
         stream.write(reinterpret_cast<const char*> (&m_sprites[i].index), sizeof(m_sprites[i].index));
         stream.write(reinterpret_cast<const char*> (&m_sprites[i].x), sizeof(m_sprites[i].x));
@@ -901,8 +910,8 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_vblank_triggered), sizeof(m_vblank_triggered));
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
     stream.read(reinterpret_cast<char*> (&m_burst_mode), sizeof(m_burst_mode));
-    stream.read(reinterpret_cast<char*> (m_line_buffer), sizeof(u16) * 1024);
-    stream.read(reinterpret_cast<char*> (m_line_buffer_sprites), sizeof(u16) * 1024);
+    stream.read(reinterpret_cast<char*> (m_line_buffer), sizeof(u16) * HUC6270_MAX_BACKGROUND_WIDTH);
+    stream.read(reinterpret_cast<char*> (m_line_buffer_sprites), sizeof(u16) * HUC6270_MAX_BACKGROUND_WIDTH);
     stream.read(reinterpret_cast<char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
     stream.read(reinterpret_cast<char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
     stream.read(reinterpret_cast<char*> (&m_sprite_count), sizeof(m_sprite_count));
@@ -910,7 +919,7 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_next_event), sizeof(m_next_event));
     stream.read(reinterpret_cast<char*> (&m_clocks_to_next_event), sizeof(m_clocks_to_next_event));
 
-    for (int i = 0; i < 128; i++)
+    for (int i = 0; i < (HUC6270_MAX_SPRITE_HEIGHT * 2); i++)
     {
         stream.read(reinterpret_cast<char*> (&m_sprites[i].index), sizeof(m_sprites[i].index));
         stream.read(reinterpret_cast<char*> (&m_sprites[i].x), sizeof(m_sprites[i].x));
