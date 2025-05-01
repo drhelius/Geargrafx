@@ -88,8 +88,8 @@
 #define HUC6270_VAR_VCR (m_register[HUC6270_REG_VCR] & 0xFF)
 #define HUC6270_VAR_CR (m_register[HUC6270_REG_CR] & 0x1FFF)
 
-//#define HUC6270_DEBUG(...) { }
+#define HUC6270_DEBUG(...) { }
 
-#define HUC6270_DEBUG(x, ...) Debug("%d\t" x "\tH: %d\tD: %d\tRCR: %d SY: %d LBXR=%d BXR=%d BYR=%d", m_vpos, ## __VA_ARGS__, *m_huc6260->GetState()->HPOS, m_hpos, m_raster_line, m_bg_counter_y, m_latched_bxr, m_register[HUC6270_REG_BXR], m_register[HUC6270_REG_BYR]);
+//#define HUC6270_DEBUG(x, ...) Debug("%d\t" x "\tH: %d\tD: %d\tRCR: %d SY: %d LBXR=%d BXR=%d BYR=%d", m_vpos, ## __VA_ARGS__, *m_huc6260->GetState()->HPOS, m_hpos, m_raster_line, m_bg_counter_y, m_latched_bxr, m_register[HUC6270_REG_BXR], m_register[HUC6270_REG_BYR]);
 
 #endif /* HUC6270_DEFINES_H */
