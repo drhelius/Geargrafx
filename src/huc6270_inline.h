@@ -33,8 +33,10 @@ INLINE u32 HuC6270::Clock()
 
     u32 pixel = 0x10000;
 
-    if (m_active_line &&
-        (m_v_state == HuC6270_VERTICAL_STATE_VDW) && (m_h_state == HuC6270_HORIZONTAL_STATE_HDW))
+    //bool active_line = ((m_vpos >= 14) && (m_vpos < 256));
+
+    if (m_active_line && (m_v_state == HuC6270_VERTICAL_STATE_VDW) && (m_h_state == HuC6270_HORIZONTAL_STATE_HDW))
+    //if (active_line && (m_v_state == HuC6270_VERTICAL_STATE_VDW) && (m_h_state == HuC6270_HORIZONTAL_STATE_HDW))
     {
         if (m_line_buffer_index < 512)
         {

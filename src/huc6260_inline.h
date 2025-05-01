@@ -109,6 +109,11 @@ INLINE int HuC6260::GetClockDivider()
     return m_clock_divider;
 }
 
+INLINE int HuC6260::GetTotalLines()
+{
+    return k_huc6260_total_lines[m_blur];
+}
+
 INLINE u16* HuC6260::GetColorTable()
 {
     return m_color_table;

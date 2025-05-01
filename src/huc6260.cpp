@@ -30,7 +30,6 @@ HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
     m_state.CTA = &m_color_table_address;
     m_state.HPOS = &m_hpos;
     m_state.VPOS = &m_vpos;
-    m_state.PIXEL_INDEX = &m_pixel_index;
     m_state.HSYNC = &m_hsync;
     m_state.VSYNC = &m_vsync;
     InitPointer(m_color_table);

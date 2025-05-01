@@ -58,8 +58,8 @@ void HuC6270::Reset()
         m_register[i] = 0;
     }
 
-    m_register[HUC6270_REG_HDR] = 0x1F & 0x7F;
-    m_register[HUC6270_REG_VDR] = 239 & 0x7F;
+    m_register[HUC6270_REG_HDR] = 0x1F;
+    m_register[HUC6270_REG_VDR] = 239;
 
     m_address_register = 0;
     m_status_register = 0;
@@ -303,6 +303,17 @@ void HuC6270::WriteRegister(u16 address, u8 value)
 void HuC6270::EndOfLine()
 {
     m_hpos = 0;
+    m_line_buffer_index = 0;
+    m_vpos++;
+
+    if (m_vpos == m_huc6260->GetTotalLines())
+    {
+        m_vpos = 0;
+        m_burst_mode = ((m_latched_cr & 0x00C0) == 0);
+    }
+
+    //m_active_line = (m_raster_line < HUC6270_LINES_ACTIVE);
+    m_active_line = ((m_vpos >= 14) && (m_vpos < 256));
 }
 
 void HuC6270::LineEvents()
@@ -347,8 +358,6 @@ void HuC6270::LineEvents()
                     m_vblank_triggered = true;
                     VBlankIRQ();
                 }
-                if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
-                    RenderLine();
 
                 break;
             case HuC6270_EVENT_RCR:
@@ -502,32 +511,24 @@ void HuC6270::NextHorizontalState()
     switch (m_h_state)
     {
         case HuC6270_HORIZONTAL_STATE_HDS:
-            m_clocks_to_next_h_state = (m_latched_hds + 1) << 3;
-
-            m_line_buffer_index = 0;
-
-            //m_hpos = 0;
-            m_vpos = (m_vpos + 1) % HUC6270_LINES;
-            m_active_line = (m_raster_line < HUC6270_LINES_ACTIVE);
-
-
-            if (m_vpos == 0)
-                m_burst_mode = ((m_latched_cr & 0x00C0) == 0);
-
             HUC6270_DEBUG("  HDS start\t");
+            m_clocks_to_next_h_state = (m_latched_hds + 1) << 3;
             break;
         case HuC6270_HORIZONTAL_STATE_HDW:
             HUC6270_DEBUG("  HDW start\t");
             m_clocks_to_next_h_state = (m_latched_hdw + 1) << 3;
             m_next_event = HuC6270_EVENT_RCR;
             m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 1;
+
+            //if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
+            if (m_active_line)
+                RenderLine();
             break;
         case HuC6270_HORIZONTAL_STATE_HDE:
             HUC6270_DEBUG("  HDE start\t");
             m_clocks_to_next_h_state = (m_latched_hde + 1) << 3;
             break;
         case HuC6270_HORIZONTAL_STATE_HSW:
-            //m_hpos = 0;
             HUC6270_DEBUG("  HSW start\t");
             m_clocks_to_next_h_state = (m_latched_hsw + 1) << 3;
             HSyncStart();

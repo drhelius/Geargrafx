@@ -44,7 +44,6 @@ public:
         u16* CTA;
         s32* HPOS;
         s32* VPOS;
-        s32* PIXEL_INDEX;
         bool* HSYNC;
         bool* VSYNC;
     };
@@ -67,6 +66,7 @@ public:
     HuC6260_State* GetState();
     HuC6260_Speed GetSpeed();
     int GetClockDivider();
+    int GetTotalLines();
     u16* GetColorTable();
     void SetBuffer(u8* frame_buffer);
     u8* GetBuffer();

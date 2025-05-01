@@ -43,36 +43,32 @@ void gui_debug_window_huc6260_info(void)
     HuC6260* huc6260 = core->GetHuC6260();
     HuC6260::HuC6260_State* huc6260_state = huc6260->GetState();
 
-    ImGui::TextColored(violet, "SPEED    "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SPEED   "); ImGui::SameLine();
     const char* speed[] = { "5.36 MHz", "7.16 MHz", "10.8 MHz" };
     ImGui::TextColored(orange, "%s", speed[huc6260->GetSpeed()]);
 
-    ImGui::TextColored(violet, "HSYNC    "); ImGui::SameLine();
-    ImGui::TextColored(*huc6260_state->HSYNC ? red : green, *huc6260_state->HSYNC ? "HIGH" : "LOW");
-    ImGui::TextColored(violet, "VSYNC    "); ImGui::SameLine();
-    ImGui::TextColored(*huc6260_state->VSYNC ? red : green, *huc6260_state->VSYNC ? "HIGH" : "LOW");
-
     int vpos = *huc6260_state->VPOS;
-
-    ImGui::TextColored(violet, "HPOS,VPOS"); ImGui::SameLine();
+    ImGui::TextColored(violet, "X,Y     "); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%03d,%03d)", *huc6260_state->HPOS, vpos, *huc6260_state->HPOS, vpos);
 
-    ImGui::TextColored(violet, "LINES    "); ImGui::SameLine();
+    ImGui::TextColored(violet, "LINES   "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", IS_SET_BIT(*huc6260_state->CR, 2) ? HUC6270_LINES : (HUC6270_LINES - 1));
 
-    ImGui::TextColored(violet, "PIXEL    "); ImGui::SameLine();
-    ImGui::TextColored(white, "%0X", *huc6260_state->PIXEL_INDEX);
+    ImGui::TextColored(violet, "HSYNC   "); ImGui::SameLine();
+    ImGui::TextColored(*huc6260_state->HSYNC ? red : green, *huc6260_state->HSYNC ? "HIGH" : "LOW");
+    ImGui::TextColored(violet, "VSYNC   "); ImGui::SameLine();
+    ImGui::TextColored(*huc6260_state->VSYNC ? red : green, *huc6260_state->VSYNC ? "HIGH" : "LOW");
 
-    ImGui::TextColored(violet, "CTRL REG "); ImGui::SameLine();
+    ImGui::TextColored(violet, "CTRL REG"); ImGui::SameLine();
     ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6260_state->CR, BYTE_TO_BINARY(*huc6260_state->CR));
 
-    ImGui::TextColored(violet, "CTA      "); ImGui::SameLine();
+    ImGui::TextColored(violet, "CTA     "); ImGui::SameLine();
     ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6260_state->CTA, BYTE_TO_BINARY(*huc6260_state->CTA >> 8), BYTE_TO_BINARY(*huc6260_state->CTA & 0xFF));
 
-    ImGui::TextColored(violet, "BLUR     "); ImGui::SameLine();
+    ImGui::TextColored(violet, "BLUR    "); ImGui::SameLine();
     ImGui::TextColored(IS_SET_BIT(*huc6260_state->CR, 2) ? green : gray, "%s", IS_SET_BIT(*huc6260_state->CR, 2) ? "ON" : "OFF");
 
-    ImGui::TextColored(violet, "B&W      "); ImGui::SameLine();
+    ImGui::TextColored(violet, "B&W     "); ImGui::SameLine();
     ImGui::TextColored(IS_SET_BIT(*huc6260_state->CR, 7) ? green : gray, "%s", IS_SET_BIT(*huc6260_state->CR, 7) ? "ON" : "OFF");
 
     ImGui::PopFont();
