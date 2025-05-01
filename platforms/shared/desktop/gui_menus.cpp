@@ -461,20 +461,22 @@ static void menu_video(void)
 
             if (config_video.scanline_mode == 2)
             {
-                ImGui::PushItemWidth(200.0f);
-                if (ImGui::SliderInt("##scanline_start", &config_video.scanline_start, 0, 241, "Start = %d"))
+                ImGui::Separator();
+                ImGui::TextDisabled("Displaying %d scanlines:", MAX(0, config_video.scanline_end - config_video.scanline_start + 1));
+                ImGui::PushItemWidth(250.0f);
+                if (ImGui::SliderInt("##scanline_start", &config_video.scanline_start, 0, 241, "Start line = %d"))
                 {
                     emu_set_scanline_start_end(
                     config_debug.debug ? 0 : config_video.scanline_start,
                     config_debug.debug ? 241 : config_video.scanline_end);
                 }
-                if (ImGui::SliderInt("##scanline_end", &config_video.scanline_end, 0, 241, "End = %d"))
+                if (ImGui::SliderInt("##scanline_end", &config_video.scanline_end, 0, 241, "End line = %d"))
                 {
                     emu_set_scanline_start_end(
                     config_debug.debug ? 0 : config_video.scanline_start,
                     config_debug.debug ? 241 : config_video.scanline_end);
                 }
-                if (ImGui::Button("Show all scanlines"))
+                if (ImGui::Button("Show all scanlines", ImVec2(250.0f, 0)))
                 {
                     if (!config_debug.debug)
                     {
