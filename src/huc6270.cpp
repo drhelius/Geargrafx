@@ -150,6 +150,7 @@ void HuC6270::SetVSyncLow()
     m_latched_vcr = HUC6270_VAR_VCR;
     m_latched_vsw = HUC6270_VAR_VSW;
 
+    HUC6270_DEBUG(" >> VSW start (force)");
     m_v_state = HuC6270_VERTICAL_STATE_VSW;
     m_lines_to_next_v_state = m_latched_vsw + 1;
 
@@ -521,7 +522,9 @@ void HuC6270::NextHorizontalState()
             m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 1;
 
             //if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
-            if (m_active_line)
+            // if (m_active_line)
+            //     RenderLine();
+            if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
                 RenderLine();
             break;
         case HuC6270_HORIZONTAL_STATE_HDE:
