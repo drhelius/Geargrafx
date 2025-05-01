@@ -65,7 +65,6 @@ void Input::SaveState(std::ostream& stream)
     using namespace std;
     stream.write(reinterpret_cast<const char*> (&m_clr), sizeof(m_clr));
     stream.write(reinterpret_cast<const char*> (&m_sel), sizeof(m_sel));
-    stream.write(reinterpret_cast<const char*> (m_gamepads), sizeof(m_gamepads));
     stream.write(reinterpret_cast<const char*> (&m_register), sizeof(m_register));
     stream.write(reinterpret_cast<const char*> (&m_selected_pad), sizeof(m_selected_pad));
     stream.write(reinterpret_cast<const char*> (&m_selected_extra_buttons), sizeof(m_selected_extra_buttons));
@@ -76,8 +75,10 @@ void Input::LoadState(std::istream& stream)
     using namespace std;
     stream.read(reinterpret_cast<char*> (&m_clr), sizeof(m_clr));
     stream.read(reinterpret_cast<char*> (&m_sel), sizeof(m_sel));
-    stream.read(reinterpret_cast<char*> (m_gamepads), sizeof(m_gamepads));
     stream.read(reinterpret_cast<char*> (&m_register), sizeof(m_register));
     stream.read(reinterpret_cast<char*> (&m_selected_pad), sizeof(m_selected_pad));
     stream.read(reinterpret_cast<char*> (&m_selected_extra_buttons), sizeof(m_selected_extra_buttons));
+
+    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+        m_gamepads[i] = 0xFFFF;
 }

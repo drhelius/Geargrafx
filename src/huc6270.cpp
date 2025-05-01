@@ -837,6 +837,9 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
     stream.write(reinterpret_cast<const char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
     stream.write(reinterpret_cast<const char*> (&m_sprite_count), sizeof(m_sprite_count));
+    stream.write(reinterpret_cast<const char*> (&m_sprite_overflow), sizeof(m_sprite_overflow));
+    stream.write(reinterpret_cast<const char*> (&m_next_event), sizeof(m_next_event));
+    stream.write(reinterpret_cast<const char*> (&m_clocks_to_next_event), sizeof(m_clocks_to_next_event));
 
     for (int i = 0; i < 128; i++)
     {
@@ -891,6 +894,9 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
     stream.read(reinterpret_cast<char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
     stream.read(reinterpret_cast<char*> (&m_sprite_count), sizeof(m_sprite_count));
+    stream.read(reinterpret_cast<char*> (&m_sprite_overflow), sizeof(m_sprite_overflow));
+    stream.read(reinterpret_cast<char*> (&m_next_event), sizeof(m_next_event));
+    stream.read(reinterpret_cast<char*> (&m_clocks_to_next_event), sizeof(m_clocks_to_next_event));
 
     for (int i = 0; i < 128; i++)
     {
