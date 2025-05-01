@@ -97,6 +97,7 @@ void HuC6270::Reset()
     m_line_buffer_index = 0;
     m_no_sprite_limit = false;
     m_sprite_count = 0;
+    m_sprite_overflow = false;
 
     for (int i = 0; i < HUC6270_VRAM_SIZE; i++)
     {
@@ -272,12 +273,12 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                     break;
                 // 0x07
                 case HUC6270_REG_BXR:
-                    //HUC6270_DEBUG("**** BXR Set");
+                    //HUC6270_DEBUG("*** BXR Set");
                     break;
                 // 0x08
                 case HUC6270_REG_BYR:
                     m_bg_counter_y = m_register[HUC6270_REG_BYR];
-                    //HUC6270_DEBUG("**** BYR Set");
+                    //HUC6270_DEBUG("*** BYR Set");
                     break;
                 // 0x12
                 case HUC6270_REG_LENR:
@@ -324,7 +325,7 @@ void HuC6270::LineEvents()
         switch (m_next_event)
         {
             case HuC6270_EVENT_BYR:
-                HUC6270_DEBUG("  [?] LatchScrollY");
+                HUC6270_DEBUG("  [+] Event BYR\t");
                 m_next_event = HuC6270_EVENT_BXR;
                 m_clocks_to_next_event = 2;
 
@@ -340,7 +341,7 @@ void HuC6270::LineEvents()
 
                 break;
             case HuC6270_EVENT_BXR:
-                HUC6270_DEBUG("  [?] LatchScrollX");
+                HUC6270_DEBUG("  [+] Event BXR\t");
                 m_next_event = HuC6270_EVENT_HDS;
                 m_clocks_to_next_event = 6;
 
@@ -348,7 +349,7 @@ void HuC6270::LineEvents()
 
                 break;
             case HuC6270_EVENT_HDS:
-                HUC6270_DEBUG("  [?] HdsIrqTrigger");
+                HUC6270_DEBUG("  [+] Event HDS\t");
                 m_next_event = HuC6270_EVENT_NONE;
                 m_clocks_to_next_event = -1;
 
@@ -358,9 +359,16 @@ void HuC6270::LineEvents()
                     VBlankIRQ();
                 }
 
+                HUC6270_DEBUG("  [!] Sprite OF IRQ");
+                if (m_sprite_overflow)
+                {
+                    m_sprite_overflow = false;
+                    OverflowIRQ();
+                }
+
                 break;
             case HuC6270_EVENT_RCR:
-                HUC6270_DEBUG("  [?] IncRcrCounter");
+                HUC6270_DEBUG("  [+] Event RCR\t");
                 m_next_event = HuC6270_EVENT_NONE;
                 m_clocks_to_next_event = -1;
 
@@ -490,7 +498,6 @@ void HuC6270::NextVerticalState()
             m_lines_to_next_v_state = m_latched_vdw + 1;
             m_raster_line = 0;
             m_vblank_triggered = false;
-
             HUC6270_DEBUG(" >> VDW start\t");
             break;
         case HuC6270_VERTICAL_STATE_VCR:
@@ -526,10 +533,7 @@ void HuC6270::NextHorizontalState()
             m_next_event = HuC6270_EVENT_RCR;
             m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 5;
 
-            //if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
-            // if (m_active_line)
-            //     RenderLine();
-            if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
+            if (m_active_line)
                 RenderLine();
             break;
         case HuC6270_HORIZONTAL_STATE_HDE:
@@ -556,7 +560,6 @@ void HuC6270::VBlankIRQ()
     if (m_trigger_sat_transfer || (m_register[HUC6270_REG_DCR] & 0x10))
     {
         m_trigger_sat_transfer = false;
-
         m_sat_transfer_pending = 1024;
         //m_status_register |= HUC6270_STATUS_BUSY;
     }
@@ -716,7 +719,7 @@ void HuC6270::FetchSprites()
 
             if (m_sprite_count >= 16)
             {
-                OverflowIRQ();
+                m_sprite_overflow = true;
                 if (!m_no_sprite_limit)
                     break;
             }
@@ -770,7 +773,7 @@ void HuC6270::FetchSprites()
 
                 if (m_sprite_count >= 16)
                 {
-                    OverflowIRQ();
+                    m_sprite_overflow = true;
                     if (!m_no_sprite_limit)
                         break;
                 }

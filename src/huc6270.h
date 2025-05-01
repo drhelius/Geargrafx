@@ -144,6 +144,7 @@ private:
     s32 m_line_buffer_index;
     bool m_no_sprite_limit;
     s32 m_sprite_count;
+    bool m_sprite_overflow;
     HuC6270_Sprite_Data m_sprites[128];
 
 private:

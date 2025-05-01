@@ -93,7 +93,6 @@ INLINE void HuC6270::RCRIRQ()
 
 INLINE void HuC6270::OverflowIRQ()
 {
-    HUC6270_DEBUG("  [?] SPRITE OV IRQ");
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW)
     {
         m_status_register |= HUC6270_STATUS_OVERFLOW;
@@ -103,6 +102,7 @@ INLINE void HuC6270::OverflowIRQ()
 
 INLINE void HuC6270::SpriteCollisionIRQ()
 {
+    HUC6270_DEBUG("  [!] Sprite COL IRQ");
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_COLLISION)
     {
         m_status_register |= HUC6270_STATUS_COLLISION;
