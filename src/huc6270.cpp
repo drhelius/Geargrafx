@@ -411,7 +411,7 @@ void HuC6270::HSyncStart()
     if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
     {
         m_next_event = HuC6270_EVENT_BYR;
-        event_clocks = 34;
+        event_clocks = 37;
     }
     else
     {
@@ -531,7 +531,7 @@ void HuC6270::NextHorizontalState()
             HUC6270_DEBUG("  HDW start\t");
             m_clocks_to_next_h_state = (m_latched_hdw + 1) << 3;
             m_next_event = HuC6270_EVENT_RCR;
-            m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 5;
+            m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 2;
 
             if (m_active_line)
                 RenderLine();
