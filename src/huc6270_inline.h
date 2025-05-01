@@ -31,6 +31,15 @@ INLINE u32 HuC6270::Clock()
     if (m_vram_transfer_pending > 0)
         VRAMTransfer();
 
+    m_hpos++;
+
+    m_clocks_to_next_h_state--;
+    while (m_clocks_to_next_h_state == 0)
+        NextHorizontalState();
+
+    if (m_clocks_to_next_event > 0)
+        LineEvents();
+
     u32 pixel = 0x10000;
 
     if (m_active_line && (m_h_state == HuC6270_HORIZONTAL_STATE_HDW))
@@ -45,15 +54,6 @@ INLINE u32 HuC6270::Clock()
         }
         m_line_buffer_index++;
     }
-
-    m_hpos++;
-
-    m_clocks_to_next_h_state--;
-    while (m_clocks_to_next_h_state == 0)
-        NextHorizontalState();
-
-    if (m_clocks_to_next_event > 0)
-        LineEvents();
 
     return pixel;
 }
