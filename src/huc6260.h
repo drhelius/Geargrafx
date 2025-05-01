@@ -124,11 +124,11 @@ static const HuC6260::HuC6260_Speed k_huc6260_speed[4] = {
 static const int k_huc6260_total_lines[2] = { HUC6260_LINES - 1, HUC6260_LINES };
 static const int k_huc6260_full_line_width[4] = { 342, 455, 683, 683 };
 static const int k_huc6260_line_width[2][4] = {
-    { 256, 341, 512, 512 },
+    { 256,      341,      512,      512      },
     { 256 + 24, 341 + 32, 512 + 48, 512 + 48 } };
 static const int k_huc6260_line_offset[2][4] = {
-    { 24 + 24, 24 + 48, 24 + 96, 24 + 96 },
-    { 8 + 24 - 12, 8 + 38 - 16, 8 + 96 - 24, 8 + 96 - 24 } };
+    { 24 + 24,      24 + 48,      24 + 96,      24 + 96      },
+    { 24 + 24 - 12, 24 + 48 - 16, 24 + 96 - 24, 24 + 96 - 24 } };
 
 static uint8_t k_rgb888_palette_composite[512][3] = {
     {   0,   0,   0}, {   0,   0,  27}, {   1,   2,  61}, {   0,   0,  88},
