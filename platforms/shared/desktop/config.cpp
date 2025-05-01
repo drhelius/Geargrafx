@@ -56,8 +56,8 @@ void config_init(void)
     config_input_keyboard[0].key_down = SDL_SCANCODE_DOWN;
     config_input_keyboard[0].key_select = SDL_SCANCODE_A;
     config_input_keyboard[0].key_run = SDL_SCANCODE_S;
-    config_input_keyboard[0].key_I = SDL_SCANCODE_Z;
-    config_input_keyboard[0].key_II = SDL_SCANCODE_X;
+    config_input_keyboard[0].key_I = SDL_SCANCODE_X;
+    config_input_keyboard[0].key_II = SDL_SCANCODE_Z;
     config_input_keyboard[0].key_III = SDL_SCANCODE_C;
     config_input_keyboard[0].key_IV = SDL_SCANCODE_V;
     config_input_keyboard[0].key_V = SDL_SCANCODE_B;
@@ -69,8 +69,8 @@ void config_init(void)
     config_input_keyboard[1].key_down = SDL_SCANCODE_K;
     config_input_keyboard[1].key_select = SDL_SCANCODE_G;
     config_input_keyboard[1].key_run = SDL_SCANCODE_H;
-    config_input_keyboard[1].key_I = SDL_SCANCODE_T;
-    config_input_keyboard[1].key_II = SDL_SCANCODE_Y;
+    config_input_keyboard[1].key_I = SDL_SCANCODE_Y;
+    config_input_keyboard[1].key_II = SDL_SCANCODE_T;
     config_input_keyboard[1].key_III = SDL_SCANCODE_5;
     config_input_keyboard[1].key_IV = SDL_SCANCODE_6;
     config_input_keyboard[1].key_V = SDL_SCANCODE_7;
