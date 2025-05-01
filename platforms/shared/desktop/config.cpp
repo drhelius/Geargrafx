@@ -254,8 +254,8 @@ void config_read(void)
     config_input_keyboard[0].key_down = (SDL_Scancode)read_int("InputKeyboard1", "KeyDown", SDL_SCANCODE_DOWN);
     config_input_keyboard[0].key_select = (SDL_Scancode)read_int("InputKeyboard1", "KeySelect", SDL_SCANCODE_A);
     config_input_keyboard[0].key_run = (SDL_Scancode)read_int("InputKeyboard1", "KeyRun", SDL_SCANCODE_S);
-    config_input_keyboard[0].key_I = (SDL_Scancode)read_int("InputKeyboard1", "KeyI", SDL_SCANCODE_Z);
-    config_input_keyboard[0].key_II = (SDL_Scancode)read_int("InputKeyboard1", "KeyII", SDL_SCANCODE_X);
+    config_input_keyboard[0].key_I = (SDL_Scancode)read_int("InputKeyboard1", "KeyI", SDL_SCANCODE_X);
+    config_input_keyboard[0].key_II = (SDL_Scancode)read_int("InputKeyboard1", "KeyII", SDL_SCANCODE_Z);
     config_input_keyboard[0].key_III = (SDL_Scancode)read_int("InputKeyboard1", "KeyIII", SDL_SCANCODE_C);
     config_input_keyboard[0].key_IV = (SDL_Scancode)read_int("InputKeyboard1", "KeyIV", SDL_SCANCODE_V);
     config_input_keyboard[0].key_V = (SDL_Scancode)read_int("InputKeyboard1", "KeyV", SDL_SCANCODE_B);
@@ -267,8 +267,8 @@ void config_read(void)
     config_input_keyboard[1].key_down = (SDL_Scancode)read_int("InputKeyboard2", "KeyDown", SDL_SCANCODE_K);
     config_input_keyboard[1].key_select = (SDL_Scancode)read_int("InputKeyboard2", "KeySelect", SDL_SCANCODE_G);
     config_input_keyboard[1].key_run = (SDL_Scancode)read_int("InputKeyboard2", "KeyRun", SDL_SCANCODE_H);
-    config_input_keyboard[1].key_I = (SDL_Scancode)read_int("InputKeyboard2", "KeyI", SDL_SCANCODE_T);
-    config_input_keyboard[1].key_II = (SDL_Scancode)read_int("InputKeyboard2", "KeyII", SDL_SCANCODE_Y);
+    config_input_keyboard[1].key_I = (SDL_Scancode)read_int("InputKeyboard2", "KeyI", SDL_SCANCODE_Y);
+    config_input_keyboard[1].key_II = (SDL_Scancode)read_int("InputKeyboard2", "KeyII", SDL_SCANCODE_T);
     config_input_keyboard[1].key_III = (SDL_Scancode)read_int("InputKeyboard2", "KeyIII", SDL_SCANCODE_5);
     config_input_keyboard[1].key_IV = (SDL_Scancode)read_int("InputKeyboard2", "KeyIV", SDL_SCANCODE_6);
     config_input_keyboard[1].key_V = (SDL_Scancode)read_int("InputKeyboard2", "KeyV", SDL_SCANCODE_7);
