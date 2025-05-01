@@ -304,7 +304,6 @@ void HuC6270::WriteRegister(u16 address, u8 value)
 void HuC6270::EndOfLine()
 {
     m_hpos = 0;
-    m_line_buffer_index = 0;
     m_vpos++;
 
     if (m_vpos == m_huc6260->GetTotalLines())
@@ -313,8 +312,7 @@ void HuC6270::EndOfLine()
         m_burst_mode = ((m_latched_cr & 0x00C0) == 0);
     }
 
-    //m_active_line = (m_raster_line < HUC6270_LINES_ACTIVE);
-    m_active_line = ((m_vpos >= 14) && (m_vpos < 256));
+    m_active_line = (m_v_state == HuC6270_VERTICAL_STATE_VDW) && (m_vpos >= 14) && (m_vpos < 256);
 }
 
 void HuC6270::LineEvents()
@@ -520,6 +518,7 @@ void HuC6270::NextHorizontalState()
         case HuC6270_HORIZONTAL_STATE_HDS:
             HUC6270_DEBUG("  HDS start\t");
             m_clocks_to_next_h_state = (m_latched_hds + 1) << 3;
+            m_line_buffer_index = 0;
             break;
         case HuC6270_HORIZONTAL_STATE_HDW:
             HUC6270_DEBUG("  HDW start\t");
