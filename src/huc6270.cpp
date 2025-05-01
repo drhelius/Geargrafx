@@ -411,12 +411,12 @@ void HuC6270::HSyncStart()
     if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
     {
         m_next_event = HuC6270_EVENT_BYR;
-        event_clocks = 33;
+        event_clocks = 34;
     }
     else
     {
         m_next_event = HuC6270_EVENT_HDS;
-        event_clocks = 24;
+        event_clocks = 26;
     }
 
     if(display_start - event_clocks <= m_hpos)
