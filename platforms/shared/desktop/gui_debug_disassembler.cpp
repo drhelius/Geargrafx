@@ -323,7 +323,7 @@ static void draw_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Start (F5)");
+        ImGui::SetTooltip("Start / Continue (F5)");
     }
 
     ImGui::SameLine();
