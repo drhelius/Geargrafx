@@ -108,6 +108,7 @@ private:
     u16 m_register[20];
     u16* m_sat;
     u16 m_read_buffer;
+    u16 m_vram_openbus;
     bool m_trigger_sat_transfer;
     u16 m_sat_transfer_pending;
     u32 m_vram_transfer_pending;
@@ -157,6 +158,7 @@ private:
     NO_INLINE void VRAMTransfer();
     NO_INLINE void NextVerticalState();
     NO_INLINE void NextHorizontalState();
+    u16 ReadVRAM(u16 address);
     void VBlankIRQ();
     void RCRIRQ();
     void OverflowIRQ();

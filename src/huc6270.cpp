@@ -73,6 +73,7 @@ void HuC6270::Reset()
     m_address_register = 0;
     m_status_register = 0;
     m_read_buffer = 0xFFFF;
+    m_vram_openbus = 0;
     m_trigger_sat_transfer = false;
     m_sat_transfer_pending = 0;
     m_vram_transfer_pending = 0;
@@ -111,12 +112,12 @@ void HuC6270::Reset()
 
     for (int i = 0; i < HUC6270_VRAM_SIZE; i++)
     {
-        m_vram[i] = 0;
+        m_vram[i] = rand() & 0xFFFF;
     }
 
     for (int i = 0; i < HUC6270_SAT_SIZE; i++)
     {
-        m_sat[i] = 0;
+        m_sat[i] = rand() & 0xFFFF;
     }
 
     for (int i = 0; i < 1024; i++)
@@ -202,7 +203,7 @@ u8 HuC6270::ReadRegister(u16 address)
 #if !defined(GG_DISABLE_DISASSEMBLER)
                 m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, m_register[HUC6270_REG_MARR], true);
 #endif
-                m_read_buffer = m_vram[m_register[HUC6270_REG_MARR] & 0x7FFF];
+                m_read_buffer = ReadVRAM(m_register[HUC6270_REG_MARR]);
                 m_register[HUC6270_REG_MARR] += k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
             }
             else
@@ -258,7 +259,7 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                 case HUC6270_REG_MARR:
                     if (msb)
                     {
-                        m_read_buffer = m_vram[m_register[HUC6270_REG_MARR] & 0x7FFF];
+                        m_read_buffer = ReadVRAM(m_register[HUC6270_REG_MARR]);
                         m_register[HUC6270_REG_MARR] += k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
                     }
                     break;
@@ -302,7 +303,8 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                     break;
                 // 0x13
                 case HUC6270_REG_DVSSR:
-                    m_trigger_sat_transfer = true;
+                    if (msb)
+                        m_trigger_sat_transfer = true;
                     break;
             }
             break;
@@ -455,7 +457,7 @@ void HuC6270::SATTransfer()
     {
         u16 satb = m_register[HUC6270_REG_DVSSR];
         int i = 255 - (m_sat_transfer_pending >> 2);
-        m_sat[i] = m_vram[(satb + i) & 0x7FFF];
+        m_sat[i] = ReadVRAM(satb + i);
 
         if (m_sat_transfer_pending == 0)
         {
@@ -478,7 +480,7 @@ void HuC6270::VRAMTransfer()
     {
         if (m_vram_transfer_dest < 0x8000)
         {
-            m_vram[m_vram_transfer_dest & 0x7FFF] = m_vram[m_vram_transfer_src & 0x7FFF];
+            m_vram[m_vram_transfer_dest] = ReadVRAM(m_vram_transfer_src);
         }
         else
         {
@@ -520,7 +522,7 @@ void HuC6270::NextVerticalState()
             HUC6270_DEBUG(" >> VDW start\t");
             break;
         case HuC6270_VERTICAL_STATE_VCR:
-            HUC6270_DEBUG(" >> VDE start\t");
+            HUC6270_DEBUG(" >> VCR start\t");
             m_lines_to_next_v_state = m_latched_vcr;
             break;
         case HuC6270_VERTICAL_STATE_VSW:
@@ -636,16 +638,16 @@ void HuC6270::RenderBackground(int width)
 
         if (tile_col != prev_tile_col)
         {
-            bat_entry = m_vram[bat_offset + tile_col];
+            bat_entry = ReadVRAM(bat_offset + tile_col);
             tile_index = bat_entry & 0x07FF;
             color_table = (bat_entry >> 12) & 0x0F;
             tile_data = tile_index << 4;
             int line_start_a = (tile_data + tile_y);
             int line_start_b = (line_start_a + 8);
-            byte1 = m_vram[line_start_a] & 0xFF;
-            byte2 = m_vram[line_start_a] >> 8;
-            byte3 = m_vram[line_start_b] & 0xFF;
-            byte4 = m_vram[line_start_b] >> 8;
+            byte1 = ReadVRAM(line_start_a) & 0xFF;
+            byte2 = ReadVRAM(line_start_a) >> 8;
+            byte3 = ReadVRAM(line_start_b) & 0xFF;
+            byte4 = ReadVRAM(line_start_b) >> 8;
             prev_tile_col = tile_col;
         }
 
@@ -770,10 +772,10 @@ void HuC6270::FetchSprites()
                 m_sprites[m_sprite_count].x = sprite_x;
                 m_sprites[m_sprite_count].flags = flags;
                 m_sprites[m_sprite_count].palette = palette;
-                m_sprites[m_sprite_count].data[0] = m_vram[line_start + 0];
-                m_sprites[m_sprite_count].data[1] = m_vram[line_start + 16];
-                m_sprites[m_sprite_count].data[2] = mode1 ? 0 : m_vram[line_start + 32];
-                m_sprites[m_sprite_count].data[3] = mode1 ? 0 : m_vram[line_start + 48];
+                m_sprites[m_sprite_count].data[0] = ReadVRAM(line_start + 0);
+                m_sprites[m_sprite_count].data[1] = ReadVRAM(line_start + 16);
+                m_sprites[m_sprite_count].data[2] = mode1 ? 0 : ReadVRAM(line_start + 32);
+                m_sprites[m_sprite_count].data[3] = mode1 ? 0 : ReadVRAM(line_start + 48);
             }
             else
             {
@@ -783,10 +785,10 @@ void HuC6270::FetchSprites()
                 m_sprites[m_sprite_count].x = sprite_x;
                 m_sprites[m_sprite_count].flags = flags;
                 m_sprites[m_sprite_count].palette = palette;
-                m_sprites[m_sprite_count].data[0] = m_vram[line + 0];
-                m_sprites[m_sprite_count].data[1] = m_vram[line + 16];
-                m_sprites[m_sprite_count].data[2] = mode1 ? 0 : m_vram[line + 32];
-                m_sprites[m_sprite_count].data[3] = mode1 ? 0 : m_vram[line + 48];
+                m_sprites[m_sprite_count].data[0] = ReadVRAM(line + 0);
+                m_sprites[m_sprite_count].data[1] = ReadVRAM(line + 16);
+                m_sprites[m_sprite_count].data[2] = mode1 ? 0 : ReadVRAM(line + 32);
+                m_sprites[m_sprite_count].data[3] = mode1 ? 0 : ReadVRAM(line + 48);
 
                 m_sprite_count++;
 
@@ -802,10 +804,10 @@ void HuC6270::FetchSprites()
                 m_sprites[m_sprite_count].x = sprite_x + 16;
                 m_sprites[m_sprite_count].flags = flags;
                 m_sprites[m_sprite_count].palette = palette;
-                m_sprites[m_sprite_count].data[0] = m_vram[line + 0];
-                m_sprites[m_sprite_count].data[1] = m_vram[line + 16];
-                m_sprites[m_sprite_count].data[2] = mode1 ? 0 : m_vram[line + 32];
-                m_sprites[m_sprite_count].data[3] = mode1 ? 0 : m_vram[line + 48];
+                m_sprites[m_sprite_count].data[0] = ReadVRAM(line + 0);
+                m_sprites[m_sprite_count].data[1] = ReadVRAM(line + 16);
+                m_sprites[m_sprite_count].data[2] = mode1 ? 0 : ReadVRAM(line + 32);
+                m_sprites[m_sprite_count].data[3] = mode1 ? 0 : ReadVRAM(line + 48);
             }
 
             m_sprite_count++;
@@ -822,6 +824,7 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (m_register), sizeof(m_register));
     stream.write(reinterpret_cast<const char*> (m_sat), sizeof(u16) * HUC6270_SAT_SIZE);
     stream.write(reinterpret_cast<const char*> (&m_read_buffer), sizeof(m_read_buffer));
+    stream.write(reinterpret_cast<const char*> (&m_vram_openbus), sizeof(m_vram_openbus));
     stream.write(reinterpret_cast<const char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
     stream.write(reinterpret_cast<const char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
     stream.write(reinterpret_cast<const char*> (&m_vram_transfer_pending), sizeof(m_vram_transfer_pending));
@@ -880,6 +883,7 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (m_register), sizeof(m_register));
     stream.read(reinterpret_cast<char*> (m_sat), sizeof(u16) * HUC6270_SAT_SIZE);
     stream.read(reinterpret_cast<char*> (&m_read_buffer), sizeof(m_read_buffer));
+    stream.read(reinterpret_cast<char*> (&m_vram_openbus), sizeof(m_vram_openbus));
     stream.read(reinterpret_cast<char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
     stream.read(reinterpret_cast<char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
     stream.read(reinterpret_cast<char*> (&m_vram_transfer_pending), sizeof(m_vram_transfer_pending));

@@ -78,9 +78,23 @@ INLINE void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
     m_no_sprite_limit = no_sprite_limit;
 }
 
+INLINE u16 HuC6270::ReadVRAM(u16 address)
+{
+    if (address < HUC6270_VRAM_SIZE)
+    {
+        m_vram_openbus = m_vram[address];
+        return m_vram_openbus;
+    }
+    else
+    {
+        Debug("HuC6270 VRAM read out of bounds %04X", address);
+        return m_vram_openbus;
+    }
+}
+
 INLINE void HuC6270::RCRIRQ()
 {
-    HUC6270_DEBUG("  [?] RCR IRQ\t");
+    HUC6270_DEBUG("  [!] RCR IRQ\t");
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE)
     {
         if (((int)m_register[HUC6270_REG_RCR] - 64) == m_raster_line)
