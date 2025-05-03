@@ -32,17 +32,16 @@ INLINE bool HuC6260::Clock()
     {
         u32 pixel = m_huc6270->Clock();
 
-        int start_x = k_huc6260_line_offset[m_overscan][m_speed];
-        int end_x = start_x + k_huc6260_line_width[m_overscan][m_speed];
-        int start_y = m_scanline_start + HUC6270_LINES_TOP_BLANKING;
-        int end_y = m_scanline_end + HUC6270_LINES_TOP_BLANKING + 1;
+        int start_x = k_huc6260_line_start[m_overscan][m_speed];
+        int end_x = k_huc6260_line_end[m_overscan][m_speed];
 
-        if ((m_pixel_x >= start_x) && (m_pixel_x < end_x) && (m_vpos >= start_y) && (m_vpos < end_y))
+        if (m_active_line && (m_pixel_x >= start_x) && (m_pixel_x < end_x))
         {
             if ((pixel & 0x10F) == 0)
                 pixel &= 0x10000;
 
-            WritePixel(pixel);
+            m_vce_buffer[m_pixel_index] = pixel;
+            m_pixel_index++;
         }
 
         m_pixel_x = (m_pixel_x + 1) % k_huc6260_full_line_width[m_speed];
@@ -63,6 +62,7 @@ INLINE bool HuC6260::Clock()
         // End of vertical sync
         else if (m_vpos == (k_huc6260_total_lines[m_blur] - 1))
         {
+            RenderFrame();
             m_vsync = true;
             m_pixel_index = 0;
             frame_ready = true;
@@ -77,6 +77,10 @@ INLINE bool HuC6260::Clock()
         if(m_vpos >= 14 && m_vpos < 256)
             m_line_speed[m_vpos - 14] = m_speed;
         m_vpos = (m_vpos + 1) % k_huc6260_total_lines[m_blur];
+
+        int start_y = m_scanline_start + HUC6270_LINES_TOP_BLANKING;
+        int end_y = m_scanline_end + HUC6270_LINES_TOP_BLANKING + 1;
+        m_active_line = (m_vpos >= start_y) && (m_vpos < end_y);
     }
     // Start of horizontal sync
     else if (m_hpos == HUC6260_HSYNC_START_HPOS)

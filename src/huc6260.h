@@ -85,7 +85,7 @@ private:
     void InitPalettes();
     void DeletePalettes();
     NO_INLINE void AdjustForMultipleDividers();
-    NO_INLINE void WritePixel(u32 pixel);
+    void RenderFrame();
 
 private:
     HuC6270* m_huc6270;
@@ -97,10 +97,12 @@ private:
     s32 m_clock_divider;
     u16* m_color_table;
     u8* m_frame_buffer;
-    u8* m_temp_buffer;
+    u8* m_scale_buffer;
+    u32* m_vce_buffer;
     s32* m_line_speed;
     bool m_multiple_speeds;
     bool m_scaled_width;
+    bool m_active_line;
     s32 m_hpos;
     s32 m_vpos;
     s32 m_pixel_index;
@@ -113,11 +115,8 @@ private:
     int m_scanline_start;
     int m_scanline_end;
     GG_Pixel_Format m_pixel_format;
-    u8*** m_rgb888_palette;
+    u8*** m_rgba888_palette;
     u8*** m_rgb565_palette;
-    u8*** m_bgr565_palette;
-    u8*** m_rgb555_palette;
-    u8*** m_bgr555_palette;
     int m_reset_value;
     int m_palette;
 };
@@ -129,11 +128,14 @@ static const HuC6260::HuC6260_Speed k_huc6260_speed[4] = {
 static const int k_huc6260_total_lines[2] = { HUC6260_LINES - 1, HUC6260_LINES };
 static const int k_huc6260_full_line_width[4] = { 342, 455, 683, 683 };
 static const int k_huc6260_line_width[2][4] = {
-    { 256,      341,      512,      512      },
+    { 256, 341, 512, 512 },
     { 256 + 24, 341 + 32, 512 + 48, 512 + 48 } };
-static const int k_huc6260_line_offset[2][4] = {
-    { 24 + 24,      24 + 48,      24 + 96,      24 + 96      },
+static const int k_huc6260_line_start[2][4] = {
+    { 24 + 24, 24 + 48, 24 + 96, 24 + 96 },
     { 24 + 24 - 12, 24 + 48 - 16, 24 + 96 - 24, 24 + 96 - 24 } };
+static const int k_huc6260_line_end[2][4] = {
+    { 256 + 24 + 24, 341 + 24 + 48, 512 + 24 + 96, 512 + 24 + 96 },
+    { 256 + 24 + 24 + 24 - 12, 341 + 32 + 24 + 48 - 16, 512 + 48 + 24 + 96 - 24, 512 + 48 + 24 + 96 - 24 } };
 static const int k_huc6260_scaling_width[2] = { 1024, 1120 };
 
 static uint8_t k_rgb888_palette_composite[512][3] = {

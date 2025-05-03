@@ -34,13 +34,11 @@ HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
     m_state.VSYNC = &m_vsync;
     InitPointer(m_color_table);
     InitPointer(m_frame_buffer);
-    InitPointer(m_temp_buffer);
+    InitPointer(m_scale_buffer);
+    InitPointer(m_vce_buffer);
     InitPointer(m_line_speed);
-    InitPointer(m_rgb888_palette);
+    InitPointer(m_rgba888_palette);
     InitPointer(m_rgb565_palette);
-    InitPointer(m_bgr565_palette);
-    InitPointer(m_rgb555_palette);
-    InitPointer(m_bgr555_palette);
 
     m_overscan = 0;
     m_scanline_start = 0;
@@ -52,7 +50,8 @@ HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
 HuC6260::~HuC6260()
 {
     SafeDeleteArray(m_color_table);
-    SafeDeleteArray(m_temp_buffer);
+    SafeDeleteArray(m_scale_buffer);
+    SafeDeleteArray(m_vce_buffer);
     SafeDeleteArray(m_line_speed);
     DeletePalettes();
 }
@@ -61,7 +60,8 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
 {
     m_pixel_format = pixel_format;
     m_color_table = new u16[512];
-    m_temp_buffer = new u8[2048 * 512 * 4];
+    m_scale_buffer = new u8[2048 * 512 * 4];
+    m_vce_buffer = new u32[1024 * 512];
     m_line_speed = new s32[242];
 
     InitPalettes();
@@ -70,12 +70,12 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
 
 void HuC6260::InitPalettes()
 {
-    m_rgb888_palette = new u8**[2];
+    m_rgba888_palette = new u8**[2];
     for (int i = 0; i < 2; i++)
     {
-        m_rgb888_palette[i] = new u8*[512];
+        m_rgba888_palette[i] = new u8*[512];
         for (int j = 0; j < 512; j++)
-            m_rgb888_palette[i][j] = new u8[3];
+            m_rgba888_palette[i][j] = new u8[4];
     }
 
     m_rgb565_palette = new u8**[2];
@@ -86,38 +86,15 @@ void HuC6260::InitPalettes()
             m_rgb565_palette[i][j] = new u8[2];
     }
 
-    m_bgr565_palette = new u8**[2];
-    for (int i = 0; i < 2; i++)
-    {
-        m_bgr565_palette[i] = new u8*[512];
-        for (int j = 0; j < 512; j++)
-            m_bgr565_palette[i][j] = new u8[2];
-    }
-
-    m_rgb555_palette = new u8**[2];
-    for (int i = 0; i < 2; i++)
-    {
-        m_rgb555_palette[i] = new u8*[512];
-        for (int j = 0; j < 512; j++)
-            m_rgb555_palette[i][j] = new u8[2];
-    }
-
-    m_bgr555_palette = new u8**[2];
-    for (int i = 0; i < 2; i++)
-    {
-        m_bgr555_palette[i] = new u8*[512];
-        for (int j = 0; j < 512; j++)
-            m_bgr555_palette[i][j] = new u8[2];
-    }
-
     for (int i = 0; i < 512; i++)
     {
         u8 green = ((i >> 6) & 0x07) * 255 / 7;
         u8 red = ((i >> 3) & 0x07) * 255 / 7;
         u8 blue = (i & 0x07) * 255 / 7;
-        m_rgb888_palette[0][i][0] = red;
-        m_rgb888_palette[0][i][1] = green;
-        m_rgb888_palette[0][i][2] = blue;
+        m_rgba888_palette[0][i][0] = red;
+        m_rgba888_palette[0][i][1] = green;
+        m_rgba888_palette[0][i][2] = blue;
+        m_rgba888_palette[0][i][3] = 255;
 
         green = ((i >> 6) & 0x07) * 63 / 7;
         red = ((i >> 3) & 0x07) * 31 / 7;
@@ -125,60 +102,35 @@ void HuC6260::InitPalettes()
         u16 rgb565 = (red << 11) | (green << 5) | blue;
         m_rgb565_palette[0][i][0] = rgb565 & 0xFF;
         m_rgb565_palette[0][i][1] = (rgb565 >> 8) & 0xFF;
-        u16 bgr565 = (blue << 11) | (green << 5) | red;
-        m_bgr565_palette[0][i][0] = bgr565 & 0xFF;
-        m_bgr565_palette[0][i][1] = (bgr565 >> 8) & 0xFF;
 
-        green = ((i >> 6) & 0x07) * 31 / 7;
-        red = ((i >> 3) & 0x07) * 31 / 7;
-        blue = (i & 0x07) * 31 / 7;
-        u16 rgb555 = (red << 10) | (green << 5) | blue;
-        m_rgb555_palette[0][i][0] = rgb555 & 0xFF;
-        m_rgb555_palette[0][i][1] = (rgb555 >> 8) & 0xFF;
-        u16 bgr555 = (blue << 10) | (green << 5) | red;
-        m_bgr555_palette[0][i][0] = bgr555 & 0xFF;
-        m_bgr555_palette[0][i][1] = (bgr555 >> 8) & 0xFF;
+        m_rgba888_palette[1][i][0] = k_rgb888_palette_composite[i][0];
+        m_rgba888_palette[1][i][1] = k_rgb888_palette_composite[i][1];
+        m_rgba888_palette[1][i][2] = k_rgb888_palette_composite[i][2];
+        m_rgba888_palette[1][i][3] = 255;
 
-        m_rgb888_palette[1][i][0] = k_rgb888_palette_composite[i][0];
-        m_rgb888_palette[1][i][1] = k_rgb888_palette_composite[i][1];
-        m_rgb888_palette[1][i][2] = k_rgb888_palette_composite[i][2];
-
-        red = k_rgb888_palette_composite[i][0] * 31 / 255;
         green = k_rgb888_palette_composite[i][1] * 63 / 255;
+        red = k_rgb888_palette_composite[i][0] * 31 / 255;
         blue = k_rgb888_palette_composite[i][2] * 31 / 255;
         rgb565 = (red << 11) | (green << 5) | blue;
         m_rgb565_palette[1][i][0] = rgb565 & 0xFF;
         m_rgb565_palette[1][i][1] = (rgb565 >> 8) & 0xFF;
-        bgr565 = (blue << 11) | (green << 5) | red;
-        m_bgr565_palette[1][i][0] = bgr565 & 0xFF;
-        m_bgr565_palette[1][i][1] = (bgr565 >> 8) & 0xFF;
-
-        red = k_rgb888_palette_composite[i][0] * 31 / 255;
-        green = k_rgb888_palette_composite[i][1] * 31 / 255;
-        blue = k_rgb888_palette_composite[i][2] * 31 / 255;
-        rgb555 = (red << 10) | (green << 5) | blue;
-        m_rgb555_palette[1][i][0] = rgb555 & 0xFF;
-        m_rgb555_palette[1][i][1] = (rgb555 >> 8) & 0xFF;
-        bgr555 = (blue << 10) | (green << 5) | red;
-        m_bgr555_palette[1][i][0] = bgr555 & 0xFF;
-        m_bgr555_palette[1][i][1] = (bgr555 >> 8) & 0xFF;
     }
 }
 
 void HuC6260::DeletePalettes()
 {
-    if (IsValidPointer(m_rgb888_palette))
+    if (IsValidPointer(m_rgba888_palette))
     {
         for (int i = 0; i < 2; i++)
         {
-            if (IsValidPointer(m_rgb888_palette[i]))
+            if (IsValidPointer(m_rgba888_palette[i]))
             {
                 for (int j = 0; j < 512; j++)
-                    SafeDeleteArray(m_rgb888_palette[i][j]);
-                SafeDeleteArray(m_rgb888_palette[i]);
+                    SafeDeleteArray(m_rgba888_palette[i][j]);
+                SafeDeleteArray(m_rgba888_palette[i]);
             }
         }
-        SafeDeleteArray(m_rgb888_palette);
+        SafeDeleteArray(m_rgba888_palette);
     }
 
     if (IsValidPointer(m_rgb565_palette))
@@ -193,48 +145,6 @@ void HuC6260::DeletePalettes()
             }
         }
         SafeDeleteArray(m_rgb565_palette);
-    }
-
-    if (IsValidPointer(m_bgr565_palette))
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            if (IsValidPointer(m_bgr565_palette[i]))
-            {
-                for (int j = 0; j < 512; j++)
-                    SafeDeleteArray(m_bgr565_palette[i][j]);
-                SafeDeleteArray(m_bgr565_palette[i]);
-            }
-        }
-        SafeDeleteArray(m_bgr565_palette);
-    }
-
-    if (IsValidPointer(m_rgb555_palette))
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            if (IsValidPointer(m_rgb555_palette[i]))
-            {
-                for (int j = 0; j < 512; j++)
-                    SafeDeleteArray(m_rgb555_palette[i][j]);
-                SafeDeleteArray(m_rgb555_palette[i]);
-            }
-        }
-        SafeDeleteArray(m_rgb555_palette);
-    }
-
-    if (IsValidPointer(m_bgr555_palette))
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            if (IsValidPointer(m_bgr555_palette[i]))
-            {
-                for (int j = 0; j < 512; j++)
-                    SafeDeleteArray(m_bgr555_palette[i][j]);
-                SafeDeleteArray(m_bgr555_palette[i]);
-            }
-        }
-        SafeDeleteArray(m_bgr555_palette);
     }
 }
 
@@ -254,6 +164,7 @@ void HuC6260::Reset()
     m_vsync = true;
     m_blur = 0;
     m_black_and_white = 0;
+    m_active_line = false;
 
     for (int i = 0; i < 512; i++)
     {
@@ -357,10 +268,32 @@ void HuC6260::WriteRegister(u16 address, u8 value)
     }
 }
 
+void HuC6260::RenderFrame()
+{
+    u8*** palette = (m_pixel_format == GG_PIXEL_RGB565) ? m_rgb565_palette : m_rgba888_palette;
+    int bytes_per_pixel = (m_pixel_format == GG_PIXEL_RGB565) ? 2 : 4;
+    int frame_buffer_index = 0;
+
+    for (int i = 0; i < m_pixel_index; i++)
+    {
+        u32 pixel = m_vce_buffer[i];
+        u16 color = 0;
+
+        if ((pixel & 0x10000) == 0)
+        {
+            assert(pixel < 512);
+            color = m_color_table[pixel & 0x1FF] & 0x1FF;
+        }
+
+        memcpy(m_frame_buffer + frame_buffer_index, palette[m_palette][color], bytes_per_pixel);
+        frame_buffer_index += bytes_per_pixel;
+    }
+}
+
 void HuC6260::AdjustForMultipleDividers()
 {
     int bytes_per_pixel = 2;
-    if (m_pixel_format == GG_PIXEL_RGBA8888 || m_pixel_format == GG_PIXEL_BGRA8888)
+    if (m_pixel_format == GG_PIXEL_RGBA8888)
         bytes_per_pixel = 4;
 
     int dominant_width = k_huc6260_scaling_width[m_overscan];
@@ -372,7 +305,7 @@ void HuC6260::AdjustForMultipleDividers()
         s32 original_line_speed = m_line_speed[line + m_scanline_start];
         int original_line_width = k_huc6260_line_width[m_overscan][original_line_speed];
 
-        u8* dest_line = m_temp_buffer + ((line * dominant_width) * bytes_per_pixel);
+        u8* dest_line = m_scale_buffer + ((line * dominant_width) * bytes_per_pixel);
 
         switch (original_line_speed)
         {
@@ -417,86 +350,7 @@ void HuC6260::AdjustForMultipleDividers()
         src_ptr += (original_line_width * bytes_per_pixel);
     }
 
-    memcpy(m_frame_buffer, m_temp_buffer, dominant_width * 242 * bytes_per_pixel);
-}
-
-void HuC6260::WritePixel(u32 pixel)
-{
-    u16 color;
-    if ((pixel & 0x10000) == 0)
-    {
-        assert(pixel < 512);
-
-        if (pixel >= 512)
-        {
-            Debug("HuC6260: Invalid pixel value %04X\n", pixel);
-            pixel = 0;
-        }
-
-        color = m_color_table[pixel];
-
-        assert(color < 512);
-
-        if (color >= 512)
-        {
-            Debug("HuC6260: Invalid color value %04X\n", color);
-            color = 0;
-        }
-    }
-    else
-        color = 0;
-
-    switch (m_pixel_format)
-    {
-        case GG_PIXEL_RGB565:
-            {
-                int byte = m_pixel_index * 2;
-                m_frame_buffer[byte + 0] = m_rgb565_palette[m_palette][color][0];
-                m_frame_buffer[byte + 1] = m_rgb565_palette[m_palette][color][1];
-            }
-            break;
-        case GG_PIXEL_RGBA8888:
-            {
-                int byte = m_pixel_index * 4;
-                m_frame_buffer[byte + 0] = m_rgb888_palette[m_palette][color][0];
-                m_frame_buffer[byte + 1] = m_rgb888_palette[m_palette][color][1];
-                m_frame_buffer[byte + 2] = m_rgb888_palette[m_palette][color][2];
-                m_frame_buffer[byte + 3] = 255;
-            }
-            break;
-        case GG_PIXEL_RGB555:
-            {
-                int byte = m_pixel_index * 2;
-                m_frame_buffer[byte + 0] = m_rgb555_palette[m_palette][color][0];
-                m_frame_buffer[byte + 1] = m_rgb555_palette[m_palette][color][1];
-            }
-            break;
-        case GG_PIXEL_BGR565:
-            {
-                int byte = m_pixel_index * 2;
-                m_frame_buffer[byte + 0] = m_bgr565_palette[m_palette][color][0];
-                m_frame_buffer[byte + 1] = m_bgr565_palette[m_palette][color][1];
-            }
-            break;
-        case GG_PIXEL_BGR555:
-            {
-                int byte = m_pixel_index * 2;
-                m_frame_buffer[byte + 0] = m_bgr555_palette[m_palette][color][0];
-                m_frame_buffer[byte + 1] = m_bgr555_palette[m_palette][color][1];
-            }
-            break;
-        case GG_PIXEL_BGRA8888:
-            {
-                int byte = m_pixel_index * 4;
-                m_frame_buffer[byte + 0] = m_rgb888_palette[m_palette][color][2];
-                m_frame_buffer[byte + 1] = m_rgb888_palette[m_palette][color][1];
-                m_frame_buffer[byte + 2] = m_rgb888_palette[m_palette][color][0];
-                m_frame_buffer[byte + 3] = 255;
-            }
-            break;
-    }
-
-    m_pixel_index++;
+    memcpy(m_frame_buffer, m_scale_buffer, dominant_width * 242 * bytes_per_pixel);
 }
 
 void HuC6260::SaveState(std::ostream& stream)
@@ -517,6 +371,9 @@ void HuC6260::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_black_and_white), sizeof(m_black_and_white));
     stream.write(reinterpret_cast<const char*> (m_line_speed), sizeof(s32) * HUC6260_LINES);
     stream.write(reinterpret_cast<const char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
+    stream.write(reinterpret_cast<const char*> (&m_active_line), sizeof(m_active_line));
+    stream.write(reinterpret_cast<const char*> (m_scale_buffer), sizeof(u8) * 2048 * 512 * 4);
+    stream.write(reinterpret_cast<const char*> (m_vce_buffer), sizeof(u32) * 1024 * 512);
 }
 
 void HuC6260::LoadState(std::istream& stream)
@@ -537,4 +394,7 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_black_and_white), sizeof(m_black_and_white));
     stream.read(reinterpret_cast<char*> (m_line_speed), sizeof(s32) * HUC6260_LINES);
     stream.read(reinterpret_cast<char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
+    stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
+    stream.read(reinterpret_cast<char*> (m_scale_buffer), sizeof(u8) * 2048 * 512 * 4);
+    stream.read(reinterpret_cast<char*> (m_vce_buffer), sizeof(u32) * 1024 * 512);
 }

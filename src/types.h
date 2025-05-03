@@ -48,11 +48,7 @@ struct GG_Color
 enum GG_Pixel_Format
 {
     GG_PIXEL_RGB565,
-    GG_PIXEL_RGB555,
     GG_PIXEL_RGBA8888,
-    GG_PIXEL_BGR565,
-    GG_PIXEL_BGR555,
-    GG_PIXEL_BGRA8888
 };
 
 enum GG_Keys
@@ -91,6 +87,7 @@ struct GG_SaveState_Header
     u32 screenshot_size;
     u16 screenshot_width;
     u16 screenshot_height;
+    u8 screshot_width_scale;
 };
 
 struct GG_SaveState_Screenshot
@@ -99,6 +96,7 @@ struct GG_SaveState_Screenshot
     u32 height;
     u32 size;
     u8* data;
+    u8 width_scale;
 };
 
 struct GG_Disassembler_Record
