@@ -420,30 +420,27 @@ bool GeargrafxCore::SaveState(u8* buffer, size_t& size, bool screenshot)
         return false;
     }
 
-    if (!IsValidPointer(buffer))
+    stringstream stream;
+    size_t expected_size = 0;
+    if (!SaveState(stream, expected_size, screenshot))
     {
-        Log("ERROR: Invalid save state buffer");
+        Log("ERROR: Failed to save state to buffer");
         return false;
     }
 
-    stringstream stream;
-    size_t expected_size = 0;
-
-    if (SaveState(stream, expected_size, screenshot))
+    if (IsValidPointer(buffer) && (size >= expected_size))
     {
-        if (size >= expected_size)
-        {
-            memcpy(buffer, stream.str().c_str(), expected_size);
-            Log("Save state saved to buffer [%d bytes]", expected_size);
-        }
-        else
-        {
-            Debug("Calculating state size: %d bytes", expected_size);
-        }
         size = expected_size;
+        memcpy(buffer, stream.str().c_str(), size);
+        return true;
     }
-
-    return true;
+    else if (!IsValidPointer(buffer) && (size == 0))
+    {
+        size = expected_size;
+        return true;
+    }
+    else
+        return false;
 }
 
 bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screenshot)
@@ -564,9 +561,7 @@ bool GeargrafxCore::LoadState(const u8* buffer, size_t size)
     stringstream stream;
     stream.write(reinterpret_cast<const char*> (buffer), size);
 
-    bool ret = LoadState(stream);
-    Log("Save state loaded from buffer [%d bytes]", size);
-    return ret;
+    return LoadState(stream);
 }
 
 bool GeargrafxCore::LoadState(std::istream& stream)

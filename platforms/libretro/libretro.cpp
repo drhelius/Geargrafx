@@ -278,7 +278,7 @@ void retro_run(void)
         info.geometry.base_height  = runtime_info.screen_height;
         info.geometry.max_width    = runtime_info.screen_width;
         info.geometry.max_height   = runtime_info.screen_height;
-        info.geometry.aspect_ratio = aspect_ratio == 0.0f ? (float)runtime_info.screen_width / (float)runtime_info.screen_height / (float)runtime_info.width_scale : aspect_ratio;
+        info.geometry.aspect_ratio = (aspect_ratio == 0.0f ? ((float)runtime_info.screen_width / (float)runtime_info.width_scale) / (float)runtime_info.screen_height : aspect_ratio);
 
         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
     }
