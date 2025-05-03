@@ -109,11 +109,11 @@ void application_destroy(void)
 {
     save_window_size();
     config_write();
+    emu_destroy();
     config_destroy();
     renderer_destroy();
     ImGui_ImplSDL2_Shutdown();
     gui_destroy();
-    emu_destroy();
     sdl_destroy();
 }
 
