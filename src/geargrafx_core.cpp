@@ -492,9 +492,10 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     {
         header.screenshot_width = m_huc6260->GetCurrentWidth();
         header.screenshot_height = m_huc6260->GetCurrentHeight();
+        header.screshot_width_scale = m_huc6260->GetWidthScale();
 
         int bytes_per_pixel = 2;
-        if (m_huc6260->GetPixelFormat() == GG_PIXEL_RGBA8888 || m_huc6260->GetPixelFormat() == GG_PIXEL_BGRA8888)
+        if (m_huc6260->GetPixelFormat() == GG_PIXEL_RGBA8888)
             bytes_per_pixel = 4;
 
         u8* frame_buffer = m_huc6260->GetBuffer();
@@ -605,6 +606,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     Debug("Load state header screenshot size: %d", header.screenshot_size);
     Debug("Load state header screenshot width: %d", header.screenshot_width);
     Debug("Load state header screenshot height: %d", header.screenshot_height);
+    Debug("Load state header screenshot width scale: %d", header.screshot_width_scale);
 
     if ((header.magic != GG_SAVESTATE_MAGIC))
     {
@@ -721,10 +723,12 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
     screenshot->size = header.screenshot_size;
     screenshot->width = header.screenshot_width;
     screenshot->height = header.screenshot_height;
+    screenshot->width_scale = header.screshot_width_scale;
 
     Debug("Screenshot size: %d bytes", screenshot->size);
     Debug("Screenshot width: %d", screenshot->width);
     Debug("Screenshot height: %d", screenshot->height);
+    Debug("Screenshot width scale: %d", screenshot->width_scale);
 
     stream.seekg(savestate_size - sizeof(header) - screenshot->size, ios::beg);
     stream.read(reinterpret_cast<char*> (screenshot->data), screenshot->size);
