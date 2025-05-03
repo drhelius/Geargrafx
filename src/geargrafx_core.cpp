@@ -184,7 +184,7 @@ bool GeargrafxCore::LoadROMFromBuffer(const u8* buffer, int size)
 
 bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
 {
-    runtime_info.screen_width = m_huc6260->GetCurrentLineWidth();
+    runtime_info.screen_width = m_huc6260->GetCurrentWidth();
     runtime_info.screen_height = m_huc6260->GetCurrentHeight();
 
     return m_cartridge->IsReady();
@@ -480,7 +480,7 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
 
     if (screenshot)
     {
-        header.screenshot_width = m_huc6260->GetCurrentLineWidth();
+        header.screenshot_width = m_huc6260->GetCurrentWidth();
         header.screenshot_height = m_huc6260->GetCurrentHeight();
 
         int bytes_per_pixel = 2;

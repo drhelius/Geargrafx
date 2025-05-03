@@ -32,17 +32,11 @@ INLINE bool HuC6260::Clock()
     {
         u32 pixel = m_huc6270->Clock();
 
-#if defined(HUC6260_DEBUG)
-        int start_x = 0;
-        int end_x = k_huc6260_full_line_width[m_speed];
-        int start_y = 0;
-        int end_y = HUC6270_LINES;
-#else
         int start_x = k_huc6260_line_offset[m_overscan][m_speed];
         int end_x = start_x + k_huc6260_line_width[m_overscan][m_speed];
         int start_y = m_scanline_start + HUC6270_LINES_TOP_BLANKING;
         int end_y = m_scanline_end + HUC6270_LINES_TOP_BLANKING + 1;
-#endif
+
         if ((m_pixel_x >= start_x) && (m_pixel_x < end_x) && (m_vpos >= start_y) && (m_vpos < end_y))
         {
             if ((pixel & 0x10F) == 0)
@@ -72,8 +66,15 @@ INLINE bool HuC6260::Clock()
             m_vsync = true;
             m_pixel_index = 0;
             frame_ready = true;
+            if (m_multiple_dividers)
+            {
+                m_multiple_dividers = false;
+                AdjustForMultipleDividers();
+            }
         }
 
+        if(m_vpos >= 14 && m_vpos < 256)
+            m_line_divider[m_vpos - 14] = m_clock_divider;
         m_vpos = (m_vpos + 1) % k_huc6260_total_lines[m_blur];
     }
     // Start of horizontal sync
@@ -125,22 +126,15 @@ INLINE u8* HuC6260::GetBuffer()
     return m_frame_buffer;
 }
 
-INLINE int HuC6260::GetCurrentLineWidth()
+INLINE int HuC6260::GetCurrentWidth()
 {
-#if defined(HUC6260_DEBUG)
-    return k_huc6260_full_line_width[m_speed];
-#else
-    return k_huc6260_line_width[m_overscan][m_speed];
-#endif
+    int speed = DividerToSpeed(DominantDividerInFrame());
+    return k_huc6260_line_width[m_overscan][speed];
 }
 
 INLINE int HuC6260::GetCurrentHeight()
 {
-#if defined(HUC6260_DEBUG)
-    return HUC6270_LINES;
-#else
     return CLAMP(HUC6270_LINES_ACTIVE - m_scanline_start - ((HUC6270_LINES_ACTIVE - 1) - m_scanline_end), 1, HUC6270_LINES_ACTIVE);
-#endif
 }
 
 INLINE void HuC6260::SetScanlineStart(int scanline_start)

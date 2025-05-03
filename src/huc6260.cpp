@@ -34,6 +34,8 @@ HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
     m_state.VSYNC = &m_vsync;
     InitPointer(m_color_table);
     InitPointer(m_frame_buffer);
+    InitPointer(m_temp_buffer);
+    InitPointer(m_line_divider);
     InitPointer(m_rgb888_palette);
     InitPointer(m_rgb565_palette);
     InitPointer(m_bgr565_palette);
@@ -50,6 +52,8 @@ HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
 HuC6260::~HuC6260()
 {
     SafeDeleteArray(m_color_table);
+    SafeDeleteArray(m_temp_buffer);
+    SafeDeleteArray(m_line_divider);
     DeletePalettes();
 }
 
@@ -57,6 +61,8 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
 {
     m_pixel_format = pixel_format;
     m_color_table = new u16[512];
+    m_temp_buffer = new u8[2048 * 512 * 4];
+    m_line_divider = new s32[242];
 
     InitPalettes();
     Reset();
@@ -238,6 +244,7 @@ void HuC6260::Reset()
     m_color_table_address = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
     m_clock_divider = 4;
+    m_multiple_dividers = false;
     m_hpos = 0;
     m_vpos = 0;
     m_pixel_index = 0;
@@ -253,6 +260,33 @@ void HuC6260::Reset()
             m_color_table[i] = rand() & 0x1FF;
         else
             m_color_table[i] = m_reset_value & 0x1FF;
+    }
+}
+
+s32 HuC6260::DominantDividerInFrame()
+{
+    s32 min_div = m_line_divider[0];
+    for (int i = 1; i < 242; i++)
+    {
+        if (m_line_divider[i] < min_div)
+            min_div = m_line_divider[i];
+    }
+
+    return min_div;
+}
+
+s32 HuC6260::DividerToSpeed(s32 divider)
+{
+    switch (divider)
+    {
+    case 4:
+        return HuC6260_SPEED_5_36_MHZ;
+    case 3:
+        return HuC6260_SPEED_7_16_MHZ;
+    case 2:
+        return HuC6260_SPEED_10_8_MHZ;
+    default:
+        return HuC6260_SPEED_5_36_MHZ;
     }
 }
 
@@ -292,12 +326,14 @@ void HuC6260::WriteRegister(u16 address, u8 value)
     switch (address & 0x07)
     {
         case 0:
+        {
             // Control register
             m_control_register = value;
             m_speed = m_control_register & 0x03;
             m_blur = (m_control_register >> 2) & 0x01;
             m_black_and_white = (m_control_register >> 7) & 0x01;
 
+            s32 old_clock_divider = m_clock_divider;
             switch (m_speed)
             {
                 case 0:
@@ -313,7 +349,11 @@ void HuC6260::WriteRegister(u16 address, u8 value)
                     m_clock_divider = 2;
                     break;
             }
+
+            if (old_clock_divider != m_clock_divider)
+                m_multiple_dividers = true;
             break;
+        }
         case 2:
             // Color table address LSB
             m_color_table_address = (m_color_table_address & 0x0100) | value;
@@ -338,6 +378,86 @@ void HuC6260::WriteRegister(u16 address, u8 value)
             // Not used
             Debug("HuC6260 Write unused register");
             break;
+    }
+}
+
+void HuC6260::AdjustForMultipleDividers()
+{
+    int bytes_per_pixel = 2;
+    if (m_pixel_format == GG_PIXEL_RGBA8888 || m_pixel_format == GG_PIXEL_BGRA8888)
+        bytes_per_pixel = 4;
+
+    s32 dominant_divider = DominantDividerInFrame();
+    s32 dominant_speed = DividerToSpeed(dominant_divider);
+    int dominant_width = k_huc6260_scaling_width[m_overscan];
+
+    u8* src_ptr = m_frame_buffer;
+
+    for (int line = 0; line < 242; line++)
+    {
+        s32 original_line_divider = m_line_divider[line + m_scanline_start];
+        int original_line_width = k_huc6260_line_width[m_overscan][DividerToSpeed(original_line_divider)];
+
+        u8* dest_line = m_temp_buffer + ((line * dominant_width) * bytes_per_pixel);
+
+        switch (original_line_divider)
+        {
+        case 2:
+            for (int pixel = 0; pixel < original_line_width; pixel++)
+            {
+                for (int s = 0; s < 2; s++)
+                {
+                    memcpy(dest_line + (((pixel * 2) + s) * bytes_per_pixel),
+                           src_ptr + (pixel * bytes_per_pixel),
+                           bytes_per_pixel);
+                }
+            }
+            break;
+        case 3:
+            for (int pixel = 0; pixel < original_line_width; pixel++)
+            {
+                for (int s = 0; s < 3; s++)
+                {
+                    memcpy(dest_line + (((pixel * 3) + s) * bytes_per_pixel),
+                           src_ptr + (pixel * bytes_per_pixel),
+                           bytes_per_pixel);
+                }
+            }
+            break;
+        case 4:
+            for (int pixel = 0; pixel < original_line_width; pixel++)
+            {
+                for (int s = 0; s < 4; s++)
+                {
+                    memcpy(dest_line + (((pixel * 4) + s) * bytes_per_pixel),
+                           src_ptr + (pixel * bytes_per_pixel),
+                           bytes_per_pixel);
+                }
+            }
+            break;
+        default:
+            break;
+        }
+
+        src_ptr += (original_line_width * bytes_per_pixel);
+    }
+
+    src_ptr = m_temp_buffer;
+    u8* dest_ptr = m_frame_buffer;
+
+    int downscaled_width = k_huc6260_line_width[m_overscan][dominant_speed];
+
+    for (int line = 0; line < 242; line++)
+    {
+        for (int pixel = 0; pixel < downscaled_width; pixel++)
+        {
+            memcpy(dest_ptr + (pixel * bytes_per_pixel),
+                   src_ptr + ((pixel * dominant_divider) * bytes_per_pixel),
+                   bytes_per_pixel);
+        }
+
+        src_ptr += (dominant_width * bytes_per_pixel);
+        dest_ptr += (downscaled_width * bytes_per_pixel);
     }
 }
 
@@ -436,6 +556,8 @@ void HuC6260::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_vsync), sizeof(m_vsync));
     stream.write(reinterpret_cast<const char*> (&m_blur), sizeof(m_blur));
     stream.write(reinterpret_cast<const char*> (&m_black_and_white), sizeof(m_black_and_white));
+    stream.write(reinterpret_cast<const char*> (m_line_divider), sizeof(s32) * HUC6260_LINES);
+    stream.write(reinterpret_cast<const char*> (&m_multiple_dividers), sizeof(m_multiple_dividers));
 }
 
 void HuC6260::LoadState(std::istream& stream)
@@ -454,4 +576,6 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_vsync), sizeof(m_vsync));
     stream.read(reinterpret_cast<char*> (&m_blur), sizeof(m_blur));
     stream.read(reinterpret_cast<char*> (&m_black_and_white), sizeof(m_black_and_white));
+    stream.read(reinterpret_cast<char*> (m_line_divider), sizeof(s32) * HUC6260_LINES);
+    stream.read(reinterpret_cast<char*> (&m_multiple_dividers), sizeof(m_multiple_dividers));
 }

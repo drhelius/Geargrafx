@@ -30,7 +30,6 @@
 #define HUC6260_HSYNC_START_HPOS (HUC6260_LINE_LENGTH - HUC6260_HSYNC_LENGTH)
 #define HUC6260_HSYNC_END_HPOS 0
 #define HUC6260_VSYNC_HPOS (HUC6260_HSYNC_START_HPOS + 30)
-//#define HUC6260_DEBUG
 
 class HuC6270;
 class HuC6280;
@@ -70,7 +69,7 @@ public:
     u16* GetColorTable();
     void SetBuffer(u8* frame_buffer);
     u8* GetBuffer();
-    int GetCurrentLineWidth();
+    int GetCurrentWidth();
     int GetCurrentHeight();
     void SetScanlineStart(int scanline_start);
     void SetScanlineEnd(int scanline_end);
@@ -84,6 +83,9 @@ public:
 private:
     void InitPalettes();
     void DeletePalettes();
+    s32 DominantDividerInFrame();
+    s32 DividerToSpeed(s32 divider);
+    NO_INLINE void AdjustForMultipleDividers();
     NO_INLINE void WritePixel(u32 pixel);
 
 private:
@@ -96,6 +98,9 @@ private:
     s32 m_clock_divider;
     u16* m_color_table;
     u8* m_frame_buffer;
+    u8* m_temp_buffer;
+    s32* m_line_divider;
+    bool m_multiple_dividers;
     s32 m_hpos;
     s32 m_vpos;
     s32 m_pixel_index;
@@ -129,6 +134,7 @@ static const int k_huc6260_line_width[2][4] = {
 static const int k_huc6260_line_offset[2][4] = {
     { 24 + 24,      24 + 48,      24 + 96,      24 + 96      },
     { 24 + 24 - 12, 24 + 48 - 16, 24 + 96 - 24, 24 + 96 - 24 } };
+static const int k_huc6260_scaling_width[2] = { 1024, 1120 };
 
 static uint8_t k_rgb888_palette_composite[512][3] = {
     {   0,   0,   0}, {   0,   0,  27}, {   1,   2,  61}, {   0,   0,  88},
