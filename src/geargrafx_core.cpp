@@ -262,13 +262,25 @@ bool GeargrafxCore::IsPaused()
 
 void GeargrafxCore::ResetROM(bool preserve_ram)
 {
-    UNUSED(preserve_ram);
+    if (!m_cartridge->IsReady())
+        return;
 
-    if (m_cartridge->IsReady())
+    using namespace std;
+    stringstream stream;
+
+    if (preserve_ram)
+        m_memory->SaveRam(stream);
+
+    Log("Geargrafx RESET");
+    Reset();
+    m_huc6280->DisassembleNextOPCode();
+
+    if (preserve_ram)
     {
-        Log("Geargrafx RESET");
-        Reset();
-        m_huc6280->DisassembleNextOPCode();
+        stream.seekg(0, stream.end);
+        s32 size = (s32)stream.tellg();
+        stream.seekg(0, stream.beg);
+        m_memory->LoadRam(stream, size);
     }
 }
 
