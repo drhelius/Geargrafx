@@ -71,6 +71,7 @@ public:
     u8* GetBuffer();
     int GetCurrentWidth();
     int GetCurrentHeight();
+    int GetWidthScale();
     void SetScanlineStart(int scanline_start);
     void SetScanlineEnd(int scanline_end);
     void SetOverscan(bool overscan);
@@ -83,8 +84,6 @@ public:
 private:
     void InitPalettes();
     void DeletePalettes();
-    s32 DominantDividerInFrame();
-    s32 DividerToSpeed(s32 divider);
     NO_INLINE void AdjustForMultipleDividers();
     NO_INLINE void WritePixel(u32 pixel);
 
@@ -99,8 +98,9 @@ private:
     u16* m_color_table;
     u8* m_frame_buffer;
     u8* m_temp_buffer;
-    s32* m_line_divider;
-    bool m_multiple_dividers;
+    s32* m_line_speed;
+    bool m_multiple_speeds;
+    bool m_scaled_width;
     s32 m_hpos;
     s32 m_vpos;
     s32 m_pixel_index;

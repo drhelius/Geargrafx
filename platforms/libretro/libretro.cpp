@@ -58,6 +58,7 @@ static int audio_sample_count = 0;
 
 static int current_screen_width = 0;
 static int current_screen_height = 0;
+static int current_width_scale = 1;
 static float current_aspect_ratio = 0.0f;
 static float aspect_ratio = 0.0f;
 
@@ -84,6 +85,7 @@ static GG_Keys keymap[MAX_BUTTONS] = {
 };
 
 static GeargrafxCore* core;
+static GG_Runtime_Info runtime_info;
 static u8* frame_buffer;
 
 static void set_controller_info(void);
@@ -165,7 +167,9 @@ void retro_init(void)
     core->Init(GG_PIXEL_RGB565);
 #endif
 
-    frame_buffer = new u8[HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT * 2];
+    core->GetRuntimeInfo(runtime_info);
+
+    frame_buffer = new u8[2048 * 512 * 2];
 
     for (int i = 0; i < MAX_PADS; i++)
     {
@@ -237,17 +241,11 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
-    GG_Runtime_Info runtime_info;
-    core->GetRuntimeInfo(runtime_info);
-
-    current_screen_width = runtime_info.screen_width;
-    current_screen_height = runtime_info.screen_height;
-
     info->geometry.base_width   = runtime_info.screen_width;
     info->geometry.base_height  = runtime_info.screen_height;
-    info->geometry.max_width    = 1024;
+    info->geometry.max_width    = 2048;
     info->geometry.max_height   = 512;
-    info->geometry.aspect_ratio = aspect_ratio;
+    info->geometry.aspect_ratio = aspect_ratio == 0.0f ? (float)runtime_info.screen_width / (float)runtime_info.screen_height / (float)runtime_info.width_scale : aspect_ratio;
     info->timing.fps            = 59.82;
     info->timing.sample_rate    = 44100.0;
 }
@@ -263,15 +261,16 @@ void retro_run(void)
     audio_sample_count = 0;
     core->RunToVBlank(frame_buffer, audio_buf, &audio_sample_count);
 
-    GG_Runtime_Info runtime_info;
     core->GetRuntimeInfo(runtime_info);
 
     if ((runtime_info.screen_width != current_screen_width) ||
         (runtime_info.screen_height != current_screen_height) ||
+        (runtime_info.width_scale != current_width_scale) ||
         (aspect_ratio != current_aspect_ratio))
     {
         current_screen_width = runtime_info.screen_width;
         current_screen_height = runtime_info.screen_height;
+        current_width_scale = runtime_info.width_scale;
         current_aspect_ratio = aspect_ratio;
 
         retro_system_av_info info;
@@ -279,7 +278,7 @@ void retro_run(void)
         info.geometry.base_height  = runtime_info.screen_height;
         info.geometry.max_width    = runtime_info.screen_width;
         info.geometry.max_height   = runtime_info.screen_height;
-        info.geometry.aspect_ratio = aspect_ratio;
+        info.geometry.aspect_ratio = aspect_ratio == 0.0f ? (float)runtime_info.screen_width / (float)runtime_info.screen_height / (float)runtime_info.width_scale : aspect_ratio;
 
         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
     }

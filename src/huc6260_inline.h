@@ -66,15 +66,16 @@ INLINE bool HuC6260::Clock()
             m_vsync = true;
             m_pixel_index = 0;
             frame_ready = true;
-            if (m_multiple_dividers)
+            m_scaled_width = m_multiple_speeds;
+            if (m_multiple_speeds)
             {
-                m_multiple_dividers = false;
+                m_multiple_speeds = false;
                 AdjustForMultipleDividers();
             }
         }
 
         if(m_vpos >= 14 && m_vpos < 256)
-            m_line_divider[m_vpos - 14] = m_clock_divider;
+            m_line_speed[m_vpos - 14] = m_speed;
         m_vpos = (m_vpos + 1) % k_huc6260_total_lines[m_blur];
     }
     // Start of horizontal sync
@@ -128,13 +129,20 @@ INLINE u8* HuC6260::GetBuffer()
 
 INLINE int HuC6260::GetCurrentWidth()
 {
-    int speed = DividerToSpeed(DominantDividerInFrame());
-    return k_huc6260_line_width[m_overscan][speed];
+    if (m_scaled_width)
+        return k_huc6260_scaling_width[m_overscan];
+    else
+        return k_huc6260_line_width[m_overscan][m_speed];
 }
 
 INLINE int HuC6260::GetCurrentHeight()
 {
     return CLAMP(HUC6270_LINES_ACTIVE - m_scanline_start - ((HUC6270_LINES_ACTIVE - 1) - m_scanline_end), 1, HUC6270_LINES_ACTIVE);
+}
+
+INLINE int HuC6260::GetWidthScale()
+{
+    return m_scaled_width ? 3 : 1;
 }
 
 INLINE void HuC6260::SetScanlineStart(int scanline_start)

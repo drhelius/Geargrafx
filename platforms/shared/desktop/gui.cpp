@@ -320,7 +320,7 @@ static void main_window(void)
             ratio = 16.0f / 10.0f;
             break;
         default:
-            ratio = (float)runtime.screen_width / (float)runtime.screen_height;
+            ratio = (float)runtime.screen_width / (float)runtime.screen_height / (float)runtime.width_scale;
     }
 
     if (!config_debug.debug && config_video.scale == 3)

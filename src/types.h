@@ -35,6 +35,7 @@ struct GG_Runtime_Info
 {
     int screen_width;
     int screen_height;
+    int width_scale;
 };
 
 struct GG_Color

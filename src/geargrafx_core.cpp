@@ -186,6 +186,7 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
 {
     runtime_info.screen_width = m_huc6260->GetCurrentWidth();
     runtime_info.screen_height = m_huc6260->GetCurrentHeight();
+    runtime_info.width_scale = m_huc6260->GetWidthScale();
 
     return m_cartridge->IsReady();
 }
