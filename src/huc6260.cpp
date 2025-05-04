@@ -61,7 +61,7 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
     m_pixel_format = pixel_format;
     m_color_table = new u16[512];
     m_scale_buffer = new u8[2048 * 512 * 4];
-    m_vce_buffer = new u32[1024 * 512];
+    m_vce_buffer = new u16[1024 * 512];
     m_line_speed = new s32[242];
 
     InitPalettes();
@@ -276,16 +276,7 @@ void HuC6260::RenderFrame()
 
     for (int i = 0; i < m_pixel_index; i++)
     {
-        u32 pixel = m_vce_buffer[i];
-        u16 color = 0;
-
-        if ((pixel & 0x10000) == 0)
-        {
-            assert(pixel < 512);
-            color = m_color_table[pixel & 0x1FF] & 0x1FF;
-        }
-
-        memcpy(m_frame_buffer + frame_buffer_index, palette[m_palette][color], bytes_per_pixel);
+        memcpy(m_frame_buffer + frame_buffer_index, palette[m_palette][m_vce_buffer[i]], bytes_per_pixel);
         frame_buffer_index += bytes_per_pixel;
     }
 }
@@ -373,7 +364,7 @@ void HuC6260::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
     stream.write(reinterpret_cast<const char*> (&m_active_line), sizeof(m_active_line));
     stream.write(reinterpret_cast<const char*> (m_scale_buffer), sizeof(u8) * 2048 * 512 * 4);
-    stream.write(reinterpret_cast<const char*> (m_vce_buffer), sizeof(u32) * 1024 * 512);
+    stream.write(reinterpret_cast<const char*> (m_vce_buffer), sizeof(u16) * 1024 * 512);
 }
 
 void HuC6260::LoadState(std::istream& stream)
@@ -396,5 +387,5 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
     stream.read(reinterpret_cast<char*> (m_scale_buffer), sizeof(u8) * 2048 * 512 * 4);
-    stream.read(reinterpret_cast<char*> (m_vce_buffer), sizeof(u32) * 1024 * 512);
+    stream.read(reinterpret_cast<char*> (m_vce_buffer), sizeof(u16) * 1024 * 512);
 }

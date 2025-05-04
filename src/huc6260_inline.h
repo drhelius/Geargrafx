@@ -40,7 +40,17 @@ INLINE bool HuC6260::Clock()
             if ((pixel & 0x10F) == 0)
                 pixel &= 0x10000;
 
-            m_vce_buffer[m_pixel_index] = pixel;
+            u16 color;
+            if ((pixel & 0x10000) == 0)
+            {
+                assert(pixel < 512);
+                color = m_color_table[pixel];
+                assert(color < 512);
+            }
+            else
+                color = 0;
+
+            m_vce_buffer[m_pixel_index] = color;
             m_pixel_index++;
         }
 
