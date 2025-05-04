@@ -35,10 +35,12 @@ HuC6280PSG::~HuC6280PSG()
 void HuC6280PSG::Init()
 {
     m_channels = new HuC6280PSG_Channel[6];
+    m_lfo_src = &m_channels[1];
+    m_lfo_dest = &m_channels[0];
 
     m_state.CHANNELS = m_channels;
     m_state.CHANNEL_SELECT = &m_channel_select;
-    m_state.MAIN_AMPLITUDE = &m_main_amplitude;
+    m_state.MAIN_AMPLITUDE = &m_main_vol;
     m_state.LFO_FREQUENCY = &m_lfo_frequency;
     m_state.LFO_CONTROL = &m_lfo_control;
     m_state.BUFFER_INDEX = &m_buffer_index;
@@ -61,7 +63,10 @@ void HuC6280PSG::Reset()
     m_frame_samples = 0;
 
     m_channel_select = 0;
-    m_main_amplitude = 0;
+    m_main_vol = 0;
+    m_main_vol_left = 0;
+    m_main_vol_right = 0;
+    m_lfo_enabled = 0;
     m_lfo_frequency = 0;
     m_lfo_control = 0;
 
@@ -69,16 +74,23 @@ void HuC6280PSG::Reset()
 
     for (int i = 0; i < 6; i++)
     {
+        m_channels[i].enabled = 0;
         m_channels[i].frequency = 0;
         m_channels[i].control = 0;
         m_channels[i].amplitude = 0;
+        m_channels[i].vol = 0;
+        m_channels[i].vol_left = 0;
+        m_channels[i].vol_right = 0;
         m_channels[i].wave = 0;
         m_channels[i].wave_index = 0;
         m_channels[i].noise_control = 0;
+        m_channels[i].noise_enabled = 0;
+        m_channels[i].noise_freq = 0;
         m_channels[i].noise_seed = 1;
         m_channels[i].noise_counter = 0;
         m_channels[i].counter = 0;
         m_channels[i].dda = 0;
+        m_channels[i].dda_enabled = 0;
         m_channels[i].left_sample = 0;
         m_channels[i].right_sample = 0;
 
@@ -107,7 +119,9 @@ void HuC6280PSG::Write(u16 address, u8 value)
         break;
     // Main amplitude
     case 1:
-        m_main_amplitude = value;
+        m_main_vol = value;
+        m_main_vol_left = (value >> 4) & 0x0F;
+        m_main_vol_right = value & 0x0F;
         break;
     // Channel frequency (low)
     case 2:
@@ -140,6 +154,9 @@ void HuC6280PSG::Write(u16 address, u8 value)
             }
 
             m_ch->control = value;
+            m_ch->enabled = IS_SET_BIT(value, 7);
+            m_ch->dda_enabled = IS_SET_BIT(value, 6);
+            m_ch->vol = (value >> 1) & 0x0F;
         }
         break;
     // Channel amplitude
@@ -147,6 +164,8 @@ void HuC6280PSG::Write(u16 address, u8 value)
         if (m_channel_select < 6)
         {
             m_ch->amplitude = value;
+            m_ch->vol_left = (value >> 4) & 0x0F;
+            m_ch->vol_right = value & 0x0F;
         }
         break;
     // Channel waveform data
@@ -173,22 +192,25 @@ void HuC6280PSG::Write(u16 address, u8 value)
         if ((m_channel_select > 3) && (m_channel_select < 6))
         {
             m_ch->noise_control = value;
+            m_ch->noise_enabled = IS_SET_BIT(value, 7);
+            m_ch->noise_freq = ((value & 0x1F) ^ 0x1F) << 6;
         }
         break;
     // LFO frequency
     case 8:
         m_lfo_frequency = value;
 
-        if (value & 0x80)
+        if (IS_SET_BIT(value, 7))
         {
-            u16 lfo_freq = m_channels[1].frequency ? m_channels[1].frequency : 0x1000;
-            m_channels[1].counter = lfo_freq * m_lfo_frequency;
-            m_channels[1].wave_index = 0;
+            u16 lfo_freq = m_lfo_src->frequency ? m_lfo_src->frequency : 0x1000;
+            m_lfo_src->counter = lfo_freq * m_lfo_frequency;
+            m_lfo_src->wave_index = 0;
         }
         break;
     // LFO control
     case 9:
         m_lfo_control = value;
+        m_lfo_enabled = (value & 0x03);
         break;
     }
 }
@@ -197,9 +219,6 @@ void HuC6280PSG::Sync()
 {
     for (int cycles = 0; cycles < m_elapsed_cycles; cycles++)
     {
-        u8 main_left_vol = (m_main_amplitude >> 4) & 0x0F;
-        u8 main_right_vol = m_main_amplitude & 0x0F;
-
         for (int i = 0; i < 6; i++)
         {
             HuC6280PSG_Channel* ch = &m_channels[i];
@@ -214,22 +233,17 @@ void HuC6280PSG::Sync()
 
                 if (ch->noise_counter <= 0)
                 {
-                    u32 freq = (ch->noise_control & 0x1F) ^ 0x1F;
-                    ch->noise_counter = freq << 6;
+                    ch->noise_counter = ch->noise_freq;
                     u32 seed = ch->noise_seed;
                     ch->noise_seed = (seed >> 1) | ((IS_SET_BIT(seed, 0) ^ IS_SET_BIT(seed, 1) ^ IS_SET_BIT(seed, 11) ^ IS_SET_BIT(seed, 12) ^ IS_SET_BIT(seed, 17)) << 17);
                 }
             }
 
-            if (!(ch->control & 0x80))
+            if (!ch->enabled)
                 continue;
 
-            u8 left_vol = (ch->amplitude >> 4) & 0x0F;
-            u8 right_vol = ch->amplitude & 0x0F;
-            u8 channel_vol = (ch->control >> 1) & 0x0F;
-
-            u8 temp_left_vol = MIN(0x0F, (0x0F - main_left_vol) + (0x0F - left_vol) + (0x0F - channel_vol));
-            u8 temp_right_vol = MIN(0x0F, (0x0F - main_right_vol) + (0x0F - right_vol) + (0x0F - channel_vol));
+            u8 temp_left_vol = MIN(0x0F, (0x0F - m_main_vol_left) + (0x0F - ch->vol_left) + (0x0F - ch->vol));
+            u8 temp_right_vol = MIN(0x0F, (0x0F - m_main_vol_right) + (0x0F - ch->vol_right) + (0x0F - ch->vol));
 
             u16 final_left_vol = m_volume_lut[(temp_left_vol << 1) | (~ch->control & 0x01)];
             u16 final_right_vol = m_volume_lut[(temp_right_vol << 1) | (~ch->control & 0x01)];
@@ -237,72 +251,61 @@ void HuC6280PSG::Sync()
             s8 data = 0;
 
             // Noise
-            if ((i >=4) && (ch->noise_control & 0x80))
-            {
+            if ((ch->noise_enabled) && (i >=4))
                 data = noise_data;
-            }
             // DDA
-            else if (ch->control & 0x40)
-            {
+            else if (ch->dda_enabled)
                 data = ch->dda;
-            }
-            // Waveform
-            else
+            // Waveform with LFO
+            else if (m_lfo_enabled && (i < 2))
             {
-                // LFO
-                if ((i < 2) && (m_lfo_control & 0x03))
+                if (i == 1)
+                    continue;
+
+                u16 lfo_freq = m_lfo_src->frequency ? m_lfo_src->frequency : 0x1000;
+                s32 freq = m_lfo_dest->frequency ? m_lfo_dest->frequency : 0x1000;
+
+                if (m_lfo_control & 0x80)
                 {
-                    if (i == 1)
-                        continue;
-
-                    HuC6280PSG_Channel* src = &m_channels[1];
-                    HuC6280PSG_Channel* dest = &m_channels[0];
-
-                    u16 lfo_freq = src->frequency ? src->frequency : 0x1000;
-                    s32 freq = dest->frequency ? dest->frequency : 0x1000;
-
-                    if (m_lfo_control & 0x80)
-                    {
-                        src->counter = lfo_freq * m_lfo_frequency;
-                        src->wave_index = 0;
-                    }
-                    else
-                    {
-                        s16 lfo_data = src->wave_data[src->wave_index];
-                        src->counter--;
-
-                        if (src->counter <= 0)
-                        {
-                            src->counter = lfo_freq * m_lfo_frequency;
-                            src->wave_index = (src->wave_index + 1) & 0x1f;
-                        }
-
-                        freq += ((lfo_data - 16) << (((m_lfo_control & 3) - 1) << 1));
-                    }
-
-                    data = dest->wave_data[dest->wave_index];
-                    dest->counter--;
-
-                    if (dest->counter <= 0)
-                    {
-                        dest->counter = freq;
-                        dest->wave_index = (dest->wave_index + 1) & 0x1f;
-                    }
+                    m_lfo_src->counter = lfo_freq * m_lfo_frequency;
+                    m_lfo_src->wave_index = 0;
                 }
-                // No LFO
                 else
                 {
-                    u16 freq = ch->frequency ? ch->frequency : 0x1000;
+                    s16 lfo_data = m_lfo_src->wave_data[m_lfo_src->wave_index];
+                    m_lfo_src->counter--;
 
-                    if (freq > 7)
-                        data = ch->wave_data[ch->wave_index];
-                    ch->counter--;
-
-                    if (ch->counter <= 0)
+                    if (m_lfo_src->counter <= 0)
                     {
-                        ch->counter = freq;
-                        ch->wave_index = (ch->wave_index + 1) & 0x1F;
+                        m_lfo_src->counter = lfo_freq * m_lfo_frequency;
+                        m_lfo_src->wave_index = (m_lfo_src->wave_index + 1) & 0x1f;
                     }
+
+                    freq += ((lfo_data - 16) << (((m_lfo_control & 3) - 1) << 1));
+                }
+
+                data = m_lfo_dest->wave_data[m_lfo_dest->wave_index];
+                m_lfo_dest->counter--;
+
+                if (m_lfo_dest->counter <= 0)
+                {
+                    m_lfo_dest->counter = freq;
+                    m_lfo_dest->wave_index = (m_lfo_dest->wave_index + 1) & 0x1f;
+                }
+            }
+            // Waveform without LFO
+            else
+            {
+                u16 freq = ch->frequency ? ch->frequency : 0x1000;
+
+                if (freq > 7)
+                    data = ch->wave_data[ch->wave_index];
+                ch->counter--;
+
+                if (ch->counter <= 0)
+                {
+                    ch->counter = freq;
+                    ch->wave_index = (ch->wave_index + 1) & 0x1F;
                 }
             }
 
@@ -381,7 +384,10 @@ void HuC6280PSG::ComputeVolumeLUT()
 void HuC6280PSG::SaveState(std::ostream& stream)
 {
     stream.write(reinterpret_cast<const char*> (&m_channel_select), sizeof(m_channel_select));
-    stream.write(reinterpret_cast<const char*> (&m_main_amplitude), sizeof(m_main_amplitude));
+    stream.write(reinterpret_cast<const char*> (&m_main_vol), sizeof(m_main_vol));
+    stream.write(reinterpret_cast<const char*> (&m_main_vol_left), sizeof(m_main_vol_left));
+    stream.write(reinterpret_cast<const char*> (&m_main_vol_right), sizeof(m_main_vol_right));
+    stream.write(reinterpret_cast<const char*> (&m_lfo_enabled), sizeof(m_lfo_enabled));
     stream.write(reinterpret_cast<const char*> (&m_lfo_frequency), sizeof(m_lfo_frequency));
     stream.write(reinterpret_cast<const char*> (&m_lfo_control), sizeof(m_lfo_control));
     stream.write(reinterpret_cast<const char*> (&m_elapsed_cycles), sizeof(m_elapsed_cycles));
@@ -391,17 +397,24 @@ void HuC6280PSG::SaveState(std::ostream& stream)
 
     for (int i = 0; i < 6; i++)
     {
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].enabled), sizeof(m_channels[i].enabled));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].frequency), sizeof(m_channels[i].frequency));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].control), sizeof(m_channels[i].control));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].amplitude), sizeof(m_channels[i].amplitude));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].vol), sizeof(m_channels[i].vol));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].vol_left), sizeof(m_channels[i].vol_left));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].vol_right), sizeof(m_channels[i].vol_right));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].wave), sizeof(m_channels[i].wave));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].wave_index), sizeof(m_channels[i].wave_index));
         stream.write(reinterpret_cast<const char*> (m_channels[i].wave_data), sizeof(m_channels[i].wave_data));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].noise_control), sizeof(m_channels[i].noise_control));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].noise_enabled), sizeof(m_channels[i].noise_enabled));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].noise_freq), sizeof(m_channels[i].noise_freq));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].noise_seed), sizeof(m_channels[i].noise_seed));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].noise_counter), sizeof(m_channels[i].noise_counter));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].counter), sizeof(m_channels[i].counter));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].dda), sizeof(m_channels[i].dda));
+        stream.write(reinterpret_cast<const char*> (&m_channels[i].dda_enabled), sizeof(m_channels[i].dda_enabled));
         stream.write(reinterpret_cast<const char*> (m_channels[i].output), sizeof(m_channels[i].output));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].left_sample), sizeof(m_channels[i].left_sample));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].right_sample), sizeof(m_channels[i].right_sample));
@@ -411,7 +424,10 @@ void HuC6280PSG::SaveState(std::ostream& stream)
 void HuC6280PSG::LoadState(std::istream& stream)
 {
     stream.read(reinterpret_cast<char*> (&m_channel_select), sizeof(m_channel_select));
-    stream.read(reinterpret_cast<char*> (&m_main_amplitude), sizeof(m_main_amplitude));
+    stream.read(reinterpret_cast<char*> (&m_main_vol), sizeof(m_main_vol));
+    stream.read(reinterpret_cast<char*> (&m_main_vol_left), sizeof(m_main_vol_left));
+    stream.read(reinterpret_cast<char*> (&m_main_vol_right), sizeof(m_main_vol_right));
+    stream.read(reinterpret_cast<char*> (&m_lfo_enabled), sizeof(m_lfo_enabled));
     stream.read(reinterpret_cast<char*> (&m_lfo_frequency), sizeof(m_lfo_frequency));
     stream.read(reinterpret_cast<char*> (&m_lfo_control), sizeof(m_lfo_control));
     stream.read(reinterpret_cast<char*> (&m_elapsed_cycles), sizeof(m_elapsed_cycles));
@@ -421,17 +437,24 @@ void HuC6280PSG::LoadState(std::istream& stream)
 
     for (int i = 0; i < 6; i++)
     {
+        stream.read(reinterpret_cast<char*> (&m_channels[i].enabled), sizeof(m_channels[i].enabled));
         stream.read(reinterpret_cast<char*> (&m_channels[i].frequency), sizeof(m_channels[i].frequency));
         stream.read(reinterpret_cast<char*> (&m_channels[i].control), sizeof(m_channels[i].control));
         stream.read(reinterpret_cast<char*> (&m_channels[i].amplitude), sizeof(m_channels[i].amplitude));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].vol), sizeof(m_channels[i].vol));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].vol_left), sizeof(m_channels[i].vol_left));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].vol_right), sizeof(m_channels[i].vol_right));
         stream.read(reinterpret_cast<char*> (&m_channels[i].wave), sizeof(m_channels[i].wave));
         stream.read(reinterpret_cast<char*> (&m_channels[i].wave_index), sizeof(m_channels[i].wave_index));
         stream.read(reinterpret_cast<char*> (m_channels[i].wave_data), sizeof(m_channels[i].wave_data));
         stream.read(reinterpret_cast<char*> (&m_channels[i].noise_control), sizeof(m_channels[i].noise_control));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].noise_enabled), sizeof(m_channels[i].noise_enabled));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].noise_freq), sizeof(m_channels[i].noise_freq));
         stream.read(reinterpret_cast<char*> (&m_channels[i].noise_seed), sizeof(m_channels[i].noise_seed));
         stream.read(reinterpret_cast<char*> (&m_channels[i].noise_counter), sizeof(m_channels[i].noise_counter));
         stream.read(reinterpret_cast<char*> (&m_channels[i].counter), sizeof(m_channels[i].counter));
         stream.read(reinterpret_cast<char*> (&m_channels[i].dda), sizeof(m_channels[i].dda));
+        stream.read(reinterpret_cast<char*> (&m_channels[i].dda_enabled), sizeof(m_channels[i].dda_enabled));
         stream.read(reinterpret_cast<char*> (m_channels[i].output), sizeof(m_channels[i].output));
         stream.read(reinterpret_cast<char*> (&m_channels[i].left_sample), sizeof(m_channels[i].left_sample));
         stream.read(reinterpret_cast<char*> (&m_channels[i].right_sample), sizeof(m_channels[i].right_sample));

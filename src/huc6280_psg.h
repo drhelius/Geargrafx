@@ -36,17 +36,24 @@ class HuC6280PSG
 public:
     struct HuC6280PSG_Channel
     {
+        u8 enabled;
         u16 frequency;
         u8 control;
         u8 amplitude;
+        u8 vol;
+        u8 vol_left;
+        u8 vol_right;
         u8 wave;
         u8 wave_index;
         u8 wave_data[32];
         u8 noise_control;
+        u8 noise_enabled;
+        u32 noise_freq;
         u32 noise_seed;
         s32 noise_counter;
         s32 counter;
         s8 dda;
+        s8 dda_enabled;
         s16 output[GG_AUDIO_BUFFER_SIZE];
         s16 left_sample;
         s16 right_sample;
@@ -84,8 +91,13 @@ private:
     HuC6280PSG_State m_state;
     HuC6280PSG_Channel* m_channels;
     HuC6280PSG_Channel* m_ch;
+    HuC6280PSG_Channel* m_lfo_src;
+    HuC6280PSG_Channel* m_lfo_dest;
     u8 m_channel_select;
-    u8 m_main_amplitude;
+    u8 m_main_vol;
+    u8 m_main_vol_left;
+    u8 m_main_vol_right;
+    u8 m_lfo_enabled;
     u8 m_lfo_frequency;
     u8 m_lfo_control;
     s32 m_elapsed_cycles;

@@ -142,12 +142,9 @@ void HuC6270::SetHSyncHigh()
 {
     // Low to high
     EndOfLine();
-
     HUC6270_DEBUG("  HSW start (force)");
-
     m_h_state = HuC6270_HORIZONTAL_STATE_HSW;
     m_clocks_to_next_h_state = m_huc6260->GetClockDivider() == 3 ? 32 : 24;
-
     HSyncStart();
 }
 

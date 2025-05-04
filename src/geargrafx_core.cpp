@@ -124,28 +124,37 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
 
         stop = m_huc6260->Clock();
 
-        if (m_clock % 6 == 0)
+        if (m_clock == 0)
+        {
+            m_clock = 6;
             m_audio->Clock();
+        }
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-        if (debug_enable && debug->step_debugger)
-            stop = instruction_completed;
-
-        if (debug_enable && instruction_completed && m_huc6280->BreakpointHit())
-            stop = true;
-
-        if (debug_enable && debug->stop_on_run_to_breakpoint && instruction_completed && m_huc6280->RunToBreakpointHit())
-            stop = true;
-
-        if (debug_enable && instruction_completed && IsValidPointer(m_debug_callback))
+        if (debug_enable)
         {
-            debug_state.cycles = *m_huc6280->GetState()->CYCLES;
-            m_debug_callback(&debug_state);
-            get_debug_state = true;
+            if (debug->step_debugger)
+                stop = instruction_completed;
+
+            if (instruction_completed)
+            {
+                if (m_huc6280->BreakpointHit())
+                    stop = true;
+
+                if (debug->stop_on_run_to_breakpoint && m_huc6280->RunToBreakpointHit())
+                    stop = true;
+
+                if (IsValidPointer(m_debug_callback))
+                {
+                    debug_state.cycles = *m_huc6280->GetState()->CYCLES;
+                    m_debug_callback(&debug_state);
+                    get_debug_state = true;
+                }
+            }
         }
 #endif
 
-        m_clock = (m_clock + 1) % 12;
+        m_clock--;
     }
     while (!stop);
 
