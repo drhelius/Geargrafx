@@ -445,23 +445,28 @@ bool GeargrafxCore::SaveState(u8* buffer, size_t& size, bool screenshot)
     size_t expected_size = 0;
     if (!SaveState(stream, expected_size, screenshot))
     {
-        Log("ERROR: Failed to save state to buffer");
+        Log("ERROR: Failed to save state to stream to calculate size");
         return false;
     }
 
-    if (IsValidPointer(buffer) && (size >= expected_size))
+    if (IsValidPointer(buffer))
     {
-        size = expected_size;
-        memcpy(buffer, stream.str().c_str(), size);
-        return true;
-    }
-    else if (!IsValidPointer(buffer) && (size == 0))
-    {
-        size = expected_size;
-        return true;
+        if (size >= expected_size)
+        {
+            size = expected_size;
+            memcpy(buffer, stream.str().c_str(), size);
+            return true;
+        }
+        else
+        {
+            Log("ERROR: Buffer size is too small to save state");
+            return false;
+        }
     }
     else
-        return false;
+        size = expected_size;
+
+    return false;
 }
 
 bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screenshot)
@@ -490,12 +495,14 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     header.timestamp = time(NULL);
     strncpy(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name) - 1);
     header.rom_crc = m_cartridge->GetCRC();
+    strncpy(header.emu_build, GG_VERSION, sizeof(header.emu_build) - 1);
 
     Debug("Save state header magic: 0x%08x", header.magic);
     Debug("Save state header version: %d", header.version);
     Debug("Save state header timestamp: %d", header.timestamp);
     Debug("Save state header rom name: %s", header.rom_name);
     Debug("Save state header rom crc: 0x%08x", header.rom_crc);
+    Debug("Save state header emu build: %s", header.emu_build);
 
     if (screenshot)
     {
@@ -616,6 +623,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     Debug("Load state header screenshot width: %d", header.screenshot_width);
     Debug("Load state header screenshot height: %d", header.screenshot_height);
     Debug("Load state header screenshot width scale: %d", header.screshot_width_scale);
+    Debug("Load state header emu build: %s", header.emu_build);
 
     if ((header.magic != GG_SAVESTATE_MAGIC))
     {
@@ -625,19 +633,19 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     if (header.version != GG_SAVESTATE_VERSION)
     {
-        Log("Invalid save state version: %d", header.version);
+        Log("ERROR: Invalid save state version: %d", header.version);
         return false;
     }
 
     if (header.size != size)
     {
-        Log("Invalid save state size: %d", header.size);
+        Log("ERROR: Invalid save state size: %d", header.size);
         return false;
     }
 
     if (header.rom_crc != m_cartridge->GetCRC())
     {
-        Log("Invalid save state rom crc: 0x%08x", header.rom_crc);
+        Log("ERROR: Invalid save state rom crc: 0x%08x", header.rom_crc);
         return false;
     }
 
@@ -679,6 +687,20 @@ bool GeargrafxCore::GetSaveStateHeader(int index, const char* path, GG_SaveState
     stream.read(reinterpret_cast<char*> (header), sizeof(GG_SaveState_Header));
     stream.seekg(0, ios::beg);
 
+    // for older versions of the save state whithout build in header
+    if (header->magic != GG_SAVESTATE_MAGIC)
+    {
+        stream.seekg(savestate_size - sizeof(GG_SaveState_Header) + 32, ios::beg);
+        stream.read(reinterpret_cast<char*> (header), sizeof(GG_SaveState_Header));
+        stream.seekg(0, ios::beg);
+
+        if (header->magic != GG_SAVESTATE_MAGIC)
+            return false;
+
+        header->size += 32;
+        header->emu_build[0] = 0;
+    }
+
     return true;
 }
 
@@ -706,14 +728,7 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
     }
 
     GG_SaveState_Header header;
-
-    stream.seekg(0, ios::end);
-    size_t savestate_size = static_cast<size_t>(stream.tellg());
-    stream.seekg(0, ios::beg);
-
-    stream.seekg(savestate_size - sizeof(header), ios::beg);
-    stream.read(reinterpret_cast<char*> (&header), sizeof(header));
-    stream.seekg(0, ios::beg);
+    GetSaveStateHeader(index, path, &header);
 
     if (header.screenshot_size == 0)
     {
@@ -739,7 +754,7 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
     Debug("Screenshot height: %d", screenshot->height);
     Debug("Screenshot width scale: %d", screenshot->width_scale);
 
-    stream.seekg(savestate_size - sizeof(header) - screenshot->size, ios::beg);
+    stream.seekg(header.size - sizeof(header) - screenshot->size, ios::beg);
     stream.read(reinterpret_cast<char*> (screenshot->data), screenshot->size);
     stream.close();
 
