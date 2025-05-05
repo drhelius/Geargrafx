@@ -105,7 +105,6 @@ private:
     Input* m_input;
     Cartridge* m_cartridge;
     bool m_paused;
-    u64 m_clock;
     GG_Debug_Callback m_debug_callback;
 };
 

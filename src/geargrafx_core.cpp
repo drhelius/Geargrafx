@@ -44,7 +44,6 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_cartridge);
     InitPointer(m_debug_callback);
     m_paused = true;
-    m_clock = 0;
 }
 
 GeargrafxCore::~GeargrafxCore()
@@ -150,8 +149,6 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
             }
         }
 #endif
-
-        m_clock--;
     }
     while (!stop);
 
@@ -478,7 +475,6 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
 
     Debug("Serializing save state...");
 
-    stream.write(reinterpret_cast<const char*> (&m_clock), sizeof(m_clock));
     m_memory->SaveState(stream);
     m_huc6260->SaveState(stream);
     m_huc6270->SaveState(stream);
@@ -648,7 +644,6 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     Debug("Unserializing save state...");
 
-    stream.read(reinterpret_cast<char*> (&m_clock), sizeof(m_clock));
     m_memory->LoadState(stream);
     m_huc6260->LoadState(stream);
     m_huc6270->LoadState(stream);
@@ -760,7 +755,6 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
 
 void GeargrafxCore::Reset()
 {
-    m_clock = 0;
     m_paused = false;
     m_memory->Reset();
     m_huc6260->Reset();

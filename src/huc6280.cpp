@@ -86,8 +86,6 @@ void HuC6280::Reset()
     SetFlag(FLAG_INTERRUPT);
     ClearFlag(FLAG_BREAK);
     m_cycles = 0;
-    m_clock = 0;
-    m_clock_cycles = 0;
     m_last_instruction_cycles = 0;
     m_irq_pending = 0;
     m_speed = 0;
@@ -128,7 +126,7 @@ void HuC6280::EnableBreakpoints(bool enable, bool irqs)
 
 bool HuC6280::BreakpointHit()
 {
-    return (m_cpu_breakpoint_hit || m_memory_breakpoint_hit) && (m_clock_cycles == 0);
+    return (m_cpu_breakpoint_hit || m_memory_breakpoint_hit);
 }
 
 void HuC6280::ResetBreakpoints()
@@ -337,8 +335,6 @@ void HuC6280::SaveState(std::ostream& stream)
     m_P.SaveState(stream);
 
     stream.write(reinterpret_cast<const char*> (&m_cycles), sizeof(m_cycles));
-    stream.write(reinterpret_cast<const char*> (&m_clock), sizeof(m_clock));
-    stream.write(reinterpret_cast<const char*> (&m_clock_cycles), sizeof(m_clock_cycles));
     stream.write(reinterpret_cast<const char*> (&m_last_instruction_cycles), sizeof(m_last_instruction_cycles));
     stream.write(reinterpret_cast<const char*> (&m_irq_pending), sizeof(m_irq_pending));
     stream.write(reinterpret_cast<const char*> (&m_speed), sizeof(m_speed));
@@ -367,8 +363,6 @@ void HuC6280::LoadState(std::istream& stream)
     m_P.LoadState(stream);
 
     stream.read(reinterpret_cast<char*> (&m_cycles), sizeof(m_cycles));
-    stream.read(reinterpret_cast<char*> (&m_clock), sizeof(m_clock));
-    stream.read(reinterpret_cast<char*> (&m_clock_cycles), sizeof(m_clock_cycles));
     stream.read(reinterpret_cast<char*> (&m_last_instruction_cycles), sizeof(m_last_instruction_cycles));
     stream.read(reinterpret_cast<char*> (&m_irq_pending), sizeof(m_irq_pending));
     stream.read(reinterpret_cast<char*> (&m_speed), sizeof(m_speed));

@@ -28,8 +28,10 @@ INLINE bool HuC6260::Clock(u32 cycles)
 {
     bool frame_ready = false;
 
-    for (u32 i = 0; i < cycles; i++)
+    while (cycles > 0)
     {
+        cycles--;
+
         if ((m_hpos % m_clock_divider) == 0)
         {
             u32 pixel = m_huc6270->Clock();

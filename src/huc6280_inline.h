@@ -373,7 +373,7 @@ INLINE u16 HuC6280::AbsoluteIndexedIndirectAddressing()
 
 INLINE bool HuC6280::RunToBreakpointHit()
 {
-    return m_run_to_breakpoint_hit && (m_clock_cycles == 0);
+    return m_run_to_breakpoint_hit;
 }
 
 INLINE std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints()
