@@ -217,8 +217,13 @@ void HuC6280PSG::Write(u16 address, u8 value)
 
 void HuC6280PSG::Sync()
 {
-    for (int cycles = 0; cycles < m_elapsed_cycles; cycles++)
+    int remaining_cycles = m_elapsed_cycles;
+
+    while (remaining_cycles > 0)
     {
+        int batch_size = MIN(remaining_cycles, GG_AUDIO_CYCLES_PER_SAMPLE - m_sample_cycle_counter);
+        remaining_cycles -= batch_size;
+
         for (int i = 0; i < 6; i++)
         {
             HuC6280PSG_Channel* ch = &m_channels[i];
@@ -226,16 +231,30 @@ void HuC6280PSG::Sync()
             ch->right_sample = 0;
             s8 noise_data = 0;
 
+            // LFSR is always running
             if (i >= 4)
             {
                 noise_data = IS_SET_BIT(ch->noise_seed, 0) ? 0x1F : 0;
-                ch->noise_counter--;
 
-                if (ch->noise_counter <= 0)
+                int noise_counter_new = ch->noise_counter - batch_size;
+                if (noise_counter_new <= 0)
                 {
-                    ch->noise_counter = ch->noise_freq;
-                    u32 seed = ch->noise_seed;
-                    ch->noise_seed = (seed >> 1) | ((IS_SET_BIT(seed, 0) ^ IS_SET_BIT(seed, 1) ^ IS_SET_BIT(seed, 11) ^ IS_SET_BIT(seed, 12) ^ IS_SET_BIT(seed, 17)) << 17);
+                    int noise_steps = 1 + ((-noise_counter_new) / ch->noise_freq);
+                    ch->noise_counter = noise_counter_new + (noise_steps * ch->noise_freq);
+
+                    for (int step = 0; step < noise_steps; step++)
+                    {
+                        u32 seed = ch->noise_seed;
+                        ch->noise_seed = (seed >> 1) | ((IS_SET_BIT(seed, 0) ^ IS_SET_BIT(seed, 1) ^ 
+                                         IS_SET_BIT(seed, 11) ^ IS_SET_BIT(seed, 12) ^ 
+                                         IS_SET_BIT(seed, 17)) << 17);
+                    }
+
+                    noise_data = IS_SET_BIT(ch->noise_seed, 0) ? 0x1F : 0;
+                }
+                else
+                {
+                    ch->noise_counter = noise_counter_new;
                 }
             }
 
@@ -251,7 +270,7 @@ void HuC6280PSG::Sync()
             s8 data = 0;
 
             // Noise
-            if ((ch->noise_enabled) && (i >=4))
+            if ((ch->noise_enabled) && (i >= 4))
                 data = noise_data;
             // DDA
             else if (ch->dda_enabled)
@@ -272,41 +291,58 @@ void HuC6280PSG::Sync()
                 }
                 else
                 {
-                    s16 lfo_data = m_lfo_src->wave_data[m_lfo_src->wave_index];
-                    m_lfo_src->counter--;
-
-                    if (m_lfo_src->counter <= 0)
+                    int lfo_counter_new = m_lfo_src->counter - batch_size;
+                    if (lfo_counter_new <= 0)
                     {
-                        m_lfo_src->counter = lfo_freq * m_lfo_frequency;
-                        m_lfo_src->wave_index = (m_lfo_src->wave_index + 1) & 0x1f;
+                        int lfo_steps = 1 + ((-lfo_counter_new) / (lfo_freq * m_lfo_frequency));
+                        m_lfo_src->counter = lfo_counter_new + (lfo_steps * lfo_freq * m_lfo_frequency);
+
+                        m_lfo_src->wave_index = (m_lfo_src->wave_index + lfo_steps) & 0x1f;
+                    }
+                    else
+                    {
+                        m_lfo_src->counter = lfo_counter_new;
                     }
 
+                    s16 lfo_data = m_lfo_src->wave_data[m_lfo_src->wave_index];
                     freq += ((lfo_data - 16) << (((m_lfo_control & 3) - 1) << 1));
                 }
 
-                data = m_lfo_dest->wave_data[m_lfo_dest->wave_index];
-                m_lfo_dest->counter--;
-
-                if (m_lfo_dest->counter <= 0)
+                int dest_counter_new = m_lfo_dest->counter - batch_size;
+                if (dest_counter_new <= 0)
                 {
-                    m_lfo_dest->counter = freq;
-                    m_lfo_dest->wave_index = (m_lfo_dest->wave_index + 1) & 0x1f;
+                    int dest_steps = 1 + ((-dest_counter_new) / freq);
+                    m_lfo_dest->counter = dest_counter_new + (dest_steps * freq);
+
+                    m_lfo_dest->wave_index = (m_lfo_dest->wave_index + dest_steps) & 0x1f;
                 }
+                else
+                {
+                    m_lfo_dest->counter = dest_counter_new;
+                }
+
+                data = m_lfo_dest->wave_data[m_lfo_dest->wave_index];
             }
             // Waveform without LFO
             else
             {
                 u16 freq = ch->frequency ? ch->frequency : 0x1000;
 
+                int wave_counter_new = ch->counter - batch_size;
+                if (wave_counter_new <= 0)
+                {
+                    int wave_steps = 1 + ((-wave_counter_new) / freq);
+                    ch->counter = wave_counter_new + (wave_steps * freq);
+
+                    ch->wave_index = (ch->wave_index + wave_steps) & 0x1F;
+                }
+                else
+                {
+                    ch->counter = wave_counter_new;
+                }
+
                 if (freq > 7)
                     data = ch->wave_data[ch->wave_index];
-                ch->counter--;
-
-                if (ch->counter <= 0)
-                {
-                    ch->counter = freq;
-                    ch->wave_index = (ch->wave_index + 1) & 0x1F;
-                }
             }
 
             if (!ch->mute)
@@ -316,7 +352,7 @@ void HuC6280PSG::Sync()
             }
         }
 
-        m_sample_cycle_counter++;
+        m_sample_cycle_counter += batch_size;
 
         if (m_sample_cycle_counter >= GG_AUDIO_CYCLES_PER_SAMPLE)
         {
