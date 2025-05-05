@@ -112,12 +112,12 @@ void HuC6270::Reset()
 
     for (int i = 0; i < HUC6270_VRAM_SIZE; i++)
     {
-        m_vram[i] = rand() & 0xFFFF;
+        m_vram[i] = 0;
     }
 
     for (int i = 0; i < HUC6270_SAT_SIZE; i++)
     {
-        m_sat[i] = rand() & 0xFFFF;
+        m_sat[i] = 0;
     }
 
     for (int i = 0; i < 1024; i++)
