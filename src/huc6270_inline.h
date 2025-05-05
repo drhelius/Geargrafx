@@ -45,14 +45,8 @@ INLINE u32 HuC6270::Clock()
 
     if (m_active_line && (m_h_state == HuC6270_HORIZONTAL_STATE_HDW))
     {
-        if (m_line_buffer_index < HUC6270_MAX_BACKGROUND_WIDTH)
-        {
-            pixel = m_line_buffer[m_line_buffer_index];
-        }
-        else
-        {
-            Debug("HuC6270 line buffer overflow %d", m_line_buffer_index);
-        }
+        assert(m_line_buffer_index < HUC6270_MAX_BACKGROUND_WIDTH);
+        pixel = m_line_buffer[m_line_buffer_index];
         m_line_buffer_index++;
     }
 

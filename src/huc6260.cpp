@@ -45,6 +45,9 @@ HuC6260::HuC6260(HuC6270* huc6270, HuC6280* huc6280)
     m_scanline_end = 241;
     m_reset_value = -1;
     m_palette = 0;
+    m_speed = HuC6260_SPEED_5_36_MHZ;
+
+    CalculateScreenBounds();
 }
 
 HuC6260::~HuC6260()
@@ -173,6 +176,8 @@ void HuC6260::Reset()
         else
             m_color_table[i] = m_reset_value & 0x1FF;
     }
+
+    CalculateScreenBounds();
 }
 
 u8 HuC6260::ReadRegister(u16 address)
@@ -222,7 +227,11 @@ void HuC6260::WriteRegister(u16 address, u8 value)
             m_speed = m_control_register & 0x03;
 
             if (old_speed != m_speed)
+            {
+                m_screen_start_x = k_huc6260_line_start[m_overscan][m_speed];
+                m_screen_end_x = k_huc6260_line_end[m_overscan][m_speed];
                 m_multiple_speeds = true;
+            }
 
             switch (m_speed)
             {
@@ -279,6 +288,14 @@ void HuC6260::RenderFrame()
         memcpy(m_frame_buffer + frame_buffer_index, palette[m_palette][m_vce_buffer[i]], bytes_per_pixel);
         frame_buffer_index += bytes_per_pixel;
     }
+}
+
+void HuC6260::CalculateScreenBounds()
+{
+    m_screen_start_x = k_huc6260_line_start[m_overscan][m_speed];
+    m_screen_end_x = k_huc6260_line_end[m_overscan][m_speed];
+    m_screen_start_y = m_scanline_start + HUC6270_LINES_TOP_BLANKING;
+    m_screen_end_y = m_scanline_end + HUC6270_LINES_TOP_BLANKING + 1;
 }
 
 void HuC6260::AdjustForMultipleDividers()
@@ -388,4 +405,6 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
     stream.read(reinterpret_cast<char*> (m_scale_buffer), sizeof(u8) * 2048 * 512 * 4);
     stream.read(reinterpret_cast<char*> (m_vce_buffer), sizeof(u16) * 1024 * 512);
+
+    CalculateScreenBounds();
 }

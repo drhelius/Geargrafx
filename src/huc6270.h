@@ -78,8 +78,8 @@ public:
     u32 Clock();
     void SetHSyncHigh();
     void SetVSyncLow();
-    NO_INLINE u8 ReadRegister(u16 address);
-    NO_INLINE void WriteRegister(u16 address, u8 value);
+    u8 ReadRegister(u16 address);
+    void WriteRegister(u16 address, u8 value);
     HuC6270_State* GetState();
     u16* GetVRAM();
     u16* GetSAT();
@@ -154,10 +154,10 @@ private:
     void LineEvents();
     void HSyncStart();
     void IncrementRasterLine();
-    NO_INLINE void SATTransfer();
-    NO_INLINE void VRAMTransfer();
-    NO_INLINE void NextVerticalState();
-    NO_INLINE void NextHorizontalState();
+    void SATTransfer();
+    void VRAMTransfer();
+    void NextVerticalState();
+    void NextHorizontalState();
     u16 ReadVRAM(u16 address);
     void VBlankIRQ();
     void RCRIRQ();

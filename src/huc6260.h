@@ -60,8 +60,8 @@ public:
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     void Reset();
     bool Clock(u32 cycles);
-    NO_INLINE u8 ReadRegister(u16 address);
-    NO_INLINE void WriteRegister(u16 address, u8 value);
+    u8 ReadRegister(u16 address);
+    void WriteRegister(u16 address, u8 value);
     HuC6260_State* GetState();
     HuC6260_Speed GetSpeed();
     int GetClockDivider();
@@ -84,8 +84,9 @@ public:
 private:
     void InitPalettes();
     void DeletePalettes();
-    NO_INLINE void AdjustForMultipleDividers();
+    void AdjustForMultipleDividers();
     void RenderFrame();
+    void CalculateScreenBounds();
 
 private:
     HuC6270* m_huc6270;
@@ -119,6 +120,10 @@ private:
     u8*** m_rgb565_palette;
     int m_reset_value;
     int m_palette;
+    int m_screen_start_x;
+    int m_screen_end_x;
+    int m_screen_start_y;
+    int m_screen_end_y;
 };
 
 static const HuC6260::HuC6260_Speed k_huc6260_speed[4] = {

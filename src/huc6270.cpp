@@ -504,7 +504,9 @@ void HuC6270::VRAMTransfer()
 
 void HuC6270::NextVerticalState()
 {
-    m_v_state = (m_v_state + 1) % HuC6270_VERTICAL_STATE_COUNT;
+    m_v_state++;
+    if (m_v_state == HuC6270_VERTICAL_STATE_COUNT)
+        m_v_state = 0;
 
     switch (m_v_state)
     {
@@ -536,7 +538,9 @@ void HuC6270::NextVerticalState()
 
 void HuC6270::NextHorizontalState()
 {
-    m_h_state = (m_h_state + 1) % HuC6270_HORIZONTAL_STATE_COUNT;
+    m_h_state++;
+    if (m_h_state == HuC6270_HORIZONTAL_STATE_COUNT)
+        m_h_state = 0;
 
     switch (m_h_state)
     {
