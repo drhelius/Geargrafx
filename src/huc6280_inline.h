@@ -162,22 +162,18 @@ INLINE void HuC6280::ClockTimer(u32 cycles)
     if (!m_timer_enabled)
         return;
 
-    for (u32 i = 0; i < cycles; i++)
+    m_timer_cycles -= cycles;
+
+    if (m_timer_cycles <= 0)
     {
-        m_timer_cycles--;
-
-        if (m_timer_cycles == 0)
+        m_timer_cycles = k_huc6280_timer_divisor + m_timer_cycles;
+        if (m_timer_counter == 0)
         {
-            m_timer_cycles = k_huc6280_timer_divisor;
-
-            if (m_timer_counter == 0)
-            {
-                m_timer_counter = m_timer_reload;
-                m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 2);
-            }
-            else
-                m_timer_counter--;
+            m_timer_counter = m_timer_reload;
+            m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 2);
         }
+        else
+            m_timer_counter--;
     }
 }
 
