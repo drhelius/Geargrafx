@@ -22,9 +22,17 @@
 #include "audio.h"
 #include "huc6280_psg.h"
 
-INLINE void Audio::Clock()
+INLINE void Audio::Clock(u32 cycles)
 {
-    m_psg->Clock();
+    for (u32 i = 0; i < cycles; i++)
+    {
+        if (m_cycle_counter == 0)
+        {
+            m_cycle_counter = 6;
+            m_psg->Clock();
+        }
+        m_cycle_counter--;
+    }
 }
 
 INLINE void Audio::WritePSG(u32 address, u8 value)

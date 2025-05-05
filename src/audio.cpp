@@ -50,6 +50,8 @@ void Audio::Reset()
     {
         m_psg_buffer[i] = 0;
     }
+
+    m_cycle_counter = 6;
 }
 
 void Audio::Mute(bool mute)

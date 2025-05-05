@@ -101,8 +101,8 @@ public:
     ~HuC6280();
     void Init(Memory* memory, HuC6270* huc6270);
     void Reset();
-    bool Clock();
-    u32 TickOPCode();
+    u32 RunInstruction(bool* completed = NULL);
+    void ClockTimer(u32 cycles);
     void AssertIRQ1(bool asserted);
     void AssertIRQ2(bool asserted);
     void InjectCycles(unsigned int cycles);
@@ -174,10 +174,8 @@ private:
 
 private:
 
-    void TickIRQ();
+    void HandleIRQ();
     void CheckIRQs();
-
-    void ClockTimer();
 
     void CheckBreakpoints();
     void PushCallStack(u16 src, u16 dest, u16 back);

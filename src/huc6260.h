@@ -59,7 +59,7 @@ public:
     ~HuC6260();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     void Reset();
-    bool Clock();
+    bool Clock(u32 cycles);
     NO_INLINE u8 ReadRegister(u16 address);
     NO_INLINE void WriteRegister(u16 address, u8 value);
     HuC6260_State* GetState();

@@ -143,7 +143,7 @@ bool run_test(RSJresource& test)
         memory->Write((*it)[0].as<int>(), (*it)[1].as<int>());
     }
 
-    cpu->TickOPCode();
+    cpu->RunInstruction();
 
 #if 0
     unsigned int cycles = cpu->Tick();

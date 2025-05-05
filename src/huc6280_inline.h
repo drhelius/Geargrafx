@@ -26,30 +26,7 @@
 #include "huc6280_names.h"
 #include "memory.h"
 
-INLINE bool HuC6280::Clock()
-{
-    bool instruction_completed = false;
-
-    if (m_clock % k_huc6280_speed_divisor[m_speed] == 0)
-    {
-        if (m_clock_cycles <= 0)
-        {
-            m_clock_cycles += TickOPCode();
-        }
-
-        m_clock_cycles--;
-        instruction_completed = ((m_clock_cycles == 0) && (m_transfer_state == 0));
-    }
-
-    if (m_clock % 3 == 0)
-        ClockTimer();
-
-    m_clock = (m_clock + 1) % 12;
-
-    return instruction_completed;
-}
-
-INLINE u32 HuC6280::TickOPCode()
+INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_memory_breakpoint_hit = false;
@@ -71,21 +48,25 @@ INLINE u32 HuC6280::TickOPCode()
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_last_instruction_cycles = m_cycles;
+    if (IsValidPointer(instruction_completed))
+        *instruction_completed = (m_transfer_state == 0);
+#else
+    UNUSED(instruction_completed);
 #endif
 
-    if((m_transfer_state == 0) && (m_irq_pending || IS_SET_BIT(m_interrupt_request_register, 2)))
-        TickIRQ();
+    m_last_instruction_cycles = m_cycles;
+
+    if((m_irq_pending || IS_SET_BIT(m_interrupt_request_register, 2)) && (m_transfer_state == 0))
+        HandleIRQ();
 
     DisassembleNextOPCode();
 
     m_cycles += k_huc6280_opcode_cycles[opcode];
 
-    m_last_instruction_cycles = m_cycles;
-
-    return m_cycles;
+    return m_cycles * k_huc6280_speed_divisor[m_speed];
 }
 
-INLINE void HuC6280::TickIRQ()
+INLINE void HuC6280::HandleIRQ()
 {
     u16 vector = 0;
 
@@ -176,24 +157,27 @@ INLINE void HuC6280::WriteInterruptRegister(u16 address, u8 value)
     }
 }
 
-INLINE void HuC6280::ClockTimer()
+INLINE void HuC6280::ClockTimer(u32 cycles)
 {
     if (!m_timer_enabled)
         return;
 
-    m_timer_cycles -= 3;
-
-    if (m_timer_cycles == 0)
+    for (u32 i = 0; i < cycles; i++)
     {
-        m_timer_cycles = k_huc6280_timer_divisor;
+        m_timer_cycles--;
 
-        if (m_timer_counter == 0)
+        if (m_timer_cycles == 0)
         {
-            m_timer_counter = m_timer_reload;
-            m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 2);
+            m_timer_cycles = k_huc6280_timer_divisor;
+
+            if (m_timer_counter == 0)
+            {
+                m_timer_counter = m_timer_reload;
+                m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 2);
+            }
+            else
+                m_timer_counter--;
         }
-        else
-            m_timer_counter--;
     }
 }
 

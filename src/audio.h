@@ -34,7 +34,7 @@ public:
     void Init();
     void Reset();
     void Mute(bool mute);
-    void Clock();
+    void Clock(u32 cycles);
     void WritePSG(u32 address, u8 value);
     void EndFrame(s16* sample_buffer, int* sample_count);
     HuC6280PSG* GetPSG();
@@ -45,6 +45,7 @@ private:
     bool m_mute;
     HuC6280PSG* m_psg;
     s16* m_psg_buffer;
+    u32 m_cycle_counter;
 };
 
 #include "audio_inline.h"

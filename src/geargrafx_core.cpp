@@ -117,18 +117,15 @@ bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sampl
             debug_state.S = m_huc6280->GetState()->S->GetValue();
         }
 
-        instruction_completed = m_huc6280->Clock();
+        u32 cycles = m_huc6280->RunInstruction(&instruction_completed);
 #else
-        m_huc6280->Clock();
+        u32 cycles = m_huc6280->RunInstruction();
 #endif
 
-        stop = m_huc6260->Clock();
+        m_huc6280->ClockTimer(cycles);
+        stop = m_huc6260->Clock(cycles);
+        m_audio->Clock(cycles);
 
-        if (m_clock == 0)
-        {
-            m_clock = 6;
-            m_audio->Clock();
-        }
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
         if (debug_enable)
