@@ -37,21 +37,19 @@ Audio::~Audio()
 void Audio::Init()
 {
     m_psg_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
-
     m_psg = new HuC6280PSG();
     m_psg->Init();
 }
 
 void Audio::Reset()
 {
+    m_cycle_counter = 0;
     m_psg->Reset();
 
     for (int i = 0; i < GG_AUDIO_BUFFER_SIZE; i++)
     {
         m_psg_buffer[i] = 0;
     }
-
-    m_cycle_counter = 6;
 }
 
 void Audio::Mute(bool mute)
@@ -89,6 +87,7 @@ void Audio::SaveState(std::ostream& stream)
     using namespace std;
     stream.write(reinterpret_cast<const char*> (m_psg_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
     m_psg->SaveState(stream);
+    stream.write(reinterpret_cast<const char*> (&m_cycle_counter), sizeof(m_cycle_counter));
 }
 
 void Audio::LoadState(std::istream& stream)
@@ -96,4 +95,5 @@ void Audio::LoadState(std::istream& stream)
     using namespace std;
     stream.read(reinterpret_cast<char*> (m_psg_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
     m_psg->LoadState(stream);
+    stream.read(reinterpret_cast<char*> (&m_cycle_counter), sizeof(m_cycle_counter));
 }

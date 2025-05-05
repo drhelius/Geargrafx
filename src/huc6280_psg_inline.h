@@ -22,9 +22,9 @@
 
 #include "huc6280_psg.h"
 
-INLINE void HuC6280PSG::Clock()
+INLINE void HuC6280PSG::Clock(u32 cycles)
 {
-    m_elapsed_cycles++;
+    m_elapsed_cycles += cycles;
 }
 
 INLINE HuC6280PSG::HuC6280PSG_State* HuC6280PSG::GetState()

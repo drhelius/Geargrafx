@@ -24,15 +24,10 @@
 
 INLINE void Audio::Clock(u32 cycles)
 {
-    for (u32 i = 0; i < cycles; i++)
-    {
-        if (m_cycle_counter == 0)
-        {
-            m_cycle_counter = 6;
-            m_psg->Clock();
-        }
-        m_cycle_counter--;
-    }
+    u32 total_cycles = m_cycle_counter + cycles;
+    u32 psg_cycles = total_cycles / 6;
+    m_psg->Clock(psg_cycles);
+    m_cycle_counter = total_cycles % 6;
 }
 
 INLINE void Audio::WritePSG(u32 address, u8 value)
