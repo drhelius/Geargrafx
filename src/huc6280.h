@@ -173,8 +173,8 @@ private:
     int m_reset_value;
 
 private:
-    
-    u32 TickIRQ();
+
+    void TickIRQ();
     void CheckIRQs();
 
     void ClockTimer();

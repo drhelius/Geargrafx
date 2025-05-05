@@ -37,18 +37,11 @@ INLINE bool HuC6280::Clock()
     {
         if (m_clock_cycles <= 0)
         {
-            if ((m_irq_pending != 0) && (m_transfer_state == 0))
-            {
-                m_clock_cycles += TickIRQ();
-                if (m_clock_cycles == 0)
-                    m_clock_cycles += TickOPCode();
-            }
-            else
-                m_clock_cycles += TickOPCode();
+            m_clock_cycles += TickOPCode();
         }
 
         m_clock_cycles--;
-        instruction_completed = ((m_clock_cycles == 0) && (m_transfer_state == 0) && (m_irq_pending == 0));
+        instruction_completed = ((m_clock_cycles == 0) && (m_transfer_state == 0));
     }
 
     m_clock = (m_clock + 1) % 12;
@@ -58,11 +51,15 @@ INLINE bool HuC6280::Clock()
 
 INLINE u32 HuC6280::TickOPCode()
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
     m_memory_breakpoint_hit = false;
+#endif
     m_skip_flag_transfer_clear = false;
+
     m_cycles = 0;
 
     u8 opcode = Fetch8();
+    CheckIRQs();
     (this->*m_opcodes[opcode])();
 
 #if defined(GG_TESTING)
@@ -71,6 +68,13 @@ INLINE u32 HuC6280::TickOPCode()
     if (!m_skip_flag_transfer_clear)
         ClearFlag(FLAG_TRANSFER);
 #endif
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    m_last_instruction_cycles = m_cycles;
+#endif
+
+    if((m_transfer_state == 0) && (m_irq_pending || IS_SET_BIT(m_interrupt_request_register, 2)))
+        TickIRQ();
 
     DisassembleNextOPCode();
 
@@ -81,52 +85,40 @@ INLINE u32 HuC6280::TickOPCode()
     return m_cycles;
 }
 
-INLINE u32 HuC6280::TickIRQ()
+INLINE void HuC6280::TickIRQ()
 {
-    assert(m_irq_pending != 0);
-
-    m_cycles = 0;
     u16 vector = 0;
 
     // TIQ
     if (IS_SET_BIT(m_irq_pending, 2) && IS_SET_BIT(m_interrupt_request_register, 2))
-    {
         vector = 0xFFFA;
-        m_debug_next_irq = 3;
-    }
     // IRQ1
     else if (IS_SET_BIT(m_irq_pending, 1))
-    {
         vector = 0xFFF8;
-        m_debug_next_irq = 4;
-    }
     // IRQ2
     else if (IS_SET_BIT(m_irq_pending, 0))
-    {
         vector = 0xFFF6;
-        m_debug_next_irq = 5;
-    }
     else
-        return 0;
+        return;
 
     u16 pc = m_PC.GetValue();
     StackPush16(pc);
     StackPush8(m_P.GetValue() & ~FLAG_BREAK);
     SetFlag(FLAG_INTERRUPT);
     ClearFlag(FLAG_DECIMAL | FLAG_TRANSFER);
+
     m_PC.SetLow(MemoryRead(vector));
     m_PC.SetHigh(MemoryRead(vector + 1));
+
     m_cycles += 8;
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    DisassembleNextOPCode();
+    m_debug_next_irq =((0xFFFA - vector) >> 1) + 3;
     if (m_breakpoints_irq_enabled)
         m_cpu_breakpoint_hit = true;
     u16 dest = m_PC.GetValue();
     PushCallStack(pc, dest, pc);
 #endif
-
-    return m_cycles;
 }
 
 INLINE void HuC6280::CheckIRQs()
@@ -153,18 +145,15 @@ INLINE void HuC6280::AssertIRQ2(bool asserted)
 INLINE void HuC6280::InjectCycles(unsigned int cycles)
 {
     m_cycles += cycles;
-    CheckIRQs();
 }
 
 INLINE u8 HuC6280::MemoryRead(u16 address, bool block_transfer)
 {
-    CheckIRQs();
     return m_memory->Read(address, block_transfer);
 }
 
 INLINE void HuC6280::MemoryWrite(u16 address, u8 value, bool block_transfer)
 {
-    CheckIRQs();
     m_memory->Write(address, value, block_transfer);
 }
 
