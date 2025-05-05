@@ -253,6 +253,11 @@ INLINE bool HuC6280::IsSetFlag(u8 flag)
     return (m_P.GetValue() & flag) != 0;
 }
 
+INLINE bool HuC6280::IsNotSetFlag(u8 flag)
+{
+    return (m_P.GetValue() & flag) == 0;
+}
+
 INLINE void HuC6280::StackPush16(u16 value)
 {
     m_memory->Write(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value >> 8));

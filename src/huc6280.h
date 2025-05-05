@@ -192,6 +192,7 @@ private:
     void SetFlag(u8 flag);
     void ClearFlag(u8 flag);
     bool IsSetFlag(u8 flag);
+    bool IsNotSetFlag(u8 flag);
 
     void StackPush16(u16 value);
     void StackPush8(u8 value);

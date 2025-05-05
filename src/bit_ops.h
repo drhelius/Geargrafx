@@ -27,6 +27,7 @@
 #define SET_BIT(value, bit) ((value) | (1U << (bit)))
 #define UNSET_BIT(value, bit) ((value) & (~(1U << (bit))))
 #define IS_SET_BIT(value, bit) (((value) & (1U << (bit))) != 0)
+#define IS_NOT_SET_BIT(value, bit) (((value) & (1U << (bit))) == 0)
 #define FLIP_BIT(value, bit) ((value) ^ (1U << (bit)))
 
 static const u8 k_bitops_reverse_lut[16] = {

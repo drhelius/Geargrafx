@@ -115,13 +115,13 @@ void HuC6280::OPCode0x0E()
 void HuC6280::OPCode0x0F()
 {
     // BBR0 ZP,rr
-    OPcodes_Branch(!IS_SET_BIT(m_memory->Read(ZeroPageAddressing()), 0));
+    OPcodes_Branch(IS_NOT_SET_BIT(m_memory->Read(ZeroPageAddressing()), 0));
 }
 
 void HuC6280::OPCode0x10()
 {
     // BPL rr
-    OPcodes_Branch(!IsSetFlag(FLAG_NEGATIVE));
+    OPcodes_Branch(IsNotSetFlag(FLAG_NEGATIVE));
 }
 
 void HuC6280::OPCode0x11()
@@ -210,7 +210,7 @@ void HuC6280::OPCode0x1E()
 void HuC6280::OPCode0x1F()
 {
     // BBR1 ZP,rr
-    OPcodes_Branch(!IS_SET_BIT(m_memory->Read(ZeroPageAddressing()), 1));
+    OPcodes_Branch(IS_NOT_SET_BIT(m_memory->Read(ZeroPageAddressing()), 1));
 }
 
 void HuC6280::OPCode0x20()
@@ -316,7 +316,7 @@ void HuC6280::OPCode0x2E()
 void HuC6280::OPCode0x2F()
 {
     // BBR2 ZP,rr
-    OPcodes_Branch(!IS_SET_BIT(m_memory->Read(ZeroPageAddressing()), 2));
+    OPcodes_Branch(IS_NOT_SET_BIT(m_memory->Read(ZeroPageAddressing()), 2));
 }
 
 void HuC6280::OPCode0x30()
@@ -410,7 +410,7 @@ void HuC6280::OPCode0x3E()
 void HuC6280::OPCode0x3F()
 {
     // BBR3 ZP,rr
-    OPcodes_Branch(!IS_SET_BIT(m_memory->Read(ZeroPageAddressing()), 3));
+    OPcodes_Branch(IS_NOT_SET_BIT(m_memory->Read(ZeroPageAddressing()), 3));
 }
 
 void HuC6280::OPCode0x40()
@@ -513,13 +513,13 @@ void HuC6280::OPCode0x4E()
 void HuC6280::OPCode0x4F()
 {
     // BBR4 ZP,rr
-    OPcodes_Branch(!IS_SET_BIT(m_memory->Read(ZeroPageAddressing()), 4));
+    OPcodes_Branch(IS_NOT_SET_BIT(m_memory->Read(ZeroPageAddressing()), 4));
 }
 
 void HuC6280::OPCode0x50()
 {
     // BVC rr
-    OPcodes_Branch(!IsSetFlag(FLAG_OVERFLOW));
+    OPcodes_Branch(IsNotSetFlag(FLAG_OVERFLOW));
 }
 
 void HuC6280::OPCode0x51()
@@ -607,7 +607,7 @@ void HuC6280::OPCode0x5E()
 void HuC6280::OPCode0x5F()
 {
     // BBR5 ZP,r
-    OPcodes_Branch(!IS_SET_BIT(m_memory->Read(ZeroPageAddressing()), 5));
+    OPcodes_Branch(IS_NOT_SET_BIT(m_memory->Read(ZeroPageAddressing()), 5));
 }
 
 void HuC6280::OPCode0x60()
@@ -706,7 +706,7 @@ void HuC6280::OPCode0x6E()
 void HuC6280::OPCode0x6F()
 {
     // BBR6 ZP,rr
-    OPcodes_Branch(!IS_SET_BIT(m_memory->Read(ZeroPageAddressing()), 6));
+    OPcodes_Branch(IS_NOT_SET_BIT(m_memory->Read(ZeroPageAddressing()), 6));
 }
 
 void HuC6280::OPCode0x70()
@@ -803,7 +803,7 @@ void HuC6280::OPCode0x7E()
 void HuC6280::OPCode0x7F()
 {
     // BBR7 ZP,rr
-    OPcodes_Branch(!IS_SET_BIT(m_memory->Read(ZeroPageAddressing()), 7));
+    OPcodes_Branch(IS_NOT_SET_BIT(m_memory->Read(ZeroPageAddressing()), 7));
 }
 
 void HuC6280::OPCode0x80()
@@ -906,7 +906,7 @@ void HuC6280::OPCode0x8F()
 void HuC6280::OPCode0x90()
 {
     // BCC rr
-    OPcodes_Branch(!IsSetFlag(FLAG_CARRY));
+    OPcodes_Branch(IsNotSetFlag(FLAG_CARRY));
 }
 
 void HuC6280::OPCode0x91()
@@ -1289,7 +1289,7 @@ void HuC6280::OPCode0xCF()
 void HuC6280::OPCode0xD0()
 {
     // BNE rr
-    OPcodes_Branch(!IsSetFlag(FLAG_ZERO));
+    OPcodes_Branch(IsNotSetFlag(FLAG_ZERO));
 }
 
 void HuC6280::OPCode0xD1()
