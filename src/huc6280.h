@@ -157,7 +157,7 @@ private:
     u8 m_timer_reload;
     u8 m_interrupt_disable_register;
     u8 m_interrupt_request_register;
-    bool m_skip_flag_transfer_clear;
+    bool m_transfer_flag;
     s32 m_debug_next_irq;
     bool m_breakpoints_enabled;
     bool m_breakpoints_irq_enabled;
@@ -193,6 +193,7 @@ private:
     void ClearFlag(u8 flag);
     bool IsSetFlag(u8 flag);
     bool IsNotSetFlag(u8 flag);
+    void SetP(u8 value);
 
     void StackPush16(u16 value);
     void StackPush8(u8 value);

@@ -81,7 +81,11 @@ void HuC6280::Reset()
         m_P.SetValue(m_reset_value & 0xFF);
     }
 
+#if defined(GG_TESTING)
+    SetFlag(FLAG_TRANSFER);
+#else
     ClearFlag(FLAG_TRANSFER);
+#endif
     ClearFlag(FLAG_DECIMAL);
     SetFlag(FLAG_INTERRUPT);
     ClearFlag(FLAG_BREAK);
@@ -100,7 +104,7 @@ void HuC6280::Reset()
     m_timer_reload = 0;
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
-    m_skip_flag_transfer_clear = false;
+    m_transfer_flag = false;
     m_cpu_breakpoint_hit = false;
     m_memory_breakpoint_hit = false;
     m_run_to_breakpoint_hit = false;
@@ -349,7 +353,7 @@ void HuC6280::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_timer_reload), sizeof(m_timer_reload));
     stream.write(reinterpret_cast<const char*> (&m_interrupt_disable_register), sizeof(m_interrupt_disable_register));
     stream.write(reinterpret_cast<const char*> (&m_interrupt_request_register), sizeof(m_interrupt_request_register));
-    stream.write(reinterpret_cast<const char*> (&m_skip_flag_transfer_clear), sizeof(m_skip_flag_transfer_clear));
+    stream.write(reinterpret_cast<const char*> (&m_transfer_flag), sizeof(m_transfer_flag));
     stream.write(reinterpret_cast<const char*> (&m_debug_next_irq), sizeof(m_debug_next_irq));
 }
 
@@ -377,6 +381,6 @@ void HuC6280::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_timer_reload), sizeof(m_timer_reload));
     stream.read(reinterpret_cast<char*> (&m_interrupt_disable_register), sizeof(m_interrupt_disable_register));
     stream.read(reinterpret_cast<char*> (&m_interrupt_request_register), sizeof(m_interrupt_request_register));
-    stream.read(reinterpret_cast<char*> (&m_skip_flag_transfer_clear), sizeof(m_skip_flag_transfer_clear));
+    stream.read(reinterpret_cast<char*> (&m_transfer_flag), sizeof(m_transfer_flag));
     stream.read(reinterpret_cast<char*> (&m_debug_next_irq), sizeof(m_debug_next_irq));
 }

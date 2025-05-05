@@ -71,9 +71,6 @@ void HuC6280::OPCode0x07()
 void HuC6280::OPCode0x08()
 {
     // PHP
-#if !defined(GG_TESTING)
-    ClearFlag(FLAG_TRANSFER);
-#endif
     StackPush8(m_P.GetValue() | FLAG_BREAK);
 }
 
@@ -271,11 +268,7 @@ void HuC6280::OPCode0x27()
 void HuC6280::OPCode0x28()
 {
     // PLP
-    m_P.SetValue(StackPop8());
-    m_skip_flag_transfer_clear = true;
-#if defined(GG_TESTING)
-    ClearFlag(FLAG_BREAK);
-#endif
+    SetP(StackPop8());
 }
 
 void HuC6280::OPCode0x29()
@@ -416,12 +409,8 @@ void HuC6280::OPCode0x3F()
 void HuC6280::OPCode0x40()
 {
     // RTI
-    m_P.SetValue(StackPop8());
+    SetP(StackPop8());
     m_PC.SetValue(StackPop16());
-    m_skip_flag_transfer_clear = true;
-#if defined(GG_TESTING)
-    ClearFlag(FLAG_BREAK);
-#endif
 #if !defined(GG_DISABLE_DISASSEMBLER)
     PopCallStack();
 #endif
@@ -1501,7 +1490,6 @@ void HuC6280::OPCode0xF4()
 {
     // SET
     SetFlag(FLAG_TRANSFER);
-    m_skip_flag_transfer_clear = true;
 }
 
 void HuC6280::OPCode0xF5()

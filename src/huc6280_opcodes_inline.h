@@ -31,7 +31,7 @@ INLINE void HuC6280::OPCodes_ADC(u8 value)
 
 #if !defined(GG_TESTING)
     u16 address = 0;
-    if (IsSetFlag(FLAG_TRANSFER))
+    if (m_transfer_flag)
     {
         address = ZeroPageX();
         a = m_memory->Read(address);
@@ -81,7 +81,7 @@ INLINE void HuC6280::OPCodes_ADC(u8 value)
     }
 
 #if !defined(GG_TESTING)
-    if (IsSetFlag(FLAG_TRANSFER))
+    if (m_transfer_flag)
         m_memory->Write(address, final_result);
     else
 #endif
@@ -92,7 +92,7 @@ INLINE void HuC6280::OPCodes_AND(u8 value)
 {
     u8 result;
 #if !defined(GG_TESTING)
-    if (IsSetFlag(FLAG_TRANSFER))
+    if (m_transfer_flag)
     {
         u16 address = ZeroPageX();
         u8 a = m_memory->Read(address);
@@ -172,16 +172,12 @@ INLINE void HuC6280::OPCodes_BRK()
 {
     u16 pc = m_PC.GetValue();
     StackPush16(pc + 1);
-
-#if !defined(GG_TESTING)
-    ClearFlag(FLAG_TRANSFER);
-#endif
-
     StackPush8(m_P.GetValue() | FLAG_BREAK);
-    ClearFlag(FLAG_DECIMAL);
     SetFlag(FLAG_INTERRUPT);
+    ClearFlag(FLAG_DECIMAL | FLAG_TRANSFER);
 
 #if defined(GG_TESTING)
+    SetFlag(FLAG_TRANSFER); 
     m_PC.SetLow(m_memory->Read(0xFFFE));
     m_PC.SetHigh(m_memory->Read(0xFFFF));
 #else
@@ -239,7 +235,7 @@ INLINE void HuC6280::OPCodes_EOR(u8 value)
 {
     u8 result;
 #if !defined(GG_TESTING)
-    if (IsSetFlag(FLAG_TRANSFER))
+    if (m_transfer_flag)
     {
         u16 address = ZeroPageX();
         u8 a = m_memory->Read(address);
@@ -305,7 +301,7 @@ INLINE void HuC6280::OPCodes_ORA(u8 value)
     u8 result;
 
 #if !defined(GG_TESTING)
-    if (IsSetFlag(FLAG_TRANSFER))
+    if (m_transfer_flag)
     {
         u16 address = ZeroPageX();
         u8 a = m_memory->Read(address);

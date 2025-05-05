@@ -31,20 +31,16 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_memory_breakpoint_hit = false;
 #endif
-    m_skip_flag_transfer_clear = false;
 
+    m_transfer_flag = IsSetFlag(FLAG_TRANSFER);
+#if !defined(GG_TESTING)
+    ClearFlag(FLAG_TRANSFER);
+#endif
     m_cycles = 0;
 
     u8 opcode = Fetch8();
     CheckIRQs();
     (this->*m_opcodes[opcode])();
-
-#if defined(GG_TESTING)
-    SetFlag(FLAG_TRANSFER);
-#else
-    if (!m_skip_flag_transfer_clear)
-        ClearFlag(FLAG_TRANSFER);
-#endif
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_last_instruction_cycles = m_cycles;
@@ -256,6 +252,15 @@ INLINE bool HuC6280::IsSetFlag(u8 flag)
 INLINE bool HuC6280::IsNotSetFlag(u8 flag)
 {
     return (m_P.GetValue() & flag) == 0;
+}
+
+INLINE void HuC6280::SetP(u8 value)
+{
+#if defined(GG_TESTING)
+    m_P.SetValue((value & 0xEF) | FLAG_TRANSFER);
+#else
+    m_P.SetValue(value & 0xEF);
+#endif
 }
 
 INLINE void HuC6280::StackPush16(u16 value)
