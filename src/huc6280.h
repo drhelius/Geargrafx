@@ -179,9 +179,6 @@ private:
     void PushCallStack(u16 src, u16 dest, u16 back);
     void PopCallStack();
 
-    u8 MemoryRead(u16 address, bool block_transfer = false);
-    void MemoryWrite(u16 address, u8 value, bool block_transfer = false);
-
     u8 Fetch8();
     u16 Fetch16();
     u16 Address16(u8 high, u8 low);

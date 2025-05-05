@@ -66,7 +66,7 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
     return m_cycles * k_huc6280_speed_divisor[m_speed];
 }
 
-INLINE void HuC6280::HandleIRQ()
+inline void HuC6280::HandleIRQ()
 {
     u16 vector = 0;
 
@@ -88,8 +88,8 @@ INLINE void HuC6280::HandleIRQ()
     SetFlag(FLAG_INTERRUPT);
     ClearFlag(FLAG_DECIMAL | FLAG_TRANSFER);
 
-    m_PC.SetLow(MemoryRead(vector));
-    m_PC.SetHigh(MemoryRead(vector + 1));
+    m_PC.SetLow(m_memory->Read(vector));
+    m_PC.SetHigh(m_memory->Read(vector + 1));
 
     m_cycles += 8;
 
@@ -126,16 +126,6 @@ INLINE void HuC6280::AssertIRQ2(bool asserted)
 INLINE void HuC6280::InjectCycles(unsigned int cycles)
 {
     m_cycles += cycles;
-}
-
-INLINE u8 HuC6280::MemoryRead(u16 address, bool block_transfer)
-{
-    return m_memory->Read(address, block_transfer);
-}
-
-INLINE void HuC6280::MemoryWrite(u16 address, u8 value, bool block_transfer)
-{
-    m_memory->Write(address, value, block_transfer);
 }
 
 INLINE u8 HuC6280:: ReadInterruptRegister(u16 address)
@@ -203,7 +193,7 @@ INLINE void HuC6280::WriteTimerRegister(u16 address, u8 value)
 
 INLINE u8 HuC6280::Fetch8()
 {
-    u8 value = MemoryRead(m_PC.GetValue());
+    u8 value = m_memory->Read(m_PC.GetValue());
     m_PC.Increment();
     return value;
 }
@@ -211,8 +201,8 @@ INLINE u8 HuC6280::Fetch8()
 INLINE u16 HuC6280::Fetch16()
 {
     u16 pc = m_PC.GetValue();
-    u8 l = MemoryRead(pc);
-    u8 h = MemoryRead(pc + 1);
+    u8 l = m_memory->Read(pc);
+    u8 h = m_memory->Read(pc + 1);
     m_PC.SetValue(pc + 2);
     return Address16(h , l);
 }
@@ -265,31 +255,31 @@ INLINE bool HuC6280::IsSetFlag(u8 flag)
 
 INLINE void HuC6280::StackPush16(u16 value)
 {
-    MemoryWrite(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value >> 8));
+    m_memory->Write(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value >> 8));
     m_S.Decrement();
-    MemoryWrite(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value & 0x00FF));
+    m_memory->Write(STACK_ADDR | m_S.GetValue(), static_cast<u8>(value & 0x00FF));
     m_S.Decrement();
 }
 
 INLINE void HuC6280::StackPush8(u8 value)
 {
-    MemoryWrite(STACK_ADDR | m_S.GetValue(), value);
+    m_memory->Write(STACK_ADDR | m_S.GetValue(), value);
     m_S.Decrement();
 }
 
 INLINE u16 HuC6280::StackPop16()
 {
     m_S.Increment();
-    u8 l = MemoryRead(STACK_ADDR | m_S.GetValue());
+    u8 l = m_memory->Read(STACK_ADDR | m_S.GetValue());
     m_S.Increment();
-    u8 h = MemoryRead(STACK_ADDR | m_S.GetValue());
+    u8 h = m_memory->Read(STACK_ADDR | m_S.GetValue());
     return Address16(h , l);
 }
 
 INLINE u8 HuC6280::StackPop8()
 {
     m_S.Increment();
-    return MemoryRead(STACK_ADDR | m_S.GetValue());
+    return m_memory->Read(STACK_ADDR | m_S.GetValue());
 }
 
 INLINE u8 HuC6280::ImmediateAddressing()
@@ -317,24 +307,24 @@ INLINE u16 HuC6280::ZeroPageRelativeAddressing()
 INLINE u16 HuC6280::ZeroPageIndirectAddressing()
 {
     u16 address = ZeroPageAddressing();
-    u8 l = MemoryRead(address);
-    u8 h = MemoryRead((address + 1) & 0x20FF);
+    u8 l = m_memory->Read(address);
+    u8 h = m_memory->Read((address + 1) & 0x20FF);
     return Address16(h, l);
 }
 
 INLINE u16 HuC6280::ZeroPageIndexedIndirectAddressing()
 {
     u16 address = (ZeroPageAddressing() + m_X.GetValue()) & 0x20FF;
-    u8 l = MemoryRead(address);
-    u8 h = MemoryRead((address + 1) & 0x20FF);
+    u8 l = m_memory->Read(address);
+    u8 h = m_memory->Read((address + 1) & 0x20FF);
     return Address16(h, l);
 }
 
 INLINE u16 HuC6280::ZeroPageIndirectIndexedAddressing()
 {
     u16 address = ZeroPageAddressing();
-    u8 l = MemoryRead(address);
-    u8 h = MemoryRead((address + 1) & 0x20FF);
+    u8 l = m_memory->Read(address);
+    u8 h = m_memory->Read((address + 1) & 0x20FF);
     return Address16(h, l) + m_Y.GetValue();
 }
 
@@ -358,16 +348,16 @@ INLINE u16 HuC6280::AbsoluteAddressing(EightBitRegister* reg)
 INLINE u16 HuC6280::AbsoluteIndirectAddressing()
 {
     u16 address = Fetch16();
-    u8 l = MemoryRead(address);
-    u8 h = MemoryRead(address + 1);
+    u8 l = m_memory->Read(address);
+    u8 h = m_memory->Read(address + 1);
     return Address16(h, l);
 }
 
 INLINE u16 HuC6280::AbsoluteIndexedIndirectAddressing()
 {
     u16 address = Fetch16() + m_X.GetValue();
-    u8 l = MemoryRead(address);
-    u8 h = MemoryRead(address + 1);
+    u8 l = m_memory->Read(address);
+    u8 h = m_memory->Read(address + 1);
     return Address16(h, l);
 }
 
