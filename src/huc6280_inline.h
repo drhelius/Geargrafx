@@ -28,9 +28,6 @@
 
 INLINE bool HuC6280::Clock()
 {
-    if (m_clock % 3 == 0)
-        ClockTimer();
-
     bool instruction_completed = false;
 
     if (m_clock % k_huc6280_speed_divisor[m_speed] == 0)
@@ -43,6 +40,9 @@ INLINE bool HuC6280::Clock()
         m_clock_cycles--;
         instruction_completed = ((m_clock_cycles == 0) && (m_transfer_state == 0));
     }
+
+    if (m_clock % 3 == 0)
+        ClockTimer();
 
     m_clock = (m_clock + 1) % 12;
 
