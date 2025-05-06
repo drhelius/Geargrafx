@@ -308,8 +308,10 @@ void GeargrafxCore::SaveRam(const char* path, bool full_path)
         {
             final_path = path;
             if (!full_path)
+            {
                 final_path += "/";
                 final_path += m_cartridge->GetFileName();
+            }
         }
         else
             final_path = m_cartridge->GetFilePath();
@@ -343,8 +345,10 @@ void GeargrafxCore::LoadRam(const char* path, bool full_path)
         {
             final_path = path;
             if (!full_path)
+            {
                 final_path += "/";
                 final_path += m_cartridge->GetFileName();
+            }
         }
         else
             final_path = m_cartridge->GetFilePath();
