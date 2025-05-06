@@ -311,12 +311,12 @@ void HuC6280PSG::Sync()
 
                     s16 lfo_data = m_lfo_src->wave_data[m_lfo_src->wave_index];
                     freq += ((lfo_data - 16) << (((m_lfo_control & 3) - 1) << 1));
+                    freq = MAX(freq, 1);
                 }
 
                 int dest_counter_new = m_lfo_dest->counter - batch_size;
                 if (dest_counter_new <= 0)
                 {
-                    assert(freq > 0);
                     int dest_steps = 1 + ((-dest_counter_new) / freq);
                     m_lfo_dest->counter = dest_counter_new + (dest_steps * freq);
 
