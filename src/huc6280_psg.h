@@ -65,7 +65,7 @@ public:
         HuC6280PSG_Channel* CHANNELS;
         u8* CHANNEL_SELECT;
         u8* MAIN_AMPLITUDE;
-        u8* LFO_FREQUENCY;
+        u16* LFO_FREQUENCY;
         u8* LFO_CONTROL;
         s32* BUFFER_INDEX;
         s32* FRAME_SAMPLES;
@@ -98,7 +98,7 @@ private:
     u8 m_main_vol_left;
     u8 m_main_vol_right;
     u8 m_lfo_enabled;
-    u8 m_lfo_frequency;
+    u16 m_lfo_frequency;
     u8 m_lfo_control;
     s32 m_elapsed_cycles;
     s32 m_sample_cycle_counter;
