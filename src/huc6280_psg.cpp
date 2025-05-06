@@ -18,6 +18,7 @@
  */
 
 #include <math.h>
+#include <assert.h>
 #include <algorithm>
 #include "huc6280_psg.h"
 
@@ -85,7 +86,7 @@ void HuC6280PSG::Reset()
         m_channels[i].wave_index = 0;
         m_channels[i].noise_control = 0;
         m_channels[i].noise_enabled = 0;
-        m_channels[i].noise_freq = 0;
+        m_channels[i].noise_freq = 0x1F << 6;
         m_channels[i].noise_seed = 1;
         m_channels[i].noise_counter = 0;
         m_channels[i].counter = 0;
@@ -193,12 +194,16 @@ void HuC6280PSG::Write(u16 address, u8 value)
         {
             m_ch->noise_control = value;
             m_ch->noise_enabled = IS_SET_BIT(value, 7);
-            m_ch->noise_freq = ((value & 0x1F) ^ 0x1F) << 6;
+            u8 freq = value & 0x1F;
+            if (freq == 0x1F)
+                m_ch->noise_freq = 32;
+            else
+                m_ch->noise_freq = ((~freq) & 0x1F) << 6;
         }
         break;
     // LFO frequency
     case 8:
-        m_lfo_frequency = value;
+        m_lfo_frequency = value ? value : 0x100;
 
         if (IS_SET_BIT(value, 7))
         {
@@ -311,6 +316,7 @@ void HuC6280PSG::Sync()
                 int dest_counter_new = m_lfo_dest->counter - batch_size;
                 if (dest_counter_new <= 0)
                 {
+                    assert(freq > 0);
                     int dest_steps = 1 + ((-dest_counter_new) / freq);
                     m_lfo_dest->counter = dest_counter_new + (dest_steps * freq);
 
