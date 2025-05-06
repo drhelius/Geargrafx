@@ -19,17 +19,17 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 ## Downloads
 
 - **Windows**:
-  - [Geargrafx-1.2.0-windows-x64.zip](https://github.com/drhelius/Geargrafx/releases/download/1.2.0/Geargrafx-1.2.0-windows-x64.zip)
-  - [Geargrafx-1.2.0-windows-arm64.zip](https://github.com/drhelius/Geargrafx/releases/download/1.2.0/Geargrafx-1.2.0-windows-arm64.zip)
+  - [Geargrafx-1.3.0-windows-x64.zip](https://github.com/drhelius/Geargrafx/releases/download/1.3.0/Geargrafx-1.3.0-windows-x64.zip)
+  - [Geargrafx-1.3.0-windows-arm64.zip](https://github.com/drhelius/Geargrafx/releases/download/1.3.0/Geargrafx-1.3.0-windows-arm64.zip)
   - NOTE: If you have errors you may need to install:
     - [Microsoft Visual C++ Redistributable](https://go.microsoft.com/fwlink/?LinkId=746572)
     - [OpenGL Compatibility Pack](https://apps.microsoft.com/detail/9nqpsl29bfff)
 - **macOS**:
-  - [Geargrafx-1.2.0-macos-arm.zip](https://github.com/drhelius/Geargrafx/releases/download/1.2.0/Geargrafx-1.2.0-macos-arm.zip)
-  - [Geargrafx-1.2.0-macos-intel.zip](https://github.com/drhelius/Geargrafx/releases/download/1.2.0/Geargrafx-1.2.0-macos-intel.zip)
+  - [Geargrafx-1.3.0-macos-arm.zip](https://github.com/drhelius/Geargrafx/releases/download/1.3.0/Geargrafx-1.3.0-macos-arm.zip)
+  - [Geargrafx-1.3.0-macos-intel.zip](https://github.com/drhelius/Geargrafx/releases/download/1.3.0/Geargrafx-1.3.0-macos-intel.zip)
 - **Linux**:
-  - [Geargrafx-1.2.0-ubuntu-24.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.2.0/Geargrafx-1.2.0-ubuntu-24.04.zip)
-  - [Geargrafx-1.2.0-ubuntu-22.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.2.0/Geargrafx-1.2.0-ubuntu-22.04.zip)
+  - [Geargrafx-1.3.0-ubuntu-24.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.3.0/Geargrafx-1.3.0-ubuntu-24.04.zip)
+  - [Geargrafx-1.3.0-ubuntu-22.04.zip](https://github.com/drhelius/Geargrafx/releases/download/1.3.0/Geargrafx-1.3.0-ubuntu-22.04.zip)
   - NOTE: You may need to install `libsdl2` and `libglew`
 - **RetroArch**: [Libretro core documentation](https://docs.libretro.com/library/geargrafx/)
 - **Dev Builds**: [GitHub Actions](https://github.com/drhelius/Geargrafx/actions/workflows/geargrafx.yml)
