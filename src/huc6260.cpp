@@ -172,9 +172,15 @@ void HuC6260::Reset()
     for (int i = 0; i < 512; i++)
     {
         if (m_reset_value < 0)
-            m_color_table[i] = rand() & 0x1FF;
+        {
+            bool random = (rand() & 0x1);
+            u16 and_value = random ? 0x1D0 : 0x1F1;
+            u16 or_value = random ? 0x1C0 : 0x1FC;
+            m_color_table[i] = (((rand() & and_value) ) | or_value);
+            m_color_table[i] = MIN(m_color_table[i] + ((i & 0xFF) >> 2), 0x1FF);
+        }
         else
-            m_color_table[i] = m_reset_value & 0x1FF;
+            m_color_table[i] = m_reset_value | 0x1FF;
     }
 
     CalculateScreenBounds();
