@@ -728,6 +728,28 @@ static void menu_debug(void)
 
         if (ImGui::BeginMenu("Reset Values", config_debug.debug))
         {
+            if (ImGui::BeginMenu("CPU Registers"))
+            {
+                ImGui::PushItemWidth(100.0f);
+                if (ImGui::Combo("##init_registers", &config_debug.reset_registers, "Random\0 0x00\0 0xFF\0\0"))
+                {
+                    emu_set_huc6280_registers_reset_value(get_reset_value(config_debug.reset_registers));
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("MPRs"))
+            {
+                ImGui::PushItemWidth(100.0f);
+                if (ImGui::Combo("##init_mpr", &config_debug.reset_mpr, "Random\0 0x00\0 0xFF\0\0"))
+                {
+                    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
             if (ImGui::BeginMenu("RAM"))
             {
                 ImGui::PushItemWidth(100.0f);
@@ -750,34 +772,12 @@ static void menu_debug(void)
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("Registers"))
-            {
-                ImGui::PushItemWidth(100.0f);
-                if (ImGui::Combo("##init_registers", &config_debug.reset_registers, "Random\0 0x00\0 0xFF\0\0"))
-                {
-                    emu_set_huc6280_registers_reset_value(get_reset_value(config_debug.reset_registers));
-                }
-                ImGui::PopItemWidth();
-                ImGui::EndMenu();
-            }
-
             if (ImGui::BeginMenu("Palettes"))
             {
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_color_table", &config_debug.reset_color_table, "Random\0 0x0000\0 0x01FF\0\0"))
                 {
                     emu_set_huc6260_color_table_reset_value(get_reset_value(config_debug.reset_color_table));
-                }
-                ImGui::PopItemWidth();
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("MPRs"))
-            {
-                ImGui::PushItemWidth(100.0f);
-                if (ImGui::Combo("##init_mpr", &config_debug.reset_mpr, "Random\0 0x00\0 0xFF\0\0"))
-                {
-                    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();

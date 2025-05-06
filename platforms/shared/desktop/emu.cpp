@@ -400,7 +400,7 @@ void emu_set_memory_reset_values(int mpr, int wram, int card_ram)
 
 void emu_set_huc6260_color_table_reset_value(int value)
 {
-    geargrafx->GetHuC6280()->SetResetValue(value);
+    geargrafx->GetHuC6260()->SetResetValue(value);
 }
 
 void emu_set_huc6280_registers_reset_value(int value)
