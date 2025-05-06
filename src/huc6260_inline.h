@@ -55,7 +55,7 @@ INLINE bool HuC6260::Clock(u32 cycles)
 
         if ((m_hpos % m_clock_divider) == 0)
         {
-            u32 pixel = m_huc6270->Clock();
+            u16 pixel = m_huc6270->Clock();
 
             m_pixel_x++;
             if (m_pixel_x == k_huc6260_full_line_width[m_speed])
@@ -64,17 +64,11 @@ INLINE bool HuC6260::Clock(u32 cycles)
             if (m_active_line && (m_pixel_x >= m_screen_start_x) && (m_pixel_x < m_screen_end_x))
             {
                 if ((pixel & 0x10F) == 0)
-                    pixel &= 0x10000;
+                    pixel = 0;
 
-                u16 color;
-                if ((pixel & 0x10000) == 0)
-                {
-                    assert(pixel < 512);
-                    color = m_color_table[pixel];
-                    assert(color < 512);
-                }
-                else
-                    color = 0;
+                assert(pixel < 512);
+                u16 color = m_color_table[pixel];
+                assert(color < 512);
 
                 m_vce_buffer[m_pixel_index] = color;
                 m_pixel_index++;

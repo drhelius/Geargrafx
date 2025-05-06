@@ -24,7 +24,7 @@
 #include "huc6260.h"
 #include "huc6280.h"
 
-INLINE u32 HuC6270::Clock()
+INLINE u16 HuC6270::Clock()
 {
     if (m_sat_transfer_pending > 0)
         SATTransfer();
@@ -40,8 +40,7 @@ INLINE u32 HuC6270::Clock()
     if (m_clocks_to_next_event > 0)
         LineEvents();
 
-    //u32 pixel = 0x10000;
-    u32 pixel = 0x100;
+    u16 pixel = 0x100;
 
     if (m_active_line && (m_h_state == HuC6270_HORIZONTAL_STATE_HDW))
     {
