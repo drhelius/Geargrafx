@@ -47,7 +47,7 @@ void gui_debug_memory_reset(void)
     Memory* memory = core->GetMemory();
     Cartridge* cart = core->GetCartridge();
     HuC6260* huc6260 = core->GetHuC6260();
-    HuC6270* huc6270 = core->GetHuC6270();
+    HuC6270* huc6270 = core->GetHuC6270_1();
 
     mem_edit[0].Reset("RAM", memory->GetWorkingRAM(), 0x2000);
     mem_edit[1].Reset("ZERO PAGE", memory->GetWorkingRAM(), 0x100);

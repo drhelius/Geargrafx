@@ -20,8 +20,9 @@
 #ifndef HUC6260_INLINE_H
 #define HUC6260_INLINE_H
 
+#include <assert.h>
 #include "huc6260.h"
-#include "huc6270.h"
+#include "huc6202.h"
 #include "huc6280.h"
 
 INLINE bool HuC6260::Clock(u32 cycles)
@@ -55,7 +56,7 @@ INLINE bool HuC6260::Clock(u32 cycles)
 
         if ((m_hpos % m_clock_divider) == 0)
         {
-            u16 pixel = m_huc6270->Clock();
+            u16 pixel = m_huc6202->Clock();
 
             m_pixel_x++;
             if (m_pixel_x == k_huc6260_full_line_width[m_speed])
@@ -85,13 +86,13 @@ INLINE bool HuC6260::Clock(u32 cycles)
         if (m_hpos == HUC6260_HSYNC_END_HPOS)
         {
             m_hsync = true;
-            m_huc6270->SetHSyncHigh();
+            m_huc6202->SetHSyncHigh();
 
             // Start of vertical sync
             if (m_vpos == (k_huc6260_total_lines[m_blur] - 4))
             {
                 m_vsync = false;
-                m_huc6270->SetVSyncLow();
+                m_huc6202->SetVSyncLow();
             }
             // End of vertical sync
             else if (m_vpos == (k_huc6260_total_lines[m_blur] - 1))

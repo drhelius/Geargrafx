@@ -24,6 +24,7 @@
 #include "huc6280.h"
 #include "huc6280_timing.h"
 #include "huc6280_names.h"
+#include "huc6270.h"
 #include "memory.h"
 
 INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)

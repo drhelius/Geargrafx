@@ -372,6 +372,9 @@
     <ClInclude Include="..\..\src\huc6202.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\huc6202_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

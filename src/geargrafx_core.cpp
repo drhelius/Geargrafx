@@ -39,7 +39,8 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_memory);
     InitPointer(m_huc6202);
     InitPointer(m_huc6260);
-    InitPointer(m_huc6270);
+    InitPointer(m_huc6270_1);
+    InitPointer(m_huc6270_2);
     InitPointer(m_huc6280);
     InitPointer(m_audio);
     InitPointer(m_input);
@@ -54,7 +55,8 @@ GeargrafxCore::~GeargrafxCore()
     SafeDelete(m_input);
     SafeDelete(m_audio);
     SafeDelete(m_huc6280);
-    SafeDelete(m_huc6270);
+    SafeDelete(m_huc6270_1);
+    SafeDelete(m_huc6270_2);
     SafeDelete(m_huc6260);
     SafeDelete(m_huc6202);
     SafeDelete(m_memory);
@@ -68,18 +70,20 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 
     m_cartridge = new Cartridge();
     m_huc6280 = new HuC6280();
-    m_huc6270 = new HuC6270(m_huc6280);
-    m_huc6260 = new HuC6260(m_huc6270, m_huc6280);
-    m_huc6202 = new HuC6202();
+    m_huc6270_1 = new HuC6270(m_huc6280);
+    m_huc6270_2 = new HuC6270(m_huc6280);
+    m_huc6202 = new HuC6202(m_huc6270_1, m_huc6270_2);
+    m_huc6260 = new HuC6260(m_huc6202, m_huc6280);
     m_input = new Input();
     m_audio = new Audio();
-    m_memory = new Memory(m_huc6260, m_huc6270, m_huc6280, m_cartridge, m_input, m_audio);
+    m_memory = new Memory(m_huc6260, m_huc6270_1, m_huc6280, m_cartridge, m_input, m_audio);
 
     m_cartridge->Init();
     m_memory->Init();
     m_huc6260->Init(pixel_format);
-    m_huc6270->Init(m_huc6260);
-    m_huc6280->Init(m_memory, m_huc6270);
+    m_huc6270_1->Init(m_huc6260);
+    m_huc6270_2->Init(m_huc6260);
+    m_huc6280->Init(m_memory, m_huc6270_1);
     m_huc6202->Init();
     m_audio->Init();
     m_input->Init();
@@ -219,9 +223,14 @@ HuC6260* GeargrafxCore::GetHuC6260()
     return m_huc6260;
 }
 
-HuC6270* GeargrafxCore::GetHuC6270()
+HuC6270* GeargrafxCore::GetHuC6270_1()
 {
-    return m_huc6270;
+    return m_huc6270_1;
+}
+
+HuC6270* GeargrafxCore::GetHuC6270_2()
+{
+    return m_huc6270_2;
 }
 
 HuC6280* GeargrafxCore::GetHuC6280()
@@ -492,7 +501,8 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     m_memory->SaveState(stream);
     m_huc6202->SaveState(stream);
     m_huc6260->SaveState(stream);
-    m_huc6270->SaveState(stream);
+    m_huc6270_1->SaveState(stream);
+    m_huc6270_2->SaveState(stream);
     m_huc6280->SaveState(stream);
     m_audio->SaveState(stream);
     m_input->SaveState(stream);
@@ -662,7 +672,8 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     m_memory->LoadState(stream);
     m_huc6202->LoadState(stream);
     m_huc6260->LoadState(stream);
-    m_huc6270->LoadState(stream);
+    m_huc6270_1->LoadState(stream);
+    m_huc6270_2->LoadState(stream);
     m_huc6280->LoadState(stream);
     m_audio->LoadState(stream);
     m_input->LoadState(stream);
@@ -773,9 +784,10 @@ void GeargrafxCore::Reset()
 {
     m_paused = false;
     m_memory->Reset();
-    m_huc6202->Reset();
+    m_huc6202->Reset(m_cartridge->IsSGX());
     m_huc6260->Reset();
-    m_huc6270->Reset();
+    m_huc6270_1->Reset();
+    m_huc6270_2->Reset();
     m_huc6280->Reset();
     m_audio->Reset();
     m_input->Reset();

@@ -86,7 +86,8 @@ public:
     Cartridge* GetCartridge();
     HuC6202* GetHuC6202();
     HuC6260* GetHuC6260();
-    HuC6270* GetHuC6270();
+    HuC6270* GetHuC6270_1();
+    HuC6270* GetHuC6270_2();
     HuC6280* GetHuC6280();
     Audio* GetAudio();
     Input* GetInput();
@@ -102,7 +103,8 @@ private:
     Memory* m_memory;
     HuC6202* m_huc6202;
     HuC6260* m_huc6260;
-    HuC6270* m_huc6270;
+    HuC6270* m_huc6270_1;
+    HuC6270* m_huc6270_2;
     HuC6280* m_huc6280;
     Audio* m_audio;
     Input* m_input;

@@ -39,7 +39,7 @@
     #define GG_DEBUG 1
 #endif
 
-#define GG_SAVESTATE_VERSION 16
+#define GG_SAVESTATE_VERSION 17
 #define GG_SAVESTATE_MAGIC 0x82190619
 
 #if !defined(NULL)

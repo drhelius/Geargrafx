@@ -31,7 +31,7 @@
 #define HUC6260_HSYNC_END_HPOS 0
 #define HUC6260_VSYNC_HPOS (HUC6260_HSYNC_START_HPOS + 30)
 
-class HuC6270;
+class HuC6202;
 class HuC6280;
 
 class HuC6260
@@ -55,7 +55,7 @@ public:
     };
 
 public:
-    HuC6260(HuC6270* huc6270, HuC6280* huc6280);
+    HuC6260(HuC6202* huc6202, HuC6280* huc6280);
     ~HuC6260();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     void Reset();
@@ -89,7 +89,7 @@ private:
     void CalculateScreenBounds();
 
 private:
-    HuC6270* m_huc6270;
+    HuC6202* m_huc6202;
     HuC6280* m_huc6280;
     HuC6260_State m_state;
     u8 m_control_register;

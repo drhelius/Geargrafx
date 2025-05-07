@@ -379,7 +379,8 @@ void emu_set_composite_palette(bool enabled)
 
 void emu_video_no_sprite_limit(bool enabled)
 {
-    geargrafx->GetHuC6270()->SetNoSpriteLimit(enabled);
+    geargrafx->GetHuC6270_1()->SetNoSpriteLimit(enabled);
+    geargrafx->GetHuC6270_2()->SetNoSpriteLimit(enabled);
 }
 
 void emu_set_overscan(int overscan)
@@ -523,7 +524,7 @@ static void update_debug(void)
 static void update_debug_background(void)
 {
     HuC6260* huc6260 = geargrafx->GetHuC6260();
-    HuC6270* huc6270 = geargrafx->GetHuC6270();
+    HuC6270* huc6270 = geargrafx->GetHuC6270_1();
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     u16* vram = huc6270->GetVRAM();
     int screen_reg = (huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07;
@@ -579,7 +580,7 @@ static void update_debug_background(void)
 static void update_debug_sprites(void)
 {
     HuC6260* huc6260 = geargrafx->GetHuC6260();
-    HuC6270* huc6270 = geargrafx->GetHuC6270();
+    HuC6270* huc6270 = geargrafx->GetHuC6270_1();
     u16* vram = huc6270->GetVRAM();
     u16* sat = huc6270->GetSAT();
     u16* color_table = huc6260->GetColorTable();

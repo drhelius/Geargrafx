@@ -41,7 +41,7 @@ void gui_debug_window_huc6270_info(void)
 
     GeargrafxCore* core = emu_get_core();
     HuC6260* huc6260 = core->GetHuC6260();
-    HuC6270* huc6270 = core->GetHuC6270();
+    HuC6270* huc6270 = core->GetHuC6270_1();
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
 
     ImGui::TextColored(violet, "SPEED   "); ImGui::SameLine();
@@ -176,7 +176,7 @@ void gui_debug_window_huc6270_registers(void)
     ImGui::PushFont(gui_default_font);
 
     GeargrafxCore* core = emu_get_core();
-    HuC6270* huc6270 = core->GetHuC6270();
+    HuC6270* huc6270 = core->GetHuC6270_1();
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
 
     ImGui::TextColored(magenta, "ADDRESS"); ImGui::SameLine();
@@ -222,7 +222,7 @@ void gui_debug_window_huc6270_background(void)
     ImGui::Begin("HuC6270 Background", &config_debug.show_huc6270_background);
 
     GeargrafxCore* core = emu_get_core();
-    HuC6270* huc6270 = core->GetHuC6270();
+    HuC6270* huc6270 = core->GetHuC6270_1();
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     u16* vram = huc6270->GetVRAM();
     int screen_reg = (huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07;
@@ -381,7 +381,7 @@ void gui_debug_window_huc6270_sprites(void)
     ImGuiIO& io = ImGui::GetIO();
 
     GeargrafxCore* core = emu_get_core();
-    HuC6270* huc6270 = core->GetHuC6270();
+    HuC6270* huc6270 = core->GetHuC6270_1();
     u16* sat = huc6270->GetSAT();
     GG_Runtime_Info runtime;
     emu_get_runtime(runtime);
