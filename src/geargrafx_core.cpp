@@ -27,6 +27,7 @@
 #include "common.h"
 #include "cartridge.h"
 #include "memory.h"
+#include "huc6202.h"
 #include "huc6260.h"
 #include "huc6270.h"
 #include "huc6280.h"
@@ -36,6 +37,7 @@
 GeargrafxCore::GeargrafxCore()
 {
     InitPointer(m_memory);
+    InitPointer(m_huc6202);
     InitPointer(m_huc6260);
     InitPointer(m_huc6270);
     InitPointer(m_huc6280);
@@ -54,6 +56,7 @@ GeargrafxCore::~GeargrafxCore()
     SafeDelete(m_huc6280);
     SafeDelete(m_huc6270);
     SafeDelete(m_huc6260);
+    SafeDelete(m_huc6202);
     SafeDelete(m_memory);
 }
 
@@ -67,6 +70,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_huc6280 = new HuC6280();
     m_huc6270 = new HuC6270(m_huc6280);
     m_huc6260 = new HuC6260(m_huc6270, m_huc6280);
+    m_huc6202 = new HuC6202();
     m_input = new Input();
     m_audio = new Audio();
     m_memory = new Memory(m_huc6260, m_huc6270, m_huc6280, m_cartridge, m_input, m_audio);
@@ -76,6 +80,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_huc6260->Init(pixel_format);
     m_huc6270->Init(m_huc6260);
     m_huc6280->Init(m_memory, m_huc6270);
+    m_huc6202->Init();
     m_audio->Init();
     m_input->Init();
 }
@@ -202,6 +207,11 @@ Memory* GeargrafxCore::GetMemory()
 Cartridge* GeargrafxCore::GetCartridge()
 {
     return m_cartridge;
+}
+
+HuC6202* GeargrafxCore::GetHuC6202()
+{
+    return m_huc6202;
 }
 
 HuC6260* GeargrafxCore::GetHuC6260()
@@ -480,6 +490,7 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     Debug("Serializing save state...");
 
     m_memory->SaveState(stream);
+    m_huc6202->SaveState(stream);
     m_huc6260->SaveState(stream);
     m_huc6270->SaveState(stream);
     m_huc6280->SaveState(stream);
@@ -649,6 +660,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     Debug("Unserializing save state...");
 
     m_memory->LoadState(stream);
+    m_huc6202->LoadState(stream);
     m_huc6260->LoadState(stream);
     m_huc6270->LoadState(stream);
     m_huc6280->LoadState(stream);
@@ -761,6 +773,7 @@ void GeargrafxCore::Reset()
 {
     m_paused = false;
     m_memory->Reset();
+    m_huc6202->Reset();
     m_huc6260->Reset();
     m_huc6270->Reset();
     m_huc6280->Reset();

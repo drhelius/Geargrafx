@@ -23,6 +23,7 @@
     <ClCompile Include="..\..\src\audio.cpp" />
     <ClCompile Include="..\..\src\cartridge.cpp" />
     <ClCompile Include="..\..\src\geargrafx_core.cpp" />
+    <ClCompile Include="..\..\src\huc6202.cpp" />
     <ClCompile Include="..\..\src\huc6260.cpp" />
     <ClCompile Include="..\..\src\huc6270.cpp" />
     <ClCompile Include="..\..\src\huc6280_functors.cpp" />
@@ -83,6 +84,7 @@
     <ClInclude Include="..\..\src\mapper.h" />
     <ClInclude Include="..\..\src\memory_inline.h" />
     <ClInclude Include="..\..\src\memory.h" />
+    <ClInclude Include="..\..\src\huc6202.h" />
     <ClInclude Include="..\..\src\huc6260_inline.h" />
     <ClInclude Include="..\..\src\huc6260.h" />
     <ClInclude Include="..\..\src\huc6270_defines.h" />

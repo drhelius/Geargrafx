@@ -29,6 +29,7 @@ class Input;
 class HuC6260;
 class HuC6270;
 class HuC6280;
+class HuC6202;
 class Memory;
 class Cartridge;
 
@@ -83,6 +84,7 @@ public:
     bool GetRuntimeInfo(GG_Runtime_Info& runtime_info);
     Memory* GetMemory();
     Cartridge* GetCartridge();
+    HuC6202* GetHuC6202();
     HuC6260* GetHuC6260();
     HuC6270* GetHuC6270();
     HuC6280* GetHuC6280();
@@ -98,6 +100,7 @@ private:
 
 private:
     Memory* m_memory;
+    HuC6202* m_huc6202;
     HuC6260* m_huc6260;
     HuC6270* m_huc6270;
     HuC6280* m_huc6280;

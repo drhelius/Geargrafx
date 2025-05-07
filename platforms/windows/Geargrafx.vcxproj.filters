@@ -139,6 +139,9 @@
     <ClCompile Include="..\..\src\miniz\miniz.c">
       <Filter>src\miniz</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\huc6202.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\shared\desktop\application.h">
@@ -364,6 +367,9 @@
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\huc6280_names.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\huc6202.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

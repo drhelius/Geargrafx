@@ -4,6 +4,7 @@ SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
                 $(SOURCE_DIR)/audio.cpp \
                 $(SOURCE_DIR)/cartridge.cpp \
                 $(SOURCE_DIR)/geargrafx_core.cpp \
+                $(SOURCE_DIR)/huc6202.cpp \
                 $(SOURCE_DIR)/huc6260.cpp \
                 $(SOURCE_DIR)/huc6270.cpp \
                 $(SOURCE_DIR)/huc6280_functors.cpp \
