@@ -20,11 +20,19 @@
 #include "huc6202.h"
 #include "huc6270.h"
 
-HuC6202::HuC6202(HuC6270* huc6270_1, HuC6270* huc6270_2)
+HuC6202::HuC6202(HuC6270* huc6270_1, HuC6270* huc6270_2, HuC6280* huc6280)
 {
+    m_huc6280 = huc6280;
     m_huc6270_1 = huc6270_1;
     m_huc6270_2 = huc6270_2;
     m_is_sgx = false;
+    m_priority_1 = 0;
+    m_priority_2 = 0;
+    m_window_1 = 0;
+    m_window_2 = 0;
+    m_vdc2_selected = false;
+    m_irq1_1 = false;
+    m_irq1_2 = false;
 }
 
 HuC6202::~HuC6202()
@@ -34,110 +42,41 @@ HuC6202::~HuC6202()
 
 void HuC6202::Init()
 {
-
+    Reset(false);
 }
 
 void HuC6202::Reset(bool is_sgx)
 {
     m_is_sgx = is_sgx;
-
-    if(m_is_sgx)
-    {
-        m_clock_ptr = &HuC6202::ClockTemplate<true>;
-        m_hsync_high_ptr = &HuC6202::SetHSyncHighTemplate<true>;
-        m_vsync_low_ptr = &HuC6202::SetVSyncLowTemplate<true>;
-    }
-    else
-    {
-        m_clock_ptr = &HuC6202::ClockTemplate<false>;
-        m_hsync_high_ptr = &HuC6202::SetHSyncHighTemplate<false>;
-        m_vsync_low_ptr = &HuC6202::SetVSyncLowTemplate<false>;
-    }
-}
-
-u16 HuC6202::Clock()
-{
-    return (this->*m_clock_ptr)();
-}
-
-void HuC6202::SetHSyncHigh()
-{
-    (this->*m_hsync_high_ptr)();
-}
-
-void HuC6202::SetVSyncLow()
-{
-    (this->*m_vsync_low_ptr)();
-}
-
-template<bool is_sgx>
-u16 HuC6202::ClockTemplate()
-{
-    if (is_sgx)
-    {
-        u16 pixel1 = m_huc6270_1->Clock();
-        u16 pixel2 = m_huc6270_2->Clock();
-    }
-    else
-    {
-        return m_huc6270_1->Clock();
-    }
-}
-
-template u16 HuC6202::ClockTemplate<true>();
-template u16 HuC6202::ClockTemplate<false>();
-
-template<bool is_sgx>
-void HuC6202::SetHSyncHighTemplate()
-{
-    if (is_sgx)
-    {
-        m_huc6270_1->SetHSyncHigh();
-        m_huc6270_2->SetHSyncHigh();
-    }
-    else
-    {
-        m_huc6270_1->SetHSyncHigh();
-    }
-}
-
-template void HuC6202::SetHSyncHighTemplate<true>();
-template void HuC6202::SetHSyncHighTemplate<false>();
-
-template<bool is_sgx>
-void HuC6202::SetVSyncLowTemplate()
-{
-    if (is_sgx)
-    {
-        m_huc6270_1->SetVSyncLow();
-        m_huc6270_2->SetVSyncLow();
-    }
-    else
-    {
-        m_huc6270_1->SetVSyncLow();
-    }
-}
-
-template void HuC6202::SetVSyncLowTemplate<true>();
-template void HuC6202::SetVSyncLowTemplate<false>();
-
-u8 HuC6202::ReadRegister(u16 address)
-{
-
-    return 0;
-}
-
-void HuC6202::WriteRegister(u16 address, u8 value)
-{
-
+    m_priority_1 = 0x11;
+    m_priority_2 = 0x11;
+    m_window_1 = 0;
+    m_window_2 = 0;
+    m_vdc2_selected = false;
+    m_irq1_1 = false;
+    m_irq1_2 = false;
 }
 
 void HuC6202::SaveState(std::ostream& stream)
 {
-
+    using namespace std;
+    stream.write(reinterpret_cast<const char*> (&m_priority_1), sizeof(m_priority_1));
+    stream.write(reinterpret_cast<const char*> (&m_priority_2), sizeof(m_priority_2));
+    stream.write(reinterpret_cast<const char*> (&m_window_1), sizeof(m_window_1));
+    stream.write(reinterpret_cast<const char*> (&m_window_2), sizeof(m_window_2));
+    stream.write(reinterpret_cast<const char*> (&m_vdc2_selected), sizeof(m_vdc2_selected));
+    stream.write(reinterpret_cast<const char*> (&m_irq1_1), sizeof(m_irq1_1));
+    stream.write(reinterpret_cast<const char*> (&m_irq1_2), sizeof(m_irq1_2));
 }
 
 void HuC6202::LoadState(std::istream& stream)
 {
-
+    using namespace std;
+    stream.read(reinterpret_cast<char*> (&m_priority_1), sizeof(m_priority_1));
+    stream.read(reinterpret_cast<char*> (&m_priority_2), sizeof(m_priority_2));
+    stream.read(reinterpret_cast<char*> (&m_window_1), sizeof(m_window_1));
+    stream.read(reinterpret_cast<char*> (&m_window_2), sizeof(m_window_2));
+    stream.read(reinterpret_cast<char*> (&m_vdc2_selected), sizeof(m_vdc2_selected));
+    stream.read(reinterpret_cast<char*> (&m_irq1_1), sizeof(m_irq1_1));
+    stream.read(reinterpret_cast<char*> (&m_irq1_2), sizeof(m_irq1_2));
 }

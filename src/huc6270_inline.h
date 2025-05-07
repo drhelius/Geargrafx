@@ -67,6 +67,11 @@ INLINE u16* HuC6270::GetSAT()
     return m_sat;
 }
 
+INLINE const char* HuC6270::GetName()
+{
+    return m_name;
+}
+
 INLINE void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
 {
     m_no_sprite_limit = no_sprite_limit;
@@ -94,7 +99,7 @@ INLINE void HuC6270::RCRIRQ()
         if (((int)m_register[HUC6270_REG_RCR] - 64) == m_raster_line)
         {
             m_status_register |= HUC6270_STATUS_SCANLINE;
-            m_huc6280->AssertIRQ1(true);
+            m_huc6202->AssertIRQ1(this, true);
         }
     }
 }
@@ -104,7 +109,7 @@ INLINE void HuC6270::OverflowIRQ()
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_OVERFLOW)
     {
         m_status_register |= HUC6270_STATUS_OVERFLOW;
-        m_huc6280->AssertIRQ1(true);
+        m_huc6202->AssertIRQ1(this, true);
     }
 }
 
@@ -114,7 +119,7 @@ INLINE void HuC6270::SpriteCollisionIRQ()
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_COLLISION)
     {
         m_status_register |= HUC6270_STATUS_COLLISION;
-        m_huc6280->AssertIRQ1(true);
+        m_huc6202->AssertIRQ1(this, true);
     }
 }
 

@@ -26,7 +26,7 @@
 
 class Cartridge;
 class HuC6260;
-class HuC6270;
+class HuC6202;
 class HuC6280;
 class Input;
 class Audio;
@@ -36,7 +36,7 @@ class SF2Mapper;
 class Memory
 {
 public:
-    Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio);
+    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio);
     ~Memory();
     void Init();
     void Reset();
@@ -69,7 +69,7 @@ public:
 
 private:
     HuC6260* m_huc6260;
-    HuC6270* m_huc6270;
+    HuC6202* m_huc6202;
     HuC6280* m_huc6280;
     Cartridge* m_cartridge;
     SF2Mapper* m_sf2_mapper;
@@ -77,6 +77,7 @@ private:
     Audio* m_audio;
     u8 m_mpr[8];
     u8* m_wram;
+    u8* m_wram_map[4];
     u8* m_card_ram;
     u8** m_card_ram_map;
     u8* m_backup_ram;

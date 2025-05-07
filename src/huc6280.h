@@ -45,7 +45,7 @@
 #endif
 
 class Memory;
-class HuC6270;
+class HuC6202;
 
 class HuC6280
 {
@@ -99,7 +99,7 @@ public:
 public:
     HuC6280();
     ~HuC6280();
-    void Init(Memory* memory, HuC6270* huc6270);
+    void Init(Memory* memory, HuC6202* huc6202);
     void Reset();
     u32 RunInstruction(bool* completed = NULL);
     void ClockTimer(u32 cycles);
@@ -149,7 +149,7 @@ private:
     u16 m_transfer_source;
     u16 m_transfer_dest;
     Memory* m_memory;
-    HuC6270* m_huc6270;
+    HuC6202* m_huc6202;
     HuC6280_State m_processor_state;
     bool m_timer_enabled;
     s32 m_timer_cycles;

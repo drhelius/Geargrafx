@@ -20,17 +20,17 @@
 #include <stdlib.h>
 #include "memory.h"
 #include "huc6260.h"
-#include "huc6270.h"
+#include "huc6202.h"
 #include "huc6280.h"
 #include "cartridge.h"
 #include "input.h"
 #include "audio.h"
 #include "sf2_mapper.h"
 
-Memory::Memory(HuC6260* huc6260, HuC6270* huc6270, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio)
+Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio)
 {
     m_huc6260 = huc6260;
-    m_huc6270 = huc6270;
+    m_huc6202 = huc6202;
     m_huc6280 = huc6280;
     m_cartridge = cartridge;
     m_input = input;
@@ -72,7 +72,7 @@ Memory::~Memory()
 
 void Memory::Init()
 {
-    m_wram = new u8[0x2000];
+    m_wram = new u8[0x8000];
     m_card_ram = new u8[0x8000];
     m_card_ram_map = new u8*[0x20];
     m_backup_ram = new u8[0x800];
@@ -115,13 +115,16 @@ void Memory::Reset()
             m_mpr[i] = m_mpr_reset_value & 0xFF;
     }
 
-    for (int i = 0; i < 0x2000; i++)
+    for (int i = 0; i < 0x8000; i++)
     {
         if (m_wram_reset_value < 0)
             m_wram[i] = rand() & 0xFF;
         else
             m_wram[i] = m_wram_reset_value & 0xFF;
     }
+
+    for (int i = 0; i < 4; i++)
+        m_wram_map[i] = &m_wram[i * (m_cartridge->IsSGX() ? 0x2000 : 0)];
 
 #if defined(GG_TESTING)
     for (int i = 0; i < 0x10000; i++)
@@ -297,7 +300,7 @@ void Memory::SaveState(std::ostream& stream)
 {
     using namespace std;
     stream.write(reinterpret_cast<const char*> (m_mpr), sizeof(m_mpr));
-    stream.write(reinterpret_cast<const char*> (m_wram), sizeof(u8) * 0x2000);
+    stream.write(reinterpret_cast<const char*> (m_wram), sizeof(u8) * 0x8000);
     stream.write(reinterpret_cast<const char*> (m_card_ram), sizeof(u8) * 0x8000);
     stream.write(reinterpret_cast<const char*> (&m_card_ram_size), sizeof(m_card_ram_size));
     stream.write(reinterpret_cast<const char*> (&m_card_ram_start), sizeof(m_card_ram_start));
@@ -314,7 +317,7 @@ void Memory::LoadState(std::istream& stream)
 {
     using namespace std;
     stream.read(reinterpret_cast<char*> (m_mpr), sizeof(m_mpr));
-    stream.read(reinterpret_cast<char*> (m_wram), sizeof(u8) * 0x2000);
+    stream.read(reinterpret_cast<char*> (m_wram), sizeof(u8) * 0x8000);
     stream.read(reinterpret_cast<char*> (m_card_ram), sizeof(u8) * 0x8000);
     stream.read(reinterpret_cast<char*> (&m_card_ram_size), sizeof(m_card_ram_size));
     stream.read(reinterpret_cast<char*> (&m_card_ram_start), sizeof(m_card_ram_start));

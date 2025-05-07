@@ -85,11 +85,7 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
     else if (bank < 0xFC)
     {
         // RAM
-        if (bank > 0xF8)
-        {
-            Debug("SGX RAM read at %04X, bank=%02X", address, bank);
-        }
-        return m_wram[offset];
+        return m_wram_map[bank - 0xF8][offset];
     }
     // 0xFC - 0xFE
     else if (bank < 0xFF)
@@ -107,7 +103,7 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
             case 0x0000:
                 // HuC6270
                 m_huc6280->InjectCycles(block_transfer ? 2 : 1);
-                return m_huc6270->ReadRegister(offset);
+                return m_huc6202->ReadRegister(offset);
             case 0x0400:
                 // HuC6260
                 m_huc6280->InjectCycles(1);
@@ -225,11 +221,7 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
     else if (bank < 0xFC)
     {
         // RAM
-        if (bank > 0xF8)
-        {
-            Debug("SGX RAM write at %04X, value=%02X, bank=%02X", address, value, bank);
-        }
-        m_wram[offset] = value;
+        m_wram_map[bank - 0xF8][offset] = value;
     }
     // 0xFC - 0xFE
     else if (bank < 0xFF)
@@ -245,7 +237,7 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
             case 0x0000:
                 // HuC6270
                 m_huc6280->InjectCycles(block_transfer ? 2 : 1);
-                m_huc6270->WriteRegister(offset, value);
+                m_huc6202->WriteRegister(offset, value);
                 break;
             case 0x0400:
                 // HuC6260

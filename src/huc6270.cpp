@@ -49,9 +49,11 @@ HuC6270::~HuC6270()
     SafeDeleteArray(m_sprites);
 }
 
-void HuC6270::Init(HuC6260* huC6260)
+void HuC6270::Init(const char* name, HuC6260* huC6260, HuC6202* huC6202)
 {
     m_huc6260 = huC6260;
+    m_huc6202 = huC6202;
+    strncpy(m_name, name, 8);
     m_vram = new u16[HUC6270_VRAM_SIZE];
     m_sat = new u16[HUC6270_SAT_SIZE];
     m_line_buffer = new u16[HUC6270_MAX_BACKGROUND_WIDTH];
@@ -174,7 +176,7 @@ u8 HuC6270::ReadRegister(u16 address)
         case 0:
         {
             u8 ret = m_status_register & 0x7F;
-            m_huc6280->AssertIRQ1(false);
+            m_huc6202->AssertIRQ1(this, false);
             m_status_register &= 0x40;
             return ret;
         }
@@ -463,7 +465,7 @@ void HuC6270::SATTransfer()
             if (m_register[HUC6270_REG_DCR] & 0x01)
             {
                 m_status_register |= HUC6270_STATUS_SAT_END;
-                m_huc6280->AssertIRQ1(true);
+                m_huc6202->AssertIRQ1(this, true);
             }
         }
     }
@@ -496,7 +498,7 @@ void HuC6270::VRAMTransfer()
             if (m_register[HUC6270_REG_DCR] & 0x02)
             {
                 m_status_register |= HUC6270_STATUS_VRAM_END;
-                m_huc6280->AssertIRQ1(true);
+                m_huc6202->AssertIRQ1(this, true);
             }
         }
     }
@@ -576,7 +578,7 @@ void HuC6270::VBlankIRQ()
     if (m_register[HUC6270_REG_CR] & HUC6270_CONTROL_VBLANK)
     {
         m_status_register |= HUC6270_STATUS_VBLANK;
-        m_huc6280->AssertIRQ1(true);
+        m_huc6202->AssertIRQ1(this, true);
     }
 
     if (m_trigger_sat_transfer || (m_register[HUC6270_REG_DCR] & 0x10))

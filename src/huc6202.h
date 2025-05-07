@@ -25,11 +25,12 @@
 #include "common.h"
 
 class HuC6270;
+class HuC6280;
 
 class HuC6202
 {
 public:
-    HuC6202(HuC6270* huc6270_1, HuC6270* huc6270_2);
+    HuC6202(HuC6270* huc6270_1, HuC6270* huc6270_2, HuC6280* huc6280);
     ~HuC6202();
     void Init();
     void Reset(bool is_sgx);
@@ -38,24 +39,25 @@ public:
     void SetVSyncLow();
     u8 ReadRegister(u16 address);
     void WriteRegister(u16 address, u8 value);
+    void WriteFromCPU(u16 address, u8 value);
+    void AssertIRQ1(HuC6270* vdc, bool assert);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
 private:
-    template<bool is_supergrafx>
-    u16 ClockTemplate();
-    template<bool is_supergrafx>
-    void SetHSyncHighTemplate();
-    template<bool is_supergrafx>
-    void SetVSyncLowTemplate();
-
-private:
+    HuC6280* m_huc6280;
     HuC6270* m_huc6270_1;
     HuC6270* m_huc6270_2;
     bool m_is_sgx;
-    u16 (HuC6202::*m_clock_ptr)();
-    void (HuC6202::*m_hsync_high_ptr)();
-    void (HuC6202::*m_vsync_low_ptr)();
+    u8 m_priority_1;
+    u8 m_priority_2;
+    u16 m_window_1;
+    u16 m_window_2;
+    bool m_vdc2_selected;
+    bool m_irq1_1;
+    bool m_irq1_2;
 };
+
+#include "huc6202_inline.h"
 
 #endif /* HUC6202_H */

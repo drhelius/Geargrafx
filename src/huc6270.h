@@ -25,6 +25,7 @@
 #include "huc6270_defines.h"
 #include "common.h"
 
+class HuC6202;
 class HuC6260;
 class HuC6280;
 
@@ -73,7 +74,7 @@ public:
 public:
     HuC6270(HuC6280* huC6280);
     ~HuC6270();
-    void Init(HuC6260* huC6260);
+    void Init(const char* name, HuC6260* huC6260, HuC6202* huC6202);
     void Reset();
     u16 Clock();
     void SetHSyncHigh();
@@ -83,6 +84,7 @@ public:
     HuC6270_State* GetState();
     u16* GetVRAM();
     u16* GetSAT();
+    const char* GetName();
     void SetNoSpriteLimit(bool no_sprite_limit);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
@@ -99,9 +101,11 @@ private:
     };
 
 private:
+    HuC6202* m_huc6202;
     HuC6260* m_huc6260;
     HuC6280* m_huc6280;
     HuC6270_State m_state;
+    char m_name[8];
     u16* m_vram;
     u16 m_address_register;
     u16 m_status_register;

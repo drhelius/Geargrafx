@@ -50,10 +50,10 @@ HuC6280::~HuC6280()
 {
 }
 
-void HuC6280::Init(Memory* memory, HuC6270* huc6270)
+void HuC6280::Init(Memory* memory, HuC6202* huc6202)
 {
     m_memory = memory;
-    m_huc6270 = huc6270;
+    m_huc6202 = huc6202;
     CreateZNFlagsTable();
 }
 
