@@ -37,7 +37,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 ## Features
 
 - Save states with preview.
-- Mulit Tap (up to 5 players).
+- Multi Tap (up to 5 players).
 - Normal Gamepad (2 buttons) and Avenue Pad (6 buttons).
 - Adjustable scanline count (224p, 240p or manual).
 - RGB or Composite color output.
@@ -47,6 +47,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 - Full debugger with just-in-time disassembler, CPU breakpoints, memory access breakpoints, code navigation (goto address, JP JR and CALL double clicking), debug symbols, automatic labels, memory editor, PSG inspector and video viewer including registries, tiles, sprites and backgrounds.
 - Windows and Linux *Portable Mode*.
 - ROM loading from the command line by adding the ROM path as an argument.
+- ROM loading using drag & drop.
 - Support for modern game controllers through [gamecontrollerdb.txt](https://github.com/mdqinc/SDL_GameControllerDB) file located in the same directory as the application binary.
 
 ## Tips
