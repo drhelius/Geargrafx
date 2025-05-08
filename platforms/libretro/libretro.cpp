@@ -359,7 +359,7 @@ void *retro_get_memory_data(unsigned id)
         case RETRO_MEMORY_SYSTEM_RAM:
             return core->GetMemory()->GetWorkingRAM();
         case RETRO_MEMORY_VIDEO_RAM:
-            return (u8*)core->GetHuC6270()->GetVRAM();
+            return (u8*)core->GetHuC6270_1()->GetVRAM();
     }
 
     return NULL;
@@ -654,7 +654,8 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        core->GetHuC6270()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
+        core->GetHuC6270_1()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
+        core->GetHuC6270_2()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
     }
 
     var.key = "geargrafx_up_down_allowed";
