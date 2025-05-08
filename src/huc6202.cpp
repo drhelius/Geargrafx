@@ -33,6 +33,15 @@ HuC6202::HuC6202(HuC6270* huc6270_1, HuC6270* huc6270_2, HuC6280* huc6280)
     m_vdc2_selected = false;
     m_irq1_1 = false;
     m_irq1_2 = false;
+
+    m_state.PRIORITY_1 = &m_priority_1;
+    m_state.PRIORITY_2 = &m_priority_2;
+    m_state.WINDOW_1 = &m_window_1;
+    m_state.WINDOW_2 = &m_window_2;
+    m_state.VDC2_SELECTED = &m_vdc2_selected;
+    m_state.IRQ1_1 = &m_irq1_1;
+    m_state.IRQ1_2 = &m_irq1_2;
+    m_state.WINDOW_PRIORITY = m_window_priority;
 }
 
 HuC6202::~HuC6202()

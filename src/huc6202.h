@@ -52,6 +52,18 @@ public:
         HuC6270_Priority_Mode priority_mode;
     };
 
+    struct HuC6202_State
+    {
+        u8* PRIORITY_1;
+        u8* PRIORITY_2;
+        u16* WINDOW_1;
+        u16* WINDOW_2;
+        bool* VDC2_SELECTED;
+        bool* IRQ1_1;
+        bool* IRQ1_2;
+        HuC6270_Window_Priority* WINDOW_PRIORITY;
+    };
+
 public:
     HuC6202(HuC6270* huc6270_1, HuC6270* huc6270_2, HuC6280* huc6280);
     ~HuC6202();
@@ -68,6 +80,7 @@ public:
     u16 GetWindow1Width();
     u16 GetWindow2Width();
     HuC6270_Window_Priority* GetWindowPriorities();
+    HuC6202_State* GetState();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -78,6 +91,7 @@ private:
     HuC6280* m_huc6280;
     HuC6270* m_huc6270_1;
     HuC6270* m_huc6270_2;
+    HuC6202_State m_state;
     bool m_is_sgx;
     u8 m_priority_1;
     u8 m_priority_2;

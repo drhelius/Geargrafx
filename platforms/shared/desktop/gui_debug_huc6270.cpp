@@ -30,19 +30,28 @@
 #include "renderer.h"
 #include "utils.h"
 
-void gui_debug_window_huc6270_info(void)
+void gui_debug_window_huc6270_info(int vdc)
 {
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(214, 45), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(216, 618), ImGuiCond_FirstUseEver);
-    ImGui::Begin("HuC6270 Info", &config_debug.show_huc6270_info);
-
-    ImGui::PushFont(gui_default_font);
+    if (vdc < 1 || vdc > 2)
+        return;
 
     GeargrafxCore* core = emu_get_core();
     HuC6260* huc6260 = core->GetHuC6260();
-    HuC6270* huc6270 = core->GetHuC6270_1();
+    HuC6270* huc6270 = vdc == 1 ? core->GetHuC6270_1() : core->GetHuC6270_2();
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
+    bool* show = ((vdc == 1) ? &config_debug.show_huc6270_1_info : &config_debug.show_huc6270_2_info);
+    char title[32];
+    if (core->GetCartridge()->IsSGX())
+        snprintf(title, sizeof(title), "HuC6270 (%d) Info", vdc);
+    else
+        strncpy(title, "HuC6270 Info", sizeof(title));
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::SetNextWindowPos(ImVec2(214, 45), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(216, 618), ImGuiCond_FirstUseEver);
+    ImGui::Begin(title, show);
+
+    ImGui::PushFont(gui_default_font);
 
     ImGui::TextColored(violet, "SPEED   "); ImGui::SameLine();
     const char* speed[] = { "5.36 MHz", "7.16 MHz", "10.8 MHz" };
@@ -166,18 +175,27 @@ void gui_debug_window_huc6270_info(void)
     ImGui::PopStyleVar();
 }
 
-void gui_debug_window_huc6270_registers(void)
+void gui_debug_window_huc6270_registers(int vdc)
 {
+    if (vdc < 1 || vdc > 2)
+        return;
+
+    GeargrafxCore* core = emu_get_core();
+    HuC6270* huc6270 = vdc == 1 ? core->GetHuC6270_1() : core->GetHuC6270_2();
+    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
+    bool* show = ((vdc == 1) ? &config_debug.show_huc6270_1_registers : &config_debug.show_huc6270_2_registers);
+    char title[32];
+    if (core->GetCartridge()->IsSGX())
+        snprintf(title, sizeof(title), "HuC6270 (%d) Registers", vdc);
+    else
+        strncpy(title, "HuC6270 Registers", sizeof(title));
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(93, 79), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(284, 400), ImGuiCond_FirstUseEver);
-    ImGui::Begin("HuC6270 Registers", &config_debug.show_huc6270_registers);
+    ImGui::Begin(title, show);
 
     ImGui::PushFont(gui_default_font);
-
-    GeargrafxCore* core = emu_get_core();
-    HuC6270* huc6270 = core->GetHuC6270_1();
-    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
 
     ImGui::TextColored(magenta, "ADDRESS"); ImGui::SameLine();
     ImGui::TextColored(magenta, "  "); ImGui::SameLine();
@@ -214,16 +232,26 @@ void gui_debug_window_huc6270_registers(void)
 
 static const float k_scale_levels[3] = { 1.0f, 1.5f, 2.0f };
 
-void gui_debug_window_huc6270_background(void)
+void gui_debug_window_huc6270_background(int vdc)
 {
+    if (vdc < 1 || vdc > 2)
+        return;
+
+    GeargrafxCore* core = emu_get_core();
+    HuC6270* huc6270 = vdc == 1 ? core->GetHuC6270_1() : core->GetHuC6270_2();
+    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
+    bool* show = ((vdc == 1) ? &config_debug.show_huc6270_1_background : &config_debug.show_huc6270_2_background);
+    char title[32];
+    if (core->GetCartridge()->IsSGX())
+        snprintf(title, sizeof(title), "HuC6270 (%d) Background", vdc);
+    else
+        strncpy(title, "HuC6270 Background", sizeof(title));
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(63, 35), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(545, 614), ImGuiCond_FirstUseEver);
-    ImGui::Begin("HuC6270 Background", &config_debug.show_huc6270_background);
+    ImGui::Begin(title, show);
 
-    GeargrafxCore* core = emu_get_core();
-    HuC6270* huc6270 = core->GetHuC6270_1();
-    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     u16* vram = huc6270->GetVRAM();
     int screen_reg = (huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07;
     int screen_size_x = k_huc6270_screen_size_x[screen_reg];
@@ -290,7 +318,7 @@ void gui_debug_window_huc6270_background(void)
         ImVec2 p = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-        ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(size_h, size_v), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width / texture_size_h, emu_debug_background_buffer_height / texture_size_v));
+        ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_background[vdc - 1], ImVec2(size_h, size_v), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width[vdc - 1] / texture_size_h, emu_debug_background_buffer_height[vdc - 1] / texture_size_v));
 
         if (show_grid)
         {
@@ -334,7 +362,7 @@ void gui_debug_window_huc6270_background(void)
                 float tile_uv_h = (i % screen_size_x) * 8.0f;
                 float tile_uv_v = (i / screen_size_x) * 8.0f;
 
-                ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_background, ImVec2(tile_width, tile_height), ImVec2(tile_uv_h / texture_size_h, tile_uv_v / texture_size_v), ImVec2((tile_uv_h + 8) / texture_size_h, (tile_uv_v + 8) / texture_size_v));
+                ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_background[vdc - 1], ImVec2(tile_width, tile_height), ImVec2(tile_uv_h / texture_size_h, tile_uv_v / texture_size_v), ImVec2((tile_uv_h + 8) / texture_size_h, (tile_uv_v + 8) / texture_size_v));
 
                 ImGui::PushFont(gui_default_font);
 
@@ -367,24 +395,34 @@ void gui_debug_window_huc6270_background(void)
     ImGui::PopStyleVar();
 }
 
-void gui_debug_window_huc6270_sprites(void)
+void gui_debug_window_huc6270_sprites(int vdc)
 {
+    if (vdc < 1 || vdc > 2)
+        return;
+
+    GeargrafxCore* core = emu_get_core();
+    HuC6270* huc6270 = vdc == 1 ? core->GetHuC6270_1() : core->GetHuC6270_2();
+    u16* sat = huc6270->GetSAT();
+    GG_Runtime_Info runtime;
+    emu_get_runtime(runtime);
+    bool* show = ((vdc == 1) ? &config_debug.show_huc6270_1_sprites : &config_debug.show_huc6270_2_sprites);
+    char title[32];
+    if (core->GetCartridge()->IsSGX())
+        snprintf(title, sizeof(title), "HuC6270 (%d) Sprites", vdc);
+    else
+        strncpy(title, "HuC6270 Sprites", sizeof(title));
+
+    ImVec4 cyan = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
     float scale = 4.0f;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(78, 56), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(546, 500), ImGuiCond_FirstUseEver);
-    ImGui::Begin("HuC6270 Sprites", &config_debug.show_huc6270_sprites);
+    ImGui::Begin(title, show);
 
     ImGui::PushFont(gui_default_font);
 
     ImGuiIO& io = ImGui::GetIO();
-
-    GeargrafxCore* core = emu_get_core();
-    HuC6270* huc6270 = core->GetHuC6270_1();
-    u16* sat = huc6270->GetSAT();
-    GG_Runtime_Info runtime;
-    emu_get_runtime(runtime);
 
     ImGui::Columns(2, "spr", false);
     ImGui::SetColumnOffset(1, 180.0f);
@@ -404,7 +442,7 @@ void gui_debug_window_huc6270_sprites(void)
         float tex_h = fwidth / 32.0f / scale;
         float tex_v = fheight / 64.0f / scale;
 
-        ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_sprites[s], ImVec2(fwidth, fheight), ImVec2(0.0f, 0.0f), ImVec2(tex_h, tex_v));
+        ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_sprites[vdc - 1][s], ImVec2(fwidth, fheight), ImVec2(0.0f, 0.0f), ImVec2(tex_h, tex_v));
 
         float mouse_x = io.MousePos.x - p[s].x;
         float mouse_y = io.MousePos.y - p[s].y;

@@ -457,8 +457,10 @@ static void load_ram(void)
 
 static void reset_buffers(void)
 {
-    emu_debug_background_buffer_width = 32;
-    emu_debug_background_buffer_height = 32;
+    emu_debug_background_buffer_width[0] = 32;
+    emu_debug_background_buffer_height[0] = 32;
+    emu_debug_background_buffer_width[1] = 32;
+    emu_debug_background_buffer_height[1] = 32;
 
      for (int i = 0; i < 2048 * 512 * 4; i++)
         emu_frame_buffer[i] = 0;
@@ -467,16 +469,20 @@ static void reset_buffers(void)
         audio_buffer[i] = 0;
 
     for (int i = 0; i < HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4; i++)
-        emu_debug_background_buffer[i] = 0;
+        emu_debug_background_buffer[0][i] = 0;
 
-    for (int i = 0; i < 64; i++)
-    {
-        for (int j = 0; j < HUC6270_MAX_SPRITE_WIDTH * HUC6270_MAX_SPRITE_HEIGHT * 4; j++)
-            emu_debug_sprite_buffers[i][j] = 0;
+    for (int i = 0; i < HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4; i++)
+        emu_debug_background_buffer[1][i] = 0;
 
-        emu_debug_sprite_widths[i] = 16;
-        emu_debug_sprite_heights[i] = 16;
-    }
+    for (int i = 0; i < 2; i++)
+        for (int s = 0; s < 64; s++)
+        {
+            for (int j = 0; j < HUC6270_MAX_SPRITE_WIDTH * HUC6270_MAX_SPRITE_HEIGHT * 4; j++)
+                emu_debug_sprite_buffers[i][s][j] = 0;
+
+            emu_debug_sprite_widths[i][s] = 16;
+            emu_debug_sprite_heights[i][s] = 16;
+        }
 }
 
 static const char* get_configurated_dir(int location, const char* path)
@@ -495,24 +501,31 @@ static const char* get_configurated_dir(int location, const char* path)
 
 static void init_debug(void)
 {
-    emu_debug_background_buffer = new u8[HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4];
+    emu_debug_background_buffer[0] = new u8[HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4];
     for (int i = 0; i < HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4; i++)
-        emu_debug_background_buffer[i] = 0;
+        emu_debug_background_buffer[0][i] = 0;
 
-    for (int i = 0; i < 64; i++)
-    {
-        emu_debug_sprite_buffers[i] = new u8[HUC6270_MAX_SPRITE_WIDTH * HUC6270_MAX_SPRITE_HEIGHT * 4];
-        for (int j = 0; j < HUC6270_MAX_SPRITE_WIDTH * HUC6270_MAX_SPRITE_HEIGHT * 4; j++)
-            emu_debug_sprite_buffers[i][j] = 0;
-    }
+    emu_debug_background_buffer[1] = new u8[HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4];
+    for (int i = 0; i < HUC6270_MAX_BACKGROUND_WIDTH * HUC6270_MAX_BACKGROUND_HEIGHT * 4; i++)
+        emu_debug_background_buffer[1][i] = 0;
+
+    for (int i = 0; i < 2; i++)
+        for (int s = 0; s < 64; s++)
+        {
+            emu_debug_sprite_buffers[i][s] = new u8[HUC6270_MAX_SPRITE_WIDTH * HUC6270_MAX_SPRITE_HEIGHT * 4];
+            for (int j = 0; j < HUC6270_MAX_SPRITE_WIDTH * HUC6270_MAX_SPRITE_HEIGHT * 4; j++)
+                emu_debug_sprite_buffers[i][s][j] = 0;
+        }
 }
 
 static void destroy_debug(void) 
 {
-    SafeDeleteArray(emu_debug_background_buffer);
+    SafeDeleteArray(emu_debug_background_buffer[0]);
+    SafeDeleteArray(emu_debug_background_buffer[1]);
 
-    for (int i = 0; i < 64; i++)
-        SafeDeleteArray(emu_debug_sprite_buffers[i]);
+    for (int i = 0; i < 2; i++)
+        for (int s = 0; s < 64; s++)
+            SafeDeleteArray(emu_debug_sprite_buffers[i][s]);
 }
 
 static void update_debug(void)
@@ -523,131 +536,145 @@ static void update_debug(void)
 
 static void update_debug_background(void)
 {
-    HuC6260* huc6260 = geargrafx->GetHuC6260();
-    HuC6270* huc6270 = geargrafx->GetHuC6270_1();
-    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
-    u16* vram = huc6270->GetVRAM();
-    int screen_reg = (huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07;
-    int screen_size_x = k_huc6270_screen_size_x[screen_reg];
-    int screen_size_y = k_huc6270_screen_size_y[screen_reg];
-    emu_debug_background_buffer_width = screen_size_x * 8;
-    emu_debug_background_buffer_height = screen_size_y * 8;
-    int bat_size = screen_size_x * screen_size_y;
-    int pixels = bat_size * 8 * 8;
+    bool is_sgx = geargrafx->GetCartridge()->IsSGX();
+    int vdc_min = 0;
+    int vdc_max = is_sgx ? 1 : 0;
 
-    for (int pixel = 0; pixel < pixels; pixel++)
+    for (int vdc = vdc_min; vdc <= vdc_max; vdc++)
     {
-        int x = pixel % emu_debug_background_buffer_width;
-        int y = pixel / emu_debug_background_buffer_width;
+        HuC6260* huc6260 = geargrafx->GetHuC6260();
+        HuC6270* huc6270 = vdc == 0 ? geargrafx->GetHuC6270_1() : geargrafx->GetHuC6270_2();
+        HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
+        u16* vram = huc6270->GetVRAM();
+        int screen_reg = (huc6270_state->R[HUC6270_REG_MWR] >> 4) & 0x07;
+        int screen_size_x = k_huc6270_screen_size_x[screen_reg];
+        int screen_size_y = k_huc6270_screen_size_y[screen_reg];
+        emu_debug_background_buffer_width[vdc] = screen_size_x * 8;
+        emu_debug_background_buffer_height[vdc] = screen_size_y * 8;
+        int bat_size = screen_size_x * screen_size_y;
+        int pixels = bat_size * 8 * 8;
 
-        int bat_entry_index = (x / 8) + ((y / 8) * screen_size_x);
-        u16 bat_entry = vram[bat_entry_index];
-        int tile_index = bat_entry & 0x07FF;
-        int color_table = (bat_entry >> 12) & 0x0F;
+        for (int pixel = 0; pixel < pixels; pixel++)
+        {
+            int x = pixel % emu_debug_background_buffer_width[vdc];
+            int y = pixel / emu_debug_background_buffer_width[vdc];
 
-        int tile_data = tile_index * 16;
-        int tile_y =  (y % 8);
-        int tile_x = (pixel % 8);
+            int bat_entry_index = (x / 8) + ((y / 8) * screen_size_x);
+            u16 bat_entry = vram[bat_entry_index];
+            int tile_index = bat_entry & 0x07FF;
+            int color_table = (bat_entry >> 12) & 0x0F;
 
-        int line_start_a = (tile_data + tile_y);
-        int line_start_b = (tile_data + tile_y + 8);
+            int tile_data = tile_index * 16;
+            int tile_y =  (y % 8);
+            int tile_x = (pixel % 8);
 
-        u8 byte1 = vram[line_start_a] & 0xFF;
-        u8 byte2 = vram[line_start_a] >> 8;
-        u8 byte3 = vram[line_start_b] & 0xFF;
-        u8 byte4 = vram[line_start_b] >> 8;
+            int line_start_a = (tile_data + tile_y);
+            int line_start_b = (tile_data + tile_y + 8);
 
-        int color = ((byte1 >> (7 - tile_x)) & 0x01) | (((byte2 >> (7 - tile_x)) & 0x01) << 1) | (((byte3 >> (7 - tile_x)) & 0x01) << 2) | (((byte4 >> (7 - tile_x)) & 0x01) << 3);
+            u8 byte1 = vram[line_start_a] & 0xFF;
+            u8 byte2 = vram[line_start_a] >> 8;
+            u8 byte3 = vram[line_start_b] & 0xFF;
+            u8 byte4 = vram[line_start_b] >> 8;
 
-        if (color == 0)
-            color_table = 0;
+            int color = ((byte1 >> (7 - tile_x)) & 0x01) | (((byte2 >> (7 - tile_x)) & 0x01) << 1) | (((byte3 >> (7 - tile_x)) & 0x01) << 2) | (((byte4 >> (7 - tile_x)) & 0x01) << 3);
 
-        u16 color_value = huc6260->GetColorTable()[(color_table * 16) + color];
+            if (color == 0)
+                color_table = 0;
 
-        // convert to 8 bit color
-        int blue = (color_value & 0x07) * 255 / 7;
-        int red = ((color_value >> 3) & 0x07) * 255 / 7;
-        int green = ((color_value >> 6) & 0x07) * 255 / 7;
+            u16 color_value = huc6260->GetColorTable()[(color_table * 16) + color];
 
-        int index = (pixel * 4);
-        emu_debug_background_buffer[index + 0] = red;
-        emu_debug_background_buffer[index + 1] = green;
-        emu_debug_background_buffer[index + 2] = blue;
-        emu_debug_background_buffer[index + 3] = 255;
+            // convert to 8 bit color
+            int blue = (color_value & 0x07) * 255 / 7;
+            int red = ((color_value >> 3) & 0x07) * 255 / 7;
+            int green = ((color_value >> 6) & 0x07) * 255 / 7;
+
+            int index = (pixel * 4);
+            emu_debug_background_buffer[vdc][index + 0] = red;
+            emu_debug_background_buffer[vdc][index + 1] = green;
+            emu_debug_background_buffer[vdc][index + 2] = blue;
+            emu_debug_background_buffer[vdc][index + 3] = 255;
+        }
     }
 }
 
 static void update_debug_sprites(void)
 {
-    HuC6260* huc6260 = geargrafx->GetHuC6260();
-    HuC6270* huc6270 = geargrafx->GetHuC6270_1();
-    u16* vram = huc6270->GetVRAM();
-    u16* sat = huc6270->GetSAT();
-    u16* color_table = huc6260->GetColorTable();
+    bool is_sgx = geargrafx->GetCartridge()->IsSGX();
+    int vdc_min = 0;
+    int vdc_max = is_sgx ? 1 : 0;
 
-    for (int i = 0; i < 64; i++)
+    for (int vdc = vdc_min; vdc <= vdc_max; vdc++)
     {
-        int sprite_offset = i << 2;
-        u16 flags = sat[sprite_offset + 3] & 0xB98F;
-        bool x_flip = (flags & 0x0800);
-        bool y_flip = (flags & 0x8000);
-        int palette = flags & 0x0F;
-        int cgx = (flags >> 8) & 0x01;
-        int cgy = (flags >> 12) & 0x03;
-        int width = k_huc6270_sprite_width[cgx];
-        int height = k_huc6270_sprite_height[cgy];
-        u16 pattern = (sat[sprite_offset + 2] >> 1) & 0x3FF;
-        pattern &= k_huc6270_sprite_mask_width[cgx];
-        pattern &= k_huc6270_sprite_mask_height[cgy];
-        u16 sprite_address = pattern << 6;
-        bool mode1 = ((huc6270->GetState()->R[HUC6270_REG_MWR] >> 2) & 0x03) == 1;
-        int mode1_offset = mode1 ? (sat[sprite_offset + 2] & 1) << 5 : 0;
+        HuC6260* huc6260 = geargrafx->GetHuC6260();
+        HuC6270* huc6270 = vdc == 0 ? geargrafx->GetHuC6270_1() : geargrafx->GetHuC6270_2();
+        u16* vram = huc6270->GetVRAM();
+        u16* sat = huc6270->GetSAT();
+        u16* color_table = huc6260->GetColorTable();
 
-        emu_debug_sprite_widths[i] = width;
-        emu_debug_sprite_heights[i] = height;
-
-        for (int y = 0; y < height; y++)
+        for (int i = 0; i < 64; i++)
         {
-            int flipped_y = y_flip ? (height - 1 - y) : y;
-            int tile_y = flipped_y >> 4;
-            int tile_line_offset = tile_y * 2 * 64;
-            int offset_y = flipped_y & 0xF;
-            u16 line_start = sprite_address + tile_line_offset + offset_y;
+            int sprite_offset = i << 2;
+            u16 flags = sat[sprite_offset + 3] & 0xB98F;
+            bool x_flip = (flags & 0x0800);
+            bool y_flip = (flags & 0x8000);
+            int palette = flags & 0x0F;
+            int cgx = (flags >> 8) & 0x01;
+            int cgy = (flags >> 12) & 0x03;
+            int width = k_huc6270_sprite_width[cgx];
+            int height = k_huc6270_sprite_height[cgy];
+            u16 pattern = (sat[sprite_offset + 2] >> 1) & 0x3FF;
+            pattern &= k_huc6270_sprite_mask_width[cgx];
+            pattern &= k_huc6270_sprite_mask_height[cgy];
+            u16 sprite_address = pattern << 6;
+            bool mode1 = ((huc6270->GetState()->R[HUC6270_REG_MWR] >> 2) & 0x03) == 1;
+            int mode1_offset = mode1 ? (sat[sprite_offset + 2] & 1) << 5 : 0;
 
-            for (int x = 0; x < width; x++)
+            emu_debug_sprite_widths[vdc][i] = width;
+            emu_debug_sprite_heights[vdc][i] = height;
+
+            for (int y = 0; y < height; y++)
             {
-                int flipped_x = x_flip ? (width - 1 - x) : x;
-                int tile_x = flipped_x >> 4;
-                int tile_x_offset = tile_x * 64;
-                int line = line_start + tile_x_offset + mode1_offset;
+                int flipped_y = y_flip ? (height - 1 - y) : y;
+                int tile_y = flipped_y >> 4;
+                int tile_line_offset = tile_y * 2 * 64;
+                int offset_y = flipped_y & 0xF;
+                u16 line_start = sprite_address + tile_line_offset + offset_y;
 
-                u16 plane1 = vram[line + 0];
-                u16 plane2 = vram[line + 16];
-                u16 plane3 = mode1 ? 0 : vram[line + 32];
-                u16 plane4 = mode1 ? 0 : vram[line + 48];
-
-                int pixel_x = 15 - (flipped_x & 0xF);
-                u16 pixel = ((plane1 >> pixel_x) & 0x01) | (((plane2 >> pixel_x) & 0x01) << 1) | (((plane3 >> pixel_x) & 0x01) << 2) | (((plane4 >> pixel_x) & 0x01) << 3);
-                pixel |= (palette << 4);
-                pixel |= 0x100;
-
-                int color = color_table[pixel & 0x1FF];
-                u8 green = ((color >> 6) & 0x07) * 255 / 7;
-                u8 red = ((color >> 3) & 0x07) * 255 / 7;
-                u8 blue = (color & 0x07) * 255 / 7;
-
-                if (!(pixel & 0x0F))
+                for (int x = 0; x < width; x++)
                 {
-                    red = 255;
-                    green = 0;
-                    blue = 255;
-                }
+                    int flipped_x = x_flip ? (width - 1 - x) : x;
+                    int tile_x = flipped_x >> 4;
+                    int tile_x_offset = tile_x * 64;
+                    int line = line_start + tile_x_offset + mode1_offset;
 
-                int pixel_index = ((y * width) + x) << 2;
-                emu_debug_sprite_buffers[i][pixel_index + 0] = red;
-                emu_debug_sprite_buffers[i][pixel_index + 1] = green;
-                emu_debug_sprite_buffers[i][pixel_index + 2] = blue;
-                emu_debug_sprite_buffers[i][pixel_index + 3] = 255;
+                    u16 plane1 = vram[line + 0];
+                    u16 plane2 = vram[line + 16];
+                    u16 plane3 = mode1 ? 0 : vram[line + 32];
+                    u16 plane4 = mode1 ? 0 : vram[line + 48];
+
+                    int pixel_x = 15 - (flipped_x & 0xF);
+                    u16 pixel = ((plane1 >> pixel_x) & 0x01) | (((plane2 >> pixel_x) & 0x01) << 1) | (((plane3 >> pixel_x) & 0x01) << 2) | (((plane4 >> pixel_x) & 0x01) << 3);
+                    pixel |= (palette << 4);
+                    pixel |= 0x100;
+
+                    int color = color_table[pixel & 0x1FF];
+                    u8 green = ((color >> 6) & 0x07) * 255 / 7;
+                    u8 red = ((color >> 3) & 0x07) * 255 / 7;
+                    u8 blue = (color & 0x07) * 255 / 7;
+
+                    if (!(pixel & 0x0F))
+                    {
+                        red = 255;
+                        green = 0;
+                        blue = 255;
+                    }
+
+                    int pixel_index = ((y * width) + x) << 2;
+                    emu_debug_sprite_buffers[vdc][i][pixel_index + 0] = red;
+                    emu_debug_sprite_buffers[vdc][i][pixel_index + 1] = green;
+                    emu_debug_sprite_buffers[vdc][i][pixel_index + 2] = blue;
+                    emu_debug_sprite_buffers[vdc][i][pixel_index + 3] = 255;
+                }
             }
         }
     }

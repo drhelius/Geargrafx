@@ -790,17 +790,37 @@ static void menu_debug(void)
 
         ImGui::MenuItem("Show Output Screen", "", &config_debug.show_screen, config_debug.debug);
         ImGui::MenuItem("Show Disassembler", "", &config_debug.show_disassembler, config_debug.debug);
+        ImGui::MenuItem("Show Memory Editor", "", &config_debug.show_memory, config_debug.debug);
+        ImGui::MenuItem("Show Trace Logger", "", &config_debug.show_trace_logger, config_debug.debug);
+        ImGui::Separator();
         ImGui::MenuItem("Show HuC6280 Status", "", &config_debug.show_processor, config_debug.debug);
         ImGui::MenuItem("Show HuC6280 Call Stack", "", &config_debug.show_call_stack, config_debug.debug);
-        ImGui::MenuItem("Show Memory Editor", "", &config_debug.show_memory, config_debug.debug);
+        ImGui::Separator();
         ImGui::MenuItem("Show HuC6260 Info", "", &config_debug.show_huc6260_info, config_debug.debug);
         ImGui::MenuItem("Show HuC6260 Palettes", "", &config_debug.show_huc6260_palettes, config_debug.debug);
-        ImGui::MenuItem("Show HuC6270 Info", "", &config_debug.show_huc6270_info, config_debug.debug);
-        ImGui::MenuItem("Show HuC6270 Registers", "", &config_debug.show_huc6270_registers, config_debug.debug);
-        ImGui::MenuItem("Show HuC6270 Background", "", &config_debug.show_huc6270_background, config_debug.debug);
-        ImGui::MenuItem("Show HuC6270 Sprites", "", &config_debug.show_huc6270_sprites, config_debug.debug);
+        ImGui::Separator();
+         if (emu_get_core()->GetCartridge()->IsSGX())
+        {
+            ImGui::MenuItem("Show HuC6202 Info", "", &config_debug.show_huc6202_info, config_debug.debug);
+            ImGui::Separator();
+            ImGui::MenuItem("Show HuC6270 (1) Info", "", &config_debug.show_huc6270_1_info, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 (2) Info", "", &config_debug.show_huc6270_2_info, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 (1) Registers", "", &config_debug.show_huc6270_1_registers, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 (2) Registers", "", &config_debug.show_huc6270_2_registers, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 (1) Background", "", &config_debug.show_huc6270_1_background, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 (2) Background", "", &config_debug.show_huc6270_2_background, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 (1) Sprites", "", &config_debug.show_huc6270_1_sprites, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 (2) Sprites", "", &config_debug.show_huc6270_2_sprites, config_debug.debug);
+        }
+        else
+        {
+            ImGui::MenuItem("Show HuC6270 Info", "", &config_debug.show_huc6270_1_info, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 Registers", "", &config_debug.show_huc6270_1_registers, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 Background", "", &config_debug.show_huc6270_1_background, config_debug.debug);
+            ImGui::MenuItem("Show HuC6270 Sprites", "", &config_debug.show_huc6270_1_sprites, config_debug.debug);
+        }
+        ImGui::Separator();
         ImGui::MenuItem("Show PSG", "", &config_debug.show_psg, config_debug.debug);
-        ImGui::MenuItem("Show Trace Logger", "", &config_debug.show_trace_logger, config_debug.debug);
 
 #if defined(__APPLE__) || defined(_WIN32)
         ImGui::Separator();

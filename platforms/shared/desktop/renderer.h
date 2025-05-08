@@ -35,8 +35,8 @@
 #define FRAME_BUFFER_HEIGHT (SYSTEM_TEXTURE_HEIGHT * FRAME_BUFFER_SCALE)
 
 EXTERN uint32_t renderer_emu_texture;
-EXTERN uint32_t renderer_emu_debug_huc6270_background;
-EXTERN uint32_t renderer_emu_debug_huc6270_sprites[64];
+EXTERN uint32_t renderer_emu_debug_huc6270_background[2];
+EXTERN uint32_t renderer_emu_debug_huc6270_sprites[2][64];
 EXTERN uint32_t renderer_emu_savestates;
 EXTERN const char* renderer_glew_version;
 EXTERN const char* renderer_opengl_version;

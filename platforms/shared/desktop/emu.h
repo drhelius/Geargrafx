@@ -46,12 +46,12 @@ enum Directory_Location
 EXTERN u8* emu_frame_buffer;
 EXTERN GG_SaveState_Header emu_savestates[5];
 EXTERN GG_SaveState_Screenshot emu_savestates_screenshots[5];
-EXTERN u8* emu_debug_sprite_buffers[64];
-EXTERN u8* emu_debug_background_buffer;
-EXTERN int emu_debug_background_buffer_width;
-EXTERN int emu_debug_background_buffer_height;
-EXTERN int emu_debug_sprite_widths[64];
-EXTERN int emu_debug_sprite_heights[64];
+EXTERN u8* emu_debug_sprite_buffers[2][64];
+EXTERN u8* emu_debug_background_buffer[2];
+EXTERN int emu_debug_background_buffer_width[2];
+EXTERN int emu_debug_background_buffer_height[2];
+EXTERN int emu_debug_sprite_widths[2][64];
+EXTERN int emu_debug_sprite_heights[2][64];
 EXTERN Debug_Command emu_debug_command;
 EXTERN bool emu_debug_pc_changed;
 
