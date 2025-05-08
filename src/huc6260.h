@@ -58,7 +58,7 @@ public:
     HuC6260(HuC6202* huc6202, HuC6280* huc6280);
     ~HuC6260();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
-    void Reset();
+    void Reset(bool is_sgx);
     bool Clock(u32 cycles);
     u8 ReadRegister(u16 address);
     void WriteRegister(u16 address, u8 value);
@@ -92,6 +92,7 @@ private:
     HuC6202* m_huc6202;
     HuC6280* m_huc6280;
     HuC6260_State m_state;
+    bool m_is_sgx;
     u8 m_control_register;
     u16 m_color_table_address;
     s32 m_speed;

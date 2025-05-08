@@ -594,26 +594,16 @@ void HuC6270::RenderLine()
     int width = MIN(1024, (m_latched_hdw + 1) << 3);
 
     if((m_latched_cr & 0x80) == 0)
-    {
-        u16 color = 0x100;
-
         for (int i = 0; i < width; i++)
-        {
-            m_line_buffer[i] = color;
-        }
-    }
+            m_line_buffer[i] = 0;
 
     if (!m_burst_mode)
     {
         if((m_latched_cr & 0x80) != 0)
-        {
             RenderBackground(width);
-        }
 
         if((m_latched_cr & 0x40) != 0)
-        {
             RenderSprites(width);
-        }
     }
 }
 

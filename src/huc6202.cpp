@@ -48,13 +48,33 @@ void HuC6202::Init()
 void HuC6202::Reset(bool is_sgx)
 {
     m_is_sgx = is_sgx;
-    m_priority_1 = 0x11;
-    m_priority_2 = 0x11;
     m_window_1 = 0;
     m_window_2 = 0;
     m_vdc2_selected = false;
     m_irq1_1 = false;
     m_irq1_2 = false;
+    WriteRegister(8, 0x11);
+    WriteRegister(9, 0x11);
+}
+
+void HuC6202::CalculatePriorityMode(HuC6270_Window_Mode window_mode, u8 value)
+{
+    m_window_priority[window_mode].vdc_1_enabled = (value & 0x01) != 0;
+    m_window_priority[window_mode].vdc_2_enabled = (value & 0x02) != 0;
+    u8 priority_mode = (value >> 2) & 0x03;
+
+    switch (priority_mode)
+    {
+        case 1:
+            m_window_priority[window_mode].priority_mode = HuC6270_PRIORITY_SPRITES_2_ABOVE_BG_1;
+            break;
+        case 2:
+            m_window_priority[window_mode].priority_mode = HuC6270_PRIORITY_SPRITES_1_BELOW_BG_2;
+            break;
+        default:
+            m_window_priority[window_mode].priority_mode = HuC6270_PRIORITY_DEFAULT;
+            break;
+    }
 }
 
 void HuC6202::SaveState(std::ostream& stream)
@@ -67,6 +87,12 @@ void HuC6202::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_vdc2_selected), sizeof(m_vdc2_selected));
     stream.write(reinterpret_cast<const char*> (&m_irq1_1), sizeof(m_irq1_1));
     stream.write(reinterpret_cast<const char*> (&m_irq1_2), sizeof(m_irq1_2));
+    for (int i = 0; i < 4; i++)
+    {
+        stream.write(reinterpret_cast<const char*> (&m_window_priority[i].vdc_1_enabled), sizeof(m_window_priority[i].vdc_1_enabled));
+        stream.write(reinterpret_cast<const char*> (&m_window_priority[i].vdc_2_enabled), sizeof(m_window_priority[i].vdc_2_enabled));
+        stream.write(reinterpret_cast<const char*> (&m_window_priority[i].priority_mode), sizeof(m_window_priority[i].priority_mode));
+    }
 }
 
 void HuC6202::LoadState(std::istream& stream)
@@ -79,4 +105,10 @@ void HuC6202::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_vdc2_selected), sizeof(m_vdc2_selected));
     stream.read(reinterpret_cast<char*> (&m_irq1_1), sizeof(m_irq1_1));
     stream.read(reinterpret_cast<char*> (&m_irq1_2), sizeof(m_irq1_2));
+    for (int i = 0; i < 4; i++)
+    {
+        stream.read(reinterpret_cast<char*> (&m_window_priority[i].vdc_1_enabled), sizeof(m_window_priority[i].vdc_1_enabled));
+        stream.read(reinterpret_cast<char*> (&m_window_priority[i].vdc_2_enabled), sizeof(m_window_priority[i].vdc_2_enabled));
+        stream.read(reinterpret_cast<char*> (&m_window_priority[i].priority_mode), sizeof(m_window_priority[i].priority_mode));
+    }
 }

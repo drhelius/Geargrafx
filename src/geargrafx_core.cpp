@@ -785,7 +785,7 @@ void GeargrafxCore::Reset()
     m_paused = false;
     m_memory->Reset();
     m_huc6202->Reset(m_cartridge->IsSGX());
-    m_huc6260->Reset();
+    m_huc6260->Reset(m_cartridge->IsSGX());
     m_huc6270_1->Reset();
     m_huc6270_2->Reset();
     m_huc6280->Reset();

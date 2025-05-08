@@ -89,7 +89,8 @@
         "stack": "cpp",
         "variant": "cpp",
         "cassert": "cpp",
-        "__config": "cpp"
+        "__config": "cpp",
+        "__assertion_handler": "cpp"
     },
     "todo-tree.tree.showBadges": true,
     "todo-tree.tree.disableCompactFolders": false,

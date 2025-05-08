@@ -25,6 +25,7 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280)
 {
     m_huc6280 = huc6280;
     m_huc6202 = huc6202;
+    m_is_sgx = false;
     m_pixel_format = GG_PIXEL_RGBA8888;
     m_state.CR = &m_control_register;
     m_state.CTA = &m_color_table_address;
@@ -68,7 +69,7 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
     m_line_speed = new s32[242];
 
     InitPalettes();
-    Reset();
+    Reset(false);
 }
 
 void HuC6260::InitPalettes()
@@ -151,8 +152,9 @@ void HuC6260::DeletePalettes()
     }
 }
 
-void HuC6260::Reset()
+void HuC6260::Reset(bool is_sgx)
 {
+    m_is_sgx = is_sgx;
     m_control_register = 0;
     m_color_table_address = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;

@@ -24,18 +24,18 @@
 #include "huc6270.h"
 #include "huc6280.h"
 
-INLINE u16 HuC6202::Clock()
+INLINE u16 HuC6202::Clock(void)
 {
-    if (m_is_sgx)
-    {
-        u16 pixel1 = m_huc6270_1->Clock();
-        u16 pixel2 = m_huc6270_2->Clock();
-        return pixel1;
-    }
-    else
-    {
-        return m_huc6270_1->Clock();
-    }
+    return m_huc6270_1->Clock();
+}
+
+INLINE void HuC6202::ClockSGX(u16* pixel_1, u16* pixel_2)
+{
+    // Although the HuC6202 combines the two VDCs output
+    // the combination is performed in the HuC6260
+    // for performance reasons
+    *pixel_1 = m_huc6270_1->Clock();
+    *pixel_2 = m_huc6270_2->Clock();
 }
 
 INLINE void HuC6202::SetHSyncHigh()
@@ -100,9 +100,13 @@ INLINE void HuC6202::WriteRegister(u16 address, u8 value)
                 break;
             case 0x08:
                 m_priority_1 = value;
+                CalculatePriorityMode(HuC6270_WINDOW_BOTH, value & 0x0F);
+                CalculatePriorityMode(HuC6270_WINDOW_2, (value & 0xF0) >> 4);
                 break;
             case 0x09:
                 m_priority_2 = value;
+                CalculatePriorityMode(HuC6270_WINDOW_1, value & 0x0F);
+                CalculatePriorityMode(HuC6270_WINDOW_NONE, (value & 0xF0) >> 4);
                 break;
             case 0x0A:
                 m_window_1 = (m_window_1 & 0x300) | value;
@@ -150,6 +154,21 @@ INLINE void HuC6202::AssertIRQ1(HuC6270* vdc, bool assert)
         m_irq1_2 = assert;
 
     m_huc6280->AssertIRQ1(m_irq1_1 || m_irq1_2);
+}
+
+INLINE u16 HuC6202::GetWindow1Width()
+{
+    return m_window_1;
+}
+
+INLINE u16 HuC6202::GetWindow2Width()
+{
+    return m_window_2;
+}
+
+INLINE HuC6202::HuC6270_Window_Priority* HuC6202::GetWindowPriorities()
+{
+    return m_window_priority;
 }
 
 #endif /* HUC6202_INLINE_H */

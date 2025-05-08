@@ -20,7 +20,6 @@
 #ifndef HUC6260_INLINE_H
 #define HUC6260_INLINE_H
 
-#include <assert.h>
 #include "huc6260.h"
 #include "huc6202.h"
 #include "huc6280.h"
@@ -56,23 +55,80 @@ INLINE bool HuC6260::Clock(u32 cycles)
 
         if ((m_hpos % m_clock_divider) == 0)
         {
-            u16 pixel = m_huc6202->Clock();
-
             m_pixel_x++;
             if (m_pixel_x == k_huc6260_full_line_width[m_speed])
                 m_pixel_x = 0;
 
-            if (m_active_line && (m_pixel_x >= m_screen_start_x) && (m_pixel_x < m_screen_end_x))
+            if (m_is_sgx)
             {
-                if ((pixel & 0x10F) == 0)
-                    pixel = 0;
+                u16 pixel_1, pixel_2;
+                m_huc6202->ClockSGX(&pixel_1, &pixel_2);
 
-                assert(pixel < 512);
-                u16 color = m_color_table[pixel];
-                assert(color < 512);
+                if (m_active_line && (m_pixel_x >= m_screen_start_x) && (m_pixel_x < m_screen_end_x))
+                {
+                    u16 win_1_width = m_huc6202->GetWindow1Width();
+                    u16 win_2_width = m_huc6202->GetWindow2Width();
 
-                m_vce_buffer[m_pixel_index] = color;
-                m_pixel_index++;
+                    int in_win_1 = (win_1_width >= 0x40) && (m_pixel_x < win_1_width);
+                    int in_win_2 = ((win_2_width >= 0x40) && (m_pixel_x < win_2_width)) << 1;
+                    int win_mode = in_win_1 | in_win_2;
+
+                    HuC6202::HuC6270_Window_Priority* priorities = m_huc6202->GetWindowPriorities();
+                    HuC6202::HuC6270_Window_Priority* priority = &priorities[win_mode];
+
+                    int vdc_1_enabled = priority->vdc_1_enabled;
+                    int vdc_2_enabled = priority->vdc_2_enabled << 1;
+                    int vdcs_enabled = vdc_1_enabled | vdc_2_enabled;
+
+                    u16 final_pixel;
+
+                    if (vdcs_enabled == 0)
+                        final_pixel = 0;
+                    else if (vdcs_enabled == 1)
+                        final_pixel = pixel_1;
+                    else if (vdcs_enabled == 2)
+                        final_pixel = pixel_2;
+                    else
+                    {
+                        bool is_pixel_1_transparent = (pixel_1 & 0x0F) == 0;
+                        bool is_vdc_1_sprite = pixel_1 & 0x100;
+                        bool is_vdc_2_sprite = pixel_2 & 0x100;
+
+                        switch (priority->priority_mode)
+                        {
+                            case HuC6202::HuC6270_PRIORITY_DEFAULT:
+                                final_pixel = is_pixel_1_transparent ? pixel_2 : pixel_1;
+                                break;
+                            case HuC6202::HuC6270_PRIORITY_SPRITES_2_ABOVE_BG_1:
+                                if (is_pixel_1_transparent || (is_vdc_2_sprite && !is_vdc_1_sprite))
+                                    final_pixel = pixel_2;
+                                else
+                                    final_pixel = pixel_1;
+                                break;
+                            case HuC6202::HuC6270_PRIORITY_SPRITES_1_BELOW_BG_2:
+                            {
+                                bool is_pixel_2_transparent = (pixel_2 & 0x0F) == 0;
+                                if (is_pixel_1_transparent || (is_vdc_1_sprite && !is_vdc_2_sprite && !is_pixel_2_transparent))
+                                    final_pixel = pixel_2;
+                                else
+                                    final_pixel = pixel_1;
+                                break;
+                            }
+                        }
+                    }
+
+                    m_vce_buffer[m_pixel_index] = m_color_table[final_pixel];
+                    m_pixel_index++;
+                }
+            }
+            else
+            {
+                u16 pixel = m_huc6202->Clock();
+                if (m_active_line && (m_pixel_x >= m_screen_start_x) && (m_pixel_x < m_screen_end_x))
+                {
+                    m_vce_buffer[m_pixel_index] = m_color_table[pixel];
+                    m_pixel_index++;
+                }
             }
         }
 
