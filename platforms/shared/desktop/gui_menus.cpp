@@ -368,7 +368,19 @@ static void menu_emulator(void)
         {
             ImGui::BeginTooltip();
             ImGui::Text("This option is not recommended as many USA games");
-            ImGui::Text("will fail to start if a JAP system is detected");
+            ImGui::Text("will fail to start if a Japanese system is detected");
+            ImGui::EndTooltip();
+        }
+
+        if (ImGui::MenuItem("Force SuperGrafx", "", &config_emulator.force_sgx))
+        {
+            emu_set_force_sgx(config_emulator.force_sgx);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("This option is only recommended for development");
+            ImGui::Text("and will be applied on the next rom opened.");
             ImGui::EndTooltip();
         }
 

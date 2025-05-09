@@ -60,6 +60,7 @@ struct config_Emulator
     bool status_messages = false;
     bool backup_ram = true;
     bool pce_jap = false;
+    bool force_sgx = false;
 };
 
 struct config_Video

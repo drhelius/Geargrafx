@@ -37,6 +37,7 @@ Cartridge::Cartridge()
     m_rom_bank_count = 0;
     m_crc = 0;
     m_is_sgx = false;
+    m_force_sgx = false;
     m_mapper = STANDARD_MAPPER;
 
     m_rom_map = new u8*[128];
@@ -87,6 +88,13 @@ bool Cartridge::IsSGX()
 {
     return m_is_sgx;
 }
+
+void Cartridge::ForceSGX(bool enable)
+{
+    m_force_sgx = enable;
+    m_is_sgx = enable;
+}
+
 
 Cartridge::CartridgeMapper Cartridge::GetMapper()
 {
@@ -213,7 +221,15 @@ bool Cartridge::LoadFromFile(const char* path)
         if (extension == "zip")
             m_ready = LoadFromZipFile(reinterpret_cast<u8*> (memblock), size);
         else
+        {
+            if (extension == "sgx")
+            {
+                m_is_sgx = true;
+                Log("Forcing SuperGrafx (SGX) because of extension");
+            }
+
             m_ready = LoadFromBuffer(reinterpret_cast<u8*> (memblock), size);
+        }
 
         SafeDeleteArray(memblock);
     }
@@ -342,6 +358,12 @@ void Cartridge::GatherROMInfo()
     Log("ROM CRC32: %08X", m_crc);
 
     GatherInfoFromDB();
+
+    if (m_force_sgx)
+    {
+        m_is_sgx = true;
+        Log("Forcing SuperGrafx (SGX) because of user request");
+    }
 
     if ((m_mapper == STANDARD_MAPPER) && (m_rom_size > 0x100000))
     {

@@ -290,8 +290,9 @@ void emu_get_info(char* info, int buffer_size)
         u32 crc = cart->GetCRC();
         int rom_size = cart->GetROMSize();
         int rom_banks = cart->GetROMBankCount();
+        const char* is_sgx = cart->IsSGX() ? "YES" : "NO";
 
-        snprintf(info, buffer_size, "File Name: %s\nCRC: %08X\nROM Size: %d bytes, %d KB\nROM Banks: %d\nScreen Resolution: %dx%d", filename, crc, rom_size, rom_size / 1024, rom_banks, runtime.screen_width, runtime.screen_height);
+        snprintf(info, buffer_size, "File Name: %s\nCRC: %08X\nROM Size: %d bytes, %d KB\nROM Banks: %d\nSuperGrafx: %s\nScreen Resolution: %dx%d", filename, crc, rom_size, rom_size / 1024, rom_banks, is_sgx, runtime.screen_width, runtime.screen_height);
     }
     else
     {
@@ -412,6 +413,11 @@ void emu_set_huc6280_registers_reset_value(int value)
 void emu_set_pce_japanese(bool enabled)
 {
     geargrafx->GetInput()->EnablePCEJap(enabled);
+}
+
+void emu_set_force_sgx(bool enabled)
+{
+    geargrafx->GetCartridge()->ForceSGX(enabled);
 }
 
 void emu_set_backup_ram(bool enabled)

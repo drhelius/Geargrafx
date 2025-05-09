@@ -536,6 +536,7 @@ static void set_variabless(void)
         { "geargrafx_composite_colors", "Composite Colors; Disabled|Enabled" },
         { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
         { "geargrafx_force_pce_jap", "Force Japanese PC Engine (restart); Disabled|Enabled" },
+        { "geargrafx_force_sgx", "Force SuperGrafx (restart); Disabled|Enabled" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
         { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
         { NULL }
@@ -647,6 +648,14 @@ static void check_variables(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         core->GetInput()->EnablePCEJap(strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_force_sgx";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetCartridge()->ForceSGX(strcmp(var.value, "Enabled") == 0);
     }
 
     var.key = "geargrafx_no_sprite_limit";

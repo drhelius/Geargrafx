@@ -195,6 +195,7 @@ void config_read(void)
     config_emulator.status_messages = read_bool("Emulator", "StatusMessages", false);
     config_emulator.backup_ram = read_bool("Emulator", "BackupRAM", true);
     config_emulator.pce_jap = read_bool("Emulator", "PCEJap", false);
+    config_emulator.force_sgx = read_bool("Emulator", "ForceSGX", false);
 
     if (config_emulator.savefiles_path.empty())
     {
@@ -387,6 +388,7 @@ void config_write(void)
     write_bool("Emulator", "StatusMessages", config_emulator.status_messages);
     write_bool("Emulator", "BackupRAM", config_emulator.backup_ram);
     write_bool("Emulator", "PCEJap", config_emulator.pce_jap);
+    write_bool("Emulator", "ForceSGX", config_emulator.force_sgx);
 
     for (int i = 0; i < config_max_recent_roms; i++)
     {

@@ -39,6 +39,7 @@ public:
     u32 GetCRC();
     bool IsReady();
     bool IsSGX();
+    void ForceSGX(bool enable);
     CartridgeMapper GetMapper();
     int GetROMSize();
     int GetROMBankCount();
@@ -71,6 +72,7 @@ private:
     char m_file_extension[512];
     u32 m_crc;
     bool m_is_sgx;
+    bool m_force_sgx;
     CartridgeMapper m_mapper;
 };
 

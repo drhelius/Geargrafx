@@ -100,6 +100,7 @@ EXTERN void emu_set_memory_reset_values(int mpr, int wram, int card_ram);
 EXTERN void emu_set_huc6260_color_table_reset_value(int value);
 EXTERN void emu_set_huc6280_registers_reset_value(int value);
 EXTERN void emu_set_pce_japanese(bool enabled);
+EXTERN void emu_set_force_sgx(bool enabled);
 EXTERN void emu_set_backup_ram(bool enabled);
 EXTERN void emu_set_turbo_tap(bool enabled);
 EXTERN void emu_set_avenue_pad(GG_Controllers controller, bool enabled);
