@@ -52,13 +52,13 @@ include:
     file: '/ios9.yml'
 
   ################################## CONSOLES ################################
-    # PlayStation 2
-  - project: 'libretro-infrastructure/ci-templates'
-    file: '/ps2-static.yml'
+  # PlayStation 2
+  # - project: 'libretro-infrastructure/ci-templates'
+  #   file: '/ps2-static.yml'
 
   # PlayStation Portable
-  - project: 'libretro-infrastructure/ci-templates'
-    file: '/psp-static.yml'
+  # - project: 'libretro-infrastructure/ci-templates'
+  #   file: '/psp-static.yml'
 
   # PlayStation Vita
   - project: 'libretro-infrastructure/ci-templates'
