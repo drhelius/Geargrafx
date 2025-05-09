@@ -384,7 +384,7 @@ void gui_debug_window_huc6270_background(int vdc)
 
                 if (ImGui::IsMouseClicked(0))
                 {
-                    gui_debug_memory_goto(MEMORY_EDITOR_VRAM, tile_index * 16);
+                    gui_debug_memory_goto((vdc == 1) ? MEMORY_EDITOR_VRAM_1 : MEMORY_EDITOR_VRAM_2, tile_index * 16);
                 }
             }
         }
@@ -540,7 +540,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
 
             if (ImGui::IsMouseClicked(0))
             {
-                gui_debug_memory_goto(MEMORY_EDITOR_VRAM, pattern << 6);
+                gui_debug_memory_goto((vdc == 1) ? MEMORY_EDITOR_VRAM_1 : MEMORY_EDITOR_VRAM_2, pattern << 6);
             }
         }
     }

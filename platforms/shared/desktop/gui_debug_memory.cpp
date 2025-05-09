@@ -47,16 +47,20 @@ void gui_debug_memory_reset(void)
     Memory* memory = core->GetMemory();
     Cartridge* cart = core->GetCartridge();
     HuC6260* huc6260 = core->GetHuC6260();
-    HuC6270* huc6270 = core->GetHuC6270_1();
+    HuC6270* huc6270_1 = core->GetHuC6270_1();
+    HuC6270* huc6270_2 = core->GetHuC6270_2();
+    bool is_sgx = core->GetCartridge()->IsSGX();
 
-    mem_edit[0].Reset("RAM", memory->GetWorkingRAM(), 0x2000);
-    mem_edit[1].Reset("ZERO PAGE", memory->GetWorkingRAM(), 0x100);
-    mem_edit[2].Reset("ROM", cart->GetROM(), cart->GetROMSize());
-    mem_edit[3].Reset("VRAM", (u8*)huc6270->GetVRAM(), HUC6270_VRAM_SIZE, 0, 2);
-    mem_edit[4].Reset("SAT", (u8*)huc6270->GetSAT(), HUC6270_SAT_SIZE, 0, 2);
-    mem_edit[5].Reset("PALETTES", (u8*)huc6260->GetColorTable(), 512, 0, 2);
-    mem_edit[6].Reset("CARD RAM", memory->GetCardRAM(), memory->GetCardRAMSize());
-    mem_edit[7].Reset("BACKUP RAM", memory->GetBackupRAM(), 0x800);
+    mem_edit[MEMORY_EDITOR_RAM].Reset("RAM", memory->GetWorkingRAM(), 0x2000);
+    mem_edit[MEMORY_EDITOR_ZERO_PAGE].Reset("ZERO PAGE", memory->GetWorkingRAM(), 0x100);
+    mem_edit[MEMORY_EDITOR_ROM].Reset("ROM", cart->GetROM(), cart->GetROMSize());
+    mem_edit[MEMORY_EDITOR_CARD_RAM].Reset("CARD RAM", memory->GetCardRAM(), memory->GetCardRAMSize());
+    mem_edit[MEMORY_EDITOR_BACKUP_RAM].Reset("BACKUP RAM", memory->GetBackupRAM(), 0x800);
+    mem_edit[MEMORY_EDITOR_PALETTES].Reset("PALETTES", (u8*)huc6260->GetColorTable(), 512, 0, 2);
+    mem_edit[MEMORY_EDITOR_VRAM_1].Reset(is_sgx ? "VRAM 1" : "VRAM", (u8*)huc6270_1->GetVRAM(), HUC6270_VRAM_SIZE, 0, 2);
+    mem_edit[MEMORY_EDITOR_VRAM_2].Reset("VRAM 2", (u8*)huc6270_2->GetVRAM(), HUC6270_VRAM_SIZE, 0, 2);
+    mem_edit[MEMORY_EDITOR_SAT_1].Reset(is_sgx ? "SAT 1" : "SAT", (u8*)huc6270_1->GetSAT(), HUC6270_SAT_SIZE, 0, 2);
+    mem_edit[MEMORY_EDITOR_SAT_2].Reset("SAT 2", (u8*)huc6270_2->GetSAT(), HUC6270_SAT_SIZE, 0, 2);
 }
 
 void gui_debug_window_memory(void)
@@ -147,15 +151,16 @@ static void draw_tabs(void)
 {
     GeargrafxCore* core = emu_get_core();
     Cartridge* cart = core->GetCartridge();
+    bool is_sgx = cart->IsSGX();
 
     for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
     {
+        if (!is_sgx && (i == MEMORY_EDITOR_VRAM_2 || i == MEMORY_EDITOR_SAT_2))
+            continue;
         if (i == MEMORY_EDITOR_ROM && !IsValidPointer(cart->GetROM()))
             continue;
-
         if (i == MEMORY_EDITOR_CARD_RAM && core->GetMemory()->GetCardRAMSize() == 0)
             continue;
-
         if (i == MEMORY_EDITOR_BACKUP_RAM && !core->GetMemory()->IsBackupRamEnabled())
             continue;
 
