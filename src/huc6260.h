@@ -145,7 +145,7 @@ static const int k_huc6260_line_end[2][4] = {
     { 256 + 24 + 24 + 24 - 12, 341 + 32 + 24 + 48 - 16, 512 + 48 + 24 + 96 - 24, 512 + 48 + 24 + 96 - 24 } };
 static const int k_huc6260_scaling_width[2] = { 1024, 1120 };
 
-static uint8_t k_rgb888_palette_composite[512][3] = {
+static const uint8_t k_rgb888_palette_composite[512][3] = {
     {   0,   0,   0}, {   0,   0,  27}, {   1,   2,  61}, {   0,   0,  88},
     {   1,   4, 123}, {   0,   0, 149}, {   2,   5, 184}, {   0,   2, 211},
     {  28,   0,   4}, {  32,   4,  39}, {  29,   1,  65}, {  33,   6, 100},
