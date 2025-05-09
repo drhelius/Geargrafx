@@ -267,14 +267,15 @@ void MemEditor::Draw(bool ascii, bool preview, bool options, bool cursors)
 
                             if (ImGui::InputText("##editing_input", buf, (m_mem_word == 1) ? 3 : 5, ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_AlwaysOverwrite))
                             {
-                                try
+                                u16 value = 0;
+                                if (parseHexString(buf, strlen(buf), &value))
                                 {
                                     if (m_mem_word == 1)
-                                        m_mem_data[byte_address] = (uint8_t)std::stoul(buf, 0, 16);
+                                        m_mem_data[byte_address] = (uint8_t)value;
                                     else if (m_mem_word == 2)
                                     {
                                         uint16_t* mem_data_16 = (uint16_t*)m_mem_data;
-                                        mem_data_16[byte_address] = (uint16_t)std::stoul(buf, 0, 16);
+                                        mem_data_16[byte_address] = value;
                                     }
 
                                     if (byte_address < (m_mem_size - 1))
@@ -286,7 +287,7 @@ void MemEditor::Draw(bool ascii, bool preview, bool options, bool cursors)
                                     else
                                         m_editing_address = -1;
                                 }
-                                catch (const std::invalid_argument&)
+                                else
                                 {
                                     m_editing_address = -1;
                                 }
@@ -537,26 +538,22 @@ void MemEditor::DrawCursors()
     ImGui::PushItemWidth((character_size.x * (strlen(buf) + 1)) + 2);
     if (ImGui::InputTextWithHint("##gotoaddr", buf, m_goto_address, m_hex_addr_digits + 1, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
     {
-        try
+        u32 address_value = 0;
+        if (parseHexString(m_goto_address, strlen(m_goto_address), &address_value))
         {
-            JumpToAddress((int)std::stoul(m_goto_address, 0, 16));
-            m_goto_address[0] = 0;
+            JumpToAddress((int)address_value);
         }
-        catch(const std::invalid_argument&)
-        {
-        }
+        m_goto_address[0] = 0;
     }
     ImGui::SameLine();
     if (ImGui::Button("GoTo"))
     {
-        try
+        u32 address_value = 0;
+        if (parseHexString(m_goto_address, strlen(m_goto_address), &address_value))
         {
-            JumpToAddress((int)std::stoul(m_goto_address, 0, 16));
-            m_goto_address[0] = 0;
+            JumpToAddress((int)address_value);
         }
-        catch(const std::invalid_argument&)
-        {
-        }
+        m_goto_address[0] = 0;
     }
 
     ImGui::SameLine();
@@ -566,25 +563,19 @@ void MemEditor::DrawCursors()
     ImGui::PushItemWidth((m_mem_word == 1 ? character_size.x * 3 : character_size.x * 5) + 2);
     if (ImGui::InputTextWithHint("##findnext", m_mem_word == 1 ? "00" : "0000", m_find_next, m_mem_word == 1 ? 3 : 5, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
     {
-        try
+        u32 find_value = 0;
+        if (parseHexString(m_find_next, strlen(m_find_next), &find_value))
         {
-            int find_value = (int)std::stoul(m_find_next, 0, 16);
-            FindNextValue(find_value);
-        }
-        catch(const std::invalid_argument&)
-        {
+            FindNextValue((int)find_value);
         }
     }
     ImGui::SameLine();
     if (ImGui::Button("Find Next"))
     {
-        try
+        u32 find_value = 0;
+        if (parseHexString(m_find_next, strlen(m_find_next), &find_value))
         {
-            int find_value = (int)std::stoul(m_find_next, 0, 16);
-            FindNextValue(find_value);
-        }
-        catch(const std::invalid_argument&)
-        {
+            FindNextValue((int)find_value);
         }
     }
 
@@ -856,9 +847,10 @@ void MemEditor::BookMarkPopup()
 
         if (ImGui::Button("OK", ImVec2(90, 0)))
         {
-            try
+            u32 bookmark_address_value = 0;
+            if (parseHexString(address, strlen(address), &bookmark_address_value))
             {
-                int bookmark_address = (int)std::stoul(address, 0, 16);
+                int bookmark_address = (int)bookmark_address_value;
 
                 if (strlen(name) == 0)
                 {
@@ -876,9 +868,6 @@ void MemEditor::BookMarkPopup()
                 ImGui::CloseCurrentPopup();
                 address[0] = 0;
                 name[0] = 0;
-            }
-            catch(const std::invalid_argument&)
-            {
             }
         }
 
@@ -938,9 +927,10 @@ void MemEditor::WatchPopup()
 
         if (ImGui::Button("OK", ImVec2(90, 0)))
         {
-            try
+            u32 watch_address_value = 0;
+            if (parseHexString(address, strlen(address), &watch_address_value))
             {
-                int watch_address = (int)std::stoul(address, 0, 16);
+                int watch_address = (int)watch_address_value;
 
                 if (watch_address >= m_mem_base_addr && watch_address < (m_mem_base_addr + m_mem_size))
                 {
@@ -955,9 +945,6 @@ void MemEditor::WatchPopup()
                 notes[0] = 0;
 
                 m_watch_window = true;
-            }
-            catch(const std::invalid_argument&)
-            {
             }
         }
 
@@ -1151,12 +1138,10 @@ void MemEditor::SearchWindow()
 
                 if (ImGui::InputTextWithHint("##search_value", buf, m_search_compare_specific_value_str, m_mem_word == 1 ? 3 : 5, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
                 {
-                    try
+                    u32 value = 0;
+                    if (parseHexString(m_search_compare_specific_value_str, strlen(m_search_compare_specific_value_str), &value))
                     {
-                        m_search_compare_specific_value = (int)std::stoul(m_search_compare_specific_value_str, 0, 16);
-                    }
-                    catch(const std::invalid_argument&)
-                    {
+                        m_search_compare_specific_value = (int)value;
                     }
                 }
                 break;
@@ -1206,16 +1191,15 @@ void MemEditor::SearchWindow()
 
         if (ImGui::InputTextWithHint("##search_address", buf, m_search_compare_specific_address_str, m_hex_addr_digits + 1, ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
         {
-            try
+            u32 address_value = 0;
+            if (parseHexString(m_search_compare_specific_address_str, strlen(m_search_compare_specific_address_str), &address_value))
             {
-                m_search_compare_specific_address = (int)std::stoul(m_search_compare_specific_address_str, 0, 16);
+                m_search_compare_specific_address = (int)address_value;
+
                 if (m_search_compare_specific_address < 0)
                     m_search_compare_specific_address = 0;
                 else if (m_search_compare_specific_address >= m_mem_size)
                     m_search_compare_specific_address = m_mem_size - 1;
-            }
-            catch(const std::invalid_argument&)
-            {
             }
         }
     }
@@ -1469,11 +1453,12 @@ void MemEditor::Paste()
         {
             std::string byte = text.substr(i * 2, 2);
 
-            try
+            uint8_t value = 0;
+            if (parseHexString(byte.c_str(), byte.length(), &value))
             {
-                data[i] = (uint8_t)std::stoul(byte, 0, 16);
+                data[i] = value;
             }
-            catch(const std::invalid_argument&)
+            else
             {
                 delete[] data;
                 SDL_free(clipboard);

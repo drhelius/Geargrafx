@@ -894,31 +894,32 @@ static void add_symbol(const char* line)
             addr_str = tokens[1];
             symbol = tokens[2];
         }
-        else {
+        else
+        {
             // VASM format: <address> <symbolname>
             addr_str = tokens[0];
             symbol = tokens[1];
         }
 
-        try
+        // Parse the bank and address values
+        u16 bank_value = 0;
+        if (parseHexString(bank_str.c_str(), bank_str.length(), &bank_value))
         {
-            // Parse bank and address
-            s.bank = std::stoul(bank_str, 0, 16);
-            s.address = (u16)std::stoul(addr_str, 0, 16);
+            u16 address_value = 0;
+            if (parseHexString(addr_str.c_str(), addr_str.length(), &address_value))
+            {
+                s.bank = bank_value;
+                s.address = address_value;
+                snprintf(s.text, 64, "%s", symbol.c_str());
 
-            // Store the symbol
-            snprintf(s.text, 64, "%s", symbol.c_str());
+                // Store the symbol
+                DebugSymbol* new_symbol = new DebugSymbol;
+                new_symbol->address = s.address;
+                new_symbol->bank = s.bank;
+                snprintf(new_symbol->text, 64, "%s", s.text);
 
-            DebugSymbol* new_symbol = new DebugSymbol;
-            new_symbol->address = s.address;
-            new_symbol->bank = s.bank;
-            snprintf(new_symbol->text, 64, "%s", s.text);
-
-            fixed_symbols[s.bank][s.address] = new_symbol;
-        }
-        catch(const std::invalid_argument&)
-        {
-            // Invalid format - silently ignore
+                fixed_symbols[s.bank][s.address] = new_symbol;
+            }
         }
     }
 }
@@ -1190,12 +1191,10 @@ static void disassembler_menu(void)
 
             if (go)
             {
-                try
+                u16 address_value = 0;
+                if (parseHexString(goto_address, strlen(goto_address), &address_value))
                 {
-                    request_goto_address((u16)std::stoul(goto_address, 0, 16));
-                }
-                catch(const std::invalid_argument&)
-                {
+                    request_goto_address(address_value);
                 }
                 goto_address[0] = 0;
             }
@@ -1266,12 +1265,10 @@ static void disassembler_menu(void)
 
             if (go)
             {
-                try
+                u16 address_value = 0;
+                if (parseHexString(runto_address, strlen(runto_address), &address_value))
                 {
-                    gui_debug_runto_address((u16)std::stoul(runto_address, 0, 16));
-                }
-                catch(const std::invalid_argument&)
-                {
+                    gui_debug_runto_address(address_value);
                 }
                 runto_address[0] = 0;
             }
@@ -1398,10 +1395,9 @@ static void add_bookmark_popup(void)
 
         if (ImGui::Button("OK", ImVec2(90, 0)))
         {
-            try
+            u16 bookmark_address = 0;
+            if (parseHexString(address_bookmark, strlen(address_bookmark), &bookmark_address))
             {
-                bookmark_address = (int)std::stoul(address_bookmark, 0, 16);
-
                 if (strlen(name_bookmark) == 0)
                 {
                     Memory* memory = emu_get_core()->GetMemory();
@@ -1430,9 +1426,6 @@ static void add_bookmark_popup(void)
                 address_bookmark[0] = 0;
                 name_bookmark[0] = 0;
                 bookmark_modified = false;
-            }
-            catch(const std::invalid_argument&)
-            {
             }
         }
 
@@ -1481,22 +1474,16 @@ static void add_symbol_popup(void)
 
         if (ImGui::Button("OK", ImVec2(90, 0)))
         {
-            try
+            if (strlen(name) != 0 && strlen(address) != 0)
             {
-                if (strlen(name) != 0)
-                {
-                    char symbol[128] = { };
-                    snprintf(symbol, 128, "%s %s", address, name);
-                    add_symbol(symbol);
+                char symbol[128] = { };
+                snprintf(symbol, 128, "%s %s", address, name);
+                add_symbol(symbol);
 
-                    ImGui::CloseCurrentPopup();
-                    address[0] = 0;
-                    name[0] = 0;
-                    symbol_modified = false;
-                }
-            }
-            catch(const std::invalid_argument&)
-            {
+                ImGui::CloseCurrentPopup();
+                address[0] = 0;
+                name[0] = 0;
+                symbol_modified = false;
             }
         }
 

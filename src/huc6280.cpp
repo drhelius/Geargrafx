@@ -154,30 +154,28 @@ bool HuC6280::AddBreakpoint(int type, char* text, bool read, bool write, bool ex
     if (!read && !write && !execute)
         return false;
 
-    try
+    if ((input_len == 9) && (text[4] == '-'))
     {
-        if ((input_len == 9) && (text[4] == '-'))
+        // format: AAAA-BBBB
+        if (parseHexString(text, 4, &brk.address1) && 
+            parseHexString(text + 5, 4, &brk.address2))
         {
-            std::string str(text);
-            std::size_t separator = str.find("-");
-
-            if (separator != std::string::npos)
-            {
-                brk.address1 = (u16)std::stoul(str.substr(0, separator), 0 , 16);
-                brk.address2 = (u16)std::stoul(str.substr(separator + 1 , std::string::npos), 0, 16);
-                brk.range = true;
-            }
-        }
-        else if ((input_len > 0) && (input_len <= 4))
-        {
-            brk.address1 = (u16)std::stoul(text, 0, 16);
+            brk.range = true;
         }
         else
         {
             return false;
         }
     }
-    catch(const std::invalid_argument&)
+    else if ((input_len > 0) && (input_len <= 4))
+    {
+        // format: AAAA
+        if (!parseHexString(text, input_len, &brk.address1))
+        {
+            return false;
+        }
+    }
+    else
     {
         return false;
     }

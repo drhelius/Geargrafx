@@ -423,7 +423,7 @@ std::string GeargrafxCore::GetSaveStatePath(const char* path, int index)
         full_path.replace(dot_index + 1, full_path.length() - dot_index - 1, "state");
 
     if (index >= 0)
-        full_path += to_string(index);
+        full_path += std::to_string(index);
 
     return full_path;
 }

@@ -30,7 +30,7 @@ else
 endif
 
 CPPFLAGS += -I../ -I../../
-CPPFLAGS += -Wall -Wextra -Wformat  -DEMULATOR_BUILD=\"$(GIT_VERSION)\"
+CPPFLAGS += -Wall -Wextra -Wformat -fno-exceptions -DEMULATOR_BUILD=\"$(GIT_VERSION)\"
 CXXFLAGS += -std=c++11
 CFLAGS += -std=c99
 

@@ -339,8 +339,8 @@ OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
 INCLUDES += -I$(CORE_DIR)
 
-CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(INCLUDES) $(fpic)
-CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -D__LIBRETRO__ $(INCLUDES) $(fpic)
+CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ $(INCLUDES) $(fpic)
+CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ $(INCLUDES) $(fpic)
 
 all: $(TARGET)
 	@echo Build complete: $(TARGET_NAME) $(BUILD_CONFIG) - $(GIT_VERSION) - $(platform)

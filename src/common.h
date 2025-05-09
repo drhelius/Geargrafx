@@ -54,4 +54,48 @@ inline void GetCurrentDateTimeString(char* buffer, size_t size)
     GetDateTimeString(timestamp, buffer, size);
 }
 
+inline bool isHexDigit(char c)
+{
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+template<typename T>
+inline bool parseHexString(const char* str, size_t len, T* result, size_t max_digits = sizeof(T) * 2)
+{
+    if (len == 0 || len > max_digits)
+        return false;
+
+    *result = 0;
+    for (size_t i = 0; i < len; i++)
+    {
+        if (!isHexDigit(str[i]))
+            return false;
+
+        *result = (*result << 4);
+
+        if (str[i] >= '0' && str[i] <= '9')
+            *result |= (str[i] - '0');
+        else if (str[i] >= 'a' && str[i] <= 'f')
+            *result |= (str[i] - 'a' + 10);
+        else // (str[i] >= 'A' && str[i] <= 'F')
+            *result |= (str[i] - 'A' + 10);
+    }
+    return true;
+}
+
+inline bool parseHexString(const char* str, size_t len, u8* result)
+{
+    return parseHexString<u8>(str, len, result, 2);
+}
+
+inline bool parseHexString(const char* str, size_t len, u16* result)
+{
+    return parseHexString<u16>(str, len, result, 4);
+}
+
+inline bool parseHexString(const char* str, size_t len, u32* result)
+{
+    return parseHexString<u32>(str, len, result, 8);
+}
+
 #endif /* COMMON_H */
