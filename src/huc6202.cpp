@@ -66,7 +66,7 @@ void HuC6202::Reset(bool is_sgx)
     WriteRegister(9, 0x11);
 }
 
-void HuC6202::CalculatePriorityMode(HuC6270_Window_Mode window_mode, u8 value)
+void HuC6202::CalculatePriorityMode(HuC6202_Window_Mode window_mode, u8 value)
 {
     m_window_priority[window_mode].vdc_1_enabled = (value & 0x01) != 0;
     m_window_priority[window_mode].vdc_2_enabled = (value & 0x02) != 0;

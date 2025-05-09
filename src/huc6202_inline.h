@@ -166,7 +166,7 @@ INLINE u16 HuC6202::GetWindow2Width()
     return m_window_2;
 }
 
-INLINE HuC6202::HuC6270_Window_Priority* HuC6202::GetWindowPriorities()
+INLINE HuC6202::HuC6202_Window_Priority* HuC6202::GetWindowPriorities()
 {
     return m_window_priority;
 }

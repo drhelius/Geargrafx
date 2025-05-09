@@ -73,8 +73,8 @@ INLINE bool HuC6260::Clock(u32 cycles)
                     int in_win_2 = ((win_2_width >= 0x40) && (m_pixel_x < win_2_width)) << 1;
                     int win_mode = in_win_1 | in_win_2;
 
-                    HuC6202::HuC6270_Window_Priority* priorities = m_huc6202->GetWindowPriorities();
-                    HuC6202::HuC6270_Window_Priority* priority = &priorities[win_mode];
+                    HuC6202::HuC6202_Window_Priority* priorities = m_huc6202->GetWindowPriorities();
+                    HuC6202::HuC6202_Window_Priority* priority = &priorities[win_mode];
 
                     int vdc_1_enabled = priority->vdc_1_enabled;
                     int vdc_2_enabled = priority->vdc_2_enabled << 1;

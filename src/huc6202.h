@@ -30,7 +30,7 @@ class HuC6280;
 class HuC6202
 {
 public:
-    enum HuC6270_Window_Mode
+    enum HuC6202_Window_Mode
     {
         HuC6270_WINDOW_NONE = 0,
         HuC6270_WINDOW_1,
@@ -38,18 +38,18 @@ public:
         HuC6270_WINDOW_BOTH
     };
 
-    enum HuC6270_Priority_Mode
+    enum HuC6202_Priority_Mode
     {
         HuC6270_PRIORITY_DEFAULT = 0,
         HuC6270_PRIORITY_SPRITES_2_ABOVE_BG_1,
         HuC6270_PRIORITY_SPRITES_1_BELOW_BG_2,
     };
 
-    struct HuC6270_Window_Priority
+    struct HuC6202_Window_Priority
     {
         bool vdc_1_enabled;
         bool vdc_2_enabled;
-        HuC6270_Priority_Mode priority_mode;
+        HuC6202_Priority_Mode priority_mode;
     };
 
     struct HuC6202_State
@@ -61,7 +61,7 @@ public:
         bool* VDC2_SELECTED;
         bool* IRQ1_1;
         bool* IRQ1_2;
-        HuC6270_Window_Priority* WINDOW_PRIORITY;
+        HuC6202_Window_Priority* WINDOW_PRIORITY;
     };
 
 public:
@@ -79,13 +79,13 @@ public:
     void AssertIRQ1(HuC6270* vdc, bool assert);
     u16 GetWindow1Width();
     u16 GetWindow2Width();
-    HuC6270_Window_Priority* GetWindowPriorities();
+    HuC6202_Window_Priority* GetWindowPriorities();
     HuC6202_State* GetState();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
 private:
-    void CalculatePriorityMode(HuC6270_Window_Mode window_mode, u8 value);
+    void CalculatePriorityMode(HuC6202_Window_Mode window_mode, u8 value);
 
 private:
     HuC6280* m_huc6280;
@@ -100,7 +100,7 @@ private:
     bool m_vdc2_selected;
     bool m_irq1_1;
     bool m_irq1_2;
-    HuC6270_Window_Priority m_window_priority[4];
+    HuC6202_Window_Priority m_window_priority[4];
 };
 
 #include "huc6202_inline.h"
