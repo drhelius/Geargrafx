@@ -193,16 +193,16 @@ libretro-build-tvos-arm64:
 
 ################################### CONSOLES #################################
 # PlayStation 2
-libretro-build-ps2:
-  extends:
-    - .libretro-ps2-static-retroarch-master
-    - .core-defs
+# libretro-build-ps2:
+#   extends:
+#     - .libretro-ps2-static-retroarch-master
+#     - .core-defs
 
 # PlayStation Portable
-libretro-build-psp:
-  extends:
-    - .libretro-psp-static-retroarch-master
-    - .core-defs
+# libretro-build-psp:
+#   extends:
+#     - .libretro-psp-static-retroarch-master
+#     - .core-defs
 
 # PlayStation Vita
 libretro-build-vita:
