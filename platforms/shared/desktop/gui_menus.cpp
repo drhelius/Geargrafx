@@ -71,6 +71,7 @@ void gui_main_menu(void)
     choose_savestates_path = false;
     choose_screenshots_path = false;
     gui_main_menu_hovered = false;
+    choose_backup_ram_path = false;
 
     if (config_emulator.show_menu && ImGui::BeginMainMenuBar())
     {
