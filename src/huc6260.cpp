@@ -36,7 +36,8 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280)
     InitPointer(m_color_table);
     InitPointer(m_frame_buffer);
     InitPointer(m_scale_buffer);
-    InitPointer(m_vce_buffer);
+    InitPointer(m_vce_buffer_1);
+    InitPointer(m_vce_buffer_2);
     InitPointer(m_line_speed);
     InitPointer(m_rgba888_palette);
     InitPointer(m_rgb565_palette);
@@ -55,7 +56,8 @@ HuC6260::~HuC6260()
 {
     SafeDeleteArray(m_color_table);
     SafeDeleteArray(m_scale_buffer);
-    SafeDeleteArray(m_vce_buffer);
+    SafeDeleteArray(m_vce_buffer_1);
+    SafeDeleteArray(m_vce_buffer_2);
     SafeDeleteArray(m_line_speed);
     DeletePalettes();
 }
@@ -65,7 +67,8 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
     m_pixel_format = pixel_format;
     m_color_table = new u16[512];
     m_scale_buffer = new u8[2048 * 512 * 4];
-    m_vce_buffer = new u16[1024 * 512];
+    m_vce_buffer_1 = new u16[1024 * 512];
+    m_vce_buffer_2 = new u16[1024 * 512];
     m_line_speed = new s32[242];
 
     InitPalettes();
@@ -291,10 +294,69 @@ void HuC6260::RenderFrame()
     int bytes_per_pixel = (m_pixel_format == GG_PIXEL_RGB565) ? 2 : 4;
     int frame_buffer_index = 0;
 
-    for (int i = 0; i < m_pixel_index; i++)
+    if (m_is_sgx)
     {
-        memcpy(m_frame_buffer + frame_buffer_index, palette[m_palette][m_vce_buffer[i]], bytes_per_pixel);
-        frame_buffer_index += bytes_per_pixel;
+        HuC6202::HuC6202_Window_Priority* priorities = m_huc6202->GetWindowPriorities();
+
+        for (int i = 0; i < m_pixel_index; i++)
+        {
+            u16 pixel_1 = m_vce_buffer_1[i];
+            u16 pixel_2 = m_vce_buffer_2[i];
+            int win_mode = (pixel_1 >> 14) & 0x0003;
+
+            HuC6202::HuC6202_Window_Priority* priority = &priorities[win_mode];
+            int vdc_1_enabled = priority->vdc_1_enabled;
+            int vdc_2_enabled = priority->vdc_2_enabled << 1;
+            int vdcs_enabled = vdc_1_enabled | vdc_2_enabled;
+
+            u16 final_pixel;
+
+            if (vdcs_enabled == 0)
+                final_pixel = 0;
+            else if (vdcs_enabled == 1)
+                final_pixel = pixel_1;
+            else if (vdcs_enabled == 2)
+                final_pixel = pixel_2;
+            else
+            {
+                bool is_pixel_1_transparent = (pixel_1 & 0x2000);
+                bool is_vdc_1_sprite = (pixel_1 & 0x1000);
+                bool is_vdc_2_sprite = (pixel_2 & 0x1000);
+
+                switch (priority->priority_mode)
+                {
+                    case HuC6202::HuC6270_PRIORITY_DEFAULT:
+                        final_pixel = is_pixel_1_transparent ? pixel_2 : pixel_1;
+                        break;
+                    case HuC6202::HuC6270_PRIORITY_SPRITES_2_ABOVE_BG_1:
+                        if (is_pixel_1_transparent || (is_vdc_2_sprite && !is_vdc_1_sprite))
+                            final_pixel = pixel_2;
+                        else
+                            final_pixel = pixel_1;
+                        break;
+                    case HuC6202::HuC6270_PRIORITY_SPRITES_1_BELOW_BG_2:
+                    {
+                        bool is_pixel_2_transparent = (pixel_2 & 0x2000);
+                        if (is_pixel_1_transparent || (is_vdc_1_sprite && !is_vdc_2_sprite && !is_pixel_2_transparent))
+                            final_pixel = pixel_2;
+                        else
+                            final_pixel = pixel_1;
+                        break;
+                    }
+                }
+            }
+
+            memcpy(m_frame_buffer + frame_buffer_index, palette[m_palette][final_pixel & 0x1FF], bytes_per_pixel);
+            frame_buffer_index += bytes_per_pixel;
+        }
+    }
+    else
+    {
+        for (int i = 0; i < m_pixel_index; i++)
+        {
+            memcpy(m_frame_buffer + frame_buffer_index, palette[m_palette][m_vce_buffer_1[i]], bytes_per_pixel);
+            frame_buffer_index += bytes_per_pixel;
+        }
     }
 }
 
@@ -389,7 +451,8 @@ void HuC6260::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
     stream.write(reinterpret_cast<const char*> (&m_active_line), sizeof(m_active_line));
     stream.write(reinterpret_cast<const char*> (m_scale_buffer), sizeof(u8) * 2048 * 512 * 4);
-    stream.write(reinterpret_cast<const char*> (m_vce_buffer), sizeof(u16) * 1024 * 512);
+    stream.write(reinterpret_cast<const char*> (m_vce_buffer_1), sizeof(u16) * 1024 * 512);
+    stream.write(reinterpret_cast<const char*> (m_vce_buffer_2), sizeof(u16) * 1024 * 512);
 }
 
 void HuC6260::LoadState(std::istream& stream)
@@ -412,7 +475,8 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
     stream.read(reinterpret_cast<char*> (m_scale_buffer), sizeof(u8) * 2048 * 512 * 4);
-    stream.read(reinterpret_cast<char*> (m_vce_buffer), sizeof(u16) * 1024 * 512);
+    stream.read(reinterpret_cast<char*> (m_vce_buffer_1), sizeof(u16) * 1024 * 512);
+    stream.read(reinterpret_cast<char*> (m_vce_buffer_2), sizeof(u16) * 1024 * 512);
 
     CalculateScreenBounds();
 }

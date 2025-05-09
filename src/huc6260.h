@@ -100,7 +100,8 @@ private:
     u16* m_color_table;
     u8* m_frame_buffer;
     u8* m_scale_buffer;
-    u16* m_vce_buffer;
+    u16* m_vce_buffer_1;
+    u16* m_vce_buffer_2;
     s32* m_line_speed;
     bool m_multiple_speeds;
     bool m_scaled_width;
