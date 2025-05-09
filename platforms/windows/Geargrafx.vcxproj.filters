@@ -25,7 +25,7 @@
     <ClCompile Include="..\shared\desktop\gui_debug_disassembler.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\desktop\gui_debug_huc6201.cpp">
+    <ClCompile Include="..\shared\desktop\gui_debug_huc6202.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\gui_debug_huc6260.cpp">
@@ -174,7 +174,7 @@
     <ClInclude Include="..\shared\desktop\gui_debug_disassembler.h">
       <Filter>desktop</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\desktop\gui_debug_huc6201.h">
+    <ClInclude Include="..\shared\desktop\gui_debug_huc6202.h">
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\gui_debug_huc6260.h">

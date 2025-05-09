@@ -40,7 +40,7 @@
     <ClCompile Include="..\shared\desktop\emu.cpp" />
     <ClCompile Include="..\shared\desktop\gui_actions.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_disassembler.cpp" />
-    <ClCompile Include="..\shared\desktop\gui_debug_huc6201.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_debug_huc6202.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_huc6260.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_huc6270.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_huc6280.cpp" />
@@ -112,7 +112,7 @@
     <ClInclude Include="..\shared\desktop\gui_actions.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_constants.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_disassembler.h" />
-    <ClInclude Include="..\shared\desktop\gui_debug_huc6201.h" />
+    <ClInclude Include="..\shared\desktop\gui_debug_huc6202.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_huc6260.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_huc6270.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_huc6280.h" />
