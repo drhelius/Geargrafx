@@ -278,7 +278,7 @@ void gui_debug_go_back(void)
 void gui_debug_window_disassembler(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(155, 26), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(166, 26), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(458, 553), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("Disassembler", &config_debug.show_disassembler, ImGuiWindowFlags_MenuBar);
@@ -1516,7 +1516,7 @@ static void add_symbol_popup(void)
 void gui_debug_window_call_stack(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(340, 168), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(140, 122), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(330, 240), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("Call Stack", &config_debug.show_call_stack);

@@ -47,7 +47,7 @@ void gui_debug_window_huc6270_info(int vdc)
         strncpy(title, "HuC6270 Info", sizeof(title));
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(214, 45), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(214 + ((vdc == 1) ? 0 : 224), 45), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(216, 618), ImGuiCond_FirstUseEver);
     ImGui::Begin(title, show);
 
@@ -191,7 +191,7 @@ void gui_debug_window_huc6270_registers(int vdc)
         strncpy(title, "HuC6270 Registers", sizeof(title));
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(93, 79), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(93 + ((vdc == 1) ? 0 : 274), 79), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(284, 400), ImGuiCond_FirstUseEver);
     ImGui::Begin(title, show);
 
@@ -248,7 +248,7 @@ void gui_debug_window_huc6270_background(int vdc)
         strncpy(title, "HuC6270 Background", sizeof(title));
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(63, 35), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(63 + ((vdc == 1) ? 0 : 108), 35 + ((vdc == 1) ? 0 : 44)), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(545, 614), ImGuiCond_FirstUseEver);
     ImGui::Begin(title, show);
 
@@ -416,7 +416,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
     float scale = 4.0f;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(78, 56), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(78 + ((vdc == 1) ? 0 : 64), 56 + ((vdc == 1) ? 0 : 34)), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(546, 500), ImGuiCond_FirstUseEver);
     ImGui::Begin(title, show);
 

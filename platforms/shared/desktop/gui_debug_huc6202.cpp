@@ -31,8 +31,8 @@
 void gui_debug_window_huc6202_info(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(75, 410), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(280, 220), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(208, 150), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(306, 330), ImGuiCond_FirstUseEver);
     ImGui::Begin("HuC6202 Info", &config_debug.show_huc6202_info);
 
     ImGui::PushFont(gui_default_font);
