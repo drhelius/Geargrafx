@@ -95,6 +95,7 @@ void config_init(void)
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
         config_input.controller_type[i] = 0;
+        config_input.avenue_pad_3_button[i] = 0;
 
         config_input_gamepad[i].detected = false;
         config_input_gamepad[i].gamepad_invert_x_axis = false;
@@ -252,6 +253,7 @@ void config_read(void)
         char input_group[32];
         snprintf(input_group, sizeof(input_group), "Input%d", i + 1);
         config_input.controller_type[i] = read_int(input_group, "ControllerType", 0);
+        config_input.avenue_pad_3_button[i] = read_int(input_group, "AvenuePad3Button", 0);
     }
 
     config_input_keyboard[0].key_left = (SDL_Scancode)read_int("InputKeyboard1", "KeyLeft", SDL_SCANCODE_LEFT);
@@ -424,6 +426,7 @@ void config_write(void)
         char input_group[32];
         snprintf(input_group, sizeof(input_group), "Input%d", i + 1);
         write_int(input_group, "ControllerType", config_input.controller_type[i]);
+        write_int(input_group, "AvenuePad3Button", config_input.avenue_pad_3_button[i]);
     }
 
     write_int("InputKeyboard1", "KeyLeft", config_input_keyboard[0].key_left);

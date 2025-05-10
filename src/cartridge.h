@@ -44,6 +44,7 @@ public:
     int GetROMSize();
     int GetROMBankCount();
     int GetCardRAMSize();
+    GG_Keys GetAvenuePad3Button();
     const char* GetFilePath();
     const char* GetFileDirectory();
     const char* GetFileName();
@@ -74,6 +75,7 @@ private:
     bool m_is_sgx;
     bool m_force_sgx;
     CartridgeMapper m_mapper;
+    GG_Keys m_avenue_pad_3_button;
 };
 
 #endif /* CARTRIDGE_H */

@@ -18,12 +18,12 @@
  */
 
 #include "input.h"
+#include "cartridge.h"
 #include "common.h"
 
-Input::Input()
+Input::Input(Cartridge* cartridge)
 {
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-        m_avenue_pad[i] = false;
+    m_cartridge = cartridge;
     m_turbo_tap = false;
     m_pce_jap = false;
     m_cdrom = true;
@@ -34,6 +34,9 @@ Input::Input()
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
+        m_controller_type[i] = GG_CONTROLLER_STANDARD;
+        m_avenue_pad_3_button[i] = GG_KEY_NONE;
+        m_avenue_pad_3_state[i] = 0xFFFF;
         m_gamepads[i] = 0xFFFF;
         m_selected_extra_buttons = false;
     }
@@ -53,6 +56,7 @@ void Input::Reset()
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
+        m_avenue_pad_3_state[i] = 0xFFFF;
         m_gamepads[i] = 0xFFFF;
         m_selected_extra_buttons = false;
     }

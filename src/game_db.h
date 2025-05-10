@@ -22,36 +22,72 @@
 
 #include "common.h"
 
-#define GG_GAMEDB_NONE              0x00
-#define GG_GAMEDB_SGX_REQUIRED      0x01
-#define GG_GAMEDB_SGX_OPTIONAL      0x02
-#define GG_GAMEDB_SF2_MAPPER        0x04
-#define GG_GAMEDB_CARD_RAM_8000     0x08
+#define GG_GAMEDB_NONE                 0x0000
+#define GG_GAMEDB_SGX_REQUIRED         0x0001
+#define GG_GAMEDB_SGX_OPTIONAL         0x0002
+#define GG_GAMEDB_SF2_MAPPER           0x0004
+#define GG_GAMEDB_CARD_RAM_8000        0x0008
+#define GG_GAMEDB_AVENUE_PAD_3_SELECT  0x0010
+#define GG_GAMEDB_AVENUE_PAD_3_RUN     0x0020
 
 struct GG_Game_DB_Entry
 {
     u32 crc;
     const char* title;
-    u8 flags;
+    u16 flags;
 };
 
 const GG_Game_DB_Entry k_game_database[] =
 {
     // SGX
-    { 0x8C4588E2, "1941 - Counter Attack (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
-    { 0x4C2126B0, "Aldynes (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
-    { 0x3B13AF61, "Battle Ace (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
-    { 0xB486A8ED, "Daimakaimura (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
-    { 0x1F041166, "Madouou Granzort (J) (SGX)", GG_GAMEDB_SGX_REQUIRED},
+    { 0x8C4588E2, "1941 - Counter Attack (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
+    { 0x4C2126B0, "Aldynes (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
+    { 0x3B13AF61, "Battle Ace (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
+    { 0xB486A8ED, "Daimakaimura (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
+    { 0x1F041166, "Madouou Granzort (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
 
     // OPTIONAL SGX
-    { 0xBEBFE042, "Darius Plus (J) (SGX)", GG_GAMEDB_SGX_OPTIONAL},
+    { 0xBEBFE042, "Darius Plus (J) (SGX)", GG_GAMEDB_SGX_OPTIONAL },
 
     // SF2 MAPPER
-    { 0xD15CB6BB, "Street Fighter II' - Champion Edition (J)", GG_GAMEDB_SF2_MAPPER},
+    { 0xD15CB6BB, "Street Fighter II' - Champion Edition (J)", GG_GAMEDB_SF2_MAPPER },
 
     // CARD RAM SIZE = 0x8000
-    { 0x083C956A, "Populous (J)", GG_GAMEDB_CARD_RAM_8000},
+    { 0x083C956A, "Populous (J)", GG_GAMEDB_CARD_RAM_8000 },
+
+    // AVENUE PAD 3
+    { 0x0, "Forgotten Worlds", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "After Burner II", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "Air Zonk", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Atlantean", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "Akumajou Dracula X: Chi no Rondo", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Barunba", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Battle Royale", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Blazing Lazers", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Bloody Wolf", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "Cyber Core", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Download", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Kunio Soccer", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Final Match Tennis", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "Final Soldier", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Gate of Thunder", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Golden Axe", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Gradius II", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "John Madden Football", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "Legendary Axe 2", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "Martial Champion", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "Metamor Jupiter", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Ninja Spirit", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Riot Zone", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "Silent Debuggers", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "Shinobi", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Soldier Blade", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Special Criminal Investigation", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Spriggan mk 2", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Star Soldier", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Turrican", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0x0, "Vallis III", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x0, "World Heroes 2", GG_GAMEDB_AVENUE_PAD_3_RUN },
 
     {0, 0, GG_GAMEDB_NONE}
 };

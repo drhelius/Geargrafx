@@ -438,7 +438,7 @@ static void menu_video(void)
         if (ImGui::BeginMenu("Aspect Ratio"))
         {
             ImGui::PushItemWidth(190.0f);
-            ImGui::Combo("##ratio", &config_video.ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0\0");
+            ImGui::Combo("##ratio", &config_video.ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0PCE (6:5 DAR)\0\0");
             ImGui::PopItemWidth();
             ImGui::EndMenu();
         }
@@ -578,18 +578,41 @@ static void menu_input(void)
                 if (ImGui::BeginMenu(player_name))
                 {
                     ImGui::PushItemWidth(200.0f);
-                    if (ImGui::Combo("##controller", &config_input.controller_type[i], "Standard Pad (2 buttons)\0Avenue Pad (6 buttons)\0\0"))
+                    if (ImGui::Combo("##controller", &config_input.controller_type[i], "Standard Pad (2 buttons)\0Avenue Pad 3 (3 buttons)\0Avenue Pad 6 (6 buttons)\0\0"))
                     {
-                        emu_set_avenue_pad((GG_Controllers)i, config_input.controller_type[i] == 1);
+                        emu_set_pad_type((GG_Controllers)i, (GG_Controller_Type)config_input.controller_type[i]);
                     }
                     if (ImGui::IsItemHovered())
                     {
                         ImGui::BeginTooltip();
-                        ImGui::Text("It is recommended to select Avenue Pad");
+                        ImGui::Text("It is recommended to select Avenue Pad 6");
                         ImGui::Text("only for games that support it.");
                         ImGui::EndTooltip();
                     }
 
+                    if (config_input.controller_type[i] == GG_CONTROLLER_AVENUE_PAD_3)
+                    {
+                        ImGui::Separator();
+                        ImGui::TextDisabled("Avenue Pad 3 Switch:");
+                        ImGui::PushItemWidth(200.0f);
+                        if (ImGui::Combo("##avenue_pad_3", &config_input.avenue_pad_3_button[i], "Auto\0SELECT\0RUN\0\0"))
+                        {
+                            GG_Keys key = GG_KEY_NONE;
+                            if (config_input.avenue_pad_3_button[i] == 1)
+                                key = GG_KEY_SELECT;
+                            else if (config_input.avenue_pad_3_button[i] == 2)
+                                key = GG_KEY_RUN;
+                            emu_set_avenue_pad_3_button((GG_Controllers)i, key);
+                        }
+                        ImGui::PopItemWidth();
+                        if (ImGui::IsItemHovered())
+                        {
+                            ImGui::BeginTooltip();
+                            ImGui::Text("\"Auto\" will automatically choose SELECT or RUN");
+                            ImGui::Text("depending on the game being played.");
+                            ImGui::EndTooltip();
+                        }
+                    }
                     ImGui::EndMenu();
                 }
             }
@@ -617,8 +640,10 @@ static void menu_input(void)
                     keyboard_configuration_item("I:", &config_input_keyboard[i].key_I, i);
                     keyboard_configuration_item("II:", &config_input_keyboard[i].key_II, i);
                     ImGui::Separator();
-                    ImGui::TextDisabled("Avenue Pad%s:", config_input.controller_type[i] == 1 ? "" : " (disabled)");
+                    ImGui::TextDisabled("Avenue Pad 3/6:");
                     keyboard_configuration_item("III:", &config_input_keyboard[i].key_III, i);
+                    ImGui::Separator();
+                    ImGui::TextDisabled("Avenue Pad 6:");
                     keyboard_configuration_item("IV:", &config_input_keyboard[i].key_IV, i);
                     keyboard_configuration_item("V:", &config_input_keyboard[i].key_V, i);
                     keyboard_configuration_item("VI:", &config_input_keyboard[i].key_VI, i);

@@ -53,6 +53,7 @@ enum GG_Pixel_Format
 
 enum GG_Keys
 {
+    GG_KEY_NONE = 0x00,
     GG_KEY_I = 0x01,
     GG_KEY_II = 0x02,
     GG_KEY_SELECT = 0x04,
@@ -65,6 +66,13 @@ enum GG_Keys
     GG_KEY_IV = 0x200,
     GG_KEY_V = 0x400,
     GG_KEY_VI = 0x800,
+};
+
+enum GG_Controller_Type
+{
+    GG_CONTROLLER_STANDARD = 0,
+    GG_CONTROLLER_AVENUE_PAD_3,
+    GG_CONTROLLER_AVENUE_PAD_6
 };
 
 enum GG_Controllers

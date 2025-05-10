@@ -103,7 +103,8 @@ EXTERN void emu_set_pce_japanese(bool enabled);
 EXTERN void emu_set_force_sgx(bool enabled);
 EXTERN void emu_set_backup_ram(bool enabled);
 EXTERN void emu_set_turbo_tap(bool enabled);
-EXTERN void emu_set_avenue_pad(GG_Controllers controller, bool enabled);
+EXTERN void emu_set_pad_type(GG_Controllers controller, GG_Controller_Type type);
+EXTERN void emu_set_avenue_pad_3_button(GG_Controllers controller, GG_Keys button);
 EXTERN void emu_save_screenshot(const char* file_path);
 
 #undef EMU_IMPORT

@@ -117,7 +117,15 @@ void gui_init(void)
     emu_set_composite_palette(config_video.composite_palette);
     emu_set_turbo_tap(config_input.turbo_tap);
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-        emu_set_avenue_pad((GG_Controllers)i, config_input.controller_type[i] == 1);
+    {
+        emu_set_pad_type((GG_Controllers)i, (GG_Controller_Type)config_input.controller_type[i]);
+        GG_Keys key = GG_KEY_NONE;
+        if (config_input.avenue_pad_3_button[i] == 1)
+            key = GG_KEY_SELECT;
+        else if (config_input.avenue_pad_3_button[i] == 2)
+            key = GG_KEY_RUN;
+        emu_set_avenue_pad_3_button((GG_Controllers)i, key);
+    }
     emu_debug_set_callback(gui_debug_callback);
 
     strcpy(gui_savefiles_path, config_emulator.savefiles_path.c_str());
@@ -319,6 +327,9 @@ static void main_window(void)
             break;
         case 3:
             ratio = 16.0f / 10.0f;
+            break;
+        case 4:
+            ratio = 6.0f / 5.0f;
             break;
         default:
             ratio = ((float)runtime.screen_width / (float)runtime.width_scale) / (float)runtime.screen_height;

@@ -94,6 +94,7 @@ struct config_Input
 {
     bool turbo_tap = false;
     int controller_type[GG_MAX_GAMEPADS];
+    int avenue_pad_3_button[GG_MAX_GAMEPADS];
 };
 
 struct config_Input_Keyboard

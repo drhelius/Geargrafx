@@ -33,7 +33,8 @@
 // #endif
 
 #define RETRO_DEVICE_PCE_PAD            RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
-#define RETRO_DEVICE_PCE_AVENUE_PAD_6   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+#define RETRO_DEVICE_PCE_AVENUE_PAD_3   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+#define RETRO_DEVICE_PCE_AVENUE_PAD_6   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
 
 #define MAX_PADS GG_MAX_GAMEPADS
 #define MAX_BUTTONS 12
@@ -220,10 +221,15 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
         case RETRO_DEVICE_PCE_PAD:
         case RETRO_DEVICE_JOYPAD:
             log_cb(RETRO_LOG_INFO, "Controller %u: Standard PCE Pad\n", port);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_STANDARD);
+            break;
+        case RETRO_DEVICE_PCE_AVENUE_PAD_3:
+            log_cb(RETRO_LOG_INFO, "Controller %u: Avenue Pad 3\n", port);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_AVENUE_PAD_3);
             break;
         case RETRO_DEVICE_PCE_AVENUE_PAD_6:
             log_cb(RETRO_LOG_INFO, "Controller %u: Avenue Pad 6\n", port);
-            core->GetInput()->EnableAvenuePad((GG_Controllers)port, true);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_AVENUE_PAD_6);
             break;
         default:
             log_cb(RETRO_LOG_DEBUG, "Setting descriptors for unsupported device.\n");
@@ -395,6 +401,7 @@ static void set_controller_info(void)
 {
     static const struct retro_controller_description port[] = {
         { "PC Engine Pad", RETRO_DEVICE_PCE_PAD },
+        { "Avenue Pad 3", RETRO_DEVICE_PCE_AVENUE_PAD_3 },
         { "Avenue Pad 6", RETRO_DEVICE_PCE_AVENUE_PAD_6 }
     };
 
@@ -551,6 +558,7 @@ static void set_variabless(void)
         { "geargrafx_force_pce_jap", "Force Japanese PC Engine (restart); Disabled|Enabled" },
         { "geargrafx_force_sgx", "Force SuperGrafx (restart); Disabled|Enabled" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
+        { "geargrafx_avenue_pad_3_switch", "Avenue Pad 3 Switch; Auto|SELECT|RUN" },
         { "geargrafx_soft_reset", "Soft Reset; Enabled|Disabled" },
         { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
         { NULL }
@@ -679,6 +687,25 @@ static void check_variables(void)
     {
         core->GetHuC6270_1()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
         core->GetHuC6270_2()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_avenue_pad_3_switch";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        GG_Keys button;
+        if (strcmp(var.value, "Auto") == 0)
+            button = GG_KEY_NONE;
+        else if (strcmp(var.value, "SELECT") == 0)
+            button = GG_KEY_SELECT;
+        else if (strcmp(var.value, "RUN") == 0)
+            button = GG_KEY_RUN;
+        else
+            button = GG_KEY_NONE;
+
+        for (int i = 0; i < MAX_PADS; i++)
+            core->GetInput()->SetAvenuePad3Button((GG_Controllers)i, button);
     }
 
     var.key = "geargrafx_soft_reset";

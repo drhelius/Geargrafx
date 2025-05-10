@@ -431,9 +431,14 @@ void emu_set_turbo_tap(bool enabled)
     geargrafx->GetInput()->EnableTurboTap(enabled);
 }
 
-void emu_set_avenue_pad(GG_Controllers controller, bool enabled)
+void emu_set_pad_type(GG_Controllers controller, GG_Controller_Type type)
 {
-    geargrafx->GetInput()->EnableAvenuePad(controller, enabled);
+    geargrafx->GetInput()->SetControllerType(controller, type);
+}
+
+void emu_set_avenue_pad_3_button(GG_Controllers controller, GG_Keys button)
+{
+    geargrafx->GetInput()->SetAvenuePad3Button(controller, button);
 }
 
 void emu_save_screenshot(const char* file_path)

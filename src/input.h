@@ -26,10 +26,12 @@
 
 #define GG_MAX_GAMEPADS 5
 
+class Cartridge;
+
 class Input
 {
 public:
-    Input();
+    Input(Cartridge* cartridge);
     void Init();
     void Reset();
     void KeyPressed(GG_Controllers controller, GG_Keys key);
@@ -42,11 +44,13 @@ public:
     void EnablePCEJap(bool enable);
     void EnableCDROM(bool enable);
     void EnableTurboTap(bool enabled);
-    void EnableAvenuePad(GG_Controllers controller, bool enabled);
+    void SetControllerType(GG_Controllers controller, GG_Controller_Type type);
+    void SetAvenuePad3Button(GG_Controllers controller, GG_Keys button);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
 private:
+    Cartridge* m_cartridge;
     bool m_clr;
     bool m_sel;
     u16 m_gamepads[GG_MAX_GAMEPADS];
@@ -54,9 +58,11 @@ private:
     bool m_pce_jap;
     bool m_cdrom;
     bool m_turbo_tap;
-    bool m_avenue_pad[GG_MAX_GAMEPADS];
+    GG_Controller_Type m_controller_type[GG_MAX_GAMEPADS];
     int m_selected_pad;
     bool m_selected_extra_buttons;
+    GG_Keys m_avenue_pad_3_button[GG_MAX_GAMEPADS];
+    u16 m_avenue_pad_3_state[GG_MAX_GAMEPADS];
 
 private:
     void UpdateRegister(u8 value);

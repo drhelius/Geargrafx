@@ -21,15 +21,45 @@
 #define INPUT_INLINE_H
 
 #include "input.h"
+#include "cartridge.h"
 
 INLINE void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
 {
     m_gamepads[controller] &= ~key;
+
+    if (m_controller_type[controller] == GG_CONTROLLER_AVENUE_PAD_3)
+    {
+        GG_Keys iii_button = m_avenue_pad_3_button[controller];
+        if (iii_button == GG_KEY_NONE)
+            iii_button = m_cartridge->GetAvenuePad3Button();
+
+        if ((key == iii_button) || (key == GG_KEY_III))
+        {
+            m_avenue_pad_3_state[controller] &= ~key;
+            m_gamepads[controller] &= ~iii_button;
+        }
+    }
 }
 
 INLINE void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
 {
     m_gamepads[controller] |= key;
+
+    if (m_controller_type[controller] == GG_CONTROLLER_AVENUE_PAD_3)
+    {
+        GG_Keys iii_button = m_avenue_pad_3_button[controller];
+        if (iii_button == GG_KEY_NONE)
+            iii_button = m_cartridge->GetAvenuePad3Button();
+
+        if ((key == iii_button) || (key == GG_KEY_III))
+        {
+            m_avenue_pad_3_state[controller] |= key;
+            if ((m_avenue_pad_3_state[controller] & iii_button) && (m_avenue_pad_3_state[controller] & GG_KEY_III))
+            {
+                m_gamepads[controller] |= iii_button;
+            }
+        }
+    }
 }
 
 INLINE u8 Input::ReadK()
@@ -72,9 +102,14 @@ INLINE void Input::EnableTurboTap(bool enabled)
     m_turbo_tap = enabled;
 }
 
-INLINE void Input::EnableAvenuePad(GG_Controllers controller, bool enabled)
+INLINE void Input::SetControllerType(GG_Controllers controller, GG_Controller_Type type)
 {
-    m_avenue_pad[controller] = enabled;
+    m_controller_type[controller] = type;
+}
+
+INLINE void Input::SetAvenuePad3Button(GG_Controllers controller, GG_Keys button)
+{
+    m_avenue_pad_3_button[controller] = button;
 }
 
 INLINE void Input::UpdateRegister(u8 value)
@@ -112,7 +147,7 @@ INLINE void Input::UpdateRegister(u8 value)
 
     if (!m_clr)
     {
-        if (m_avenue_pad[m_selected_pad] && m_selected_extra_buttons)
+        if ((m_controller_type[m_selected_pad] == GG_CONTROLLER_AVENUE_PAD_6) && m_selected_extra_buttons)
         {
             if (!m_sel)
                 m_register |= ((m_gamepads[m_selected_pad] >> 8) & 0x0F);

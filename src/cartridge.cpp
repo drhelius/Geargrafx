@@ -39,6 +39,7 @@ Cartridge::Cartridge()
     m_is_sgx = false;
     m_force_sgx = false;
     m_mapper = STANDARD_MAPPER;
+    m_avenue_pad_3_button = GG_KEY_SELECT;
 
     m_rom_map = new u8*[128];
     for (int i = 0; i < 128; i++)
@@ -69,6 +70,7 @@ void Cartridge::Reset()
     m_crc = 0;
     m_is_sgx = false;
     m_mapper = STANDARD_MAPPER;
+    m_avenue_pad_3_button = GG_KEY_SELECT;
 
     for (int i = 0; i < 128; i++)
         InitPointer(m_rom_map[i]);
@@ -114,6 +116,11 @@ int Cartridge::GetROMBankCount()
 int Cartridge::GetCardRAMSize()
 {
     return m_card_ram_size;
+}
+
+GG_Keys Cartridge::GetAvenuePad3Button()
+{
+    return m_avenue_pad_3_button;
 }
 
 const char* Cartridge::GetFilePath()
@@ -413,6 +420,17 @@ void Cartridge::GatherInfoFromDB()
             {
                 m_mapper = STANDARD_MAPPER;
                 Log("ROM uses standard mapper.");
+            }
+
+            if (k_game_database[i].flags & GG_GAMEDB_AVENUE_PAD_3_SELECT)
+            {
+                m_avenue_pad_3_button = GG_KEY_SELECT;
+                Log("ROM uses Avenue Pad 3 select button.");
+            }
+            else if (k_game_database[i].flags & GG_GAMEDB_AVENUE_PAD_3_RUN)
+            {
+                m_avenue_pad_3_button = GG_KEY_RUN;
+                Log("ROM uses Avenue Pad 3 run button.");
             }
         }
         else
