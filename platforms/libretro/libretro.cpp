@@ -38,8 +38,6 @@
 
 #define MAX_PADS GG_MAX_GAMEPADS
 #define MAX_BUTTONS 12
-#define PCE_PAD_BUTTONS 8
-#define AVENUE_PAD_6_BUTTONS 12
 
 static retro_environment_t environ_cb;
 static retro_video_refresh_t video_cb;
@@ -516,33 +514,13 @@ static void update_input(void)
     }
 
     for (int j = 0; j < MAX_PADS; j++)
-    {
-        int max_buttons = 0;
-        switch (input_device[j])
+        for (int i = 0; i < MAX_BUTTONS; i++)
         {
-            case RETRO_DEVICE_PCE_PAD:
-            case RETRO_DEVICE_JOYPAD:
-                max_buttons = PCE_PAD_BUTTONS;
-                break;
-            case RETRO_DEVICE_PCE_AVENUE_PAD_6:
-                max_buttons = AVENUE_PAD_6_BUTTONS;
-                break;
-            default:
-                max_buttons = 0;
-                break;
+            if (joypad_current[j][i])
+                core->KeyPressed((GG_Controllers)j, keymap[i]);
+            else
+                core->KeyReleased((GG_Controllers)j, keymap[i]);
         }
-
-        for (int i = 0; i < max_buttons; i++)
-        {
-            if (joypad_current[j][i] != joypad_old[j][i])
-            {
-                if (joypad_current[j][i])
-                    core->KeyPressed((GG_Controllers)j, keymap[i]);
-                else
-                    core->KeyReleased((GG_Controllers)j, keymap[i]);
-            }
-        }
-    }
 }
 
 static void set_variabless(void)
