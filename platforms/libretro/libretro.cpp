@@ -63,6 +63,7 @@ static float current_aspect_ratio = 0.0f;
 static float aspect_ratio = 0.0f;
 
 static bool allow_up_down = false;
+static bool allow_soft_reset = false;
 
 static bool libretro_supports_bitmasks;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
@@ -218,10 +219,10 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
             break;
         case RETRO_DEVICE_PCE_PAD:
         case RETRO_DEVICE_JOYPAD:
-            log_cb(RETRO_LOG_INFO, "Controller %u: Normal PCE Pad\n", port);
+            log_cb(RETRO_LOG_INFO, "Controller %u: Standard PCE Pad\n", port);
             break;
         case RETRO_DEVICE_PCE_AVENUE_PAD_6:
-            log_cb(RETRO_LOG_INFO, "Controller %u: PCE Avenue Pad 6\n", port);
+            log_cb(RETRO_LOG_INFO, "Controller %u: Avenue Pad 6\n", port);
             core->GetInput()->EnableAvenuePad((GG_Controllers)port, true);
             break;
         default:
@@ -394,7 +395,7 @@ static void set_controller_info(void)
 {
     static const struct retro_controller_description port[] = {
         { "PC Engine Pad", RETRO_DEVICE_PCE_PAD },
-        { "PC Engine Avenue Pad 6", RETRO_DEVICE_PCE_AVENUE_PAD_6 }
+        { "Avenue Pad 6", RETRO_DEVICE_PCE_AVENUE_PAD_6 }
     };
 
     static const struct retro_controller_info ports[] = {
@@ -484,10 +485,22 @@ static void update_input(void)
             joypad_current[j][3] = (right_pressed && (!left_pressed || joypad_old[j][3])) ? 1 : 0;
         }
 
+        int select_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_SELECT);
+        int start_pressed  = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_START);
+
+        if (allow_soft_reset)
+        {
+            joypad_current[j][6] = select_pressed;
+            joypad_current[j][7] = start_pressed;
+        }
+        else
+        {
+            joypad_current[j][6] = (select_pressed && (!start_pressed || joypad_old[j][6])) ? 1 : 0;
+            joypad_current[j][7] = (start_pressed && (!select_pressed || joypad_old[j][7])) ? 1 : 0;
+        }
+
         joypad_current[j][4] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_A);
         joypad_current[j][5] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_B);
-        joypad_current[j][6] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_SELECT);
-        joypad_current[j][7] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_START);
         joypad_current[j][8] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_Y);
         joypad_current[j][9] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_X);
         joypad_current[j][10] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_L2);
@@ -538,6 +551,7 @@ static void set_variabless(void)
         { "geargrafx_force_pce_jap", "Force Japanese PC Engine (restart); Disabled|Enabled" },
         { "geargrafx_force_sgx", "Force SuperGrafx (restart); Disabled|Enabled" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
+        { "geargrafx_soft_reset", "Soft Reset; Enabled|Disabled" },
         { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
         { NULL }
     };
@@ -667,14 +681,19 @@ static void check_variables(void)
         core->GetHuC6270_2()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
     }
 
+    var.key = "geargrafx_soft_reset";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        allow_soft_reset = (strcmp(var.value, "Enabled") == 0);
+    }
+
     var.key = "geargrafx_up_down_allowed";
     var.value = NULL;
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        if (strcmp(var.value, "Enabled") == 0)
-            allow_up_down = true;
-        else
-            allow_up_down = false;
+        allow_up_down = (strcmp(var.value, "Enabled") == 0);
     }
 }
