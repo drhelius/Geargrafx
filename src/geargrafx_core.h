@@ -64,7 +64,7 @@ public:
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     bool RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug = NULL);
     bool LoadROM(const char* file_path);
-    bool LoadROMFromBuffer(const u8* buffer, int size);
+    bool LoadROMFromBuffer(const u8* buffer, int size, const char* path = NULL);
     void ResetROM(bool preserve_ram);
     void KeyPressed(GG_Controllers controller, GG_Keys key);
     void KeyReleased(GG_Controllers controller, GG_Keys key);

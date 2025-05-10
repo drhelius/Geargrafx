@@ -182,9 +182,9 @@ bool GeargrafxCore::LoadROM(const char* file_path)
         return false;
 }
 
-bool GeargrafxCore::LoadROMFromBuffer(const u8* buffer, int size)
+bool GeargrafxCore::LoadROMFromBuffer(const u8* buffer, int size, const char* path)
 {
-    if (m_cartridge->LoadFromBuffer(buffer, size))
+    if (m_cartridge->LoadFromBuffer(buffer, size, path))
     {
         m_memory->ResetDisassemblerRecords();
         Reset();

@@ -52,12 +52,13 @@ public:
     u8* GetROM();
     u8** GetROMMap();
     bool LoadFromFile(const char* path);
-    bool LoadFromBuffer(const u8* buffer, int size);
+    bool LoadFromBuffer(const u8* buffer, int size, const char* path);
 
 private:
     bool LoadFromZipFile(const u8* buffer, int size);
     void GatherROMInfo();
     void GatherInfoFromDB();
+    void GatherDataFromPath(const char* path);
     void InitRomMAP();
 
 private:

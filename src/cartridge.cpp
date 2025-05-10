@@ -159,32 +159,14 @@ bool Cartridge::LoadFromFile(const char* path)
 
     Log("Loading %s...", path);
 
+    if (!IsValidPointer(path))
+    {
+        Log("ERROR: Invalid path %s", path);
+        return false;
+    }
+
     Reset();
-
-    string fullpath(path);
-    string directory;
-    string filename;
-    string extension;
-
-    size_t pos = fullpath.find_last_of("/\\");
-    if (pos != string::npos)
-    {
-        filename = fullpath.substr(pos + 1);
-        directory = fullpath.substr(0, pos);
-    }
-    else
-    {
-        filename = fullpath;
-        directory = "";
-    }
-
-    extension = fullpath.substr(fullpath.find_last_of(".") + 1);
-    transform(extension.begin(), extension.end(), extension.begin(), (int(*)(int)) tolower);
-
-    snprintf(m_file_path, sizeof(m_file_path), "%s", path);
-    snprintf(m_file_directory, sizeof(m_file_directory), "%s", directory.c_str());
-    snprintf(m_file_name, sizeof(m_file_name), "%s", filename.c_str());
-    snprintf(m_file_extension, sizeof(m_file_extension), "%s", extension.c_str());
+    GatherDataFromPath(path);
 
     ifstream file(path, ios::in | ios::binary | ios::ate);
 
@@ -225,18 +207,10 @@ bool Cartridge::LoadFromFile(const char* path)
             }
         }
 
-        if (extension == "zip")
+        if (strcmp(m_file_extension, "zip") == 0)
             m_ready = LoadFromZipFile(reinterpret_cast<u8*> (memblock), size);
         else
-        {
-            if (extension == "sgx")
-            {
-                m_is_sgx = true;
-                Log("Forcing SuperGrafx (SGX) because of extension");
-            }
-
-            m_ready = LoadFromBuffer(reinterpret_cast<u8*> (memblock), size);
-        }
+            m_ready = LoadFromBuffer(reinterpret_cast<u8*> (memblock), size, path);
 
         SafeDeleteArray(memblock);
     }
@@ -252,11 +226,24 @@ bool Cartridge::LoadFromFile(const char* path)
     return m_ready;
 }
 
-bool Cartridge::LoadFromBuffer(const u8* buffer, int size)
+bool Cartridge::LoadFromBuffer(const u8* buffer, int size, const char* path)
 {
     if (IsValidPointer(buffer))
     {
         Log("Loading ROM from buffer... Size: %d", size);
+
+        Reset();
+
+        if (IsValidPointer(path))
+        {
+            GatherDataFromPath(path);
+        }
+
+        if (strcmp(m_file_extension, "sgx") == 0)
+        {
+            m_is_sgx = true;
+            Log("Forcing SuperGrafx (SGX) because of extension");
+        }
 
         if(size & 512)
         {
@@ -344,7 +331,7 @@ bool Cartridge::LoadFromZipFile(const u8* buffer, int size)
                 return false;
             }
 
-            bool ok = LoadFromBuffer((const u8*) p, (int)uncomp_size);
+            bool ok = LoadFromBuffer((const u8*) p, (int)uncomp_size, fn.c_str());
 
             free(p);
             mz_zip_reader_end(&zip_archive);
@@ -441,6 +428,36 @@ void Cartridge::GatherInfoFromDB()
     {
         Debug("ROM not found in database. CRC: %08X", m_crc);
     }
+}
+
+void Cartridge::GatherDataFromPath(const char* path)
+{
+    using namespace std;
+
+    string fullpath(path);
+    string directory;
+    string filename;
+    string extension;
+
+    size_t pos = fullpath.find_last_of("/\\");
+    if (pos != string::npos)
+    {
+        filename = fullpath.substr(pos + 1);
+        directory = fullpath.substr(0, pos);
+    }
+    else
+    {
+        filename = fullpath;
+        directory = "";
+    }
+
+    extension = fullpath.substr(fullpath.find_last_of(".") + 1);
+    transform(extension.begin(), extension.end(), extension.begin(), (int(*)(int)) tolower);
+
+    snprintf(m_file_path, sizeof(m_file_path), "%s", path);
+    snprintf(m_file_directory, sizeof(m_file_directory), "%s", directory.c_str());
+    snprintf(m_file_name, sizeof(m_file_name), "%s", filename.c_str());
+    snprintf(m_file_extension, sizeof(m_file_extension), "%s", extension.c_str());
 }
 
 void Cartridge::InitRomMAP()
