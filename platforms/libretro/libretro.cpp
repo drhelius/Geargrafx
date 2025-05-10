@@ -541,7 +541,7 @@ static void set_variabless(void)
 {
     struct retro_variable vars[] = {
         { "geargrafx_turbotap", "TurboTap; Disabled|Enabled" },
-        { "geargrafx_aspect_ratio", "Aspect Ratio; 1:1 PAR|4:3 DAR|16:9 DAR|16:10 DAR" },
+        { "geargrafx_aspect_ratio", "Aspect Ratio; 1:1 PAR|4:3 DAR|6:5 DAR|16:9 DAR|16:10 DAR" },
         { "geargrafx_overscan", "Overscan; Disabled|Enabled" },
         { "geargrafx_scanline_count", "Scanline Count; 224p|240p|Manual" },
         { "geargrafx_scanline_start", "Scanline Start (Manual); 3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|0|1|2" },
@@ -580,6 +580,8 @@ static void check_variables(void)
             aspect_ratio = 0.0f;
         else if (strcmp(var.value, "4:3 DAR") == 0)
             aspect_ratio = 4.0f / 3.0f;
+        else if (strcmp(var.value, "6:5 DAR") == 0)
+            aspect_ratio = 6.0f / 5.0f;
         else if (strcmp(var.value, "16:9 DAR") == 0)
             aspect_ratio = 16.0f / 9.0f;
         else if (strcmp(var.value, "16:10 DAR") == 0)
