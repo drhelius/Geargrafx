@@ -211,12 +211,12 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
     }
 
     input_device[port] = device;
-    core->GetInput()->EnableAvenuePad((GG_Controllers)port, false);
 
     switch ( device )
     {
         case RETRO_DEVICE_NONE:
             log_cb(RETRO_LOG_INFO, "Controller %u: Unplugged\n", port);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_STANDARD);
             break;
         case RETRO_DEVICE_PCE_PAD:
         case RETRO_DEVICE_JOYPAD:
@@ -233,6 +233,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
             break;
         default:
             log_cb(RETRO_LOG_DEBUG, "Setting descriptors for unsupported device.\n");
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_STANDARD);
             break;
     }
 }
