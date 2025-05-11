@@ -22,6 +22,7 @@
 
 #include <iostream>
 #include <streambuf>
+#include <cstring>
 
 class memory_buffer : public std::streambuf
 {
