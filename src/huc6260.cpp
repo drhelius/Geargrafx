@@ -447,12 +447,8 @@ void HuC6260::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_vsync), sizeof(m_vsync));
     stream.write(reinterpret_cast<const char*> (&m_blur), sizeof(m_blur));
     stream.write(reinterpret_cast<const char*> (&m_black_and_white), sizeof(m_black_and_white));
-    stream.write(reinterpret_cast<const char*> (m_line_speed), sizeof(s32) * HUC6260_LINES);
     stream.write(reinterpret_cast<const char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
     stream.write(reinterpret_cast<const char*> (&m_active_line), sizeof(m_active_line));
-    stream.write(reinterpret_cast<const char*> (m_scale_buffer), sizeof(u8) * 2048 * 512 * 4);
-    stream.write(reinterpret_cast<const char*> (m_vce_buffer_1), sizeof(u16) * 1024 * 512);
-    stream.write(reinterpret_cast<const char*> (m_vce_buffer_2), sizeof(u16) * 1024 * 512);
 }
 
 void HuC6260::LoadState(std::istream& stream)
@@ -471,12 +467,8 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_vsync), sizeof(m_vsync));
     stream.read(reinterpret_cast<char*> (&m_blur), sizeof(m_blur));
     stream.read(reinterpret_cast<char*> (&m_black_and_white), sizeof(m_black_and_white));
-    stream.read(reinterpret_cast<char*> (m_line_speed), sizeof(s32) * HUC6260_LINES);
     stream.read(reinterpret_cast<char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
-    stream.read(reinterpret_cast<char*> (m_scale_buffer), sizeof(u8) * 2048 * 512 * 4);
-    stream.read(reinterpret_cast<char*> (m_vce_buffer_1), sizeof(u16) * 1024 * 512);
-    stream.read(reinterpret_cast<char*> (m_vce_buffer_2), sizeof(u16) * 1024 * 512);
 
     CalculateScreenBounds();
 }

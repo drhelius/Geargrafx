@@ -848,8 +848,6 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_vblank_triggered), sizeof(m_vblank_triggered));
     stream.write(reinterpret_cast<const char*> (&m_active_line), sizeof(m_active_line));
     stream.write(reinterpret_cast<const char*> (&m_burst_mode), sizeof(m_burst_mode));
-    stream.write(reinterpret_cast<const char*> (m_line_buffer), sizeof(u16) * HUC6270_MAX_BACKGROUND_WIDTH);
-    stream.write(reinterpret_cast<const char*> (m_line_buffer_sprites), sizeof(u16) * HUC6270_MAX_BACKGROUND_WIDTH);
     stream.write(reinterpret_cast<const char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
     stream.write(reinterpret_cast<const char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
     stream.write(reinterpret_cast<const char*> (&m_sprite_count), sizeof(m_sprite_count));
@@ -907,8 +905,6 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_vblank_triggered), sizeof(m_vblank_triggered));
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
     stream.read(reinterpret_cast<char*> (&m_burst_mode), sizeof(m_burst_mode));
-    stream.read(reinterpret_cast<char*> (m_line_buffer), sizeof(u16) * HUC6270_MAX_BACKGROUND_WIDTH);
-    stream.read(reinterpret_cast<char*> (m_line_buffer_sprites), sizeof(u16) * HUC6270_MAX_BACKGROUND_WIDTH);
     stream.read(reinterpret_cast<char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
     stream.read(reinterpret_cast<char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
     stream.read(reinterpret_cast<char*> (&m_sprite_count), sizeof(m_sprite_count));
