@@ -141,6 +141,10 @@ void application_trigger_quit(void)
 void application_trigger_fullscreen(bool fullscreen)
 {
     SDL_SetWindowFullscreen(application_sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    if (config_debug.debug)
+        config_emulator.show_menu = true;
+    else
+        config_emulator.show_menu = !fullscreen;
 }
 
 void application_trigger_fit_to_content(int width, int height)
@@ -548,7 +552,7 @@ static void sdl_events_emu(const SDL_Event* event)
 
             if (key == SDL_SCANCODE_ESCAPE)
             {
-                application_trigger_quit();
+                application_trigger_fullscreen(false);
                 break;
             }
 
@@ -630,6 +634,9 @@ static void sdl_shortcuts_gui(const SDL_Event* event)
 
         switch (key)
         {
+            case SDL_SCANCODE_Q:
+                application_trigger_quit();
+                break;
             case SDL_SCANCODE_A:
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutDebugSelectAll);

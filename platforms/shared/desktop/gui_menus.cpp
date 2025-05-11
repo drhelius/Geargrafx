@@ -225,7 +225,7 @@ static void menu_geargrafx(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Quit", "ESC"))
+        if (ImGui::MenuItem("Quit", "Ctrl+Q"))
         {
             application_trigger_quit();
         }
