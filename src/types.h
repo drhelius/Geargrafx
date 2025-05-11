@@ -99,6 +99,12 @@ struct GG_SaveState_Header
     char emu_build[32];
 };
 
+struct GG_SaveState_Header_Libretro
+{
+    u32 magic;
+    u32 version;
+};
+
 struct GG_SaveState_Screenshot
 {
     u32 width;

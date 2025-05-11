@@ -33,6 +33,7 @@
 #include "huc6280.h"
 #include "audio.h"
 #include "input.h"
+#include "memory_stream.h"
 
 GeargrafxCore::GeargrafxCore()
 {
@@ -462,32 +463,29 @@ bool GeargrafxCore::SaveState(u8* buffer, size_t& size, bool screenshot)
         return false;
     }
 
-    stringstream stream;
-    size_t expected_size = 0;
-    if (!SaveState(stream, expected_size, screenshot))
+    if (!IsValidPointer(buffer))
     {
-        Log("ERROR: Failed to save state to stream to calculate size");
-        return false;
-    }
-
-    if (IsValidPointer(buffer))
-    {
-        if (size >= expected_size)
+        stringstream stream;
+        if (!SaveState(stream, size, screenshot))
         {
-            size = expected_size;
-            memcpy(buffer, stream.str().c_str(), size);
-            return true;
-        }
-        else
-        {
-            Log("ERROR: Buffer size is too small to save state");
+            Log("ERROR: Failed to save state to stream to calculate size");
             return false;
         }
+        return true;
     }
     else
-        size = expected_size;
+    {
+        memory_stream direct_stream(reinterpret_cast<char*>(buffer), size);
 
-    return false;
+        if (!SaveState(direct_stream, size, screenshot))
+        {
+            Log("ERROR: Failed to save state to buffer");
+            return false;
+        }
+
+        size = direct_stream.size();
+        return true;
+    }
 }
 
 bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screenshot)
@@ -511,9 +509,17 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     m_audio->SaveState(stream);
     m_input->SaveState(stream);
 
+#if defined(__LIBRETRO__)
+    GG_SaveState_Header_Libretro header;
+    header.magic = GG_SAVESTATE_MAGIC;
+    header.version = GG_SAVESTATE_VERSION;
+    Debug("Save state header magic: 0x%08x", header.magic);
+    Debug("Save state header version: %d", header.version);
+#else
     GG_SaveState_Header header;
     header.magic = GG_SAVESTATE_MAGIC;
     header.version = GG_SAVESTATE_VERSION;
+
     header.timestamp = time(NULL);
     strncpy(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name) - 1);
     header.rom_crc = m_cartridge->GetCRC();
@@ -551,12 +557,15 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     Debug("Save state header screenshot size: %d", header.screenshot_size);
     Debug("Save state header screenshot width: %d", header.screenshot_width);
     Debug("Save state header screenshot height: %d", header.screenshot_height);
+#endif
 
     size = static_cast<size_t>(stream.tellp());
     size += sizeof(header);
-    header.size = static_cast<u32>(size);
 
+#if !defined(__LIBRETRO__)
+    header.size = static_cast<u32>(size);
     Debug("Save state header size: %d", header.size);
+#endif
 
     stream.write(reinterpret_cast<const char*>(&header), sizeof(header));
     return true;
@@ -609,10 +618,8 @@ bool GeargrafxCore::LoadState(const u8* buffer, size_t size)
         return false;
     }
 
-    stringstream stream;
-    stream.write(reinterpret_cast<const char*> (buffer), size);
-
-    return LoadState(stream);
+    memory_input_stream direct_stream(reinterpret_cast<const char*>(buffer), size);
+    return LoadState(direct_stream);
 }
 
 bool GeargrafxCore::LoadState(std::istream& stream)
@@ -625,7 +632,11 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         return false;
     }
 
+#if defined(__LIBRETRO__)
+    GG_SaveState_Header_Libretro header;
+#else
     GG_SaveState_Header header;
+#endif
 
     stream.seekg(0, ios::end);
     size_t size = static_cast<size_t>(stream.tellg());
@@ -637,6 +648,20 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     Debug("Load state header magic: 0x%08x", header.magic);
     Debug("Load state header version: %d", header.version);
+
+    if ((header.magic != GG_SAVESTATE_MAGIC))
+    {
+        Log("Invalid save state: 0x%08x", header.magic);
+        return false;
+    }
+
+    if (header.version != GG_SAVESTATE_VERSION)
+    {
+        Log("ERROR: Invalid save state version: %d", header.version);
+        return false;
+    }
+
+#if !defined(__LIBRETRO__)
     Debug("Load state header size: %d", header.size);
     Debug("Load state header timestamp: %d", header.timestamp);
     Debug("Load state header rom name: %s", header.rom_name);
@@ -670,6 +695,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         Log("ERROR: Invalid save state rom crc: 0x%08x", header.rom_crc);
         return false;
     }
+#endif
 
     Debug("Unserializing save state...");
 

@@ -345,6 +345,9 @@
     <ClInclude Include="..\..\src\memory_inline.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\memory_stream.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\sf2_mapper.h">
       <Filter>src</Filter>
     </ClInclude>
