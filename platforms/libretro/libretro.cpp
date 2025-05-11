@@ -405,11 +405,11 @@ static void set_controller_info(void)
     };
 
     static const struct retro_controller_info ports[] = {
-        { port, 2 },
-        { port, 2 },
-        { port, 2 },
-        { port, 2 },
-        { port, 2 },
+        { port, 3 },
+        { port, 3 },
+        { port, 3 },
+        { port, 3 },
+        { port, 3 },
         { NULL, 0 }
     };
 
