@@ -338,7 +338,7 @@ INLINE u8* Memory::GetBackupRAM()
 
 INLINE int Memory::GetWorkingRAMSize()
 {
-    return 0x2000;
+    return m_cartridge->IsSGX() ? 0x8000 : 0x2000;
 }
 
 INLINE int Memory::GetCardRAMSize()
