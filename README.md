@@ -36,12 +36,14 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 
 ## Features
 
+- Accurate emulation supporting the entire PCE / SGX catalog.
 - Save states with preview.
 - Multi Tap (up to 5 players).
-- Normal Gamepad (2 buttons) and Avenue Pad (6 buttons).
+- Standard Gamepad (2 buttons), Avenue Pad 3 (3 buttons, auto-configured based on game), Avenue Pad 6 (6 buttons).
 - Adjustable scanline count (224p, 240p or manual).
 - RGB or Composite color output.
 - Compressed rom support (ZIP).
+- Internal database for automatic rom detection.
 - Supported platforms (standalone): Windows, Linux, BSD and macOS.
 - Supported platforms (libretro): Windows, Linux, macOS, Raspberry Pi, Android, iOS, tvOS, PlayStation Vita, PlayStation 3, Nintendo 3DS, Nintendo GameCube, Nintendo Wii, Nintendo WiiU, Nintendo Switch, Emscripten, Classic Mini systems (NES, SNES, C64, ...), OpenDingux, RetroFW and QNX.
 - Full debugger with just-in-time disassembler, CPU breakpoints, memory access breakpoints, code navigation (goto address, JP JR and CALL double clicking), debug symbols, automatic labels, memory editor, PSG inspector and video viewer including registries, tiles, sprites, backgrounds and both VDCs in SuperGrafx mode.
