@@ -354,6 +354,9 @@
     <ClInclude Include="..\..\src\types.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\crc.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="..\shared\desktop\imgui\fonts\IconsMaterialDesign.h">
       <Filter>desktop\imgui\fonts</Filter>
     </ClInclude>

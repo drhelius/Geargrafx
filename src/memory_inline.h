@@ -156,7 +156,7 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
             }
             case 0x1800:
                 // Unused
-                Debug("Unused hardware read at %04X", address);
+                Debug("CDROM hardware read at %04X", address);
                 return 0xFF;
             case 0x1C00:
                 // Unused
@@ -281,7 +281,7 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
             }
             case 0x1800:
                 // Unused
-                Debug("Unused hardware write at %04X, value=%02X", address, value);
+                Debug("CDROM hardware write at %04X, value=%02X", address, value);
                 break;
             case 0x1C00:
                 // Unused

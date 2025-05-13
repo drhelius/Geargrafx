@@ -132,6 +132,12 @@ void gui_init(void)
     strcpy(gui_savestates_path, config_emulator.savestates_path.c_str());
     strcpy(gui_screenshots_path, config_emulator.screenshots_path.c_str());
     strcpy(gui_backup_ram_path, config_emulator.backup_ram_path.c_str());
+    strcpy(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str());
+    strcpy(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str());
+    if (strlen(gui_syscard_bios_path) > 0)
+        emu_load_syscard_bios(gui_syscard_bios_path);
+    if (strlen(gui_gameexpress_bios_path) > 0)
+        emu_load_gameexpress_bios(gui_gameexpress_bios_path);
 
     gui_debug_init();
     gui_init_menus();

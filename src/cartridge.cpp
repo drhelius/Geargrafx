@@ -24,6 +24,7 @@
 #include "cartridge.h"
 #include "miniz/miniz.h"
 #include "game_db.h"
+#include "crc.h"
 
 Cartridge::Cartridge()
 {

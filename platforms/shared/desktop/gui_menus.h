@@ -30,6 +30,8 @@ EXTERN char gui_savefiles_path[4096];
 EXTERN char gui_savestates_path[4096];
 EXTERN char gui_screenshots_path[4096];
 EXTERN char gui_backup_ram_path[4096];
+EXTERN char gui_syscard_bios_path[4096];
+EXTERN char gui_gameexpress_bios_path[4096];
 
 EXTERN void gui_init_menus(void);
 EXTERN void gui_main_menu(void);

@@ -53,6 +53,8 @@ struct config_Emulator
     int screenshots_dir_option = 0;
     std::string backup_ram_path;
     int backup_ram_dir_option = 0;
+    std::string syscard_bios_path;
+    std::string gameexpress_bios_path;
     std::string screenshots_path;
     std::string last_open_path;
     int window_width = 770;

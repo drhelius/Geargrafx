@@ -26,6 +26,8 @@
 #include "input.h"
 #include "audio.h"
 #include "sf2_mapper.h"
+#include "game_db.h"
+#include "crc.h"
 
 Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio)
 {
@@ -39,6 +41,9 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* 
     InitPointer(m_card_ram);
     InitPointer(m_card_ram_map);
     InitPointer(m_backup_ram);
+    InitPointer(m_syscard_bios);
+    InitPointer(m_gameexpress_bios);
+    InitPointer(m_bios_map);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
@@ -50,6 +55,10 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* 
     m_card_ram_size = 0;
     m_card_ram_start = 0;
     m_card_ram_end = 0;
+    m_right_syscard_bios = false;
+    m_right_gameexpress_bios = false;
+    m_syscard_bios_crc = 0;
+    m_gameexpress_bios_crc = 0;
 }
 
 Memory::~Memory()
@@ -58,6 +67,9 @@ Memory::~Memory()
     SafeDeleteArray(m_card_ram);
     SafeDeleteArray(m_card_ram_map);
     SafeDeleteArray(m_backup_ram);
+    SafeDeleteArray(m_syscard_bios);
+    SafeDeleteArray(m_gameexpress_bios);
+    SafeDeleteArray(m_bios_map);
     SafeDeleteArray(m_test_memory);
     if (IsValidPointer(m_disassembler))
     {
@@ -76,6 +88,9 @@ void Memory::Init()
     m_card_ram = new u8[0x8000];
     m_card_ram_map = new u8*[0x20];
     m_backup_ram = new u8[0x800];
+    m_syscard_bios = new u8[GG_BIOS_SYSCARD_SIZE];
+    m_gameexpress_bios = new u8[GG_BIOS_GAME_EXPRESS_SIZE];
+    m_bios_map = new u8*[0x200];
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_disassembler = new GG_Disassembler_Record*[0x200000];
@@ -272,6 +287,78 @@ GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
     }
 
     return record;
+}
+
+bool Memory::LoadBios(const char* file_path, bool syscard)
+{
+    using namespace std;
+    int expected_size = 0;
+    u8* bios = NULL;
+    bool* right_bios = NULL;
+    u32* crc = NULL;
+
+    if  (syscard)
+    {
+        right_bios = &m_right_syscard_bios;
+        expected_size = GG_BIOS_SYSCARD_SIZE;
+        bios = m_syscard_bios;
+        crc = &m_syscard_bios_crc;
+    }
+    else
+    {
+        right_bios = &m_right_gameexpress_bios;
+        expected_size = GG_BIOS_GAME_EXPRESS_SIZE;
+        bios = m_gameexpress_bios;
+        crc = &m_gameexpress_bios_crc;
+    }
+
+    *right_bios = false;
+
+    ifstream file(file_path, ios::in | ios::binary | ios::ate);
+
+    if (file.is_open())
+    {
+        int size = static_cast<int> (file.tellg());
+
+        if (size != expected_size)
+        {
+            Log("Incorrect BIOS size %d: %s", size, file_path);
+            return false;
+        }
+
+        file.seekg(0, ios::beg);
+        file.read(reinterpret_cast<char*>(bios), size);
+        file.close();
+
+        *right_bios = true;
+
+        Log("BIOS %s loaded (%d bytes)", file_path, size);
+    }
+    else
+    {
+        Log("There was a problem opening the file %s", file_path);
+        return false;
+    }
+
+    int i = 0;
+    *crc = CalculateCRC32(*crc, bios, expected_size);
+
+    while(k_bios_database[i].title != 0)
+    {
+        u32 db_crc = k_bios_database[i].crc;
+
+        if (db_crc == *crc)
+        {
+            Debug("BIOS found in database: %s. CRC: %08X", k_game_database[i].title, *crc);
+        }
+        else
+        {
+            Debug("BIOS not found in database. CRC: %08X", *crc);
+        }
+        i++;
+    }
+
+    return true;
 }
 
 void Memory::SaveRam(std::ostream &file)

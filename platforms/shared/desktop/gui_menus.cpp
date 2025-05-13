@@ -41,6 +41,8 @@ static bool save_screenshot = false;
 static bool choose_savestates_path = false;
 static bool choose_screenshots_path = false;
 static bool choose_backup_ram_path = false;
+static bool open_syscard_bios = false;
+static bool open_gameexpress_bios = false;
 
 static void menu_geargrafx(void);
 static void menu_emulator(void);
@@ -72,6 +74,8 @@ void gui_main_menu(void)
     choose_screenshots_path = false;
     gui_main_menu_hovered = false;
     choose_backup_ram_path = false;
+    open_syscard_bios = false;
+    open_gameexpress_bios = false;
 
     if (config_emulator.show_menu && ImGui::BeginMainMenuBar())
     {
@@ -87,7 +91,7 @@ void gui_main_menu(void)
 
         gui_main_menu_height = (int)ImGui::GetWindowSize().y;
 
-        ImGui::EndMainMenuBar();       
+        ImGui::EndMainMenuBar();
     }
 
     file_dialogs();
@@ -355,6 +359,44 @@ static void menu_emulator(void)
                 }
             }
 
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("BIOS"))
+        {
+            if (ImGui::BeginMenu("System Card"))
+            {
+                if (ImGui::MenuItem("Load System Card BIOS..."))
+                {
+                    open_syscard_bios = true;
+                }
+                ImGui::PushItemWidth(350);
+                if (ImGui::InputText("##syscard_bios_path", gui_syscard_bios_path, IM_ARRAYSIZE(gui_syscard_bios_path), ImGuiInputTextFlags_AutoSelectAll))
+                {
+                    config_emulator.syscard_bios_path.assign(gui_syscard_bios_path);
+                    emu_load_syscard_bios(gui_syscard_bios_path);
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Games Express"))
+            {
+                if (ImGui::MenuItem("Load Game Express BIOS..."))
+                {
+                    open_gameexpress_bios = true;
+                }
+                ImGui::PushItemWidth(350);
+                if (ImGui::InputText("##gameexpress_bios_path", gui_gameexpress_bios_path, IM_ARRAYSIZE(gui_gameexpress_bios_path), ImGuiInputTextFlags_AutoSelectAll))
+                {
+                    config_emulator.gameexpress_bios_path.assign(gui_gameexpress_bios_path);
+                    emu_load_gameexpress_bios(gui_gameexpress_bios_path);
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
             ImGui::EndMenu();
         }
 
@@ -920,6 +962,10 @@ static void file_dialogs(void)
         gui_file_dialog_choose_screenshot_path();
     if (choose_backup_ram_path)
         gui_file_dialog_choose_backup_ram_path();
+    if (open_syscard_bios)
+        gui_file_dialog_load_syscard_bios();
+    if (open_gameexpress_bios)
+        gui_file_dialog_load_gameexpress_bios();
     if (open_about)
     {
         gui_dialog_in_use = true;

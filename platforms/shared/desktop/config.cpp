@@ -191,6 +191,8 @@ void config_read(void)
     config_emulator.backup_ram_dir_option = read_int("Emulator", "BackupRAMDirOption", 0);
     config_emulator.backup_ram_path = read_string("Emulator", "BackupRAMPath");
     config_emulator.last_open_path = read_string("Emulator", "LastOpenPath");
+    config_emulator.syscard_bios_path = read_string("Emulator", "SysCardBiosPath");
+    config_emulator.gameexpress_bios_path = read_string("Emulator", "GameExpressBiosPath");
     config_emulator.window_width = read_int("Emulator", "WindowWidth", 770);
     config_emulator.window_height = read_int("Emulator", "WindowHeight", 600);
     config_emulator.status_messages = read_bool("Emulator", "StatusMessages", false);
@@ -385,6 +387,8 @@ void config_write(void)
     write_int("Emulator", "BackupRAMDirOption", config_emulator.backup_ram_dir_option);
     write_string("Emulator", "BackupRAMPath", config_emulator.backup_ram_path);
     write_string("Emulator", "LastOpenPath", config_emulator.last_open_path);
+    write_string("Emulator", "SysCardBiosPath", config_emulator.syscard_bios_path);
+    write_string("Emulator", "GameExpressBiosPath", config_emulator.gameexpress_bios_path);
     write_int("Emulator", "WindowWidth", config_emulator.window_width);
     write_int("Emulator", "WindowHeight", config_emulator.window_height);
     write_bool("Emulator", "StatusMessages", config_emulator.status_messages);

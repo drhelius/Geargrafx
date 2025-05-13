@@ -454,6 +454,16 @@ void emu_save_screenshot(const char* file_path)
     Log("Screenshot saved to %s", file_path);
 }
 
+void emu_load_syscard_bios(const char* file_path)
+{
+    geargrafx->GetMemory()->LoadBios(file_path, true);
+}
+
+void emu_load_gameexpress_bios(const char* file_path)
+{
+    geargrafx->GetMemory()->LoadBios(file_path, false);
+}
+
 static void save_ram(void)
 {
     const char* dir = get_configurated_dir(config_emulator.backup_ram_dir_option, config_emulator.backup_ram_path.c_str());
