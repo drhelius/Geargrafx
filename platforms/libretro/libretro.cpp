@@ -140,6 +140,18 @@ void retro_set_video_refresh(retro_video_refresh_t cb)
 void retro_set_environment(retro_environment_t cb)
 {
     environ_cb = cb;
+
+    static const struct retro_system_content_info_override content_overrides[] = {
+        {
+            "pce|sgx|bin|rom", // extensions
+            false,             // need_fullpath
+            false              // persistent_data
+        },
+        { NULL, false, false }
+    };
+
+    environ_cb(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)content_overrides);
+
     set_controller_info();
     set_variabless();
 }
@@ -241,8 +253,8 @@ void retro_get_system_info(struct retro_system_info *info)
     memset(info, 0, sizeof(*info));
     info->library_name     = "Geargrafx";
     info->library_version  = GG_VERSION;
-    info->need_fullpath    = false;
-    info->valid_extensions = "pce|sgx|bin|rom";
+    info->need_fullpath    = true;
+    info->valid_extensions = "pce|sgx|bin|rom|cue";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -302,10 +314,23 @@ bool retro_load_game(const struct retro_game_info *info)
     snprintf(retro_game_path, sizeof(retro_game_path), "%s", info->path);
     log_cb(RETRO_LOG_INFO, "Loading game: %s\n", retro_game_path);
 
-    if (!core->LoadROMFromBuffer(reinterpret_cast<const u8*>(info->data), info->size, retro_game_path))
+    if (IsValidPointer(info->data))
     {
-        log_cb(RETRO_LOG_ERROR, "Invalid or corrupted ROM.\n");
-        return false;
+        log_cb(RETRO_LOG_INFO, "Loading game from buffer");
+        if (!core->LoadROMFromBuffer(reinterpret_cast<const u8*>(info->data), info->size, retro_game_path))
+        {
+            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted ROM.\n");
+            return false;
+        }
+    }
+    else
+    {
+        log_cb(RETRO_LOG_INFO, "Loading game from file");
+        if (!core->LoadROM(retro_game_path))
+        {
+            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted ROM.\n");
+            return false;
+        }
     }
 
     enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
