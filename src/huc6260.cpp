@@ -247,15 +247,15 @@ void HuC6260::WriteRegister(u16 address, u8 value)
             switch (m_speed)
             {
                 case 0:
-                    Debug("HuC6260 Speed: 5.36 MHz");
+                    //Debug("HuC6260 Speed: 5.36 MHz");
                     m_clock_divider = 4;
                     break;
                 case 1:
-                    Debug("HuC6260 Speed: 7.16 MHz");
+                    //Debug("HuC6260 Speed: 7.16 MHz");
                     m_clock_divider = 3;
                     break;
                 default:
-                    Debug("HuC6260 Speed: 10.8 MHz");
+                    //Debug("HuC6260 Speed: 10.8 MHz");
                     m_clock_divider = 2;
                     break;
             }
