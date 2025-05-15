@@ -39,6 +39,9 @@ SOURCES_CXX := \
     $(SRC_DIR)/geargrafx_core.cpp \
     $(SRC_DIR)/audio.cpp \
     $(SRC_DIR)/cartridge.cpp \
+    $(SRC_DIR)/cdrom_media.cpp \
+    $(SRC_DIR)/cdrom.cpp \
+    $(SRC_DIR)/scsi_controller.cpp \
     $(SRC_DIR)/huc6202.cpp \
     $(SRC_DIR)/huc6260.cpp \
     $(SRC_DIR)/huc6270.cpp \

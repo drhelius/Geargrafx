@@ -106,6 +106,15 @@
     <ClCompile Include="..\..\src\cartridge.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cdrom_media.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cdrom.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\scsi_controller.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\geargrafx_core.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -271,6 +280,15 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cartridge.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_media.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cdrom.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\scsi_controller.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\common.h">
