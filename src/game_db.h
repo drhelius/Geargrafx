@@ -57,6 +57,7 @@ const GG_DB_Entry k_game_database[] =
 
     // CARD RAM SIZE = 0x8000
     { 0x083C956A, "Populous (J)", GG_GAMEDB_CARD_RAM_8000 },
+    { 0x0A9ADE99, "Populous (J) [Alt]", GG_GAMEDB_CARD_RAM_8000 },
 
     // AVENUE PAD 3
     { 0x933D5BCC, "Air Zonk (USA)", GG_GAMEDB_AVENUE_PAD_3_SELECT },
@@ -128,13 +129,14 @@ const GG_DB_Entry k_game_database[] =
 
 const GG_DB_Entry k_bios_database[] =
 {
-    { 0x0, "System Card 1.0", GG_BIOSDB_SYSCARD },
-    { 0x0, "System Card 1.1", GG_BIOSDB_SYSCARD },
-    { 0x0, "System Card 2.0", GG_BIOSDB_SYSCARD },
-    { 0x0, "System Card 3.0", GG_BIOSDB_SYSCARD },
-    { 0x0, "System Card 3.1", GG_BIOSDB_SYSCARD },
-    { 0x0, "System Card 3.2", GG_BIOSDB_SYSCARD },
-    { 0x0, "Game Express (J)", GG_BIOSDB_GAME_EXPRESS },
+    { 0x3F9F95A4, "System Card 1.0 (J)", GG_BIOSDB_SYSCARD },
+    { 0x0, "System Card 2.0 (J)", GG_BIOSDB_SYSCARD },
+    { 0xFF2A5EC3, "System Card 2.0 (USA)", GG_BIOSDB_SYSCARD },
+    { 0x283B74E0, "System Card 2.1 (J)", GG_BIOSDB_SYSCARD },
+    { 0x6D9A73EF, "System Card 3.0 (J)", GG_BIOSDB_SYSCARD },
+    { 0x2B5B75FE, "System Card 3.0 (USA)", GG_BIOSDB_SYSCARD },
+    { 0x51A12D90, "Game Express (J)", GG_BIOSDB_GAME_EXPRESS },
+    { 0x0, "Game Express (J) [Alt]", GG_BIOSDB_GAME_EXPRESS },
 
     {0, 0, 0}
 };
