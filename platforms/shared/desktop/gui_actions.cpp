@@ -23,7 +23,7 @@
 #include "gui_debug_trace_logger.h"
 #include "config.h"
 #include "emu.h"
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 void gui_action_reset(void)
 {

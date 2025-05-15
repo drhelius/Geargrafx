@@ -20,7 +20,7 @@
 #define GUI_DEBUG_MEMORY_IMPORT
 #include "gui_debug_memory.h"
 
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 #include "imgui/imgui.h"
 #include "gui_debug_memeditor.h"
 #include "gui_filedialogs.h"

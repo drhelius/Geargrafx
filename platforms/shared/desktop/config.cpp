@@ -19,7 +19,7 @@
 
 #include <SDL.h>
 #include <iomanip>
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 #define MINI_CASE_SENSITIVE
 #include "mINI/ini.h"

@@ -20,7 +20,7 @@
 #include "sound_queue.h"
 #include <string>
 #include <assert.h>
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 static void sdl_error(const char* str)
 {

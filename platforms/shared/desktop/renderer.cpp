@@ -29,7 +29,7 @@
 #include "imgui/imgui_impl_opengl2.h"
 #include "emu.h"
 #include "config.h"
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 #define RENDERER_IMPORT
 #include "renderer.h"

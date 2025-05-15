@@ -20,7 +20,7 @@
 #ifndef GUI_DEBUG_TRACE_LOGGER_H
 #define	GUI_DEBUG_TRACE_LOGGER_H
 
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 #ifdef GUI_DEBUG_TRACE_LOGGER_IMPORT
     #define EXTERN

@@ -23,7 +23,7 @@
 #include "imgui/imgui.h"
 #include "imgui/implot.h"
 #include "imgui/fonts/IconsMaterialDesign.h"
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 #include "gui.h"
 #include "gui_debug_constants.h"
 #include "gui_debug_memeditor.h"

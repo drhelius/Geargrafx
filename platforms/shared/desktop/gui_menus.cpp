@@ -29,7 +29,7 @@
 #include "emu.h"
 #include "renderer.h"
 #include "utils.h"
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 static bool open_rom = false;
 static bool open_ram = false;

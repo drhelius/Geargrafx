@@ -19,7 +19,7 @@
 #define EMU_IMPORT
 #include "emu.h"
 
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 #include "sound_queue.h"
 #include "config.h"
 

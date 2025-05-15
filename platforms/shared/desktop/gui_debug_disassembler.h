@@ -20,7 +20,7 @@
 #ifndef GUI_DEBUG_DISASSEMBLER_H
 #define	GUI_DEBUG_DISASSEMBLER_H
 
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 #ifdef GUI_DEBUG_DISASSEMBLER_IMPORT
     #define EXTERN

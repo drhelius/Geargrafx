@@ -337,7 +337,7 @@ include Makefile.common
 
 OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
-INCLUDES += -I$(CORE_DIR)
+INCLUDES += -I$(CORE_DIR) -I$(SOURCE_DIR)
 
 CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ $(INCLUDES) $(fpic)
 CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ $(INCLUDES) $(fpic)

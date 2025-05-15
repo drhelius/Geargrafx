@@ -29,7 +29,7 @@
 #include "emu.h"
 #include "renderer.h"
 #include "utils.h"
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 #define GUI_IMPORT
 #include "gui.h"

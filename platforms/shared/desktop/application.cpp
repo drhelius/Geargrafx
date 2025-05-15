@@ -20,7 +20,7 @@
 #include <SDL.h>
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 #include "config.h"
 #include "gui.h"
 #include "gui_debug_disassembler.h"

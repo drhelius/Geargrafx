@@ -1,5 +1,5 @@
 SRC_DIR = ../../src
-DESKTOP_SRC_DIR=../shared/desktop
+DESKTOP_SRC_DIR = ../shared/desktop
 
 SOURCES_C := \
     $(SRC_DIR)/miniz/miniz.c \

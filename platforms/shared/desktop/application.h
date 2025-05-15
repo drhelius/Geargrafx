@@ -21,7 +21,7 @@
 #define APPLICATION_H
 
 #include <SDL.h>
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 #ifdef APPLICATION_IMPORT
     #define EXTERN

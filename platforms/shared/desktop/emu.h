@@ -20,7 +20,7 @@
 #ifndef EMU_H
 #define	EMU_H
 
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 
 #ifdef EMU_IMPORT
     #define EXTERN

@@ -16,7 +16,7 @@ else
     CC = gcc
 endif
 
-CPPFLAGS += -I../ -I../../
+CPPFLAGS += -I$(SRC_DIR)
 CPPFLAGS += -Wall -Wextra -Wformat -DGG_TESTING=1 -DGG_DISABLE_DISASSEMBLER=1 -DEMULATOR_BUILD=\"$(GIT_VERSION)\"
 CXXFLAGS += -std=c++11
 CFLAGS += -std=c99

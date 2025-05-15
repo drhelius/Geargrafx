@@ -21,7 +21,7 @@
 #include "gui_debug_huc6270.h"
 
 #include "imgui/imgui.h"
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 #include "gui_debug_constants.h"
 #include "gui_debug_memory.h"
 #include "gui.h"

@@ -24,7 +24,7 @@
 #include <string.h>
 #include <math.h>
 #include "libretro.h"
-#include "../../src/geargrafx.h"
+#include "geargrafx.h"
 
 // #ifdef _WIN32
 // static const char slash = '\\';

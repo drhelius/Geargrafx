@@ -20,7 +20,7 @@
 #define GUI_DEBUG_IMPORT
 #include "gui_debug.h"
 
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 #include "imgui/imgui.h"
 #include "gui_debug_disassembler.h"
 #include "gui_debug_huc6280.h"

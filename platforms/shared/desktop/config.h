@@ -21,7 +21,7 @@
 #define	CONFIG_H
 
 #include <SDL.h>
-#include "../../../src/geargrafx.h"
+#include "geargrafx.h"
 #define MINI_CASE_SENSITIVE
 #include "mINI/ini.h"
 #include "imgui/imgui.h"
