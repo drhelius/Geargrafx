@@ -25,9 +25,11 @@
 #include "miniz/miniz.h"
 #include "game_db.h"
 #include "crc.h"
+#include "cdrom_media.h"
 
-Cartridge::Cartridge()
+Cartridge::Cartridge(CdRomMedia* cdrom_media)
 {
+    m_cdrom_media = cdrom_media;
     InitPointer(m_rom);
     m_rom_size = 0;
     m_card_ram_size = 0;
@@ -39,6 +41,7 @@ Cartridge::Cartridge()
     m_crc = 0;
     m_is_sgx = false;
     m_force_sgx = false;
+    m_is_cdrom = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
 
@@ -70,11 +73,14 @@ void Cartridge::Reset()
     m_rom_bank_count = 0;
     m_crc = 0;
     m_is_sgx = false;
+    m_is_cdrom = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
 
     for (int i = 0; i < 128; i++)
         InitPointer(m_rom_map[i]);
+
+    m_cdrom_media->Reset();
 }
 
 u32 Cartridge::GetCRC()
@@ -92,12 +98,16 @@ bool Cartridge::IsSGX()
     return m_is_sgx;
 }
 
+bool Cartridge::IsCDROM()
+{
+    return m_is_cdrom;
+}
+
 void Cartridge::ForceSGX(bool enable)
 {
     m_force_sgx = enable;
     m_is_sgx = enable;
 }
-
 
 Cartridge::CartridgeMapper Cartridge::GetMapper()
 {
@@ -116,7 +126,7 @@ int Cartridge::GetROMBankCount()
 
 int Cartridge::GetCardRAMSize()
 {
-    return m_card_ram_size;
+    return m_is_cdrom ? 0x30000 : m_card_ram_size;
 }
 
 GG_Keys Cartridge::GetAvenuePad3Button()
@@ -202,16 +212,20 @@ bool Cartridge::LoadFromFile(const char* path)
             if (i == size - 1)
             {
                 Log("ERROR: File %s is empty!", path);
-                file.close();
                 SafeDeleteArray(memblock);
                 return false;
             }
         }
 
-        if (strcmp(m_file_extension, "zip") == 0)
-            m_ready = LoadFromZipFile(reinterpret_cast<u8*> (memblock), size);
+        if (strcmp(m_file_extension, "cue") == 0)
+        {
+            m_is_cdrom = true;
+            m_ready = m_cdrom_media->LoadCueFromBuffer(reinterpret_cast<u8*>(memblock), size, path);
+        }
+        else if (strcmp(m_file_extension, "zip") == 0)
+            m_ready = LoadFromZipFile(reinterpret_cast<u8*>(memblock), size);
         else
-            m_ready = LoadFromBuffer(reinterpret_cast<u8*> (memblock), size, path);
+            m_ready = LoadFromBuffer(reinterpret_cast<u8*>(memblock), size, path);
 
         SafeDeleteArray(memblock);
     }

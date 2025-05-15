@@ -79,6 +79,7 @@
     <ClInclude Include="..\..\src\cartridge.h" />
     <ClInclude Include="..\..\src\cdrom_media.h" />
     <ClInclude Include="..\..\src\cdrom.h" />
+    <ClInclude Include="..\..\src\cdrom_common.h" />
     <ClInclude Include="..\..\src\scsi_controller.h" />
     <ClInclude Include="..\..\src\common.h" />
     <ClInclude Include="..\..\src\defines.h" />

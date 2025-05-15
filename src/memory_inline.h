@@ -44,61 +44,17 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
     u8 bank = m_mpr[mpr_index];
     u16 offset = address & 0x1FFF;
 
-    // 0x00 - 0x7F
-    if (bank < 0x80)
+    if (bank != 0xFF)
     {
-        // HuCard ROM
-        if (IsValidPointer(m_current_mapper))
+        if (IsValidPointer(m_current_mapper) && (bank < 0x80))
             return m_current_mapper->Read(bank, offset);
-        else if ((m_card_ram_size > 0) && (bank >= m_card_ram_start) && (bank <= m_card_ram_end))
-        {
-            return m_card_ram_map[bank - m_card_ram_start][offset];
-        }
-        else
-        {
-            u8** rom_map = m_cartridge->GetROMMap();
-            return rom_map[bank][offset];
-        }
+        else 
+            return m_memory_map[bank][offset];
     }
-    // 0x80 - 0xF6
-    else if (bank < 0xF7)
-    {
-        // Unused
-        Debug("Unused read at %04X, bank=%02X", address, bank);
-        return 0xFF;
-    }
-    // 0xF7
-    else if (bank < 0xF8)
-    {
-        // Backup RAM
-        if (m_backup_ram_enabled && (offset < 0x800))
-        {
-            return m_backup_ram[offset];
-        }
-        else
-        {
-            Debug("Invalid Backup RAM read at %04X, bank=%02X", address, bank);
-            return 0xFF;
-        }
-    }
-    // 0xF8 - 0xFB
-    else if (bank < 0xFC)
-    {
-        // RAM
-        return m_wram_map[bank - 0xF8][offset];
-    }
-    // 0xFC - 0xFE
-    else if (bank < 0xFF)
-    {
-        // Unused
-        Debug("Unused read at %04X, bank=%02X", address, bank);
-        return 0xFF;
-    }
-    // 0xFF
     else
     {
         // Hardware Page
-        switch (offset & 0x001C00)
+        switch (offset & 0x1C00)
         {
             case 0x0000:
                 // HuC6270
@@ -155,7 +111,7 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
                 }
             }
             case 0x1800:
-                // Unused
+                // CDROM
                 Debug("CDROM hardware read at %04X", address);
                 return 0xFF;
             case 0x1C00:
@@ -167,6 +123,9 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
                 return 0xFF;
         }
     }
+
+    Debug("Invalid read at %04X", address);
+    return 0xFF;
 }
 
 INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
@@ -184,50 +143,19 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
     u8 bank = m_mpr[mpr_index];
     u16 offset = address & 0x1FFF;
 
-    // 0x00 - 0x7F
-    if (bank < 0x80)
+    if (IsValidPointer(m_current_mapper) && bank < 0x80)
     {
-        // HuCard ROM
-        if (IsValidPointer(m_current_mapper))
-            m_current_mapper->Write(bank, offset, value);
-        else if ((m_card_ram_size > 0) && (bank >= m_card_ram_start) && (bank <= m_card_ram_end))
-        {
-            m_card_ram_map[bank - m_card_ram_start][offset] = value;
-        }
-        else
-        {
-            Debug("Attempted write to HuCard ROM at %04X, value=%02X, bank=%02X", address, value, bank);
-        }
+        m_current_mapper->Write(bank, offset, value);
     }
-    // 0x80 - 0xF6
-    else if (bank < 0xF7)
+    else if (bank == 0xF7)
     {
-        // Unused
-        Debug("Unused write at %04X, value=%02X, bank=%02X", address, value, bank);
+        if (m_memory_map_write[bank] && (offset < 0x800))
+            m_memory_map[bank][offset] = value;
     }
-    // 0xF7
-    else if (bank < 0xF8)
+    else if (bank != 0xFF)
     {
-        if (m_backup_ram_enabled && (offset < 0x800))
-        {
-            m_backup_ram[offset] = value;
-        }
-        else
-        {
-            Debug("Invalid Backup RAM write at %04X, value=%02X, bank=%02X", address, value, bank);
-        }
-    }
-    // 0xF8 - 0xFB
-    else if (bank < 0xFC)
-    {
-        // RAM
-        m_wram_map[bank - 0xF8][offset] = value;
-    }
-    // 0xFC - 0xFE
-    else if (bank < 0xFF)
-    {
-        // Unused
-        Debug("Unused write at %04X, value=%02X, bank=%02X", address, value, bank);
+        if (m_memory_map_write[bank])
+            m_memory_map[bank][offset] = value;
     }
     else
     {
@@ -280,7 +208,7 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
                 break;
             }
             case 0x1800:
-                // Unused
+                // CDROM
                 Debug("CDROM hardware write at %04X, value=%02X", address, value);
                 break;
             case 0x1C00:

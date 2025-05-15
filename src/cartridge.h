@@ -22,6 +22,8 @@
 
 #include "common.h"
 
+class CdRomMedia;
+
 class Cartridge
 {
 public:
@@ -32,13 +34,14 @@ public:
     };
 
 public:
-    Cartridge();
+    Cartridge(CdRomMedia* cdrom_media);
     ~Cartridge();
     void Init();
     void Reset();
     u32 GetCRC();
     bool IsReady();
     bool IsSGX();
+    bool IsCDROM();
     void ForceSGX(bool enable);
     CartridgeMapper GetMapper();
     int GetROMSize();
@@ -62,6 +65,7 @@ private:
     void InitRomMAP();
 
 private:
+    CdRomMedia* m_cdrom_media;
     u8* m_rom;
     u8** m_rom_map;
     int m_rom_size;
@@ -75,6 +79,7 @@ private:
     u32 m_crc;
     bool m_is_sgx;
     bool m_force_sgx;
+    bool m_is_cdrom;
     CartridgeMapper m_mapper;
     GG_Keys m_avenue_pad_3_button;
 };

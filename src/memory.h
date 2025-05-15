@@ -72,6 +72,9 @@ public:
     void LoadState(std::istream& stream);
 
 private:
+    void ReloadMemoryMap();
+
+private:
     HuC6260* m_huc6260;
     HuC6202* m_huc6202;
     HuC6280* m_huc6280;
@@ -80,14 +83,14 @@ private:
     Input* m_input;
     Audio* m_audio;
     u8 m_mpr[8];
+    u8** m_memory_map;
+    bool* m_memory_map_write;
+    u8* m_unused_memory;
     u8* m_wram;
-    u8* m_wram_map[4];
     u8* m_card_ram;
-    u8** m_card_ram_map;
     u8* m_backup_ram;
     u8* m_syscard_bios;
     u8* m_gameexpress_bios;
-    u8** m_bios_map;
     bool m_right_syscard_bios;
     bool m_right_gameexpress_bios;
     u32 m_syscard_bios_crc;

@@ -31,6 +31,9 @@
 #include "huc6260.h"
 #include "huc6270.h"
 #include "huc6280.h"
+#include "scsi_controller.h"
+#include "cdrom.h"
+#include "cdrom_media.h"
 #include "audio.h"
 #include "input.h"
 #include "memory_stream.h"
@@ -43,6 +46,9 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_huc6270_1);
     InitPointer(m_huc6270_2);
     InitPointer(m_huc6280);
+    InitPointer(m_cdrom);
+    InitPointer(m_cdrom_media);
+    InitPointer(m_scsi_controller);
     InitPointer(m_audio);
     InitPointer(m_input);
     InitPointer(m_cartridge);
@@ -55,6 +61,9 @@ GeargrafxCore::~GeargrafxCore()
     SafeDelete(m_cartridge);
     SafeDelete(m_input);
     SafeDelete(m_audio);
+    SafeDelete(m_scsi_controller);
+    SafeDelete(m_cdrom_media);
+    SafeDelete(m_cdrom);
     SafeDelete(m_huc6280);
     SafeDelete(m_huc6270_1);
     SafeDelete(m_huc6270_2);
@@ -69,7 +78,10 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 
     srand((unsigned int)time(NULL));
 
-    m_cartridge = new Cartridge();
+    m_cdrom_media = new CdRomMedia();
+    m_scsi_controller = new ScsiController();
+    m_cdrom = new CdRom();
+    m_cartridge = new Cartridge(m_cdrom_media);
     m_huc6280 = new HuC6280();
     m_huc6270_1 = new HuC6270(m_huc6280);
     m_huc6270_2 = new HuC6270(m_huc6280);
@@ -79,6 +91,9 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_audio = new Audio();
     m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_cartridge, m_input, m_audio);
 
+    m_cdrom_media->Init();
+    m_cdrom->Init();
+    m_scsi_controller->Init();
     m_cartridge->Init();
     m_memory->Init();
     m_huc6260->Init(pixel_format);
@@ -819,6 +834,8 @@ void GeargrafxCore::Reset()
     m_huc6270_1->Reset();
     m_huc6270_2->Reset();
     m_huc6280->Reset();
+    m_cdrom->Reset();
+    m_scsi_controller->Reset();
     m_audio->Reset();
     m_input->Reset();
 }

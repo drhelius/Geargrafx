@@ -32,6 +32,9 @@ class HuC6280;
 class HuC6202;
 class Memory;
 class Cartridge;
+class CdRom;
+class CdRomMedia;
+class ScsiController;
 
 class GeargrafxCore
 {
@@ -109,6 +112,9 @@ private:
     Audio* m_audio;
     Input* m_input;
     Cartridge* m_cartridge;
+    CdRom* m_cdrom;
+    CdRomMedia* m_cdrom_media;
+    ScsiController* m_scsi_controller;
     bool m_paused;
     GG_Debug_Callback m_debug_callback;
 };

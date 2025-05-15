@@ -37,13 +37,14 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* 
     m_cartridge = cartridge;
     m_input = input;
     m_audio = audio;
+    InitPointer(m_memory_map);
+    InitPointer(m_memory_map_write);
+    InitPointer(m_unused_memory);
     InitPointer(m_wram);
     InitPointer(m_card_ram);
-    InitPointer(m_card_ram_map);
     InitPointer(m_backup_ram);
     InitPointer(m_syscard_bios);
     InitPointer(m_gameexpress_bios);
-    InitPointer(m_bios_map);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
@@ -63,13 +64,14 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* 
 
 Memory::~Memory()
 {
+    SafeDeleteArray(m_memory_map);
+    SafeDeleteArray(m_memory_map_write);
+    SafeDeleteArray(m_unused_memory);
     SafeDeleteArray(m_wram);
     SafeDeleteArray(m_card_ram);
-    SafeDeleteArray(m_card_ram_map);
     SafeDeleteArray(m_backup_ram);
     SafeDeleteArray(m_syscard_bios);
     SafeDeleteArray(m_gameexpress_bios);
-    SafeDeleteArray(m_bios_map);
     SafeDeleteArray(m_test_memory);
     if (IsValidPointer(m_disassembler))
     {
@@ -84,20 +86,21 @@ Memory::~Memory()
 
 void Memory::Init()
 {
+    m_memory_map = new u8*[0x100];
+    for (int i = 0; i < 0x100; i++)
+        InitPointer(m_memory_map[i]);
+    m_memory_map_write = new bool[0x100];
     m_wram = new u8[0x8000];
-    m_card_ram = new u8[0x8000];
-    m_card_ram_map = new u8*[0x20];
-    m_backup_ram = new u8[0x800];
+    m_card_ram = new u8[0x30000];
+    m_backup_ram = new u8[0x2000];
     m_syscard_bios = new u8[GG_BIOS_SYSCARD_SIZE];
     m_gameexpress_bios = new u8[GG_BIOS_GAME_EXPRESS_SIZE];
-    m_bios_map = new u8*[0x200];
+    m_unused_memory = new u8[0x2000];
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_disassembler = new GG_Disassembler_Record*[0x200000];
     for (int i = 0; i < 0x200000; i++)
-    {
         InitPointer(m_disassembler[i]);
-    }
 #endif
 
 #if defined(GG_TESTING)
@@ -138,9 +141,6 @@ void Memory::Reset()
             m_wram[i] = m_wram_reset_value & 0xFF;
     }
 
-    for (int i = 0; i < 4; i++)
-        m_wram_map[i] = &m_wram[i * (m_cartridge->IsSGX() ? 0x2000 : 0)];
-
 #if defined(GG_TESTING)
     for (int i = 0; i < 0x10000; i++)
         m_test_memory[i] = rand() & 0xFF;
@@ -161,6 +161,11 @@ void Memory::Reset()
         m_card_ram_start = 0x40;
         m_card_ram_end = 0x5F;
     }
+    else if (m_card_ram_size == 0x30000)
+    {
+        m_card_ram_start = 0x68;
+        m_card_ram_end = 0x7F;
+    }
     else
     {
         m_card_ram_start = 0x00;
@@ -176,17 +181,93 @@ void Memory::Reset()
             else
                 m_card_ram[i] = m_card_ram_reset_value & 0xFF;
         }
-
-        int ram_card_banks = MIN(m_card_ram_end - m_card_ram_start + 1, 0x20);
-
-        for (int i = 0; i < ram_card_banks; i++)
-        {
-            m_card_ram_map[i] = &m_card_ram[(i * 0x2000) % m_card_ram_size];
-        }
     }
 
+    memset(m_backup_ram, 0xFF, 0x2000);
     memset(m_backup_ram, 0x00, 0x800);
     memcpy(m_backup_ram, k_backup_ram_init_string, 8);
+
+    memset(m_unused_memory, 0xFF, 0x2000);
+
+    ReloadMemoryMap();
+}
+
+void Memory::ReloadMemoryMap()
+{
+    for (int i = 0; i < 0x100; i++)
+    {
+        m_memory_map[i] = NULL;
+        m_memory_map_write[i] = false;
+
+        // 0x00 - 0x7F
+        if (i < 0x80)
+        {
+            // Card RAM
+            if ((m_card_ram_size > 0) && (i >= m_card_ram_start) && (i <= m_card_ram_end))
+            {
+                int bank = i - m_card_ram_start;
+                m_memory_map[i] = &m_card_ram[(bank * 0x2000) % m_card_ram_size];
+                m_memory_map_write[i] = true;
+            }
+            // BIOS for CDROM
+            else if (m_cartridge->IsCDROM())
+            {
+                m_memory_map[i] = &m_syscard_bios[(i * 0x2000) % GG_BIOS_SYSCARD_SIZE];
+                m_memory_map_write[i] = false;
+            }
+            // HuCard ROM
+            else
+            {
+                m_memory_map[i] = m_cartridge->GetROMMap()[i];
+                m_memory_map_write[i] = false;
+            }
+        }
+        // 0x80 - 0xF6
+        else if (i < 0xF7)
+        {
+            // Unused
+            m_memory_map[i] = m_unused_memory;
+            m_memory_map_write[i] = false;
+        }
+        // 0xF7
+        else if (i < 0xF8)
+        {
+            if (m_backup_ram_enabled)
+            {
+                // Backup RAM
+                m_memory_map[i] = m_backup_ram;
+                m_memory_map_write[i] = true;
+            }
+            else
+            {
+                // Unused
+                m_memory_map[i] = m_unused_memory;
+                m_memory_map_write[i] = false;
+            }
+        }
+        // 0xF8 - 0xFB
+        else if (i < 0xFC)
+        {
+            // RAM
+            if (m_cartridge->IsSGX())
+            {
+                int bank = i - 0xF8;
+                m_memory_map[i] = &m_wram[bank * 0x2000];
+            }
+            else
+            {
+                m_memory_map[i] = &m_wram[0];
+            }
+            m_memory_map_write[i] = true;
+        }
+        // 0xFC - 0xFE
+        else if (i < 0xFF)
+        {
+            // Unused
+            m_memory_map[i] = m_unused_memory;
+            m_memory_map_write[i] = false;
+        }
+    }
 }
 
 void Memory::SetResetValues(int mpr, int wram, int card_ram)
@@ -388,8 +469,8 @@ void Memory::SaveState(std::ostream& stream)
     using namespace std;
     stream.write(reinterpret_cast<const char*> (m_mpr), sizeof(m_mpr));
     stream.write(reinterpret_cast<const char*> (m_wram), sizeof(u8) * 0x8000);
-    stream.write(reinterpret_cast<const char*> (m_card_ram), sizeof(u8) * 0x8000);
     stream.write(reinterpret_cast<const char*> (&m_card_ram_size), sizeof(m_card_ram_size));
+    stream.write(reinterpret_cast<const char*> (m_card_ram), sizeof(u8) * m_card_ram_size);
     stream.write(reinterpret_cast<const char*> (&m_card_ram_start), sizeof(m_card_ram_start));
     stream.write(reinterpret_cast<const char*> (&m_card_ram_end), sizeof(m_card_ram_end));
     stream.write(reinterpret_cast<const char*> (m_backup_ram), sizeof(u8) * 0x800);
@@ -405,8 +486,8 @@ void Memory::LoadState(std::istream& stream)
     using namespace std;
     stream.read(reinterpret_cast<char*> (m_mpr), sizeof(m_mpr));
     stream.read(reinterpret_cast<char*> (m_wram), sizeof(u8) * 0x8000);
-    stream.read(reinterpret_cast<char*> (m_card_ram), sizeof(u8) * 0x8000);
     stream.read(reinterpret_cast<char*> (&m_card_ram_size), sizeof(m_card_ram_size));
+    stream.read(reinterpret_cast<char*> (m_card_ram), sizeof(u8) * m_card_ram_size);
     stream.read(reinterpret_cast<char*> (&m_card_ram_start), sizeof(m_card_ram_start));
     stream.read(reinterpret_cast<char*> (&m_card_ram_end), sizeof(m_card_ram_end));
     stream.read(reinterpret_cast<char*> (m_backup_ram), sizeof(u8) * 0x800);

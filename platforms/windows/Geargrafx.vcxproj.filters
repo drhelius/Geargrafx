@@ -288,6 +288,9 @@
     <ClInclude Include="..\..\src\cdrom.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_common.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\scsi_controller.h">
       <Filter>src</Filter>
     </ClInclude>
