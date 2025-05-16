@@ -17,7 +17,7 @@
  *
  */
 
- #ifndef _MEMORY_STREAM_H_
+#ifndef _MEMORY_STREAM_H_
 #define _MEMORY_STREAM_H_
 
 #include <iostream>
@@ -48,9 +48,9 @@ protected:
     {
         if (pptr() + n > buffer_end)
             return 0;
-        
+
         std::memcpy(pptr(), s, (size_t)n);
-        pbump(n);
+        pbump((int)n);
         return n;
     }
 
