@@ -98,8 +98,8 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_memory->Init();
     m_huc6260->Init(pixel_format);
     m_huc6202->Init();
-    m_huc6270_1->Init("VDC 1", m_huc6260, m_huc6202);
-    m_huc6270_2->Init("VDC 2", m_huc6260, m_huc6202);
+    m_huc6270_1->Init(m_huc6260, m_huc6202);
+    m_huc6270_2->Init(m_huc6260, m_huc6202);
     m_huc6280->Init(m_memory, m_huc6202);
     m_audio->Init();
     m_input->Init();
@@ -518,9 +518,9 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     header.version = GG_SAVESTATE_VERSION;
 
     header.timestamp = time(NULL);
-    strncpy_fit(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name) - 1);
+    strncpy_fit(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name));
     header.rom_crc = m_cartridge->GetCRC();
-    strncpy_fit(header.emu_build, GG_VERSION, sizeof(header.emu_build) - 1);
+    strncpy_fit(header.emu_build, GG_VERSION, sizeof(header.emu_build));
 
     Debug("Save state header magic: 0x%08x", header.magic);
     Debug("Save state header version: %d", header.version);
