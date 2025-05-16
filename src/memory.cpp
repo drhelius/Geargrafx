@@ -204,89 +204,56 @@ void Memory::ReloadMemoryMap()
     if (m_cartridge->IsCDROM())
         m_cartridge->LoadBios(m_syscard_bios, GG_BIOS_SYSCARD_SIZE);
 
-    for (int i = 0; i < 0x100; i++)
+    // 0x00 - 0x7F
+    for (int i = 0x00; i <= 0x7F; i++)
     {
-        m_memory_map[i] = NULL;
-        m_memory_map_write[i] = false;
-
-        // 0x00 - 0x7F
-        if (i < 0x80)
+        // Card RAM
+        if ((m_card_ram_size > 0) && (i >= m_card_ram_start) && (i <= m_card_ram_end))
         {
-            // Card RAM
-            if ((m_card_ram_size > 0) && (i >= m_card_ram_start) && (i <= m_card_ram_end))
-            {
-                int bank = i - m_card_ram_start;
-                m_memory_map[i] = &m_card_ram[(bank * 0x2000) % m_card_ram_size];
-                m_memory_map_write[i] = true;
-            }
-            else
-            {
-                m_memory_map[i] = m_cartridge->GetROMMap()[i];
-                m_memory_map_write[i] = false;
-            }
-        }
-        // 0x80 - 0x87
-        else if (i < 0x88)
-        {
-            if (m_cartridge->IsCDROM())
-            {
-                // CDROM RAM
-                int bank = i - 0x80;
-                m_memory_map[i] = &m_cdrom_ram[bank * 0x2000];
-                m_memory_map_write[i] = true;
-            }
-            else
-            {
-                // Unused
-                m_memory_map[i] = m_unused_memory;
-                m_memory_map_write[i] = false;
-            }
-        }
-        // 0x88 - 0xF6
-        else if (i < 0xF7)
-        {
-            // Unused
-            m_memory_map[i] = m_unused_memory;
-            m_memory_map_write[i] = false;
-        }
-        // 0xF7
-        else if (i < 0xF8)
-        {
-            if (m_backup_ram_enabled)
-            {
-                // Backup RAM
-                m_memory_map[i] = m_backup_ram;
-                m_memory_map_write[i] = true;
-            }
-            else
-            {
-                // Unused
-                m_memory_map[i] = m_unused_memory;
-                m_memory_map_write[i] = false;
-            }
-        }
-        // 0xF8 - 0xFB
-        else if (i < 0xFC)
-        {
-            // RAM
-            if (m_cartridge->IsSGX())
-            {
-                int bank = i - 0xF8;
-                m_memory_map[i] = &m_wram[bank * 0x2000];
-            }
-            else
-            {
-                m_memory_map[i] = &m_wram[0];
-            }
             m_memory_map_write[i] = true;
+            m_memory_map[i] = &m_card_ram[((i - m_card_ram_start) * 0x2000) % m_card_ram_size];
         }
-        // 0xFC - 0xFE
-        else if (i < 0xFF)
+        // ROM
+        else
         {
-            // Unused
-            m_memory_map[i] = m_unused_memory;
             m_memory_map_write[i] = false;
+            m_memory_map[i] = m_cartridge->GetROMMap()[i];
         }
+    }
+
+    // 0x80 - 0xFF
+    for (int i = 0x80; i <= 0xFF; i++)
+    {
+        m_memory_map_write[i] = false;
+        m_memory_map[i] = m_unused_memory;
+    }
+
+    // 0x80 - 0x87
+    if (m_cartridge->IsCDROM())
+        for (int i = 0x80; i <= 0x87; i++)
+        {
+            // CDROM RAM
+            m_memory_map_write[i] = true;
+            m_memory_map[i] = &m_cdrom_ram[(i - 0x80) * 0x2000];
+        }
+
+    // 0xF7
+    if (m_backup_ram_enabled)
+    {
+        // Backup RAM
+        m_memory_map_write[0xF7] = true;
+        m_memory_map[0xF7] = m_backup_ram;
+    }
+
+    // 0xF8 - 0xFB
+    for (int i = 0xF8; i <= 0xFB; i++)
+    {
+        // RAM
+        m_memory_map_write[i] = true;
+        if (m_cartridge->IsSGX())
+            m_memory_map[i] = &m_wram[(i - 0xF8) * 0x2000];
+        else
+            m_memory_map[i] = &m_wram[0];
     }
 }
 
