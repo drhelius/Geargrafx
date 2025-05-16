@@ -185,7 +185,7 @@ void HuC6260::Reset(bool is_sgx)
             m_color_table[i] = MIN(m_color_table[i] + ((i & 0xFF) >> 2), 0x1FF);
         }
         else
-            m_color_table[i] = m_reset_value | 0x1FF;
+            m_color_table[i] = m_reset_value & 0x1FF;
     }
 
     CalculateScreenBounds();
