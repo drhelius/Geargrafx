@@ -518,9 +518,9 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     header.version = GG_SAVESTATE_VERSION;
 
     header.timestamp = time(NULL);
-    strncpy_fit(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name) - 1);
+    strncpy_fit(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name));
     header.rom_crc = m_cartridge->GetCRC();
-    strncpy_fit(header.emu_build, GG_VERSION, sizeof(header.emu_build) - 1);
+    strncpy_fit(header.emu_build, GG_VERSION, sizeof(header.emu_build));
 
     Debug("Save state header magic: 0x%08x", header.magic);
     Debug("Save state header version: %d", header.version);
