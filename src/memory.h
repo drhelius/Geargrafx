@@ -33,13 +33,14 @@ class HuC6202;
 class HuC6280;
 class Input;
 class Audio;
+class CdRom;
 class Mapper;
 class SF2Mapper;
 
 class Memory
 {
 public:
-    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio);
+    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio, CdRom* cdrom);
     ~Memory();
     void Init();
     void Reset();
@@ -82,6 +83,7 @@ private:
     SF2Mapper* m_sf2_mapper;
     Input* m_input;
     Audio* m_audio;
+    CdRom* m_cdrom;
     u8 m_mpr[8];
     u8** m_memory_map;
     bool* m_memory_map_write;

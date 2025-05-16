@@ -43,7 +43,6 @@ HuC6280::HuC6280()
     m_processor_state.TIMER_RELOAD = &m_timer_reload;
     m_processor_state.IDR = &m_interrupt_disable_register;
     m_processor_state.IRR = &m_interrupt_request_register;
-    m_processor_state.CYCLES = &m_last_instruction_cycles;
 }
 
 HuC6280::~HuC6280()
@@ -90,7 +89,6 @@ void HuC6280::Reset()
     SetFlag(FLAG_INTERRUPT);
     ClearFlag(FLAG_BREAK);
     m_cycles = 0;
-    m_last_instruction_cycles = 0;
     m_irq_pending = 0;
     m_speed = 0;
     m_transfer_state = 0;
@@ -337,7 +335,6 @@ void HuC6280::SaveState(std::ostream& stream)
     m_P.SaveState(stream);
 
     stream.write(reinterpret_cast<const char*> (&m_cycles), sizeof(m_cycles));
-    stream.write(reinterpret_cast<const char*> (&m_last_instruction_cycles), sizeof(m_last_instruction_cycles));
     stream.write(reinterpret_cast<const char*> (&m_irq_pending), sizeof(m_irq_pending));
     stream.write(reinterpret_cast<const char*> (&m_speed), sizeof(m_speed));
     stream.write(reinterpret_cast<const char*> (&m_transfer_state), sizeof(m_transfer_state));
@@ -365,7 +362,6 @@ void HuC6280::LoadState(std::istream& stream)
     m_P.LoadState(stream);
 
     stream.read(reinterpret_cast<char*> (&m_cycles), sizeof(m_cycles));
-    stream.read(reinterpret_cast<char*> (&m_last_instruction_cycles), sizeof(m_last_instruction_cycles));
     stream.read(reinterpret_cast<char*> (&m_irq_pending), sizeof(m_irq_pending));
     stream.read(reinterpret_cast<char*> (&m_speed), sizeof(m_speed));
     stream.read(reinterpret_cast<char*> (&m_transfer_state), sizeof(m_transfer_state));

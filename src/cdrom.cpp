@@ -35,3 +35,27 @@ void CdRom::Init()
 void CdRom::Reset()
 {
 }
+
+u8 CdRom::ReadRegister(u16 address)
+{
+    return 0xFF;
+}
+
+void CdRom::WriteRegister(u16 address, u8 value)
+{
+}
+
+CdRom::CdRom_State* CdRom::GetState()
+{
+    return &m_state;
+}
+
+void CdRom::SaveState(std::ostream& stream)
+{
+    using namespace std;
+}
+
+void CdRom::LoadState(std::istream& stream)
+{
+    using namespace std;
+}

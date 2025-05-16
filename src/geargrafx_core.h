@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "types.h"
+#include "common.h"
 
 class Audio;
 class Input;
@@ -48,18 +48,7 @@ public:
         bool stop_on_irq;
     };
 
-    struct GG_Debug_State
-    {
-        u16 PC;
-        u8 P;
-        u8 A;
-        u8 X;
-        u8 Y;
-        u8 S;
-        int cycles;
-    };
-
-    typedef void (*GG_Debug_Callback)(GG_Debug_State* state);
+    typedef void (*GG_Debug_Callback)(void);
 
 public:
     GeargrafxCore();
@@ -98,6 +87,8 @@ public:
 
 private:
     void Reset();
+    bool RunToVBlankDebug(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug);
+    bool RunToVBlankFast(u8* frame_buffer, s16* sample_buffer, int* sample_count);
     bool SaveState(std::ostream& stream, size_t& size, bool screenshot);
     bool LoadState(std::istream& stream);
     std::string GetSaveStatePath(const char* path, int index);
@@ -118,5 +109,20 @@ private:
     bool m_paused;
     GG_Debug_Callback m_debug_callback;
 };
+
+#include "cartridge.h"
+
+INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
+{
+    if (m_paused || !m_cartridge->IsReady())
+        return false;
+
+#if defined(GG_DISABLE_DISASSEMBLER)
+    UNUSED(debug);
+    return RunToVBlankFast(frame_buffer, sample_buffer, sample_count);
+#else
+    return RunToVBlankDebug(frame_buffer, sample_buffer, sample_count, debug);
+#endif
+}
 
 #endif /* GEARGRAFX_CORE_H */

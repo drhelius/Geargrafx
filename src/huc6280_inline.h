@@ -44,14 +44,11 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
     (this->*m_opcodes[opcode])();
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    m_last_instruction_cycles = m_cycles;
     if (IsValidPointer(instruction_completed))
         *instruction_completed = (m_transfer_state == 0);
 #else
     UNUSED(instruction_completed);
 #endif
-
-    m_last_instruction_cycles = m_cycles;
 
     if((m_irq_pending || IS_SET_BIT(m_interrupt_request_register, 2)) && (m_transfer_state == 0))
         HandleIRQ();

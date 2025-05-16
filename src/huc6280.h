@@ -140,7 +140,6 @@ private:
     EightBitRegister m_P;
     u8 m_zn_flags_lut[256];
     u32 m_cycles;
-    u32 m_last_instruction_cycles;
     s32 m_irq_pending;
     s32 m_speed;
     int m_transfer_state;

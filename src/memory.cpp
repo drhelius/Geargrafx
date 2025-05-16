@@ -25,9 +25,10 @@
 #include "cartridge.h"
 #include "input.h"
 #include "audio.h"
+#include "cdrom.h"
 #include "sf2_mapper.h"
 
-Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio)
+Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio, CdRom* cdrom)
 {
     m_huc6260 = huc6260;
     m_huc6202 = huc6202;
@@ -35,6 +36,7 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* 
     m_cartridge = cartridge;
     m_input = input;
     m_audio = audio;
+    m_cdrom = cdrom;
     InitPointer(m_memory_map);
     InitPointer(m_memory_map_write);
     InitPointer(m_unused_memory);

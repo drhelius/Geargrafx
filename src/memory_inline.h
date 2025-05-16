@@ -28,6 +28,7 @@
 #include "huc6280.h"
 #include "input.h"
 #include "audio.h"
+#include "cdrom.h"
 #include "mapper.h"
 
 INLINE u8 Memory::Read(u16 address, bool block_transfer)
@@ -112,8 +113,10 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
             }
             case 0x1800:
                 // CDROM
-                Debug("CDROM hardware read at %04X", address);
-                return 0xFF;
+                if (m_cartridge->IsCDROM())
+                    return m_cdrom->ReadRegister(offset);
+                else
+                    return 0xFF;
             case 0x1C00:
                 // Unused
                 Debug("Unused hardware read at %04X", address);
@@ -209,7 +212,7 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
             }
             case 0x1800:
                 // CDROM
-                Debug("CDROM hardware write at %04X, value=%02X", address, value);
+                m_cdrom->WriteRegister(offset, value);
                 break;
             case 0x1C00:
                 // Unused

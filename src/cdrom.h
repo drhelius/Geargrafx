@@ -20,17 +20,31 @@
 #ifndef CDROM_H
 #define CDROM_H
 
+#include <iostream>
+#include <fstream>
 #include "common.h"
 
 class CdRom
 {
 public:
+    struct CdRom_State
+    {
+        u8* tmp;
+    };
+
+public:
     CdRom();
     ~CdRom();
     void Init();
     void Reset();
+    u8 ReadRegister(u16 address);
+    void WriteRegister(u16 address, u8 value);
+    CdRom_State* GetState();
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
+    CdRom_State m_state;
 
 };
 
