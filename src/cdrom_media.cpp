@@ -327,7 +327,7 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
     string line;
 
     Track current_track;
-    ImgFile* current_img_file;
+    ImgFile* current_img_file = NULL;
     bool in_track = false;
 
     while (getline(stream, line))
@@ -381,6 +381,13 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
             in_track = true;
             current_track = Track();
+
+            if (!IsValidPointer(current_img_file))
+            {
+                Log("ERROR: TRACK found without FILE in CUE");
+                return false;
+            }
+
             current_track.img_file = current_img_file;
 
             istringstream track_stream(line.substr(5));
