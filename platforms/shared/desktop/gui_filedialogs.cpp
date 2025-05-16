@@ -36,7 +36,7 @@ static void file_dialog_set_native_window(SDL_Window* window, nfdwindowhandle_t*
 void gui_file_dialog_open_rom(void)
 {
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "ROM/CD Files", "pce,sgx,cue,rom,bin,zip" } };
+    nfdfilteritem_t filterItem[1] = { { "ROM Files", "pce,sgx,rom,bin,zip" } };
     nfdopendialogu8args_t args = { };
     args.filterList = filterItem;
     args.filterCount = 1;
