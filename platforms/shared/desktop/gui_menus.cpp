@@ -103,7 +103,7 @@ static void menu_geargrafx(void)
     {
         gui_in_use = true;
 
-        if (ImGui::MenuItem("Open ROM...", "Ctrl+O"))
+        if (ImGui::MenuItem("Open ROM/CD...", "Ctrl+O"))
         {
             open_rom = true;
         }
