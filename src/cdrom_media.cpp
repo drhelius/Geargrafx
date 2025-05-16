@@ -358,7 +358,7 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                 Debug("Found FILE: %s", current_file_path.c_str());
 
                 ImgFile* img_file = new ImgFile();
-                strncpy(img_file->file_path, current_file_path.c_str(), sizeof(img_file->file_path));
+                strncpy_fit(img_file->file_path, current_file_path.c_str(), sizeof(img_file->file_path));
                 if (!GatherImgInfo(img_file))
                 {
                     Log("ERROR: Failed to gather ImgFile info for %s", current_file_path.c_str());

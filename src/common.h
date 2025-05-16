@@ -20,6 +20,7 @@
 #ifndef COMMON_H
 #define	COMMON_H
 
+#include <string.h>
 #include <time.h>
 #include "defines.h"
 #include "types.h"
@@ -96,6 +97,14 @@ inline bool parseHexString(const char* str, size_t len, u16* result)
 inline bool parseHexString(const char* str, size_t len, u32* result)
 {
     return parseHexString<u32>(str, len, result, 8);
+}
+
+inline char* strncpy_fit(char* dest, const char* src, size_t dest_size)
+{
+    if (dest_size != 0)
+        dest_size -= 1;
+
+    return strncpy(dest, src, dest_size);
 }
 
 #endif /* COMMON_H */

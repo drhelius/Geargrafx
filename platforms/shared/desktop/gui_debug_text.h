@@ -64,7 +64,7 @@ static bool ProcessInlineHexColor(const char* start, const char* end, ImVec4& co
     if(digits == 6 || digits == 8)
     {
         char hex[9];
-        strncpy(hex, start, digits);
+        strncpy_fit(hex, start, digits);
         hex[digits] = 0;
 
         unsigned int hex_color = 0;

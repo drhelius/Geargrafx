@@ -309,7 +309,7 @@ void HuC6260::RenderFrame()
             int vdc_2_enabled = priority->vdc_2_enabled << 1;
             int vdcs_enabled = vdc_1_enabled | vdc_2_enabled;
 
-            u16 final_pixel;
+            u16 final_pixel = 0;
 
             if (vdcs_enabled == 0)
                 final_pixel = 0;

@@ -164,7 +164,7 @@ void gui_file_dialog_choose_savestate_path(void)
     nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
-        strncpy(gui_savestates_path, outPath, sizeof(gui_savestates_path));
+        strncpy_fit(gui_savestates_path, outPath, sizeof(gui_savestates_path));
         config_emulator.savestates_path.assign(outPath);
         update_savestates_data();
         NFD_FreePath(outPath);
@@ -185,7 +185,7 @@ void gui_file_dialog_choose_screenshot_path(void)
     nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
-        strncpy(gui_screenshots_path, outPath, sizeof(gui_screenshots_path));
+        strncpy_fit(gui_screenshots_path, outPath, sizeof(gui_screenshots_path));
         config_emulator.screenshots_path.assign(outPath);
         NFD_FreePath(outPath);
     }
@@ -205,7 +205,7 @@ void gui_file_dialog_choose_backup_ram_path(void)
     nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
-        strncpy(gui_backup_ram_path, outPath, sizeof(gui_backup_ram_path));
+        strncpy_fit(gui_backup_ram_path, outPath, sizeof(gui_backup_ram_path));
         config_emulator.backup_ram_path.assign(outPath);
         NFD_FreePath(outPath);
     }
@@ -228,7 +228,7 @@ void gui_file_dialog_load_syscard_bios(void)
     nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
-        strncpy(gui_syscard_bios_path, outPath, sizeof(gui_syscard_bios_path));
+        strncpy_fit(gui_syscard_bios_path, outPath, sizeof(gui_syscard_bios_path));
         config_emulator.syscard_bios_path.assign(outPath);
         emu_load_syscard_bios(outPath);
         NFD_FreePath(outPath);
@@ -252,7 +252,7 @@ void gui_file_dialog_load_gameexpress_bios(void)
     nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
-        strncpy(gui_gameexpress_bios_path, outPath, sizeof(gui_gameexpress_bios_path));
+        strncpy_fit(gui_gameexpress_bios_path, outPath, sizeof(gui_gameexpress_bios_path));
         config_emulator.gameexpress_bios_path.assign(outPath);
         emu_load_gameexpress_bios(outPath);
         NFD_FreePath(outPath);

@@ -620,25 +620,25 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
     switch (bank_type)
     {
         case Memory::MEMORY_BANK_TYPE_ROM:
-            strncpy(record->segment, "ROM  ", sizeof(record->segment));
+            strncpy_fit(record->segment, "ROM  ", sizeof(record->segment));
             break;
         case Memory::MEMORY_BANK_TYPE_BIOS:
-            strncpy(record->segment, "BIOS ", sizeof(record->segment));
+            strncpy_fit(record->segment, "BIOS ", sizeof(record->segment));
             break;
         case Memory::MEMORY_BANK_TYPE_CARD_RAM:
-            strncpy(record->segment, "CRAM ", sizeof(record->segment));
+            strncpy_fit(record->segment, "CRAM ", sizeof(record->segment));
             break;
         case Memory::MEMORY_BANK_TYPE_BACKUP_RAM:
-            strncpy(record->segment, "BRAM ", sizeof(record->segment));
+            strncpy_fit(record->segment, "BRAM ", sizeof(record->segment));
             break;
         case Memory::MEMORY_BANK_TYPE_WRAM:
-            strncpy(record->segment, "WRAM ", sizeof(record->segment));
+            strncpy_fit(record->segment, "WRAM ", sizeof(record->segment));
             break;
         case Memory::MEMORY_BANK_TYPE_CDROM_RAM:
-            strncpy(record->segment, "CDRAM", sizeof(record->segment));
+            strncpy_fit(record->segment, "CDRAM", sizeof(record->segment));
             break;
         default:
-            strncpy(record->segment, "?????", sizeof(record->segment));
+            strncpy_fit(record->segment, "?????", sizeof(record->segment));
             break;
     }
 #else

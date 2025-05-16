@@ -53,7 +53,7 @@ void HuC6270::Init(const char* name, HuC6260* huC6260, HuC6202* huC6202)
 {
     m_huc6260 = huC6260;
     m_huc6202 = huC6202;
-    strncpy(m_name, name, 8);
+    strncpy_fit(m_name, name, 8);
     m_vram = new u16[HUC6270_VRAM_SIZE];
     m_sat = new u16[HUC6270_SAT_SIZE];
     m_line_buffer = new u16[HUC6270_MAX_BACKGROUND_WIDTH];
