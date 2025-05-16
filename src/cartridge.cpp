@@ -42,6 +42,8 @@ Cartridge::Cartridge(CdRomMedia* cdrom_media)
     m_is_sgx = false;
     m_force_sgx = false;
     m_is_cdrom = false;
+    m_is_bios = false;
+    m_is_valid_bios = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
 
@@ -74,6 +76,8 @@ void Cartridge::Reset()
     m_crc = 0;
     m_is_sgx = false;
     m_is_cdrom = false;
+    m_is_bios = false;
+    m_is_valid_bios = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
 
@@ -101,6 +105,16 @@ bool Cartridge::IsSGX()
 bool Cartridge::IsCDROM()
 {
     return m_is_cdrom;
+}
+
+bool Cartridge::IsBios()
+{
+    return m_is_bios;
+}
+
+bool Cartridge::IsValidBios()
+{
+    return m_is_valid_bios;
 }
 
 void Cartridge::ForceSGX(bool enable)
@@ -300,6 +314,36 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size, const char* path)
     }
 }
 
+bool Cartridge::LoadBios(u8* buffer, int size)
+{
+    m_is_bios = false;
+    m_is_valid_bios = false;
+
+    if (IsValidPointer(buffer))
+    {
+        Log("Loading BIOS from buffer... Size: %d", size);
+
+        m_rom_size = size;
+        SafeDeleteArray(m_rom);
+        m_rom = new u8[m_rom_size];
+        memcpy(m_rom, buffer, m_rom_size);
+
+        m_is_bios = true;
+
+        GatherROMInfo();
+        InitRomMAP();
+
+        Debug("BIOS loaded from buffer. Size: %d bytes", size);
+
+        return true;
+    }
+    else
+    {
+        Log("ERROR: Unable to load BIOS from buffer: Buffer invalid %p. Size: %d", buffer, size);
+        return false;
+    }
+}
+
 bool Cartridge::LoadFromZipFile(const u8* buffer, int size)
 {
     Debug("Loading from ZIP file... Size: %d", size);
@@ -433,6 +477,18 @@ void Cartridge::GatherInfoFromDB()
             {
                 m_avenue_pad_3_button = GG_KEY_RUN;
                 Log("ROM uses Avenue Pad 3 run button.");
+            }
+
+            if (k_game_database[i].flags & GG_GAMEDB_BIOS_SYSCARD)
+            {
+                m_is_valid_bios = true;
+                Log("ROM is a Syscard BIOS.");
+            }
+
+            if (k_game_database[i].flags & GG_GAMEDB_BIOS_GAME_EXPRESS)
+            {
+                m_is_valid_bios = true;
+                Log("ROM is a Game Express BIOS.");
             }
         }
         else

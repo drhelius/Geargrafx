@@ -124,7 +124,7 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
         }
     }
 
-    Debug("Invalid read at %04X", address);
+    Debug("Invalid memory read at %04X, bank: %02X", address, bank);
     return 0xFF;
 }
 

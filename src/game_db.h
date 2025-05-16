@@ -29,9 +29,8 @@
 #define GG_GAMEDB_AVENUE_PAD_3_SELECT   0x0010
 #define GG_GAMEDB_AVENUE_PAD_3_RUN      0x0020
 #define GG_GAMEDB_CDROM                 0x0040
-
-#define GG_BIOSDB_SYSCARD               0x0001
-#define GG_BIOSDB_GAME_EXPRESS          0x0002
+#define GG_GAMEDB_BIOS_SYSCARD          0x0080
+#define GG_GAMEDB_BIOS_GAME_EXPRESS     0x0100
 
 struct GG_DB_Entry
 {
@@ -42,6 +41,16 @@ struct GG_DB_Entry
 
 const GG_DB_Entry k_game_database[] =
 {
+    // BIOS
+    { 0x3F9F95A4, "System Card 1.0 (J)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x0, "System Card 2.0 (J)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0xFF2A5EC3, "System Card 2.0 (USA)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x283B74E0, "System Card 2.1 (J)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x6D9A73EF, "System Card 3.0 (J)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x2B5B75FE, "System Card 3.0 (USA)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x51A12D90, "Game Express (J)", GG_GAMEDB_BIOS_GAME_EXPRESS },
+    { 0x0, "Game Express (J) [Alt]", GG_GAMEDB_BIOS_GAME_EXPRESS },
+
     // SGX
     { 0x8C4588E2, "1941 - Counter Attack (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
     { 0x4C2126B0, "Aldynes (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
@@ -123,20 +132,6 @@ const GG_DB_Entry k_game_database[] =
     { 0x0, "Valis III (USA)", GG_GAMEDB_AVENUE_PAD_3_RUN | GG_GAMEDB_CDROM },
     { 0x0, "World Heroes 2 (J)", GG_GAMEDB_AVENUE_PAD_3_RUN | GG_GAMEDB_CDROM },
     { 0x0, "World Heroes 2 (J) [Demo]", GG_GAMEDB_AVENUE_PAD_3_RUN | GG_GAMEDB_CDROM },
-
-    {0, 0, 0}
-};
-
-const GG_DB_Entry k_bios_database[] =
-{
-    { 0x3F9F95A4, "System Card 1.0 (J)", GG_BIOSDB_SYSCARD },
-    { 0x0, "System Card 2.0 (J)", GG_BIOSDB_SYSCARD },
-    { 0xFF2A5EC3, "System Card 2.0 (USA)", GG_BIOSDB_SYSCARD },
-    { 0x283B74E0, "System Card 2.1 (J)", GG_BIOSDB_SYSCARD },
-    { 0x6D9A73EF, "System Card 3.0 (J)", GG_BIOSDB_SYSCARD },
-    { 0x2B5B75FE, "System Card 3.0 (USA)", GG_BIOSDB_SYSCARD },
-    { 0x51A12D90, "Game Express (J)", GG_BIOSDB_GAME_EXPRESS },
-    { 0x0, "Game Express (J) [Alt]", GG_BIOSDB_GAME_EXPRESS },
 
     {0, 0, 0}
 };

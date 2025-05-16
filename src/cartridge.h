@@ -42,6 +42,8 @@ public:
     bool IsReady();
     bool IsSGX();
     bool IsCDROM();
+    bool IsBios();
+    bool IsValidBios();
     void ForceSGX(bool enable);
     CartridgeMapper GetMapper();
     int GetROMSize();
@@ -56,6 +58,7 @@ public:
     u8** GetROMMap();
     bool LoadFromFile(const char* path);
     bool LoadFromBuffer(const u8* buffer, int size, const char* path);
+    bool LoadBios(u8* buffer, int size);
 
 private:
     bool LoadFromZipFile(const u8* buffer, int size);
@@ -80,6 +83,8 @@ private:
     bool m_is_sgx;
     bool m_force_sgx;
     bool m_is_cdrom;
+    bool m_is_bios;
+    bool m_is_valid_bios;
     CartridgeMapper m_mapper;
     GG_Keys m_avenue_pad_3_button;
 };

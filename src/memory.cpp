@@ -26,8 +26,6 @@
 #include "input.h"
 #include "audio.h"
 #include "sf2_mapper.h"
-#include "game_db.h"
-#include "crc.h"
 
 Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio)
 {
@@ -41,6 +39,7 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* 
     InitPointer(m_memory_map_write);
     InitPointer(m_unused_memory);
     InitPointer(m_wram);
+    InitPointer(m_cdrom_ram);
     InitPointer(m_card_ram);
     InitPointer(m_backup_ram);
     InitPointer(m_syscard_bios);
@@ -53,13 +52,10 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* 
     m_wram_reset_value = 0;
     m_card_ram_reset_value = 0;
     m_backup_ram_enabled = true;
+    m_cdrom_ram_size = 0;
     m_card_ram_size = 0;
     m_card_ram_start = 0;
     m_card_ram_end = 0;
-    m_right_syscard_bios = false;
-    m_right_gameexpress_bios = false;
-    m_syscard_bios_crc = 0;
-    m_gameexpress_bios_crc = 0;
 }
 
 Memory::~Memory()
@@ -68,6 +64,7 @@ Memory::~Memory()
     SafeDeleteArray(m_memory_map_write);
     SafeDeleteArray(m_unused_memory);
     SafeDeleteArray(m_wram);
+    SafeDeleteArray(m_cdrom_ram);
     SafeDeleteArray(m_card_ram);
     SafeDeleteArray(m_backup_ram);
     SafeDeleteArray(m_syscard_bios);
@@ -91,6 +88,7 @@ void Memory::Init()
         InitPointer(m_memory_map[i]);
     m_memory_map_write = new bool[0x100];
     m_wram = new u8[0x8000];
+    m_cdrom_ram = new u8[0x10000];
     m_card_ram = new u8[0x30000];
     m_backup_ram = new u8[0x2000];
     m_syscard_bios = new u8[GG_BIOS_SYSCARD_SIZE];
@@ -154,7 +152,17 @@ void Memory::Reset()
     else
         m_current_mapper = NULL;
 
-    m_card_ram_size = MIN(m_cartridge->GetCardRAMSize(), 0x8000);
+    m_cdrom_ram_size = m_cartridge->IsCDROM() ? 0x10000 : 0;
+
+    for (u32 i = 0; i < m_cdrom_ram_size; i++)
+    {
+        if (m_wram_reset_value < 0)
+            m_cdrom_ram[i] = rand() & 0xFF;
+        else
+            m_cdrom_ram[i] = m_wram_reset_value & 0xFF;
+    }
+
+    m_card_ram_size = m_cartridge->GetCardRAMSize();
 
     if (m_card_ram_size == 0x8000)
     {
@@ -172,15 +180,12 @@ void Memory::Reset()
         m_card_ram_end = 0x00;
     }
 
-    if (m_card_ram_size > 0)
+    for (u32 i = 0; i < m_card_ram_size; i++)
     {
-        for (int i = 0; i < m_card_ram_size; i++)
-        {
-            if (m_card_ram_reset_value < 0)
-                m_card_ram[i] = rand() & 0xFF;
-            else
-                m_card_ram[i] = m_card_ram_reset_value & 0xFF;
-        }
+        if (m_card_ram_reset_value < 0)
+            m_card_ram[i] = rand() & 0xFF;
+        else
+            m_card_ram[i] = m_card_ram_reset_value & 0xFF;
     }
 
     memset(m_backup_ram, 0xFF, 0x2000);
@@ -194,6 +199,9 @@ void Memory::Reset()
 
 void Memory::ReloadMemoryMap()
 {
+    if (m_cartridge->IsCDROM())
+        m_cartridge->LoadBios(m_syscard_bios, GG_BIOS_SYSCARD_SIZE);
+
     for (int i = 0; i < 0x100; i++)
     {
         m_memory_map[i] = NULL;
@@ -209,20 +217,30 @@ void Memory::ReloadMemoryMap()
                 m_memory_map[i] = &m_card_ram[(bank * 0x2000) % m_card_ram_size];
                 m_memory_map_write[i] = true;
             }
-            // BIOS for CDROM
-            else if (m_cartridge->IsCDROM())
-            {
-                m_memory_map[i] = &m_syscard_bios[(i * 0x2000) % GG_BIOS_SYSCARD_SIZE];
-                m_memory_map_write[i] = false;
-            }
-            // HuCard ROM
             else
             {
                 m_memory_map[i] = m_cartridge->GetROMMap()[i];
                 m_memory_map_write[i] = false;
             }
         }
-        // 0x80 - 0xF6
+        // 0x80 - 0x87
+        else if (i < 0x88)
+        {
+            if (m_cartridge->IsCDROM())
+            {
+                // CDROM RAM
+                int bank = i - 0x80;
+                m_memory_map[i] = &m_cdrom_ram[bank * 0x2000];
+                m_memory_map_write[i] = true;
+            }
+            else
+            {
+                // Unused
+                m_memory_map[i] = m_unused_memory;
+                m_memory_map_write[i] = false;
+            }
+        }
+        // 0x88 - 0xF6
         else if (i < 0xF7)
         {
             // Unused
@@ -375,25 +393,17 @@ bool Memory::LoadBios(const char* file_path, bool syscard)
     using namespace std;
     int expected_size = 0;
     u8* bios = NULL;
-    bool* right_bios = NULL;
-    u32* crc = NULL;
 
     if  (syscard)
     {
-        right_bios = &m_right_syscard_bios;
         expected_size = GG_BIOS_SYSCARD_SIZE;
         bios = m_syscard_bios;
-        crc = &m_syscard_bios_crc;
     }
     else
     {
-        right_bios = &m_right_gameexpress_bios;
         expected_size = GG_BIOS_GAME_EXPRESS_SIZE;
         bios = m_gameexpress_bios;
-        crc = &m_gameexpress_bios_crc;
     }
-
-    *right_bios = false;
 
     ifstream file(file_path, ios::in | ios::binary | ios::ate);
 
@@ -411,32 +421,12 @@ bool Memory::LoadBios(const char* file_path, bool syscard)
         file.read(reinterpret_cast<char*>(bios), size);
         file.close();
 
-        *right_bios = true;
-
         Log("BIOS %s loaded (%d bytes)", file_path, size);
     }
     else
     {
         Log("There was a problem opening the file %s", file_path);
         return false;
-    }
-
-    int i = 0;
-    *crc = CalculateCRC32(*crc, bios, expected_size);
-
-    while(k_bios_database[i].title != 0)
-    {
-        u32 db_crc = k_bios_database[i].crc;
-
-        if (db_crc == *crc)
-        {
-            Debug("BIOS found in database: %s. CRC: %08X", k_game_database[i].title, *crc);
-        }
-        else
-        {
-            Debug("BIOS not found in database. CRC: %08X", *crc);
-        }
-        i++;
     }
 
     return true;
@@ -469,6 +459,8 @@ void Memory::SaveState(std::ostream& stream)
     using namespace std;
     stream.write(reinterpret_cast<const char*> (m_mpr), sizeof(m_mpr));
     stream.write(reinterpret_cast<const char*> (m_wram), sizeof(u8) * 0x8000);
+    stream.write(reinterpret_cast<const char*> (&m_cdrom_ram_size), sizeof(m_cdrom_ram_size));
+    stream.write(reinterpret_cast<const char*> (m_cdrom_ram), sizeof(u8) * m_cdrom_ram_size);
     stream.write(reinterpret_cast<const char*> (&m_card_ram_size), sizeof(m_card_ram_size));
     stream.write(reinterpret_cast<const char*> (m_card_ram), sizeof(u8) * m_card_ram_size);
     stream.write(reinterpret_cast<const char*> (&m_card_ram_start), sizeof(m_card_ram_start));
@@ -486,6 +478,8 @@ void Memory::LoadState(std::istream& stream)
     using namespace std;
     stream.read(reinterpret_cast<char*> (m_mpr), sizeof(m_mpr));
     stream.read(reinterpret_cast<char*> (m_wram), sizeof(u8) * 0x8000);
+    stream.read(reinterpret_cast<char*> (&m_cdrom_ram_size), sizeof(m_cdrom_ram_size));
+    stream.read(reinterpret_cast<char*> (m_cdrom_ram), sizeof(u8) * m_cdrom_ram_size);
     stream.read(reinterpret_cast<char*> (&m_card_ram_size), sizeof(m_card_ram_size));
     stream.read(reinterpret_cast<char*> (m_card_ram), sizeof(u8) * m_card_ram_size);
     stream.read(reinterpret_cast<char*> (&m_card_ram_start), sizeof(m_card_ram_start));

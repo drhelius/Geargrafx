@@ -65,7 +65,7 @@ public:
     void EnableBackupRam(bool enable);
     bool IsBackupRamEnabled();
     bool IsBackupRamUsed();
-    bool LoadBios(const char* fiel_path, bool syscard);
+    bool LoadBios(const char* file_path, bool syscard);
     void SaveRam(std::ostream &file);
     bool LoadRam(std::istream &file, s32 file_size);
     void SaveState(std::ostream& stream);
@@ -88,14 +88,12 @@ private:
     u8* m_unused_memory;
     u8* m_wram;
     u8* m_card_ram;
+    u8* m_cdrom_ram;
     u8* m_backup_ram;
     u8* m_syscard_bios;
     u8* m_gameexpress_bios;
-    bool m_right_syscard_bios;
-    bool m_right_gameexpress_bios;
-    u32 m_syscard_bios_crc;
-    u32 m_gameexpress_bios_crc;
-    int m_card_ram_size;
+    u32 m_cdrom_ram_size;
+    u32 m_card_ram_size;
     u8 m_card_ram_start;
     u8 m_card_ram_end;
     bool m_backup_ram_enabled;
