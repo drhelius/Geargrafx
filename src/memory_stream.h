@@ -49,7 +49,7 @@ protected:
         if (pptr() + n > buffer_end)
             return 0;
         
-        std::memcpy(pptr(), s, n);
+        std::memcpy(pptr(), s, (size_t)n);
         pbump(n);
         return n;
     }
