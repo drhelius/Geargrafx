@@ -509,11 +509,12 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     u8 opcode_size = k_huc6280_opcode_sizes[opcode];
 
-    record->size = opcode_size;
     record->address = m_memory->GetPhysicalAddress(address);
     record->bank = m_memory->GetBank(address);
     record->name[0] = 0;
     record->bytes[0] = 0;
+    record->segment[0] = 0;
+    record->size = opcode_size;
     record->jump = false;
     record->jump_address = 0;
     record->jump_bank = 0;
@@ -614,21 +615,31 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
         record->subroutine = true;
     }
 
-    if (record->bank < 0xF7)
+    Memory::MemoryBankType bank_type = m_memory->GetBankType(record->bank);
+
+    switch (bank_type)
     {
-        strncpy(record->segment, "ROM", 5);
-    }
-    else if (record->bank == 0xF7)
-    {
-        strncpy(record->segment, "BAT", 5);
-    }
-    else if (record->bank >= 0xF8 && record->bank < 0xFC)
-    {
-        strncpy(record->segment, "RAM", 5);
-    }
-    else
-    {
-        strncpy(record->segment, "???", 5);
+        case Memory::MEMORY_BANK_TYPE_ROM:
+            strncpy(record->segment, "ROM  ", sizeof(record->segment));
+            break;
+        case Memory::MEMORY_BANK_TYPE_BIOS:
+            strncpy(record->segment, "BIOS ", sizeof(record->segment));
+            break;
+        case Memory::MEMORY_BANK_TYPE_CARD_RAM:
+            strncpy(record->segment, "CRAM ", sizeof(record->segment));
+            break;
+        case Memory::MEMORY_BANK_TYPE_BACKUP_RAM:
+            strncpy(record->segment, "BRAM ", sizeof(record->segment));
+            break;
+        case Memory::MEMORY_BANK_TYPE_WRAM:
+            strncpy(record->segment, "WRAM ", sizeof(record->segment));
+            break;
+        case Memory::MEMORY_BANK_TYPE_CDROM_RAM:
+            strncpy(record->segment, "CDRAM", sizeof(record->segment));
+            break;
+        default:
+            strncpy(record->segment, "?????", sizeof(record->segment));
+            break;
     }
 #else
     UNUSED(record);

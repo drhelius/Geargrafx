@@ -212,7 +212,8 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
             }
             case 0x1800:
                 // CDROM
-                m_cdrom->WriteRegister(offset, value);
+                if (m_cartridge->IsCDROM())
+                    m_cdrom->WriteRegister(offset, value);
                 break;
             case 0x1C00:
                 // Unused
@@ -267,6 +268,11 @@ INLINE u8* Memory::GetBackupRAM()
     return m_backup_ram;
 }
 
+INLINE u8* Memory::GetCDROMRAM()
+{
+    return m_cdrom_ram;
+}
+
 INLINE int Memory::GetWorkingRAMSize()
 {
     return m_cartridge->IsSGX() ? 0x8000 : 0x2000;
@@ -277,9 +283,24 @@ INLINE int Memory::GetCardRAMSize()
     return m_card_ram_size;
 }
 
+INLINE int Memory::GetCardRAMStart()
+{
+    return m_card_ram_start;
+}
+
+INLINE int Memory::GetCardRAMEnd()
+{
+    return m_card_ram_end;
+}
+
 INLINE int Memory::GetBackupRAMSize()
 {
     return 0x800;
+}
+
+INLINE int Memory::GetCDROMRAMSize()
+{
+    return m_cdrom_ram_size;
 }
 
 INLINE GG_Disassembler_Record** Memory::GetAllDisassemblerRecords()

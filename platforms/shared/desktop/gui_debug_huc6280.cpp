@@ -208,62 +208,136 @@ static void get_bank_name(u8 mpr, u8 mpr_value, char *name, char* tooltip)
 {
     u16 cpu_address = mpr << 13;
 
-    // 0x00 - 0x7F
-    if (mpr_value < 0x80)
+    GeargrafxCore* core = emu_get_core();
+    Memory* memory = core->GetMemory();
+    Cartridge* cartridge = core->GetCartridge();
+    Memory::MemoryBankType bank_type = memory->GetBankType(mpr_value);
+
+    switch (bank_type)
     {
-        u32 rom_address = mpr_value << 13;
-        snprintf(name, 16, "ROM $%02X", mpr_value);
-        snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (ROM) $%06X-$%06X",
-            cpu_address, cpu_address + 0x1FFF,  rom_address,  rom_address + 0x1FFF);
-    }
-    // 0x80 - 0xF6
-    else if (mpr_value < 0xF7)
-    {
-        snprintf(name, 16, "UNUSED");
-        snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X", cpu_address, cpu_address + 0x1FFF);
-    }
-    // 0xF7
-    else if (mpr_value < 0xF8)
-    {
+    case Memory::MEMORY_BANK_TYPE_ROM:
+        // ROM
+        {
+            u32 rom_address = mpr_value << 13;
+            snprintf(name, 16, "ROM $%02X", mpr_value);
+            snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (ROM) $%06X-$%06X",
+                cpu_address, cpu_address + 0x1FFF, rom_address, rom_address + 0x1FFF);
+        }
+        break;
+    case Memory::MEMORY_BANK_TYPE_BIOS:
+        // BIOS
+        {
+            u32 rom_address = mpr_value << 13;
+            snprintf(name, 16, "BIOS $%02X", mpr_value);
+            snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (BIOS) $%06X-$%06X",
+                cpu_address, cpu_address + 0x1FFF, rom_address, rom_address + 0x1FFF);
+        }
+        break;
+    case Memory::MEMORY_BANK_TYPE_CARD_RAM:
+        // Card RAM
+        {
+            int card_ram_start = memory->GetCardRAMStart();
+            int card_ram_size = memory->GetCardRAMSize();
+            u32 card_ram_address = ((mpr_value - card_ram_start) * 0x2000) % card_ram_size;
+            snprintf(name, 16, "CARD RAM");
+            snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (CARD RAM) $%06X-$%06X",
+                cpu_address, cpu_address + 0x1FFF, card_ram_address, card_ram_address + 0x1FFF);
+        }
+        break;
+    case Memory::MEMORY_BANK_TYPE_BACKUP_RAM:
+        // Backup RAM
         snprintf(name, 16, "BRAM");
-        snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X", cpu_address, cpu_address + 0x1FFF);
-    }
-    // 0xF8 - 0xFB
-    else if (mpr_value < 0xFC)
-    {
-        u8 ram_bank = mpr_value - 0xF8;
-        u16 ram_address = ram_bank << 13;
-        snprintf(name, 16, "WRAM $%02X", ram_bank);
-        snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (WRAM) $%04X-$%04X",
-            cpu_address, cpu_address + 0x1FFF,  ram_address,  ram_address + 0x1FFF);
-    }
-    // 0xFC - 0xFE
-    else if (mpr_value < 0xFF)
-    {
-        snprintf(name, 16, "UNUSED");
-        snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X", cpu_address, cpu_address + 0x1FFF);
-    }
-    // 0xFF
-    else
-    {
-        snprintf(name, 16, "HARDWARE");
-        snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X", cpu_address, cpu_address + 0x1FFF);
+        snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nBackup RAM", 
+            cpu_address, cpu_address + 0x1FFF);
+        break;
+    case Memory::MEMORY_BANK_TYPE_WRAM:
+        // WRAM
+        {
+            u8 ram_bank = mpr_value - 0xF8;
+            u16 ram_address = ram_bank << 13;
+
+            if (cartridge->IsSGX())
+            {
+                snprintf(name, 16, "WRAM $%02X", ram_bank);
+                snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (WRAM) $%04X-$%04X",
+                    cpu_address, cpu_address + 0x1FFF, ram_address, ram_address + 0x1FFF);
+            }
+            else
+            {
+                snprintf(name, 16, "WRAM $00");
+                snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (WRAM) $0000-$1FFF",
+                    cpu_address, cpu_address + 0x1FFF);
+            }
+        }
+        break;
+    case Memory::MEMORY_BANK_TYPE_CDROM_RAM:
+        // CDROM RAM
+        {
+            u32 cdrom_ram_address = (mpr_value - 0x80) * 0x2000;
+            snprintf(name, 16, "CD RAM");
+            snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (CDROM RAM) $%06X-$%06X",
+                cpu_address, cpu_address + 0x1FFF, cdrom_ram_address, cdrom_ram_address + 0x1FFF);
+        }
+        break;
+    case Memory::MEMORY_BANK_TYPE_UNUSED:
+    default:
+        // Hardware registers at 0xFF or unused
+        if (mpr_value == 0xFF)
+        {
+            snprintf(name, 16, "HARDWARE");
+            snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X", cpu_address, cpu_address + 0x1FFF);
+        }
+        else
+        {
+            snprintf(name, 16, "UNUSED");
+            snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X", cpu_address, cpu_address + 0x1FFF);
+        }
+        break;
     }
 }
 
 static void goto_address(u8 mpr_value)
 {
-    // 0x00 - 0x7F
-    if (mpr_value < 0x80)
+    GeargrafxCore* core = emu_get_core();
+    Memory* memory = core->GetMemory();
+    Memory::MemoryBankType bank_type = memory->GetBankType(mpr_value);
+
+    switch (bank_type)
     {
-        u32 rom_address = mpr_value << 13;
-        gui_debug_memory_goto(MEMORY_EDITOR_ROM, rom_address);
-    }
-    // 0xF8 - 0xFB
-    else if (mpr_value < 0xFC)
-    {
-        u8 ram_bank = mpr_value - 0xF8;
-        u16 ram_address = ram_bank << 13;
-        gui_debug_memory_goto(MEMORY_EDITOR_RAM, ram_address);
+    case Memory::MEMORY_BANK_TYPE_ROM:
+    case Memory::MEMORY_BANK_TYPE_BIOS:
+        {
+            u32 rom_address = mpr_value << 13;
+            gui_debug_memory_goto(MEMORY_EDITOR_ROM, rom_address);
+        }
+        break;
+    case Memory::MEMORY_BANK_TYPE_CARD_RAM:
+        {
+            int card_ram_start = memory->GetCardRAMStart();
+            int card_ram_size = memory->GetCardRAMSize();
+            u32 card_ram_address = ((mpr_value - card_ram_start) * 0x2000) % card_ram_size;
+            gui_debug_memory_goto(MEMORY_EDITOR_CARD_RAM, card_ram_address);
+        }
+        break;
+    case Memory::MEMORY_BANK_TYPE_BACKUP_RAM:
+        {
+            gui_debug_memory_goto(MEMORY_EDITOR_BACKUP_RAM, 0);
+        }
+        break;
+    case Memory::MEMORY_BANK_TYPE_CDROM_RAM:
+        {
+            u32 cdrom_ram_address = (mpr_value - 0x80) * 0x2000;
+            gui_debug_memory_goto(MEMORY_EDITOR_CDROM_RAM, cdrom_ram_address);
+        }
+        break;
+    case Memory::MEMORY_BANK_TYPE_WRAM:
+        {
+            u8 ram_bank = mpr_value - 0xF8;
+            u16 ram_address = ram_bank << 13;
+            gui_debug_memory_goto(MEMORY_EDITOR_RAM, ram_address);
+        }
+        break;
+    default:
+        break;
     }
 }

@@ -401,6 +401,26 @@ bool Memory::LoadBios(const char* file_path, bool syscard)
     return true;
 }
 
+Memory::MemoryBankType Memory::GetBankType(u8 bank)
+{
+    if (m_cartridge->IsCDROM() && bank >= 0x80 && bank <= 0x87)
+        return MEMORY_BANK_TYPE_CDROM_RAM;
+
+    if (bank == 0xF7 && m_backup_ram_enabled)
+        return MEMORY_BANK_TYPE_BACKUP_RAM;
+
+    if (bank >= 0xF8 && bank <= 0xFB)
+        return MEMORY_BANK_TYPE_WRAM;
+
+    if ((m_card_ram_size > 0) && (bank >= m_card_ram_start) && (bank <= m_card_ram_end))
+        return MEMORY_BANK_TYPE_CARD_RAM;
+
+    if (bank < 0x80)
+        return m_cartridge->IsCDROM() ? MEMORY_BANK_TYPE_BIOS : MEMORY_BANK_TYPE_ROM;
+
+    return MEMORY_BANK_TYPE_UNUSED;
+}
+
 void Memory::SaveRam(std::ostream &file)
 {
     Debug("Saving backup RAM to file");

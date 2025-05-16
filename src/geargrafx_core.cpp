@@ -80,7 +80,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
 
     m_cdrom_media = new CdRomMedia();
     m_scsi_controller = new ScsiController();
-    m_cdrom = new CdRom();
+    m_cdrom = new CdRom(m_scsi_controller);
     m_cartridge = new Cartridge(m_cdrom_media);
     m_huc6280 = new HuC6280();
     m_huc6270_1 = new HuC6270(m_huc6280);

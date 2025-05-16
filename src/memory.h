@@ -40,6 +40,18 @@ class SF2Mapper;
 class Memory
 {
 public:
+    enum MemoryBankType
+    {
+        MEMORY_BANK_TYPE_ROM,
+        MEMORY_BANK_TYPE_BIOS,
+        MEMORY_BANK_TYPE_CARD_RAM,
+        MEMORY_BANK_TYPE_BACKUP_RAM,
+        MEMORY_BANK_TYPE_WRAM,
+        MEMORY_BANK_TYPE_CDROM_RAM,
+        MEMORY_BANK_TYPE_UNUSED
+    };
+
+public:
     Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio, CdRom* cdrom);
     ~Memory();
     void Init();
@@ -59,14 +71,19 @@ public:
     u8* GetWorkingRAM();
     u8* GetCardRAM();
     u8* GetBackupRAM();
+    u8* GetCDROMRAM();
     int GetWorkingRAMSize();
     int GetCardRAMSize();
+    int GetCardRAMStart();
+    int GetCardRAMEnd();
     int GetBackupRAMSize();
+    int GetCDROMRAMSize();
     GG_Disassembler_Record** GetAllDisassemblerRecords();
     void EnableBackupRam(bool enable);
     bool IsBackupRamEnabled();
     bool IsBackupRamUsed();
     bool LoadBios(const char* file_path, bool syscard);
+    MemoryBankType GetBankType(u8 bank);
     void SaveRam(std::ostream &file);
     bool LoadRam(std::istream &file, s32 file_size);
     void SaveState(std::ostream& stream);

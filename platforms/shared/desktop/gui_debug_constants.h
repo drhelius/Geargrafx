@@ -77,7 +77,7 @@ struct stDebugLabel
     const char* label;
 };
 
-static const int k_debug_label_count = 23;
+static const int k_debug_label_count = 43;
 static const stDebugLabel k_debug_labels[k_debug_label_count] = 
 {
     { 0x0000, "VDC_ADDRESS_" },
@@ -102,7 +102,27 @@ static const stDebugLabel k_debug_labels[k_debug_label_count] =
     { 0x0C01, "TIMER_CONTROL_" },
     { 0x1000, "JOYPAD_" },
     { 0x1402, "IRQ_DISABLE_" },
-    { 0x1403, "IRQ_STATUS_" }
+    { 0x1403, "IRQ_STATUS_" },
+    { 0x1800, "CDC_STATUS_" },
+    { 0x1801, "CDC_CMD_STAT_DATA_" },
+    { 0x1802, "CD_ADPCM_CD_CTRL_" },
+    { 0x1803, "CD_BRAM_LOCK_STAT_" },
+    { 0x1804, "CD_RESET_" },
+    { 0x1805, "CD_PCM_LSB_" },
+    { 0x1806, "CD_PCM_MSB_" },
+    { 0x1807, "CD_BRAM_UNLOCK_STAT_" },
+    { 0x1808, "CD_ADPCM_LSB_" },
+    { 0x1809, "CD_ADPCM_MSB_" },
+    { 0x180A, "CD_ADPCM_DATA_" },
+    { 0x180B, "CD_ADPCM_DMA_" },
+    { 0x180C, "CD_ADPCM_STAT_" },
+    { 0x180D, "CD_ADPCM_ADDR_CTRL_" },
+    { 0x180E, "CD_ADPCM_RATE_" },
+    { 0x180F, "CD_AUDIO_FADER_" },
+    { 0x18C0, "CD_SIGNATURE0_" },
+    { 0x18C1, "CD_SIGNATURE1_" },
+    { 0x18C2, "CD_SIGNATURE2_" },
+    { 0x18C3, "CD_SIGNATURE3_" }
 };
 
 #endif	/* GUI_DEBUG_CONSTANTS_H */

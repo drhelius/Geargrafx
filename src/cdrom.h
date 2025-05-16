@@ -24,6 +24,8 @@
 #include <fstream>
 #include "common.h"
 
+class ScsiController;
+
 class CdRom
 {
 public:
@@ -33,7 +35,7 @@ public:
     };
 
 public:
-    CdRom();
+    CdRom(ScsiController* scsi_controller);
     ~CdRom();
     void Init();
     void Reset();
@@ -45,7 +47,10 @@ public:
 
 private:
     CdRom_State m_state;
+    ScsiController* m_scsi_controller;
 
 };
+
+static const u8 k_super_cdrom_signature[4] = { 0x00, 0xAA, 0x55, 0x03 };
 
 #endif /* CDROM_H */

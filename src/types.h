@@ -120,7 +120,7 @@ struct GG_Disassembler_Record
     u8 bank;
     char name[64];
     char bytes[25];
-    char segment[5];
+    char segment[8];
     u8 opcodes[7];
     int size;
     bool jump;
