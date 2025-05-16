@@ -158,7 +158,6 @@ struct config_Debug
     bool trace_bank = true;
     bool trace_registers = true;
     bool trace_flags = true;
-    bool trace_cycles = true;
     bool trace_bytes = true;
     bool dis_show_mem = true;
     bool dis_show_symbols = true;

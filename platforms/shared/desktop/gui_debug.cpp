@@ -49,9 +49,9 @@ void gui_debug_reset(void)
     gui_debug_reset_symbols();
 }
 
-void gui_debug_callback(GeargrafxCore::GG_Debug_State* state)
+void gui_debug_callback(void)
 {
-    gui_debug_trace_logger_update(state);
+    gui_debug_trace_logger_update();
 }
 
 void gui_debug_windows(void)

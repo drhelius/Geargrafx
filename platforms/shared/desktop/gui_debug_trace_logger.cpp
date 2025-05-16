@@ -98,7 +98,7 @@ void gui_debug_window_trace_logger(void)
     ImGui::PopStyleVar();
 }
 
-void gui_debug_trace_logger_update(GeargrafxCore::GG_Debug_State* state)
+void gui_debug_trace_logger_update(void)
 {
     if (trace_logger_enabled)
     {
@@ -108,7 +108,9 @@ void gui_debug_trace_logger_update(GeargrafxCore::GG_Debug_State* state)
         }
 
         Memory* memory = emu_get_core()->GetMemory();
-        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(state->PC);
+        HuC6280* huc6280 = emu_get_core()->GetHuC6280();
+        HuC6280::HuC6280_State* state = huc6280->GetState();
+        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(state->PC->GetValue());
 
         if (!IsValidPointer(record))
             return;
@@ -118,37 +120,43 @@ void gui_debug_trace_logger_update(GeargrafxCore::GG_Debug_State* state)
 
         char registers[40];
         snprintf(registers, sizeof(registers), "A: %02X  X: %02X  Y: %02X  S: %02X   ",
-            state->A, state->X, state->Y, state->S);
+            state->A->GetValue(), state->X->GetValue(),
+            state->Y->GetValue(), state->S->GetValue());
 
         char flags[32];
+        u8 flags_state = state->P->GetValue();
         snprintf(flags, sizeof(flags), "P: %c%c%c%c%c%c%c%c   ",
-            (state->P & FLAG_NEGATIVE) ? 'N' : 'n',
-            (state->P & FLAG_OVERFLOW) ? 'V' : 'v',
-            (state->P & FLAG_TRANSFER) ? 'T' : 't',
-            (state->P & FLAG_BREAK) ? 'B' : 'b',
-            (state->P & FLAG_DECIMAL) ? 'D' : 'd',
-            (state->P & FLAG_INTERRUPT) ? 'I' : 'i',
-            (state->P & FLAG_ZERO) ? 'Z' : 'z',
-            (state->P & FLAG_CARRY) ? 'C' : 'c');
-
-        char cycles[16];
-        snprintf(cycles, sizeof(cycles), "(%02d) ", state->cycles);
+            (flags_state & FLAG_NEGATIVE) ? 'N' : 'n',
+            (flags_state & FLAG_OVERFLOW) ? 'V' : 'v',
+            (flags_state & FLAG_TRANSFER) ? 'T' : 't',
+            (flags_state & FLAG_BREAK) ? 'B' : 'b',
+            (flags_state & FLAG_DECIMAL) ? 'D' : 'd',
+            (flags_state & FLAG_INTERRUPT) ? 'I' : 'i',
+            (flags_state & FLAG_ZERO) ? 'Z' : 'z',
+            (flags_state & FLAG_CARRY) ? 'C' : 'c');
 
         char counter[16];
         snprintf(counter, sizeof(counter), "%d  ", trace_logger_instruction_count);
 
         std::string instr = record->name;
-        instr.erase(std::remove(instr.begin(), instr.end(), '{'), instr.end());
-        instr.erase(std::remove(instr.begin(), instr.end(), '}'), instr.end());
+        
+        size_t pos = 0;
+        while ((pos = instr.find('{', pos)) != std::string::npos)
+        {
+            size_t end_pos = instr.find('}', pos);
+            if (end_pos != std::string::npos)
+                instr.erase(pos, end_pos - pos + 1);
+            else 
+                pos++;
+        }
 
         char line[256];
-        snprintf(line, sizeof(line), "%s%s%04X   %s%s%s%s   %s",
+        snprintf(line, sizeof(line), "%s%s%04X   %s%s%s   %s",
             config_debug.trace_counter ? counter : "",
             config_debug.trace_bank ? bank : "", 
-            state->PC, 
+            state->PC->GetValue(), 
             config_debug.trace_registers ? registers : "", 
             config_debug.trace_flags ? flags : "",
-            config_debug.trace_cycles ? cycles : "",
             instr.c_str(),
             config_debug.trace_bytes ? record->bytes : "");
 
@@ -198,7 +206,6 @@ static void trace_logger_menu(void)
         ImGui::MenuItem("Bank Number", "", &config_debug.trace_bank);
         ImGui::MenuItem("Registers", "", &config_debug.trace_registers);
         ImGui::MenuItem("Flags", "", &config_debug.trace_flags);
-        ImGui::MenuItem("Cycles", "", &config_debug.trace_cycles);
         ImGui::MenuItem("Bytes", "", &config_debug.trace_bytes);
 
         ImGui::EndMenu();

@@ -136,7 +136,6 @@ void config_read(void)
 #else
         config_debug.debug = read_bool("Debug", "Debug", false);
 #endif
-    config_debug.debug = read_bool("Debug", "Debug", false);
     config_debug.show_disassembler = read_bool("Debug", "Disassembler", true);
     config_debug.show_screen = read_bool("Debug", "Screen", true);
     config_debug.show_memory = read_bool("Debug", "Memory", false);
@@ -159,7 +158,6 @@ void config_read(void)
     config_debug.trace_bank = read_bool("Debug", "TraceBank", true);
     config_debug.trace_registers = read_bool("Debug", "TraceRegisters", true);
     config_debug.trace_flags = read_bool("Debug", "TraceFlags", true);
-    config_debug.trace_cycles = read_bool("Debug", "TraceCycles", true);
     config_debug.trace_bytes = read_bool("Debug", "TraceBytes", true);
     config_debug.dis_show_mem = read_bool("Debug", "DisMem", true);
     config_debug.dis_show_symbols = read_bool("Debug", "DisSymbols", true);
@@ -355,7 +353,6 @@ void config_write(void)
     write_bool("Debug", "TraceBank", config_debug.trace_bank);
     write_bool("Debug", "TraceRegisters", config_debug.trace_registers);
     write_bool("Debug", "TraceFlags", config_debug.trace_flags);
-    write_bool("Debug", "TraceCycles", config_debug.trace_cycles);
     write_bool("Debug", "TraceBytes", config_debug.trace_bytes);
     write_bool("Debug", "DisMem", config_debug.dis_show_mem);
     write_bool("Debug", "DisSymbols", config_debug.dis_show_symbols);
