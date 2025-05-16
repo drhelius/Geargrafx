@@ -70,11 +70,6 @@ INLINE u16* HuC6270::GetSAT()
     return m_sat;
 }
 
-INLINE const char* HuC6270::GetName()
-{
-    return m_name;
-}
-
 INLINE void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
 {
     m_no_sprite_limit = no_sprite_limit;

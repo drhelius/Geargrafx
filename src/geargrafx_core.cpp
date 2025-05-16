@@ -98,8 +98,8 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_memory->Init();
     m_huc6260->Init(pixel_format);
     m_huc6202->Init();
-    m_huc6270_1->Init("VDC 1", m_huc6260, m_huc6202);
-    m_huc6270_2->Init("VDC 2", m_huc6260, m_huc6202);
+    m_huc6270_1->Init(m_huc6260, m_huc6202);
+    m_huc6270_2->Init(m_huc6260, m_huc6202);
     m_huc6280->Init(m_memory, m_huc6202);
     m_audio->Init();
     m_input->Init();
