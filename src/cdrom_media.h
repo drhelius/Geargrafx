@@ -51,7 +51,12 @@ public:
     {
         u32 number;
         TrackType type;
-        GG_CdRomPosition start_position;
+        u32 sector_size;
+        GG_CdRomMSF start_msf;
+        GG_CdRomMSF end_msf;
+        u32 start_lba;
+        u32 end_lba;
+        u32 sector_count;
         ImgFile* img_file;
     };
 
@@ -66,14 +71,21 @@ public:
     const char* GetFileName();
     const char* GetFileExtension();
     const std::vector<Track>& GetTracks();
+    u32 GetTrackSectorSize(TrackType type);
+    const char* GetTrackTypeName(TrackType type);
     bool LoadCueFromFile(const char* path);
     bool LoadCueFromBuffer(const u8* buffer, int size, const char* path);
+    bool ReadSector(u32 lba, u8* buffer);
 
 private:
     void DestroyImgFiles();
     void GatherPaths(const char* path);
     bool GatherImgInfo(ImgFile* img_file);
     bool ParseCueFile(const char* cue_content);
+    bool ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size);
+    bool LoadChunk(ImgFile* img_file, u32 chunk_index);
+    bool PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count);
+    bool PreloadTrackChunks(u32 track_number, u32 sectors);
 
 private:
     bool m_ready;
@@ -85,6 +97,17 @@ private:
     std::vector<ImgFile*> m_img_files;
 };
 
-static const int k_cdrom_track_type_size[3] = { 2352, 2048, 2352};
+static const u32 k_cdrom_track_type_size[3] = { 2352, 2048, 2352};
+static const char* k_cdrom_track_type_name[3] = { "AUDIO", "MODE1/2048", "MODE1/2352" }; 
+
+INLINE u32 CdRomMedia::GetTrackSectorSize(CdRomMedia::TrackType type)
+{
+    return k_cdrom_track_type_size[type];
+}
+
+INLINE const char* CdRomMedia::GetTrackTypeName(CdRomMedia::TrackType type)
+{
+    return k_cdrom_track_type_name[type];
+}
 
 #endif /* CDROM_MEDIA_H */

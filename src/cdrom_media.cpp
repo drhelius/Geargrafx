@@ -132,7 +132,7 @@ bool CdRomMedia::LoadCueFromFile(const char* path)
 
     if (file.is_open())
     {
-        int size = static_cast<int>(file.tellg());
+        int size = (int)(file.tellg());
 
         if (size <= 0)
         {
@@ -199,19 +199,17 @@ bool CdRomMedia::LoadCueFromBuffer(const u8* buffer, int size, const char* path)
         memcpy(cue_content, buffer, size);
         cue_content[size] = 0;
 
-        bool result = ParseCueFile(cue_content);
+        m_ready = ParseCueFile(cue_content);
 
         SafeDeleteArray(cue_content);
 
-        if (result)
+        if (m_ready)
         {
-            m_ready = true;
             Debug("CD-ROM Media loaded from buffer. Track count: %d", m_tracks.size());
         }
         else
         {
             Log("ERROR: Failed to parse CUE file");
-            m_ready = false;
         }
 
         return m_ready;
@@ -273,7 +271,7 @@ bool CdRomMedia::GatherImgInfo(ImgFile* img_file)
 
     if (file.is_open())
     {
-        int size = static_cast<int>(file.tellg());
+        int size = (int)(file.tellg());
 
         if (size <= 0)
         {
@@ -422,6 +420,8 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                 Log("WARNING: Unknown track type: %s", type_str.c_str());
                 return false;
             }
+
+            current_track.sector_size = GetTrackSectorSize(current_track.type);
         }
         else if (lowercase_line.find("index") == 0)
         {
@@ -449,9 +449,10 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                     continue;
                 }
 
-                current_track.start_position.minutes = minutes;
-                current_track.start_position.seconds = seconds;
-                current_track.start_position.frames = frames;
+                current_track.start_msf.minutes = minutes;
+                current_track.start_msf.seconds = seconds;
+                current_track.start_msf.frames = frames;
+                current_track.start_lba = MsfToLba(&current_track.start_msf);
 
                 Debug("Track %d starts at %02d:%02d:%02d", current_track.number, minutes, seconds, frames);
             }
@@ -459,29 +460,227 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
     }
 
     if (in_track)
-    {
         m_tracks.push_back(current_track);
+
+    for (size_t i = 0; i < m_tracks.size(); i++)
+    {
+        if ((i + 1) < m_tracks.size())
+        {
+            m_tracks[i].sector_count = m_tracks[i + 1].start_lba - m_tracks[i].start_lba;
+            m_tracks[i].end_lba = m_tracks[i].start_lba + m_tracks[i].sector_count - 1;
+            LbaToMsf(m_tracks[i].end_lba, &m_tracks[i].end_msf);
+        }
+        else
+        {
+            if (IsValidPointer(m_tracks[i].img_file))
+            {
+                u32 prev_sectors_size = 0;
+                for (size_t j = 0; j < i; j++)
+                    if (m_tracks[j].img_file == m_tracks[i].img_file)
+                        prev_sectors_size += m_tracks[j].sector_count * GetTrackSectorSize(m_tracks[j].type);
+
+                u32 last_track_size = m_tracks[i].img_file->file_size - prev_sectors_size;
+
+                m_tracks[i].sector_count = last_track_size / m_tracks[i].sector_size;
+                m_tracks[i].end_lba = m_tracks[i].start_lba + m_tracks[i].sector_count - 1;
+                LbaToMsf(m_tracks[i].end_lba, &m_tracks[i].end_msf);
+            }
+            else
+            {
+                m_tracks[i].sector_count = 75 * 60 * 80;
+                m_tracks[i].end_lba = m_tracks[i].start_lba + m_tracks[i].sector_count - 1;
+                LbaToMsf(m_tracks[i].end_lba, &m_tracks[i].end_msf);
+            }
+        }
+
+        Debug("Track %d (%s): Start LBA: %d, End LBA: %d, Sectors: %d",
+            m_tracks[i].number, GetTrackTypeName(m_tracks[i].type),
+            m_tracks[i].start_lba, m_tracks[i].end_lba, m_tracks[i].sector_count);
     }
-
-    // Calculate track lengths (difference between start frames)
-    // if (m_tracks.size() > 1)
-    // {
-    //     for (size_t i = 0; i < m_tracks.size() - 1; i++)
-    //     {
-    //         m_tracks[i].length_frames = m_tracks[i + 1].start_lba - m_tracks[i].start_lba;
-    //     }
-
-    //     // For the last track, we can't calculate exact length without reading the file
-    //     // For now, just set a large value
-    //     if (!m_tracks.empty())
-    //         m_tracks.back().length_frames = 75 * 60 * 80; // 80 minutes worth of frames
-    // }
-    // else if (m_tracks.size() == 1)
-    // {
-    //     // For a single track, set a default large value
-    //     m_tracks[0].length_frames = 75 * 60 * 80; // 80 minutes worth of frames
-    // }
 
     Log("Successfully parsed CUE file with %d tracks", m_tracks.size());
     return !m_tracks.empty();
+}
+
+bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
+{
+    if (!m_ready || buffer == NULL)
+    {
+        Debug("ERROR: ReadSector failed - Media not ready or buffer is NULL");
+        return false;
+    }
+
+    for (size_t i = 0; i < m_tracks.size(); i++)
+    {
+        const Track& track = m_tracks[i];
+        u32 start = track.start_lba;
+        u32 end = start + track.sector_count;
+
+        if (lba >= start && lba < end)
+        {
+            u32 sector_offset = lba - start;
+            u32 sector_size = GetTrackSectorSize(track.type);
+            ImgFile* img_file = track.img_file;
+
+            if (img_file == NULL || img_file->file_size == 0)
+                return false;
+
+            u64 byte_offset = sector_offset * (u64)sector_size;
+            if (byte_offset + sector_size > img_file->file_size)
+                return false;
+
+            Debug("Reading sector %d from track %d (LBA: %d)", lba, track.number, byte_offset);
+
+            return ReadFromImgFile(img_file, byte_offset, buffer, sector_size);
+        }
+    }
+
+    Debug("ERROR: ReadSector failed - LBA %d not found in any track", lba);
+
+    return false;
+}
+
+bool CdRomMedia::ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size)
+{
+    if (!IsValidPointer(img_file) || !IsValidPointer(buffer))
+        return false;
+
+    if (offset + size > img_file->file_size)
+        return false;
+
+    const u32 chunk_size = img_file->chunk_size;
+    u32 chunk_index = offset / chunk_size;
+    u32 chunk_offset = offset % chunk_size;
+
+    if (img_file->chunks[chunk_index] == NULL)
+    {
+        if (!LoadChunk(img_file, chunk_index))
+        {
+            Debug("ERROR: Failed to load chunk %d", chunk_index);
+            return false;
+        }
+    }
+
+    if (chunk_offset + size <= chunk_size)
+    {
+        Debug("Reading %d bytes from chunk %d, offset %d", size, chunk_index, chunk_offset);
+        memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, size);
+    }
+    else
+    {
+        u32 first_part = chunk_size - chunk_offset;
+
+        Debug("Reading %d bytes from chunk %d (crossing), offset %d", first_part, chunk_index, chunk_offset);
+        memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, first_part);
+
+        if (img_file->chunks[chunk_index + 1] == NULL)
+        {
+            if (!LoadChunk(img_file, chunk_index + 1))
+            {
+                Debug("ERROR: Failed to load chunk %d", chunk_index + 1);
+                return false;
+            }
+        }
+
+        Debug("Reading %d bytes from chunk %d (crossing), offset 0", size - first_part, chunk_index + 1);
+        memcpy(buffer + first_part, img_file->chunks[chunk_index + 1], size - first_part);
+    }
+
+    return true;
+}
+
+bool CdRomMedia::LoadChunk(ImgFile* img_file, u32 chunk_index)
+{
+    using namespace std;
+
+    if (!IsValidPointer(img_file))
+        return false;
+
+    ifstream file(img_file->file_path, ios::in | ios::binary);
+
+    if (!file.is_open())
+        return false;
+
+    u64 offset = (u64)chunk_index * (u64)img_file->chunk_size;
+    file.seekg(offset, ios::beg);
+
+    if (file.fail())
+        return false;
+
+    u32 to_read = img_file->chunk_size;
+    if (offset + to_read > img_file->file_size)
+        to_read = img_file->file_size - offset;
+
+    if (!img_file->chunks[chunk_index])
+        img_file->chunks[chunk_index] = new u8[img_file->chunk_size];
+
+    Debug("Loading chunk %d from %s", chunk_index, img_file->file_path);
+    file.read(reinterpret_cast<char*>(img_file->chunks[chunk_index]), to_read);
+
+    if (file.gcount() != to_read)
+    {
+        Debug("ERROR: Failed to read chunk %d from %s. Read %d bytes, expected %d bytes",
+            chunk_index, img_file->file_path, file.gcount(), to_read);
+        file.close();
+        return false;
+    }
+
+    file.close();
+    Debug("Loaded chunk %d from %s", chunk_index, img_file->file_path);
+    return true;
+}
+
+bool CdRomMedia::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count)
+{
+    if (!IsValidPointer(img_file))
+    {
+        Log("ERROR: Cannot preload chunks - Invalid ImgFile pointer");
+        return false;
+    }
+
+    if (start_chunk >= img_file->chunk_count)
+    {
+        Log("ERROR: Cannot preload chunks - Start chunk index %d out of bounds (max: %d)",
+            start_chunk, img_file->chunk_count - 1);
+        return false;
+    }
+
+    // Limit count to available chunks
+    u32 end_chunk = start_chunk + count;
+    if (end_chunk > img_file->chunk_count)
+    {
+        end_chunk = img_file->chunk_count;
+    }
+
+    Debug("Preloading chunks %d-%d from %s", start_chunk, end_chunk - 1, img_file->file_path);
+
+    for (u32 i = start_chunk; i < end_chunk; i++)
+    {
+        if (img_file->chunks[i] == NULL)
+        {
+            if (!LoadChunk(img_file, i))
+            {
+                Log("ERROR: Failed to preload chunk %d", i);
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool CdRomMedia::PreloadTrackChunks(u32 track_number, u32 sectors)
+{
+    if (track_number >= m_tracks.size())
+        return false;
+
+    const Track& track = m_tracks[track_number];
+
+    u32 sector_size = track.sector_size;
+    u64 start_offset = 0;
+    u64 total_bytes = sectors * sector_size;
+    u32 start_chunk = start_offset / track.img_file->chunk_size;
+    u32 chunks_needed = (total_bytes + track.img_file->chunk_size - 1) / track.img_file->chunk_size;
+
+    return PreloadChunks(track.img_file, start_chunk, chunks_needed);
 }

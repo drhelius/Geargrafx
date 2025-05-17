@@ -22,23 +22,23 @@
 
 #include "common.h"
 
-struct GG_CdRomPosition
+struct GG_CdRomMSF
 {
     u32 minutes;
     u32 seconds;
     u32 frames;
 };
 
-inline void FromLBA(u32 lba, GG_CdRomPosition* pos)
+inline void LbaToMsf(u32 lba, GG_CdRomMSF* msf)
 {
-    pos->minutes = lba / 75 / 60;
-    pos->seconds = lba / 75 % 60;
-    pos->frames = lba % 75;
+    msf->minutes = lba / 75 / 60;
+    msf->seconds = lba / 75 % 60;
+    msf->frames = lba % 75;
 }
 
-inline u32 ToLBA(GG_CdRomPosition* pos)
+inline u32 MsfToLba(GG_CdRomMSF* msf)
 {
-    return (pos->minutes * 60 + pos->seconds) * 75 + pos->frames;
+    return (msf->minutes * 60 + msf->seconds) * 75 + msf->frames;
 }
 
 #endif /* CDROM_COMMON_H */
