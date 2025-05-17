@@ -638,7 +638,7 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
             strncpy_fit(record->segment, "CDRAM", sizeof(record->segment));
             break;
         default:
-            strncpy_fit(record->segment, "?????", sizeof(record->segment));
+            strncpy_fit(record->segment, "???? ", sizeof(record->segment));
             break;
     }
 #else
