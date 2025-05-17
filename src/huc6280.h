@@ -142,8 +142,8 @@ private:
     u32 m_cycles;
     s32 m_irq_pending;
     s32 m_speed;
-    int m_transfer_state;
-    int m_transfer_count;
+    u32 m_transfer_state;
+    u32 m_transfer_count;
     u16 m_transfer_length;
     u16 m_transfer_source;
     u16 m_transfer_dest;
