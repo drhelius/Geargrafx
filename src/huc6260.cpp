@@ -33,66 +33,30 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280)
     m_state.VPOS = &m_vpos;
     m_state.HSYNC = &m_hsync;
     m_state.VSYNC = &m_vsync;
-    InitPointer(m_color_table);
-    InitPointer(m_frame_buffer);
-    InitPointer(m_scale_buffer);
-    InitPointer(m_vce_buffer_1);
-    InitPointer(m_vce_buffer_2);
-    InitPointer(m_line_speed);
-    InitPointer(m_rgba888_palette);
-    InitPointer(m_rgb565_palette);
-
     m_overscan = 0;
     m_scanline_start = 0;
     m_scanline_end = 241;
     m_reset_value = -1;
     m_palette = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
+    InitPointer(m_frame_buffer);
 
     CalculateScreenBounds();
 }
 
 HuC6260::~HuC6260()
 {
-    SafeDeleteArray(m_color_table);
-    SafeDeleteArray(m_scale_buffer);
-    SafeDeleteArray(m_vce_buffer_1);
-    SafeDeleteArray(m_vce_buffer_2);
-    SafeDeleteArray(m_line_speed);
-    DeletePalettes();
 }
 
 void HuC6260::Init(GG_Pixel_Format pixel_format)
 {
     m_pixel_format = pixel_format;
-    m_color_table = new u16[512];
-    m_scale_buffer = new u8[2048 * 512 * 4];
-    m_vce_buffer_1 = new u16[1024 * 512];
-    m_vce_buffer_2 = new u16[1024 * 512];
-    m_line_speed = new s32[242];
-
     InitPalettes();
     Reset(false);
 }
 
 void HuC6260::InitPalettes()
 {
-    m_rgba888_palette = new u8**[2];
-    for (int i = 0; i < 2; i++)
-    {
-        m_rgba888_palette[i] = new u8*[512];
-        for (int j = 0; j < 512; j++)
-            m_rgba888_palette[i][j] = new u8[4];
-    }
-
-    m_rgb565_palette = new u8**[2];
-    for (int i = 0; i < 2; i++)
-    {
-        m_rgb565_palette[i] = new u8*[512];
-        for (int j = 0; j < 512; j++)
-            m_rgb565_palette[i][j] = new u8[2];
-    }
-
     for (int i = 0; i < 512; i++)
     {
         u8 green = ((i >> 6) & 0x07) * 255 / 7;
@@ -121,37 +85,6 @@ void HuC6260::InitPalettes()
         rgb565 = (red << 11) | (green << 5) | blue;
         m_rgb565_palette[1][i][0] = rgb565 & 0xFF;
         m_rgb565_palette[1][i][1] = (rgb565 >> 8) & 0xFF;
-    }
-}
-
-void HuC6260::DeletePalettes()
-{
-    if (IsValidPointer(m_rgba888_palette))
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            if (IsValidPointer(m_rgba888_palette[i]))
-            {
-                for (int j = 0; j < 512; j++)
-                    SafeDeleteArray(m_rgba888_palette[i][j]);
-                SafeDeleteArray(m_rgba888_palette[i]);
-            }
-        }
-        SafeDeleteArray(m_rgba888_palette);
-    }
-
-    if (IsValidPointer(m_rgb565_palette))
-    {
-        for (int i = 0; i < 2; i++)
-        {
-            if (IsValidPointer(m_rgb565_palette[i]))
-            {
-                for (int j = 0; j < 512; j++)
-                    SafeDeleteArray(m_rgb565_palette[i][j]);
-                SafeDeleteArray(m_rgb565_palette[i]);
-            }
-        }
-        SafeDeleteArray(m_rgb565_palette);
     }
 }
 
@@ -285,78 +218,6 @@ void HuC6260::WriteRegister(u16 address, u8 value)
             // Not used
             Debug("HuC6260 Write unused register");
             break;
-    }
-}
-
-void HuC6260::RenderFrame()
-{
-    u8*** palette = (m_pixel_format == GG_PIXEL_RGB565) ? m_rgb565_palette : m_rgba888_palette;
-    int bytes_per_pixel = (m_pixel_format == GG_PIXEL_RGB565) ? 2 : 4;
-    int frame_buffer_index = 0;
-
-    if (m_is_sgx)
-    {
-        HuC6202::HuC6202_Window_Priority* priorities = m_huc6202->GetWindowPriorities();
-
-        for (int i = 0; i < m_pixel_index; i++)
-        {
-            u16 pixel_1 = m_vce_buffer_1[i];
-            u16 pixel_2 = m_vce_buffer_2[i];
-            int win_mode = (pixel_1 >> 14) & 0x0003;
-
-            HuC6202::HuC6202_Window_Priority* priority = &priorities[win_mode];
-            int vdc_1_enabled = priority->vdc_1_enabled;
-            int vdc_2_enabled = priority->vdc_2_enabled << 1;
-            int vdcs_enabled = vdc_1_enabled | vdc_2_enabled;
-
-            u16 final_pixel = 0;
-
-            if (vdcs_enabled == 0)
-                final_pixel = 0;
-            else if (vdcs_enabled == 1)
-                final_pixel = pixel_1;
-            else if (vdcs_enabled == 2)
-                final_pixel = pixel_2;
-            else
-            {
-                bool is_pixel_1_transparent = (pixel_1 & 0x2000);
-                bool is_vdc_1_sprite = (pixel_1 & 0x1000);
-                bool is_vdc_2_sprite = (pixel_2 & 0x1000);
-
-                switch (priority->priority_mode)
-                {
-                    case HuC6202::HuC6270_PRIORITY_DEFAULT:
-                        final_pixel = is_pixel_1_transparent ? pixel_2 : pixel_1;
-                        break;
-                    case HuC6202::HuC6270_PRIORITY_SPRITES_2_ABOVE_BG_1:
-                        if (is_pixel_1_transparent || (is_vdc_2_sprite && !is_vdc_1_sprite))
-                            final_pixel = pixel_2;
-                        else
-                            final_pixel = pixel_1;
-                        break;
-                    case HuC6202::HuC6270_PRIORITY_SPRITES_1_BELOW_BG_2:
-                    {
-                        bool is_pixel_2_transparent = (pixel_2 & 0x2000);
-                        if (is_pixel_1_transparent || (is_vdc_1_sprite && !is_vdc_2_sprite && !is_pixel_2_transparent))
-                            final_pixel = pixel_2;
-                        else
-                            final_pixel = pixel_1;
-                        break;
-                    }
-                }
-            }
-
-            memcpy(m_frame_buffer + frame_buffer_index, palette[m_palette][final_pixel & 0x1FF], bytes_per_pixel);
-            frame_buffer_index += bytes_per_pixel;
-        }
-    }
-    else
-    {
-        for (int i = 0; i < m_pixel_index; i++)
-        {
-            memcpy(m_frame_buffer + frame_buffer_index, palette[m_palette][m_vce_buffer_1[i]], bytes_per_pixel);
-            frame_buffer_index += bytes_per_pixel;
-        }
     }
 }
 

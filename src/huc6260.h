@@ -83,9 +83,10 @@ public:
 
 private:
     void InitPalettes();
-    void DeletePalettes();
     void AdjustForMultipleDividers();
     void RenderFrame();
+    template <bool SGX, int BPP>
+    void RenderFrameTemplate();
     void CalculateScreenBounds();
 
 private:
@@ -97,12 +98,12 @@ private:
     u16 m_color_table_address;
     s32 m_speed;
     s32 m_clock_divider;
-    u16* m_color_table;
+    u16 m_color_table[512] = {};
     u8* m_frame_buffer;
-    u8* m_scale_buffer;
-    u16* m_vce_buffer_1;
-    u16* m_vce_buffer_2;
-    s32* m_line_speed;
+    u8 m_scale_buffer[2048 * 512 * 4] = {};
+    u16 m_vce_buffer_1[1024 * 512] = {};
+    u16 m_vce_buffer_2[1024 * 512] = {};
+    s32 m_line_speed[242] = {};
     bool m_multiple_speeds;
     bool m_scaled_width;
     bool m_active_line;
@@ -118,8 +119,8 @@ private:
     int m_scanline_start;
     int m_scanline_end;
     GG_Pixel_Format m_pixel_format;
-    u8*** m_rgba888_palette;
-    u8*** m_rgb565_palette;
+    u8 m_rgba888_palette[2][512][4] = {};
+    u8 m_rgb565_palette[2][512][2] = {};
     int m_reset_value;
     int m_palette;
     int m_screen_start_x;

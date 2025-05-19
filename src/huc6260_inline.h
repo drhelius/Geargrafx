@@ -142,6 +142,124 @@ INLINE bool HuC6260::Clock(u32 cycles)
     return frame_ready;
 }
 
+INLINE void HuC6260::RenderFrame()
+{
+    if (m_is_sgx)
+    {
+        if (m_pixel_format == GG_PIXEL_RGB565)
+            RenderFrameTemplate<true, 2>();
+        else
+            RenderFrameTemplate<true, 4>();
+    }
+    else
+    {
+        if (m_pixel_format == GG_PIXEL_RGB565)
+            RenderFrameTemplate<false, 2>();
+        else
+            RenderFrameTemplate<false, 4>();
+    }
+}
+
+template <bool is_sgx, int bytes_per_pixel>
+void HuC6260::RenderFrameTemplate()
+{
+    u8* palette = (m_pixel_format == GG_PIXEL_RGB565) ? &m_rgb565_palette[0][0][0] : &m_rgba888_palette[0][0][0];
+    int frame_buffer_index = 0;
+
+    if (is_sgx)
+    {
+        HuC6202::HuC6202_Window_Priority* priorities = m_huc6202->GetWindowPriorities();
+
+        for (int i = 0; i < m_pixel_index; i++)
+        {
+            u16 pixel_1 = m_vce_buffer_1[i];
+            u16 pixel_2 = m_vce_buffer_2[i];
+            int win_mode = (pixel_1 >> 14) & 0x0003;
+
+            HuC6202::HuC6202_Window_Priority* priority = &priorities[win_mode];
+            int vdc_1_enabled = priority->vdc_1_enabled;
+            int vdc_2_enabled = priority->vdc_2_enabled << 1;
+            int vdcs_enabled = vdc_1_enabled | vdc_2_enabled;
+
+            u16 final_pixel = 0;
+
+            if (vdcs_enabled == 0)
+                final_pixel = 0;
+            else if (vdcs_enabled == 1)
+                final_pixel = pixel_1;
+            else if (vdcs_enabled == 2)
+                final_pixel = pixel_2;
+            else
+            {
+                bool is_pixel_1_transparent = (pixel_1 & 0x2000);
+                bool is_vdc_1_sprite = (pixel_1 & 0x1000);
+                bool is_vdc_2_sprite = (pixel_2 & 0x1000);
+
+                switch (priority->priority_mode)
+                {
+                    case HuC6202::HuC6270_PRIORITY_DEFAULT:
+                        final_pixel = is_pixel_1_transparent ? pixel_2 : pixel_1;
+                        break;
+                    case HuC6202::HuC6270_PRIORITY_SPRITES_2_ABOVE_BG_1:
+                        if (is_pixel_1_transparent || (is_vdc_2_sprite && !is_vdc_1_sprite))
+                            final_pixel = pixel_2;
+                        else
+                            final_pixel = pixel_1;
+                        break;
+                    case HuC6202::HuC6270_PRIORITY_SPRITES_1_BELOW_BG_2:
+                    {
+                        bool is_pixel_2_transparent = (pixel_2 & 0x2000);
+                        if (is_pixel_1_transparent || (is_vdc_1_sprite && !is_vdc_2_sprite && !is_pixel_2_transparent))
+                            final_pixel = pixel_2;
+                        else
+                            final_pixel = pixel_1;
+                        break;
+                    }
+                }
+            }
+
+            u8* src = palette + ((final_pixel & 0x1FF) * bytes_per_pixel);
+            u8* dst = m_frame_buffer + frame_buffer_index;
+            frame_buffer_index += bytes_per_pixel;
+
+            if (bytes_per_pixel == 2)
+            {
+                dst[0] = src[0];
+                dst[1] = src[1];
+            }
+            else
+            {
+                dst[0] = src[0];
+                dst[1] = src[1];
+                dst[2] = src[2];
+                dst[3] = src[3];
+            }
+        }
+    }
+    else
+    {
+        for (int i = 0; i < m_pixel_index; i++)
+        {
+            u8* src = palette + (m_vce_buffer_1[i] * bytes_per_pixel);
+            u8* dst = m_frame_buffer + frame_buffer_index;
+            frame_buffer_index += bytes_per_pixel;
+
+            if (bytes_per_pixel == 2)
+            {
+                dst[0] = src[0];
+                dst[1] = src[1];
+            }
+            else
+            {
+                dst[0] = src[0];
+                dst[1] = src[1];
+                dst[2] = src[2];
+                dst[3] = src[3];
+            }
+        }
+    }
+}
+
 INLINE HuC6260::HuC6260_State* HuC6260::GetState()
 {
     return &m_state;
