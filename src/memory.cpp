@@ -37,15 +37,6 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* 
     m_input = input;
     m_audio = audio;
     m_cdrom = cdrom;
-    InitPointer(m_memory_map);
-    InitPointer(m_memory_map_write);
-    InitPointer(m_unused_memory);
-    InitPointer(m_wram);
-    InitPointer(m_cdrom_ram);
-    InitPointer(m_card_ram);
-    InitPointer(m_backup_ram);
-    InitPointer(m_syscard_bios);
-    InitPointer(m_gameexpress_bios);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
@@ -62,15 +53,6 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* 
 
 Memory::~Memory()
 {
-    SafeDeleteArray(m_memory_map);
-    SafeDeleteArray(m_memory_map_write);
-    SafeDeleteArray(m_unused_memory);
-    SafeDeleteArray(m_wram);
-    SafeDeleteArray(m_cdrom_ram);
-    SafeDeleteArray(m_card_ram);
-    SafeDeleteArray(m_backup_ram);
-    SafeDeleteArray(m_syscard_bios);
-    SafeDeleteArray(m_gameexpress_bios);
     SafeDeleteArray(m_test_memory);
     if (IsValidPointer(m_disassembler))
     {
@@ -85,17 +67,8 @@ Memory::~Memory()
 
 void Memory::Init()
 {
-    m_memory_map = new u8*[0x100];
     for (int i = 0; i < 0x100; i++)
         InitPointer(m_memory_map[i]);
-    m_memory_map_write = new bool[0x100];
-    m_wram = new u8[0x8000];
-    m_cdrom_ram = new u8[0x10000];
-    m_card_ram = new u8[0x30000];
-    m_backup_ram = new u8[0x2000];
-    m_syscard_bios = new u8[GG_BIOS_SYSCARD_SIZE];
-    m_gameexpress_bios = new u8[GG_BIOS_GAME_EXPRESS_SIZE];
-    m_unused_memory = new u8[0x2000];
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_disassembler = new GG_Disassembler_Record*[0x200000];

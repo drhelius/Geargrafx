@@ -102,15 +102,15 @@ private:
     Audio* m_audio;
     CdRom* m_cdrom;
     u8 m_mpr[8];
-    u8** m_memory_map;
-    bool* m_memory_map_write;
-    u8* m_unused_memory;
-    u8* m_wram;
-    u8* m_card_ram;
-    u8* m_cdrom_ram;
-    u8* m_backup_ram;
-    u8* m_syscard_bios;
-    u8* m_gameexpress_bios;
+    u8* m_memory_map[0x100] = {};
+    bool m_memory_map_write[0x100] = {};
+    u8 m_unused_memory[0x2000];
+    u8 m_wram[0x8000] = {};
+    u8 m_card_ram[0x30000] = {};
+    u8 m_cdrom_ram[0x10000] = {};
+    u8 m_backup_ram[0x2000] = {};
+    u8 m_syscard_bios[GG_BIOS_SYSCARD_SIZE] = {};
+    u8 m_gameexpress_bios[GG_BIOS_GAME_EXPRESS_SIZE];
     u32 m_cdrom_ram_size;
     u32 m_card_ram_size;
     u8 m_card_ram_start;
@@ -126,7 +126,7 @@ private:
     int m_card_ram_reset_value;
 };
 
-static const u8 k_backup_ram_init_string[8] = { 'H', 'U', 'B', 'M', 0x00, 0x88, 0x10, 0x80 };
+static const u8 k_backup_ram_init_string[8] = { 'H', 'U', 'B', 'M', 0x00, 0xA0, 0x10, 0x80 };
 
 #include "memory_inline.h"
 
