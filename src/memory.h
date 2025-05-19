@@ -110,7 +110,7 @@ private:
     u8 m_cdrom_ram[0x10000] = {};
     u8 m_backup_ram[0x2000] = {};
     u8 m_syscard_bios[GG_BIOS_SYSCARD_SIZE] = {};
-    u8 m_gameexpress_bios[GG_BIOS_GAME_EXPRESS_SIZE];
+    u8 m_gameexpress_bios[GG_BIOS_GAME_EXPRESS_SIZE] = {};
     u32 m_cdrom_ram_size;
     u32 m_card_ram_size;
     u8 m_card_ram_start;
