@@ -86,6 +86,7 @@
     <ClInclude Include="..\..\src\game_db.h" />
     <ClInclude Include="..\..\src\geargrafx.h" />
     <ClInclude Include="..\..\src\geargrafx_core.h" />
+    <ClInclude Include="..\..\src\geargrafx_core_inline.h" />
     <ClInclude Include="..\..\src\input_inline.h" />
     <ClInclude Include="..\..\src\input.h" />
     <ClInclude Include="..\..\src\log.h" />

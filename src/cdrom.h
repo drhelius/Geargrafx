@@ -39,6 +39,7 @@ public:
     ~CdRom();
     void Init();
     void Reset();
+    void Clock(u32 cycles);
     u8 ReadRegister(u16 address);
     void WriteRegister(u16 address, u8 value);
     CdRom_State* GetState();

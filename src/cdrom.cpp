@@ -18,6 +18,7 @@
  */
 
 #include "cdrom.h"
+#include "scsi_controller.h"
 
 CdRom::CdRom(ScsiController* scsi_controller)
 {
@@ -37,6 +38,11 @@ void CdRom::Reset()
 {
 }
 
+void CdRom::Clock(u32 cycles)
+{
+    m_scsi_controller->Clock(cycles);
+}
+
 u8 CdRom::ReadRegister(u16 address)
 {
     u16 reg = address & 0x3FF;
@@ -44,15 +50,15 @@ u8 CdRom::ReadRegister(u16 address)
     {
         case 0x00:
             // SCSI get status
-            Debug("CDROM Read SCSI get status %02X", reg);
-            return 0x00;
+            //Debug("CDROM Read SCSI get status %02X", reg);
+            return m_scsi_controller->GetStatus();
         case 0x01:
             // SCSI get data
             Debug("CDROM Read SCSI get data %02X", reg);
-            return 0x00;
+            return m_scsi_controller->ReadData();
         case 0x02:
             // IRQs
-            Debug("CDROM Read IRQs %02X", reg);
+            //Debug("CDROM Read IRQs %02X", reg);
             return 0x00;
         case 0x03:
             // BRAM Lock
@@ -77,7 +83,7 @@ u8 CdRom::ReadRegister(u16 address)
         case 0x08:
             // SCSI get data
             Debug("CDROM Read SCSI get data %02X", reg);
-            return 0x00;
+            return m_scsi_controller->ReadData();
         case 0x09:
         case 0x0A:
         case 0x0B:
@@ -115,10 +121,12 @@ void CdRom::WriteRegister(u16 address, u8 value)
         case 0x00:
             // SCSI control
             Debug("CDROM Write SCSI control %02X, value: %02X", reg, value);
+            //m_scsi_controller->SetSignal((ScsiSignal)value);
             break;
         case 0x01:
             // SCSI command
             Debug("CDROM Write SCSI command %02X, value: %02X", reg, value);
+            m_scsi_controller->WriteData(value);
             break;
         case 0x02:
             // ACK

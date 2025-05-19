@@ -79,7 +79,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     srand((unsigned int)time(NULL));
 
     m_cdrom_media = new CdRomMedia();
-    m_scsi_controller = new ScsiController();
+    m_scsi_controller = new ScsiController(m_cdrom_media);
     m_cdrom = new CdRom(m_scsi_controller);
     m_cartridge = new Cartridge(m_cdrom_media);
     m_huc6280 = new HuC6280();
@@ -105,68 +105,68 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_input->Init();
 }
 
-bool GeargrafxCore::RunToVBlankFast(u8* frame_buffer, s16* sample_buffer, int* sample_count)
-{
-    m_huc6260->SetBuffer(frame_buffer);
-    bool stop = false;
+// bool GeargrafxCore::RunToVBlankFast(u8* frame_buffer, s16* sample_buffer, int* sample_count)
+// {
+//     m_huc6260->SetBuffer(frame_buffer);
+//     bool stop = false;
 
-    do
-    {
-        u32 cycles = m_huc6280->RunInstruction();
-        m_huc6280->ClockTimer(cycles);
-        stop = m_huc6260->Clock(cycles);
-        m_audio->Clock(cycles);
-    }
-    while (!stop);
+//     do
+//     {
+//         u32 cycles = m_huc6280->RunInstruction();
+//         m_huc6280->ClockTimer(cycles);
+//         stop = m_huc6260->Clock(cycles);
+//         m_audio->Clock(cycles);
+//     }
+//     while (!stop);
 
-    m_audio->EndFrame(sample_buffer, sample_count);
-    return false;
-}
+//     m_audio->EndFrame(sample_buffer, sample_count);
+//     return false;
+// }
 
-bool GeargrafxCore::RunToVBlankDebug(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
-{
-    bool debug_enable = false;
-    bool instruction_completed = false;
-    if (IsValidPointer(debug))
-    {
-        debug_enable = true;
-        m_huc6280->EnableBreakpoints(debug->stop_on_breakpoint, debug->stop_on_irq);
-    }
+// bool GeargrafxCore::RunToVBlankDebug(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
+// {
+//     bool debug_enable = false;
+//     bool instruction_completed = false;
+//     if (IsValidPointer(debug))
+//     {
+//         debug_enable = true;
+//         m_huc6280->EnableBreakpoints(debug->stop_on_breakpoint, debug->stop_on_irq);
+//     }
 
-    m_huc6260->SetBuffer(frame_buffer);
-    bool stop = false;
+//     m_huc6260->SetBuffer(frame_buffer);
+//     bool stop = false;
 
-    do
-    {
-        if (debug_enable && (IsValidPointer(m_debug_callback)))
-            m_debug_callback();
+//     do
+//     {
+//         if (debug_enable && (IsValidPointer(m_debug_callback)))
+//             m_debug_callback();
 
-        u32 cycles = m_huc6280->RunInstruction(&instruction_completed);
-        m_huc6280->ClockTimer(cycles);
-        stop = m_huc6260->Clock(cycles);
-        m_audio->Clock(cycles);
+//         u32 cycles = m_huc6280->RunInstruction(&instruction_completed);
+//         m_huc6280->ClockTimer(cycles);
+//         stop = m_huc6260->Clock(cycles);
+//         m_audio->Clock(cycles);
 
-        if (debug_enable)
-        {
-            if (debug->step_debugger)
-                stop = instruction_completed;
+//         if (debug_enable)
+//         {
+//             if (debug->step_debugger)
+//                 stop = instruction_completed;
 
-            if (instruction_completed)
-            {
-                if (m_huc6280->BreakpointHit())
-                    stop = true;
+//             if (instruction_completed)
+//             {
+//                 if (m_huc6280->BreakpointHit())
+//                     stop = true;
 
-                if (debug->stop_on_run_to_breakpoint && m_huc6280->RunToBreakpointHit())
-                    stop = true;
-            }
-        }
-    }
-    while (!stop);
+//                 if (debug->stop_on_run_to_breakpoint && m_huc6280->RunToBreakpointHit())
+//                     stop = true;
+//             }
+//         }
+//     }
+//     while (!stop);
 
-    m_audio->EndFrame(sample_buffer, sample_count);
+//     m_audio->EndFrame(sample_buffer, sample_count);
 
-    return m_huc6280->BreakpointHit() || m_huc6280->RunToBreakpointHit();
-}
+//     return m_huc6280->BreakpointHit() || m_huc6280->RunToBreakpointHit();
+// }
 
 bool GeargrafxCore::LoadROM(const char* file_path)
 {
@@ -812,7 +812,7 @@ void GeargrafxCore::Reset()
     m_paused = false;
     m_memory->Reset();
     m_huc6202->Reset(m_cartridge->IsSGX());
-    m_huc6260->Reset(m_cartridge->IsSGX());
+    m_huc6260->Reset();
     m_huc6270_1->Reset();
     m_huc6270_2->Reset();
     m_huc6280->Reset();

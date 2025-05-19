@@ -87,8 +87,8 @@ public:
 
 private:
     void Reset();
-    bool RunToVBlankDebug(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug);
-    bool RunToVBlankFast(u8* frame_buffer, s16* sample_buffer, int* sample_count);
+    template<bool debugger, bool is_cdrom, bool is_sgx>
+    bool RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug);
     bool SaveState(std::ostream& stream, size_t& size, bool screenshot);
     bool LoadState(std::istream& stream);
     std::string GetSaveStatePath(const char* path, int index);
@@ -110,19 +110,6 @@ private:
     GG_Debug_Callback m_debug_callback;
 };
 
-#include "cartridge.h"
-
-INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
-{
-    if (m_paused || !m_cartridge->IsReady())
-        return false;
-
-#if defined(GG_DISABLE_DISASSEMBLER)
-    UNUSED(debug);
-    return RunToVBlankFast(frame_buffer, sample_buffer, sample_count);
-#else
-    return RunToVBlankDebug(frame_buffer, sample_buffer, sample_count, debug);
-#endif
-}
+#include "geargrafx_core_inline.h"
 
 #endif /* GEARGRAFX_CORE_H */

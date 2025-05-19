@@ -24,6 +24,7 @@
 #include "huc6202.h"
 #include "huc6280.h"
 
+template <bool is_sgx>
 INLINE bool HuC6260::Clock(u32 cycles)
 {
     bool frame_ready = false;
@@ -59,7 +60,7 @@ INLINE bool HuC6260::Clock(u32 cycles)
             if (m_pixel_x == k_huc6260_full_line_width[m_speed])
                 m_pixel_x = 0;
 
-            if (m_is_sgx)
+            if (is_sgx)
             {
                 u16 pixel_1, pixel_2;
                 m_huc6202->ClockSGX(&pixel_1, &pixel_2);
@@ -113,7 +114,7 @@ INLINE bool HuC6260::Clock(u32 cycles)
             // End of vertical sync
             else if (m_vpos == (k_huc6260_total_lines[m_blur] - 1))
             {
-                RenderFrame();
+                RenderFrame<is_sgx>();
                 m_vsync = true;
                 m_pixel_index = 0;
                 frame_ready = true;
@@ -142,9 +143,10 @@ INLINE bool HuC6260::Clock(u32 cycles)
     return frame_ready;
 }
 
+template <bool is_sgx>
 INLINE void HuC6260::RenderFrame()
 {
-    if (m_is_sgx)
+    if (is_sgx)
     {
         if (m_pixel_format == GG_PIXEL_RGB565)
             RenderFrameTemplate<true, 2>();

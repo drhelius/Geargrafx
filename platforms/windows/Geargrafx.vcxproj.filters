@@ -309,6 +309,9 @@
     <ClInclude Include="..\..\src\geargrafx_core.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\geargrafx_core_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\huc6260.h">
       <Filter>src</Filter>
     </ClInclude>
