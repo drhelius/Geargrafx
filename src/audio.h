@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include "types.h"
+#include "huc6280_psg.h"
 
 class HuC6280PSG;
 
@@ -44,7 +45,7 @@ public:
 private:
     bool m_mute;
     HuC6280PSG* m_psg;
-    s16* m_psg_buffer;
+    s16 m_psg_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     u32 m_cycle_counter;
 };
 

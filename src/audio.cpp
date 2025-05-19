@@ -31,12 +31,10 @@ Audio::Audio()
 Audio::~Audio()
 {
     SafeDelete(m_psg);
-    SafeDeleteArray(m_psg_buffer);
 }
 
 void Audio::Init()
 {
-    m_psg_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
     m_psg = new HuC6280PSG();
     m_psg->Init();
 }
@@ -46,10 +44,7 @@ void Audio::Reset()
     m_cycle_counter = 0;
     m_psg->Reset();
 
-    for (int i = 0; i < GG_AUDIO_BUFFER_SIZE; i++)
-    {
-        m_psg_buffer[i] = 0;
-    }
+    memset(m_psg_buffer, 0, sizeof(m_psg_buffer));
 }
 
 void Audio::Mute(bool mute)
