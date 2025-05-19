@@ -25,11 +25,6 @@ HuC6270::HuC6270(HuC6280* huC6280)
 {
     m_huc6280 = huC6280;
     InitPointer(m_huc6260);
-    InitPointer(m_vram);
-    InitPointer(m_sat);
-    InitPointer(m_line_buffer);
-    InitPointer(m_line_buffer_sprites);
-    InitPointer(m_sprites);
     m_state.AR = &m_address_register;
     m_state.SR = &m_status_register;
     m_state.R = m_register;
@@ -42,32 +37,18 @@ HuC6270::HuC6270(HuC6280* huC6280)
 
 HuC6270::~HuC6270()
 {
-    SafeDeleteArray(m_vram);
-    SafeDeleteArray(m_sat);
-    SafeDeleteArray(m_line_buffer);
-    SafeDeleteArray(m_line_buffer_sprites);
-    SafeDeleteArray(m_sprites);
 }
 
 void HuC6270::Init(HuC6260* huC6260, HuC6202* huC6202)
 {
     m_huc6260 = huC6260;
     m_huc6202 = huC6202;
-    m_vram = new u16[HUC6270_VRAM_SIZE];
-    m_sat = new u16[HUC6270_SAT_SIZE];
-    m_line_buffer = new u16[HUC6270_MAX_BACKGROUND_WIDTH];
-    m_line_buffer_sprites = new u16[HUC6270_MAX_BACKGROUND_WIDTH];
-    m_sprites = new HuC6270_Sprite_Data[HUC6270_SPRITES * 2];
     Reset();
 }
 
 void HuC6270::Reset()
 {
-    for (int i = 0; i < 20; i++)
-    {
-        m_register[i] = 0;
-    }
-
+    memset(m_register, 0, sizeof(m_register));
     m_register[HUC6270_REG_HDR] = 0x1F;
     m_register[HUC6270_REG_VDR] = 239;
 
@@ -111,32 +92,11 @@ void HuC6270::Reset()
     m_sprite_count = 0;
     m_sprite_overflow = false;
 
-    for (int i = 0; i < HUC6270_VRAM_SIZE; i++)
-    {
-        m_vram[i] = 0;
-    }
-
-    for (int i = 0; i < HUC6270_SAT_SIZE; i++)
-    {
-        m_sat[i] = 0;
-    }
-
-    for (int i = 0; i < 1024; i++)
-    {
-        m_line_buffer[i] = 0;
-        m_line_buffer_sprites[i] = 0;
-    }
-
-    for (int i = 0; i < 128; i++)
-    {
-        m_sprites[i].x = 0;
-        m_sprites[i].flags = 0;
-        m_sprites[i].palette = 0;
-        for (int j = 0; j < 4; j++)
-        {
-            m_sprites[i].data[j] = 0;
-        }
-    }
+    memset(m_vram, 0, sizeof(m_vram));
+    memset(m_sat, 0, sizeof(m_sat));
+    memset(m_line_buffer, 0, sizeof(m_line_buffer));
+    memset(m_line_buffer_sprites, 0, sizeof(m_line_buffer_sprites));
+    memset(m_sprites, 0, sizeof(m_sprites));
 }
 
 void HuC6270::SetHSyncHigh()

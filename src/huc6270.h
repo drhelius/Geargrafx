@@ -103,11 +103,11 @@ private:
     HuC6260* m_huc6260;
     HuC6280* m_huc6280;
     HuC6270_State m_state;
-    u16* m_vram;
+    u16 m_vram[HUC6270_VRAM_SIZE] = {};
     u16 m_address_register;
     u16 m_status_register;
     u16 m_register[20];
-    u16* m_sat;
+    u16 m_sat[HUC6270_SAT_SIZE] = {};
     u16 m_read_buffer;
     u16 m_vram_openbus;
     bool m_trigger_sat_transfer;
@@ -142,13 +142,13 @@ private:
     bool m_vblank_triggered;
     bool m_active_line;
     bool m_burst_mode;
-    u16* m_line_buffer;
-    u16* m_line_buffer_sprites;
+    u16 m_line_buffer[HUC6270_MAX_BACKGROUND_WIDTH] = {};
+    u16 m_line_buffer_sprites[HUC6270_MAX_BACKGROUND_WIDTH] = {};
     s32 m_line_buffer_index;
     bool m_no_sprite_limit;
     s32 m_sprite_count;
     bool m_sprite_overflow;
-    HuC6270_Sprite_Data* m_sprites;
+    HuC6270_Sprite_Data m_sprites[HUC6270_SPRITES * 2] = {};
 
 private:
     void EndOfLine();
