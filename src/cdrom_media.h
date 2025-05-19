@@ -52,11 +52,14 @@ public:
         u32 number;
         TrackType type;
         u32 sector_size;
-        GG_CdRomMSF start_msf;
-        GG_CdRomMSF end_msf;
-        u32 start_lba;
-        u32 end_lba;
         u32 sector_count;
+        u32 start_lba;
+        GG_CdRomMSF start_msf;
+        u32 end_lba;
+        GG_CdRomMSF end_msf;
+        bool has_lead_in;
+        u32 lead_in_lba;
+        GG_CdRomMSF lead_in_msf;
         ImgFile* img_file;
     };
 

@@ -423,6 +423,26 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
             current_track.sector_size = GetTrackSectorSize(current_track.type);
         }
+        else if (lowercase_line.find("pregap") == 0)
+        {
+            int minutes = 0, seconds = 0, frames = 0;
+            char colon1, colon2;
+            istringstream pregap_stream(line.substr(6));
+            if (!(pregap_stream >> minutes >> colon1 >> seconds >> colon2 >> frames) ||
+                colon1 != ':' || colon2 != ':' ||
+                minutes < 0 || seconds < 0 || frames < 0 ||
+                seconds >= 60 || frames >= 75)
+            {
+                Log("ERROR: Invalid time format in PREGAP entry");
+                continue;
+            }
+            current_track.lead_in_msf.minutes = minutes;
+            current_track.lead_in_msf.seconds = seconds;
+            current_track.lead_in_msf.frames = frames;
+            current_track.lead_in_lba = MsfToLba(&current_track.lead_in_msf);
+            current_track.has_lead_in = true;
+            Debug("Track %d pregap at %02d:%02d:%02d", current_track.number, minutes, seconds, frames);
+        }
         else if (lowercase_line.find("index") == 0)
         {
             if (!in_track)
@@ -435,20 +455,27 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
             istringstream index_stream(line.substr(5));
             index_stream >> index_number;
 
-            if (index_number == 1)
+            int minutes = 0, seconds = 0, frames = 0;
+            char colon1, colon2;
+
+            if (!(index_stream >> minutes >> colon1 >> seconds >> colon2 >> frames) ||
+                colon1 != ':' || colon2 != ':' ||
+                minutes < 0 || seconds < 0 || frames < 0 ||
+                seconds >= 60 || frames >= 75)
             {
-                int minutes = 0, seconds = 0, frames = 0;
-                char colon1, colon2;
+                Log("ERROR: Invalid time format in INDEX entry");
+                continue;
+            }
 
-                if (!(index_stream >> minutes >> colon1 >> seconds >> colon2 >> frames) ||
-                    colon1 != ':' || colon2 != ':' ||
-                    minutes < 0 || seconds < 0 || frames < 0 ||
-                    seconds >= 60 || frames >= 75)
-                {
-                    Log("ERROR: Invalid time format in INDEX entry");
-                    continue;
-                }
+            if (index_number == 0) {
+                current_track.lead_in_msf.minutes = minutes;
+                current_track.lead_in_msf.seconds = seconds;
+                current_track.lead_in_msf.frames = frames;
+                current_track.lead_in_lba = MsfToLba(&current_track.lead_in_msf);
+                current_track.has_lead_in = true;
 
+                Debug("Track %d lead-in at %02d:%02d:%02d", current_track.number, minutes, seconds, frames);
+            } else if (index_number == 1) {
                 current_track.start_msf.minutes = minutes;
                 current_track.start_msf.seconds = seconds;
                 current_track.start_msf.frames = frames;
@@ -466,7 +493,11 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
     {
         if ((i + 1) < m_tracks.size())
         {
-            m_tracks[i].sector_count = m_tracks[i + 1].start_lba - m_tracks[i].start_lba;
+            if (m_tracks[i + 1].has_lead_in)
+                m_tracks[i].sector_count = m_tracks[i + 1].lead_in_lba - m_tracks[i].start_lba;
+            else
+                m_tracks[i].sector_count = m_tracks[i + 1].start_lba - m_tracks[i].start_lba;
+
             m_tracks[i].end_lba = m_tracks[i].start_lba + m_tracks[i].sector_count - 1;
             LbaToMsf(m_tracks[i].end_lba, &m_tracks[i].end_msf);
         }
@@ -474,14 +505,25 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
         {
             if (IsValidPointer(m_tracks[i].img_file))
             {
-                u32 prev_sectors_size = 0;
+                u32 prev_bytes = 0;
                 for (size_t j = 0; j < i; j++)
+                {
                     if (m_tracks[j].img_file == m_tracks[i].img_file)
-                        prev_sectors_size += m_tracks[j].sector_count * GetTrackSectorSize(m_tracks[j].type);
+                        prev_bytes += m_tracks[j].sector_count * m_tracks[j].sector_size;
+                }
 
-                u32 last_track_size = m_tracks[i].img_file->file_size - prev_sectors_size;
+                u32 pregap_bytes = 0;
+                for (size_t j = 0; j < i; j++)
+                {
+                    if (m_tracks[j].img_file == m_tracks[i].img_file && m_tracks[j].has_lead_in)
+                    {
+                        u32 pregap_sectors = m_tracks[j].start_lba - m_tracks[j].lead_in_lba;
+                        pregap_bytes += pregap_sectors * m_tracks[j].sector_size;
+                    }
+                }
 
-                m_tracks[i].sector_count = last_track_size / m_tracks[i].sector_size;
+                u32 usable_bytes = m_tracks[i].img_file->file_size - prev_bytes - pregap_bytes;
+                m_tracks[i].sector_count = usable_bytes / m_tracks[i].sector_size;
                 m_tracks[i].end_lba = m_tracks[i].start_lba + m_tracks[i].sector_count - 1;
                 LbaToMsf(m_tracks[i].end_lba, &m_tracks[i].end_msf);
             }
