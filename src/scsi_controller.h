@@ -20,10 +20,8 @@
 #ifndef SCSI_CONTROLLER_H
 #define SCSI_CONTROLLER_H
 
+#include <vector>
 #include "common.h"
-
-#define SCSI_COMMAND_BUFFER_SIZE 12
-#define SCSI_DATA_BUFFER_SIZE 2352
 
 class CdRomMedia;
 
@@ -32,22 +30,21 @@ class ScsiController
 public:
     enum ScsiSignal
     {
-        SCSI_SIGNAL_BSY,
-        SCSI_SIGNAL_SEL,
-        SCSI_SIGNAL_CD,
-        SCSI_SIGNAL_IO,
-        SCSI_SIGNAL_MSG,
-        SCSI_SIGNAL_REQ,
-        SCSI_SIGNAL_ACK,
-        SCSI_SIGNAL_ATN,
-        SCSI_SIGNAL_RST,
-        SCSI_SIGNAL_COUNT
+        SCSI_SIGNAL_BSY = 0x80,
+        SCSI_SIGNAL_SEL = 0x01,
+        SCSI_SIGNAL_CD = 0x10,
+        SCSI_SIGNAL_IO = 0x08,
+        SCSI_SIGNAL_MSG = 0x20,
+        SCSI_SIGNAL_REQ = 0x40,
+        SCSI_SIGNAL_ACK = 0x02,
+        SCSI_SIGNAL_ATN = 0x04,
+        SCSI_SIGNAL_RST = 0x100
     };
 
     struct ScsiBus
     {
         u8 db;
-        bool signals[SCSI_SIGNAL_COUNT];
+        u16 signals;
     };
 
     enum ScsiPhase
@@ -74,6 +71,13 @@ public:
         SCSI_CMD_READ_TOC = 0xDE
     };
 
+    enum ScsiEvent
+    {
+        SCSI_EVENT_NONE,
+        SCSI_EVENT_SET_COMMAND_PHASE,
+        SCSI_EVENT_SET_REQ_SIGNAL,
+    };
+
 public:
     ScsiController(CdRomMedia* cdrom_media);
     ~ScsiController();
@@ -83,54 +87,48 @@ public:
     u8 ReadData();
     void WriteData(u8 value);
     u8 GetStatus();
-    void SetSignal(ScsiSignal signal);
-    void ClearSignal(ScsiSignal signal);
+    void SetSignal(u16 signals);
+    void ClearSignal(u16 signals);
     bool IsSignalSet(ScsiSignal signal);
+    void StartSelection();
+    void BusChange();
 
 private:
-    // Interno: ejecuta el comando cuando buffer está lleno
+    void SetPhase(ScsiPhase phase);
+    void SetEvent(ScsiEvent event, u32 cycles);
+    void UpdateCommandPhase();
+    void UpdateDataInPhase();
     void ExecuteCommand();
-
-    // Helpers para los comandos clásicos (TEST UNIT READY, REQUEST SENSE, READ, etc.)
     void CommandTestUnitReady();
     void CommandRequestSense();
     void CommandRead();
-    void CommandVendor(u8 opcode);
     u8 CommandLength(ScsiCommand command);
 
 private:
     CdRomMedia* m_cdrom_media;
     ScsiBus m_bus;
     ScsiPhase m_phase;
-
-    u8 m_command_buffer[SCSI_COMMAND_BUFFER_SIZE];
-    // Buffer de comandos recibidos
-    u8 m_command_index;
-    u8 m_command_length;
-
-    // Buffer de datos que va devolviendo el SCSI (lectura de sectores, info, etc)
-    u8* m_data_buffer;
-    u32 m_data_length;
-    u32 m_data_index;
-
+    ScsiEvent m_next_event;
+    u32 m_next_event_cycles;
+    std::vector<u8> m_command_buffer;
     u32 m_read_current_lba = 0;
     u16 m_read_sectors_remaining = 0;
     u32 m_read_sector_offset = 0;
 };
 
-INLINE void ScsiController::SetSignal(ScsiSignal signal)
+INLINE void ScsiController::SetSignal(u16 signals)
 {
-    m_bus.signals[signal] = true;
+    m_bus.signals |= signals;
 }
 
-INLINE void ScsiController::ClearSignal(ScsiSignal signal)
+INLINE void ScsiController::ClearSignal(u16 signals)
 {
-    m_bus.signals[signal] = false;
+    m_bus.signals &= ~signals;
 }
 
 INLINE bool ScsiController::IsSignalSet(ScsiSignal signal)
 {
-    return m_bus.signals[signal];
+    return (m_bus.signals & signal) != 0;
 }
 
 #endif /* SCSI_CONTROLLER_H */

@@ -59,7 +59,7 @@ u8 CdRom::ReadRegister(u16 address)
         case 0x02:
             // IRQs
             //Debug("CDROM Read IRQs %02X", reg);
-            return 0x00;
+            return 0x00 | (m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_ACK) ? 0x80 : 0x00);
         case 0x03:
             // BRAM Lock
             Debug("CDROM Read BRAM Lock %02X", reg);
@@ -121,17 +121,26 @@ void CdRom::WriteRegister(u16 address, u8 value)
         case 0x00:
             // SCSI control
             Debug("CDROM Write SCSI control %02X, value: %02X", reg, value);
-            //m_scsi_controller->SetSignal((ScsiSignal)value);
+            m_scsi_controller->StartSelection();
             break;
         case 0x01:
             // SCSI command
             Debug("CDROM Write SCSI command %02X, value: %02X", reg, value);
             m_scsi_controller->WriteData(value);
+            m_scsi_controller->BusChange();
             break;
         case 0x02:
+        {
             // ACK
             Debug("CDROM Write ACK %02X, value: %02X", reg, value);
+            bool ack = (value & 0x80) != 0;
+            if (ack)
+                m_scsi_controller->SetSignal(ScsiController::SCSI_SIGNAL_ACK);
+            else
+                m_scsi_controller->ClearSignal(ScsiController::SCSI_SIGNAL_ACK);
+            m_scsi_controller->BusChange();
             break;
+        }
         case 0x04:
             // Reset
             Debug("CDROM Write Reset %02X, value: %02X", reg, value);
