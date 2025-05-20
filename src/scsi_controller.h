@@ -76,6 +76,20 @@ public:
         SCSI_EVENT_NONE,
         SCSI_EVENT_SET_COMMAND_PHASE,
         SCSI_EVENT_SET_REQ_SIGNAL,
+        SCSI_SET_GOOD_STATUS,
+    };
+
+    enum ScsiStatus
+    {
+        SCSI_STATUS_GOOD = 0x00,
+        SCSI_STATUS_CHECK_CONDITION = 0x02,
+        SCSI_STATUS_CONDITION_MET = 0x04,
+        SCSI_STATUS_BUSY = 0x08,
+        SCSI_STATUS_INTERMEDIATE = 0x10,
+        SCSI_STATUS_INTERMEDIATE_CONDITION_MET = 0x14,
+        SCSI_STATUS_RESERVATION_CONFLICT = 0x18,
+        SCSI_STATUS_COMMAND_TERMINATED = 0x22,
+        SCSI_STATUS_QUEUE_FULL = 0x28
     };
 
 public:
@@ -91,6 +105,7 @@ public:
     void ClearSignal(u16 signals);
     bool IsSignalSet(ScsiSignal signal);
     void StartSelection();
+    void StartStatus(ScsiStatus status, u8 length = 1);
     void BusChange();
 
 private:
@@ -98,22 +113,38 @@ private:
     void SetEvent(ScsiEvent event, u32 cycles);
     void UpdateCommandPhase();
     void UpdateDataInPhase();
+    void UpdateStatusPhase();
+    void UpdateMessageInPhase();
     void ExecuteCommand();
     void CommandTestUnitReady();
     void CommandRequestSense();
     void CommandRead();
     u8 CommandLength(ScsiCommand command);
+    u32 TimeToCycles(u32 us);
 
 private:
     CdRomMedia* m_cdrom_media;
     ScsiBus m_bus;
     ScsiPhase m_phase;
     ScsiEvent m_next_event;
-    u32 m_next_event_cycles;
+    s32 m_next_event_cycles;
     std::vector<u8> m_command_buffer;
+    std::vector<u8> m_data_buffer;
+    u32 m_data_buffer_offset = 0;
     u32 m_read_current_lba = 0;
     u16 m_read_sectors_remaining = 0;
     u32 m_read_sector_offset = 0;
+};
+
+static const char* k_scsi_phase_names[] = {
+    "BUS FREE",
+    "SELECTION",
+    "MESSAGE OUT",
+    "COMMAND",
+    "DATA IN",
+    "DATA OUT",
+    "MESSAGE IN",
+    "STATUS"
 };
 
 INLINE void ScsiController::SetSignal(u16 signals)
@@ -129,6 +160,12 @@ INLINE void ScsiController::ClearSignal(u16 signals)
 INLINE bool ScsiController::IsSignalSet(ScsiSignal signal)
 {
     return (m_bus.signals & signal) != 0;
+}
+
+INLINE u32 ScsiController::TimeToCycles(u32 us)
+{
+    // Convert microseconds to PCE master clock cycles (21.47727 MHz) using integer math
+    return (us * 21) + ((us * 47727) / 1000000);
 }
 
 #endif /* SCSI_CONTROLLER_H */

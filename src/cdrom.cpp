@@ -54,7 +54,7 @@ u8 CdRom::ReadRegister(u16 address)
             return m_scsi_controller->GetStatus();
         case 0x01:
             // SCSI get data
-            Debug("CDROM Read SCSI get data %02X", reg);
+            //Debug("CDROM Read SCSI get data %02X", reg);
             return m_scsi_controller->ReadData();
         case 0x02:
             // IRQs
@@ -125,7 +125,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
             break;
         case 0x01:
             // SCSI command
-            Debug("CDROM Write SCSI command %02X, value: %02X", reg, value);
+            //Debug("CDROM Write SCSI command %02X, value: %02X", reg, value);
             m_scsi_controller->WriteData(value);
             m_scsi_controller->BusChange();
             break;
