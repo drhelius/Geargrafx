@@ -541,29 +541,39 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
         return false;
     }
 
+    u32 file_offset = 0;
     for (size_t i = 0; i < m_tracks.size(); i++)
     {
         const Track& track = m_tracks[i];
+        u32 sector_size = track.sector_size;
         u32 start = track.start_lba;
         u32 end = start + track.sector_count;
 
         if (lba >= start && lba < end)
         {
             u32 sector_offset = lba - start;
-            u32 sector_size = GetTrackSectorSize(track.type);
             ImgFile* img_file = track.img_file;
 
             if (img_file == NULL || img_file->file_size == 0)
                 return false;
 
-            u64 byte_offset = sector_offset * (u64)sector_size;
+            u64 byte_offset = file_offset + (sector_offset * sector_size);
+
+            if (sector_size == 2352)
+            {
+                byte_offset += 16;
+                sector_size = 2048;
+            }
+
             if (byte_offset + sector_size > img_file->file_size)
                 return false;
 
-            Debug("Reading sector %d from track %d (LBA: %d)", lba, track.number, byte_offset);
+            Debug("Reading sector %d from track %d (LBA: %d)", lba, i, byte_offset);
 
             return ReadFromImgFile(img_file, byte_offset, buffer, sector_size);
         }
+        else
+            file_offset += (track.sector_size * track.sector_count);
     }
 
     Debug("ERROR: ReadSector failed - LBA %d not found in any track", lba);
@@ -657,7 +667,6 @@ bool CdRomMedia::LoadChunk(ImgFile* img_file, u32 chunk_index)
     }
 
     file.close();
-    Debug("Loaded chunk %d from %s", chunk_index, img_file->file_path);
     return true;
 }
 
@@ -714,4 +723,71 @@ bool CdRomMedia::PreloadTrackChunks(u32 track_number, u32 sectors)
     u32 chunks_needed = (total_bytes + track.img_file->chunk_size - 1) / track.img_file->chunk_size;
 
     return PreloadChunks(track.img_file, start_chunk, chunks_needed);
+}
+
+///////////////////////////////////////////////////////////////
+// Seek time, based on the work by Dave Shadoff
+// https://github.com/pce-devel/PCECD_seek
+
+u32 CdRomMedia::SeekFindGroup(u32 lba)
+{
+    for (u32 i = 0; i < GG_SEEK_NUM_SECTOR_GROUPS; i++)
+        if ((lba >= k_seek_sector_list[i].sec_start) && (lba <= k_seek_sector_list[i].sec_end))
+            return i;
+    return 0;
+}
+
+u32 CdRomMedia::SeekTime(u32 start_lba, u32 end_lba)
+{
+    u32 start_index = SeekFindGroup(start_lba);
+    u32 target_index = SeekFindGroup(end_lba);
+    u32 lba_difference = (u32)std::abs((int)end_lba - (int)start_lba);
+    float track_difference = 0.0f;
+
+    // Now we find the track difference
+    //
+    // Note: except for the first and last sector groups, all groups are 1606.48 tracks per group.
+    //
+    if (target_index == start_index)
+    {
+        track_difference = (lba_difference / k_seek_sector_list[target_index].sec_per_revolution);
+    }
+    else if (target_index > start_index)
+    {
+        track_difference = (k_seek_sector_list[start_index].sec_end - start_lba) / k_seek_sector_list[start_index].sec_per_revolution;
+        track_difference += (end_lba - k_seek_sector_list[target_index].sec_start) / k_seek_sector_list[target_index].sec_per_revolution;
+        track_difference += (1606.48 * (target_index - start_index - 1));
+    }
+    else // start_index > target_index
+    {
+        track_difference = (start_lba - k_seek_sector_list[start_index].sec_start) / k_seek_sector_list[start_index].sec_per_revolution;
+        track_difference += (k_seek_sector_list[target_index].sec_end - end_lba) / k_seek_sector_list[target_index].sec_per_revolution;
+        track_difference += (1606.48 * (start_index - target_index - 1));
+    }
+
+    // Now, we use the algorithm to determine how long to wait
+    if (lba_difference < 2)
+    {
+        return (3 * 1000 / 60);
+    }
+    if (lba_difference < 5)
+    {
+        return (9 * 1000 / 60) + (float)(k_seek_sector_list[target_index].rotation_ms / 2);
+    }
+    else if (track_difference <= 80)
+    {
+        return (16 * 1000 / 60) + (float)(k_seek_sector_list[target_index].rotation_ms / 2);
+    }
+    else if (track_difference <= 160)
+    {
+        return (22 * 1000 / 60) + (float)(k_seek_sector_list[target_index].rotation_ms / 2);
+    }
+    else if (track_difference <= 644)
+    {
+        return (22 * 1000 / 60) + (float)(k_seek_sector_list[target_index].rotation_ms / 2) + (float)((track_difference - 161) * 16.66 / 80);
+    }
+    else
+    {
+        return (36 * 1000 / 60) + (float)((track_difference - 644) * 16.66 / 195);
+    }
 }

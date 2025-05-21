@@ -23,14 +23,22 @@
 ScsiController::ScsiController(CdRomMedia* cdrom_media)
 {
     m_cdrom_media = cdrom_media;
-    m_phase = SCSI_PHASE_BUS_FREE;
     m_bus.db = 0;
     m_bus.signals = 0;
+    m_phase = SCSI_PHASE_BUS_FREE;
+    m_next_event = SCSI_EVENT_NONE;
+    m_next_event_cycles = 0;
+    m_next_load_cycles = 0;
+    m_load_sector = 0;
+    m_load_sector_count = 0;
+    m_auto_ack_cycles = 0;
     m_command_buffer.clear();
     m_command_buffer.reserve(16);
     m_data_buffer.clear();
-    m_data_buffer.reserve(8192);
+    m_data_buffer.reserve(2048);
     m_data_buffer_offset = 0;
+    m_bus_changed = false;
+    m_previous_signals = 0;
 }
 
 ScsiController::~ScsiController()
@@ -44,46 +52,56 @@ void ScsiController::Init()
 
 void ScsiController::Reset()
 {
-    m_phase = SCSI_PHASE_BUS_FREE;
     m_bus.db = 0;
     m_bus.signals = 0;
+    m_phase = SCSI_PHASE_BUS_FREE;
+    m_next_event = SCSI_EVENT_NONE;
+    m_next_event_cycles = 0;
+    m_next_load_cycles = 0;
+    m_load_sector = 0;
+    m_load_sector_count = 0;
+    m_auto_ack_cycles = 0;
     m_command_buffer.clear();
     m_data_buffer.clear();
     m_data_buffer_offset = 0;
+    m_bus_changed = false;
+    m_previous_signals = 0;
 }
 
 void ScsiController::Clock(u32 cycles)
 {
+    if (m_auto_ack_cycles > 0)
+    {
+        m_auto_ack_cycles -= cycles;
+        if (m_auto_ack_cycles <= 0)
+        {
+            m_auto_ack_cycles = 0;
+            ClearSignal(SCSI_SIGNAL_ACK);
+        }
+    }
+
     if (m_next_event != SCSI_EVENT_NONE)
     {
         m_next_event_cycles -= cycles;
         if (m_next_event_cycles <= 0)
         {
-            switch (m_next_event)
-            {
-                case SCSI_EVENT_SET_COMMAND_PHASE:
-                    Debug("SCSI Event Set command phase");
-                    NextEvent(SCSI_EVENT_NONE, 0);
-                    SetPhase(SCSI_PHASE_COMMAND);
-                    break;
-                case SCSI_EVENT_SET_REQ_SIGNAL:
-                    Debug("SCSI Event Set REQ signal");
-                    NextEvent(SCSI_EVENT_NONE, 0);
-                    SetSignal(SCSI_SIGNAL_REQ);
-                    break;
-                case SCSI_EVENT_SET_GOOD_STATUS:
-                    Debug("SCSI Event Set good status");
-                    NextEvent(SCSI_EVENT_NONE, 0);
-                    StartStatus(SCSI_STATUS_GOOD);
-                    break;
-                case SCSI_EVENT_SET_DATA_IN_PHASE:
-                    Debug("SCSI Event Set data in phase");
-                    NextEvent(SCSI_EVENT_NONE, 0);
-                    SetPhase(SCSI_PHASE_DATA_IN);
-                    break;
-                default:
-                    break;
-            }
+            RunEvent();
+        }
+    }
+
+    if (m_bus_changed)
+    {
+        m_bus_changed = false;
+        UpdateScsi();
+    }
+
+    if (m_next_load_cycles > 0)
+    {
+        m_next_load_cycles -= cycles;
+        if (m_next_load_cycles <= 0)
+        {
+            m_next_load_cycles = 0;
+            LoadSector();
         }
     }
 }
@@ -126,7 +144,6 @@ void ScsiController::SetPhase(ScsiPhase phase)
             break;
         case SCSI_PHASE_DATA_IN:
             SetSignal(SCSI_SIGNAL_BSY | SCSI_SIGNAL_IO);
-            BusChange();
             break;
         case SCSI_PHASE_MESSAGE_IN:
             SetSignal(SCSI_SIGNAL_BSY | SCSI_SIGNAL_CD | SCSI_SIGNAL_IO | SCSI_SIGNAL_MSG | SCSI_SIGNAL_REQ);
@@ -145,9 +162,39 @@ void ScsiController::NextEvent(ScsiEvent event, u32 cycles)
     m_next_event_cycles = cycles;
 }
 
-void ScsiController::BusChange()
+void ScsiController::RunEvent()
 {
-    Debug("SCSI Bus change: %02X %02X", m_bus.signals, m_bus.db);
+    switch (m_next_event)
+    {
+        case SCSI_EVENT_SET_COMMAND_PHASE:
+            Debug("SCSI Event Set command phase");
+            NextEvent(SCSI_EVENT_NONE, 0);
+            SetPhase(SCSI_PHASE_COMMAND);
+            break;
+        case SCSI_EVENT_SET_REQ_SIGNAL:
+            Debug("SCSI Event Set REQ signal");
+            NextEvent(SCSI_EVENT_NONE, 0);
+            SetSignal(SCSI_SIGNAL_REQ);
+            break;
+        case SCSI_EVENT_SET_GOOD_STATUS:
+            Debug("SCSI Event Set good status");
+            NextEvent(SCSI_EVENT_NONE, 0);
+            StartStatus(SCSI_STATUS_GOOD);
+            break;
+        case SCSI_EVENT_SET_DATA_IN_PHASE:
+            Debug("SCSI Event Set data in phase");
+            NextEvent(SCSI_EVENT_NONE, 0);
+            SetPhase(SCSI_PHASE_DATA_IN);
+            break;
+        default:
+            break;
+    }
+}
+
+void ScsiController::UpdateScsi()
+{
+    //Debug(">>>> SCSI UPDATE: %02X %02X <<<<----------------------", m_bus.signals, m_bus.db);
+
     switch (m_phase)
     {
         case SCSI_PHASE_COMMAND:
@@ -235,15 +282,16 @@ void ScsiController::UpdateDataInPhase()
         {
             m_bus.db = m_data_buffer[m_data_buffer_offset];
             m_data_buffer_offset++;
-            Debug("SCSI Data in phase data %02X", m_bus.db);
+            //Debug("SCSI Data in phase data %02X", m_bus.db);
             SetSignal(SCSI_SIGNAL_REQ);
         }
         else
         {
-            // multiple sectors here
-
-            // 150us delay
-            NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(150));
+            if (m_load_sector_count == 0)
+            {
+                // 150us delay
+                NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(150));
+            }
         }
     }
 }
@@ -352,11 +400,19 @@ void ScsiController::CommandRead()
     if (count == 0)
     {
         Debug("SCSI CMD Read: count is 0");
-        SetPhase(SCSI_PHASE_STATUS);
-        m_bus.db = 0x00; // Good
+        StartStatus(SCSI_STATUS_GOOD);
+        return;
     }
 
-    //m_cdrom_media->ReadSector(m_read_current_lba, m_data_buffer)
+    u32 current_lba = 0;//m_cdrom_media->GetCurrentSector();
+    u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
+    u32 seek_cycles = TimeToCycles(seek_time * 1000);
+    u32 transfer_time = m_cdrom_media->SectorTransferTime();
+    u32 transfer_cycles = TimeToCycles(transfer_time * 1000);
+
+    m_next_load_cycles = seek_cycles + transfer_cycles;
+    m_load_sector = lba;
+    m_load_sector_count = count;
 
     SetPhase(SCSI_PHASE_DATA_IN);
 }
@@ -408,6 +464,7 @@ void ScsiController::CommandReadTOC()
             Debug("Mode: Number of tracks");
             u8 buffer[buffer_size] = { 0x01, 0x00, 0x00, 0x00 };
             buffer[1] = DecToBcd((u8)m_cdrom_media->GetTracks().size());
+            Debug("Number of tracks: %d", m_cdrom_media->GetTracks().size());
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
             // 420us delay
@@ -418,10 +475,13 @@ void ScsiController::CommandReadTOC()
         {
             Debug("Mode: Disc length");
             u8 buffer[buffer_size] = { 0x00, 0x00, 0x00, 0x00 };
-            GG_CdRomMSF length = m_cdrom_media->GetCdRomLength();
-            buffer[0] = DecToBcd(length.minutes);
-            buffer[1] = DecToBcd(length.seconds);
-            buffer[2] = DecToBcd(length.frames);
+            u32 length = m_cdrom_media->GetCdRomLengthLba() + 150;
+            Debug("Disc length: %d", length);
+            GG_CdRomMSF length_msf = { 0, 0, 0 };
+            LbaToMsf(length, &length_msf);
+            buffer[0] = DecToBcd(length_msf.minutes);
+            buffer[1] = DecToBcd(length_msf.seconds);
+            buffer[2] = DecToBcd(length_msf.frames);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
             // 420us delay
@@ -431,7 +491,7 @@ void ScsiController::CommandReadTOC()
         case 0x02:
         {
             u8 track = BcdToDec(m_command_buffer[2]);
-            Debug("Mode: Track %d information", track);
+            Debug("Mode: Track %d start", track);
 
             if (track == 0)
                 track = 1;
@@ -449,8 +509,11 @@ void ScsiController::CommandReadTOC()
             }
             else
             {
-                start_msf = m_cdrom_media->GetTracks()[track - 1].start_msf;
+                u32 start_lba = m_cdrom_media->GetTracks()[track - 1].start_lba + 150;
+                LbaToMsf(start_lba, &start_msf);
             }
+
+            Debug("Track %d start: %d", track, MsfToLba(&start_msf));
             u8 buffer[buffer_size] = { 0x00, 0x00, 0x00, 0x00 };
             buffer[0] = DecToBcd(start_msf.minutes);
             buffer[1] = DecToBcd(start_msf.seconds);
@@ -485,4 +548,25 @@ u8 ScsiController::CommandLength(ScsiCommand command)
         default:
             return 0;
     }
+}
+
+void ScsiController::LoadSector()
+{
+    m_data_buffer.resize(2048);
+    m_cdrom_media->ReadSector(m_load_sector, m_data_buffer.data());
+
+    Debug("SCSI Load sector %d", m_load_sector);
+
+    m_data_buffer_offset = 0;
+    m_load_sector++;
+    m_load_sector &= 0x1FFFFF;
+    m_load_sector_count--;
+
+    if (m_load_sector_count == 0)
+        m_next_load_cycles = 0;
+    else
+        m_next_load_cycles = TimeToCycles(m_cdrom_media->SectorTransferTime() * 1000);
+
+    //SetSignal(SCSI_SIGNAL_REQ);
+    m_bus_changed = true;
 }
