@@ -285,6 +285,9 @@
     <ClInclude Include="..\..\src\cdrom_media.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_media_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\cdrom.h">
       <Filter>src</Filter>
     </ClInclude>

@@ -77,36 +77,6 @@ void CdRomMedia::Reset()
     m_img_files.clear();
 }
 
-bool CdRomMedia::IsReady()
-{
-    return m_ready;
-}
-
-const char* CdRomMedia::GetFilePath()
-{
-    return m_file_path;
-}
-
-const char* CdRomMedia::GetFileDirectory()
-{
-    return m_file_directory;
-}
-
-const char* CdRomMedia::GetFileName()
-{
-    return m_file_name;
-}
-
-const char* CdRomMedia::GetFileExtension()
-{
-    return m_file_extension;
-}
-
-const std::vector<CdRomMedia::Track>& CdRomMedia::GetTracks()
-{
-    return m_tracks;
-}
-
 bool CdRomMedia::LoadCueFromFile(const char* path)
 {
     using namespace std;
@@ -425,23 +395,23 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
         }
         else if (lowercase_line.find("pregap") == 0)
         {
-            int minutes = 0, seconds = 0, frames = 0;
+            int m = 0, s = 0, f = 0;
             char colon1, colon2;
             istringstream pregap_stream(line.substr(6));
-            if (!(pregap_stream >> minutes >> colon1 >> seconds >> colon2 >> frames) ||
+            if (!(pregap_stream >> m >> colon1 >> s >> colon2 >> f) ||
                 colon1 != ':' || colon2 != ':' ||
-                minutes < 0 || seconds < 0 || frames < 0 ||
-                seconds >= 60 || frames >= 75)
+                m < 0 || s < 0 || f < 0 || s >= 60 || f >= 75 || m > 99)
             {
                 Log("ERROR: Invalid time format in PREGAP entry");
                 continue;
             }
-            current_track.lead_in_msf.minutes = minutes;
-            current_track.lead_in_msf.seconds = seconds;
-            current_track.lead_in_msf.frames = frames;
+
+            current_track.lead_in_msf.minutes = (u8)m;
+            current_track.lead_in_msf.seconds = (u8)s;
+            current_track.lead_in_msf.frames = (u8)f;
             current_track.lead_in_lba = MsfToLba(&current_track.lead_in_msf);
             current_track.has_lead_in = true;
-            Debug("Track %d pregap at %02d:%02d:%02d", current_track.number, minutes, seconds, frames);
+            Debug("Track %d pregap at %02d:%02d:%02d", current_track.number, m, s, f);
         }
         else if (lowercase_line.find("index") == 0)
         {
@@ -455,33 +425,32 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
             istringstream index_stream(line.substr(5));
             index_stream >> index_number;
 
-            int minutes = 0, seconds = 0, frames = 0;
+            int m = 0, s = 0, f = 0;
             char colon1, colon2;
 
-            if (!(index_stream >> minutes >> colon1 >> seconds >> colon2 >> frames) ||
+            if (!(index_stream >> m >> colon1 >> s >> colon2 >> f) ||
                 colon1 != ':' || colon2 != ':' ||
-                minutes < 0 || seconds < 0 || frames < 0 ||
-                seconds >= 60 || frames >= 75)
+                m < 0 || s < 0 || f < 0 || s >= 60 || f >= 75 || m > 99)
             {
                 Log("ERROR: Invalid time format in INDEX entry");
                 continue;
             }
 
             if (index_number == 0) {
-                current_track.lead_in_msf.minutes = minutes;
-                current_track.lead_in_msf.seconds = seconds;
-                current_track.lead_in_msf.frames = frames;
+                current_track.lead_in_msf.minutes = (u8)m;
+                current_track.lead_in_msf.seconds = (u8)s;
+                current_track.lead_in_msf.frames = (u8)f;
                 current_track.lead_in_lba = MsfToLba(&current_track.lead_in_msf);
                 current_track.has_lead_in = true;
 
-                Debug("Track %d lead-in at %02d:%02d:%02d", current_track.number, minutes, seconds, frames);
+                Debug("Track %d lead-in at %02d:%02d:%02d", current_track.number, m, s, f);
             } else if (index_number == 1) {
-                current_track.start_msf.minutes = minutes;
-                current_track.start_msf.seconds = seconds;
-                current_track.start_msf.frames = frames;
+                current_track.start_msf.minutes = (u8)m;
+                current_track.start_msf.seconds = (u8)s;
+                current_track.start_msf.frames = (u8)f;
                 current_track.start_lba = MsfToLba(&current_track.start_msf);
 
-                Debug("Track %d starts at %02d:%02d:%02d", current_track.number, minutes, seconds, frames);
+                Debug("Track %d starts at %02d:%02d:%02d", current_track.number, m, s, f);
             }
         }
     }
@@ -541,6 +510,26 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
     }
 
     Log("Successfully parsed CUE file with %d tracks", m_tracks.size());
+
+    if (m_tracks.empty())
+    {
+        m_cdrom_length = {0, 0, 0};
+        m_cdrom_length_lba = 0;
+        m_sector_count = 0;
+    }
+    else
+    {
+        m_cdrom_length_lba = m_tracks.back().end_lba + 1;
+        LbaToMsf(m_cdrom_length_lba, &m_cdrom_length);
+        m_sector_count = 0;
+        for (size_t i = 0; i < m_tracks.size(); i++)
+            m_sector_count += m_tracks[i].sector_count;
+    }
+
+    Debug("CD-ROM length: %02d:%02d:%02d, Total sectors: %d",
+        m_cdrom_length.minutes, m_cdrom_length.seconds, m_cdrom_length.frames,
+        m_cdrom_length_lba);
+
     return !m_tracks.empty();
 }
 

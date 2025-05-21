@@ -24,21 +24,31 @@
 
 struct GG_CdRomMSF
 {
-    u32 minutes;
-    u32 seconds;
-    u32 frames;
+    u8 minutes;
+    u8 seconds;
+    u8 frames;
 };
 
-inline void LbaToMsf(u32 lba, GG_CdRomMSF* msf)
+INLINE void LbaToMsf(u32 lba, GG_CdRomMSF* msf)
 {
-    msf->minutes = lba / 75 / 60;
-    msf->seconds = lba / 75 % 60;
-    msf->frames = lba % 75;
+    msf->minutes = (u8)(lba / 75 / 60);
+    msf->seconds = (u8)(lba / 75 % 60);
+    msf->frames = (u8)(lba % 75);
 }
 
-inline u32 MsfToLba(GG_CdRomMSF* msf)
+INLINE u32 MsfToLba(GG_CdRomMSF* msf)
 {
     return (msf->minutes * 60 + msf->seconds) * 75 + msf->frames;
+}
+
+INLINE u8 DecToBcd(u8 val)
+{
+    return ((val / 10) << 4) | (val % 10);
+}
+
+INLINE u8 BcdToDec(u8 bcd)
+{
+    return ((bcd >> 4) * 10) + (bcd & 0x0F);
 }
 
 #endif /* CDROM_COMMON_H */

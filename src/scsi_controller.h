@@ -76,7 +76,8 @@ public:
         SCSI_EVENT_NONE,
         SCSI_EVENT_SET_COMMAND_PHASE,
         SCSI_EVENT_SET_REQ_SIGNAL,
-        SCSI_SET_GOOD_STATUS,
+        SCSI_EVENT_SET_GOOD_STATUS,
+        SCSI_EVENT_SET_DATA_IN_PHASE
     };
 
     enum ScsiStatus
@@ -110,7 +111,7 @@ public:
 
 private:
     void SetPhase(ScsiPhase phase);
-    void SetEvent(ScsiEvent event, u32 cycles);
+    void NextEvent(ScsiEvent event, u32 cycles);
     void UpdateCommandPhase();
     void UpdateDataInPhase();
     void UpdateStatusPhase();
@@ -119,6 +120,11 @@ private:
     void CommandTestUnitReady();
     void CommandRequestSense();
     void CommandRead();
+    void CommandAudioStartPosition();
+    void CommandAudioStopPosition();
+    void CommandAudioPause();
+    void CommandReadSubcodeQ();
+    void CommandReadTOC();
     u8 CommandLength(ScsiCommand command);
     u32 TimeToCycles(u32 us);
 
@@ -131,9 +137,6 @@ private:
     std::vector<u8> m_command_buffer;
     std::vector<u8> m_data_buffer;
     u32 m_data_buffer_offset = 0;
-    u32 m_read_current_lba = 0;
-    u16 m_read_sectors_remaining = 0;
-    u32 m_read_sector_offset = 0;
 };
 
 static const char* k_scsi_phase_names[] = {

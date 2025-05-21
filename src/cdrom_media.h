@@ -75,7 +75,13 @@ public:
     const char* GetFileExtension();
     const std::vector<Track>& GetTracks();
     u32 GetTrackSectorSize(TrackType type);
+    u32 GetTrackSectorSize(u8 track_number);
     const char* GetTrackTypeName(TrackType type);
+    const char* GetTrackTypeName(u8 track_number);
+    u8 GetTrackCount();
+    GG_CdRomMSF GetCdRomLength();
+    u32 GetCdRomLengthLba();
+    u8 GetSectorCount();
     bool LoadCueFromFile(const char* path);
     bool LoadCueFromBuffer(const u8* buffer, int size, const char* path);
     bool ReadSector(u32 lba, u8* buffer);
@@ -98,19 +104,14 @@ private:
     char m_file_extension[512];
     std::vector<Track> m_tracks;
     std::vector<ImgFile*> m_img_files;
+    GG_CdRomMSF m_cdrom_length;
+    u32 m_cdrom_length_lba;
+    u32 m_sector_count;
 };
 
 static const u32 k_cdrom_track_type_size[3] = { 2352, 2048, 2352};
 static const char* k_cdrom_track_type_name[3] = { "AUDIO", "MODE1/2048", "MODE1/2352" }; 
 
-INLINE u32 CdRomMedia::GetTrackSectorSize(CdRomMedia::TrackType type)
-{
-    return k_cdrom_track_type_size[type];
-}
-
-INLINE const char* CdRomMedia::GetTrackTypeName(CdRomMedia::TrackType type)
-{
-    return k_cdrom_track_type_name[type];
-}
+#include "cdrom_media_inline.h"
 
 #endif /* CDROM_MEDIA_H */
