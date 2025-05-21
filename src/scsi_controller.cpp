@@ -174,8 +174,8 @@ void ScsiController::StartSelection()
     // If target ID is not 0, ignore
     if (m_bus.db & 0x01)
     {
-        // 1ms delay
-        NextEvent(SCSI_EVENT_SET_COMMAND_PHASE, TimeToCycles(1000));
+        // 3ms delay
+        NextEvent(SCSI_EVENT_SET_COMMAND_PHASE, TimeToCycles(3000));
     }
 }
 
@@ -217,8 +217,8 @@ void ScsiController::UpdateCommandPhase()
         else
         {
             Debug("SCSI Command not complete %02X", opcode);
-            // 50us delay
-            NextEvent(SCSI_EVENT_SET_REQ_SIGNAL, TimeToCycles(50));
+            // 150us delay
+            NextEvent(SCSI_EVENT_SET_REQ_SIGNAL, TimeToCycles(150));
         }
     }
 }
@@ -241,7 +241,9 @@ void ScsiController::UpdateDataInPhase()
         else
         {
             // multiple sectors here
-            NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(50));
+
+            // 150us delay
+            NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(150));
         }
     }
 }
@@ -327,8 +329,8 @@ void ScsiController::CommandTestUnitReady()
     Debug("SCSI CMD Test Unit Ready");
     Debug("******");
 
-    // 7ms delay
-    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(7000));
+    // 21ms delay
+    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(21000));
 }
 
 void ScsiController::CommandRequestSense()
@@ -408,8 +410,8 @@ void ScsiController::CommandReadTOC()
             buffer[1] = DecToBcd((u8)m_cdrom_media->GetTracks().size());
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
-            // 140us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(140));
+            // 420us delay
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(420));
             break;
         }
         case 0x01:
@@ -422,8 +424,8 @@ void ScsiController::CommandReadTOC()
             buffer[2] = DecToBcd(length.frames);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
-            // 140us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(140));
+            // 420us delay
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(420));
             break;
         }
         case 0x02:
@@ -456,8 +458,8 @@ void ScsiController::CommandReadTOC()
             buffer[3] = type;
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
-            // 140us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(140));
+            // 420us delay
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(420));
             break;
         }
         default:
