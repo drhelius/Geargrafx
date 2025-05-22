@@ -62,8 +62,11 @@ void HuC6202::Reset(bool is_sgx)
     m_vdc2_selected = false;
     m_irq1_1 = false;
     m_irq1_2 = false;
-    WriteRegister(8, 0x11);
-    WriteRegister(9, 0x11);
+    if (m_is_sgx)
+    {
+        WriteRegister(8, 0x11);
+        WriteRegister(9, 0x11);
+    }
 }
 
 void HuC6202::CalculatePriorityMode(HuC6202_Window_Mode window_mode, u8 value)
