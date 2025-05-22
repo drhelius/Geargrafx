@@ -23,7 +23,9 @@
 #include <vector>
 #include "common.h"
 
+class CdRom;
 class CdRomMedia;
+class HuC6280;
 
 class ScsiController
 {
@@ -96,8 +98,8 @@ public:
 public:
     ScsiController(CdRomMedia* cdrom_media);
     ~ScsiController();
-    void Init();
-    void Reset();
+    void Init(HuC6280* huc6280, CdRom* cdrom);
+    void Reset(bool keep_rst_signal = false);
     void Clock(u32 cycles);
     u8 ReadData();
     void WriteData(u8 value);
@@ -114,6 +116,7 @@ private:
     void SetPhase(ScsiPhase phase);
     void NextEvent(ScsiEvent event, u32 cycles);
     void RunEvent();
+    void UpdateIRQs();
     void UpdateCommandPhase();
     void UpdateDataInPhase();
     void UpdateStatusPhase();
@@ -132,6 +135,8 @@ private:
     u32 TimeToCycles(u32 us);
 
 private:
+    HuC6280* m_huc6280;
+    CdRom* m_cdrom;
     CdRomMedia* m_cdrom_media;
     ScsiBus m_bus;
     ScsiPhase m_phase;
@@ -194,6 +199,7 @@ INLINE void ScsiController::AutoAck()
 {
     if (IsSignalSet(SCSI_SIGNAL_REQ) && IsSignalSet(SCSI_SIGNAL_IO) && !IsSignalSet(SCSI_SIGNAL_CD))
     {
+        Debug("SCSI Auto ACK (set)");
         SetSignal(SCSI_SIGNAL_ACK);
         m_auto_ack_cycles = 21;
     }

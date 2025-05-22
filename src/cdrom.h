@@ -24,7 +24,14 @@
 #include <fstream>
 #include "common.h"
 
+#define CDROM_IRQ_ADPCM             0x04
+#define CDROM_IRQ_STOP              0x08
+#define CDROM_IRQ_STATUS_AND_MSG_IN 0x20
+#define CDROM_IRQ_DATA_IN           0x40
+
 class ScsiController;
+class HuC6280;
+class Memory;
 
 class CdRom
 {
@@ -37,18 +44,29 @@ public:
 public:
     CdRom(ScsiController* scsi_controller);
     ~CdRom();
-    void Init();
+    void Init(HuC6280* huc6280, Memory* memory);
     void Reset();
     void Clock(u32 cycles);
     u8 ReadRegister(u16 address);
     void WriteRegister(u16 address, u8 value);
+    void SetIRQ(u8 value);
+    void ClearIRQ(u8 value);
     CdRom_State* GetState();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
 private:
+    void AssertIRQ2();
+
+private:
     CdRom_State m_state;
     ScsiController* m_scsi_controller;
+    HuC6280* m_huc6280;
+    Memory* m_memory;
+    u8 m_reset;
+    bool m_bram_enabled;
+    u8 m_active_irqs;
+    u8 m_enabled_irqs;
 
 };
 

@@ -33,6 +33,9 @@ CdRomMedia::CdRomMedia()
     m_file_directory[0] = 0;
     m_file_name[0] = 0;
     m_file_extension[0] = 0;
+    m_cdrom_length = {0, 0, 0};
+    m_cdrom_length_lba = 0;
+    m_sector_count = 0;
 }
 
 CdRomMedia::~CdRomMedia()
@@ -75,6 +78,9 @@ void CdRomMedia::Reset()
     m_file_extension[0] = 0;
     m_tracks.clear();
     m_img_files.clear();
+    m_cdrom_length = {0, 0, 0};
+    m_cdrom_length_lba = 0;
+    m_sector_count = 0;
 }
 
 bool CdRomMedia::LoadCueFromFile(const char* path)

@@ -19,23 +19,37 @@
 
 #include "cdrom.h"
 #include "scsi_controller.h"
+#include "huc6280.h"
+#include "memory.h"
 
 CdRom::CdRom(ScsiController* scsi_controller)
 {
     m_scsi_controller = scsi_controller;
+    InitPointer(m_memory);
+    m_reset = 0;
+    m_bram_enabled = false;
+    m_active_irqs = 0;
+    m_enabled_irqs = 0;
 }
 
 CdRom::~CdRom()
 {
 }
 
-void CdRom::Init()
+void CdRom::Init(HuC6280* huc6280, Memory* memory)
 {
+    m_huc6280 = huc6280;
+    m_memory = memory;
     Reset();
 }
 
 void CdRom::Reset()
 {
+    m_reset = 0;
+    m_bram_enabled = true;
+    m_active_irqs = 0;
+    m_enabled_irqs = 0;
+    m_memory->UpdateBackupRam(m_bram_enabled);
 }
 
 void CdRom::Clock(u32 cycles)
@@ -53,21 +67,29 @@ u8 CdRom::ReadRegister(u16 address)
             //Debug("CDROM Read SCSI get status %02X", reg);
             return m_scsi_controller->GetStatus();
         case 0x01:
+        {
             // SCSI get data
-            //Debug("CDROM Read SCSI get data %02X", reg);
-            return m_scsi_controller->ReadData();
+            u8 ret = m_scsi_controller->ReadData();
+            Debug("CDROM Read %02X SCSI get data: %02X", reg, ret);
+            return ret;
+        }
         case 0x02:
             // IRQs
             //Debug("CDROM Read IRQs %02X", reg);
-            return 0x00 | (m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_ACK) ? 0x80 : 0x00);
+            return (m_enabled_irqs & 0x7F) | (m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_ACK) ? 0x80 : 0x00);
         case 0x03:
+        {
             // BRAM Lock
             Debug("CDROM Read BRAM Lock %02X", reg);
-            return 0x00;
+            m_bram_enabled = false;
+            m_memory->UpdateBackupRam(m_bram_enabled);
+            u8 ret = m_active_irqs | 0x10;
+            return ret;
+        }
         case 0x04:
             // Reset
             Debug("CDROM Read Reset %02X", reg);
-            return 0x00;
+            return m_reset;
         case 0x05:
             // Audio Sample LSB
             Debug("CDROM Read Audio Sample LSB %02X", reg);
@@ -79,12 +101,13 @@ u8 CdRom::ReadRegister(u16 address)
         case 0x07:
             // Is BRAM Locked?
             Debug("CDROM Read Is BRAM Locked? %02X", reg);
-            return 0x00;
+            return m_bram_enabled ? 0x80 : 0x00;
         case 0x08:
         {
             // SCSI get data
             //Debug("+++ CDROM Read SCSI get data %02X", reg);
             u8 ret = m_scsi_controller->ReadData();
+            Debug("CDROM Read %02X SCSI get data: %02X", reg, ret);
             m_scsi_controller->AutoAck();
             return ret;
         }
@@ -136,16 +159,26 @@ void CdRom::WriteRegister(u16 address, u8 value)
         {
             // ACK
             Debug("CDROM Write ACK %02X, value: %02X", reg, value);
-            bool ack = (value & 0x80) != 0;
-            if (ack)
+            if ((value & 0x80) != 0)
                 m_scsi_controller->SetSignal(ScsiController::SCSI_SIGNAL_ACK);
             else
                 m_scsi_controller->ClearSignal(ScsiController::SCSI_SIGNAL_ACK);
+
+            m_enabled_irqs = value & 0x7F;
+            AssertIRQ2();
             break;
         }
         case 0x04:
             // Reset
             Debug("CDROM Write Reset %02X, value: %02X", reg, value);
+            m_reset = value & 0x0F;
+            if ((value & 0x02) != 0)
+            {
+                m_scsi_controller->SetSignal(ScsiController::SCSI_SIGNAL_RST);
+                ClearIRQ(CDROM_IRQ_DATA_IN | CDROM_IRQ_STATUS_AND_MSG_IN);
+            }
+            else
+                m_scsi_controller->ClearSignal(ScsiController::SCSI_SIGNAL_RST);
             break;
         case 0x05:
             // Audio Sample
@@ -154,6 +187,8 @@ void CdRom::WriteRegister(u16 address, u8 value)
         case 0x07:
             // Is BRAM control
             Debug("CDROM Write BRAM control %02X, value: %02X", reg, value);
+            m_bram_enabled = (value & 0x80) != 0;
+            m_memory->UpdateBackupRam(m_bram_enabled);
             break;
         case 0x08:
         case 0x09:
@@ -173,6 +208,30 @@ void CdRom::WriteRegister(u16 address, u8 value)
             Debug("CDROM Write Invalid register %04X, value: %02X", reg, value);
             break;
     }
+}
+
+void CdRom::SetIRQ(u8 value)
+{
+    if (m_active_irqs & value)
+        return;
+
+    m_active_irqs |= value;
+    AssertIRQ2();
+}
+
+void CdRom::ClearIRQ(u8 value)
+{
+    if ((m_active_irqs & value) == 0)
+        return;
+
+    m_active_irqs &= ~value;
+    AssertIRQ2();
+}
+
+void CdRom::AssertIRQ2()
+{
+    bool asserted = (m_enabled_irqs & m_active_irqs);
+    m_huc6280->AssertIRQ2(asserted);
 }
 
 CdRom::CdRom_State* CdRom::GetState()

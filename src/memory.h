@@ -82,6 +82,7 @@ public:
     void EnableBackupRam(bool enable);
     bool IsBackupRamEnabled();
     bool IsBackupRamUsed();
+    void UpdateBackupRam(bool enable);
     bool LoadBios(const char* file_path, bool syscard);
     MemoryBankType GetBankType(u8 bank);
     void SaveRam(std::ostream &file);
