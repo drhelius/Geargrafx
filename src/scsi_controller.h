@@ -109,18 +109,21 @@ public:
     bool IsSignalSet(ScsiSignal signal);
     void AutoAck();
     void StartSelection();
-    void StartStatus(ScsiStatus status, u8 length = 1);
-    void UpdateScsi();
 
 private:
     void SetPhase(ScsiPhase phase);
     void NextEvent(ScsiEvent event, u32 cycles);
     void RunEvent();
+    void UpdateScsi();
+    void UpdateEvents(u32 cycles);
+    void UpdateSectorLoading(u32 cycles);
+    void UpdateAutoAck(u32 cycles);
     void UpdateIRQs();
     void UpdateCommandPhase();
     void UpdateDataInPhase();
     void UpdateStatusPhase();
     void UpdateMessageInPhase();
+    void StartStatus(ScsiStatus status, u8 length = 1);
     void ExecuteCommand();
     void CommandTestUnitReady();
     void CommandRequestSense();
@@ -148,9 +151,9 @@ private:
     s32 m_auto_ack_cycles;
     std::vector<u8> m_command_buffer;
     std::vector<u8> m_data_buffer;
-    u32 m_data_buffer_offset = 0;
-    bool m_bus_changed = false;
-    u16 m_previous_signals = 0;
+    u32 m_data_buffer_offset;
+    bool m_bus_changed;
+    u16 m_previous_signals;
 };
 
 static const char* k_scsi_phase_names[] = {
@@ -164,54 +167,6 @@ static const char* k_scsi_phase_names[] = {
     "STATUS"
 };
 
-INLINE void ScsiController::SetSignal(u16 signals)
-{
-    m_previous_signals = m_bus.signals;
-    m_bus.signals |= signals;
-
-    if (m_previous_signals != m_bus.signals)
-    {
-        //Debug("*** SCSI Bus change detected: %02X %02X", m_bus.signals, m_bus.db);
-        m_bus_changed = true;
-        m_previous_signals =  m_bus.signals;
-    }
-}
-
-INLINE void ScsiController::ClearSignal(u16 signals)
-{
-    m_previous_signals = m_bus.signals;
-    m_bus.signals &= ~signals;
-
-    if (m_previous_signals != m_bus.signals)
-    {
-        //Debug("**** SCSI Bus change detected: %02X %02X", m_bus.signals, m_bus.db);
-        m_bus_changed = true;
-        m_previous_signals =  m_bus.signals;
-    }
-}
-
-INLINE bool ScsiController::IsSignalSet(ScsiSignal signal)
-{
-    return (m_bus.signals & signal) != 0;
-}
-
-INLINE void ScsiController::AutoAck()
-{
-    if (IsSignalSet(SCSI_SIGNAL_REQ) && IsSignalSet(SCSI_SIGNAL_IO) && !IsSignalSet(SCSI_SIGNAL_CD))
-    {
-        Debug("SCSI Auto ACK (set)");
-        SetSignal(SCSI_SIGNAL_ACK);
-        m_auto_ack_cycles = 21;
-    }
-}
-
-
-INLINE u32 ScsiController::TimeToCycles(u32 us)
-{
-    // Convert microseconds to PCE master clock cycles (21.47727 MHz) using integer math
-    return (us * 21) + ((us * 47727) / 1000000);
-}
-
-
+#include "scsi_controller_inline.h"
 
 #endif /* SCSI_CONTROLLER_H */

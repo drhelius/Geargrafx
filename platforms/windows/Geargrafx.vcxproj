@@ -82,6 +82,7 @@
     <ClInclude Include="..\..\src\cdrom.h" />
     <ClInclude Include="..\..\src\cdrom_common.h" />
     <ClInclude Include="..\..\src\scsi_controller.h" />
+    <ClInclude Include="..\..\src\scsi_controller_inline.h" />
     <ClInclude Include="..\..\src\common.h" />
     <ClInclude Include="..\..\src\defines.h" />
     <ClInclude Include="..\..\src\game_db.h" />

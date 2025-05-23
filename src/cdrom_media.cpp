@@ -49,7 +49,7 @@ void CdRomMedia::DestroyImgFiles()
     for (int i = 0; i < img_file_count; i++)
     {
         ImgFile* img_file = m_img_files[i];
-        if (img_file)
+        if (IsValidPointer(img_file))
         {
             if (IsValidPointer(img_file->chunks))
             {
@@ -281,8 +281,6 @@ bool CdRomMedia::GatherImgInfo(ImgFile* img_file)
         Log("ERROR: Unable to open file %s", img_file->file_path);
         return false;
     }
-
-    Debug("Gathered ImgFile info for %s", img_file->file_path);
 
     return true;
 }
@@ -561,7 +559,10 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
             ImgFile* img_file = track.img_file;
 
             if (img_file == NULL || img_file->file_size == 0)
+            {
+                Debug("ERROR: ReadSector failed - ImgFile is NULL or file size is 0");
                 return false;
+            }
 
             u64 byte_offset = file_offset + (sector_offset * sector_size);
 
@@ -572,7 +573,11 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
             }
 
             if (byte_offset + sector_size > img_file->file_size)
+            {
+                Debug("ERROR: ReadSector failed - Byte offset %llu + sector size %d exceeds file size %d",
+                    byte_offset, sector_size, img_file->file_size);
                 return false;
+            }
 
             Debug("Reading sector %d from track %d (LBA: %d)", lba, i, byte_offset);
 
@@ -590,10 +595,17 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
 bool CdRomMedia::ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size)
 {
     if (!IsValidPointer(img_file) || !IsValidPointer(buffer))
+    {
+        Debug("ERROR: ReadFromImgFile failed - Invalid ImgFile pointer or buffer");
         return false;
+    }
 
     if (offset + size > img_file->file_size)
+    {
+        Debug("ERROR: ReadFromImgFile failed - Offset %llu + size %d exceeds file size %d",
+            offset, size, img_file->file_size);
         return false;
+    }
 
     const u32 chunk_size = img_file->chunk_size;
     u32 chunk_index = offset / chunk_size;
@@ -641,18 +653,27 @@ bool CdRomMedia::LoadChunk(ImgFile* img_file, u32 chunk_index)
     using namespace std;
 
     if (!IsValidPointer(img_file))
+    {
+        Log("ERROR: Cannot load chunk - Invalid ImgFile pointer");
         return false;
+    }
 
     ifstream file(img_file->file_path, ios::in | ios::binary);
 
     if (!file.is_open())
+    {
+        Log("ERROR: Cannot load chunk - Unable to open file %s", img_file->file_path);
         return false;
+    }
 
     u64 offset = (u64)chunk_index * (u64)img_file->chunk_size;
     file.seekg(offset, ios::beg);
 
     if (file.fail())
+    {
+        Log("ERROR: Cannot load chunk - Failed to seek to offset %llu in file %s", offset, img_file->file_path);
         return false;
+    }
 
     u32 to_read = img_file->chunk_size;
     if (offset + to_read > img_file->file_size)
@@ -718,7 +739,11 @@ bool CdRomMedia::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count)
 bool CdRomMedia::PreloadTrackChunks(u32 track_number, u32 sectors)
 {
     if (track_number >= m_tracks.size())
+    {
+        Log("ERROR: PreloadTrackChunks failed - Track number %d out of bounds (max: %d)",
+            track_number, m_tracks.size() - 1);
         return false;
+    }
 
     const Track& track = m_tracks[track_number];
 

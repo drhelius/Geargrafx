@@ -297,6 +297,9 @@
     <ClInclude Include="..\..\src\scsi_controller.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\scsi_controller_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\common.h">
       <Filter>src</Filter>
     </ClInclude>

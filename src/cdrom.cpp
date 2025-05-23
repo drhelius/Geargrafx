@@ -107,7 +107,7 @@ u8 CdRom::ReadRegister(u16 address)
             // SCSI get data
             //Debug("+++ CDROM Read SCSI get data %02X", reg);
             u8 ret = m_scsi_controller->ReadData();
-            Debug("CDROM Read %02X SCSI get data: %02X", reg, ret);
+            //Debug("CDROM Read %02X SCSI get data: %02X", reg, ret);
             m_scsi_controller->AutoAck();
             return ret;
         }
@@ -158,7 +158,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
         case 0x02:
         {
             // ACK
-            Debug("CDROM Write ACK %02X, value: %02X", reg, value);
+            //Debug("CDROM Write ACK %02X, value: %02X", reg, value);
             if ((value & 0x80) != 0)
                 m_scsi_controller->SetSignal(ScsiController::SCSI_SIGNAL_ACK);
             else
