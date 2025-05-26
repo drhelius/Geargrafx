@@ -114,17 +114,20 @@ void gui_debug_window_cdrom(void)
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "EVENTS"); ImGui::Separator();
 
-    ImGui::TextColored(violet, "NEXT EVENT      "); ImGui::SameLine();
+    ImGui::TextColored(violet, "NEXT EVENT "); ImGui::SameLine();
     ImGui::TextColored((*scsi_state->NEXT_EVENT == 0) ? gray : yellow, "%s", k_scsi_event_names[*scsi_state->NEXT_EVENT]);
 
     ImGui::TextColored(violet, "CYCLES TO EVENT "); ImGui::SameLine();
     ImGui::TextColored((*scsi_state->NEXT_EVENT_CYCLES == 0) ? gray : white, "%d", *scsi_state->NEXT_EVENT_CYCLES);
 
     ImGui::TextColored(violet, "NEXT SECTOR LOAD"); ImGui::SameLine();
-    ImGui::TextColored((*scsi_state->NEXT_LOAD_CYCLES <= 0) ? gray : white, "%d", *scsi_state->LOAD_SECTOR);
+    ImGui::TextColored((*scsi_state->NEXT_LOAD_CYCLES <= 0) ? gray : yellow, "%d", *scsi_state->LOAD_SECTOR);
     
     ImGui::TextColored(violet, "CYCLES TO LOAD  "); ImGui::SameLine();
     ImGui::TextColored((*scsi_state->NEXT_LOAD_CYCLES <= 0) ? gray : white, "%d", *scsi_state->NEXT_LOAD_CYCLES);
+
+    ImGui::TextColored(violet, "SECTORS LEFT    "); ImGui::SameLine();
+    ImGui::TextColored((*scsi_state->NEXT_LOAD_CYCLES <= 0) ? gray : white, "%d", *scsi_state->LOAD_SECTOR_COUNT);
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "MEDIA"); ImGui::Separator();
 
