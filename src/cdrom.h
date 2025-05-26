@@ -38,7 +38,10 @@ class CdRom
 public:
     struct CdRom_State
     {
-        u8* tmp;
+        u8* RESET;
+        bool* BRAM_ENABLED;
+        u8* ACTIVE_IRQS;
+        u8* ENABLED_IRQS;
     };
 
 public:
@@ -67,7 +70,6 @@ private:
     bool m_bram_enabled;
     u8 m_active_irqs;
     u8 m_enabled_irqs;
-
 };
 
 static const u8 k_super_cdrom_signature[4] = { 0x00, 0xAA, 0x55, 0x03 };

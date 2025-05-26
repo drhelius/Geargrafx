@@ -29,6 +29,7 @@
 #include "gui_debug_huc6202.h"
 #include "gui_debug_memory.h"
 #include "gui_debug_psg.h"
+#include "gui_debug_cdrom.h"
 #include "gui_debug_trace_logger.h"
 #include "emu.h"
 #include "config.h"
@@ -93,6 +94,8 @@ void gui_debug_windows(void)
         }
         if (config_debug.show_psg)
             gui_debug_window_psg();
+        if (config_debug.show_cdrom && emu_get_core()->GetCartridge()->IsCDROM())
+            gui_debug_window_cdrom();
         if (config_debug.show_trace_logger)
             gui_debug_window_trace_logger();
 

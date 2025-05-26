@@ -879,7 +879,7 @@ static void menu_debug(void)
         ImGui::MenuItem("Show HuC6260 Info", "", &config_debug.show_huc6260_info, config_debug.debug);
         ImGui::MenuItem("Show HuC6260 Palettes", "", &config_debug.show_huc6260_palettes, config_debug.debug);
         ImGui::Separator();
-         if (emu_get_core()->GetCartridge()->IsSGX())
+        if (emu_get_core()->GetCartridge()->IsSGX())
         {
             ImGui::MenuItem("Show HuC6202 Info", "", &config_debug.show_huc6202_info, config_debug.debug);
             ImGui::Separator();
@@ -899,6 +899,9 @@ static void menu_debug(void)
             ImGui::MenuItem("Show HuC6270 Background", "", &config_debug.show_huc6270_1_background, config_debug.debug);
             ImGui::MenuItem("Show HuC6270 Sprites", "", &config_debug.show_huc6270_1_sprites, config_debug.debug);
         }
+
+        ImGui::Separator();
+        ImGui::MenuItem("Show CD-ROM", "", &config_debug.show_cdrom, config_debug.debug && emu_get_core()->GetCartridge()->IsCDROM());
         ImGui::Separator();
         ImGui::MenuItem("Show PSG", "", &config_debug.show_psg, config_debug.debug);
 

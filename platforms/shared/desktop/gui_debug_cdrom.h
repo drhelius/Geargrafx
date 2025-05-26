@@ -16,35 +16,18 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/
  *
  */
-#ifndef AUDIO_INLINE_H
-#define	AUDIO_INLINE_H
 
-#include "audio.h"
-#include "huc6280_psg.h"
+#ifndef GUI_DEBUG_CDROM_H
+#define	GUI_DEBUG_CDROM_H
 
-INLINE void Audio::Clock(u32 cycles)
-{
-    m_adpcm->Clock(cycles);
+#ifdef GUI_DEBUG_CDROM_IMPORT
+    #define EXTERN
+#else
+    #define EXTERN extern
+#endif
 
-    u32 total_cycles = m_cycle_counter + cycles;
-    u32 psg_cycles = total_cycles / 6;
-    m_psg->Clock(psg_cycles);
-    m_cycle_counter = total_cycles % 6;
-}
+EXTERN void gui_debug_window_cdrom(void);
 
-INLINE void Audio::WritePSG(u32 address, u8 value)
-{
-    m_psg->Write(address, value);
-}
-
-INLINE HuC6280PSG* Audio::GetPSG()
-{
-    return m_psg;
-}
-
-INLINE Adpcm* Audio::GetAdpcm()
-{
-    return m_adpcm;
-}
-
-#endif /* AUDIO_INLINE_H */
+#undef GUI_DEBUG_CDROM_IMPORT
+#undef EXTERN
+#endif /* GUI_DEBUG_CDROM_H */

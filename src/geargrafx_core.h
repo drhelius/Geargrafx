@@ -81,6 +81,9 @@ public:
     HuC6270* GetHuC6270_1();
     HuC6270* GetHuC6270_2();
     HuC6280* GetHuC6280();
+    CdRom* GetCDROM();
+    CdRomMedia* GetCDROMMedia();
+    ScsiController* GetScsiController();
     Audio* GetAudio();
     Input* GetInput();
     void SetDebugCallback(GG_Debug_Callback callback);

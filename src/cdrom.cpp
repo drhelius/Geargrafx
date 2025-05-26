@@ -30,6 +30,10 @@ CdRom::CdRom(ScsiController* scsi_controller)
     m_bram_enabled = false;
     m_active_irqs = 0;
     m_enabled_irqs = 0;
+    m_state.RESET = &m_reset;
+    m_state.BRAM_ENABLED = &m_bram_enabled;
+    m_state.ACTIVE_IRQS = &m_active_irqs;
+    m_state.ENABLED_IRQS = &m_enabled_irqs;
 }
 
 CdRom::~CdRom()

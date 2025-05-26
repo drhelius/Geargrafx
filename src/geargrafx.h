@@ -26,9 +26,14 @@
 #include "audio.h"
 #include "cartridge.h"
 #include "memory.h"
+#include "huc6202.h"
 #include "huc6260.h"
 #include "huc6270.h"
 #include "huc6280.h"
 #include "huc6280_psg.h"
+#include "scsi_controller.h"
+#include "cdrom.h"
+#include "cdrom_media.h"
+#include "adpcm.h"
 
 #endif /* GEARGRAFX_H */

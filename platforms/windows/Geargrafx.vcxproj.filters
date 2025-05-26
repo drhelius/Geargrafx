@@ -46,6 +46,9 @@
     <ClCompile Include="..\shared\desktop\gui_debug_psg.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug_cdrom.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
     <ClCompile Include="..\shared\desktop\gui_debug_trace_logger.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
@@ -99,6 +102,9 @@
     </ClCompile>
     <ClCompile Include="..\shared\desktop\sound_queue.cpp">
       <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\adpcm.cpp">
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\audio.cpp">
       <Filter>src</Filter>
@@ -213,6 +219,9 @@
     <ClInclude Include="..\shared\desktop\gui_debug_psg.h">
       <Filter>desktop</Filter>
     </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_cdrom.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
     <ClInclude Include="..\shared\desktop\gui_debug_text.h">
       <Filter>desktop</Filter>
     </ClInclude>
@@ -269,6 +278,12 @@
     </ClInclude>
     <ClInclude Include="..\shared\desktop\sound_queue.h">
       <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\adpcm.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\adpcm_inline.h">
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\audio.h">
       <Filter>src</Filter>

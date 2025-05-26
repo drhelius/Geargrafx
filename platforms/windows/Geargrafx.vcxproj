@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\miniz\miniz.c" />
+    <ClCompile Include="..\..\src\adpcm.cpp" />
     <ClCompile Include="..\..\src\audio.cpp" />
     <ClCompile Include="..\..\src\cartridge.cpp" />
     <ClCompile Include="..\..\src\cdrom_media.cpp" />
@@ -50,6 +51,7 @@
     <ClCompile Include="..\shared\desktop\gui_debug_memeditor.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_memory.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_psg.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_debug_cdrom.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_trace_logger.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug.cpp" />
     <ClCompile Include="..\shared\desktop\gui_filedialogs.cpp" />
@@ -73,6 +75,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\huc6280_names.h" />
     <ClInclude Include="..\..\src\miniz\miniz.h" />
+    <ClInclude Include="..\..\src\adpcm.h" />
+    <ClInclude Include="..\..\src\adpcm_inline.h" />
     <ClInclude Include="..\..\src\audio_inline.h" />
     <ClInclude Include="..\..\src\audio.h" />
     <ClInclude Include="..\..\src\bit_ops.h" />
@@ -129,6 +133,7 @@
     <ClInclude Include="..\shared\desktop\gui_debug_memeditor.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_memory.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_psg.h" />
+    <ClInclude Include="..\shared\desktop\gui_debug_cdrom.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_text.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_trace_logger.h" />
     <ClInclude Include="..\shared\desktop\gui_debug.h" />

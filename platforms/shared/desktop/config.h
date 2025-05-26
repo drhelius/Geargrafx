@@ -153,6 +153,7 @@ struct config_Debug
     bool show_huc6270_2_sprites = false;
     bool show_huc6270_2_info = false;
     bool show_psg = false;
+    bool show_cdrom = false;
     bool show_trace_logger = false;
     bool trace_counter = true;
     bool trace_bank = true;

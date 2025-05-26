@@ -296,8 +296,6 @@ void gui_debug_window_psg(void)
         ImGui::EndTabBar();
     }
 
-    
-
     ImGui::End();
     ImGui::PopStyleVar();
 }

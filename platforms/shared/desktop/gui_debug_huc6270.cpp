@@ -144,7 +144,7 @@ void gui_debug_window_huc6270_info(int vdc)
     ImGui::TextColored(violet, "VCR"); ImGui::SameLine();
     ImGui::TextColored(white, "%02X", huc6270_state->R[HUC6270_REG_VCR] & 0xFF);
 
-    ImGui::NewLine(); ImGui::TextColored(cyan, "SCROLLING"); ImGui::Separator(); 
+    ImGui::NewLine(); ImGui::TextColored(cyan, "SCROLLING"); ImGui::Separator();
 
     ImGui::TextColored(violet, "X,Y     "); ImGui::SameLine();
     ImGui::TextColored(white, "%03X,%03X (%04d,%04d)", huc6270_state->R[HUC6270_REG_BXR], huc6270_state->R[HUC6270_REG_BYR], huc6270_state->R[HUC6270_REG_BXR], huc6270_state->R[HUC6270_REG_BYR]);

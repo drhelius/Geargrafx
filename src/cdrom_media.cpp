@@ -320,6 +320,7 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
             if (first_quote != string::npos && last_quote != string::npos && first_quote != last_quote)
             {
                 string current_file_path = line.substr(first_quote + 1, last_quote - first_quote - 1);
+                string file_name = current_file_path;
 
                 if (!current_file_path.empty() && current_file_path[0] != '/' && current_file_path[0] != '\\' &&
                     (current_file_path.size() < 2 || current_file_path[1] != ':'))
@@ -331,6 +332,7 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
                 ImgFile* img_file = new ImgFile();
                 strncpy_fit(img_file->file_path, current_file_path.c_str(), sizeof(img_file->file_path));
+                strncpy_fit(img_file->file_name, file_name.c_str(), sizeof(img_file->file_name));
                 if (!GatherImgInfo(img_file))
                 {
                     Log("ERROR: Failed to gather ImgFile info for %s", current_file_path.c_str());

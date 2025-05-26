@@ -16,35 +16,26 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/
  *
  */
-#ifndef AUDIO_INLINE_H
-#define	AUDIO_INLINE_H
 
-#include "audio.h"
-#include "huc6280_psg.h"
+#ifndef ADPCM_INLINE_H
+#define ADPCM_INLINE_H
 
-INLINE void Audio::Clock(u32 cycles)
+#include "adpcm.h"
+
+INLINE void Adpcm::Clock(u32 cycles)
 {
-    m_adpcm->Clock(cycles);
-
-    u32 total_cycles = m_cycle_counter + cycles;
-    u32 psg_cycles = total_cycles / 6;
-    m_psg->Clock(psg_cycles);
-    m_cycle_counter = total_cycles % 6;
+    // Placeholder for clock logic
 }
 
-INLINE void Audio::WritePSG(u32 address, u8 value)
+INLINE u8 Adpcm::Read(u16 address)
 {
-    m_psg->Write(address, value);
+    // Placeholder for read logic
+    return 0;
 }
 
-INLINE HuC6280PSG* Audio::GetPSG()
+INLINE void Adpcm::Write(u16 address, u8 value)
 {
-    return m_psg;
+    // Placeholder for write logic
 }
 
-INLINE Adpcm* Audio::GetAdpcm()
-{
-    return m_adpcm;
-}
-
-#endif /* AUDIO_INLINE_H */
+#endif /* ADPCM_INLINE_H */

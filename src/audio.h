@@ -24,6 +24,7 @@
 #include <fstream>
 #include "types.h"
 #include "huc6280_psg.h"
+#include "adpcm.h"
 
 class HuC6280PSG;
 
@@ -39,13 +40,16 @@ public:
     void WritePSG(u32 address, u8 value);
     void EndFrame(s16* sample_buffer, int* sample_count);
     HuC6280PSG* GetPSG();
+    Adpcm* GetAdpcm();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
 private:
     bool m_mute;
     HuC6280PSG* m_psg;
+    Adpcm* m_adpcm;
     s16 m_psg_buffer[GG_AUDIO_BUFFER_SIZE] = {};
+    s16 m_adpcm_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     u32 m_cycle_counter;
 };
 

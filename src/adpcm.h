@@ -16,35 +16,39 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/
  *
  */
-#ifndef AUDIO_INLINE_H
-#define	AUDIO_INLINE_H
 
-#include "audio.h"
-#include "huc6280_psg.h"
+#ifndef ADPCM_H
+#define ADPCM_H
 
-INLINE void Audio::Clock(u32 cycles)
+#include <iostream>
+#include <fstream>
+#include "common.h"
+
+class Adpcm
 {
-    m_adpcm->Clock(cycles);
 
-    u32 total_cycles = m_cycle_counter + cycles;
-    u32 psg_cycles = total_cycles / 6;
-    m_psg->Clock(psg_cycles);
-    m_cycle_counter = total_cycles % 6;
-}
+public:
+    Adpcm();
+    ~Adpcm();
+    void Init();
+    void Reset();
+    void Clock(u32 cycles);
+    u8 Read(u16 address);
+    void Write(u16 address, u8 value);
+    int EndFrame(s16* sample_buffer);
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
-INLINE void Audio::WritePSG(u32 address, u8 value)
-{
-    m_psg->Write(address, value);
-}
+private:
+    void Sync();
+    void ComputeDeltaLUT();
 
-INLINE HuC6280PSG* Audio::GetPSG()
-{
-    return m_psg;
-}
+private:
+    s16 m_step_delta[49 * 8] = {};
+};
 
-INLINE Adpcm* Audio::GetAdpcm()
-{
-    return m_adpcm;
-}
+static const s16 k_adpcm_index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };
 
-#endif /* AUDIO_INLINE_H */
+#include "adpcm_inline.h"
+
+#endif /* ADPCM_H */

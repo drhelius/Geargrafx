@@ -173,6 +173,21 @@ HuC6280* GeargrafxCore::GetHuC6280()
     return m_huc6280;
 }
 
+CdRom* GeargrafxCore::GetCDROM()
+{
+    return m_cdrom;
+}
+
+CdRomMedia* GeargrafxCore::GetCDROMMedia()
+{
+    return m_cdrom_media;
+}
+
+ScsiController* GeargrafxCore::GetScsiController()
+{
+    return m_scsi_controller;
+}
+
 Audio* GeargrafxCore::GetAudio()
 {
     return m_audio;

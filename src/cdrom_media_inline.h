@@ -52,6 +52,11 @@ INLINE const std::vector<CdRomMedia::Track>& CdRomMedia::GetTracks()
     return m_tracks;
 }
 
+INLINE const std::vector<CdRomMedia::ImgFile*>& CdRomMedia::GetImgFiles()
+{
+    return m_img_files;
+}
+
 INLINE u32 CdRomMedia::GetTrackSectorSize(CdRomMedia::TrackType type)
 {
     return k_cdrom_track_type_size[type];
@@ -91,7 +96,7 @@ INLINE u32 CdRomMedia::GetCdRomLengthLba()
     return m_cdrom_length_lba;
 }
 
-INLINE u8 CdRomMedia::GetSectorCount()
+INLINE u32 CdRomMedia::GetSectorCount()
 {
     return m_sector_count;
 }

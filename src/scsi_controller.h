@@ -30,6 +30,7 @@ class HuC6280;
 class ScsiController
 {
 public:
+
     enum ScsiSignal
     {
         SCSI_SIGNAL_BSY = 0x80,
@@ -95,6 +96,22 @@ public:
         SCSI_STATUS_QUEUE_FULL = 0x28
     };
 
+    struct Scsi_State
+    {
+        u8* DB;
+        u16* SIGNALS;
+        ScsiPhase* PHASE;
+        ScsiEvent* NEXT_EVENT;
+        s32* NEXT_EVENT_CYCLES;
+        s32* NEXT_LOAD_CYCLES;
+        u32* LOAD_SECTOR;
+        u32* LOAD_SECTOR_COUNT;
+        s32* AUTO_ACK_CYCLES;
+        std::vector<u8>* COMMAND_BUFFER;
+        std::vector<u8>* DATA_BUFFER;
+        u32* DATA_BUFFER_OFFSET;
+    };
+
 public:
     ScsiController(CdRomMedia* cdrom_media);
     ~ScsiController();
@@ -109,6 +126,7 @@ public:
     bool IsSignalSet(ScsiSignal signal);
     void AutoAck();
     void StartSelection();
+    Scsi_State* GetState();
 
 private:
     void SetPhase(ScsiPhase phase);
@@ -138,6 +156,7 @@ private:
     u32 TimeToCycles(u32 us);
 
 private:
+    Scsi_State m_state;
     HuC6280* m_huc6280;
     CdRom* m_cdrom;
     CdRomMedia* m_cdrom_media;
@@ -165,6 +184,14 @@ static const char* k_scsi_phase_names[] = {
     "DATA OUT",
     "MESSAGE IN",
     "STATUS"
+};
+
+static const char* k_scsi_event_names[] = {
+    "NONE",
+    "SET COMMAND PHASE",
+    "SET REQ SIGNAL",
+    "SET GOOD STATUS",
+    "SET DATA IN PHASE"
 };
 
 #include "scsi_controller_inline.h"

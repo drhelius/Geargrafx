@@ -14,6 +14,7 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_popups.cpp \
     $(DESKTOP_SRC_DIR)/gui_actions.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_cdrom.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_disassembler.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6202.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6260.cpp \
@@ -37,6 +38,7 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/imgui/implot_demo.cpp \
     $(DESKTOP_SRC_DIR)/sound_queue.cpp \
     $(SRC_DIR)/geargrafx_core.cpp \
+    $(SRC_DIR)/adpcm.cpp \
     $(SRC_DIR)/audio.cpp \
     $(SRC_DIR)/cartridge.cpp \
     $(SRC_DIR)/cdrom_media.cpp \

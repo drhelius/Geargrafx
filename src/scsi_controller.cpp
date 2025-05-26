@@ -42,6 +42,19 @@ ScsiController::ScsiController(CdRomMedia* cdrom_media)
     m_data_buffer_offset = 0;
     m_bus_changed = false;
     m_previous_signals = 0;
+
+    m_state.DB = &m_bus.db;
+    m_state.SIGNALS = &m_bus.signals;
+    m_state.PHASE = &m_phase;
+    m_state.NEXT_EVENT = &m_next_event;
+    m_state.NEXT_EVENT_CYCLES = &m_next_event_cycles;
+    m_state.NEXT_LOAD_CYCLES = &m_next_load_cycles;
+    m_state.LOAD_SECTOR = &m_load_sector;
+    m_state.LOAD_SECTOR_COUNT = &m_load_sector_count;
+    m_state.AUTO_ACK_CYCLES = &m_auto_ack_cycles;
+    m_state.COMMAND_BUFFER = &m_command_buffer;
+    m_state.DATA_BUFFER = &m_data_buffer;
+    m_state.DATA_BUFFER_OFFSET = &m_data_buffer_offset;
 }
 
 ScsiController::~ScsiController()
@@ -76,6 +89,11 @@ void ScsiController::Reset(bool keep_rst_signal)
     m_previous_signals = m_bus.signals;
     UpdateIRQs();
     Debug("SCSI Reset");
+}
+
+ScsiController::Scsi_State* ScsiController::GetState()
+{
+    return &m_state;
 }
 
 void ScsiController::StartSelection()

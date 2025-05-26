@@ -33,6 +33,7 @@ public:
 
     struct ImgFile
     {
+        char file_name[256];
         char file_path[1024];
         u32 file_size;
         u32 chunk_size;
@@ -74,6 +75,7 @@ public:
     const char* GetFileName();
     const char* GetFileExtension();
     const std::vector<Track>& GetTracks();
+    const std::vector<ImgFile*>& GetImgFiles();
     u32 GetTrackSectorSize(TrackType type);
     u32 GetTrackSectorSize(u8 track_number);
     const char* GetTrackTypeName(TrackType type);
@@ -81,7 +83,7 @@ public:
     u8 GetTrackCount();
     GG_CdRomMSF GetCdRomLength();
     u32 GetCdRomLengthLba();
-    u8 GetSectorCount();
+    u32 GetSectorCount();
     bool LoadCueFromFile(const char* path);
     bool LoadCueFromBuffer(const u8* buffer, int size, const char* path);
     bool ReadSector(u32 lba, u8* buffer);
