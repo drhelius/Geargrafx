@@ -20,6 +20,17 @@
 #ifndef UTILS_H
 #define	UTILS_H
 
+#include <string.h>
+#if defined(_WIN32)
+#include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#include <libgen.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#include <linux/limits.h>
+#endif
+
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY_PATTERN_SPACED "%c%c%c%c %c%c%c%c"
 #define BYTE_TO_BINARY_PATTERN_ALL_SPACED "%c %c %c %c %c %c %c %c"
@@ -46,6 +57,39 @@ static inline int get_reset_value(int option)
         default:
             return -1;
     }
+}
+
+static inline void get_executable_path(char* path, size_t size)
+{
+#if defined(_WIN32)
+    DWORD len = GetModuleFileNameA(NULL, path, (DWORD)size);
+    if (len > 0 && len < size) {
+        char* last_slash = strrchr(path, '\\');
+        if (last_slash) *last_slash = '\0';
+    } else {
+        path[0] = '\0';
+    }
+#elif defined(__APPLE__)
+    uint32_t bufsize = (uint32_t)size;
+    if (_NSGetExecutablePath(path, &bufsize) == 0) {
+        char* dir = dirname(path);
+        strncpy(path, dir, size);
+        path[size-1] = '\0';
+    } else {
+        path[0] = '\0';
+    }
+#elif defined(__linux__)
+    ssize_t len = readlink("/proc/self/exe", path, size-1);
+    if (len != -1) {
+        path[len] = '\0';
+        char* last_slash = strrchr(path, '/');
+        if (last_slash) *last_slash = '\0';
+    } else {
+        path[0] = '\0';
+    }
+#else
+    path[0] = '\0';
+#endif
 }
 
 #endif /* UTILS_H */
