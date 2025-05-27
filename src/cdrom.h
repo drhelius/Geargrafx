@@ -74,4 +74,6 @@ private:
 
 static const u8 k_super_cdrom_signature[4] = { 0x00, 0xAA, 0x55, 0x03 };
 
+#include "cdrom_inline.h"
+
 #endif /* CDROM_H */

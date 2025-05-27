@@ -56,11 +56,6 @@ void CdRom::Reset()
     m_memory->UpdateBackupRam(m_bram_enabled);
 }
 
-void CdRom::Clock(u32 cycles)
-{
-    m_scsi_controller->Clock(cycles);
-}
-
 u8 CdRom::ReadRegister(u16 address)
 {
     u16 reg = address & 0x3FF;
@@ -212,35 +207,6 @@ void CdRom::WriteRegister(u16 address, u8 value)
             Debug("CDROM Write Invalid register %04X, value: %02X", reg, value);
             break;
     }
-}
-
-void CdRom::SetIRQ(u8 value)
-{
-    if (m_active_irqs & value)
-        return;
-
-    m_active_irqs |= value;
-    AssertIRQ2();
-}
-
-void CdRom::ClearIRQ(u8 value)
-{
-    if ((m_active_irqs & value) == 0)
-        return;
-
-    m_active_irqs &= ~value;
-    AssertIRQ2();
-}
-
-void CdRom::AssertIRQ2()
-{
-    bool asserted = (m_enabled_irqs & m_active_irqs);
-    m_huc6280->AssertIRQ2(asserted);
-}
-
-CdRom::CdRom_State* CdRom::GetState()
-{
-    return &m_state;
 }
 
 void CdRom::SaveState(std::ostream& stream)
