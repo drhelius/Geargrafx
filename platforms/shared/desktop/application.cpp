@@ -18,6 +18,8 @@
  */
 
 #include <SDL.h>
+#include <fstream>
+#include <string>
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
 #include "geargrafx.h"
@@ -26,6 +28,7 @@
 #include "gui_debug_disassembler.h"
 #include "renderer.h"
 #include "emu.h"
+#include "utils.h"
 
 #define APPLICATION_IMPORT
 #include "application.h"
@@ -237,38 +240,43 @@ static void sdl_destroy(void)
 
 static void sdl_load_gamepad_mappings(void)
 {
-    std::ifstream file("gamecontrollerdb.txt");
+    std::string db_path;
+    char exe_path[1024] = {0};
+    get_executable_path(exe_path, sizeof(exe_path));
+
+    if (exe_path[0] != '\0') {
+        db_path = std::string(exe_path) + "/gamecontrollerdb.txt";
+    } else {
+        db_path = "gamecontrollerdb.txt";
+    }
+
+    std::ifstream file(db_path);
+    if (!file.is_open()) {
+        file.open("gamecontrollerdb.txt");
+    }
 
     int added_mappings = 0;
     int updated_mappings = 0;
     int line_number = 0;
     char platform_field[64] = { };
     snprintf(platform_field, 64, "platform:%s", SDL_GetPlatform());
-
     if (file.is_open())
     {
         Debug("Loading gamecontrollerdb.txt file");
-
         std::string line;
-
         while (std::getline(file, line))
         {
             size_t comment = line.find_first_of('#');
             if (comment != std::string::npos)
                 line = line.substr(0, comment);
-
             line = line.erase(0, line.find_first_not_of(" \t\r\n"));
             line = line.erase(line.find_last_not_of(" \t\r\n") + 1);
-
             while (line[0] == ' ')
                 line = line.substr(1);
-
             if (line.empty())
                 continue;
-
             if ((line.find("platform:") != std::string::npos) && (line.find(platform_field) == std::string::npos))
                 continue;
-
             int result = SDL_GameControllerAddMapping(line.c_str());
             if (result == 1)
                 added_mappings++;
@@ -279,10 +287,8 @@ static void sdl_load_gamepad_mappings(void)
                 Log("ERROR: Unable to load game controller mapping in line %d from gamecontrollerdb.txt", line_number);
                 Log("SDL: %s", SDL_GetError());
             }
-
             line_number++;
         }
-
         file.close();
     }
     else
@@ -290,10 +296,8 @@ static void sdl_load_gamepad_mappings(void)
         Log("ERROR: Game controller database not found (gamecontrollerdb.txt)!!");
         return;
     }
-
     Log("Added %d new game controller mappings from gamecontrollerdb.txt", added_mappings);
     Log("Updated %d game controller mappings from gamecontrollerdb.txt", updated_mappings);
-
     application_added_gamepad_mappings = added_mappings;
     application_updated_gamepad_mappings = updated_mappings;
 }
