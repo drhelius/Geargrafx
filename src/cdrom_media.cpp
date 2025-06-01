@@ -566,6 +566,12 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
                 return false;
             }
 
+            if (track.has_lead_in)
+            {
+                file_offset += (track.start_lba - track.lead_in_lba) * track.sector_size;
+                Debug("Track %d has lead-in, adjusting file offset to %d", i, file_offset);
+            }
+
             u64 byte_offset = file_offset + (sector_offset * sector_size);
 
             if (sector_size == 2352)
@@ -581,7 +587,7 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
                 return false;
             }
 
-            Debug("Reading sector %d from track %d (LBA: %d)", lba, i, byte_offset);
+            Debug("Reading sector %d from track %d (offset: %d)", lba, i, byte_offset);
 
             return ReadFromImgFile(img_file, byte_offset, buffer, sector_size);
         }
