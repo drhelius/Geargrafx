@@ -21,6 +21,7 @@
 
 #include "audio.h"
 #include "huc6280_psg.h"
+#include "adpcm.h"
 
 INLINE void Audio::Clock(u32 cycles)
 {

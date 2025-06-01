@@ -21,6 +21,7 @@
 #define ADPCM_INLINE_H
 
 #include "adpcm.h"
+#include "geargrafx_core.h"
 
 INLINE void Adpcm::Clock(u32 cycles)
 {
@@ -29,13 +30,92 @@ INLINE void Adpcm::Clock(u32 cycles)
 
 INLINE u8 Adpcm::Read(u16 address)
 {
-    // Placeholder for read logic
-    return 0;
+    switch (address)
+    {
+        case 0x0A:
+            m_read_cycles = NextSlotCycles(true);
+            return m_read_value;
+        case 0x0B:
+            return m_dma;
+        case 0x0C:
+            return 0xFF;
+        case 0x0D:
+            return m_control;
+        case 0x0E:
+            return m_sample_rate;
+        default:
+            Debug("ADPCM Read Invalid address: %04X", address);
+            return 0;
+    }
 }
 
 INLINE void Adpcm::Write(u16 address, u8 value)
 {
-    // Placeholder for write logic
+    switch (address)
+    {
+        case 0x08:
+            m_address = (m_address & 0xFF00) | value;
+            break;
+        case 0x09:
+            m_address = (m_address & 0x00FF) | (value << 8);
+            break;
+        case 0x0A:
+            m_write_cycles = NextSlotCycles(false);
+            m_write_value = value;
+            break;
+        case 0x0B:
+            m_dma = value;
+            break;
+        case 0x0D:
+            m_control = value;
+            break;
+        case 0x0E:
+            m_sample_rate = value;
+            m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate & 0x0F);
+            break;
+        default:
+            Debug("ADPCM Write Invalid address: %04X, value: %02X", address, value);
+            break;
+    }
+}
+
+INLINE u32 Adpcm::CalculateCyclesPerSample(u8 sample_rate)
+{
+    float frequency = 32000.0f / (16.0f - (float)sample_rate);
+    return (u32)(GG_MASTER_CLOCK_RATE / frequency);
+}
+
+INLINE u32 Adpcm::NextSlotCycles(bool read)
+{
+    u64 cycles = m_core->GetMasterClockCycles();
+    u8 offset = cycles % 36;
+
+    return read ? m_read_latency[offset] : m_write_latency[offset];
+}
+
+INLINE void Adpcm::UpdateReadWriteEvents(u32 cycles)
+{
+    if (m_read_cycles > 0)
+    {
+        m_read_cycles -= cycles;
+        if (m_read_cycles <= 0)
+        {
+            m_read_cycles = 0;
+            m_read_value = m_adpcm_ram[m_read_address];
+            m_read_address++;
+        }
+    }
+
+    if (m_write_cycles > 0)
+    {
+        m_write_cycles -= cycles;
+        if (m_write_cycles <= 0)
+        {
+            m_write_cycles = 0;
+            m_adpcm_ram[m_write_address] = m_write_value;
+            m_write_address++;
+        }
+    }
 }
 
 #endif /* ADPCM_INLINE_H */

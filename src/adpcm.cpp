@@ -24,7 +24,18 @@
 
 Adpcm::Adpcm()
 {
-
+    m_read_value = 0;
+    m_write_value = 0;
+    m_read_cycles = 0;
+    m_write_cycles = 0;
+    m_read_address = 0;
+    m_write_address = 0;
+    m_address = 0;
+    m_samples_left = 0;
+    m_sample_rate = 0;
+    m_cycles_per_sample = 0;
+    m_control = 0;
+    m_dma = 0;
 }
 
 Adpcm::~Adpcm()
@@ -34,15 +45,25 @@ Adpcm::~Adpcm()
 
 void Adpcm::Init()
 {
-    
-
     ComputeDeltaLUT();
     Reset();
 }
 
 void Adpcm::Reset()
 {
-    
+    m_read_value = 0;
+    m_write_value = 0;
+    m_read_cycles = 0;
+    m_write_cycles = 0;
+    m_read_address = 0;
+    m_write_address = 0;
+    m_address = 0;
+    m_samples_left = 0;
+    m_sample_rate = 0xF;
+    m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate);
+    m_control = 0;
+    m_dma = 0;
+    memset(m_adpcm_ram, 0, sizeof(m_adpcm_ram));
 }
 
 void Adpcm::Sync()
@@ -73,6 +94,41 @@ void Adpcm::ComputeDeltaLUT()
                 (IS_SET_BIT(nibble, 2) ? (step_value / 1) : 0);
         }
     }
+}
+
+void Adpcm::ComputeLatencyLUTs()
+{
+    for(int i = 0; i < 36; ++i)
+    {
+        m_read_latency[i] = ComputeLatency(i, true);
+        m_write_latency[i] = ComputeLatency(i, false);
+    }
+}
+
+u8 Adpcm::ComputeLatency(int offset, bool read)
+{
+    for(int d = 1; d <= 36; d++)
+    {
+        int slot = ((offset + d) / 9) & 0x03;  // 0=refresh, 1=write, 2=write, 3=read
+
+        if(read)
+        {
+            if(slot == 3)
+                return d;
+        }
+        else
+        {
+            if(slot == 1 || slot == 2)
+                return d;
+        }
+    }
+
+    return 36;
+}
+
+void Adpcm::SetCore(GeargrafxCore* core)
+{
+    m_core = core;
 }
 
 void Adpcm::SaveState(std::ostream& stream)

@@ -54,6 +54,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_cartridge);
     InitPointer(m_debug_callback);
     m_paused = true;
+    m_master_clock_cycles = 0;
 }
 
 GeargrafxCore::~GeargrafxCore()
@@ -79,8 +80,6 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     srand((unsigned int)time(NULL));
 
     m_cdrom_media = new CdRomMedia();
-    m_scsi_controller = new ScsiController(m_cdrom_media);
-    m_cdrom = new CdRom(m_scsi_controller);
     m_cartridge = new Cartridge(m_cdrom_media);
     m_huc6280 = new HuC6280();
     m_huc6270_1 = new HuC6270(m_huc6280);
@@ -89,8 +88,12 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_huc6260 = new HuC6260(m_huc6202, m_huc6280);
     m_input = new Input(m_cartridge);
     m_audio = new Audio();
+    m_scsi_controller = new ScsiController(m_cdrom_media);
+    m_cdrom = new CdRom(m_scsi_controller, m_audio);
     m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_cartridge, m_input, m_audio, m_cdrom);
 
+    m_audio->Init();
+    m_input->Init();
     m_cdrom_media->Init();
     m_cdrom->Init(m_huc6280, m_memory);
     m_scsi_controller->Init(m_huc6280, m_cdrom);
@@ -101,8 +104,8 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_huc6270_1->Init(m_huc6260, m_huc6202);
     m_huc6270_2->Init(m_huc6260, m_huc6202);
     m_huc6280->Init(m_memory, m_huc6202);
-    m_audio->Init();
-    m_input->Init();
+
+    m_audio->GetAdpcm()->SetCore(this);
 }
 
 bool GeargrafxCore::LoadROM(const char* file_path)
@@ -136,66 +139,6 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
     runtime_info.width_scale = m_huc6260->GetWidthScale();
 
     return m_cartridge->IsReady();
-}
-
-Memory* GeargrafxCore::GetMemory()
-{
-    return m_memory;
-}
-
-Cartridge* GeargrafxCore::GetCartridge()
-{
-    return m_cartridge;
-}
-
-HuC6202* GeargrafxCore::GetHuC6202()
-{
-    return m_huc6202;
-}
-
-HuC6260* GeargrafxCore::GetHuC6260()
-{
-    return m_huc6260;
-}
-
-HuC6270* GeargrafxCore::GetHuC6270_1()
-{
-    return m_huc6270_1;
-}
-
-HuC6270* GeargrafxCore::GetHuC6270_2()
-{
-    return m_huc6270_2;
-}
-
-HuC6280* GeargrafxCore::GetHuC6280()
-{
-    return m_huc6280;
-}
-
-CdRom* GeargrafxCore::GetCDROM()
-{
-    return m_cdrom;
-}
-
-CdRomMedia* GeargrafxCore::GetCDROMMedia()
-{
-    return m_cdrom_media;
-}
-
-ScsiController* GeargrafxCore::GetScsiController()
-{
-    return m_scsi_controller;
-}
-
-Audio* GeargrafxCore::GetAudio()
-{
-    return m_audio;
-}
-
-Input* GeargrafxCore::GetInput()
-{
-    return m_input;
 }
 
 void GeargrafxCore::SetDebugCallback(GG_Debug_Callback callback)
@@ -761,6 +704,7 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
 
 void GeargrafxCore::Reset()
 {
+    m_master_clock_cycles = 0;
     m_paused = false;
     m_memory->Reset();
     m_huc6202->Reset(m_cartridge->IsSGX());

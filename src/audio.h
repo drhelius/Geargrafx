@@ -22,10 +22,9 @@
 
 #include <iostream>
 #include <fstream>
-#include "types.h"
-#include "huc6280_psg.h"
-#include "adpcm.h"
+#include "common.h"
 
+class Adpcm;
 class HuC6280PSG;
 
 class Audio

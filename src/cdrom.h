@@ -32,6 +32,8 @@
 class ScsiController;
 class HuC6280;
 class Memory;
+class Audio;
+class Adpcm;
 
 class CdRom
 {
@@ -45,7 +47,7 @@ public:
     };
 
 public:
-    CdRom(ScsiController* scsi_controller);
+    CdRom(ScsiController* scsi_controller, Audio* audio);
     ~CdRom();
     void Init(HuC6280* huc6280, Memory* memory);
     void Reset();
@@ -64,6 +66,8 @@ private:
 private:
     CdRom_State m_state;
     ScsiController* m_scsi_controller;
+    Audio* m_audio;
+    Adpcm* m_adpcm;
     HuC6280* m_huc6280;
     Memory* m_memory;
     u8 m_reset;

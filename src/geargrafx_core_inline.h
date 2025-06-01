@@ -25,6 +25,7 @@
 #include "huc6260.h"
 #include "huc6280.h"
 #include "audio.h"
+#include "cdrom.h"
 
 INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
 {
@@ -85,6 +86,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
                 m_debug_callback();
 
             u32 cycles = m_huc6280->RunInstruction(&instruction_completed);
+            m_master_clock_cycles += cycles;
             m_huc6280->ClockTimer(cycles);
             stop = m_huc6260->Clock<is_sgx>(cycles);
             if (is_cdrom)
@@ -121,6 +123,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
         do
         {
             u32 cycles = m_huc6280->RunInstruction();
+            m_master_clock_cycles += cycles;
             m_huc6280->ClockTimer(cycles);
             stop = m_huc6260->Clock<is_sgx>(cycles);
             if (is_cdrom)
@@ -132,6 +135,71 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
         m_audio->EndFrame(sample_buffer, sample_count);
         return false;
     }
+}
+
+INLINE Memory* GeargrafxCore::GetMemory()
+{
+    return m_memory;
+}
+
+INLINE Cartridge* GeargrafxCore::GetCartridge()
+{
+    return m_cartridge;
+}
+
+INLINE HuC6202* GeargrafxCore::GetHuC6202()
+{
+    return m_huc6202;
+}
+
+INLINE HuC6260* GeargrafxCore::GetHuC6260()
+{
+    return m_huc6260;
+}
+
+INLINE HuC6270* GeargrafxCore::GetHuC6270_1()
+{
+    return m_huc6270_1;
+}
+
+HuC6270* GeargrafxCore::GetHuC6270_2()
+{
+    return m_huc6270_2;
+}
+
+INLINE HuC6280* GeargrafxCore::GetHuC6280()
+{
+    return m_huc6280;
+}
+
+INLINE CdRom* GeargrafxCore::GetCDROM()
+{
+    return m_cdrom;
+}
+
+INLINE CdRomMedia* GeargrafxCore::GetCDROMMedia()
+{
+    return m_cdrom_media;
+}
+
+INLINE ScsiController* GeargrafxCore::GetScsiController()
+{
+    return m_scsi_controller;
+}
+
+INLINE Audio* GeargrafxCore::GetAudio()
+{
+    return m_audio;
+}
+
+INLINE Input* GeargrafxCore::GetInput()
+{
+    return m_input;
+}
+
+INLINE u64 GeargrafxCore::GetMasterClockCycles()
+{
+    return m_master_clock_cycles;
 }
 
 #endif /* GEARGRAFX_CORE_INLINE_H */

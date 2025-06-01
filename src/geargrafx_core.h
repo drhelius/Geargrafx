@@ -86,6 +86,7 @@ public:
     ScsiController* GetScsiController();
     Audio* GetAudio();
     Input* GetInput();
+    u64 GetMasterClockCycles();
     void SetDebugCallback(GG_Debug_Callback callback);
 
 private:
@@ -111,6 +112,7 @@ private:
     ScsiController* m_scsi_controller;
     bool m_paused;
     GG_Debug_Callback m_debug_callback;
+    u64 m_master_clock_cycles;
 };
 
 #include "geargrafx_core_inline.h"

@@ -21,10 +21,13 @@
 #include "scsi_controller.h"
 #include "huc6280.h"
 #include "memory.h"
+#include "audio.h"
 
-CdRom::CdRom(ScsiController* scsi_controller)
+CdRom::CdRom(ScsiController* scsi_controller, Audio* audio)
 {
     m_scsi_controller = scsi_controller;
+    m_audio = audio;
+    InitPointer(m_adpcm);
     InitPointer(m_memory);
     m_reset = 0;
     m_bram_enabled = false;
@@ -44,6 +47,7 @@ void CdRom::Init(HuC6280* huc6280, Memory* memory)
 {
     m_huc6280 = huc6280;
     m_memory = memory;
+    m_adpcm = m_audio->GetAdpcm();
     Reset();
 }
 
@@ -117,8 +121,8 @@ u8 CdRom::ReadRegister(u16 address)
         case 0x0D:
         case 0x0E:
             // ADPCM Read
-            Debug("CDROM Read ADPCM %02X", reg);
-            return 0x00;
+            //Debug("CDROM Read ADPCM %02X", reg);
+            return m_adpcm->Read(reg);
         case 0x0F:
             // Audio Fader
             Debug("CDROM Read Audio Fader %02X", reg);
@@ -197,7 +201,8 @@ void CdRom::WriteRegister(u16 address, u8 value)
         case 0x0D:
         case 0x0E:
             // ADPCM Write
-            Debug("CDROM Write ADPCM %02X, value: %02X", reg, value);
+            //Debug("CDROM Write ADPCM %02X, value: %02X", reg, value);
+            m_adpcm->Write(reg, value);
             break;
         case 0x0F:
             // Audio Fader
