@@ -380,7 +380,7 @@ void ScsiController::CommandRead()
         return;
     }
 
-    u32 current_lba = 0;//m_cdrom_media->GetCurrentSector();
+    u32 current_lba = m_load_sector;
     u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
     u32 seek_cycles = TimeToCycles(seek_time * 1000);
     u32 transfer_time = m_cdrom_media->SectorTransferTime();
