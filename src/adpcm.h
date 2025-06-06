@@ -25,6 +25,7 @@
 #include "common.h"
 
 class GeargrafxCore;
+class ScsiController;
 
 class Adpcm
 {
@@ -39,6 +40,7 @@ public:
     void Write(u16 address, u8 value);
     int EndFrame(s16* sample_buffer);
     void SetCore(GeargrafxCore* core);
+    void SetScsiController(ScsiController* scsi_controller);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -50,17 +52,19 @@ private:
     u32 CalculateCyclesPerSample(u8 sample_rate);
     u32 NextSlotCycles(bool read);
     void UpdateReadWriteEvents(u32 cycles);
+    void UpdateDMA(u32 cycles);
 
 private:
     GeargrafxCore* m_core;
+    ScsiController* m_scsi_controller;
     s16 m_step_delta[49 * 8] = {};
     u8 m_adpcm_ram[0x10000] = {};
     u8 m_read_latency[36] = {};
     u8 m_write_latency[36] = {};
     u8 m_read_value;
     u8 m_write_value;
-    u32 m_read_cycles;
-    u32 m_write_cycles;
+    s32 m_read_cycles;
+    s32 m_write_cycles;
     u16 m_read_address;
     u16 m_write_address;
     u16 m_address;
@@ -69,6 +73,10 @@ private:
     u32 m_cycles_per_sample;
     u8 m_control;
     u8 m_dma;
+    s32 m_dma_cycles;
+    u8 m_status;
+    bool m_end;
+    bool m_playing;
 };
 
 static const s16 k_adpcm_index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };

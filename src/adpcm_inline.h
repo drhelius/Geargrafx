@@ -22,10 +22,12 @@
 
 #include "adpcm.h"
 #include "geargrafx_core.h"
+#include "scsi_controller.h"
 
 INLINE void Adpcm::Clock(u32 cycles)
 {
-    // Placeholder for clock logic
+    UpdateReadWriteEvents(cycles);
+    UpdateDMA(cycles);
 }
 
 INLINE u8 Adpcm::Read(u16 address)
@@ -38,7 +40,12 @@ INLINE u8 Adpcm::Read(u16 address)
         case 0x0B:
             return m_dma;
         case 0x0C:
-            return 0xFF;
+            m_status = 0;
+            m_status |= (m_playing ? 0x08 : 0x00);
+            m_status |= (m_end ? 0x01 : 0x00);
+            m_status |= (m_read_cycles > 0 ? 0x80 : 0x00);
+            m_status |= (m_write_cycles > 0 ? 0x04 : 0x00);
+            return m_status;
         case 0x0D:
             return m_control;
         case 0x0E:
@@ -115,6 +122,39 @@ INLINE void Adpcm::UpdateReadWriteEvents(u32 cycles)
             m_adpcm_ram[m_write_address] = m_write_value;
             m_write_address++;
         }
+    }
+}
+
+INLINE void Adpcm::UpdateDMA(u32 cycles)
+{
+    bool dma_active = (m_dma & 0x03) != 0;
+
+    if (!dma_active)
+        return;
+
+    if (m_dma_cycles > 0)
+    {
+        m_dma_cycles -= cycles;
+        if (m_dma_cycles <= 0)
+        {
+            m_dma_cycles = 0;
+            if (m_write_cycles == 0)
+            {
+                m_write_cycles = NextSlotCycles(false);
+                m_write_value = m_scsi_controller->ReadData();
+                m_scsi_controller->AutoAck();
+            }
+            else
+                m_dma_cycles = 1;
+        }
+    }
+    else if(!m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_ACK) &&
+            !m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_CD) &&
+            m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_IO) &&
+            m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_REQ))
+    {
+
+        m_dma_cycles = 60;
     }
 }
 

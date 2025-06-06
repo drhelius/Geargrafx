@@ -24,6 +24,8 @@
 
 Adpcm::Adpcm()
 {
+    InitPointer(m_core);
+    InitPointer(m_scsi_controller);
     m_read_value = 0;
     m_write_value = 0;
     m_read_cycles = 0;
@@ -36,6 +38,10 @@ Adpcm::Adpcm()
     m_cycles_per_sample = 0;
     m_control = 0;
     m_dma = 0;
+    m_dma_cycles = 0;
+    m_status = 0;
+    m_end = false;
+    m_playing = false;
 }
 
 Adpcm::~Adpcm()
@@ -63,6 +69,10 @@ void Adpcm::Reset()
     m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate);
     m_control = 0;
     m_dma = 0;
+    m_dma_cycles = 0;
+    m_status = 0;
+    m_end = false;
+    m_playing = false;
     memset(m_adpcm_ram, 0, sizeof(m_adpcm_ram));
 }
 
@@ -129,6 +139,11 @@ u8 Adpcm::ComputeLatency(int offset, bool read)
 void Adpcm::SetCore(GeargrafxCore* core)
 {
     m_core = core;
+}
+
+void Adpcm::SetScsiController(ScsiController* scsi_controller)
+{
+    m_scsi_controller = scsi_controller;
 }
 
 void Adpcm::SaveState(std::ostream& stream)

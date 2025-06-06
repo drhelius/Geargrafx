@@ -162,7 +162,7 @@ INLINE HuC6270* GeargrafxCore::GetHuC6270_1()
     return m_huc6270_1;
 }
 
-HuC6270* GeargrafxCore::GetHuC6270_2()
+INLINE HuC6270* GeargrafxCore::GetHuC6270_2()
 {
     return m_huc6270_2;
 }

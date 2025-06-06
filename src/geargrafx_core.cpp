@@ -106,6 +106,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_huc6280->Init(m_memory, m_huc6202);
 
     m_audio->GetAdpcm()->SetCore(this);
+    m_audio->GetAdpcm()->SetScsiController(m_scsi_controller);
 }
 
 bool GeargrafxCore::LoadROM(const char* file_path)
