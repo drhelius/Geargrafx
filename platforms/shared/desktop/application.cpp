@@ -639,7 +639,8 @@ static void sdl_shortcuts_gui(const SDL_Event* event)
         switch (key)
         {
             case SDL_SCANCODE_Q:
-                application_trigger_quit();
+                if (event->key.keysym.mod & KMOD_CTRL)
+                    application_trigger_quit();
                 break;
             case SDL_SCANCODE_A:
                 if (event->key.keysym.mod & KMOD_CTRL)
