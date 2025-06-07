@@ -62,6 +62,7 @@ public:
         u32 lead_in_lba;
         GG_CdRomMSF lead_in_msf;
         ImgFile* img_file;
+        u32 file_offset;
     };
 
 public:

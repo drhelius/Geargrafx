@@ -44,11 +44,15 @@ void config_init(void)
     else
         config_root_path = SDL_GetPrefPath("Geardome", GG_TITLE);
 
-    strcpy(config_emu_file_path, config_root_path);
-    strcat(config_emu_file_path, "config.ini");
+    strncpy_fit(config_temp_path, config_root_path, sizeof(config_temp_path));
+    strncat_fit(config_temp_path, "tmp/", sizeof(config_temp_path));
+    create_directory_if_not_exists(config_temp_path);
 
-    strcpy(config_imgui_file_path, config_root_path);
-    strcat(config_imgui_file_path, "imgui.ini");
+    strncpy_fit(config_emu_file_path, config_root_path, sizeof(config_emu_file_path));
+    strncat_fit(config_emu_file_path, "config.ini", sizeof(config_emu_file_path));
+
+    strncpy_fit(config_imgui_file_path, config_root_path, sizeof(config_imgui_file_path));
+    strncat_fit(config_imgui_file_path, "imgui.ini", sizeof(config_imgui_file_path));
 
     config_input_keyboard[0].key_left = SDL_SCANCODE_LEFT;
     config_input_keyboard[0].key_right = SDL_SCANCODE_RIGHT;

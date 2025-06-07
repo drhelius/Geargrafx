@@ -37,6 +37,7 @@ Cartridge::Cartridge(CdRomMedia* cdrom_media)
     m_file_path[0] = 0;
     m_file_name[0] = 0;
     m_file_extension[0] = 0;
+    m_temp_path[0] = 0;
     m_rom_bank_count = 0;
     m_crc = 0;
     m_is_sgx = false;
@@ -168,6 +169,18 @@ const char* Cartridge::GetFileExtension()
     return m_file_extension;
 }
 
+void Cartridge::SetTempPath(const char* path)
+{
+    if (IsValidPointer(path))
+    {
+        strncpy_fit(m_temp_path, path, sizeof(m_temp_path));
+    }
+    else
+    {
+        Log("ERROR: Invalid temp path %s", path);
+    }
+}
+
 u8* Cartridge::GetROM()
 {
     return m_rom;
@@ -213,35 +226,40 @@ bool Cartridge::LoadFromFile(const char* path)
             return false;
         }
 
-        char* memblock = new char[size];
-        file.seekg(0, ios::beg);
-        file.read(memblock, size);
-        file.close();
-
-        for (int i = 0; i < size; i++)
+        if (strcmp(m_file_extension, "zip") == 0)
         {
-            if (memblock[i] != 0)
-                break;
-
-            if (i == size - 1)
-            {
-                Log("ERROR: File %s is empty!", path);
-                SafeDeleteArray(memblock);
-                return false;
-            }
+            m_ready = LoadFromZipFile(path);
         }
-
-        if (strcmp(m_file_extension, "cue") == 0)
-        {
-            m_is_cdrom = true;
-            m_ready = m_cdrom_media->LoadCueFromBuffer(reinterpret_cast<u8*>(memblock), size, path);
-        }
-        else if (strcmp(m_file_extension, "zip") == 0)
-            m_ready = LoadFromZipFile(reinterpret_cast<u8*>(memblock), size);
         else
-            m_ready = LoadFromBuffer(reinterpret_cast<u8*>(memblock), size, path);
+        {
+            char* memblock = new char[size];
+            file.seekg(0, ios::beg);
+            file.read(memblock, size);
+            file.close();
 
-        SafeDeleteArray(memblock);
+            for (int i = 0; i < size; i++)
+            {
+                if (memblock[i] != 0)
+                    break;
+
+                if (i == size - 1)
+                {
+                    Log("ERROR: File %s is empty!", path);
+                    SafeDeleteArray(memblock);
+                    return false;
+                }
+            }
+
+            if (strcmp(m_file_extension, "cue") == 0)
+            {
+                m_is_cdrom = true;
+                m_ready = m_cdrom_media->LoadCueFromBuffer(reinterpret_cast<u8*>(memblock), size, path);
+            }
+            else
+                m_ready = LoadFromBuffer(reinterpret_cast<u8*>(memblock), size, path);
+
+            SafeDeleteArray(memblock);
+        }
     }
     else
     {
@@ -344,9 +362,9 @@ bool Cartridge::LoadBios(u8* buffer, int size)
     }
 }
 
-bool Cartridge::LoadFromZipFile(const u8* buffer, int size)
+bool Cartridge::LoadFromZipFile(const char* path)
 {
-    Debug("Loading from ZIP file... Size: %d", size);
+    Debug("Loading ROM from ZIP file: %s", path);
 
     using namespace std;
 
@@ -354,7 +372,8 @@ bool Cartridge::LoadFromZipFile(const u8* buffer, int size)
     mz_bool status;
     memset(&zip_archive, 0, sizeof (zip_archive));
 
-    status = mz_zip_reader_init_mem(&zip_archive, (void*) buffer, size, 0);
+    status = mz_zip_reader_init_file(&zip_archive, path, 0);
+
     if (!status)
     {
         Log("ERROR: mz_zip_reader_init_mem() failed!");
@@ -377,7 +396,7 @@ bool Cartridge::LoadFromZipFile(const u8* buffer, int size)
         string extension = fn.substr(fn.find_last_of(".") + 1);
         transform(extension.begin(), extension.end(), extension.begin(), (int(*)(int)) tolower);
 
-        if ((extension == "pce") || (extension == "sgx") || (extension == "rom") || (extension == "bin"))
+        if ((extension == "pce") || (extension == "sgx") || (extension == "rom"))
         {
             void *p;
             size_t uncomp_size;
@@ -396,6 +415,39 @@ bool Cartridge::LoadFromZipFile(const u8* buffer, int size)
             mz_zip_reader_end(&zip_archive);
 
             return ok;
+        }
+        else if (extension == "cue")
+        {
+            mz_zip_reader_end(&zip_archive);
+
+            m_is_cdrom = true;
+            const char* temp_path = m_temp_path[0] ? m_temp_path : m_file_directory;
+
+            string temppath(temp_path);
+            string fullpath(path);
+            string filename;
+
+            size_t pos = fullpath.find_last_of("/\\");
+            if (pos != string::npos)
+                filename = fullpath.substr(pos + 1);
+            else
+                filename = fullpath;
+
+            temppath += "/" + filename + "_tmp";
+
+            Debug("Loading CD-ROM Media from ZIP file: %s", path);
+            Debug("Temporary path: %s", temppath.c_str());
+
+            if (extract_zip_to_folder(path, temppath.c_str()))
+            {
+                string cue_path = temppath + "/" + fn;
+                return m_cdrom_media->LoadCueFromFile(cue_path.c_str());
+            }
+            else
+            {
+                Log("ERROR: Failed to extract ZIP file %s to %s", path, temppath.c_str());
+                return false;
+            }
         }
     }
     return false;

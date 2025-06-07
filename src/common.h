@@ -20,12 +20,23 @@
 #ifndef COMMON_H
 #define	COMMON_H
 
+#include <string>
 #include <string.h>
 #include <time.h>
+#if defined(_WIN32)
+#include <direct.h>
+#include <windows.h>
+#else
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <unistd.h>
+#endif
 #include "defines.h"
 #include "types.h"
 #include "log.h"
 #include "bit_ops.h"
+#include "miniz/miniz.h"
 
 inline int AsHex(const char c)
 {
@@ -105,6 +116,144 @@ inline char* strncpy_fit(char* dest, const char* src, size_t dest_size)
         dest_size -= 1;
 
     return strncpy(dest, src, dest_size);
+}
+
+inline char* strncat_fit(char* dest, const char* src, size_t dest_size)
+{
+    if (dest_size != 0)
+        dest_size -= strlen(dest) + 1;
+
+    return strncat(dest, src, dest_size);
+}
+
+inline bool create_directory_if_not_exists(const char* path)
+{
+#if defined(_WIN32)
+    int res = _mkdir(path);
+#else
+    int res = mkdir(path, 0755);
+#endif
+    if (res == 0 || errno == EEXIST)
+        return true;
+    else
+        return false;
+}
+
+inline bool remove_directory_and_contents(const char* path)
+{
+#if defined(_WIN32)
+    std::string search = std::string(path) + "\\*";
+    WIN32_FIND_DATAA fd;
+    HANDLE hFind = FindFirstFileA(search.c_str(), &fd);
+
+    if (hFind == INVALID_HANDLE_VALUE)
+        return false;
+
+    do
+    {
+        const char* name = fd.cFileName;
+        if (strcmp(name, ".") && strcmp(name, ".."))
+        {
+            std::string item = std::string(path) + "\\" + name;
+            if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            {
+                remove_directory_and_contents(item.c_str());
+                RemoveDirectoryA(item.c_str());
+            }
+            else
+            {
+                DeleteFileA(item.c_str());
+            }
+        }
+    }
+    while (FindNextFileA(hFind, &fd));
+
+    FindClose(hFind);
+    return RemoveDirectoryA(path) != 0;
+#else
+    DIR* dir = opendir(path);
+    if (!dir)
+        return false;
+
+    struct dirent* entry;
+
+    while ((entry = readdir(dir)) != nullptr)
+    {
+        const char* name = entry->d_name;
+        if (strcmp(name, ".") && strcmp(name, ".."))
+        {
+            std::string item = std::string(path) + "/" + name;
+            struct stat st;
+            if (stat(item.c_str(), &st) == 0) {
+                if (S_ISDIR(st.st_mode))
+                    remove_directory_and_contents(item.c_str());
+                else
+                    unlink(item.c_str());
+            }
+        }
+    }
+
+    closedir(dir);
+    return (rmdir(path) == 0);
+#endif
+}
+
+inline bool extract_zip_to_folder(const char* zip_path, const char* out_folder)
+{
+    using namespace std;
+    Debug("Extracting ZIP archive %s...", zip_path);
+    Debug("Output folder: %s", out_folder);
+
+    mz_zip_archive zip_archive;
+    memset(&zip_archive, 0, sizeof(zip_archive));
+
+    mz_bool status = mz_zip_reader_init_file(&zip_archive, zip_path, 0);
+
+    if (!status)
+    {
+        Log("ERROR: mz_zip_reader_init_file() failed!");
+        return false;
+    }
+
+    string out_dir(out_folder);
+
+    if (!create_directory_if_not_exists(out_dir.c_str()))
+    {
+        Log("ERROR: Failed to create directory %s", out_dir.c_str());
+        mz_zip_reader_end(&zip_archive);
+        return false;
+    }
+
+    mz_uint num_files = mz_zip_reader_get_num_files(&zip_archive);
+
+    for (mz_uint i = 0; i < num_files; i++)
+    {
+        mz_zip_archive_file_stat file_stat;
+        if (!mz_zip_reader_file_stat(&zip_archive, i, &file_stat))
+        {
+            Log("ERROR: mz_zip_reader_file_stat failed for file %d", i);
+            continue;
+        }
+
+        if (file_stat.m_is_directory)
+            continue;
+
+        string out_path = out_dir + "/" + file_stat.m_filename;
+
+        if (!mz_zip_reader_extract_to_file(&zip_archive, i, out_path.c_str(), 0))
+        {
+            Log("ERROR: Failed to extract %s", out_path.c_str());
+        }
+        else
+        {
+            Debug("Extracted: %s", out_path.c_str());
+        }
+    }
+
+    mz_zip_reader_end(&zip_archive);
+    Debug("Extraction complete.");
+
+    return true;
 }
 
 #endif /* COMMON_H */

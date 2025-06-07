@@ -59,9 +59,10 @@ public:
     bool LoadFromFile(const char* path);
     bool LoadFromBuffer(const u8* buffer, int size, const char* path);
     bool LoadBios(u8* buffer, int size);
+    void SetTempPath(const char* path);
 
 private:
-    bool LoadFromZipFile(const u8* buffer, int size);
+    bool LoadFromZipFile(const char* path);
     void GatherROMInfo();
     void GatherInfoFromDB();
     void GatherDataFromPath(const char* path);
@@ -79,6 +80,7 @@ private:
     char m_file_directory[512];
     char m_file_name[512];
     char m_file_extension[512];
+    char m_temp_path[512];
     u32 m_crc;
     bool m_is_sgx;
     bool m_force_sgx;

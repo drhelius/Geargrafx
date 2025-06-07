@@ -110,6 +110,7 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
 
 void application_destroy(void)
 {
+    remove_directory_and_contents(config_temp_path);
     save_window_size();
     config_write();
     emu_destroy();

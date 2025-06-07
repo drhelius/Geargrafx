@@ -54,6 +54,7 @@ void emu_init(void)
 
     geargrafx = new GeargrafxCore();
     geargrafx->Init();
+    geargrafx->GetCartridge()->SetTempPath(config_temp_path);
 
     sound_queue = new SoundQueue();
     sound_queue->Start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT);

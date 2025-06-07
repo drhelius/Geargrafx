@@ -38,7 +38,6 @@ void gui_debug_window_cdrom(void)
     ImGui::PushFont(gui_default_font);
 
     GeargrafxCore* core = emu_get_core();
-    Cartridge* cartridge = core->GetCartridge();
     CdRom* cdrom = core->GetCDROM();
     CdRomMedia* cdrom_media = core->GetCDROMMedia();
     ScsiController* scsi_controller = core->GetScsiController();

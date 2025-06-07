@@ -179,8 +179,9 @@ struct config_Debug
 EXTERN mINI::INIFile* config_ini_file;
 EXTERN mINI::INIStructure config_ini_data;
 EXTERN char* config_root_path;
-EXTERN char config_emu_file_path[260];
-EXTERN char config_imgui_file_path[260];
+EXTERN char config_temp_path[512];
+EXTERN char config_emu_file_path[512];
+EXTERN char config_imgui_file_path[512];
 EXTERN config_Emulator config_emulator;
 EXTERN config_Video config_video;
 EXTERN config_Audio config_audio;
