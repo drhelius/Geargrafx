@@ -112,6 +112,9 @@
     <ClCompile Include="..\..\src\cartridge.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cdrom_audio.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\cdrom_media.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -304,6 +307,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cdrom.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_audio_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_audio.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cdrom_inline.h">

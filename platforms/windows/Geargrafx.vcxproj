@@ -23,6 +23,7 @@
     <ClCompile Include="..\..\src\adpcm.cpp" />
     <ClCompile Include="..\..\src\audio.cpp" />
     <ClCompile Include="..\..\src\cartridge.cpp" />
+    <ClCompile Include="..\..\src\cdrom_audio.cpp" />
     <ClCompile Include="..\..\src\cdrom_media.cpp" />
     <ClCompile Include="..\..\src\cdrom.cpp" />
     <ClCompile Include="..\..\src\scsi_controller.cpp" />
@@ -85,6 +86,8 @@
     <ClInclude Include="..\..\src\cdrom_media_inline.h" />
     <ClInclude Include="..\..\src\cdrom.h" />
     <ClInclude Include="..\..\src\cdrom_inline.h" />
+    <ClInclude Include="..\..\src\cdrom_audio_inline.h" />
+    <ClInclude Include="..\..\src\cdrom_audio.h" />
     <ClInclude Include="..\..\src\cdrom_common.h" />
     <ClInclude Include="..\..\src\scsi_controller.h" />
     <ClInclude Include="..\..\src\scsi_controller_inline.h" />

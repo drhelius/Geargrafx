@@ -4,6 +4,7 @@ SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
                 $(SOURCE_DIR)/adpcm.cpp \
                 $(SOURCE_DIR)/audio.cpp \
                 $(SOURCE_DIR)/cartridge.cpp \
+                $(SOURCE_DIR)/cdrom_audio.cpp \
                 $(SOURCE_DIR)/cdrom_media.cpp \
                 $(SOURCE_DIR)/cdrom.cpp \
                 $(SOURCE_DIR)/scsi_controller.cpp \

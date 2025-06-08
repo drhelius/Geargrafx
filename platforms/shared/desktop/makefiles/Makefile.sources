@@ -41,6 +41,7 @@ SOURCES_CXX := \
     $(SRC_DIR)/adpcm.cpp \
     $(SRC_DIR)/audio.cpp \
     $(SRC_DIR)/cartridge.cpp \
+    $(SRC_DIR)/cdrom_audio.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
     $(SRC_DIR)/cdrom.cpp \
     $(SRC_DIR)/scsi_controller.cpp \
