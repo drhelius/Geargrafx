@@ -347,6 +347,8 @@ bool Memory::LoadBios(const char* file_path, bool syscard)
         bios = m_gameexpress_bios;
     }
 
+    bool ret = true;
+
     ifstream file(file_path, ios::in | ios::binary | ios::ate);
 
     if (file.is_open())
@@ -355,12 +357,14 @@ bool Memory::LoadBios(const char* file_path, bool syscard)
 
         if (size != expected_size)
         {
-            Log("Incorrect BIOS size %d: %s", size, file_path);
-            return false;
+            Log("Incorrect BIOS size %d: expected: %d. %s", size, expected_size, file_path);
+            ret = false;
         }
 
+        memset(bios, 0x00, expected_size);
+
         file.seekg(0, ios::beg);
-        file.read(reinterpret_cast<char*>(bios), size);
+        file.read(reinterpret_cast<char*>(bios), MIN(size, expected_size));
         file.close();
 
         Log("BIOS %s loaded (%d bytes)", file_path, size);
@@ -371,7 +375,7 @@ bool Memory::LoadBios(const char* file_path, bool syscard)
         return false;
     }
 
-    return true;
+    return ret;
 }
 
 Memory::MemoryBankType Memory::GetBankType(u8 bank)
