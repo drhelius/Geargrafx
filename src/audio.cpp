@@ -22,10 +22,13 @@
 #include <assert.h>
 #include "audio.h"
 #include "huc6280_psg.h"
+#include "adpcm.h"
+#include "cdrom_audio.h"
 
-Audio::Audio(Adpcm* adpcm)
+Audio::Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio)
 {
     m_adpcm = adpcm;
+    m_cdrom_audio = cdrom_audio;
     InitPointer(m_psg);
     m_mute = false;
 }
@@ -61,6 +64,7 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 
     int count_psg = m_psg->EndFrame(m_psg_buffer);
     int count_adpcm = m_adpcm->EndFrame(m_adpcm_buffer);
+    int count_cdrom = m_cdrom_audio->EndFrame(m_cdrom_buffer);
     //assert(count_psg == count_adpcm);
 
     if (IsValidPointer(sample_buffer) && IsValidPointer(sample_count))
@@ -75,6 +79,7 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
             {
                 sample_buffer[i] = m_psg_buffer[i];
                 //sample_buffer[i] += m_adpcm_buffer[i];
+                //sample_buffer[i] += m_cdrom_buffer[i];
             }
         }
     }

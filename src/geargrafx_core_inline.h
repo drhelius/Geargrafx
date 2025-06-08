@@ -26,6 +26,8 @@
 #include "huc6280.h"
 #include "audio.h"
 #include "cdrom.h"
+#include "cdrom_audio.h"
+#include "adpcm.h"
 
 INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
 {
@@ -93,6 +95,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             {
                 m_cdrom->Clock(cycles);
                 m_adpcm->Clock(cycles);
+                m_cdrom_audio->Clock(cycles);
             }
             m_audio->Clock(cycles);
 
@@ -133,6 +136,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             {
                 m_cdrom->Clock(cycles);
                 m_adpcm->Clock(cycles);
+                m_cdrom_audio->Clock(cycles);
             }
             m_audio->Clock(cycles);
         }

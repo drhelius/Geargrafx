@@ -26,11 +26,12 @@
 
 class Adpcm;
 class HuC6280PSG;
+class CdRomAudio;
 
 class Audio
 {
 public:
-    Audio(Adpcm* adpcm);
+    Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio);
     ~Audio();
     void Init();
     void Reset();
@@ -46,8 +47,10 @@ private:
     bool m_mute;
     HuC6280PSG* m_psg;
     Adpcm* m_adpcm;
+    CdRomAudio* m_cdrom_audio;
     s16 m_psg_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     s16 m_adpcm_buffer[GG_AUDIO_BUFFER_SIZE] = {};
+    s16 m_cdrom_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     u32 m_cycle_counter;
 };
 

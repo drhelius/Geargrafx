@@ -34,6 +34,7 @@
 #include "scsi_controller.h"
 #include "cdrom.h"
 #include "cdrom_media.h"
+#include "cdrom_audio.h"
 #include "adpcm.h"
 
 #endif /* GEARGRAFX_H */

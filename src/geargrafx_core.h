@@ -34,6 +34,7 @@ class Memory;
 class Cartridge;
 class CdRom;
 class CdRomMedia;
+class CdRomAudio;
 class Adpcm;
 class ScsiController;
 
@@ -111,6 +112,7 @@ private:
     Cartridge* m_cartridge;
     CdRom* m_cdrom;
     CdRomMedia* m_cdrom_media;
+    CdRomAudio* m_cdrom_audio;
     Adpcm* m_adpcm;
     ScsiController* m_scsi_controller;
     bool m_paused;

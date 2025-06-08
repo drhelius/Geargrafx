@@ -22,5 +22,9 @@
 
 #include "cdrom_audio.h"
 
+INLINE void CdRomAudio::Clock(u32 cycles)
+{
+
+}
 
 #endif /* CDROM_AUDIO_INLINE_H */
