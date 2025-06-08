@@ -165,7 +165,7 @@ INLINE void HuC6260::RenderFrame()
 template <bool is_sgx, int bytes_per_pixel>
 void HuC6260::RenderFrameTemplate()
 {
-    u8* palette = (m_pixel_format == GG_PIXEL_RGB565) ? &m_rgb565_palette[0][0][0] : &m_rgba888_palette[0][0][0];
+    u8* palette = (m_pixel_format == GG_PIXEL_RGB565) ? &m_rgb565_palette[m_palette][0][0] : &m_rgba888_palette[m_palette][0][0];
     int frame_buffer_index = 0;
 
     if (is_sgx)
