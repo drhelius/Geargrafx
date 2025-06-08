@@ -36,7 +36,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 
 ## Features
 
-- Accurate emulation supporting the entire PCE / SGX catalog.
+- Accurate emulation supporting the entire HuCard PCE / SGX catalog.
 - Save states with preview.
 - Multi Tap (up to 5 players).
 - Standard Gamepad (2 buttons), Avenue Pad 3 (3 buttons, auto-configured based on game), Avenue Pad 6 (6 buttons).
