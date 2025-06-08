@@ -90,7 +90,10 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             m_huc6280->ClockTimer(cycles);
             stop = m_huc6260->Clock<is_sgx>(cycles);
             if (is_cdrom)
+            {
                 m_cdrom->Clock(cycles);
+                m_adpcm->Clock(cycles);
+            }
             m_audio->Clock(cycles);
 
             if (debug_enable)
@@ -127,7 +130,10 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             m_huc6280->ClockTimer(cycles);
             stop = m_huc6260->Clock<is_sgx>(cycles);
             if (is_cdrom)
+            {
                 m_cdrom->Clock(cycles);
+                m_adpcm->Clock(cycles);
+            }
             m_audio->Clock(cycles);
         }
         while (!stop);
@@ -185,6 +191,11 @@ INLINE CdRomMedia* GeargrafxCore::GetCDROMMedia()
 INLINE ScsiController* GeargrafxCore::GetScsiController()
 {
     return m_scsi_controller;
+}
+
+INLINE Adpcm* GeargrafxCore::GetAdpcm()
+{
+    return m_adpcm;
 }
 
 INLINE Audio* GeargrafxCore::GetAudio()

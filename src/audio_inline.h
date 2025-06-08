@@ -25,8 +25,6 @@
 
 INLINE void Audio::Clock(u32 cycles)
 {
-    m_adpcm->Clock(cycles);
-
     u32 total_cycles = m_cycle_counter + cycles;
     u32 psg_cycles = total_cycles / 6;
     m_psg->Clock(psg_cycles);
@@ -41,11 +39,6 @@ INLINE void Audio::WritePSG(u32 address, u8 value)
 INLINE HuC6280PSG* Audio::GetPSG()
 {
     return m_psg;
-}
-
-INLINE Adpcm* Audio::GetAdpcm()
-{
-    return m_adpcm;
 }
 
 #endif /* AUDIO_INLINE_H */

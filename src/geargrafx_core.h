@@ -34,6 +34,7 @@ class Memory;
 class Cartridge;
 class CdRom;
 class CdRomMedia;
+class Adpcm;
 class ScsiController;
 
 class GeargrafxCore
@@ -84,6 +85,7 @@ public:
     CdRom* GetCDROM();
     CdRomMedia* GetCDROMMedia();
     ScsiController* GetScsiController();
+    Adpcm* GetAdpcm();
     Audio* GetAudio();
     Input* GetInput();
     u64 GetMasterClockCycles();
@@ -109,6 +111,7 @@ private:
     Cartridge* m_cartridge;
     CdRom* m_cdrom;
     CdRomMedia* m_cdrom_media;
+    Adpcm* m_adpcm;
     ScsiController* m_scsi_controller;
     bool m_paused;
     GG_Debug_Callback m_debug_callback;

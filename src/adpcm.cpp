@@ -49,8 +49,10 @@ Adpcm::~Adpcm()
 
 }
 
-void Adpcm::Init()
+void Adpcm::Init(GeargrafxCore* core, ScsiController* scsi_controller)
 {
+    m_core = core;
+    m_scsi_controller = scsi_controller;
     ComputeDeltaLUT();
     Reset();
 }
@@ -134,16 +136,6 @@ u8 Adpcm::ComputeLatency(int offset, bool read)
     }
 
     return 36;
-}
-
-void Adpcm::SetCore(GeargrafxCore* core)
-{
-    m_core = core;
-}
-
-void Adpcm::SetScsiController(ScsiController* scsi_controller)
-{
-    m_scsi_controller = scsi_controller;
 }
 
 void Adpcm::SaveState(std::ostream& stream)

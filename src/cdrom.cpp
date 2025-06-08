@@ -43,11 +43,11 @@ CdRom::~CdRom()
 {
 }
 
-void CdRom::Init(HuC6280* huc6280, Memory* memory)
+void CdRom::Init(HuC6280* huc6280, Memory* memory, Adpcm* adpcm)
 {
     m_huc6280 = huc6280;
     m_memory = memory;
-    m_adpcm = m_audio->GetAdpcm();
+    m_adpcm = adpcm;
     Reset();
 }
 

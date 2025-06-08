@@ -34,6 +34,7 @@
 #include "scsi_controller.h"
 #include "cdrom.h"
 #include "cdrom_media.h"
+#include "adpcm.h"
 #include "audio.h"
 #include "input.h"
 #include "memory_stream.h"
@@ -48,6 +49,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_huc6280);
     InitPointer(m_cdrom);
     InitPointer(m_cdrom_media);
+    InitPointer(m_adpcm);
     InitPointer(m_scsi_controller);
     InitPointer(m_audio);
     InitPointer(m_input);
@@ -63,6 +65,7 @@ GeargrafxCore::~GeargrafxCore()
     SafeDelete(m_input);
     SafeDelete(m_audio);
     SafeDelete(m_scsi_controller);
+    SafeDelete(m_adpcm);
     SafeDelete(m_cdrom_media);
     SafeDelete(m_cdrom);
     SafeDelete(m_huc6280);
@@ -87,7 +90,8 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_huc6202 = new HuC6202(m_huc6270_1, m_huc6270_2, m_huc6280);
     m_huc6260 = new HuC6260(m_huc6202, m_huc6280);
     m_input = new Input(m_cartridge);
-    m_audio = new Audio();
+    m_adpcm = new Adpcm();
+    m_audio = new Audio(m_adpcm);
     m_scsi_controller = new ScsiController(m_cdrom_media);
     m_cdrom = new CdRom(m_scsi_controller, m_audio);
     m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_cartridge, m_input, m_audio, m_cdrom);
@@ -95,7 +99,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_audio->Init();
     m_input->Init();
     m_cdrom_media->Init();
-    m_cdrom->Init(m_huc6280, m_memory);
+    m_cdrom->Init(m_huc6280, m_memory, m_adpcm);
     m_scsi_controller->Init(m_huc6280, m_cdrom);
     m_cartridge->Init();
     m_memory->Init();
@@ -104,9 +108,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_huc6270_1->Init(m_huc6260, m_huc6202);
     m_huc6270_2->Init(m_huc6260, m_huc6202);
     m_huc6280->Init(m_memory, m_huc6202);
-
-    m_audio->GetAdpcm()->SetCore(this);
-    m_audio->GetAdpcm()->SetScsiController(m_scsi_controller);
+    m_adpcm->Init(this, m_scsi_controller);
 }
 
 bool GeargrafxCore::LoadROM(const char* file_path)
@@ -715,6 +717,7 @@ void GeargrafxCore::Reset()
     m_huc6280->Reset();
     m_cdrom->Reset();
     m_scsi_controller->Reset();
+    m_adpcm->Reset();
     m_audio->Reset();
     m_input->Reset();
 }

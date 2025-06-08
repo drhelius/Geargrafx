@@ -49,7 +49,7 @@ public:
 public:
     CdRom(ScsiController* scsi_controller, Audio* audio);
     ~CdRom();
-    void Init(HuC6280* huc6280, Memory* memory);
+    void Init(HuC6280* huc6280, Memory* memory, Adpcm* adpcm);
     void Reset();
     void Clock(u32 cycles);
     u8 ReadRegister(u16 address);

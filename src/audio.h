@@ -30,7 +30,7 @@ class HuC6280PSG;
 class Audio
 {
 public:
-    Audio();
+    Audio(Adpcm* adpcm);
     ~Audio();
     void Init();
     void Reset();
@@ -39,7 +39,6 @@ public:
     void WritePSG(u32 address, u8 value);
     void EndFrame(s16* sample_buffer, int* sample_count);
     HuC6280PSG* GetPSG();
-    Adpcm* GetAdpcm();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 

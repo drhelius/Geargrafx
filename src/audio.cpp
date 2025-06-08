@@ -23,33 +23,28 @@
 #include "audio.h"
 #include "huc6280_psg.h"
 
-Audio::Audio()
+Audio::Audio(Adpcm* adpcm)
 {
+    m_adpcm = adpcm;
     InitPointer(m_psg);
-    InitPointer(m_adpcm);
     m_mute = false;
 }
 
 Audio::~Audio()
 {
     SafeDelete(m_psg);
-    SafeDelete(m_adpcm);
 }
 
 void Audio::Init()
 {
     m_psg = new HuC6280PSG();
-    m_adpcm = new Adpcm();
-
     m_psg->Init();
-    m_adpcm->Init();
 }
 
 void Audio::Reset()
 {
     m_cycle_counter = 0;
     m_psg->Reset();
-    m_adpcm->Reset();
 
     memset(m_psg_buffer, 0, sizeof(m_psg_buffer));
     memset(m_adpcm_buffer, 0, sizeof(m_adpcm_buffer));
@@ -92,7 +87,6 @@ void Audio::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (m_adpcm_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
     stream.write(reinterpret_cast<const char*> (&m_cycle_counter), sizeof(m_cycle_counter));
     m_psg->SaveState(stream);
-    m_adpcm->SaveState(stream);
 }
 
 void Audio::LoadState(std::istream& stream)
@@ -102,5 +96,4 @@ void Audio::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (m_adpcm_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
     stream.read(reinterpret_cast<char*> (&m_cycle_counter), sizeof(m_cycle_counter));
     m_psg->LoadState(stream);
-    m_adpcm->LoadState(stream);
 }

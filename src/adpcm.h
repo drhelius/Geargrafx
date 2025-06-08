@@ -29,18 +29,28 @@ class ScsiController;
 
 class Adpcm
 {
+public:
+    struct Adpcm_State
+    {
+        u8* CONTROL;
+        u8* DMA;
+        u8* STATUS;
+        bool* END;
+        bool* PLAYING;
+        u8* SAMPLE_RATE;
+        u16* READ_ADDRESS;
+        u16* WRITE_ADDRESS;
+    };
 
 public:
     Adpcm();
     ~Adpcm();
-    void Init();
+    void Init(GeargrafxCore* core, ScsiController* scsi_controller);
     void Reset();
     void Clock(u32 cycles);
     u8 Read(u16 address);
     void Write(u16 address, u8 value);
     int EndFrame(s16* sample_buffer);
-    void SetCore(GeargrafxCore* core);
-    void SetScsiController(ScsiController* scsi_controller);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
