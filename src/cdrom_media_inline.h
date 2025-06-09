@@ -101,4 +101,9 @@ INLINE u32 CdRomMedia::GetSectorCount()
     return m_sector_count;
 }
 
+INLINE u32 CdRomMedia::GetCurrentSector()
+{
+    return m_current_sector;
+}
+
 #endif /* CDROM_MEDIA_H */

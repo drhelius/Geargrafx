@@ -85,11 +85,16 @@ public:
     GG_CdRomMSF GetCdRomLength();
     u32 GetCdRomLengthLba();
     u32 GetSectorCount();
+    u32 GetCurrentSector();
     bool LoadCueFromFile(const char* path);
     bool LoadCueFromBuffer(const u8* buffer, int size, const char* path);
     bool ReadSector(u32 lba, u8* buffer);
+    bool ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size);
     u32 SeekTime(u32 start_lba, u32 end_lba);
     u32 SectorTransferTime();
+    u32 GetFirstSectorOfTrack(u8 track);
+    u32 GetLastSectorOfTrack(u8 track);
+    s32 GetTrackFromLBA(u32 lba);
 
 private:
     void DestroyImgFiles();
@@ -113,6 +118,7 @@ private:
     GG_CdRomMSF m_cdrom_length;
     u32 m_cdrom_length_lba;
     u32 m_sector_count;
+    u32 m_current_sector;
 };
 
 static const u32 k_cdrom_track_type_size[3] = { 2352, 2048, 2352};

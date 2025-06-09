@@ -223,6 +223,7 @@ void HuC6280PSG::Write(u16 address, u8 value)
 void HuC6280PSG::Sync()
 {
     int remaining_cycles = m_elapsed_cycles;
+    m_elapsed_cycles = 0;
 
     while (remaining_cycles > 0)
     {
@@ -379,8 +380,6 @@ void HuC6280PSG::Sync()
             }
         }
     }
-
-    m_elapsed_cycles = 0;
 }
 
 int HuC6280PSG::EndFrame(s16* sample_buffer)

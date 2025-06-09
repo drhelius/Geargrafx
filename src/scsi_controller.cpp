@@ -21,11 +21,13 @@
 #include "scsi_controller.h"
 #include "cdrom.h"
 #include "cdrom_media.h"
+#include "cdrom_audio.h"
 #include "huc6280.h"
 
-ScsiController::ScsiController(CdRomMedia* cdrom_media)
+ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio)
 {
     m_cdrom_media = cdrom_media;
+    m_cdrom_audio = cdrom_audio;
     m_bus.db = 0;
     m_bus.signals = 0;
     m_phase = SCSI_PHASE_BUS_FREE;
@@ -145,6 +147,9 @@ void ScsiController::SetPhase(ScsiPhase phase)
             break;
         case SCSI_PHASE_STATUS:
             SetSignal(SCSI_SIGNAL_BSY | SCSI_SIGNAL_CD | SCSI_SIGNAL_IO | SCSI_SIGNAL_REQ);
+            break;
+        case SCSI_PHASE_BUSY:
+            SetSignal(SCSI_SIGNAL_BSY);
             break;
         default:
             break;
@@ -381,6 +386,9 @@ void ScsiController::CommandRead()
     }
 
     u32 current_lba = m_load_sector;
+    u32 current_sector = m_cdrom_media->GetCurrentSector();
+    // TODO: assert(current_sector == current_lba);
+
     u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
     u32 seek_cycles = TimeToCycles(seek_time * 1000);
     u32 transfer_time = m_cdrom_media->SectorTransferTime();
@@ -401,8 +409,14 @@ void ScsiController::CommandAudioStartPosition()
     Debug("******");
     Debug("SCSI CMD Audio Start Position");
     Debug("******");
-    Debug("NOT IMPLEMENTED");
-    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(21000));
+
+    u32 start_lba = AudioLBA();
+    u8 mode = m_command_buffer[1];
+
+    m_cdrom_audio->StartAudio(start_lba, mode == 0);
+
+    //SetPhase(SCSI_PHASE_BUSY);
+    StartStatus(SCSI_STATUS_GOOD);
 }
 
 void ScsiController::CommandAudioStopPosition()
@@ -410,8 +424,33 @@ void ScsiController::CommandAudioStopPosition()
     Debug("******");
     Debug("SCSI CMD Audio Stop Position");
     Debug("******");
-    Debug("NOT IMPLEMENTED");
-    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(21000));
+
+    u32 stop_lba = AudioLBA();
+    u8 mode = m_command_buffer[1];
+
+    switch (mode)
+    {
+        case 0:
+            m_cdrom_audio->StopAudio();
+            break;
+        case 1:
+            m_cdrom_audio->SetStopLBA(stop_lba, CdRomAudio::CD_AUDIO_STOP_EVENT_LOOP);
+            break;
+        case 2:
+            m_cdrom_audio->SetStopLBA(stop_lba, CdRomAudio::CD_AUDIO_STOP_EVENT_IRQ);
+            break;
+        case 3:
+            m_cdrom_audio->SetStopLBA(stop_lba, CdRomAudio::CD_AUDIO_STOP_EVENT_STOP);
+            break;
+        default:
+            Debug("SCSI CMD Audio Stop Position: Unknown mode %02X", m_command_buffer[1]);
+            break;
+    }
+
+    if((mode == 1) || (mode == 2))
+        SetPhase(SCSI_PHASE_BUSY);
+    else
+        StartStatus(SCSI_STATUS_GOOD);
 }
 
 void ScsiController::CommandAudioPause()
@@ -419,8 +458,10 @@ void ScsiController::CommandAudioPause()
     Debug("******");
     Debug("SCSI CMD Audio Pause");
     Debug("******");
-    Debug("NOT IMPLEMENTED");
-    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(21000));
+
+    m_cdrom_audio->PauseAudio();
+
+    StartStatus(SCSI_STATUS_GOOD);
 }
 
 void ScsiController::CommandReadSubcodeQ()
@@ -429,6 +470,7 @@ void ScsiController::CommandReadSubcodeQ()
     Debug("SCSI CMD Read Subcode Q");
     Debug("******");
     Debug("NOT IMPLEMENTED");
+    // TODO: assert(false);
     NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(21000));
 }
 
@@ -546,5 +588,36 @@ void ScsiController::LoadSector()
     {
         Debug("**** SCSI Load sector: buffer not empty *******************+");
         m_next_load_cycles = TimeToCycles(290000);
+    }
+}
+
+u32 ScsiController::AudioLBA()
+{
+    u8 mode = m_command_buffer[9] & 0xC0;
+
+    switch (mode)
+    {
+        case 0x00:
+            return m_command_buffer[3] << 16 | m_command_buffer[4] << 8 | m_command_buffer[5];
+        case 0x40:
+        {
+            GG_CdRomMSF position;
+            position.minutes = BcdToDec(m_command_buffer[2]);
+            position.seconds = BcdToDec(m_command_buffer[3]);
+            position.frames = BcdToDec(m_command_buffer[4]);
+            u32 lba = MsfToLba(&position);
+            return lba - 150;
+        }
+        case 0x80:
+        {
+            u8 track = BcdToDec(m_command_buffer[2]);
+            return m_cdrom_media->GetFirstSectorOfTrack(track);
+        }
+        default:
+        {
+            Debug("SCSI CMD Audio LBA: Unknown mode %02X", mode);
+            assert(false);
+            return 0;
+        }
     }
 }

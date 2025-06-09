@@ -25,6 +25,7 @@
 
 class CdRom;
 class CdRomMedia;
+class CdRomAudio;
 class HuC6280;
 
 class ScsiController
@@ -60,6 +61,7 @@ public:
         SCSI_PHASE_DATA_OUT,
         SCSI_PHASE_MESSAGE_IN,
         SCSI_PHASE_STATUS,
+        SCSI_PHASE_BUSY
     };
 
     enum ScsiCommand
@@ -113,7 +115,7 @@ public:
     };
 
 public:
-    ScsiController(CdRomMedia* cdrom_media);
+    ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio);
     ~ScsiController();
     void Init(HuC6280* huc6280, CdRom* cdrom);
     void Reset(bool keep_rst_signal = false);
@@ -154,12 +156,14 @@ private:
     u8 CommandLength(ScsiCommand command);
     void LoadSector();
     u32 TimeToCycles(u32 us);
+    u32 AudioLBA();
 
 private:
     Scsi_State m_state;
     HuC6280* m_huc6280;
     CdRom* m_cdrom;
     CdRomMedia* m_cdrom_media;
+    CdRomAudio* m_cdrom_audio;
     ScsiBus m_bus;
     ScsiPhase m_phase;
     ScsiEvent m_next_event;
@@ -183,7 +187,8 @@ static const char* k_scsi_phase_names[] = {
     "DATA IN",
     "DATA OUT",
     "MESSAGE IN",
-    "STATUS"
+    "STATUS",
+    "BUSY"
 };
 
 static const char* k_scsi_event_names[] = {

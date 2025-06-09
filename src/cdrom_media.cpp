@@ -36,6 +36,7 @@ CdRomMedia::CdRomMedia()
     m_cdrom_length = {0, 0, 0};
     m_cdrom_length_lba = 0;
     m_sector_count = 0;
+    m_current_sector = 0;
 }
 
 CdRomMedia::~CdRomMedia()
@@ -81,6 +82,7 @@ void CdRomMedia::Reset()
     m_cdrom_length = {0, 0, 0};
     m_cdrom_length_lba = 0;
     m_sector_count = 0;
+    m_current_sector = 0;
 }
 
 bool CdRomMedia::LoadCueFromFile(const char* path)
@@ -617,6 +619,10 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
                 return false;
             }
 
+            m_current_sector = lba + 1;
+            if (m_current_sector >= m_cdrom_length_lba)
+                m_current_sector = m_cdrom_length_lba - 1;
+
             Debug("Reading sector %d from track %d (offset: %d)", lba, i, byte_offset);
 
             return ReadFromImgFile(img_file, byte_offset, buffer, sector_size);
@@ -624,6 +630,62 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
     }
 
     Debug("ERROR: ReadSector failed - LBA %d not found in any track", lba);
+
+    return false;
+}
+
+bool CdRomMedia::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
+{
+    if (!m_ready || buffer == NULL)
+    {
+        Debug("ERROR: ReadBytes failed - Media not ready or buffer is NULL");
+        return false;
+    }
+
+    if (lba >= m_cdrom_length_lba)
+    {
+        Debug("ERROR: ReadBytes failed - LBA %d out of bounds (max: %d)", lba, m_cdrom_length_lba - 1);
+        return false;
+    }
+
+    for (size_t i = 0; i < m_tracks.size(); i++)
+    {
+        const Track& track = m_tracks[i];
+        u32 sector_size = track.sector_size;
+        u32 start = track.start_lba;
+        u32 end = start + track.sector_count;
+
+        if (lba >= start && lba < end)
+        {
+            u32 sector_offset = lba - start;
+            ImgFile* img_file = track.img_file;
+
+            if (img_file == NULL || img_file->file_size == 0)
+            {
+                Debug("ERROR: ReadBytes failed - ImgFile is NULL or file size is 0");
+                return false;
+            }
+
+            u64 byte_offset = track.file_offset + (sector_offset * sector_size) + offset;
+
+            if (byte_offset + size > img_file->file_size)
+            {
+                Debug("ERROR: ReadBytes failed - Byte offset %llu + size %d exceeds file size %d",
+                    byte_offset, size, img_file->file_size);
+                return false;
+            }
+
+            m_current_sector = lba + 1;
+            if (m_current_sector >= m_cdrom_length_lba)
+                m_current_sector = m_cdrom_length_lba - 1;
+
+            Debug("Reading bytes from sector %d, offset %d", lba, offset);
+
+            return ReadFromImgFile(img_file, byte_offset, buffer, size);
+        }
+    }
+
+    Debug("ERROR: ReadBytes failed - LBA %d not found in any track", lba);
 
     return false;
 }
@@ -790,6 +852,53 @@ bool CdRomMedia::PreloadTrackChunks(u32 track_number, u32 sectors)
     u32 chunks_needed = (total_bytes + track.img_file->chunk_size - 1) / track.img_file->chunk_size;
 
     return PreloadChunks(track.img_file, start_chunk, chunks_needed);
+}
+
+u32 CdRomMedia::GetFirstSectorOfTrack(u8 track)
+{
+    if (track < m_tracks.size())
+    {
+        return m_tracks[track].start_lba;
+    }
+    else if ((track > 0) && (track == m_tracks.size()))
+    {
+        return m_tracks[track - 1].end_lba;
+    }
+
+    Debug("ERROR: GetFirstSectorOfTrack failed - Track number %d out of bounds (max: %d)", track, m_tracks.size());
+    return 0;
+}
+
+u32 CdRomMedia::GetLastSectorOfTrack(u8 track)
+{
+    if (track < m_tracks.size())
+    {
+        return m_tracks[track].end_lba;
+    }
+
+    Log("ERROR: GetLastSectorOfTrack failed - Track number %d out of bounds (max: %d)", track, m_tracks.size());
+
+    return 0;
+}
+
+s32 CdRomMedia::GetTrackFromLBA(u32 lba)
+{
+    if (lba >= m_cdrom_length_lba)
+    {
+        Debug("ERROR: GetTrackNumber failed - LBA %d out of bounds (max: %d)", lba, m_cdrom_length_lba - 1);
+        return -1;
+    }
+
+    for (u8 i = 0; i < m_tracks.size(); i++)
+    {
+        if ((lba >= m_tracks[i].start_lba) && (lba <= m_tracks[i].end_lba))
+        {
+            return i;
+        }
+    }
+
+    Debug("ERROR: GetTrackNumber failed - LBA %d not found in any track", lba);
+    return -1;
 }
 
 ///////////////////////////////////////////////////////////////
