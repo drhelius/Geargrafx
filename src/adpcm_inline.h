@@ -28,6 +28,7 @@ INLINE void Adpcm::Clock(u32 cycles)
 {
     UpdateReadWriteEvents(cycles);
     UpdateDMA(cycles);
+    UpdateAudio(cycles);
 }
 
 INLINE u8 Adpcm::Read(u16 address)
@@ -156,6 +157,11 @@ INLINE void Adpcm::UpdateDMA(u32 cycles)
 
         m_dma_cycles = 60;
     }
+}
+
+INLINE void Adpcm::UpdateAudio(u32 cycles)
+{
+
 }
 
 #endif /* ADPCM_INLINE_H */

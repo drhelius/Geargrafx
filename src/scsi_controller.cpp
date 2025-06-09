@@ -422,6 +422,7 @@ void ScsiController::CommandAudioPause()
     Debug("NOT IMPLEMENTED");
     NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(21000));
 }
+
 void ScsiController::CommandReadSubcodeQ()
 {
     Debug("******");

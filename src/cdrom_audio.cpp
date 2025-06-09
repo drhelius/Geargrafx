@@ -21,7 +21,8 @@
 
 CdRomAudio::CdRomAudio()
 {
-   
+   m_sample_cycle_counter = 0;
+   m_buffer_index = 0;
 }
 
 CdRomAudio::~CdRomAudio()
@@ -36,13 +37,23 @@ void CdRomAudio::Init()
 
 void CdRomAudio::Reset()
 {
-   
+   m_sample_cycle_counter = 0;
+   m_buffer_index = 0;
 }
 
 int CdRomAudio::EndFrame(s16* sample_buffer)
 {
+    int samples = 0;
 
-    return 0;
+    if (IsValidPointer(sample_buffer))
+    {
+        samples = m_buffer_index;
+        memcpy(sample_buffer, m_buffer, samples * sizeof(s16));
+    }
+
+    m_buffer_index = 0;
+
+    return samples;
 }
 
 void CdRomAudio::SaveState(std::ostream& stream)

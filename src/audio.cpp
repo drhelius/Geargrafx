@@ -31,6 +31,7 @@ Audio::Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio)
     m_cdrom_audio = cdrom_audio;
     InitPointer(m_psg);
     m_mute = false;
+    m_is_cdrom = false;
 }
 
 Audio::~Audio()
@@ -44,8 +45,9 @@ void Audio::Init()
     m_psg->Init();
 }
 
-void Audio::Reset()
+void Audio::Reset(bool cdrom)
 {
+    m_is_cdrom = cdrom;
     m_cycle_counter = 0;
     m_psg->Reset();
 
@@ -62,26 +64,42 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 {
     *sample_count = 0;
 
-    int count_psg = m_psg->EndFrame(m_psg_buffer);
-    int count_adpcm = m_adpcm->EndFrame(m_adpcm_buffer);
-    int count_cdrom = m_cdrom_audio->EndFrame(m_cdrom_buffer);
-    //assert(count_psg == count_adpcm);
+    if (!IsValidPointer(sample_buffer) || !IsValidPointer(sample_count))
+        return;
 
-    if (IsValidPointer(sample_buffer) && IsValidPointer(sample_count))
+    if (m_is_cdrom)
     {
+        int count_psg = m_psg->EndFrame(m_psg_buffer);
+        int count_adpcm = m_adpcm->EndFrame(m_adpcm_buffer);
+        int count_cdrom = m_cdrom_audio->EndFrame(m_cdrom_buffer);
+        assert(count_psg <= GG_AUDIO_BUFFER_SIZE);
+        assert(count_adpcm <= GG_AUDIO_BUFFER_SIZE);
+        assert(count_cdrom <= GG_AUDIO_BUFFER_SIZE);
+
         *sample_count = count_psg;
 
-        for (int i = 0; i < count_psg; i++)
+        if (m_mute)
+            memset(sample_buffer, 0, sizeof(s16) * count_psg);
+        else
         {
-            if (m_mute)
-                sample_buffer[i] = 0;
-            else
+            for (int i = 0; i < count_psg; i++)
             {
                 sample_buffer[i] = m_psg_buffer[i];
                 //sample_buffer[i] += m_adpcm_buffer[i];
                 //sample_buffer[i] += m_cdrom_buffer[i];
             }
         }
+    }
+    else
+    {
+        int count_psg = m_psg->EndFrame(m_psg_buffer);
+        assert(count_psg <= GG_AUDIO_BUFFER_SIZE);
+        *sample_count = count_psg;
+
+        if (m_mute)
+            memset(sample_buffer, 0, sizeof(s16) * count_psg);
+        else
+            memcpy(sample_buffer, m_psg_buffer, sizeof(s16) * count_psg);
     }
 }
 

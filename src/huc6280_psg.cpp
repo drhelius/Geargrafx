@@ -226,7 +226,7 @@ void HuC6280PSG::Sync()
 
     while (remaining_cycles > 0)
     {
-        int batch_size = MIN(remaining_cycles, GG_AUDIO_CYCLES_PER_SAMPLE - m_sample_cycle_counter);
+        int batch_size = MIN(remaining_cycles, GG_PSG_CYCLES_PER_SAMPLE - m_sample_cycle_counter);
         remaining_cycles -= batch_size;
 
         for (int i = 0; i < 6; i++)
@@ -360,9 +360,9 @@ void HuC6280PSG::Sync()
 
         m_sample_cycle_counter += batch_size;
 
-        if (m_sample_cycle_counter >= GG_AUDIO_CYCLES_PER_SAMPLE)
+        if (m_sample_cycle_counter >= GG_PSG_CYCLES_PER_SAMPLE)
         {
-            m_sample_cycle_counter -= GG_AUDIO_CYCLES_PER_SAMPLE;
+            m_sample_cycle_counter -= GG_PSG_CYCLES_PER_SAMPLE;
 
             for (int i = 0; i < 6; i++)
             {

@@ -209,7 +209,7 @@ void GeargrafxCore::ResetROM(bool preserve_ram)
 
 void GeargrafxCore::ResetSound()
 {
-    m_audio->Reset();
+    m_audio->Reset(m_cartridge->IsCDROM());
 }
 
 void GeargrafxCore::SaveRam()
@@ -724,6 +724,6 @@ void GeargrafxCore::Reset()
     m_scsi_controller->Reset();
     m_cdrom_audio->Reset();
     m_adpcm->Reset();
-    m_audio->Reset();
+    m_audio->Reset(m_cartridge->IsCDROM());
     m_input->Reset();
 }

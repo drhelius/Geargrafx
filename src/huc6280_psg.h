@@ -24,12 +24,6 @@
 #include <fstream>
 #include "common.h"
 
-#define GG_AUDIO_SAMPLE_RATE 44100
-#define GG_AUDIO_BUFFER_SIZE 2048
-#define GG_AUDIO_BUFFER_COUNT 3
-#define GG_AUDIO_CLOCK_RATE (GG_MASTER_CLOCK_RATE / 6)
-#define GG_AUDIO_CYCLES_PER_SAMPLE (GG_AUDIO_CLOCK_RATE / GG_AUDIO_SAMPLE_RATE)
-
 class HuC6280PSG
 {
 public:

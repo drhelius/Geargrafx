@@ -24,7 +24,23 @@
 
 INLINE void CdRomAudio::Clock(u32 cycles)
 {
+    m_sample_cycle_counter += cycles;
 
+    if (m_sample_cycle_counter >= GG_CDAUDIO_CYCLES_PER_SAMPLE)
+    {
+        m_sample_cycle_counter -= GG_CDAUDIO_CYCLES_PER_SAMPLE;
+
+        m_buffer[m_buffer_index + 0] = 0; // Placeholder for left channel
+        m_buffer[m_buffer_index + 1] = 0; // Placeholder for right channel
+
+        m_buffer_index += 2;
+
+        if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
+        {
+            Log("ERROR: CD AUDIO buffer overflow");
+            m_buffer_index = 0;
+        }
+    }
 }
 
 #endif /* CDROM_AUDIO_INLINE_H */

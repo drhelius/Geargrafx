@@ -37,7 +37,9 @@ public:
     void LoadState(std::istream& stream);
 
 private:
-    
+    s32 m_sample_cycle_counter;
+    s32 m_buffer_index;
+    s16 m_buffer[GG_AUDIO_BUFFER_SIZE] = {};
 };
 
 #include "cdrom_audio_inline.h"

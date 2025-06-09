@@ -34,7 +34,7 @@ public:
     Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio);
     ~Audio();
     void Init();
-    void Reset();
+    void Reset(bool cdrom);
     void Mute(bool mute);
     void Clock(u32 cycles);
     void WritePSG(u32 address, u8 value);
@@ -45,6 +45,7 @@ public:
 
 private:
     bool m_mute;
+    bool m_is_cdrom;
     HuC6280PSG* m_psg;
     Adpcm* m_adpcm;
     CdRomAudio* m_cdrom_audio;
