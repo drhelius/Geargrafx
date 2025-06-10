@@ -85,31 +85,31 @@ void gui_debug_window_cdrom(void)
     ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *scsi_state->DB, BYTE_TO_BINARY(*scsi_state->DB));
 
     ImGui::TextColored(violet, "BSY"); ImGui::SameLine();
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ON " : "OFF"); ImGui::SameLine();
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_BSY) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_BSY) ? "ON " : "OFF"); ImGui::SameLine();
 
     ImGui::TextColored(violet, " SEL"); ImGui::SameLine();
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ON " : "OFF"); ImGui::SameLine();
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_SEL) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_SEL) ? "ON " : "OFF"); ImGui::SameLine();
 
     ImGui::TextColored(violet, " C/D"); ImGui::SameLine();
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ON " : "OFF");
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_CD) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_CD) ? "ON " : "OFF");
 
     ImGui::TextColored(violet, "I/O"); ImGui::SameLine();
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ON " : "OFF"); ImGui::SameLine();
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_IO) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_IO) ? "ON " : "OFF"); ImGui::SameLine();
 
     ImGui::TextColored(violet, " MSG"); ImGui::SameLine();
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ON " : "OFF"); ImGui::SameLine();
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_MSG) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_MSG) ? "ON " : "OFF"); ImGui::SameLine();
 
     ImGui::TextColored(violet, " REQ"); ImGui::SameLine();
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ON " : "OFF");
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_REQ) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_REQ) ? "ON " : "OFF");
 
     ImGui::TextColored(violet, "ACK"); ImGui::SameLine();
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ON " : "OFF"); ImGui::SameLine();
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ACK) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ACK & CDROM_IRQ_ADPCM) ? "ON " : "OFF"); ImGui::SameLine();
 
     ImGui::TextColored(violet, " ATN"); ImGui::SameLine();
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ON " : "OFF"); ImGui::SameLine();
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ATN) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ATN) ? "ON " : "OFF"); ImGui::SameLine();
 
     ImGui::TextColored(violet, " RST"); ImGui::SameLine();
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ON " : "OFF");
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_RST) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_RST) ? "ON " : "OFF");
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "EVENTS"); ImGui::Separator();
 
@@ -141,16 +141,6 @@ void gui_debug_window_cdrom(void)
 
     ImGui::TextColored(violet, "SECTOR COUNT"); ImGui::SameLine();
     ImGui::TextColored(white, "%d", cdrom_media->GetSectorCount());
-
-    // std::vector<CdRomMedia::ImgFile*> files = cdrom_media->GetImgFiles();
-    // for (size_t i = 0; i < files.size(); i++)
-    // {
-    //     CdRomMedia::ImgFile* img_file = files[i];
-    //     ImGui::TextColored(violet, "FILE %d: ", (int)i + 1); ImGui::SameLine();
-    //     ImGui::TextColored(white, "%s", img_file->file_name);
-    //     ImGui::TextColored(violet, "FILE %d: ", (int)i + 1); ImGui::SameLine();
-    //     ImGui::TextColored(white, "%d bytes", img_file->file_size);
-    // }
 
     ImGui::PopFont();
 
