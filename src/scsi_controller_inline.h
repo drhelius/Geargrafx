@@ -22,6 +22,7 @@
 
 #include "scsi_controller.h"
 #include "cdrom.h"
+#include "cdrom_common.h"
 #include "huc6280.h"
 
 INLINE void ScsiController::Clock(u32 cycles)
@@ -89,13 +90,13 @@ INLINE void ScsiController::UpdateIRQs()
 
 INLINE u8 ScsiController::ReadData()
 {
-    Debug("SCSI Read data: %02X %04X %04X", m_bus.db, m_bus.signals, m_huc6280->GetState()->PC->GetValue());
+    //Debug("SCSI Read data: %02X %04X %04X", m_bus.db, m_bus.signals, m_huc6280->GetState()->PC->GetValue());
     return m_bus.db;
 }
 
 INLINE void ScsiController::WriteData(u8 value)
 {
-    Debug("SCSI Write data: %02X", value);
+    //Debug("SCSI Write data: %02X", value);
     m_bus.db = value;
 }
 
@@ -146,19 +147,19 @@ INLINE void ScsiController::RunEvent()
     switch (m_next_event)
     {
         case SCSI_EVENT_SET_COMMAND_PHASE:
-            Debug("SCSI Event Set command phase");
+            //Debug("SCSI Event Set command phase");
             SetPhase(SCSI_PHASE_COMMAND);
             break;
         case SCSI_EVENT_SET_REQ_SIGNAL:
-            Debug("SCSI Event Set REQ signal");
+            //Debug("SCSI Event Set REQ signal");
             SetSignal(SCSI_SIGNAL_REQ);
             break;
         case SCSI_EVENT_SET_GOOD_STATUS:
-            Debug("SCSI Event Set good status");
+            //Debug("SCSI Event Set good status");
             StartStatus(SCSI_STATUS_GOOD);
             break;
         case SCSI_EVENT_SET_DATA_IN_PHASE:
-            Debug("SCSI Event Set data in phase");
+            //Debug("SCSI Event Set data in phase");
             SetPhase(SCSI_PHASE_DATA_IN);
             break;
         default:
@@ -176,12 +177,6 @@ INLINE void ScsiController::AutoAck()
         SetSignal(SCSI_SIGNAL_ACK);
         //Debug("SCSI Auto ACK (set) %02X", m_bus.signals);
     }
-}
-
-INLINE u32 ScsiController::TimeToCycles(u32 us)
-{
-    // Convert microseconds to PCE master clock cycles (21.47727 MHz) using integer math
-    return (us * 21) + ((us * 47727) / 1000000);
 }
 
 INLINE u8 ScsiController::CommandLength(ScsiCommand command)

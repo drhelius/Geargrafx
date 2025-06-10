@@ -73,7 +73,7 @@ u8 CdRom::ReadRegister(u16 address)
         {
             // SCSI get data
             u8 ret = m_scsi_controller->ReadData();
-            Debug("CDROM Read %02X SCSI get data: %02X", reg, ret);
+            //Debug("CDROM Read %02X SCSI get data: %02X", reg, ret);
             return ret;
         }
         case 0x02:
@@ -83,7 +83,7 @@ u8 CdRom::ReadRegister(u16 address)
         case 0x03:
         {
             // BRAM Lock
-            Debug("CDROM Read BRAM Lock %02X", reg);
+            //Debug("CDROM Read BRAM Lock %02X", reg);
             m_bram_enabled = false;
             m_memory->UpdateBackupRam(m_bram_enabled);
             u8 ret = m_active_irqs | 0x10;

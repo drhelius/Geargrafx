@@ -86,6 +86,7 @@ public:
     u32 GetCdRomLengthLba();
     u32 GetSectorCount();
     u32 GetCurrentSector();
+    void SetCurrentSector(u32 sector);
     bool LoadCueFromFile(const char* path);
     bool LoadCueFromBuffer(const u8* buffer, int size, const char* path);
     bool ReadSector(u32 lba, u8* buffer);
@@ -95,6 +96,8 @@ public:
     u32 GetFirstSectorOfTrack(u8 track);
     u32 GetLastSectorOfTrack(u8 track);
     s32 GetTrackFromLBA(u32 lba);
+    bool PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count);
+    bool PreloadTrackChunks(u32 track_number);
 
 private:
     void DestroyImgFiles();
@@ -103,8 +106,6 @@ private:
     bool ParseCueFile(const char* cue_content);
     bool ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size);
     bool LoadChunk(ImgFile* img_file, u32 chunk_index);
-    bool PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count);
-    bool PreloadTrackChunks(u32 track_number, u32 sectors);
     u32 SeekFindGroup(u32 lba);
 
 private:

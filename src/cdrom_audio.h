@@ -25,6 +25,7 @@
 #include "common.h"
 
 class CdRomMedia;
+class ScsiController;
 
 class CdRomAudio
 {
@@ -38,31 +39,35 @@ public:
 
     enum CdAudioState
     {
-        CD_AUDIO_STATE_STOPPED,
-        CD_AUDIO_STATE_PLAYING,
-        CD_AUDIO_STATE_PAUSED,
-        CD_AUDIO_STATE_IDLE
+        CD_AUDIO_STATE_PLAYING = 0x00,
+        CD_AUDIO_STATE_IDLE = 0x01,
+        CD_AUDIO_STATE_PAUSED = 0x02,
+        CD_AUDIO_STATE_STOPPED = 0x03
     };
 
 public:
     CdRomAudio(CdRomMedia* cdrom_media);
     ~CdRomAudio();
-    void Init();
+    void Init(ScsiController* scsi_controller);
     void Reset();
     void Clock(u32 cycles);
     int EndFrame(s16* sample_buffer);
+    CdAudioState GetAudioState();
     void StartAudio(u32 lba, bool pause);
     void StopAudio();
     void PauseAudio();
+    void SetIdle();
     void SetStopLBA(u32 lba, CdAudioStopEvent event);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
 private:
-    void Sync();
+    void GenerateSamples(s16* left_sample, s16* right_sample);
+    bool Seeking(u32 cycles);
 
 private:
     CdRomMedia* m_cdrom_media;
+    ScsiController* m_scsi_controller;
     s32 m_sample_cycle_counter;
     s32 m_buffer_index;
     s16 m_buffer[GG_AUDIO_BUFFER_SIZE] = {};
@@ -73,7 +78,6 @@ private:
     u32 m_currunt_sample;
     CdAudioStopEvent m_stop_event;
     s32 m_seek_cycles;
-    s32 m_elapsed_cycles;
 };
 
 #include "cdrom_audio_inline.h"

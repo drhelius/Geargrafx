@@ -106,4 +106,12 @@ INLINE u32 CdRomMedia::GetCurrentSector()
     return m_current_sector;
 }
 
+INLINE void CdRomMedia::SetCurrentSector(u32 sector)
+{
+    if (sector < m_cdrom_length_lba)
+        m_current_sector = sector;
+    else
+        m_current_sector = m_cdrom_length_lba - 1;
+}
+
 #endif /* CDROM_MEDIA_H */

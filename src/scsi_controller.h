@@ -128,6 +128,7 @@ public:
     bool IsSignalSet(ScsiSignal signal);
     void AutoAck();
     void StartSelection();
+    void StartStatus(ScsiStatus status, u8 length = 1);
     Scsi_State* GetState();
 
 private:
@@ -143,7 +144,6 @@ private:
     void UpdateDataInPhase();
     void UpdateStatusPhase();
     void UpdateMessageInPhase();
-    void StartStatus(ScsiStatus status, u8 length = 1);
     void ExecuteCommand();
     void CommandTestUnitReady();
     void CommandRequestSense();
@@ -155,7 +155,6 @@ private:
     void CommandReadTOC();
     u8 CommandLength(ScsiCommand command);
     void LoadSector();
-    u32 TimeToCycles(u32 us);
     u32 AudioLBA();
 
 private:

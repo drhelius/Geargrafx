@@ -113,7 +113,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_huc6270_2->Init(m_huc6260, m_huc6202);
     m_huc6280->Init(m_memory, m_huc6202);
     m_adpcm->Init(this, m_scsi_controller);
-    m_cdrom_audio->Init();
+    m_cdrom_audio->Init(m_scsi_controller);
 }
 
 bool GeargrafxCore::LoadROM(const char* file_path)

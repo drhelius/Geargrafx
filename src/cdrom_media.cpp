@@ -675,11 +675,9 @@ bool CdRomMedia::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
                 return false;
             }
 
-            m_current_sector = lba + 1;
-            if (m_current_sector >= m_cdrom_length_lba)
-                m_current_sector = m_cdrom_length_lba - 1;
+            m_current_sector = lba;
 
-            Debug("Reading bytes from sector %d, offset %d", lba, offset);
+            //Debug("Reading bytes from sector %d, offset %d", lba, offset);
 
             return ReadFromImgFile(img_file, byte_offset, buffer, size);
         }
@@ -720,14 +718,14 @@ bool CdRomMedia::ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 
 
     if (chunk_offset + size <= chunk_size)
     {
-        Debug("Reading %d bytes from chunk %d, offset %d", size, chunk_index, chunk_offset);
+        //Debug("Reading %d bytes from chunk %d, offset %d", size, chunk_index, chunk_offset);
         memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, size);
     }
     else
     {
         u32 first_part = chunk_size - chunk_offset;
 
-        Debug("Reading %d bytes from chunk %d (crossing), offset %d", first_part, chunk_index, chunk_offset);
+        //Debug("Reading %d bytes from chunk %d (crossing), offset %d", first_part, chunk_index, chunk_offset);
         memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, first_part);
 
         if (img_file->chunks[chunk_index + 1] == NULL)
@@ -739,7 +737,7 @@ bool CdRomMedia::ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 
             }
         }
 
-        Debug("Reading %d bytes from chunk %d (crossing), offset 0", size - first_part, chunk_index + 1);
+        //Debug("Reading %d bytes from chunk %d (crossing), offset 0", size - first_part, chunk_index + 1);
         memcpy(buffer + first_part, img_file->chunks[chunk_index + 1], size - first_part);
     }
 
@@ -834,22 +832,23 @@ bool CdRomMedia::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count)
     return true;
 }
 
-bool CdRomMedia::PreloadTrackChunks(u32 track_number, u32 sectors)
+bool CdRomMedia::PreloadTrackChunks(u32 track_number)
 {
     if (track_number >= m_tracks.size())
     {
-        Log("ERROR: PreloadTrackChunks failed - Track number %d out of bounds (max: %d)",
-            track_number, m_tracks.size() - 1);
+        Log("ERROR: PreloadTrackChunks failed - Track number %d out of bounds (max: %d)", track_number, m_tracks.size() - 1);
         return false;
     }
 
     const Track& track = m_tracks[track_number];
 
     u32 sector_size = track.sector_size;
-    u64 start_offset = 0;
-    u64 total_bytes = sectors * sector_size;
+    u64 start_offset = track.file_offset;
+    u64 total_bytes = track.sector_count * sector_size;
     u32 start_chunk = start_offset / track.img_file->chunk_size;
     u32 chunks_needed = (total_bytes + track.img_file->chunk_size - 1) / track.img_file->chunk_size;
+
+    Debug("Preloading all sectors for track %d (sectors: %d, bytes: %llu)", track_number, track.sector_count, total_bytes);
 
     return PreloadChunks(track.img_file, start_chunk, chunks_needed);
 }
@@ -913,6 +912,7 @@ u32 CdRomMedia::SeekFindGroup(u32 lba)
     return 0;
 }
 
+// In milliseconds
 u32 CdRomMedia::SeekTime(u32 start_lba, u32 end_lba)
 {
     u32 start_index = SeekFindGroup(start_lba);

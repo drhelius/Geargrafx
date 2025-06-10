@@ -51,4 +51,11 @@ INLINE u8 BcdToDec(u8 bcd)
     return ((bcd >> 4) * 10) + (bcd & 0x0F);
 }
 
+INLINE u32 TimeToCycles(u32 us)
+{
+    // Convert microseconds to PCE master clock cycles (21.47727 MHz) using integer math
+    assert(us <= 199000000); // 199 seconds
+    return (u32)(((u64)us * 21477273ULL) / 1000000ULL);
+}
+
 #endif /* CDROM_COMMON_H */

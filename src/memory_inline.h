@@ -334,13 +334,13 @@ INLINE void Memory::UpdateBackupRam(bool enable)
 {
     if (m_backup_ram_enabled && enable)
     {
-        Debug("Backup RAM enabled");
+        //Debug("Backup RAM enabled");
         m_memory_map_write[0xF7] = true;
         m_memory_map[0xF7] = m_backup_ram;
     }
     else
     {
-        Debug("Backup RAM disabled");
+        //Debug("Backup RAM disabled");
         m_memory_map_write[0xF7] = false;
         m_memory_map[0xF7] = m_unused_memory;
     }
