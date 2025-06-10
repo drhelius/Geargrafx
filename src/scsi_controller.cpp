@@ -414,7 +414,6 @@ void ScsiController::CommandAudioStartPosition()
     u8 mode = m_command_buffer[1];
 
     m_cdrom_audio->StartAudio(start_lba, mode == 0);
-    m_cdrom_media->PreloadTrackChunks(m_cdrom_media->GetTrackFromLBA(start_lba));
 
     SetPhase(SCSI_PHASE_BUSY);
 }
@@ -469,9 +468,40 @@ void ScsiController::CommandReadSubcodeQ()
     Debug("******");
     Debug("SCSI CMD Read Subcode Q");
     Debug("******");
-    Debug("NOT IMPLEMENTED");
-    // TODO: assert(false);
-    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(21000));
+
+    CdRomAudio::CdAudioState audio_state = m_cdrom_audio->GetAudioState();
+    u32 current_lba = m_cdrom_media->GetCurrentSector();
+    s32 current_track = m_cdrom_media->GetTrackFromLBA(current_lba);
+    bool is_data_track = current_track >= 0 ? m_cdrom_media->GetTrackType(current_track) != CdRomMedia::AUDIO_TRACK : false;
+    u8 adr_control = is_data_track ? 0x41 : 0x01;
+
+    u32 lba_offset = current_track >= 0 ? m_cdrom_media->GetFirstSectorOfTrack(current_track) - current_lba : 0;
+
+    GG_CdRomMSF relative;
+    GG_CdRomMSF absolute;
+
+    LbaToMsf(lba_offset, &relative);
+    LbaToMsf(current_lba, &absolute);
+
+    const int buffer_size = 10;
+    u8 buffer[buffer_size] = { };
+
+    buffer[0] = (u8)audio_state;
+    buffer[1] = adr_control;
+    buffer[2] = DecToBcd(current_track + 1);
+    buffer[3] = 1;
+    buffer[4] = DecToBcd(relative.minutes);
+    buffer[5] = DecToBcd(relative.seconds);
+    buffer[6] = DecToBcd(relative.frames);
+    buffer[7] = DecToBcd(absolute.minutes);
+    buffer[8] = DecToBcd(absolute.seconds);
+    buffer[9] = DecToBcd(absolute.frames);
+
+    m_data_buffer.assign(buffer, buffer + buffer_size);
+    m_data_buffer_offset = 0;
+
+    // 140us delay
+    NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(140));
 }
 
 void ScsiController::CommandReadTOC()
@@ -609,8 +639,11 @@ u32 ScsiController::AudioLBA()
         }
         case 0x80:
         {
-            u8 track = BcdToDec(m_command_buffer[2]);
-            return m_cdrom_media->GetFirstSectorOfTrack(track);
+            int track = BcdToDec(m_command_buffer[2]) - 1;
+            if (track >= 0)
+                return m_cdrom_media->GetFirstSectorOfTrack(track);
+            else
+                return 0;
         }
         default:
         {

@@ -91,6 +91,8 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
 
     Debug("CD AUDIO: Start audio at LBA %d, track %d, current lba %d, seek cycles %d",
           lba, track, current_lba, m_seek_cycles);
+
+    m_cdrom_media->PreloadTrackChunks(m_cdrom_media->GetTrackFromLBA(m_start_lba));
 }
 
 INLINE void CdRomAudio::StopAudio()

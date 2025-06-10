@@ -69,6 +69,13 @@ INLINE u32 CdRomMedia::GetTrackSectorSize(u8 track_number)
     return m_tracks[track_number].sector_size;
 }
 
+INLINE CdRomMedia::TrackType CdRomMedia::GetTrackType(u8 track_number)
+{
+    if (track_number >= m_tracks.size())
+        return AUDIO_TRACK;
+    return m_tracks[track_number].type;
+}
+
 INLINE const char* CdRomMedia::GetTrackTypeName(CdRomMedia::TrackType type)
 {
     return k_cdrom_track_type_name[type];

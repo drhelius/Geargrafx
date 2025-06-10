@@ -79,6 +79,7 @@ public:
     const std::vector<ImgFile*>& GetImgFiles();
     u32 GetTrackSectorSize(TrackType type);
     u32 GetTrackSectorSize(u8 track_number);
+    TrackType GetTrackType(u8 track_number);
     const char* GetTrackTypeName(TrackType type);
     const char* GetTrackTypeName(u8 track_number);
     u8 GetTrackCount();
