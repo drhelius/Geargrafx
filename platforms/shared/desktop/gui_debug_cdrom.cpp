@@ -55,9 +55,9 @@ void gui_debug_window_cdrom(void)
     ImGui::TextColored(violet, "ENABLED"); ImGui::SameLine();
     ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *cdrom_state->ENABLED_IRQS, BYTE_TO_BINARY(*cdrom_state->ENABLED_IRQS));
 
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM) ? "ADPCM" : "ADPCM"); ImGui::SameLine();
+    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM_HALF) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM_HALF) ? "ADPCM H" : "ADPCM H"); ImGui::SameLine();
 
-    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_STOP) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_STOP) ? "STOP" : "STOP"); ImGui::SameLine();
+    ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM_END) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM_END) ? "ADPCM E" : "ADPCM E"); ImGui::SameLine();
 
     ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_STATUS_AND_MSG_IN) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_STATUS_AND_MSG_IN) ? "STATUS" : "STATUS"); ImGui::SameLine();
 
@@ -68,9 +68,9 @@ void gui_debug_window_cdrom(void)
     ImGui::TextColored(violet, "ACTIVE "); ImGui::SameLine();
     ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *cdrom_state->ACTIVE_IRQS, BYTE_TO_BINARY(*cdrom_state->ACTIVE_IRQS));
 
-    ImGui::TextColored((*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_ADPCM) ? green : gray, "%s", (*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_ADPCM) ? "ADPCM" : "ADPCM"); ImGui::SameLine();
+    ImGui::TextColored((*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_ADPCM_HALF) ? green : gray, "%s", (*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_ADPCM_HALF) ? "ADPCM H" : "ADPCM H"); ImGui::SameLine();
 
-    ImGui::TextColored((*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_STOP) ? green : gray, "%s", (*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_STOP) ? "STOP" : "STOP"); ImGui::SameLine();
+    ImGui::TextColored((*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_ADPCM_END) ? green : gray, "%s", (*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_ADPCM_END) ? "ADPCM E" : "ADPCM E"); ImGui::SameLine();
 
     ImGui::TextColored((*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_STATUS_AND_MSG_IN) ? green : gray, "%s", (*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_STATUS_AND_MSG_IN) ? "STATUS" : "STATUS"); ImGui::SameLine();
 
@@ -103,7 +103,7 @@ void gui_debug_window_cdrom(void)
     ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_REQ) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_REQ) ? "ON " : "OFF");
 
     ImGui::TextColored(violet, "ACK"); ImGui::SameLine();
-    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ACK) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ACK & CDROM_IRQ_ADPCM) ? "ON " : "OFF"); ImGui::SameLine();
+    ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ACK) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ACK) ? "ON " : "OFF"); ImGui::SameLine();
 
     ImGui::TextColored(violet, " ATN"); ImGui::SameLine();
     ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ATN) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_ATN) ? "ON " : "OFF"); ImGui::SameLine();

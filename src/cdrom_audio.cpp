@@ -33,6 +33,9 @@ CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
     m_currunt_sample = 0;
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_seek_cycles = 0;
+    m_fader = 0;
+    m_left_sample = 0;
+    m_right_sample = 0;
 }
 
 CdRomAudio::~CdRomAudio()
@@ -57,6 +60,9 @@ void CdRomAudio::Reset()
     m_currunt_sample = 0;
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_seek_cycles = 0;
+    m_fader = 0;
+    m_left_sample = 0;
+    m_right_sample = 0;
 }
 
 int CdRomAudio::EndFrame(s16* sample_buffer)

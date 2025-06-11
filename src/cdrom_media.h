@@ -84,7 +84,6 @@ public:
     const char* GetTrackTypeName(u8 track_number);
     u8 GetTrackCount();
     GG_CdRomMSF GetCdRomLength();
-    u32 GetCdRomLengthLba();
     u32 GetSectorCount();
     u32 GetCurrentSector();
     void SetCurrentSector(u32 sector);
@@ -118,7 +117,6 @@ private:
     std::vector<Track> m_tracks;
     std::vector<ImgFile*> m_img_files;
     GG_CdRomMSF m_cdrom_length;
-    u32 m_cdrom_length_lba;
     u32 m_sector_count;
     u32 m_current_sector;
 };

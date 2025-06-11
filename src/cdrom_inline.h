@@ -23,6 +23,7 @@
 #include "cdrom.h"
 #include "scsi_controller.h"
 #include "huc6280.h"
+#include "cdrom_audio.h"
 
 INLINE void CdRom::Clock(u32 cycles)
 {
@@ -51,6 +52,22 @@ INLINE void CdRom::AssertIRQ2()
 {
     bool asserted = (m_enabled_irqs & m_active_irqs);
     m_huc6280->AssertIRQ2(asserted);
+}
+
+INLINE void CdRom::LatchCdAudioSample()
+{
+    u64 current_clock = m_core->GetMasterClockCycles();
+
+    if (current_clock - m_cdaudio_sample_last_clock >= 700)
+    {
+        m_cdaudio_sample_last_clock = current_clock;
+        m_cdaudio_sample_right = !m_cdaudio_sample_right;
+
+        if (m_cdaudio_sample_right)
+            m_cdaudio_sample = m_cdrom_audio->GetRightSample();
+        else
+            m_cdaudio_sample = m_cdrom_audio->GetLeftSample();
+    }
 }
 
 INLINE CdRom::CdRom_State* CdRom::GetState()

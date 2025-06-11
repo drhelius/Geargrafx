@@ -127,7 +127,7 @@ public:
     void ClearSignal(u16 signals);
     bool IsSignalSet(ScsiSignal signal);
     void AutoAck();
-    void StartSelection();
+    void StartSelection(u8 value);
     void StartStatus(ScsiStatus status, u8 length = 1);
     Scsi_State* GetState();
 

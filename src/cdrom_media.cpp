@@ -34,7 +34,6 @@ CdRomMedia::CdRomMedia()
     m_file_name[0] = 0;
     m_file_extension[0] = 0;
     m_cdrom_length = {0, 0, 0};
-    m_cdrom_length_lba = 0;
     m_sector_count = 0;
     m_current_sector = 0;
 }
@@ -80,7 +79,6 @@ void CdRomMedia::Reset()
     m_tracks.clear();
     m_img_files.clear();
     m_cdrom_length = {0, 0, 0};
-    m_cdrom_length_lba = 0;
     m_sector_count = 0;
     m_current_sector = 0;
 }
@@ -518,7 +516,7 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                     }
 
                     u32 pregap_bytes = 0;
-                    for (size_t j = 0; j < i; j++)
+                    for (size_t j = 0; j <= i; j++)
                     {
                         if (m_tracks[j].img_file == m_tracks[i].img_file && m_tracks[j].has_lead_in)
                         {
@@ -558,22 +556,18 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
     if (m_tracks.empty())
     {
-        m_cdrom_length = {0, 0, 0};
-        m_cdrom_length_lba = 0;
         m_sector_count = 0;
+        m_cdrom_length = {0, 0, 0};
     }
     else
     {
-        m_cdrom_length_lba = m_tracks.back().end_lba + 1;
-        LbaToMsf(m_cdrom_length_lba, &m_cdrom_length);
-        m_sector_count = 0;
-        for (size_t i = 0; i < m_tracks.size(); i++)
-            m_sector_count += m_tracks[i].sector_count;
+        m_sector_count = m_tracks.back().end_lba + 1;
+        LbaToMsf(m_sector_count + 150, &m_cdrom_length);
     }
 
     Debug("CD-ROM length: %02d:%02d:%02d, Total sectors: %d",
         m_cdrom_length.minutes, m_cdrom_length.seconds, m_cdrom_length.frames,
-        m_cdrom_length_lba);
+        m_sector_count);
 
     return !m_tracks.empty();
 }
@@ -620,8 +614,8 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
             }
 
             m_current_sector = lba + 1;
-            if (m_current_sector >= m_cdrom_length_lba)
-                m_current_sector = m_cdrom_length_lba - 1;
+            if (m_current_sector >= m_sector_count)
+                m_current_sector = m_sector_count - 1;
 
             Debug("Reading sector %d from track %d (offset: %d)", lba, i, byte_offset);
 
@@ -642,9 +636,9 @@ bool CdRomMedia::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
         return false;
     }
 
-    if (lba >= m_cdrom_length_lba)
+    if (lba >= m_sector_count)
     {
-        Debug("ERROR: ReadBytes failed - LBA %d out of bounds (max: %d)", lba, m_cdrom_length_lba - 1);
+        Debug("ERROR: ReadBytes failed - LBA %d out of bounds (max: %d)", lba, m_sector_count - 1);
         return false;
     }
 
@@ -882,9 +876,9 @@ u32 CdRomMedia::GetLastSectorOfTrack(u8 track)
 
 s32 CdRomMedia::GetTrackFromLBA(u32 lba)
 {
-    if (lba >= m_cdrom_length_lba)
+    if (lba >= m_sector_count)
     {
-        Debug("ERROR: GetTrackNumber failed - LBA %d out of bounds (max: %d)", lba, m_cdrom_length_lba - 1);
+        Debug("ERROR: GetTrackNumber failed - LBA %d out of bounds (max: %d)", lba, m_sector_count - 1);
         return -1;
     }
 

@@ -100,15 +100,25 @@ ScsiController::Scsi_State* ScsiController::GetState()
     return &m_state;
 }
 
-void ScsiController::StartSelection()
+void ScsiController::StartSelection(u8 value)
 {
     Debug("SCSI Start selection");
 
     // If target ID is not 0, ignore
-    if (m_bus.db & 0x01)
+    if (value & 0x01)
     {
-        // 3ms delay
-        NextEvent(SCSI_EVENT_SET_COMMAND_PHASE, TimeToCycles(3000));
+        if (m_phase != SCSI_PHASE_DATA_IN)
+        {
+            // 3.5ms delay
+            NextEvent(SCSI_EVENT_SET_COMMAND_PHASE, 75000);
+        }
+        else
+        {
+            Debug("SCSI Start selection when already in data in phase");
+            StartStatus(SCSI_STATUS_GOOD, 8);
+            // 42ms delay
+            NextEvent(SCSI_EVENT_SET_COMMAND_PHASE, 900000);
+        }
     }
 }
 
@@ -229,7 +239,7 @@ void ScsiController::UpdateCommandPhase()
         {
             //Debug("SCSI Command not complete %02X", opcode);
             // 150us delay
-            NextEvent(SCSI_EVENT_SET_REQ_SIGNAL, TimeToCycles(150));
+            NextEvent(SCSI_EVENT_SET_REQ_SIGNAL, 3000);
         }
     }
 }
@@ -264,7 +274,7 @@ void ScsiController::UpdateDataInPhase()
             {
                 Debug("SCSI Data in phase completed %02X, %d. No more sectors.", m_bus.signals, m_data_buffer_offset);
                 // 150us delay
-                NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(150));
+                NextEvent(SCSI_EVENT_SET_GOOD_STATUS, 3000);
             }
         }
     }
@@ -359,7 +369,7 @@ void ScsiController::CommandTestUnitReady()
     Debug("******");
 
     // 21ms delay
-    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(21000));
+    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, 150000);
 }
 
 void ScsiController::CommandRequestSense()
@@ -501,7 +511,7 @@ void ScsiController::CommandReadSubcodeQ()
     m_data_buffer_offset = 0;
 
     // 140us delay
-    NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(140));
+    NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 3000);
 }
 
 void ScsiController::CommandReadTOC()
@@ -524,24 +534,23 @@ void ScsiController::CommandReadTOC()
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
             // 420us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(420));
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
         }
         case 0x01:
         {
             Debug("Mode: Disc length");
             u8 buffer[buffer_size] = { 0x00, 0x00, 0x00, 0x00 };
-            u32 length = m_cdrom_media->GetCdRomLengthLba() + 150;
-            Debug("Disc length: %d", length);
-            GG_CdRomMSF length_msf = { 0, 0, 0 };
-            LbaToMsf(length, &length_msf);
-            buffer[0] = DecToBcd(length_msf.minutes);
-            buffer[1] = DecToBcd(length_msf.seconds);
-            buffer[2] = DecToBcd(length_msf.frames);
+            GG_CdRomMSF length = m_cdrom_media->GetCdRomLength();
+            Debug("Disc length: %d", MsfToLba(&length));
+            buffer[0] = DecToBcd(length.minutes);
+            buffer[1] = DecToBcd(length.seconds);
+            buffer[2] = DecToBcd(length.frames);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
+            Debug("Disc length: %02X %02X %02X %02X", buffer[0], buffer[1], buffer[2], buffer[3]);
             // 420us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(420));
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
         }
         case 0x02:
@@ -578,7 +587,7 @@ void ScsiController::CommandReadTOC()
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
             // 420us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, TimeToCycles(420));
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
         }
         default:

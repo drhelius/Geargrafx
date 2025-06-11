@@ -64,6 +64,7 @@ private:
     void UpdateReadWriteEvents(u32 cycles);
     void UpdateDMA(u32 cycles);
     void UpdateAudio(u32 cycles);
+    void WriteControl(u8 value);
 
 private:
     GeargrafxCore* m_core;

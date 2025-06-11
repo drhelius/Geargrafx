@@ -97,7 +97,7 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_cdrom_audio = new CdRomAudio(m_cdrom_media);
     m_audio = new Audio(m_adpcm, m_cdrom_audio);
     m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio);
-    m_cdrom = new CdRom(m_scsi_controller, m_audio);
+    m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, m_audio, this);
     m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_cartridge, m_input, m_audio, m_cdrom);
 
     m_audio->Init();

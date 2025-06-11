@@ -58,12 +58,15 @@ public:
     void PauseAudio();
     void SetIdle();
     void SetStopLBA(u32 lba, CdAudioStopEvent event);
+    void WriteFader(u8 fader);
+    u8 ReadFader();
+    s16 GetLeftSample();
+    s16 GetRightSample();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
 private:
-    void GenerateSamples(s16* left_sample, s16* right_sample);
-    bool Seeking(u32 cycles);
+    void GenerateSamples();
 
 private:
     CdRomMedia* m_cdrom_media;
@@ -78,6 +81,9 @@ private:
     u32 m_currunt_sample;
     CdAudioStopEvent m_stop_event;
     s32 m_seek_cycles;
+    u8 m_fader;
+    s16 m_left_sample;
+    s16 m_right_sample;
 };
 
 #include "cdrom_audio_inline.h"

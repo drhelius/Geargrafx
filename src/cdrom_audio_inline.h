@@ -44,16 +44,16 @@ INLINE void CdRomAudio::Clock(u32 cycles)
         {
             m_sample_cycle_counter -= GG_CDAUDIO_CYCLES_PER_SAMPLE;
 
-            s16 left_sample = 0;
-            s16 right_sample = 0;
+            m_left_sample = 0;
+            m_right_sample = 0;
 
             if (m_state == CD_AUDIO_STATE_PLAYING)
             {
-                GenerateSamples(&left_sample, &right_sample);
+                GenerateSamples();
             }
 
-            m_buffer[m_buffer_index + 0] = left_sample;
-            m_buffer[m_buffer_index + 1] = right_sample;
+            m_buffer[m_buffer_index + 0] = m_left_sample;
+            m_buffer[m_buffer_index + 1] = m_right_sample;
 
             m_buffer_index += 2;
 
@@ -112,10 +112,10 @@ INLINE void CdRomAudio::SetIdle()
 
 INLINE void CdRomAudio::SetStopLBA(u32 lba, CdAudioStopEvent event)
 {
-    if (lba >= m_cdrom_media->GetCdRomLengthLba())
+    if (lba >= m_cdrom_media->GetSectorCount())
     {
         Debug("ERROR: Invalid stop LBA %d", lba);
-        lba = m_cdrom_media->GetCdRomLengthLba() - 1;
+        lba = m_cdrom_media->GetSectorCount() - 1;
     }
 
     m_stop_lba = lba;
@@ -123,12 +123,12 @@ INLINE void CdRomAudio::SetStopLBA(u32 lba, CdAudioStopEvent event)
     m_state = CD_AUDIO_STATE_PLAYING;
 }
 
-INLINE void CdRomAudio::GenerateSamples(s16* left_sample, s16* right_sample)
+INLINE void CdRomAudio::GenerateSamples()
 {
     u8 buffer[4] = {0};
     m_cdrom_media->ReadBytes(m_current_lba, m_currunt_sample * 4, buffer, 4);
-    *left_sample = (s16)((buffer[1] << 8) | buffer[0]);
-    *right_sample = (s16)((buffer[3] << 8) | buffer[2]);
+    m_left_sample = (s16)((buffer[1] << 8) | buffer[0]);
+    m_right_sample = (s16)((buffer[3] << 8) | buffer[2]);
 
     m_currunt_sample++;
     if (m_currunt_sample == 588)
@@ -138,8 +138,8 @@ INLINE void CdRomAudio::GenerateSamples(s16* left_sample, s16* right_sample)
 
         if (m_current_lba > m_stop_lba)
         {
-            if (m_current_lba >= m_cdrom_media->GetCdRomLengthLba())
-                m_current_lba = m_cdrom_media->GetCdRomLengthLba() - 1;
+            if (m_current_lba >= m_cdrom_media->GetSectorCount())
+                m_current_lba = m_cdrom_media->GetSectorCount() - 1;
 
             switch (m_stop_event)
             {
@@ -161,21 +161,25 @@ INLINE void CdRomAudio::GenerateSamples(s16* left_sample, s16* right_sample)
     }
 }
 
-INLINE bool CdRomAudio::Seeking(u32 cycles)
+INLINE void CdRomAudio::WriteFader(u8 fader)
 {
-    if (m_seek_cycles <= 0)
-        return false;
+    Debug("CDROM Write Fader %02X", fader);
+    m_fader = fader;
+}
 
-    m_seek_cycles -= cycles;
+INLINE u8 CdRomAudio::ReadFader()
+{
+    return m_fader;
+}
 
-    if (m_seek_cycles <= 0)
-    {
-        m_seek_cycles = 0;
-        m_scsi_controller->StartStatus(ScsiController::SCSI_STATUS_GOOD);
-        return false;
-    }
+INLINE s16 CdRomAudio::GetLeftSample()
+{
+    return m_left_sample;
+}
 
-    return true;
+INLINE s16 CdRomAudio::GetRightSample()
+{
+    return m_right_sample;
 }
 
 #endif /* CDROM_AUDIO_INLINE_H */

@@ -75,7 +75,7 @@ INLINE void Adpcm::Write(u16 address, u8 value)
             m_dma = value;
             break;
         case 0x0D:
-            m_control = value;
+            WriteControl(value);
             break;
         case 0x0E:
             m_sample_rate = value;
@@ -162,6 +162,21 @@ INLINE void Adpcm::UpdateDMA(u32 cycles)
 INLINE void Adpcm::UpdateAudio(u32 cycles)
 {
 
+}
+
+INLINE void Adpcm::WriteControl(u8 value)
+{
+    if (IS_SET_BIT(value, 1) && !IS_SET_BIT(m_control, 1))
+    {
+        m_write_address = m_address - (IS_SET_BIT(value, 0) ? 0 : 1);
+    }
+
+    if (IS_SET_BIT(value, 3) && !IS_SET_BIT(m_control, 3))
+    {
+        m_read_address = m_address - (IS_SET_BIT(value, 2) ? 0 : 1);
+    }
+
+    m_control = value;
 }
 
 #endif /* ADPCM_INLINE_H */

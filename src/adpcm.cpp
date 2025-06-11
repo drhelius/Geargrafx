@@ -54,6 +54,7 @@ void Adpcm::Init(GeargrafxCore* core, ScsiController* scsi_controller)
     m_core = core;
     m_scsi_controller = scsi_controller;
     ComputeDeltaLUT();
+    ComputeLatencyLUTs();
     Reset();
 }
 

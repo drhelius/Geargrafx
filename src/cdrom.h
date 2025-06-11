@@ -24,16 +24,18 @@
 #include <fstream>
 #include "common.h"
 
-#define CDROM_IRQ_ADPCM             0x04
-#define CDROM_IRQ_STOP              0x08
+#define CDROM_IRQ_ADPCM_HALF        0x04
+#define CDROM_IRQ_ADPCM_END         0x08
 #define CDROM_IRQ_STATUS_AND_MSG_IN 0x20
 #define CDROM_IRQ_DATA_IN           0x40
 
+class CdRomAudio;
 class ScsiController;
 class HuC6280;
 class Memory;
 class Audio;
 class Adpcm;
+class GeargrafxCore;
 
 class CdRom
 {
@@ -47,7 +49,7 @@ public:
     };
 
 public:
-    CdRom(ScsiController* scsi_controller, Audio* audio);
+    CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* audio, GeargrafxCore* core);
     ~CdRom();
     void Init(HuC6280* huc6280, Memory* memory, Adpcm* adpcm);
     void Reset();
@@ -62,9 +64,12 @@ public:
 
 private:
     void AssertIRQ2();
+    void LatchCdAudioSample();
 
 private:
+    GeargrafxCore* m_core;
     CdRom_State m_state;
+    CdRomAudio* m_cdrom_audio;
     ScsiController* m_scsi_controller;
     Audio* m_audio;
     Adpcm* m_adpcm;
@@ -74,6 +79,9 @@ private:
     bool m_bram_enabled;
     u8 m_active_irqs;
     u8 m_enabled_irqs;
+    bool m_cdaudio_sample_right;
+    s16 m_cdaudio_sample;
+    u64 m_cdaudio_sample_last_clock;
 };
 
 static const u8 k_super_cdrom_signature[4] = { 0x00, 0xAA, 0x55, 0x03 };

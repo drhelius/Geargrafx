@@ -98,11 +98,6 @@ INLINE GG_CdRomMSF CdRomMedia::GetCdRomLength()
     return m_cdrom_length;
 }
 
-INLINE u32 CdRomMedia::GetCdRomLengthLba()
-{
-    return m_cdrom_length_lba;
-}
-
 INLINE u32 CdRomMedia::GetSectorCount()
 {
     return m_sector_count;
@@ -115,10 +110,10 @@ INLINE u32 CdRomMedia::GetCurrentSector()
 
 INLINE void CdRomMedia::SetCurrentSector(u32 sector)
 {
-    if (sector < m_cdrom_length_lba)
+    if (sector < m_sector_count)
         m_current_sector = sector;
     else
-        m_current_sector = m_cdrom_length_lba - 1;
+        m_current_sector = m_sector_count - 1;
 }
 
 #endif /* CDROM_MEDIA_H */

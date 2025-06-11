@@ -23,8 +23,10 @@
 #include "memory.h"
 #include "audio.h"
 
-CdRom::CdRom(ScsiController* scsi_controller, Audio* audio)
+CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* audio, GeargrafxCore* core)
 {
+    m_core = core;
+    m_cdrom_audio = cdrom_audio;
     m_scsi_controller = scsi_controller;
     m_audio = audio;
     InitPointer(m_adpcm);
@@ -33,6 +35,9 @@ CdRom::CdRom(ScsiController* scsi_controller, Audio* audio)
     m_bram_enabled = false;
     m_active_irqs = 0;
     m_enabled_irqs = 0;
+    m_cdaudio_sample_right = false;
+    m_cdaudio_sample = 0;
+    m_cdaudio_sample_last_clock = 0;
     m_state.RESET = &m_reset;
     m_state.BRAM_ENABLED = &m_bram_enabled;
     m_state.ACTIVE_IRQS = &m_active_irqs;
@@ -57,6 +62,9 @@ void CdRom::Reset()
     m_bram_enabled = true;
     m_active_irqs = 0;
     m_enabled_irqs = 0;
+    m_cdaudio_sample_right = false;
+    m_cdaudio_sample = 0;
+    m_cdaudio_sample_last_clock = 0;
     m_memory->UpdateBackupRam(m_bram_enabled);
 }
 
@@ -86,8 +94,7 @@ u8 CdRom::ReadRegister(u16 address)
             //Debug("CDROM Read BRAM Lock %02X", reg);
             m_bram_enabled = false;
             m_memory->UpdateBackupRam(m_bram_enabled);
-            u8 ret = m_active_irqs | 0x10;
-            return ret;
+            return m_active_irqs | 0x10 | (m_cdaudio_sample_right ? 0x00 : 0x02);
         }
         case 0x04:
             // Reset
@@ -96,11 +103,11 @@ u8 CdRom::ReadRegister(u16 address)
         case 0x05:
             // Audio Sample LSB
             Debug("CDROM Read Audio Sample LSB %02X", reg);
-            return 0x00;
+            return (u8)(m_cdaudio_sample & 0xFF);
         case 0x06:
             // Audio Sample MSB
             Debug("CDROM Read Audio Sample MSB %02X", reg);
-            return 0x00;
+            return (u8)((m_cdaudio_sample >> 8) & 0xFF);
         case 0x07:
             // Is BRAM Locked?
             Debug("CDROM Read Is BRAM Locked? %02X", reg);
@@ -125,8 +132,7 @@ u8 CdRom::ReadRegister(u16 address)
             return m_adpcm->Read(reg);
         case 0x0F:
             // Audio Fader
-            Debug("CDROM Read Audio Fader %02X", reg);
-            return 0x00;
+            return m_cdrom_audio->ReadFader();
         case 0xC0:
         case 0xC1:
         case 0xC2:
@@ -151,7 +157,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
         case 0x00:
             // SCSI control
             Debug("CDROM Write SCSI control %02X, value: %02X", reg, value);
-            m_scsi_controller->StartSelection();
+            m_scsi_controller->StartSelection(value);
             break;
         case 0x01:
             // SCSI command
@@ -178,14 +184,15 @@ void CdRom::WriteRegister(u16 address, u8 value)
             if ((value & 0x02) != 0)
             {
                 m_scsi_controller->SetSignal(ScsiController::SCSI_SIGNAL_RST);
-                ClearIRQ(CDROM_IRQ_DATA_IN | CDROM_IRQ_STATUS_AND_MSG_IN);
+                m_active_irqs &= 0x8F;
+                AssertIRQ2();
             }
             else
                 m_scsi_controller->ClearSignal(ScsiController::SCSI_SIGNAL_RST);
             break;
         case 0x05:
             // Audio Sample
-            Debug("CDROM Write Audio Sample %02X, value: %02X", reg, value);
+            LatchCdAudioSample();
             break;
         case 0x07:
             // Is BRAM control
@@ -206,7 +213,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
             break;
         case 0x0F:
             // Audio Fader
-            Debug("CDROM Write Audio Fader %02X, value: %02X", reg, value);
+            m_cdrom_audio->WriteFader(value);
             break;
         default:
             Debug("CDROM Write Invalid register %04X, value: %02X", reg, value);
