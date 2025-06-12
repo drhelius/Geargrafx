@@ -98,19 +98,19 @@ u8 CdRom::ReadRegister(u16 address)
         }
         case 0x04:
             // Reset
-            Debug("CDROM Read Reset %02X", reg);
+            //Debug("CDROM Read Reset %02X", reg);
             return m_reset;
         case 0x05:
             // Audio Sample LSB
-            Debug("CDROM Read Audio Sample LSB %02X", reg);
+            //Debug("CDROM Read Audio Sample LSB %02X", reg);
             return (u8)(m_cdaudio_sample & 0xFF);
         case 0x06:
             // Audio Sample MSB
-            Debug("CDROM Read Audio Sample MSB %02X", reg);
+            //Debug("CDROM Read Audio Sample MSB %02X", reg);
             return (u8)((m_cdaudio_sample >> 8) & 0xFF);
         case 0x07:
             // Is BRAM Locked?
-            Debug("CDROM Read Is BRAM Locked? %02X", reg);
+            //Debug("CDROM Read Is BRAM Locked? %02X", reg);
             return m_bram_enabled ? 0x80 : 0x00;
         case 0x08:
         {
@@ -138,7 +138,7 @@ u8 CdRom::ReadRegister(u16 address)
         case 0xC2:
         case 0xC3:
             // CDROM Signature
-            Debug("CDROM Read Signature %02X", reg);
+            //Debug("CDROM Read Signature %02X", reg);
             if (true)
                 return k_super_cdrom_signature[reg & 0x03];
             else
@@ -156,7 +156,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
     {
         case 0x00:
             // SCSI control
-            Debug("CDROM Write SCSI control %02X, value: %02X", reg, value);
+            //Debug("CDROM Write SCSI control %02X, value: %02X", reg, value);
             m_scsi_controller->StartSelection(value);
             break;
         case 0x01:
@@ -179,7 +179,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
         }
         case 0x04:
             // Reset
-            Debug("CDROM Write Reset %02X, value: %02X", reg, value);
+            //Debug("CDROM Write Reset %02X, value: %02X", reg, value);
             m_reset = value & 0x0F;
             if ((value & 0x02) != 0)
             {
@@ -196,7 +196,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
             break;
         case 0x07:
             // Is BRAM control
-            Debug("CDROM Write BRAM control %02X, value: %02X", reg, value);
+            //Debug("CDROM Write BRAM control %02X, value: %02X", reg, value);
             m_bram_enabled = (value & 0x80) != 0;
             m_memory->UpdateBackupRam(m_bram_enabled);
             break;

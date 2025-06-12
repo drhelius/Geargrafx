@@ -38,7 +38,6 @@ Adpcm::Adpcm()
     m_samples_left = 0;
     m_sample_rate = 0;
     m_cycles_per_sample = 0;
-    m_sample_cycle_counter = 0;
     m_control = 0;
     m_dma = 0;
     m_dma_cycles = 0;
@@ -46,7 +45,14 @@ Adpcm::Adpcm()
     m_end = false;
     m_half = false;
     m_playing = false;
-    m_lenght = 0;
+    m_play_pending = false;
+    m_high_nibble = false;
+    m_length = 0;
+    m_sample = 2048;
+    m_magnitude = 0;
+    m_sample_cycle_counter_adpcm = 0;
+    m_sample_cycle_counter = 0;
+    m_buffer_index = 0;
 }
 
 Adpcm::~Adpcm()
@@ -76,7 +82,6 @@ void Adpcm::Reset()
     m_samples_left = 0;
     m_sample_rate = 0xF;
     m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate);
-    m_sample_cycle_counter = 0;
     m_control = 0;
     m_dma = 0;
     m_dma_cycles = 0;
@@ -84,25 +89,28 @@ void Adpcm::Reset()
     m_end = false;
     m_half = false;
     m_playing = false;
-    m_lenght = 0;
+    m_play_pending = false;
+    m_high_nibble = false;
+    m_length = 0;
+    m_sample = 2048;
+    m_magnitude = 0;
+    m_sample_cycle_counter_adpcm = 0;
+    m_sample_cycle_counter = 0;
+    m_buffer_index = 0;
     memset(m_adpcm_ram, 0, sizeof(m_adpcm_ram));
-}
-
-void Adpcm::ResetAdpcm()
-{
-    m_read_cycles = 0;
-    m_write_cycles = 0;
-    m_read_address = 0;
-    m_write_address = 0;
-    m_address = 0;
-    EndReached(false);
-    HalfReached(false);
-    m_lenght = 0;
 }
 
 int Adpcm::EndFrame(s16* sample_buffer)
 {
     int samples = 0;
+
+    if (IsValidPointer(sample_buffer))
+    {
+        samples = m_buffer_index;
+        memcpy(sample_buffer, m_buffer, samples * sizeof(s16));
+    }
+
+    m_buffer_index = 0;
 
     return samples;
 }

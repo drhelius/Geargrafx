@@ -107,7 +107,7 @@ void ScsiController::StartSelection(u8 value)
     Debug("SCSI Start selection");
 
     // If target ID is not 0, ignore
-    if (value & 0x01)
+    //if (value & 0x01)
     {
         if (m_phase != SCSI_PHASE_DATA_IN)
         {

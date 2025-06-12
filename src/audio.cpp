@@ -76,17 +76,26 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         assert(count_adpcm <= GG_AUDIO_BUFFER_SIZE);
         assert(count_cdrom <= GG_AUDIO_BUFFER_SIZE);
 
-        *sample_count = count_cdrom;
+        *sample_count = count_psg;
 
         if (m_mute)
             memset(sample_buffer, 0, sizeof(s16) * count_cdrom);
         else
         {
-            for (int i = 0; i < count_cdrom; i++)
+            for (int i = 0; i < count_psg; i++)
             {
-                //sample_buffer[i] = m_psg_buffer[i];
-                //sample_buffer[i] += m_adpcm_buffer[i];
-                sample_buffer[i] = m_cdrom_buffer[i];
+                sample_buffer[i] = m_psg_buffer[i];
+
+                int adpcm_i = i;
+                if (adpcm_i >= count_adpcm)
+                    adpcm_i = count_adpcm - 2 + (i % 2);
+
+                int cdrom_i = i;
+                if (cdrom_i >= count_cdrom)
+                    cdrom_i = count_cdrom - 2 + (i % 2);
+
+                sample_buffer[i] += m_adpcm_buffer[adpcm_i];
+                sample_buffer[i] += m_cdrom_buffer[cdrom_i];
             }
         }
     }

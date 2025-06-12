@@ -65,6 +65,7 @@ private:
     void UpdateReadWriteEvents(u32 cycles);
     void UpdateDMA(u32 cycles);
     void UpdateAudio(u32 cycles);
+    void RunAdpcm(u32 cycles);
     void WriteControl(u8 value);
     void EndReached(bool end);
     void HalfReached(bool half);
@@ -88,8 +89,7 @@ private:
     u16 m_address;
     u32 m_samples_left;
     u8 m_sample_rate;
-    u32 m_cycles_per_sample;
-    s32 m_sample_cycle_counter;
+    s32 m_cycles_per_sample;
     u8 m_control;
     u8 m_dma;
     s32 m_dma_cycles;
@@ -97,7 +97,15 @@ private:
     bool m_end;
     bool m_half;
     bool m_playing;
-    u32 m_lenght;
+    bool m_play_pending;
+    bool m_high_nibble;
+    u32 m_length;
+    s16 m_sample;
+    u8 m_magnitude;
+    s32 m_sample_cycle_counter_adpcm;
+    s32 m_sample_cycle_counter;
+    s32 m_buffer_index;
+    s16 m_buffer[GG_AUDIO_BUFFER_SIZE] = {};
 };
 
 static const s16 k_adpcm_index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };
