@@ -25,6 +25,7 @@
 #include "common.h"
 
 class GeargrafxCore;
+class CdRom;
 class ScsiController;
 
 class Adpcm
@@ -45,7 +46,7 @@ public:
 public:
     Adpcm();
     ~Adpcm();
-    void Init(GeargrafxCore* core, ScsiController* scsi_controller);
+    void Init(GeargrafxCore* core, CdRom* cdrom, ScsiController* scsi_controller);
     void Reset();
     void ResetAdpcm();
     void Clock(u32 cycles);
@@ -65,9 +66,14 @@ private:
     void UpdateDMA(u32 cycles);
     void UpdateAudio(u32 cycles);
     void WriteControl(u8 value);
+    void EndReached(bool end);
+    void HalfReached(bool half);
+    bool CheckReset();
+    void CheckLength();
 
 private:
     GeargrafxCore* m_core;
+    CdRom* m_cdrom;
     ScsiController* m_scsi_controller;
     s16 m_step_delta[49 * 8] = {};
     u8 m_adpcm_ram[0x10000] = {};
@@ -83,12 +89,15 @@ private:
     u32 m_samples_left;
     u8 m_sample_rate;
     u32 m_cycles_per_sample;
+    s32 m_sample_cycle_counter;
     u8 m_control;
     u8 m_dma;
     s32 m_dma_cycles;
     u8 m_status;
     bool m_end;
+    bool m_half;
     bool m_playing;
+    u32 m_lenght;
 };
 
 static const s16 k_adpcm_index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };

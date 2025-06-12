@@ -182,6 +182,11 @@ INLINE void ScsiController::AutoAck()
     }
 }
 
+INLINE bool ScsiController::IsDataReady()
+{
+    return ((m_data_buffer.size() > 0) && (m_data_buffer_offset < m_data_buffer.size()));
+}
+
 INLINE u8 ScsiController::CommandLength(ScsiCommand command)
 {
     switch (command)

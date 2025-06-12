@@ -129,6 +129,7 @@ public:
     void AutoAck();
     void StartSelection(u8 value);
     void StartStatus(ScsiStatus status, u8 length = 1);
+    bool IsDataReady();
     Scsi_State* GetState();
 
 private:

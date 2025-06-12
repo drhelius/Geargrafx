@@ -22,19 +22,18 @@
 
 #include "adpcm.h"
 #include "geargrafx_core.h"
+#include "cdrom.h"
 #include "scsi_controller.h"
 
 INLINE void Adpcm::Clock(u32 cycles)
 {
-    if (IS_SET_BIT(m_control, 7))
-    {
-        ResetAdpcm();
-        return;
-    }
-
+    CheckReset();
+    CheckLength();
+    UpdateAudio(cycles);
     UpdateReadWriteEvents(cycles);
     UpdateDMA(cycles);
-    UpdateAudio(cycles);
+    CheckLength();
+    CheckReset();
 }
 
 INLINE u8 Adpcm::Read(u16 address)
@@ -78,6 +77,8 @@ INLINE void Adpcm::Write(u16 address, u8 value)
             m_write_value = value;
             break;
         case 0x0B:
+            if (!m_scsi_controller->IsDataReady())
+                value &= ~0x01;
             m_dma = value;
             break;
         case 0x0D:
@@ -117,6 +118,20 @@ INLINE void Adpcm::UpdateReadWriteEvents(u32 cycles)
             m_read_cycles = 0;
             m_read_value = m_adpcm_ram[m_read_address];
             m_read_address++;
+
+            if (!IS_SET_BIT(m_control, 4))
+            {
+                if (m_lenght > 0)
+                {
+                    m_lenght--;
+                    HalfReached(m_lenght < 0x8000);
+                }
+                else
+                {
+                    HalfReached(false);
+                    EndReached(true);
+                }
+            }
         }
     }
 
@@ -128,6 +143,17 @@ INLINE void Adpcm::UpdateReadWriteEvents(u32 cycles)
             m_write_cycles = 0;
             m_adpcm_ram[m_write_address] = m_write_value;
             m_write_address++;
+
+            if (m_lenght == 0)
+                EndReached(true);
+
+            HalfReached(m_lenght < 0x8000);
+
+            if (!IS_SET_BIT(m_control, 4))
+            {
+                m_lenght++;
+                m_lenght &= 0x1FFFF;
+            }
         }
     }
 }
@@ -150,6 +176,8 @@ INLINE void Adpcm::UpdateDMA(u32 cycles)
                 m_write_cycles = NextSlotCycles(false);
                 m_write_value = m_scsi_controller->ReadData();
                 m_scsi_controller->AutoAck();
+                if (!m_scsi_controller->IsDataReady())
+                    m_dma &= ~0x01;
             }
             else
                 m_dma_cycles = 1;
@@ -160,14 +188,21 @@ INLINE void Adpcm::UpdateDMA(u32 cycles)
             m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_IO) &&
             m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_REQ))
     {
-
-        m_dma_cycles = 60;
+        m_dma_cycles = 36;
     }
 }
 
 INLINE void Adpcm::UpdateAudio(u32 cycles)
 {
+    if (!m_playing)
+        return;
 
+    m_sample_cycle_counter += cycles;
+    if (m_sample_cycle_counter >= m_cycles_per_sample)
+    {
+        m_sample_cycle_counter -= m_cycles_per_sample;
+
+    }
 }
 
 INLINE void Adpcm::WriteControl(u8 value)
@@ -183,6 +218,50 @@ INLINE void Adpcm::WriteControl(u8 value)
     }
 
     m_control = value;
+}
+
+INLINE void Adpcm::EndReached(bool end)
+{
+    if (m_end != end)
+    {
+        m_end = end;
+        if (m_end)
+            m_cdrom->SetIRQ(CDROM_IRQ_ADPCM_END);
+        else
+            m_cdrom->ClearIRQ(CDROM_IRQ_ADPCM_END);
+    }
+}
+
+INLINE void Adpcm::HalfReached(bool half)
+{
+    if (m_half != half)
+    {
+        m_half = half;
+        if (m_half)
+            m_cdrom->SetIRQ(CDROM_IRQ_ADPCM_HALF);
+        else
+            m_cdrom->ClearIRQ(CDROM_IRQ_ADPCM_HALF);
+    }
+}
+
+INLINE bool Adpcm::CheckReset()
+{
+    if (IS_SET_BIT(m_control, 7))
+    {
+        ResetAdpcm();
+        return true;
+    }
+    else
+        return false;
+}
+
+INLINE void Adpcm::CheckLength()
+{
+    if (IS_SET_BIT(m_control, 4))
+    {
+        m_lenght = m_address;
+        EndReached(false);
+    }
 }
 
 #endif /* ADPCM_INLINE_H */

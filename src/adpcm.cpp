@@ -21,6 +21,8 @@
 #include <assert.h>
 #include <algorithm>
 #include "adpcm.h"
+#include "geargrafx_core.h"
+#include "cdrom.h"
 
 Adpcm::Adpcm()
 {
@@ -36,12 +38,15 @@ Adpcm::Adpcm()
     m_samples_left = 0;
     m_sample_rate = 0;
     m_cycles_per_sample = 0;
+    m_sample_cycle_counter = 0;
     m_control = 0;
     m_dma = 0;
     m_dma_cycles = 0;
     m_status = 0;
     m_end = false;
+    m_half = false;
     m_playing = false;
+    m_lenght = 0;
 }
 
 Adpcm::~Adpcm()
@@ -49,9 +54,10 @@ Adpcm::~Adpcm()
 
 }
 
-void Adpcm::Init(GeargrafxCore* core, ScsiController* scsi_controller)
+void Adpcm::Init(GeargrafxCore* core, CdRom* cdrom, ScsiController* scsi_controller)
 {
     m_core = core;
+    m_cdrom = cdrom;
     m_scsi_controller = scsi_controller;
     ComputeDeltaLUT();
     ComputeLatencyLUTs();
@@ -70,12 +76,15 @@ void Adpcm::Reset()
     m_samples_left = 0;
     m_sample_rate = 0xF;
     m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate);
+    m_sample_cycle_counter = 0;
     m_control = 0;
     m_dma = 0;
     m_dma_cycles = 0;
     m_status = 0;
     m_end = false;
+    m_half = false;
     m_playing = false;
+    m_lenght = 0;
     memset(m_adpcm_ram, 0, sizeof(m_adpcm_ram));
 }
 
@@ -86,6 +95,9 @@ void Adpcm::ResetAdpcm()
     m_read_address = 0;
     m_write_address = 0;
     m_address = 0;
+    EndReached(false);
+    HalfReached(false);
+    m_lenght = 0;
 }
 
 int Adpcm::EndFrame(s16* sample_buffer)
