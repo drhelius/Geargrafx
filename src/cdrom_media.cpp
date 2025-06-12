@@ -313,39 +313,50 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
         if (lowercase_line.find("file") == 0)
         {
+            string current_file_path;
+            string file_name;
+
             size_t first_quote = line.find_first_of("\"");
             size_t last_quote = line.find_last_of("\"");
 
             if (first_quote != string::npos && last_quote != string::npos && first_quote != last_quote)
             {
-                string current_file_path = line.substr(first_quote + 1, last_quote - first_quote - 1);
-                string file_name = current_file_path;
-
-                if (!current_file_path.empty() && current_file_path[0] != '/' && current_file_path[0] != '\\' &&
-                    (current_file_path.size() < 2 || current_file_path[1] != ':'))
-                {
-                    current_file_path = string(m_file_directory) + "/" + current_file_path;
-                }
-
-                Debug("Found FILE: %s", current_file_path.c_str());
-
-                ImgFile* img_file = new ImgFile();
-                strncpy_fit(img_file->file_path, current_file_path.c_str(), sizeof(img_file->file_path));
-                strncpy_fit(img_file->file_name, file_name.c_str(), sizeof(img_file->file_name));
-                if (!GatherImgInfo(img_file))
-                {
-                    Log("ERROR: Failed to gather ImgFile info for %s", current_file_path.c_str());
-                    SafeDelete(img_file);
-                    return false;
-                }
-                m_img_files.push_back(img_file);
-                current_img_file = img_file;
+                current_file_path = line.substr(first_quote + 1, last_quote - first_quote - 1);
+                file_name = current_file_path;
             }
             else
             {
-                Log("ERROR: Invalid FILE format in CUE: %s", line.c_str());
+                istringstream file_stream(line.substr(4)); // Skip "FILE"
+                file_stream >> current_file_path;
+
+                if (current_file_path.empty())
+                {
+                    Log("ERROR: Invalid FILE format in CUE: %s", line.c_str());
+                    return false;
+                }
+
+                file_name = current_file_path;
+            }
+
+            if (!current_file_path.empty() && current_file_path[0] != '/' && current_file_path[0] != '\\' &&
+                (current_file_path.size() < 2 || current_file_path[1] != ':'))
+            {
+                current_file_path = string(m_file_directory) + "/" + current_file_path;
+            }
+
+            Debug("Found FILE: %s", current_file_path.c_str());
+
+            ImgFile* img_file = new ImgFile();
+            strncpy_fit(img_file->file_path, current_file_path.c_str(), sizeof(img_file->file_path));
+            strncpy_fit(img_file->file_name, file_name.c_str(), sizeof(img_file->file_name));
+            if (!GatherImgInfo(img_file))
+            {
+                Log("ERROR: Failed to gather ImgFile info for %s", current_file_path.c_str());
+                SafeDelete(img_file);
                 return false;
             }
+            m_img_files.push_back(img_file);
+            current_img_file = img_file;
         }
         else if (lowercase_line.find("track") == 0)
         {
