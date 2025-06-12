@@ -26,6 +26,12 @@
 
 INLINE void Adpcm::Clock(u32 cycles)
 {
+    if (IS_SET_BIT(m_control, 7))
+    {
+        ResetAdpcm();
+        return;
+    }
+
     UpdateReadWriteEvents(cycles);
     UpdateDMA(cycles);
     UpdateAudio(cycles);

@@ -47,6 +47,7 @@ public:
     ~Adpcm();
     void Init(GeargrafxCore* core, ScsiController* scsi_controller);
     void Reset();
+    void ResetAdpcm();
     void Clock(u32 cycles);
     u8 Read(u16 address);
     void Write(u16 address, u8 value);
@@ -55,7 +56,6 @@ public:
     void LoadState(std::istream& stream);
 
 private:
-    void Sync();
     void ComputeDeltaLUT();
     void ComputeLatencyLUTs();
     u8 ComputeLatency(int offset, bool read);

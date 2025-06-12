@@ -79,15 +79,17 @@ void Adpcm::Reset()
     memset(m_adpcm_ram, 0, sizeof(m_adpcm_ram));
 }
 
-void Adpcm::Sync()
+void Adpcm::ResetAdpcm()
 {
-   
+    m_read_cycles = 0;
+    m_write_cycles = 0;
+    m_read_address = 0;
+    m_write_address = 0;
+    m_address = 0;
 }
 
 int Adpcm::EndFrame(s16* sample_buffer)
 {
-    Sync();
-
     int samples = 0;
 
     return samples;

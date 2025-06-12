@@ -91,13 +91,16 @@ INLINE void ScsiController::UpdateIRQs()
 INLINE u8 ScsiController::ReadData()
 {
     //Debug("SCSI Read data: %02X %04X %04X", m_bus.db, m_bus.signals, m_huc6280->GetState()->PC->GetValue());
-    return m_bus.db;
+    if (m_phase == SCSI_PHASE_DATA_IN || m_phase == SCSI_PHASE_STATUS || m_phase == SCSI_PHASE_MESSAGE_IN)
+        return m_bus.db;
+    else
+        return m_data_bus_latch;
 }
 
 INLINE void ScsiController::WriteData(u8 value)
 {
     //Debug("SCSI Write data: %02X", value);
-    m_bus.db = value;
+    m_data_bus_latch = value;
 }
 
 INLINE u8 ScsiController::GetStatus()

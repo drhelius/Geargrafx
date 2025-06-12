@@ -176,6 +176,7 @@ private:
     u32 m_data_buffer_offset;
     bool m_bus_changed;
     u16 m_previous_signals;
+    u8 m_data_bus_latch;
 };
 
 static const char* k_scsi_phase_names[] = {

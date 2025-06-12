@@ -44,6 +44,7 @@ ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio)
     m_data_buffer_offset = 0;
     m_bus_changed = false;
     m_previous_signals = 0;
+    m_data_bus_latch = 0;
 
     m_state.DB = &m_bus.db;
     m_state.SIGNALS = &m_bus.signals;
@@ -89,6 +90,7 @@ void ScsiController::Reset(bool keep_rst_signal)
     m_data_buffer_offset = 0;
     m_bus_changed = false;
     m_previous_signals = m_bus.signals;
+    m_data_bus_latch = 0;
     UpdateIRQs();
     m_cdrom_audio->StopAudio();
     m_cdrom_media->SetCurrentSector(0);
@@ -149,6 +151,8 @@ void ScsiController::SetPhase(ScsiPhase phase)
         case SCSI_PHASE_BUS_FREE:
             break;
         case SCSI_PHASE_COMMAND:
+            m_next_load_cycles = 0;
+            m_data_buffer.clear();
             SetSignal(SCSI_SIGNAL_BSY | SCSI_SIGNAL_CD | SCSI_SIGNAL_REQ);
             break;
         case SCSI_PHASE_DATA_IN:
@@ -214,7 +218,7 @@ void ScsiController::UpdateCommandPhase()
     if (IsSignalSet(SCSI_SIGNAL_REQ) && IsSignalSet(SCSI_SIGNAL_ACK))
     {
         ClearSignal(SCSI_SIGNAL_REQ);
-        m_command_buffer.push_back(m_bus.db);
+        m_command_buffer.push_back(m_data_bus_latch);
     }
     else if (!IsSignalSet(SCSI_SIGNAL_REQ) && !IsSignalSet(SCSI_SIGNAL_ACK) && m_command_buffer.size() > 0)
     {
@@ -292,7 +296,7 @@ void ScsiController::UpdateStatusPhase()
     }
     else if (!IsSignalSet(SCSI_SIGNAL_REQ) && !IsSignalSet(SCSI_SIGNAL_ACK))
     {
-        assert(m_data_buffer.size() == 1);
+        //assert(m_data_buffer.size() == 1);
         if (m_data_buffer.size() > 0)
         {
             assert(m_data_buffer_offset < m_data_buffer.size());
