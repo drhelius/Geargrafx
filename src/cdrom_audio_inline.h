@@ -36,32 +36,30 @@ INLINE void CdRomAudio::Clock(u32 cycles)
             m_scsi_controller->StartStatus(ScsiController::SCSI_STATUS_GOOD);
         }
     }
-    else
+
+    m_sample_cycle_counter += cycles;
+
+    if (m_sample_cycle_counter >= GG_CDAUDIO_CYCLES_PER_SAMPLE)
     {
-        m_sample_cycle_counter += cycles;
+        m_sample_cycle_counter -= GG_CDAUDIO_CYCLES_PER_SAMPLE;
 
-        if (m_sample_cycle_counter >= GG_CDAUDIO_CYCLES_PER_SAMPLE)
+        m_left_sample = 0;
+        m_right_sample = 0;
+
+        if ((m_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0))
         {
-            m_sample_cycle_counter -= GG_CDAUDIO_CYCLES_PER_SAMPLE;
+            GenerateSamples();
+        }
 
-            m_left_sample = 0;
-            m_right_sample = 0;
+        m_buffer[m_buffer_index + 0] = m_left_sample;
+        m_buffer[m_buffer_index + 1] = m_right_sample;
 
-            if (m_state == CD_AUDIO_STATE_PLAYING)
-            {
-                GenerateSamples();
-            }
+        m_buffer_index += 2;
 
-            m_buffer[m_buffer_index + 0] = m_left_sample;
-            m_buffer[m_buffer_index + 1] = m_right_sample;
-
-            m_buffer_index += 2;
-
-            if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
-            {
-                Log("ERROR: CD AUDIO buffer overflow");
-                m_buffer_index = 0;
-            }
+        if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
+        {
+            Log("ERROR: CD AUDIO buffer overflow");
+            m_buffer_index = 0;
         }
     }
 }
@@ -86,7 +84,6 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
     m_currunt_sample = 0;
     m_stop_lba = m_cdrom_media->GetLastSectorOfTrack(track);
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
-    m_sample_cycle_counter = 0;
     m_state = pause ? CD_AUDIO_STATE_PAUSED : CD_AUDIO_STATE_PLAYING;
 
     Debug("CD AUDIO: Start audio at LBA %d, track %d, current lba %d, seek cycles %d",
