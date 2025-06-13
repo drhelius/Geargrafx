@@ -304,7 +304,7 @@ void ScsiController::UpdateStatusPhase()
             m_data_buffer_offset++;
             if (m_data_buffer_offset == m_data_buffer.size())
             {
-                Debug("SCSI Status phase complete");
+                Debug("SCSI Status phase completed");
                 m_data_buffer.clear();
                 SetPhase(SCSI_PHASE_MESSAGE_IN);
             }
@@ -325,7 +325,7 @@ void ScsiController::UpdateMessageInPhase()
     }
     else if (!IsSignalSet(SCSI_SIGNAL_REQ) && !IsSignalSet(SCSI_SIGNAL_ACK))
     {
-        Debug("SCSI Message in phase complete");
+        Debug("SCSI Message in phase completed");
         SetPhase(SCSI_PHASE_BUS_FREE);
     }
 }
@@ -361,7 +361,7 @@ void ScsiController::ExecuteCommand()
             CommandReadTOC();
             break;
         default:
-            Debug("SCSI Unknown command %02X", command);
+            Debug("SCSI Trying to execute unknown command %02X", command);
             break;
     }
 }
@@ -373,7 +373,7 @@ void ScsiController::CommandTestUnitReady()
     Debug("******");
 
     // 21ms delay
-    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, 150000);
+    NextEvent(SCSI_EVENT_SET_GOOD_STATUS, 450000);
 }
 
 void ScsiController::CommandRequestSense()
@@ -381,7 +381,7 @@ void ScsiController::CommandRequestSense()
     Debug("******");
     Debug("SCSI CMD Request Sense");
     Debug("******");
-    Debug("NOT IMPLEMENTED");
+
     NextEvent(SCSI_EVENT_SET_GOOD_STATUS, TimeToCycles(21000));
 }
 
@@ -411,8 +411,7 @@ void ScsiController::CommandRead()
     m_load_sector = lba;
     m_load_sector_count = count;
 
-    Debug("SCSI CMD Read: current lba %d, target lba %d, count %d, seek cycles %d, transfer cycles %d",
-          current_lba, lba, count, seek_cycles, transfer_cycles);
+    Debug("SCSI CMD Read: current lba %d, target lba %d, count %d, seek cycles %d, transfer cycles %d", current_lba, lba, count, seek_cycles, transfer_cycles);
 
     SetPhase(SCSI_PHASE_DATA_IN);
     m_cdrom_audio->SetIdle();
@@ -427,6 +426,8 @@ void ScsiController::CommandAudioStartPosition()
     u32 start_lba = AudioLBA();
     u8 mode = m_command_buffer[1];
 
+    Debug("SCSI CMD Audio Start Position: start LBA %d, mode %02X", start_lba, mode);
+
     m_cdrom_audio->StartAudio(start_lba, mode == 0);
 
     SetPhase(SCSI_PHASE_BUSY);
@@ -440,6 +441,8 @@ void ScsiController::CommandAudioStopPosition()
 
     u32 stop_lba = AudioLBA();
     u8 mode = m_command_buffer[1];
+
+    Debug("SCSI CMD Audio Stop Position: stop LBA %d, mode %02X", stop_lba, mode);
 
     switch (mode)
     {
@@ -514,6 +517,10 @@ void ScsiController::CommandReadSubcodeQ()
     m_data_buffer.assign(buffer, buffer + buffer_size);
     m_data_buffer_offset = 0;
 
+    Debug("SCSI CMD Read Subcode Q: audio state %d, track %d, relative %02X:%02X:%02X, absolute %02X:%02X:%02X",
+          audio_state, current_track + 1, relative.minutes, relative.seconds, relative.frames,
+          absolute.minutes, absolute.seconds, absolute.frames);
+
     // 140us delay
     NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 3000);
 }
@@ -531,7 +538,6 @@ void ScsiController::CommandReadTOC()
     {
         case 0x00:
         {
-            Debug("Mode: Number of tracks");
             u8 buffer[buffer_size] = { 0x01, 0x00, 0x00, 0x00 };
             buffer[1] = DecToBcd((u8)m_cdrom_media->GetTracks().size());
             Debug("Number of tracks: %d", m_cdrom_media->GetTracks().size());
@@ -543,16 +549,14 @@ void ScsiController::CommandReadTOC()
         }
         case 0x01:
         {
-            Debug("Mode: Disc length");
             u8 buffer[buffer_size] = { 0x00, 0x00, 0x00, 0x00 };
             GG_CdRomMSF length = m_cdrom_media->GetCdRomLength();
-            Debug("Disc length: %d", MsfToLba(&length));
             buffer[0] = DecToBcd(length.minutes);
             buffer[1] = DecToBcd(length.seconds);
             buffer[2] = DecToBcd(length.frames);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
-            Debug("Disc length: %02X %02X %02X %02X", buffer[0], buffer[1], buffer[2], buffer[3]);
+            Debug("Disc length: %d %02X:%02X:%02X", MsfToLba(&length), buffer[0], buffer[1], buffer[2]);
             // 420us delay
             NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
@@ -560,7 +564,6 @@ void ScsiController::CommandReadTOC()
         case 0x02:
         {
             u8 track = BcdToDec(m_command_buffer[2]);
-            Debug("Mode: Track %d start", track);
 
             if (track == 0)
                 track = 1;
@@ -582,12 +585,12 @@ void ScsiController::CommandReadTOC()
                 LbaToMsf(start_lba, &start_msf);
             }
 
-            Debug("Track %d start: %d", track, MsfToLba(&start_msf));
             u8 buffer[buffer_size] = { 0x00, 0x00, 0x00, 0x00 };
             buffer[0] = DecToBcd(start_msf.minutes);
             buffer[1] = DecToBcd(start_msf.seconds);
             buffer[2] = DecToBcd(start_msf.frames);
             buffer[3] = type;
+            Debug("Track %d start: %d %02X:%02X:%02X, type: %d", track, MsfToLba(&start_msf), buffer[0], buffer[1], buffer[2], type);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
             // 420us delay
@@ -619,7 +622,7 @@ void ScsiController::LoadSector()
         else
             m_next_load_cycles = TimeToCycles(m_cdrom_media->SectorTransferTime() * 1000);
 
-        Debug("SCSI sectors left: %d, next:%d, cycles: %d", m_load_sector_count, m_load_sector, m_next_load_cycles);
+        Debug("SCSI Sectors left: %d, next:%d, cycles: %d", m_load_sector_count, m_load_sector, m_next_load_cycles);
         //Debug("Phase: %s, db: %02X, signals: %02X", k_scsi_phase_names[m_phase], m_bus.db, m_bus.signals);
 
         m_bus_changed = true;
