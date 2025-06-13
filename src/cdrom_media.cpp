@@ -228,8 +228,6 @@ void CdRomMedia::GatherPaths(const char* path)
 
 bool CdRomMedia::GatherImgInfo(ImgFile* img_file)
 {
-    using namespace std;
-
     if (!IsValidPointer(img_file))
     {
         Log("ERROR: Invalid ImgFile pointer");
@@ -242,7 +240,26 @@ bool CdRomMedia::GatherImgInfo(ImgFile* img_file)
         return false;
     }
 
-    ifstream file(img_file->file_path, ios::in | ios::binary | ios::ate);
+    if (!ValidateFile(img_file->file_path))
+        return false;
+
+    if (!ProcessFileFormat(img_file))
+        return false;
+
+    SetupFileChunks(img_file);
+
+    Debug("Gathered ImgFile info: %s", img_file->file_path);
+    Debug("ImgFile info Size: %d, Chunk size: %d, Chunk count: %d", 
+          img_file->file_size, img_file->chunk_size, img_file->chunk_count);
+
+    return true;
+}
+
+bool CdRomMedia::ValidateFile(const char* file_path)
+{
+    using namespace std;
+
+    ifstream file(file_path, ios::in | ios::binary | ios::ate);
 
     if (file.is_open())
     {
@@ -250,38 +267,148 @@ bool CdRomMedia::GatherImgInfo(ImgFile* img_file)
 
         if (size <= 0)
         {
-            Log("ERROR: Unable to open file %s. Size: %d", img_file->file_path, size);
+            Log("ERROR: Unable to open file %s. Size: %d", file_path, size);
+            file.close();
             return false;
         }
 
         if (file.bad() || file.fail() || !file.good() || file.eof())
         {
-            Log("ERROR: Unable to open file %s. Bad file!", img_file->file_path);
+            Log("ERROR: Unable to open file %s. Bad file!", file_path);
+            file.close();
             return false;
         }
 
         file.close();
-
-        img_file->file_size = (u32)size;
-        img_file->chunk_size = CDROM_MEDIA_CHUNK_SIZE;
-        img_file->chunk_count = img_file->file_size / img_file->chunk_size;
-        if (img_file->file_size % img_file->chunk_size != 0)
-            img_file->chunk_count++;
-        img_file->chunks = new u8*[img_file->chunk_count];
-
-        for (u32 i = 0; i < img_file->chunk_count; i++)
-            InitPointer(img_file->chunks[i]);
-
-        Debug("Gathered ImgFile info: %s", img_file->file_path);
-        Debug("ImgFile info Size: %d, Chunk size: %d, Chunk count: %d", img_file->file_size, img_file->chunk_size, img_file->chunk_count);
+        return true;
     }
-    else
+
+    Log("ERROR: Unable to open file %s", file_path);
+    return false;
+}
+
+bool CdRomMedia::ProcessFileFormat(ImgFile* img_file)
+{
+    using namespace std;
+
+    string file_path(img_file->file_path);
+    string extension = file_path.substr(file_path.find_last_of(".") + 1);
+    transform(extension.begin(), extension.end(), extension.begin(), (int(*)(int)) tolower);
+
+    ifstream file(img_file->file_path, ios::in | ios::binary | ios::ate);
+    int size = (int)(file.tellg());
+    file.close();
+
+    img_file->file_size = (u32)size;
+
+    if (extension == "wav")
+        return ProcessWavFormat(img_file);
+
+    return true;
+}
+
+bool CdRomMedia::ProcessWavFormat(ImgFile* img_file)
+{
+    using namespace std;
+
+    Debug("WAV file detected: %s", img_file->file_path);
+
+    ifstream file(img_file->file_path, ios::in | ios::binary);
+    if (!file.is_open())
+        return false;
+
+    char header[44];
+    file.read(header, 44);
+
+    if (file.gcount() != 44)
     {
-        Log("ERROR: Unable to open file %s", img_file->file_path);
+        Log("ERROR: Failed to read WAV header from %s", img_file->file_path);
+        file.close();
         return false;
     }
 
+    if (strncmp(header, "RIFF", 4) != 0 || strncmp(header + 8, "WAVE", 4) != 0)
+    {
+        Log("ERROR: Invalid WAV format in %s", img_file->file_path);
+        file.close();
+        return false;
+    }
+
+    u16 channels = *(u16*)(header + 22);
+    u32 sample_rate = *(u32*)(header + 24);
+    u16 bits_per_sample = *(u16*)(header + 34);
+
+    if (sample_rate != 44100 || bits_per_sample != 16 || channels != 2)
+    {
+        Log("ERROR: WAV file %s has incorrect format. Required: 44100Hz, 16-bit, stereo. Found: %dHz, %d-bit, %d channel(s)", img_file->file_path, sample_rate, bits_per_sample, channels);
+        file.close();
+        return false;
+    }
+
+    Debug("WAV format verified: %dHz, %d-bit, %d channels", sample_rate, bits_per_sample, channels);
+
+    bool ret = FindWavDataChunk(img_file, file);
+    file.close();
+
+    return ret;
+}
+
+bool CdRomMedia::FindWavDataChunk(ImgFile* img_file, std::ifstream& file)
+{
+    // Reset to beginning of file + RIFF/WAVE headers
+    file.seekg(12, std::ios::beg);
+
+    uint32_t data_size = 0;
+    uint32_t data_offset = 0;
+    bool found_data = false;
+
+    while (!file.eof() && !found_data)
+    {
+        char chunk_id[4];
+        u32 chunk_size;
+
+        file.read(chunk_id, 4);
+        file.read((char*)(&chunk_size), 4);
+
+        if (file.eof())
+            break;
+
+        if (strncmp(chunk_id, "data", 4) == 0)
+        {
+            data_size = chunk_size;
+            data_offset = (u32)file.tellg();
+            found_data = true;
+            break;
+        }
+
+        file.seekg(chunk_size, std::ios::cur);
+    }
+    
+    if (!found_data)
+    {
+        Log("ERROR: Failed to find 'data' chunk in WAV file %s", img_file->file_path);
+        return false;
+    }
+    
+    Debug("WAV data chunk found at offset %d with size %d", data_offset, data_size);
+
+    img_file->is_wav = true;
+    img_file->wav_data_offset = data_offset;
+    img_file->file_size = data_size;
+
     return true;
+}
+
+void CdRomMedia::SetupFileChunks(ImgFile* img_file)
+{
+    img_file->chunk_size = CDROM_MEDIA_CHUNK_SIZE;
+    img_file->chunk_count = img_file->file_size / img_file->chunk_size;
+    if (img_file->file_size % img_file->chunk_size != 0)
+        img_file->chunk_count++;
+    img_file->chunks = new u8*[img_file->chunk_count];
+
+    for (u32 i = 0; i < img_file->chunk_count; i++)
+        InitPointer(img_file->chunks[i]);
 }
 
 bool CdRomMedia::ParseCueFile(const char* cue_content)
@@ -346,7 +473,16 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
             Debug("Found FILE: %s", current_file_path.c_str());
 
-            ImgFile* img_file = new ImgFile();
+            ImgFile* img_file = new ImgFile;
+            img_file->file_size = 0;
+            img_file->chunk_size = 0;
+            img_file->chunk_count = 0;
+            img_file->chunks = NULL;
+            img_file->is_wav = false;
+            img_file->wav_data_offset = 0;
+            img_file->file_name[0] = 0;
+            img_file->file_path[0] = 0;
+
             strncpy_fit(img_file->file_path, current_file_path.c_str(), sizeof(img_file->file_path));
             strncpy_fit(img_file->file_name, file_name.c_str(), sizeof(img_file->file_name));
             if (!GatherImgInfo(img_file))
@@ -478,14 +614,16 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
     {
         u32 cumulative_offset_lba = 0;
         ImgFile* prev_file = m_tracks[0].img_file;
+        u32 prev_sector_size = m_tracks[0].sector_size;
 
         for (size_t i = 0; i < m_tracks.size(); i++)
         {
             if (m_tracks[i].img_file != prev_file)
             {
-                u32 file_sectors = prev_file->file_size / m_tracks[i].sector_size;
+                u32 file_sectors = prev_file->file_size / prev_sector_size;
                 cumulative_offset_lba += file_sectors;
                 prev_file = m_tracks[i].img_file;
+                prev_sector_size = m_tracks[i].sector_size;
             }
 
             m_tracks[i].start_lba += cumulative_offset_lba;
@@ -682,8 +820,6 @@ bool CdRomMedia::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
 
             m_current_sector = lba;
 
-            //Debug("Reading bytes from sector %d, offset %d", lba, offset);
-
             return ReadFromImgFile(img_file, byte_offset, buffer, size);
         }
     }
@@ -767,18 +903,16 @@ bool CdRomMedia::LoadChunk(ImgFile* img_file, u32 chunk_index)
         return false;
     }
 
-    u64 offset = (u64)chunk_index * (u64)img_file->chunk_size;
-    file.seekg(offset, ios::beg);
+    u64 file_offset = CalculateFileOffset(img_file, chunk_index);
+    file.seekg(file_offset, ios::beg);
 
     if (file.fail())
     {
-        Log("ERROR: Cannot load chunk - Failed to seek to offset %llu in file %s", offset, img_file->file_path);
+        Log("ERROR: Cannot load chunk - Failed to seek to offset %llu in file %s", file_offset, img_file->file_path);
         return false;
     }
 
-    u32 to_read = img_file->chunk_size;
-    if (offset + to_read > img_file->file_size)
-        to_read = img_file->file_size - offset;
+    u32 to_read = CalculateReadSize(img_file, file_offset);
 
     if (!img_file->chunks[chunk_index])
         img_file->chunks[chunk_index] = new u8[img_file->chunk_size];
@@ -796,6 +930,30 @@ bool CdRomMedia::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
     file.close();
     return true;
+}
+
+u64 CdRomMedia::CalculateFileOffset(ImgFile* img_file, u32 chunk_index)
+{
+    u64 offset = (u64)chunk_index * (u64)img_file->chunk_size;
+
+    if (img_file->is_wav)
+        offset += img_file->wav_data_offset;
+
+    return offset;
+}
+
+u32 CdRomMedia::CalculateReadSize(ImgFile* img_file, u64 file_offset)
+{
+    u32 to_read = img_file->chunk_size;
+    u64 effective_offset = file_offset;
+
+    if (img_file->is_wav)
+        effective_offset -= img_file->wav_data_offset;
+
+    if (effective_offset + to_read > img_file->file_size)
+        to_read = img_file->file_size - effective_offset;
+
+    return to_read;
 }
 
 bool CdRomMedia::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count)

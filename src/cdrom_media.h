@@ -39,6 +39,8 @@ public:
         u32 chunk_size;
         u32 chunk_count;
         u8** chunks;
+        bool is_wav;
+        u32 wav_data_offset;
     };
 
     enum TrackType
@@ -103,6 +105,13 @@ private:
     void DestroyImgFiles();
     void GatherPaths(const char* path);
     bool GatherImgInfo(ImgFile* img_file);
+    bool ValidateFile(const char* file_path);
+    bool ProcessFileFormat(ImgFile* img_file);
+    bool ProcessWavFormat(ImgFile* img_file);
+    bool FindWavDataChunk(ImgFile* img_file, std::ifstream& file);
+    void SetupFileChunks(ImgFile* img_file);
+    u64 CalculateFileOffset(ImgFile* img_file, u32 chunk_index);
+    u32 CalculateReadSize(ImgFile* img_file, u64 file_offset);
     bool ParseCueFile(const char* cue_content);
     bool ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size);
     bool LoadChunk(ImgFile* img_file, u32 chunk_index);
