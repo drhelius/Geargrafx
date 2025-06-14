@@ -971,7 +971,6 @@ bool CdRomMedia::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count)
         return false;
     }
 
-    // Limit count to available chunks
     u32 end_chunk = start_chunk + count;
     if (end_chunk > img_file->chunk_count)
     {
@@ -1081,7 +1080,7 @@ u32 CdRomMedia::SeekTime(u32 start_lba, u32 end_lba)
     u32 start_index = SeekFindGroup(start_lba);
     u32 target_index = SeekFindGroup(end_lba);
     u32 lba_difference = (u32)std::abs((int)end_lba - (int)start_lba);
-    float track_difference = 0.0f;
+    double track_difference = 0.0;
 
     // Now we find the track difference
     //
@@ -1106,27 +1105,15 @@ u32 CdRomMedia::SeekTime(u32 start_lba, u32 end_lba)
 
     // Now, we use the algorithm to determine how long to wait
     if (lba_difference < 2)
-    {
-        return (3 * 1000 / 60);
-    }
+        return (9 * 1000 / 60);
     if (lba_difference < 5)
-    {
-        return (9 * 1000 / 60) + (float)(k_seek_sector_list[target_index].rotation_ms / 2);
-    }
+        return (9 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2);
     else if (track_difference <= 80)
-    {
-        return (16 * 1000 / 60) + (float)(k_seek_sector_list[target_index].rotation_ms / 2);
-    }
+        return (18 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2);
     else if (track_difference <= 160)
-    {
-        return (22 * 1000 / 60) + (float)(k_seek_sector_list[target_index].rotation_ms / 2);
-    }
+        return (22 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2);
     else if (track_difference <= 644)
-    {
-        return (22 * 1000 / 60) + (float)(k_seek_sector_list[target_index].rotation_ms / 2) + (float)((track_difference - 161) * 16.66 / 80);
-    }
+        return (22 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2) + ((track_difference - 161) * 16.66 / 80);
     else
-    {
-        return (36 * 1000 / 60) + (float)((track_difference - 644) * 16.66 / 195);
-    }
+        return (48 * 1000 / 60) + ((track_difference - 644) * 16.66 / 195);
 }

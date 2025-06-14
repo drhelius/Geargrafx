@@ -94,7 +94,7 @@ public:
     bool ReadSector(u32 lba, u8* buffer);
     bool ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size);
     u32 SeekTime(u32 start_lba, u32 end_lba);
-    u32 SectorTransferTime();
+    u32 SectorTransferCycles();
     u32 GetFirstSectorOfTrack(u8 track);
     u32 GetLastSectorOfTrack(u8 track);
     s32 GetTrackFromLBA(u32 lba);
@@ -133,10 +133,10 @@ private:
 static const u32 k_cdrom_track_type_size[3] = { 2352, 2048, 2352};
 static const char* k_cdrom_track_type_name[3] = { "AUDIO", "MODE1/2048", "MODE1/2352" };
 
-INLINE u32 CdRomMedia::SectorTransferTime()
+INLINE u32 CdRomMedia::SectorTransferCycles()
 {
     // Standard CD-ROM 1x speed: 75 sectors/sec
-    return 1000 / 75;
+    return GG_MASTER_CLOCK_RATE / 75;
 }
 
 // Seek time, based on the work by Dave Shadoff
@@ -146,25 +146,25 @@ struct GG_Seek_Sector_Group
     u32 sec_per_revolution;
     u32 sec_start;
     u32 sec_end;
-    float rotation_ms;
+    double rotation_ms;
 };
 
 #define GG_SEEK_NUM_SECTOR_GROUPS 14
 static const GG_Seek_Sector_Group k_seek_sector_list[GG_SEEK_NUM_SECTOR_GROUPS] = {
-    { 10,   0,      12572,  133.47f },
-    { 11,   12573,  30244,  146.82f },   // Except for the first and last groups,
-    { 12,   30245,  49523,  160.17f },   // there are 1606.5 tracks in each range
-    { 13,   49524,  70408,  173.51f },
-    { 14,   70409,  92900,  186.86f },
-    { 15,   92901,  116998, 200.21f },
-    { 16,   116999, 142703, 213.56f },
-    { 17,   142704, 170014, 226.90f },
-    { 18,   170015, 198932, 240.25f },
-    { 19,   198933, 229456, 253.60f },
-    { 20,   229457, 261587, 266.95f },
-    { 21,   261588, 295324, 280.29f },
-    { 22,   295325, 330668, 293.64f },
-    { 23,   330669, 333012, 306.99f }
+    { 10,   0,      12572,  133.47 },
+    { 11,   12573,  30244,  146.82 },   // Except for the first and last groups,
+    { 12,   30245,  49523,  160.17 },   // there are 1606.5 tracks in each range
+    { 13,   49524,  70408,  173.51 },
+    { 14,   70409,  92900,  186.86 },
+    { 15,   92901,  116998, 200.21 },
+    { 16,   116999, 142703, 213.56 },
+    { 17,   142704, 170014, 226.90 },
+    { 18,   170015, 198932, 240.25 },
+    { 19,   198933, 229456, 253.60 },
+    { 20,   229457, 261587, 266.95 },
+    { 21,   261588, 295324, 280.29 },
+    { 22,   295325, 330668, 293.64 },
+    { 23,   330669, 333012, 306.99 }
 };
 
 #include "cdrom_media_inline.h"

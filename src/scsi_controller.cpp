@@ -404,8 +404,7 @@ void ScsiController::CommandRead()
     u32 current_lba = m_cdrom_media->GetCurrentSector();
     u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
     u32 seek_cycles = TimeToCycles(seek_time * 1000);
-    u32 transfer_time = m_cdrom_media->SectorTransferTime();
-    u32 transfer_cycles = TimeToCycles(transfer_time * 1000);
+    u32 transfer_cycles = m_cdrom_media->SectorTransferCycles();
 
     m_next_load_cycles = seek_cycles + transfer_cycles;
     m_load_sector = lba;
@@ -544,7 +543,7 @@ void ScsiController::CommandReadTOC()
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
             // 420us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 10000);
             break;
         }
         case 0x01:
@@ -558,7 +557,7 @@ void ScsiController::CommandReadTOC()
             m_data_buffer_offset = 0;
             Debug("Disc length: %d %02X:%02X:%02X", MsfToLba(&length), buffer[0], buffer[1], buffer[2]);
             // 420us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 10000);
             break;
         }
         case 0x02:
@@ -594,7 +593,7 @@ void ScsiController::CommandReadTOC()
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
             // 420us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 10000);
             break;
         }
         default:
@@ -620,7 +619,7 @@ void ScsiController::LoadSector()
         if (m_load_sector_count == 0)
             m_next_load_cycles = 0;
         else
-            m_next_load_cycles = TimeToCycles(m_cdrom_media->SectorTransferTime() * 1000);
+            m_next_load_cycles = m_cdrom_media->SectorTransferCycles();
 
         Debug("SCSI Sectors left: %d, next:%d, cycles: %d", m_load_sector_count, m_load_sector, m_next_load_cycles);
         //Debug("Phase: %s, db: %02X, signals: %02X", k_scsi_phase_names[m_phase], m_bus.db, m_bus.signals);
