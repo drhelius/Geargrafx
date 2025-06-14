@@ -67,7 +67,6 @@ INLINE void ScsiController::UpdateAutoAck(u32 cycles)
         {
             m_auto_ack_cycles = 0;
             ClearSignal(SCSI_SIGNAL_ACK);
-            //Debug("SCSI Auto ACK (clear) %02X", m_bus.signals);
         }
     }
 }
@@ -115,7 +114,6 @@ INLINE void ScsiController::SetSignal(u16 signals)
 
     if (m_previous_signals != m_bus.signals)
     {
-        //Debug("*** SCSI Bus change detected: %02X %02X", m_bus.signals, m_bus.db);
         m_bus_changed = true;
         m_previous_signals =  m_bus.signals;
     }
@@ -128,7 +126,6 @@ INLINE void ScsiController::ClearSignal(u16 signals)
 
     if (m_previous_signals != m_bus.signals)
     {
-        //Debug("**** SCSI Bus change detected: %02X %02X", m_bus.signals, m_bus.db);
         m_bus_changed = true;
         m_previous_signals =  m_bus.signals;
     }
@@ -150,19 +147,15 @@ INLINE void ScsiController::RunEvent()
     switch (m_next_event)
     {
         case SCSI_EVENT_SET_COMMAND_PHASE:
-            //Debug("SCSI Event Set command phase");
             SetPhase(SCSI_PHASE_COMMAND);
             break;
         case SCSI_EVENT_SET_REQ_SIGNAL:
-            //Debug("SCSI Event Set REQ signal");
             SetSignal(SCSI_SIGNAL_REQ);
             break;
         case SCSI_EVENT_SET_GOOD_STATUS:
-            //Debug("SCSI Event Set good status");
             StartStatus(SCSI_STATUS_GOOD);
             break;
         case SCSI_EVENT_SET_DATA_IN_PHASE:
-            //Debug("SCSI Event Set data in phase");
             SetPhase(SCSI_PHASE_DATA_IN);
             break;
         default:
@@ -178,7 +171,6 @@ INLINE void ScsiController::AutoAck()
     {
         m_auto_ack_cycles = TimeToCycles(1);
         SetSignal(SCSI_SIGNAL_ACK);
-        //Debug("SCSI Auto ACK (set) %02X", m_bus.signals);
     }
 }
 

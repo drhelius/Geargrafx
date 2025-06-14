@@ -102,25 +102,17 @@ ScsiController::Scsi_State* ScsiController::GetState()
     return &m_state;
 }
 
-void ScsiController::StartSelection(u8 value)
+void ScsiController::StartSelection()
 {
     Debug("SCSI Start selection");
 
-    // If target ID is not 0, ignore
-    //if (value & 0x01)
+    if (m_phase != SCSI_PHASE_DATA_IN)
+        NextEvent(SCSI_EVENT_SET_COMMAND_PHASE, 75000);
+    else
     {
-        if (m_phase != SCSI_PHASE_DATA_IN)
-        {
-            // 3.5ms delay
-            NextEvent(SCSI_EVENT_SET_COMMAND_PHASE, 75000);
-        }
-        else
-        {
-            Debug("SCSI Start selection when already in data in phase");
-            StartStatus(SCSI_STATUS_GOOD, 8);
-            // 42ms delay
-            NextEvent(SCSI_EVENT_SET_COMMAND_PHASE, 900000);
-        }
+        Debug("SCSI Start selection when already in data in phase");
+        StartStatus(SCSI_STATUS_GOOD, 8);
+        NextEvent(SCSI_EVENT_SET_COMMAND_PHASE, 900000);
     }
 }
 
@@ -174,8 +166,6 @@ void ScsiController::SetPhase(ScsiPhase phase)
 
 void ScsiController::UpdateScsi()
 {
-    //Debug(">>>> SCSI UPDATE: %02X %02X <<<<---------------------- %04X", m_bus.signals, m_bus.db, m_huc6280->GetState()->PC->GetValue());
-
     if (!m_bus_changed)
         return;
 
@@ -233,31 +223,22 @@ void ScsiController::UpdateCommandPhase()
         }
         else if (m_command_buffer.size() >= length)
         {
-            //Debug("SCSI Command complete %02X", opcode);
             for (size_t i = 0; i < length; i++)
                 Debug("  Command byte %02X", m_command_buffer[i]);
             ExecuteCommand();
             m_command_buffer.clear();
         }
         else
-        {
-            //Debug("SCSI Command not complete %02X", opcode);
-            // 150us delay
             NextEvent(SCSI_EVENT_SET_REQ_SIGNAL, 3000);
-        }
     }
 }
 
 void ScsiController::UpdateDataInPhase()
 {
     if (IsSignalSet(SCSI_SIGNAL_REQ) && IsSignalSet(SCSI_SIGNAL_ACK))
-    {
         ClearSignal(SCSI_SIGNAL_REQ);
-        //Debug("SCSI Data in clearing req: REQ %d ACK %d", IsSignalSet(SCSI_SIGNAL_REQ), IsSignalSet(SCSI_SIGNAL_ACK));
-    }
     else if (!IsSignalSet(SCSI_SIGNAL_REQ) && !IsSignalSet(SCSI_SIGNAL_ACK))
     {
-        //assert((m_data_buffer.size() == 2048) || (m_data_buffer.size() == 4));
         if (m_data_buffer.size() > 0)
         {
             assert(m_data_buffer_offset < m_data_buffer.size());
@@ -269,34 +250,24 @@ void ScsiController::UpdateDataInPhase()
                 m_data_buffer.clear();
             }
             SetSignal(SCSI_SIGNAL_REQ);
-            //Debug("SCSI Data in putting data, signals: %02X, data: %02X, offset: %d", m_bus.signals, m_bus.db, m_data_buffer_offset - 1);
         }
         else
         {
-            //Debug("SCSI Data in phase empty %02X, %d", m_bus.signals, m_data_buffer_offset);
             if (m_load_sector_count == 0)
             {
                 Debug("SCSI Data in phase completed %02X, %d. No more sectors.", m_bus.signals, m_data_buffer_offset);
-                // 150us delay
                 NextEvent(SCSI_EVENT_SET_GOOD_STATUS, 3000);
             }
         }
-    }
-    else
-    {
-        //Debug("SCSI Data in phase: REQ %d ACK %d", IsSignalSet(SCSI_SIGNAL_REQ), IsSignalSet(SCSI_SIGNAL_ACK));
     }
 }
 
 void ScsiController::UpdateStatusPhase()
 {
     if (IsSignalSet(SCSI_SIGNAL_REQ) && IsSignalSet(SCSI_SIGNAL_ACK))
-    {
         ClearSignal(SCSI_SIGNAL_REQ);
-    }
     else if (!IsSignalSet(SCSI_SIGNAL_REQ) && !IsSignalSet(SCSI_SIGNAL_ACK))
     {
-        //assert(m_data_buffer.size() == 1);
         if (m_data_buffer.size() > 0)
         {
             assert(m_data_buffer_offset < m_data_buffer.size());
@@ -309,10 +280,7 @@ void ScsiController::UpdateStatusPhase()
                 SetPhase(SCSI_PHASE_MESSAGE_IN);
             }
             else
-            {
-                //Debug("SCSI Status phase data %02X", m_bus.db);
                 SetSignal(SCSI_SIGNAL_REQ);
-            }
         }
     }
 }
@@ -320,9 +288,7 @@ void ScsiController::UpdateStatusPhase()
 void ScsiController::UpdateMessageInPhase()
 {
     if (IsSignalSet(SCSI_SIGNAL_REQ) && IsSignalSet(SCSI_SIGNAL_ACK))
-    {
         ClearSignal(SCSI_SIGNAL_REQ);
-    }
     else if (!IsSignalSet(SCSI_SIGNAL_REQ) && !IsSignalSet(SCSI_SIGNAL_ACK))
     {
         Debug("SCSI Message in phase completed");
@@ -372,7 +338,6 @@ void ScsiController::CommandTestUnitReady()
     Debug("SCSI CMD Test Unit Ready");
     Debug("******");
 
-    // 21ms delay
     NextEvent(SCSI_EVENT_SET_GOOD_STATUS, 450000);
 }
 
@@ -520,7 +485,6 @@ void ScsiController::CommandReadSubcodeQ()
           audio_state, current_track + 1, relative.minutes, relative.seconds, relative.frames,
           absolute.minutes, absolute.seconds, absolute.frames);
 
-    // 140us delay
     NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 3000);
 }
 
@@ -542,8 +506,7 @@ void ScsiController::CommandReadTOC()
             Debug("Number of tracks: %d", m_cdrom_media->GetTracks().size());
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
-            // 420us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 10000);
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
         }
         case 0x01:
@@ -556,8 +519,7 @@ void ScsiController::CommandReadTOC()
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
             Debug("Disc length: %d %02X:%02X:%02X", MsfToLba(&length), buffer[0], buffer[1], buffer[2]);
-            // 420us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 10000);
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
         }
         case 0x02:
@@ -592,8 +554,8 @@ void ScsiController::CommandReadTOC()
             Debug("Track %d start: %d %02X:%02X:%02X, type: %d", track, MsfToLba(&start_msf), buffer[0], buffer[1], buffer[2], type);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
-            // 420us delay
-            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 10000);
+
+            NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
         }
         default:
@@ -622,7 +584,6 @@ void ScsiController::LoadSector()
             m_next_load_cycles = m_cdrom_media->SectorTransferCycles();
 
         Debug("SCSI Sectors left: %d, next:%d, cycles: %d", m_load_sector_count, m_load_sector, m_next_load_cycles);
-        //Debug("Phase: %s, db: %02X, signals: %02X", k_scsi_phase_names[m_phase], m_bus.db, m_bus.signals);
 
         m_bus_changed = true;
     }
@@ -630,7 +591,7 @@ void ScsiController::LoadSector()
     {
         Debug("**** SCSI Load sector: buffer not empty *******************");
         Debug("**** Data buffer size: %d, offset: %d", m_data_buffer.size(), m_data_buffer_offset);
-        //Debug("**** Phase: %s, db: %02X, signals: %02X", k_scsi_phase_names[m_phase], m_bus.db, m_bus.signals);
+
         m_next_load_cycles = TimeToCycles(290000);
     }
 }

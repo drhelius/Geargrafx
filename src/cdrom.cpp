@@ -157,7 +157,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
         case 0x00:
             // SCSI control
             //Debug("CDROM Write SCSI control %02X, value: %02X", reg, value);
-            m_scsi_controller->StartSelection(value);
+            m_scsi_controller->StartSelection();
             break;
         case 0x01:
             // SCSI command
