@@ -37,20 +37,21 @@ INLINE void Adpcm::Clock(u32 cycles)
     CheckReset();
 }
 
-inline void Adpcm::ResetAdpcm()
+inline void Adpcm::SoftReset()
 {
     m_read_cycles = 0;
     m_write_cycles = 0;
     m_read_address = 0;
     m_write_address = 0;
     m_address = 0;
-    EndReached(false);
-    HalfReached(false);
     m_length = 0;
-    m_high_nibble = false;
+    m_nibble_toggle = false;
     m_sample = 2048;
-    m_magnitude = 0;
+    m_step_index = 0;
     m_play_pending = false;
+    m_filter_state = 0.0f;
+    SetEndIRQ(false);
+    SetHalfIRQ(false);
 }
 
 INLINE u8 Adpcm::Read(u16 address)
@@ -65,7 +66,7 @@ INLINE u8 Adpcm::Read(u16 address)
         case 0x0C:
             m_status = 0;
             m_status |= (m_playing ? 0x08 : 0x00);
-            m_status |= (m_end ? 0x01 : 0x00);
+            m_status |= (m_end_irq ? 0x01 : 0x00);
             m_status |= (m_read_cycles > 0 ? 0x80 : 0x00);
             m_status |= (m_write_cycles > 0 ? 0x04 : 0x00);
             return m_status;
@@ -141,12 +142,12 @@ inline void Adpcm::UpdateReadWriteEvents(u32 cycles)
                 if (m_length > 0)
                 {
                     m_length--;
-                    HalfReached(m_length < 0x8000);
+                    SetHalfIRQ(m_length < 0x8000);
                 }
                 else
                 {
-                    HalfReached(false);
-                    EndReached(true);
+                    SetHalfIRQ(false);
+                    SetEndIRQ(true);
                 }
             }
         }
@@ -161,10 +162,9 @@ inline void Adpcm::UpdateReadWriteEvents(u32 cycles)
             m_adpcm_ram[m_write_address] = m_write_value;
             m_write_address++;
 
+            SetHalfIRQ(m_length < 0x8000);
             if (m_length == 0)
-                EndReached(true);
-
-            HalfReached(m_length < 0x8000);
+                SetEndIRQ(m_length == 0);
 
             if (!IS_SET_BIT(m_control, 4))
             {
@@ -177,9 +177,7 @@ inline void Adpcm::UpdateReadWriteEvents(u32 cycles)
 
 inline void Adpcm::UpdateDMA(u32 cycles)
 {
-    bool dma_active = (m_dma & 0x03) != 0;
-
-    if (!dma_active)
+    if ((m_dma & 0x03) == 0)
         return;
 
     if (m_dma_cycles > 0)
@@ -199,11 +197,13 @@ inline void Adpcm::UpdateDMA(u32 cycles)
             else
                 m_dma_cycles = 1;
         }
+        return;
     }
-    else if(!m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_ACK) &&
-            !m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_CD) &&
-            m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_IO) &&
-            m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_REQ))
+
+    if (!m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_ACK) &&
+        !m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_CD) &&
+        m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_IO) &&
+        m_scsi_controller->IsSignalSet(ScsiController::SCSI_SIGNAL_REQ))
     {
         m_dma_cycles = 36;
     }
@@ -211,41 +211,41 @@ inline void Adpcm::UpdateDMA(u32 cycles)
 
 inline void Adpcm::RunAdpcm(u32 cycles)
 {
-    if (!m_playing && !m_play_pending && !IS_SET_BIT(m_control, 5))
+    if (IS_SET_BIT(m_control, 7))
+    {
+        m_playing = IS_SET_BIT(m_control, 5);
+        m_play_pending = false;
+        return;
+    }
+
+    if (!m_playing && !m_play_pending)
         return;
 
-    m_sample_cycle_counter_adpcm += cycles;
-    if (m_sample_cycle_counter_adpcm >= m_cycles_per_sample)
+    if (!IS_SET_BIT(m_control, 5) || (IS_SET_BIT(m_control, 6) && (m_length == 0)))
     {
-        m_sample_cycle_counter_adpcm -= m_cycles_per_sample;
+        m_play_pending = false;
+        m_playing = false;
+        return;
+    }
 
-        if (IS_SET_BIT(m_control, 7))
-        {
-            m_playing = IS_SET_BIT(m_control, 5);
-            m_play_pending = false;
-            return;
-        }
-
-        if ((IS_SET_BIT(m_control, 6) && (m_length == 0)) || (!IS_SET_BIT(m_control, 5)) || (!m_playing && !m_play_pending))
-        {
-            m_play_pending = false;
-            m_playing = false;
-            return;
-        }
-
+    m_adpcm_cycle_counter += cycles;
+    if (m_adpcm_cycle_counter >= m_cycles_per_sample)
+    {
+        m_adpcm_cycle_counter -= m_cycles_per_sample;
 
         if (m_play_pending)
         {
             m_play_pending = false;
             m_playing = true;
             m_sample = 2048;
-            m_magnitude = 0;
+            m_step_index = 0;
         }
 
+        u8 ram_byte = m_adpcm_ram[m_read_address];
         u8 nibble = 0;
-        m_high_nibble = !m_high_nibble;
+        m_nibble_toggle = !m_nibble_toggle;
 
-        if (m_high_nibble)
+        if (m_nibble_toggle)
         {
             nibble = (m_adpcm_ram[m_read_address] >> 4) & 0x0F;
         }
@@ -255,21 +255,19 @@ inline void Adpcm::RunAdpcm(u32 cycles)
             m_read_address++;
             m_length--;
             m_length &= 0x1FFFF;
+
+            SetHalfIRQ(m_length <= 0x8000);
+            if (m_length == 0)
+                SetEndIRQ(m_length == 0);
         }
 
         s8 sign = (nibble & 0x08) ? -1 : 1;
         u8 value = nibble & 0x07;
-        s16 adjustment = m_step_delta[(m_magnitude << 3) | value] * sign;
+        s16 delta = m_step_delta[(m_step_index << 3) + value] * sign;
 
-        m_sample += adjustment;
-        m_sample &= 0x0FFF;
+        m_sample = (m_sample + delta) & 0x0FFF;
 
-        m_magnitude = CLAMP(m_magnitude + k_adpcm_index_shift[value], 0, 48);
-
-        HalfReached(m_length <= 0x8000);
-        if (m_length == 0)
-            EndReached(true);
-
+        m_step_index = CLAMP(m_step_index + k_adpcm_index_shift[value], 0, 48);
     }
 }
 
@@ -287,35 +285,28 @@ INLINE void Adpcm::WriteControl(u8 value)
     m_control = value;
 }
 
-INLINE void Adpcm::EndReached(bool end)
+INLINE void Adpcm::SetEndIRQ(bool asserted)
 {
-    if (m_end != end)
-    {
-        m_end = end;
-        if (m_end)
-            m_cdrom->SetIRQ(CDROM_IRQ_ADPCM_END);
-        else
-            m_cdrom->ClearIRQ(CDROM_IRQ_ADPCM_END);
-    }
+    m_end_irq = asserted;
+    if (asserted)
+        m_cdrom->SetIRQ(CDROM_IRQ_ADPCM_END);
+    else
+        m_cdrom->ClearIRQ(CDROM_IRQ_ADPCM_END);
 }
 
-INLINE void Adpcm::HalfReached(bool half)
+INLINE void Adpcm::SetHalfIRQ(bool asserted)
 {
-    if (m_half != half)
-    {
-        m_half = half;
-        if (m_half)
-            m_cdrom->SetIRQ(CDROM_IRQ_ADPCM_HALF);
-        else
-            m_cdrom->ClearIRQ(CDROM_IRQ_ADPCM_HALF);
-    }
+    if (asserted)
+        m_cdrom->SetIRQ(CDROM_IRQ_ADPCM_HALF);
+    else
+        m_cdrom->ClearIRQ(CDROM_IRQ_ADPCM_HALF);
 }
 
 INLINE bool Adpcm::CheckReset()
 {
     if (IS_SET_BIT(m_control, 7))
     {
-        ResetAdpcm();
+        SoftReset();
         return true;
     }
     else
@@ -327,19 +318,26 @@ INLINE void Adpcm::CheckLength()
     if (IS_SET_BIT(m_control, 4))
     {
         m_length = m_address;
-        EndReached(false);
+        SetEndIRQ(false);
     }
 }
 
 INLINE void Adpcm::UpdateAudio(u32 cycles)
 {
-    m_sample_cycle_counter += cycles;
+    m_audio_cycle_counter += cycles;
 
-    if (m_sample_cycle_counter >= GG_CDAUDIO_CYCLES_PER_SAMPLE)
+    if (m_audio_cycle_counter >= GG_CDAUDIO_CYCLES_PER_SAMPLE)
     {
-        m_sample_cycle_counter -= GG_CDAUDIO_CYCLES_PER_SAMPLE;
+        m_audio_cycle_counter -= GG_CDAUDIO_CYCLES_PER_SAMPLE;
 
-        s16 final_sample = (m_sample - 2048) * 10;
+        s16 raw_sample = (m_sample - 2048) * 10;
+
+        // IIR low-pass filter
+        const float alpha = 0.3f;
+        m_filter_state = (alpha * (float)(raw_sample)) + ((1.0f - alpha) * m_filter_state);
+
+        s16 final_sample = (s16)CLAMP((int)m_filter_state, -32768, 32767);
+
         m_buffer[m_buffer_index + 0] = final_sample;
         m_buffer[m_buffer_index + 1] = final_sample;
 

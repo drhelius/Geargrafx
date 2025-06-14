@@ -48,7 +48,7 @@ public:
     ~Adpcm();
     void Init(GeargrafxCore* core, CdRom* cdrom, ScsiController* scsi_controller);
     void Reset();
-    void ResetAdpcm();
+    void SoftReset();
     void Clock(u32 cycles);
     u8 Read(u16 address);
     void Write(u16 address, u8 value);
@@ -67,8 +67,8 @@ private:
     void UpdateAudio(u32 cycles);
     void RunAdpcm(u32 cycles);
     void WriteControl(u8 value);
-    void EndReached(bool end);
-    void HalfReached(bool half);
+    void SetEndIRQ(bool asserted);
+    void SetHalfIRQ(bool asserted);
     bool CheckReset();
     void CheckLength();
 
@@ -94,18 +94,18 @@ private:
     u8 m_dma;
     s32 m_dma_cycles;
     u8 m_status;
-    bool m_end;
-    bool m_half;
+    bool m_end_irq;
     bool m_playing;
     bool m_play_pending;
-    bool m_high_nibble;
+    bool m_nibble_toggle;
     u32 m_length;
     s16 m_sample;
-    u8 m_magnitude;
-    s32 m_sample_cycle_counter_adpcm;
-    s32 m_sample_cycle_counter;
+    u8 m_step_index;
+    s32 m_adpcm_cycle_counter;
+    s32 m_audio_cycle_counter;
     s32 m_buffer_index;
     s16 m_buffer[GG_AUDIO_BUFFER_SIZE] = {};
+    float m_filter_state;
 };
 
 static const s16 k_adpcm_index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };
