@@ -18,7 +18,7 @@
  */
 
 #define GUI_DEBUG_CDROM_IMPORT
-#include "gui_debug_huc6260.h"
+#include "gui_debug_cdrom.h"
 
 #include "imgui/imgui.h"
 #include "geargrafx.h"
@@ -31,8 +31,8 @@
 void gui_debug_window_cdrom(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(ImVec2(75, 228), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(270, 188), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(75, 80), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(210, 566), ImGuiCond_FirstUseEver);
     ImGui::Begin("CD-ROM", &config_debug.show_cdrom);
 
     ImGui::PushFont(gui_default_font);

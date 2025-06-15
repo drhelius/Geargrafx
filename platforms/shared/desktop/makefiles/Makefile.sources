@@ -15,6 +15,8 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_actions.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_cdrom.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_cdrom_audio.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_adpcm.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_disassembler.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6202.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6260.cpp \

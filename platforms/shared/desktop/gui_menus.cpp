@@ -774,6 +774,25 @@ static void menu_audio(void)
             emu_audio_mute(!config_audio.enable);
         }
 
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Mute PSG", "", &config_audio.mute_psg, config_audio.enable))
+        {
+            emu_audio_mute_psg(config_audio.mute_psg);
+        }
+
+        if (ImGui::MenuItem("Mute CD-ROM", "", &config_audio.mute_cd, config_audio.enable))
+        {
+            emu_audio_mute_cdrom(config_audio.mute_cd);
+        }
+
+        if (ImGui::MenuItem("Mute ADPCM", "", &config_audio.mute_adpcm, config_audio.enable))
+        {
+            emu_audio_mute_adpcm(config_audio.mute_adpcm);
+        }
+
+        ImGui::Separator();
+
         if (ImGui::MenuItem("Sync With Emulator", "", &config_audio.sync))
         {
             config_emulator.ffwd = false;
@@ -904,6 +923,8 @@ static void menu_debug(void)
         ImGui::MenuItem("Show CD-ROM", "", &config_debug.show_cdrom, config_debug.debug && emu_get_core()->GetCartridge()->IsCDROM());
         ImGui::Separator();
         ImGui::MenuItem("Show PSG", "", &config_debug.show_psg, config_debug.debug);
+        ImGui::MenuItem("Show CD-ROM Audio", "", &config_debug.show_cdrom_audio, config_debug.debug && emu_get_core()->GetCartridge()->IsCDROM());
+        ImGui::MenuItem("Show CD-ROM ADPCM", "", &config_debug.show_adpcm, config_debug.debug && emu_get_core()->GetCartridge()->IsCDROM());
 
 #if defined(__APPLE__) || defined(_WIN32)
         ImGui::Separator();

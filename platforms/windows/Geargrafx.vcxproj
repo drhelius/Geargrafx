@@ -53,6 +53,8 @@
     <ClCompile Include="..\shared\desktop\gui_debug_memory.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_psg.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_cdrom.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_debug_cdrom_audio.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_debug_adpcm.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_trace_logger.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug.cpp" />
     <ClCompile Include="..\shared\desktop\gui_filedialogs.cpp" />
@@ -138,6 +140,8 @@
     <ClInclude Include="..\shared\desktop\gui_debug_memory.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_psg.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_cdrom.h" />
+    <ClInclude Include="..\shared\desktop\gui_debug_cdrom_audio.h" />
+    <ClInclude Include="..\shared\desktop\gui_debug_adpcm.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_text.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_trace_logger.h" />
     <ClInclude Include="..\shared\desktop\gui_debug.h" />

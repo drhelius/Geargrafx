@@ -45,6 +45,19 @@ public:
         CD_AUDIO_STATE_STOPPED = 0x03
     };
 
+    struct CdRomAudio_State
+    {
+        CdAudioState* CURRENT_STATE;
+        u32* START_LBA;
+        u32* STOP_LBA;
+        u32* CURRENT_LBA;
+        CdAudioStopEvent* STOP_EVENT;
+        s32* SEEK_CYCLES;
+        u8* FADER;
+        s32* FRAME_SAMPLES;
+        s16* BUFFER;
+    };
+
 public:
     CdRomAudio(CdRomMedia* cdrom_media);
     ~CdRomAudio();
@@ -52,7 +65,8 @@ public:
     void Reset();
     void Clock(u32 cycles);
     int EndFrame(s16* sample_buffer);
-    CdAudioState GetAudioState();
+    CdAudioState GetCurrentState();
+    CdRomAudio_State* GetState();
     void StartAudio(u32 lba, bool pause);
     void StopAudio();
     void PauseAudio();
@@ -71,14 +85,16 @@ private:
 private:
     CdRomMedia* m_cdrom_media;
     ScsiController* m_scsi_controller;
+    CdRomAudio_State m_state;
     s32 m_sample_cycle_counter;
     s32 m_buffer_index;
+    s32 m_frame_samples;
     s16 m_buffer[GG_AUDIO_BUFFER_SIZE] = {};
-    CdAudioState m_state;
+    CdAudioState m_current_state;
     u32 m_start_lba;
     u32 m_stop_lba;
     u32 m_current_lba;
-    u32 m_currunt_sample;
+    u32 m_current_sample;
     CdAudioStopEvent m_stop_event;
     s32 m_seek_cycles;
     u8 m_fader;

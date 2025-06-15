@@ -85,6 +85,7 @@ public:
     HuC6280* GetHuC6280();
     CdRom* GetCDROM();
     CdRomMedia* GetCDROMMedia();
+    CdRomAudio* GetCDROMAudio();
     ScsiController* GetScsiController();
     Adpcm* GetAdpcm();
     Audio* GetAudio();

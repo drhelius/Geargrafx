@@ -134,7 +134,7 @@ void gui_debug_window_psg(void)
                     psg_state->CHANNELS[channel].mute = !psg_state->CHANNELS[channel].mute;
                 }
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                    ImGui::SetTooltip("Mute");
+                    ImGui::SetTooltip("Mute Channel");
 
                 snprintf(label, 32, "%s##exc%d", ICON_MD_STAR, channel);
 
@@ -155,7 +155,7 @@ void gui_debug_window_psg(void)
                 ImGui::PopStyleColor();
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 {
-                    ImGui::SetTooltip("Solo");
+                    ImGui::SetTooltip("Solo Channel");
                 }
                 ImGui::PopFont();
                 ImGui::PopStyleColor();
@@ -174,15 +174,19 @@ void gui_debug_window_psg(void)
                     wave_buffer_right[i] = (float)(psg_channel->output[(i * 2) + 1]) / 32768.0f * 8.0f;
                 }
 
-                for (int i = 100; i < data_size; ++i) {
-                    if (wave_buffer_left[i - 1] < 0.0f && wave_buffer_left[i] >= 0.0f) {
+                for (int i = 100; i < data_size; ++i)
+                {
+                    if (wave_buffer_left[i - 1] < 0.0f && wave_buffer_left[i] >= 0.0f)
+                    {
                         trigger_left = i;
                         break;
                     }
                 }
 
-                for (int i = 100; i < data_size; ++i) {
-                    if (wave_buffer_right[i - 1] < 0.0f && wave_buffer_right[i] >= 0.0f) {
+                for (int i = 100; i < data_size; ++i)
+                {
+                    if (wave_buffer_right[i - 1] < 0.0f && wave_buffer_right[i] >= 0.0f)
+                    {
                         trigger_right = i;
                         break;
                     }

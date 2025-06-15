@@ -35,12 +35,16 @@ public:
     {
         u8* CONTROL;
         u8* DMA;
-        u8* STATUS;
-        bool* END;
+        bool* END_IRQ;
+        bool* HALF_IRQ;
         bool* PLAYING;
         u8* SAMPLE_RATE;
+        u16* ADDRESS;
         u16* READ_ADDRESS;
         u16* WRITE_ADDRESS;
+        u32* LENGTH;
+        s32* FRAME_SAMPLES;
+        s16* BUFFER;
     };
 
 public:
@@ -53,6 +57,7 @@ public:
     u8 Read(u16 address);
     void Write(u16 address, u8 value);
     int EndFrame(s16* sample_buffer);
+    Adpcm_State* GetState();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -76,6 +81,7 @@ private:
     GeargrafxCore* m_core;
     CdRom* m_cdrom;
     ScsiController* m_scsi_controller;
+    Adpcm_State m_state;
     s16 m_step_delta[49 * 8] = {};
     u8 m_adpcm_ram[0x10000] = {};
     u8 m_read_latency[36] = {};
@@ -93,8 +99,8 @@ private:
     u8 m_control;
     u8 m_dma;
     s32 m_dma_cycles;
-    u8 m_status;
     bool m_end_irq;
+    bool m_half_irq;
     bool m_playing;
     bool m_play_pending;
     bool m_nibble_toggle;
@@ -104,6 +110,7 @@ private:
     s32 m_adpcm_cycle_counter;
     s32 m_audio_cycle_counter;
     s32 m_buffer_index;
+    s32 m_frame_samples;
     s16 m_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     float m_filter_state;
 };

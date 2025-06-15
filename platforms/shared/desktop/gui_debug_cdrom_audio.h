@@ -17,23 +17,19 @@
  *
  */
 
-#ifndef GUI_DEBUG_H
-#define	GUI_DEBUG_H
+#ifndef GUI_DEBUG_CDROM_AUDIO_H
+#define	GUI_DEBUG_CDROM_AUDIO_H
 
-#include "geargrafx.h"
-
-#ifdef GUI_DEBUG_IMPORT
+#ifdef GUI_DEBUG_CDROM_AUDIO_IMPORT
     #define EXTERN
 #else
     #define EXTERN extern
 #endif
 
-EXTERN void gui_debug_init(void);
-EXTERN void gui_debug_destroy(void);
-EXTERN void gui_debug_reset(void);
-EXTERN void gui_debug_callback(void);
-EXTERN void gui_debug_windows(void);
+EXTERN void gui_debug_cdrom_audio_init(void);
+EXTERN void gui_debug_cdrom_audio_destroy(void);
+EXTERN void gui_debug_window_cdrom_audio(void);
 
-#undef GUI_DEBUG_IMPORT
+#undef GUI_DEBUG_CDROM_AUDIO_IMPORT
 #undef EXTERN
-#endif /* GUI_DEBUG_H */
+#endif /* GUI_DEBUG_CDROM_AUDIO_H */

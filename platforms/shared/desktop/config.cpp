@@ -158,6 +158,8 @@ void config_read(void)
     config_debug.show_huc6270_2_info = read_bool("Debug", "HuC6270Info2", false);
     config_debug.show_psg = read_bool("Debug", "PSG", false);
     config_debug.show_cdrom = read_bool("Debug", "CDROM", false);
+    config_debug.show_cdrom_audio = read_bool("Debug", "CDROMAudio", false);
+    config_debug.show_adpcm = read_bool("Debug", "ADPCM", false);
     config_debug.show_trace_logger = read_bool("Debug", "TraceLogger", false);
     config_debug.trace_counter = read_bool("Debug", "TraceCounter", true);
     config_debug.trace_bank = read_bool("Debug", "TraceBank", true);
@@ -250,6 +252,9 @@ void config_read(void)
 
     config_audio.enable = read_bool("Audio", "Enable", true);
     config_audio.sync = read_bool("Audio", "Sync", true);
+    config_audio.mute_psg = read_bool("Audio", "MutePSG", false);
+    config_audio.mute_cd = read_bool("Audio", "MuteCD", false);
+    config_audio.mute_adpcm = read_bool("Audio", "MuteADPCM", false);
 
     config_input.turbo_tap = read_bool("Input", "TurboTap", false);
 
@@ -354,6 +359,8 @@ void config_write(void)
     write_bool("Debug", "HuC6270Info2", config_debug.show_huc6270_2_info);
     write_bool("Debug", "PSG", config_debug.show_psg);
     write_bool("Debug", "CDROM", config_debug.show_cdrom);
+    write_bool("Debug", "CDROMAudio", config_debug.show_cdrom_audio);
+    write_bool("Debug", "ADPCM", config_debug.show_adpcm);
     write_bool("Debug", "TraceLogger", config_debug.show_trace_logger);
     write_bool("Debug", "TraceCounter", config_debug.trace_counter);
     write_bool("Debug", "TraceBank", config_debug.trace_bank);
@@ -425,6 +432,9 @@ void config_write(void)
 
     write_bool("Audio", "Enable", config_audio.enable);
     write_bool("Audio", "Sync", config_audio.sync);
+    write_bool("Audio", "MutePSG", config_audio.mute_psg);
+    write_bool("Audio", "MuteCD", config_audio.mute_cd);
+    write_bool("Audio", "MuteADPCM", config_audio.mute_adpcm);
 
     write_bool("Input", "TurboTap", config_input.turbo_tap);
 

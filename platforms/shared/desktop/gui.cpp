@@ -102,6 +102,9 @@ void gui_init(void)
     set_style();
 
     emu_audio_mute(!config_audio.enable);
+    emu_audio_mute_psg(config_audio.mute_psg);
+    emu_audio_mute_cdrom(config_audio.mute_cd);
+    emu_audio_mute_adpcm(config_audio.mute_adpcm);
     emu_set_composite_palette(config_video.composite_palette);
     emu_video_no_sprite_limit(config_video.sprite_limit);
     emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
@@ -145,8 +148,7 @@ void gui_init(void)
 
 void gui_destroy(void)
 {
-    gui_debug_disassembler_destroy();
-    gui_debug_psg_destroy();
+    gui_debug_destroy();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
     NFD_Quit();

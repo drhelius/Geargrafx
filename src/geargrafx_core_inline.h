@@ -192,6 +192,11 @@ INLINE CdRomMedia* GeargrafxCore::GetCDROMMedia()
     return m_cdrom_media;
 }
 
+INLINE CdRomAudio* GeargrafxCore::GetCDROMAudio()
+{
+    return m_cdrom_audio;
+}
+
 INLINE ScsiController* GeargrafxCore::GetScsiController()
 {
     return m_scsi_controller;

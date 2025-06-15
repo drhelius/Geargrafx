@@ -29,6 +29,19 @@ Adpcm::Adpcm()
     InitPointer(m_core);
     InitPointer(m_scsi_controller);
     Reset();
+
+    m_state.CONTROL = &m_control;
+    m_state.DMA = &m_dma;
+    m_state.END_IRQ = &m_end_irq;
+    m_state.HALF_IRQ = &m_half_irq;
+    m_state.PLAYING = &m_playing;
+    m_state.SAMPLE_RATE = &m_sample_rate;
+    m_state.ADDRESS = &m_address;
+    m_state.READ_ADDRESS = &m_read_address;
+    m_state.WRITE_ADDRESS = &m_write_address;
+    m_state.LENGTH = &m_length;
+    m_state.FRAME_SAMPLES = &m_frame_samples;
+    m_state.BUFFER = m_buffer;
 }
 
 Adpcm::~Adpcm()
@@ -61,8 +74,8 @@ void Adpcm::Reset()
     m_control = 0;
     m_dma = 0;
     m_dma_cycles = 0;
-    m_status = 0;
     m_end_irq = false;
+    m_half_irq = false;
     m_playing = false;
     m_play_pending = false;
     m_nibble_toggle = false;
@@ -72,6 +85,7 @@ void Adpcm::Reset()
     m_adpcm_cycle_counter = 0;
     m_audio_cycle_counter = 0;
     m_buffer_index = 0;
+    m_frame_samples = 0;
     m_filter_state = 0.0f;
     memset(m_adpcm_ram, 0, sizeof(m_adpcm_ram));
 }
@@ -83,6 +97,7 @@ int Adpcm::EndFrame(s16* sample_buffer)
     if (IsValidPointer(sample_buffer))
     {
         samples = m_buffer_index;
+        m_frame_samples = m_buffer_index;
         memcpy(sample_buffer, m_buffer, samples * sizeof(s16));
     }
 

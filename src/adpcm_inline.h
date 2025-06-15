@@ -64,12 +64,14 @@ INLINE u8 Adpcm::Read(u16 address)
         case 0x0B:
             return m_dma;
         case 0x0C:
-            m_status = 0;
-            m_status |= (m_playing ? 0x08 : 0x00);
-            m_status |= (m_end_irq ? 0x01 : 0x00);
-            m_status |= (m_read_cycles > 0 ? 0x80 : 0x00);
-            m_status |= (m_write_cycles > 0 ? 0x04 : 0x00);
-            return m_status;
+        {
+            u8 status = 0;
+            status |= (m_playing ? 0x08 : 0x00);
+            status |= (m_end_irq ? 0x01 : 0x00);
+            status |= (m_read_cycles > 0 ? 0x80 : 0x00);
+            status |= (m_write_cycles > 0 ? 0x04 : 0x00);
+            return status;
+        }
         case 0x0D:
             return m_control;
         case 0x0E:
@@ -246,15 +248,12 @@ inline void Adpcm::RunAdpcm(u32 cycles)
         m_nibble_toggle = !m_nibble_toggle;
 
         if (m_nibble_toggle)
-        {
-            nibble = (m_adpcm_ram[m_read_address] >> 4) & 0x0F;
-        }
+            nibble = (ram_byte >> 4) & 0x0F;
         else
         {
-            nibble = m_adpcm_ram[m_read_address] & 0x0F;
+            nibble = ram_byte & 0x0F;
             m_read_address++;
-            m_length--;
-            m_length &= 0x1FFFF;
+            m_length = (m_length - 1) & 0x1FFFF;
 
             SetHalfIRQ(m_length <= 0x8000);
             if (m_length == 0)
@@ -296,6 +295,7 @@ INLINE void Adpcm::SetEndIRQ(bool asserted)
 
 INLINE void Adpcm::SetHalfIRQ(bool asserted)
 {
+    m_half_irq = asserted;
     if (asserted)
         m_cdrom->SetIRQ(CDROM_IRQ_ADPCM_HALF);
     else
@@ -349,6 +349,11 @@ INLINE void Adpcm::UpdateAudio(u32 cycles)
             m_buffer_index = 0;
         }
     }
+}
+
+INLINE Adpcm::Adpcm_State* Adpcm::GetState()
+{
+    return &m_state;
 }
 
 #endif /* ADPCM_INLINE_H */

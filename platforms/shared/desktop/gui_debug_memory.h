@@ -44,7 +44,6 @@ enum Memory_Editor_Tabs
     MEMORY_EDITOR_MAX
 };
 
-EXTERN void gui_debug_memory_init(void);
 EXTERN void gui_debug_memory_reset(void);
 EXTERN void gui_debug_window_memory(void);
 EXTERN void gui_debug_memory_search_window(void);

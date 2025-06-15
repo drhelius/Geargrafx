@@ -36,11 +36,6 @@ static char set_value_buffer[5] = {0};
 static void memory_editor_menu(void);
 static void draw_tabs(void);
 
-void gui_debug_memory_init(void)
-{
-    gui_debug_memory_reset();
-}
-
 void gui_debug_memory_reset(void)
 {
     GeargrafxCore* core = emu_get_core();

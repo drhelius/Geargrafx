@@ -31,6 +31,9 @@ Audio::Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio)
     m_cdrom_audio = cdrom_audio;
     InitPointer(m_psg);
     m_mute = false;
+    m_mute_psg = false;
+    m_mute_adpcm = false;
+    m_mute_cdrom = false;
     m_is_cdrom = false;
 }
 
@@ -60,6 +63,21 @@ void Audio::Mute(bool mute)
     m_mute = mute;
 }
 
+void Audio::MutePSG(bool mute)
+{
+    m_mute_psg = mute;
+}
+
+void Audio::MuteADPCM(bool mute)
+{
+    m_mute_adpcm = mute;
+}
+
+void Audio::MuteCDROM(bool mute)
+{
+    m_mute_cdrom = mute;
+}
+
 void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 {
     *sample_count = 0;
@@ -86,9 +104,10 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         {
             for (int i = 0; i < samples; i++)
             {
-                sample_buffer[i] = m_psg_buffer[i];
-                sample_buffer[i] += m_adpcm_buffer[i];
-                sample_buffer[i] += m_cdrom_buffer[i];
+                sample_buffer[i] = 0;
+                sample_buffer[i] += m_mute_psg ? 0 : m_psg_buffer[i];
+                sample_buffer[i] += m_mute_adpcm ? 0 : m_adpcm_buffer[i];
+                sample_buffer[i] += m_mute_cdrom ? 0 : m_cdrom_buffer[i];
             }
         }
     }
@@ -98,7 +117,7 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         assert(count_psg <= GG_AUDIO_BUFFER_SIZE);
         *sample_count = count_psg;
 
-        if (m_mute)
+        if (m_mute || m_mute_psg)
             memset(sample_buffer, 0, sizeof(s16) * count_psg);
         else
             memcpy(sample_buffer, m_psg_buffer, sizeof(s16) * count_psg);

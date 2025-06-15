@@ -185,6 +185,21 @@ void emu_audio_mute(bool mute)
     geargrafx->GetAudio()->Mute(mute);
 }
 
+void emu_audio_mute_psg(bool mute)
+{
+    geargrafx->GetAudio()->MutePSG(mute);
+}
+
+void emu_audio_mute_adpcm(bool mute)
+{
+    geargrafx->GetAudio()->MuteADPCM(mute);
+}
+
+void emu_audio_mute_cdrom(bool mute)
+{
+    geargrafx->GetAudio()->MuteCDROM(mute);
+}
+
 void emu_audio_reset(void)
 {
     sound_queue->Stop();

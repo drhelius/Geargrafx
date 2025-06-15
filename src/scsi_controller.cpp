@@ -450,7 +450,7 @@ void ScsiController::CommandReadSubcodeQ()
     Debug("SCSI CMD Read Subcode Q");
     Debug("******");
 
-    CdRomAudio::CdAudioState audio_state = m_cdrom_audio->GetAudioState();
+    CdRomAudio::CdAudioState audio_state = m_cdrom_audio->GetCurrentState();
     u32 current_lba = m_cdrom_media->GetCurrentSector();
     s32 current_track = m_cdrom_media->GetTrackFromLBA(current_lba);
     bool is_data_track = current_track >= 0 ? m_cdrom_media->GetTrackType(current_track) != CdRomMedia::AUDIO_TRACK : false;

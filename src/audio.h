@@ -36,6 +36,9 @@ public:
     void Init();
     void Reset(bool cdrom);
     void Mute(bool mute);
+    void MutePSG(bool mute);
+    void MuteADPCM(bool mute);
+    void MuteCDROM(bool mute);
     void Clock(u32 cycles);
     void WritePSG(u32 address, u8 value);
     void EndFrame(s16* sample_buffer, int* sample_count);
@@ -45,6 +48,9 @@ public:
 
 private:
     bool m_mute;
+    bool m_mute_psg;
+    bool m_mute_adpcm;
+    bool m_mute_cdrom;
     bool m_is_cdrom;
     HuC6280PSG* m_psg;
     Adpcm* m_adpcm;
