@@ -61,8 +61,8 @@ struct config_Emulator
     int window_height = 600;
     bool status_messages = false;
     bool backup_ram = true;
-    bool pce_jap = false;
-    bool force_sgx = false;
+    int console_type = 0;
+    int cdrom_type = 0;
 };
 
 struct config_Video

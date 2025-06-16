@@ -44,8 +44,13 @@ public:
     bool IsCDROM();
     bool IsBios();
     bool IsValidBios();
-    void ForceSGX(bool enable);
+    void SetConsoleType(GG_Console_Type console_type);
+    GG_Console_Type GetConsoleType();
+    void SetCDROMType(GG_CDROM_Type cdrom_type);
+    GG_CDROM_Type GetCDROMType();
     CartridgeMapper GetMapper();
+    void ForceBackupRAM(bool force);
+    bool IsBackupRAMForced();
     int GetROMSize();
     int GetROMBankCount();
     int GetCardRAMSize();
@@ -60,10 +65,10 @@ public:
     bool LoadFromBuffer(const u8* buffer, int size, const char* path);
     bool LoadBios(u8* buffer, int size);
     void SetTempPath(const char* path);
+    void GatherROMInfo();
 
 private:
     bool LoadFromZipFile(const char* path);
-    void GatherROMInfo();
     void GatherInfoFromDB();
     void GatherDataFromPath(const char* path);
     void InitRomMAP();
@@ -83,12 +88,14 @@ private:
     char m_temp_path[512];
     u32 m_crc;
     bool m_is_sgx;
-    bool m_force_sgx;
     bool m_is_cdrom;
     bool m_is_bios;
     bool m_is_valid_bios;
     CartridgeMapper m_mapper;
     GG_Keys m_avenue_pad_3_button;
+    GG_Console_Type m_console_type;
+    GG_CDROM_Type m_cdrom_type;
+    bool m_force_backup_ram;
 };
 
 #endif /* CARTRIDGE_H */

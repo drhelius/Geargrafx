@@ -402,33 +402,51 @@ static void menu_emulator(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Force Japanese PC Engine", "", &config_emulator.pce_jap))
+        if (ImGui::BeginMenu("Console"))
         {
-            emu_set_pce_japanese(config_emulator.pce_jap);
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("This option is not recommended as many USA games");
-            ImGui::Text("will fail to start if a Japanese system is detected");
-            ImGui::EndTooltip();
+            ImGui::PushItemWidth(170.0f);
+            if (ImGui::Combo("##consoletype", &config_emulator.console_type, "Auto\0PC Engine (JAP)\0SuperGrafx (JAP)\0TurboGrafx-16 (USA)\0\0"))
+            {
+                emu_set_console_type((GG_Console_Type)config_emulator.console_type);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("It is recommended to leave this option on Auto.");
+                ImGui::Text("Many USA games will fail to start on Japanese systems.");
+                ImGui::EndTooltip();
+            }
+
+            ImGui::EndMenu();
         }
 
-        if (ImGui::MenuItem("Force SuperGrafx", "", &config_emulator.force_sgx))
+        if (ImGui::BeginMenu("CD-ROM"))
         {
-            emu_set_force_sgx(config_emulator.force_sgx);
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("This option is only recommended for development");
-            ImGui::Text("and will be applied on the next rom opened.");
-            ImGui::EndTooltip();
+            ImGui::PushItemWidth(150.0f);
+            if (ImGui::Combo("##cdromtype", &config_emulator.cdrom_type, "Auto\0Standard\0Super CD-ROM\0Arcade CD-ROM\0\0"))
+            {
+                emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("It is recommended to leave this option on Auto.");
+                ImGui::EndTooltip();
+            }
+
+            ImGui::EndMenu();
         }
 
-        if (ImGui::MenuItem("Enable Backup RAM", "", &config_emulator.backup_ram))
+        if (ImGui::MenuItem("Force Backup RAM", "", &config_emulator.backup_ram))
         {
             emu_set_backup_ram(config_emulator.backup_ram);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("This otion will add backup RAM support to HuCard games.");
+            ImGui::Text("It is recommended to leave this option enabled.");
+            ImGui::EndTooltip();
         }
 
         ImGui::Separator();

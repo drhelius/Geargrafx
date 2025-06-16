@@ -714,8 +714,20 @@ void GeargrafxCore::Reset()
 {
     m_master_clock_cycles = 0;
     m_paused = false;
+
+    m_cartridge->GatherROMInfo();
+
+    GG_Console_Type console_type = m_cartridge->GetConsoleType();
+    bool force_backup_ram = m_cartridge->IsBackupRAMForced();
+    bool is_sgx = m_cartridge->IsSGX();
+    bool is_cdrom = m_cartridge->IsCDROM();
+
+    m_input->EnablePCEJap((console_type == GG_CONSOLE_PCE) || (console_type == GG_CONSOLE_SGX));
+    m_input->EnableCDROM(is_cdrom || force_backup_ram);
+    m_memory->EnableBackupRam(is_cdrom || force_backup_ram);
+
     m_memory->Reset();
-    m_huc6202->Reset(m_cartridge->IsSGX());
+    m_huc6202->Reset(is_sgx);
     m_huc6260->Reset();
     m_huc6270_1->Reset();
     m_huc6270_2->Reset();
@@ -724,6 +736,6 @@ void GeargrafxCore::Reset()
     m_scsi_controller->Reset();
     m_cdrom_audio->Reset();
     m_adpcm->Reset();
-    m_audio->Reset(m_cartridge->IsCDROM());
+    m_audio->Reset(is_cdrom);
     m_input->Reset();
 }

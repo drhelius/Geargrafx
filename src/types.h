@@ -38,6 +38,22 @@ struct GG_Runtime_Info
     int width_scale;
 };
 
+enum GG_Console_Type
+{
+    GG_CONSOLE_AUTO = 0,
+    GG_CONSOLE_PCE,
+    GG_CONSOLE_SGX,
+    GG_CONSOLE_TG16
+};
+
+enum GG_CDROM_Type
+{
+    GG_CDROM_AUTO = 0,
+    GG_CDROM_STANDARD,
+    GG_CDROM_SUPER_CDROM,
+    GG_CDROM_ARCADE_CARD
+};
+
 struct GG_Color
 {
     u8 red;

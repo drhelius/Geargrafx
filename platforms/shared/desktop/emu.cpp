@@ -307,8 +307,9 @@ void emu_get_info(char* info, int buffer_size)
         int rom_size = cart->GetROMSize();
         int rom_banks = cart->GetROMBankCount();
         const char* is_sgx = cart->IsSGX() ? "YES" : "NO";
+        const char* is_cdrom = cart->IsCDROM() ? "YES" : "NO";
 
-        snprintf(info, buffer_size, "File Name: %s\nCRC: %08X\nROM Size: %d bytes, %d KB\nROM Banks: %d\nSuperGrafx: %s\nScreen Resolution: %dx%d", filename, crc, rom_size, rom_size / 1024, rom_banks, is_sgx, runtime.screen_width, runtime.screen_height);
+        snprintf(info, buffer_size, "File Name: %s\nCRC: %08X\nROM Size: %d bytes, %d KB\nROM Banks: %d\nSuperGrafx: %s\nCD-ROM: %s\nScreen Resolution: %dx%d", filename, crc, rom_size, rom_size / 1024, rom_banks, is_sgx, is_cdrom, runtime.screen_width, runtime.screen_height);
     }
     else
     {
@@ -426,20 +427,18 @@ void emu_set_huc6280_registers_reset_value(int value)
     geargrafx->GetHuC6280()->SetResetValue(value);
 }
 
-void emu_set_pce_japanese(bool enabled)
+void emu_set_console_type(GG_Console_Type console_type)
 {
-    geargrafx->GetInput()->EnablePCEJap(enabled);
+    geargrafx->GetCartridge()->SetConsoleType(console_type);
 }
-
-void emu_set_force_sgx(bool enabled)
+void emu_set_cdrom_type(GG_CDROM_Type cdrom_type)
 {
-    geargrafx->GetCartridge()->ForceSGX(enabled);
+    geargrafx->GetCartridge()->SetCDROMType(cdrom_type);
 }
 
 void emu_set_backup_ram(bool enabled)
 {
-    geargrafx->GetMemory()->EnableBackupRam(enabled);
-    geargrafx->GetInput()->EnableCDROM(enabled);
+    geargrafx->GetCartridge()->ForceBackupRAM(enabled);
 }
 
 void emu_set_turbo_tap(bool enabled)

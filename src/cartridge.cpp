@@ -41,12 +41,14 @@ Cartridge::Cartridge(CdRomMedia* cdrom_media)
     m_rom_bank_count = 0;
     m_crc = 0;
     m_is_sgx = false;
-    m_force_sgx = false;
     m_is_cdrom = false;
     m_is_bios = false;
     m_is_valid_bios = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
+    m_console_type = GG_CONSOLE_AUTO;
+    m_cdrom_type = GG_CDROM_AUTO;
+    m_force_backup_ram = false;
 
     m_rom_map = new u8*[128];
     for (int i = 0; i < 128; i++)
@@ -118,15 +120,39 @@ bool Cartridge::IsValidBios()
     return m_is_valid_bios;
 }
 
-void Cartridge::ForceSGX(bool enable)
+void Cartridge::SetConsoleType(GG_Console_Type console_type)
 {
-    m_force_sgx = enable;
-    m_is_sgx = enable;
+    m_console_type = console_type;
+}
+
+GG_Console_Type Cartridge::GetConsoleType()
+{
+    return m_console_type;
+}
+
+void Cartridge::SetCDROMType(GG_CDROM_Type cdrom_type)
+{
+    m_cdrom_type = cdrom_type;
+}
+
+GG_CDROM_Type Cartridge::GetCDROMType()
+{
+    return m_cdrom_type;
 }
 
 Cartridge::CartridgeMapper Cartridge::GetMapper()
 {
     return m_mapper;
+}
+
+void Cartridge::ForceBackupRAM(bool force)
+{
+    m_force_backup_ram = force;
+}
+
+bool Cartridge::IsBackupRAMForced()
+{
+    return m_force_backup_ram;
 }
 
 int Cartridge::GetROMSize()
@@ -141,7 +167,7 @@ int Cartridge::GetROMBankCount()
 
 int Cartridge::GetCardRAMSize()
 {
-    return m_is_cdrom ? 0x30000 : m_card_ram_size;
+    return m_card_ram_size;
 }
 
 GG_Keys Cartridge::GetAvenuePad3Button()
@@ -286,22 +312,11 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size, const char* path)
             GatherDataFromPath(path);
         }
 
-        if (strcmp(m_file_extension, "sgx") == 0)
-        {
-            m_is_sgx = true;
-            Log("Forcing SuperGrafx (SGX) because of extension");
-        }
-
         if(size & 512)
         {
             Debug("Removing 512 bytes header...");
             size &= ~512;
             buffer += 512;
-        }
-
-        if(!memcmp(buffer + 0x1FD0, "MCGENJIN", 8))
-        {
-            Debug("MCGENJIN mapper detected.");
         }
 
         assert((size % 0x2000) == 0);
@@ -314,8 +329,6 @@ bool Cartridge::LoadFromBuffer(const u8* buffer, int size, const char* path)
         m_rom_size = size;
         m_rom = new u8[m_rom_size];
         memcpy(m_rom, buffer, m_rom_size);
-
-        GatherROMInfo();
 
         InitRomMAP();
 
@@ -348,7 +361,6 @@ bool Cartridge::LoadBios(u8* buffer, int size)
 
         m_is_bios = true;
 
-        GatherROMInfo();
         InitRomMAP();
 
         Debug("BIOS loaded from buffer. Size: %d bytes", size);
@@ -464,10 +476,16 @@ void Cartridge::GatherROMInfo()
 
     GatherInfoFromDB();
 
-    if (m_force_sgx)
+    if (m_console_type == GG_CONSOLE_SGX)
     {
         m_is_sgx = true;
         Log("Forcing SuperGrafx (SGX) because of user request");
+    }
+
+    if (!m_is_sgx && (strcmp(m_file_extension, "sgx") == 0))
+    {
+        m_is_sgx = true;
+        Log("Forcing SuperGrafx (SGX) because of extension");
     }
 
     if ((m_mapper == STANDARD_MAPPER) && (m_rom_size > 0x100000))
@@ -475,10 +493,52 @@ void Cartridge::GatherROMInfo()
         m_mapper = SF2_MAPPER;
         Log("ROM is bigger than 1MB. Forcing SF2 Mapper.");
     }
+
+    if (m_is_cdrom && (m_cdrom_type != GG_CDROM_STANDARD))
+    {
+        m_card_ram_size = 0x30000;
+        Log("Enabling Super CD-ROM Card RAM");
+    }
+
+    switch (m_console_type)
+    {
+        case GG_CONSOLE_PCE:
+            Log("Console Type: PC Engine");
+            break;
+        case GG_CONSOLE_SGX:
+            Log("Console Type: SuperGrafx");
+            break;
+        case GG_CONSOLE_TG16:
+            Log("Console Type: TurboGrafx-16");
+            break;
+        default:
+            Log("Console Type: Auto");
+            break;
+    }
+
+    switch (m_cdrom_type)
+    {
+        case GG_CDROM_STANDARD:
+            Log("CD-ROM Type: Standard");
+            break;
+        case GG_CDROM_SUPER_CDROM:
+            Log("CD-ROM Type: Super CD-ROM");
+            break;
+        case GG_CDROM_ARCADE_CARD:
+            Log("CD-ROM Type: Arcade Card");
+            break;
+        default:
+            Log("CD-ROM Type: Auto");
+            break;
+    }
 }
 
 void Cartridge::GatherInfoFromDB()
 {
+    m_card_ram_size = 0;
+    m_is_sgx = false;
+    m_is_valid_bios = false;
+
     int i = 0;
     bool found = false;
 

@@ -114,8 +114,8 @@ void gui_init(void)
     emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
     emu_set_huc6260_color_table_reset_value(get_reset_value(config_debug.reset_color_table));
     emu_set_huc6280_registers_reset_value(get_reset_value(config_debug.reset_registers));
-    emu_set_pce_japanese(config_emulator.pce_jap);
-    emu_set_force_sgx(config_emulator.force_sgx);
+    emu_set_console_type((GG_Console_Type)config_emulator.console_type);
+    emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
     emu_set_backup_ram(config_emulator.backup_ram);
     emu_set_composite_palette(config_video.composite_palette);
     emu_set_turbo_tap(config_input.turbo_tap);
