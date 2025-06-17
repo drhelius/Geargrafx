@@ -351,6 +351,11 @@ INLINE void Adpcm::UpdateAudio(u32 cycles)
     }
 }
 
+INLINE u8* Adpcm::GetRAM()
+{
+    return m_adpcm_ram;
+}
+
 INLINE Adpcm::Adpcm_State* Adpcm::GetState()
 {
     return &m_state;

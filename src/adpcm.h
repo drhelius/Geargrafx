@@ -57,6 +57,7 @@ public:
     u8 Read(u16 address);
     void Write(u16 address, u8 value);
     int EndFrame(s16* sample_buffer);
+    u8* GetRAM();
     Adpcm_State* GetState();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
