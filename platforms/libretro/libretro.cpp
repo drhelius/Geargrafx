@@ -26,11 +26,11 @@
 #include "libretro.h"
 #include "geargrafx.h"
 
-// #ifdef _WIN32
-// static const char slash = '\\';
-// #else
-// static const char slash = '/';
-// #endif
+#ifdef _WIN32
+static const char slash = '\\';
+#else
+static const char slash = '/';
+#endif
 
 #define RETRO_DEVICE_PCE_PAD            RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
 #define RETRO_DEVICE_PCE_AVENUE_PAD_3   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
@@ -63,6 +63,7 @@ static float aspect_ratio = 0.0f;
 
 static bool allow_up_down = false;
 static bool allow_soft_reset = false;
+static int cdrom_bios = 0;
 
 static bool libretro_supports_bitmasks;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
@@ -88,6 +89,7 @@ static GeargrafxCore* core;
 static GG_Runtime_Info runtime_info;
 static u8* frame_buffer;
 
+static void load_bios(void);
 static void set_controller_info(void);
 static void update_input(void);
 static void set_variabless(void);
@@ -209,6 +211,7 @@ void retro_reset(void)
     log_cb(RETRO_LOG_DEBUG, "Resetting...\n");
 
     check_variables();
+    load_bios();
     core->ResetMedia(true);
 }
 
@@ -310,6 +313,7 @@ void retro_run(void)
 bool retro_load_game(const struct retro_game_info *info)
 {
     check_variables();
+    load_bios();
 
     snprintf(retro_game_path, sizeof(retro_game_path), "%s", info->path);
     log_cb(RETRO_LOG_INFO, "Loading game: %s\n", retro_game_path);
@@ -352,7 +356,6 @@ void retro_unload_game(void)
 
 unsigned retro_get_region(void)
 {
-    // TODO [libretro] Implement region detection
     return RETRO_REGION_NTSC;
 }
 
@@ -419,6 +422,43 @@ void retro_cheat_reset(void)
 void retro_cheat_set(unsigned index, bool enabled, const char *code)
 {
     // TODO [libretro] Implement cheats
+}
+
+static void load_bios(void)
+{
+    char bios_path[4113];
+    const char *syscard1 = "syscard1.pce";
+    const char *syscard2 = "syscard2.pce";
+    const char *syscard3 = "syscard3.pce";
+    const char *gameexpress = "gexpress.pce";
+    const char *selected_bios = NULL;
+
+    switch (cdrom_bios)
+    {
+        case 1:
+            selected_bios = syscard1;
+            break;
+        case 2:
+            selected_bios = syscard2;
+            break;
+        case 3:
+            selected_bios = syscard2;
+            break;
+        case 4:
+            selected_bios = gameexpress;
+            break;
+        default:
+            selected_bios = syscard3;
+            break;
+    }
+
+    log_cb(RETRO_LOG_INFO, "Loading BIOS: %s\n", selected_bios);
+
+    snprintf(bios_path, 4113, "%s%c%s", retro_system_directory, slash, selected_bios);
+    core->LoadBios(bios_path, true);
+
+    snprintf(bios_path, 4113, "%s%c%s", retro_system_directory, slash, gameexpress);
+    core->LoadBios(bios_path, false);
 }
 
 static void set_controller_info(void)
@@ -561,6 +601,7 @@ static void set_variabless(void)
         { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
         { "geargrafx_console_type", "System (restart); Auto|PC Engine (JAP)|SuperGrafx (JAP)|TurboGrafx-16 (USA)" },
         { "geargrafx_cdrom_type", "CD-ROM (restart); Auto|Standard|Super CD-ROM|Arcade CD-ROM" },
+        { "geargrafx_cdrom_bios", "CD-ROM Bios; Auto|System Card 1|System Card 2|System Card 3|Game Express" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
         { "geargrafx_avenue_pad_3_switch", "Avenue Pad 3 Switch; Auto|SELECT|RUN" },
         { "geargrafx_soft_reset", "Soft Reset; Enabled|Disabled" },
@@ -710,6 +751,23 @@ static void check_variables(void)
             cdrom_type = GG_CDROM_AUTO;
 
         core->GetMedia()->SetCDROMType(cdrom_type);
+    }
+
+    var.key = "geargrafx_cdrom_bios";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (strcmp(var.value, "Auto") == 0)
+            cdrom_bios = 0;
+        else if (strcmp(var.value, "System Card 1") == 0)
+            cdrom_bios = 1;
+        else if (strcmp(var.value, "System Card 2") == 0)
+            cdrom_bios = 2;
+        else if (strcmp(var.value, "System Card 3") == 0)
+            cdrom_bios = 3;
+        else if (strcmp(var.value, "Game Express") == 0)
+            cdrom_bios = 4;
     }
 
     var.key = "geargrafx_no_sprite_limit";
