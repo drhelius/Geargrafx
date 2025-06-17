@@ -579,7 +579,9 @@ void Media::GatherBIOSInfoFromDB(bool syscard)
 
     if (!found)
     {
-        Debug("BIOS not found in database. CRC: %08X", m_crc);
+        Debug("BIOS not found in database. CRC: %08X", *bios_crc);
+        *is_valid_bios = false;
+        strncpy_fit(bios_name, "Unknown", 64);
     }
 }
 

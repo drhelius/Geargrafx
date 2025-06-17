@@ -230,8 +230,8 @@ void gui_file_dialog_load_bios(bool syscard)
     nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
-        strncpy_fit(bios_path, outPath, sizeof(4096));
         bios_config_path->assign(outPath);
+        strcpy(bios_path, bios_config_path->c_str());
         gui_load_bios(outPath, syscard);
         NFD_FreePath(outPath);
     }

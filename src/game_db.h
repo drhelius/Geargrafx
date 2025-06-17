@@ -43,14 +43,14 @@ struct GG_DB_Entry
 const GG_DB_Entry k_game_database[] =
 {
     // BIOS
-    { 0x3F9F95A4, "System Card 1.0 (J)", GG_GAMEDB_BIOS_SYSCARD },
-    { 0x0, "System Card 2.0 (J)", GG_GAMEDB_BIOS_SYSCARD },
-    { 0xFF2A5EC3, "System Card 2.0 (USA)", GG_GAMEDB_BIOS_SYSCARD },
-    { 0x283B74E0, "System Card 2.1 (J)", GG_GAMEDB_BIOS_SYSCARD },
-    { 0x6D9A73EF, "System Card 3.0 (J)", GG_GAMEDB_BIOS_SYSCARD },
-    { 0x2B5B75FE, "System Card 3.0 (USA)", GG_GAMEDB_BIOS_SYSCARD },
-    { 0x51A12D90, "Game Express (J)", GG_GAMEDB_BIOS_GAME_EXPRESS },
-    { 0x0, "Game Express (J) [Alt]", GG_GAMEDB_BIOS_GAME_EXPRESS },
+    { 0x3F9F95A4, "CD-ROM System Card [1.0] (J)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x52520BC6, "CD-ROM System Card [2.0] (J)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x283B74E0, "CD-ROM System Card [2.1] (J)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x6D9A73EF, "Super CD-ROM System [3.0] (J)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0xFF2A5EC3, "TurboGrafx CD System Card [2.0] (USA)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x2B5B75FE, "TurboGrafx CD Super System [3.0] (USA)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x51A12D90, "Game Express Card [Blue Version] (J)", GG_GAMEDB_BIOS_GAME_EXPRESS },
+    { 0x16AAF05A, "Game Express Card [Green Version] (J)", GG_GAMEDB_BIOS_GAME_EXPRESS },
 
     // SGX
     { 0x8C4588E2, "1941 - Counter Attack (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
@@ -70,8 +70,14 @@ const GG_DB_Entry k_game_database[] =
     { 0x0A9ADE99, "Populous (J) [Alt]", GG_GAMEDB_CARD_RAM_8000 },
 
     // GAME EXPRESS BIOS GAMES
+    { 0x5DAA84AD, "AV Tanjou (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
+    { 0x8498CB7C, "AV Tanjou (Japan) (Unl) [Alt 1]", GG_GAMEDB_GAME_EXPRESS_GAME },
+    { 0x65457B0B, "AV Tanjou (Japan) (Unl) [Alt 2]", GG_GAMEDB_GAME_EXPRESS_GAME },
+    { 0xFC78C1BF, "CD Bishoujo Pachinko - Kyuuma Yon Shimai (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
     { 0x5E524EFC, "CD Mahjong - Bishoujo Chuushinha (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
-
+    { 0x5FA37D41, "CD Hanafuda - Bishoujo Fan Club (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
+    { 0x8F45C7F9, "CD Pachi-Slot - Bishoujo Gambler (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
+    { 0xD62E6983, "Hi-Leg Fantasy (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
 
     // AVENUE PAD 3
     { 0x933D5BCC, "Air Zonk (USA)", GG_GAMEDB_AVENUE_PAD_3_SELECT },

@@ -290,7 +290,7 @@ void gui_load_bios(const char* path, bool syscard)
 
     if (!emu_load_bios(path, syscard))
     {
-        std::string message("Error loading BIOS: ");
+        std::string message("Error loading BIOS:\n");
         message += filename;
         gui_set_error_message(message.c_str());
         return;
@@ -298,9 +298,9 @@ void gui_load_bios(const char* path, bool syscard)
 
     if (!emu_get_core()->GetMedia()->IsValidBios(syscard))
     {
-        std::string message("Invalid BIOS: ");
+        std::string message("Invalid BIOS file:\n");
         message += filename;
-        message += "\nMake sure the file is a valid BIOS file.";
+        message += "\n\nMake sure the file is a valid BIOS file.";
         gui_set_error_message(message.c_str());
         return;
     }
