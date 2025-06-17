@@ -262,7 +262,7 @@ static void menu_emulator(void)
                 case Directory_Location_ROM:
                 {
                     if (!emu_is_empty())
-                        ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
+                        ImGui::Text("%s", emu_get_core()->GetMedia()->GetFileDirectory());
                     break;
                 }
                 case Directory_Location_Custom:
@@ -301,7 +301,7 @@ static void menu_emulator(void)
                 case Directory_Location_ROM:
                 {
                     if (!emu_is_empty())
-                        ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
+                        ImGui::Text("%s", emu_get_core()->GetMedia()->GetFileDirectory());
                     break;
                 }
                 case Directory_Location_Custom:
@@ -339,7 +339,7 @@ static void menu_emulator(void)
                 case Directory_Location_ROM:
                 {
                     if (!emu_is_empty())
-                        ImGui::Text("%s", emu_get_core()->GetCartridge()->GetFileDirectory());
+                        ImGui::Text("%s", emu_get_core()->GetMedia()->GetFileDirectory());
                     break;
                 }
                 case Directory_Location_Custom:
@@ -916,7 +916,7 @@ static void menu_debug(void)
         ImGui::MenuItem("Show HuC6260 Info", "", &config_debug.show_huc6260_info, config_debug.debug);
         ImGui::MenuItem("Show HuC6260 Palettes", "", &config_debug.show_huc6260_palettes, config_debug.debug);
         ImGui::Separator();
-        if (emu_get_core()->GetCartridge()->IsSGX())
+        if (emu_get_core()->GetMedia()->IsSGX())
         {
             ImGui::MenuItem("Show HuC6202 Info", "", &config_debug.show_huc6202_info, config_debug.debug);
             ImGui::Separator();
@@ -938,11 +938,11 @@ static void menu_debug(void)
         }
 
         ImGui::Separator();
-        ImGui::MenuItem("Show CD-ROM", "", &config_debug.show_cdrom, config_debug.debug && emu_get_core()->GetCartridge()->IsCDROM());
+        ImGui::MenuItem("Show CD-ROM", "", &config_debug.show_cdrom, config_debug.debug && emu_get_core()->GetMedia()->IsCDROM());
         ImGui::Separator();
         ImGui::MenuItem("Show PSG", "", &config_debug.show_psg, config_debug.debug);
-        ImGui::MenuItem("Show CD-ROM Audio", "", &config_debug.show_cdrom_audio, config_debug.debug && emu_get_core()->GetCartridge()->IsCDROM());
-        ImGui::MenuItem("Show CD-ROM ADPCM", "", &config_debug.show_adpcm, config_debug.debug && emu_get_core()->GetCartridge()->IsCDROM());
+        ImGui::MenuItem("Show CD-ROM Audio", "", &config_debug.show_cdrom_audio, config_debug.debug && emu_get_core()->GetMedia()->IsCDROM());
+        ImGui::MenuItem("Show CD-ROM ADPCM", "", &config_debug.show_adpcm, config_debug.debug && emu_get_core()->GetMedia()->IsCDROM());
 
 #if defined(__APPLE__) || defined(_WIN32)
         ImGui::Separator();

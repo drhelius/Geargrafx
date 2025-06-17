@@ -27,6 +27,11 @@ INLINE bool CdRomMedia::IsReady()
     return m_ready;
 }
 
+INLINE u32 CdRomMedia::GetCRC()
+{
+    return m_crc;
+}
+
 INLINE const char* CdRomMedia::GetFilePath()
 {
     return m_file_path;

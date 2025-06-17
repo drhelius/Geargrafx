@@ -40,15 +40,15 @@ void gui_debug_memory_reset(void)
 {
     GeargrafxCore* core = emu_get_core();
     Memory* memory = core->GetMemory();
-    Cartridge* cart = core->GetCartridge();
+    Media* media = core->GetMedia();
     HuC6260* huc6260 = core->GetHuC6260();
     HuC6270* huc6270_1 = core->GetHuC6270_1();
     HuC6270* huc6270_2 = core->GetHuC6270_2();
-    bool is_sgx = core->GetCartridge()->IsSGX();
+    bool is_sgx = media->IsSGX();
 
     mem_edit[MEMORY_EDITOR_RAM].Reset("WRAM", memory->GetWorkingRAM(), 0x2000 * (is_sgx ? 4 : 1));
     mem_edit[MEMORY_EDITOR_ZERO_PAGE].Reset("ZP", memory->GetWorkingRAM(), 0x100);
-    mem_edit[MEMORY_EDITOR_ROM].Reset("ROM", cart->GetROM(), cart->GetROMSize());
+    mem_edit[MEMORY_EDITOR_ROM].Reset("ROM", media->GetROM(), media->GetROMSize());
     mem_edit[MEMORY_EDITOR_CARD_RAM].Reset("CARD RAM", memory->GetCardRAM(), memory->GetCardRAMSize());
     mem_edit[MEMORY_EDITOR_BACKUP_RAM].Reset("BRAM", memory->GetBackupRAM(), 0x800);
     mem_edit[MEMORY_EDITOR_PALETTES].Reset("PALETTES", (u8*)huc6260->GetColorTable(), 512, 0, 2);
@@ -146,15 +146,15 @@ void gui_debug_memory_save_dump(const char* file_path, bool binary)
 static void draw_tabs(void)
 {
     GeargrafxCore* core = emu_get_core();
-    Cartridge* cart = core->GetCartridge();
-    bool is_sgx = cart->IsSGX();
-    bool is_cdrom = cart->IsCDROM();
+    Media* media = core->GetMedia();
+    bool is_sgx = media->IsSGX();
+    bool is_cdrom = media->IsCDROM();
 
     for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
     {
         if (!is_sgx && (i == MEMORY_EDITOR_VRAM_2 || i == MEMORY_EDITOR_SAT_2))
             continue;
-        if (i == MEMORY_EDITOR_ROM && !IsValidPointer(cart->GetROM()))
+        if (i == MEMORY_EDITOR_ROM && !IsValidPointer(media->GetROM()))
             continue;
         if (i == MEMORY_EDITOR_CARD_RAM && core->GetMemory()->GetCardRAMSize() == 0)
             continue;

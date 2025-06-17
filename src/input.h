@@ -26,12 +26,12 @@
 
 #define GG_MAX_GAMEPADS 5
 
-class Cartridge;
+class Media;
 
 class Input
 {
 public:
-    Input(Cartridge* cartridge);
+    Input(Media* media);
     void Init();
     void Reset();
     void KeyPressed(GG_Controllers controller, GG_Keys key);
@@ -50,7 +50,7 @@ public:
     void LoadState(std::istream& stream);
 
 private:
-    Cartridge* m_cartridge;
+    Media* m_media;
     bool m_clr;
     bool m_sel;
     u16 m_gamepads[GG_MAX_GAMEPADS];

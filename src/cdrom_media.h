@@ -73,6 +73,7 @@ public:
     void Init();
     void Reset();
     bool IsReady();
+    u32 GetCRC();
     const char* GetFilePath();
     const char* GetFileDirectory();
     const char* GetFileName();
@@ -115,10 +116,12 @@ private:
     bool ParseCueFile(const char* cue_content);
     bool ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size);
     bool LoadChunk(ImgFile* img_file, u32 chunk_index);
+    void CalculateCRC();
     u32 SeekFindGroup(u32 lba);
 
 private:
     bool m_ready;
+    u32 m_crc;
     char m_file_path[512];
     char m_file_directory[512];
     char m_file_name[512];

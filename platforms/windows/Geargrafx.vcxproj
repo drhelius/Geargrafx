@@ -22,7 +22,7 @@
     <ClCompile Include="..\..\src\miniz\miniz.c" />
     <ClCompile Include="..\..\src\adpcm.cpp" />
     <ClCompile Include="..\..\src\audio.cpp" />
-    <ClCompile Include="..\..\src\cartridge.cpp" />
+    <ClCompile Include="..\..\src\media.cpp" />
     <ClCompile Include="..\..\src\cdrom_audio.cpp" />
     <ClCompile Include="..\..\src\cdrom_media.cpp" />
     <ClCompile Include="..\..\src\cdrom.cpp" />
@@ -83,7 +83,8 @@
     <ClInclude Include="..\..\src\audio_inline.h" />
     <ClInclude Include="..\..\src\audio.h" />
     <ClInclude Include="..\..\src\bit_ops.h" />
-    <ClInclude Include="..\..\src\cartridge.h" />
+    <ClInclude Include="..\..\src\media.h" />
+    <ClInclude Include="..\..\src\media_inline.h" />
     <ClInclude Include="..\..\src\cdrom_media.h" />
     <ClInclude Include="..\..\src\cdrom_media_inline.h" />
     <ClInclude Include="..\..\src\cdrom.h" />

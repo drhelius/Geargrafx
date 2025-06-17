@@ -21,13 +21,13 @@
 #include <fstream>
 #include <algorithm>
 #include <assert.h>
-#include "cartridge.h"
+#include "media.h"
 #include "miniz/miniz.h"
 #include "game_db.h"
 #include "crc.h"
 #include "cdrom_media.h"
 
-Cartridge::Cartridge(CdRomMedia* cdrom_media)
+Media::Media(CdRomMedia* cdrom_media)
 {
     m_cdrom_media = cdrom_media;
     InitPointer(m_rom);
@@ -38,12 +38,16 @@ Cartridge::Cartridge(CdRomMedia* cdrom_media)
     m_file_name[0] = 0;
     m_file_extension[0] = 0;
     m_temp_path[0] = 0;
-    m_rom_bank_count = 0;
+    m_bios_name_syscard[0] = 0;
+    m_bios_name_gameexpress[0] = 0;
     m_crc = 0;
+    m_bios_crc_syscard = 0;
+    m_bios_crc_gameexpress = 0;
+    m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
-    m_is_bios = false;
-    m_is_valid_bios = false;
+    m_is_valid_bios_syscard = false;
+    m_is_valid_bios_gameexpress = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
     m_console_type = GG_CONSOLE_AUTO;
@@ -55,18 +59,18 @@ Cartridge::Cartridge(CdRomMedia* cdrom_media)
         InitPointer(m_rom_map[i]);
 }
 
-Cartridge::~Cartridge()
+Media::~Media()
 {
     SafeDeleteArray(m_rom);
     SafeDeleteArray(m_rom_map);
 }
 
-void Cartridge::Init()
+void Media::Init()
 {
     Reset();
 }
 
-void Cartridge::Reset()
+void Media::Reset()
 {
     SafeDeleteArray(m_rom);
     m_rom_size = 0;
@@ -75,12 +79,10 @@ void Cartridge::Reset()
     m_file_path[0] = 0;
     m_file_name[0] = 0;
     m_file_extension[0] = 0;
-    m_rom_bank_count = 0;
     m_crc = 0;
+    m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
-    m_is_bios = false;
-    m_is_valid_bios = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
 
@@ -90,112 +92,7 @@ void Cartridge::Reset()
     m_cdrom_media->Reset();
 }
 
-u32 Cartridge::GetCRC()
-{
-    return m_crc;
-}
-
-bool Cartridge::IsReady()
-{
-    return m_ready;
-}
-
-bool Cartridge::IsSGX()
-{
-    return m_is_sgx;
-}
-
-bool Cartridge::IsCDROM()
-{
-    return m_is_cdrom;
-}
-
-bool Cartridge::IsBios()
-{
-    return m_is_bios;
-}
-
-bool Cartridge::IsValidBios()
-{
-    return m_is_valid_bios;
-}
-
-void Cartridge::SetConsoleType(GG_Console_Type console_type)
-{
-    m_console_type = console_type;
-}
-
-GG_Console_Type Cartridge::GetConsoleType()
-{
-    return m_console_type;
-}
-
-void Cartridge::SetCDROMType(GG_CDROM_Type cdrom_type)
-{
-    m_cdrom_type = cdrom_type;
-}
-
-GG_CDROM_Type Cartridge::GetCDROMType()
-{
-    return m_cdrom_type;
-}
-
-Cartridge::CartridgeMapper Cartridge::GetMapper()
-{
-    return m_mapper;
-}
-
-void Cartridge::ForceBackupRAM(bool force)
-{
-    m_force_backup_ram = force;
-}
-
-bool Cartridge::IsBackupRAMForced()
-{
-    return m_force_backup_ram;
-}
-
-int Cartridge::GetROMSize()
-{
-    return m_rom_size;
-}
-
-int Cartridge::GetROMBankCount()
-{
-    return m_rom_bank_count;
-}
-
-int Cartridge::GetCardRAMSize()
-{
-    return m_card_ram_size;
-}
-
-GG_Keys Cartridge::GetAvenuePad3Button()
-{
-    return m_avenue_pad_3_button;
-}
-
-const char* Cartridge::GetFilePath()
-{
-    return m_file_path;
-}
-
-const char* Cartridge::GetFileDirectory()
-{
-    return m_file_directory;
-}
-
-const char* Cartridge::GetFileName()
-{
-    return m_file_name;
-}
-
-const char* Cartridge::GetFileExtension()
-{
-    return m_file_extension;
-}
-
-void Cartridge::SetTempPath(const char* path)
+void Media::SetTempPath(const char* path)
 {
     if (IsValidPointer(path))
     {
@@ -207,90 +104,75 @@ void Cartridge::SetTempPath(const char* path)
     }
 }
 
-u8* Cartridge::GetROM()
-{
-    return m_rom;
-}
-
-u8** Cartridge::GetROMMap()
-{
-    return m_rom_map;
-}
-
-bool Cartridge::LoadFromFile(const char* path)
+bool Media::LoadMedia(const char* path)
 {
     using namespace std;
 
     Log("Loading %s...", path);
 
-    if (!IsValidPointer(path))
-    {
-        Log("ERROR: Invalid path %s", path);
+    if (!IsValidFile(path))
         return false;
-    }
 
     Reset();
     GatherDataFromPath(path);
 
-    ifstream file(path, ios::in | ios::binary | ios::ate);
-
-    if (file.is_open())
+    if (strcmp(m_file_extension, "zip") == 0)
     {
-        int size = static_cast<int> (file.tellg());
+        m_ready = LoadMediaFromZipFile(path);
+    }
+    else if (strcmp(m_file_extension, "iso") == 0)
+    {
+        Log("ISO files are not supported. Please use CUE files.");
+        m_ready = false;
+    }
+    else
+    {
+        ifstream file(path, ios::in | ios::binary | ios::ate);
+        int size = (int)(file.tellg());
 
-        if (size <= 0)
+        if (file.is_open())
         {
-            Log("ERROR: Unable to open file %s. Size: %d", path, size);
-            file.close();
-            return false;
-        }
-
-        if (file.bad() || file.fail() || !file.good() || file.eof())
-        {
-            Log("ERROR: Unable to open file %s. Bad file!", path);
-            file.close();
-            return false;
-        }
-
-        if (strcmp(m_file_extension, "zip") == 0)
-        {
-            m_ready = LoadFromZipFile(path);
-        }
-        else
-        {
-            char* memblock = new char[size];
+            char* buffer = new char[size];
             file.seekg(0, ios::beg);
-            file.read(memblock, size);
+            file.read(buffer, size);
             file.close();
+
+            bool is_empty = false;
 
             for (int i = 0; i < size; i++)
             {
-                if (memblock[i] != 0)
+                if (buffer[i] != 0)
                     break;
 
                 if (i == size - 1)
                 {
                     Log("ERROR: File %s is empty!", path);
-                    SafeDeleteArray(memblock);
-                    return false;
+                    is_empty = true;
+                    m_ready = false;
                 }
             }
 
-            if (strcmp(m_file_extension, "cue") == 0)
+            if (!is_empty)
             {
-                m_is_cdrom = true;
-                m_ready = m_cdrom_media->LoadCueFromBuffer(reinterpret_cast<u8*>(memblock), size, path);
+                if (strcmp(m_file_extension, "cue") == 0)
+                {
+                    m_is_cdrom = true;
+                    m_ready = LoadCueFromBuffer((u8*)(buffer), size, path);
+                }
+                else
+                {
+                    m_is_cdrom = false;
+                    m_ready = LoadHuCardFromBuffer((u8*)(buffer), size, path);
+                }
             }
-            else
-                m_ready = LoadFromBuffer(reinterpret_cast<u8*>(memblock), size, path);
 
-            SafeDeleteArray(memblock);
+            SafeDeleteArray(buffer);
         }
-    }
-    else
-    {
-        Log("ERROR: There was a problem loading the file %s...", path);
-        m_ready = false;
+        else
+        {
+            Log("ERROR: There was a problem loading the file %s...", path);
+            m_ready = false;
+        }
     }
 
     if (!m_ready)
@@ -299,84 +181,131 @@ bool Cartridge::LoadFromFile(const char* path)
     return m_ready;
 }
 
-bool Cartridge::LoadFromBuffer(const u8* buffer, int size, const char* path)
+bool Media::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
 {
-    if (IsValidPointer(buffer))
+    Log("Loading HuCard from buffer... Size: %d", size);
+    Reset();
+
+    if (!IsValidPointer(buffer) || size <= 0)
     {
-        Log("Loading ROM from buffer... Size: %d", size);
+        Log("ERROR: Unable to load HuCard from buffer: Buffer invalid %p. Size: %d", buffer, size);
+        return false;
+    }
 
-        Reset();
+    if (IsValidPointer(path))
+        GatherDataFromPath(path);
 
-        if (IsValidPointer(path))
-        {
-            GatherDataFromPath(path);
-        }
+    if(size & 512)
+    {
+        Debug("Removing 512 bytes header...");
+        size &= ~512;
+        buffer += 512;
+    }
 
-        if(size & 512)
-        {
-            Debug("Removing 512 bytes header...");
-            size &= ~512;
-            buffer += 512;
-        }
+    assert((size % 0x2000) == 0);
+    if ((size % 0x2000) != 0)
+    {
+        Log("ERROR: Invalid size found: %d (0x%X) bytes", size, size);
+    }
 
-        assert((size % 0x2000) == 0);
+    m_rom_size = size;
+    m_rom = new u8[m_rom_size];
+    memcpy(m_rom, buffer, m_rom_size);
 
-        if ((size % 0x2000) != 0)
-        {
-            Log("ERROR: Invalid size found: %d (0x%X) bytes", size, size);
-        }
+    GatherMediaInfo();
+    InitRomMAP();
+    m_ready = true;
 
-        m_rom_size = size;
-        m_rom = new u8[m_rom_size];
-        memcpy(m_rom, buffer, m_rom_size);
+    Debug("HuCard loaded from buffer. Size: %d bytes", m_rom_size);
 
+    return m_ready;
+}
+
+bool Media::LoadCueFromBuffer(const u8* buffer, int size, const char* path)
+{
+    m_ready = m_cdrom_media->LoadCueFromBuffer(buffer, size, path);
+
+    if (m_ready)
+    {
+        GatherMediaInfo();
         InitRomMAP();
+    }
 
-        m_ready = true;
+    return m_ready;
+}
 
-        Debug("ROM loaded from buffer. Size: %d bytes", m_rom_size);
+bool Media::LoadCueFromFile(const char* path)
+{
+    m_ready =  m_cdrom_media->LoadCueFromFile(path);
 
-        return true;
+    if (m_ready)
+    {
+        GatherMediaInfo();
+        InitRomMAP();
+    }
+
+    return m_ready;
+}
+
+bool Media::LoadBios(const char* file_path, bool syscard)
+{
+    using namespace std;
+    int expected_size = 0;
+    u8* bios = NULL;
+    u32* bios_crc = NULL;
+
+    if (syscard)
+    {
+        expected_size = GG_BIOS_SYSCARD_SIZE;
+        bios = m_syscard_bios;
+        bios_crc = &m_bios_crc_syscard;
+        m_is_valid_bios_syscard = false;
     }
     else
     {
-        Log("ERROR: Unable to load ROM from buffer: Buffer invalid %p. Size: %d", buffer, size);
-        return false;
+        expected_size = GG_BIOS_GAME_EXPRESS_SIZE;
+        bios = m_gameexpress_bios;
+        bios_crc = &m_bios_crc_gameexpress;
+        m_is_valid_bios_gameexpress = false;
     }
-}
 
-bool Cartridge::LoadBios(u8* buffer, int size)
-{
-    m_is_bios = false;
-    m_is_valid_bios = false;
+    bool ret = true;
 
-    if (IsValidPointer(buffer))
+    ifstream file(file_path, ios::in | ios::binary | ios::ate);
+
+    if (file.is_open())
     {
-        Log("Loading BIOS from buffer... Size: %d", size);
+        int size = static_cast<int> (file.tellg());
 
-        m_rom_size = size;
-        SafeDeleteArray(m_rom);
-        m_rom = new u8[m_rom_size];
-        memcpy(m_rom, buffer, m_rom_size);
+        if (size != expected_size)
+        {
+            Log("Incorrect BIOS size %d: expected: %d. %s", size, expected_size, file_path);
+            ret = false;
+        }
 
-        m_is_bios = true;
+        memset(bios, 0x00, expected_size);
 
-        InitRomMAP();
+        file.seekg(0, ios::beg);
+        file.read(reinterpret_cast<char*>(bios), MIN(size, expected_size));
+        file.close();
 
-        Debug("BIOS loaded from buffer. Size: %d bytes", size);
+        *bios_crc = CalculateCRC32(0, bios, expected_size);
+        GatherBIOSInfoFromDB(syscard);
 
-        return true;
+        Log("BIOS %s loaded (%d bytes)", file_path, size);
     }
     else
     {
-        Log("ERROR: Unable to load BIOS from buffer: Buffer invalid %p. Size: %d", buffer, size);
+        Log("There was a problem opening the file %s", file_path);
         return false;
     }
+
+    return ret;
 }
 
-bool Cartridge::LoadFromZipFile(const char* path)
+bool Media::LoadMediaFromZipFile(const char* path)
 {
-    Debug("Loading ROM from ZIP file: %s", path);
+    Debug("Loading Media from ZIP file: %s", path);
 
     using namespace std;
 
@@ -421,7 +350,7 @@ bool Cartridge::LoadFromZipFile(const char* path)
                 return false;
             }
 
-            bool ok = LoadFromBuffer((const u8*) p, (int)uncomp_size, fn.c_str());
+            bool ok = LoadHuCardFromBuffer((const u8*) p, (int)uncomp_size, fn.c_str());
 
             free(p);
             mz_zip_reader_end(&zip_archive);
@@ -453,7 +382,7 @@ bool Cartridge::LoadFromZipFile(const char* path)
             if (extract_zip_to_folder(path, temppath.c_str()))
             {
                 string cue_path = temppath + "/" + fn;
-                return m_cdrom_media->LoadCueFromFile(cue_path.c_str());
+                return LoadCueFromFile(cue_path.c_str());
             }
             else
             {
@@ -465,16 +394,21 @@ bool Cartridge::LoadFromZipFile(const char* path)
     return false;
 }
 
-void Cartridge::GatherROMInfo()
+void Media::GatherMediaInfo()
 {
-    m_rom_bank_count = (m_rom_size / 0x2000) + (m_rom_size % 0x2000 ? 1 : 0);
-    m_crc = CalculateCRC32(0, m_rom, m_rom_size);
+    if (m_is_cdrom)
+    {
+        m_crc = m_cdrom_media->GetCRC();
+        Log("CD-ROM CRC32: %08X", m_crc);
+    }
+    else
+    {
+        m_crc = CalculateCRC32(0, m_rom, m_rom_size);
+        Log("HuCard Size: %d KB, %d bytes (0x%0X)", m_rom_size / 1024, m_rom_size, m_rom_size);
+        Log("HuCard CRC32: %08X", m_crc);
+    }
 
-    Log("ROM Size: %d KB, %d bytes (0x%0X)", m_rom_size / 1024, m_rom_size, m_rom_size);
-    Log("ROM Bank Count: %d (0x%0X)", m_rom_bank_count, m_rom_bank_count);
-    Log("ROM CRC32: %08X", m_crc);
-
-    GatherInfoFromDB();
+    GatherMediaInfoFromDB();
 
     if (m_console_type == GG_CONSOLE_SGX)
     {
@@ -533,11 +467,10 @@ void Cartridge::GatherROMInfo()
     }
 }
 
-void Cartridge::GatherInfoFromDB()
+void Media::GatherMediaInfoFromDB()
 {
     m_card_ram_size = 0;
     m_is_sgx = false;
-    m_is_valid_bios = false;
 
     int i = 0;
     bool found = false;
@@ -549,58 +482,52 @@ void Cartridge::GatherInfoFromDB()
         if (db_crc == m_crc)
         {
             found = true;
-            Log("ROM found in database: %s. CRC: %08X", k_game_database[i].title, m_crc);
+            Log("Media found in database: %s. CRC: %08X", k_game_database[i].title, m_crc);
 
             if (k_game_database[i].flags & GG_GAMEDB_CARD_RAM_8000)
             {
                 m_card_ram_size = 0x8000;
-                Log("ROM has 32KB of cartridge RAM");
+                Log("Media has 32KB of cartridge RAM");
             }
 
             if (k_game_database[i].flags & GG_GAMEDB_SGX_REQUIRED)
             {
                 m_is_sgx = true;
-                Log("ROM is a SuperGrafx (SGX) game.");
+                Log("Media is a SuperGrafx (SGX) game.");
             }
 
             if (k_game_database[i].flags & GG_GAMEDB_SGX_OPTIONAL)
             {
                 m_is_sgx = true;
-                Log("ROM is a SuperGrafx (SGX) optional game.");
+                Log("Media is a SuperGrafx (SGX) optional game.");
             }
 
             if (k_game_database[i].flags & GG_GAMEDB_SF2_MAPPER)
             {
                 m_mapper = SF2_MAPPER;
-                Log("ROM uses Street Fighter II mapper.");
+                Log("Media uses Street Fighter II mapper.");
             }
             else
             {
                 m_mapper = STANDARD_MAPPER;
-                Log("ROM uses standard mapper.");
+                Log("Media uses standard mapper.");
+            }
+
+            if (k_game_database[i].flags & GG_GAMEDB_GAME_EXPRESS_GAME)
+            {
+                m_is_gameexpress = true;
+                Log("Media is a Game Express game.");
             }
 
             if (k_game_database[i].flags & GG_GAMEDB_AVENUE_PAD_3_SELECT)
             {
                 m_avenue_pad_3_button = GG_KEY_SELECT;
-                Log("ROM uses Avenue Pad 3 select button.");
+                Log("Media uses Avenue Pad 3 select button.");
             }
             else if (k_game_database[i].flags & GG_GAMEDB_AVENUE_PAD_3_RUN)
             {
                 m_avenue_pad_3_button = GG_KEY_RUN;
-                Log("ROM uses Avenue Pad 3 run button.");
-            }
-
-            if (k_game_database[i].flags & GG_GAMEDB_BIOS_SYSCARD)
-            {
-                m_is_valid_bios = true;
-                Log("ROM is a Syscard BIOS.");
-            }
-
-            if (k_game_database[i].flags & GG_GAMEDB_BIOS_GAME_EXPRESS)
-            {
-                m_is_valid_bios = true;
-                Log("ROM is a Game Express BIOS.");
+                Log("Media uses Avenue Pad 3 run button.");
             }
         }
         else
@@ -609,11 +536,48 @@ void Cartridge::GatherInfoFromDB()
 
     if (!found)
     {
-        Debug("ROM not found in database. CRC: %08X", m_crc);
+        Debug("Media not found in database. CRC: %08X", m_crc);
     }
 }
 
-void Cartridge::GatherDataFromPath(const char* path)
+void Media::GatherBIOSInfoFromDB(bool syscard)
+{
+    int i = 0;
+    bool found = false;
+
+    u32* bios_crc = syscard ? &m_bios_crc_syscard : &m_bios_crc_gameexpress;
+    char* bios_name = syscard ? m_bios_name_syscard : m_bios_name_gameexpress;
+    bool* is_valid_bios = syscard ? &m_is_valid_bios_syscard : &m_is_valid_bios_gameexpress;
+
+    while(!found && (k_game_database[i].title != 0))
+    {
+        u32 db_crc = k_game_database[i].crc;
+
+        if (db_crc == *bios_crc)
+        {
+            if (syscard && !(k_game_database[i].flags & GG_GAMEDB_BIOS_SYSCARD))
+                continue;
+
+            if (!syscard && !(k_game_database[i].flags & GG_GAMEDB_BIOS_GAME_EXPRESS))
+                continue;
+
+            found = true;
+            *is_valid_bios = true;
+            strncpy_fit(bios_name, k_game_database[i].title, sizeof(bios_name));
+
+            Log("BIOS found in database: %s. CRC: %08X", k_game_database[i].title, db_crc);
+        }
+        else
+            i++;
+    }
+
+    if (!found)
+    {
+        Debug("BIOS not found in database. CRC: %08X", m_crc);
+    }
+}
+
+void Media::GatherDataFromPath(const char* path)
 {
     using namespace std;
 
@@ -643,9 +607,14 @@ void Cartridge::GatherDataFromPath(const char* path)
     snprintf(m_file_extension, sizeof(m_file_extension), "%s", extension.c_str());
 }
 
-void Cartridge::InitRomMAP()
+void Media::InitRomMAP()
 {
-    if (m_rom_bank_count == 0x30)
+    int rom_size = m_is_cdrom ? GG_BIOS_SYSCARD_SIZE : m_rom_size;
+    int rom_bank_count = (rom_size / 0x2000) + (rom_size % 0x2000 ? 1 : 0);
+    u8* bios_ptr = m_is_gameexpress ? m_gameexpress_bios : m_syscard_bios;
+    u8* rom_ptr = m_is_cdrom ? bios_ptr : m_rom;
+
+    if (rom_bank_count == 0x30)
     {
         Debug("Mapping 384KB ROM");
 
@@ -653,17 +622,17 @@ void Cartridge::InitRomMAP()
         {
             int bank = x & 0x1F;
             int bank_address = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_address];
+            m_rom_map[x] = &rom_ptr[bank_address];
         }
 
         for(int x = 64; x < 128; x++)
         {
             int bank = (x & 0x0F) + 0x20;
             int bank_address = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_address];
+            m_rom_map[x] = &rom_ptr[bank_address];
         }
     }
-    else if (m_rom_bank_count == 0x40)
+    else if (rom_bank_count == 0x40)
     {
         Debug("Mapping 512KB ROM");
 
@@ -671,17 +640,17 @@ void Cartridge::InitRomMAP()
         {
             int bank = x & 0x3F;
             int bank_address = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_address];
+            m_rom_map[x] = &rom_ptr[bank_address];
         }
 
         for(int x = 64; x < 128; x++)
         {
             int bank = (x & 0x1F) + 0x20;
             int bank_address = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_address];
+            m_rom_map[x] = &rom_ptr[bank_address];
         }
     }
-    else if (m_rom_bank_count == 0x60)
+    else if (rom_bank_count == 0x60)
     {
         Debug("Mapping 768KB ROM");
 
@@ -689,14 +658,14 @@ void Cartridge::InitRomMAP()
         {
             int bank = x & 0x3F;
             int bank_address = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_address];
+            m_rom_map[x] = &rom_ptr[bank_address];
         }
 
         for(int x = 64; x < 128; x++)
         {
             int bank = (x & 0x1F) + 0x40;
             int bank_address = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_address];
+            m_rom_map[x] = &rom_ptr[bank_address];
         }
     }
     else
@@ -705,9 +674,49 @@ void Cartridge::InitRomMAP()
 
         for(int x = 0; x < 128; x++)
         {
-            int bank = x % m_rom_bank_count;
+            int bank = x % rom_bank_count;
             int bank_address = bank * 0x2000;
-            m_rom_map[x] = &m_rom[bank_address];
+            m_rom_map[x] = &rom_ptr[bank_address];
         }
+    }
+}
+
+bool Media::IsValidFile(const char* path)
+{
+    using namespace std;
+
+    if (!IsValidPointer(path))
+    {
+        Log("ERROR: Invalid path %s", path);
+        return false;
+    }
+
+    ifstream file(path, ios::in | ios::binary | ios::ate);
+
+    if (file.is_open())
+    {
+        int size = static_cast<int> (file.tellg());
+
+        if (size <= 0)
+        {
+            Log("ERROR: Unable to open file %s. Size: %d", path, size);
+            file.close();
+            return false;
+        }
+
+        if (file.bad() || file.fail() || !file.good() || file.eof())
+        {
+            Log("ERROR: Unable to open file %s. Bad file!", path);
+            file.close();
+            return false;
+        }
+
+        file.close();
+        return true;
+    }
+    else
+    {
+        Log("ERROR: Unable to open file %s", path);
+        return false;
     }
 }

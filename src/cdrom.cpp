@@ -139,7 +139,7 @@ u8 CdRom::ReadRegister(u16 address)
         case 0xC3:
             // CDROM Signature
             //Debug("CDROM Read Signature %02X", reg);
-            if (m_core->GetCartridge()->GetCDROMType() != GG_CDROM_STANDARD)
+            if (m_core->GetMedia()->GetCDROMType() != GG_CDROM_STANDARD)
                 return k_super_cdrom_signature[reg & 0x03];
             else
                 return 0xFF;

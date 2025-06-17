@@ -17,68 +17,71 @@
  *
  */
 
-#ifndef CARTRIDGE_H
-#define CARTRIDGE_H
+#ifndef MEDIA_H
+#define MEDIA_H
 
 #include "common.h"
 
 class CdRomMedia;
 
-class Cartridge
+class Media
 {
 public:
-    enum CartridgeMapper
+    enum HuCardMapper
     {
         STANDARD_MAPPER,
         SF2_MAPPER
     };
 
 public:
-    Cartridge(CdRomMedia* cdrom_media);
-    ~Cartridge();
+    Media(CdRomMedia* cdrom_media);
+    ~Media();
     void Init();
     void Reset();
     u32 GetCRC();
+    u32 GetCdromCRC();
     bool IsReady();
     bool IsSGX();
     bool IsCDROM();
-    bool IsBios();
-    bool IsValidBios();
+    bool IsValidBios(bool syscard);
     void SetConsoleType(GG_Console_Type console_type);
     GG_Console_Type GetConsoleType();
     void SetCDROMType(GG_CDROM_Type cdrom_type);
     GG_CDROM_Type GetCDROMType();
-    CartridgeMapper GetMapper();
+    HuCardMapper GetMapper();
     void ForceBackupRAM(bool force);
     bool IsBackupRAMForced();
     int GetROMSize();
-    int GetROMBankCount();
     int GetCardRAMSize();
     GG_Keys GetAvenuePad3Button();
     const char* GetFilePath();
     const char* GetFileDirectory();
     const char* GetFileName();
     const char* GetFileExtension();
+    const char* GetBiosName(bool syscard);
     u8* GetROM();
     u8** GetROMMap();
-    bool LoadFromFile(const char* path);
-    bool LoadFromBuffer(const u8* buffer, int size, const char* path);
-    bool LoadBios(u8* buffer, int size);
+    bool LoadMedia(const char* path);
+    bool LoadHuCardFromBuffer(const u8* buffer, int size, const char* path);
+    bool LoadCueFromBuffer(const u8* buffer, int size, const char* path);
+    bool LoadCueFromFile(const char* path);
+    bool LoadBios(const char* file_path, bool syscard);
     void SetTempPath(const char* path);
-    void GatherROMInfo();
 
 private:
-    bool LoadFromZipFile(const char* path);
-    void GatherInfoFromDB();
+    bool LoadMediaFromZipFile(const char* path);
+    void GatherMediaInfo();
+    void GatherMediaInfoFromDB();
+    void GatherBIOSInfoFromDB(bool syscard);
     void GatherDataFromPath(const char* path);
     void InitRomMAP();
+    bool IsValidFile(const char* path);
 
 private:
     CdRomMedia* m_cdrom_media;
     u8* m_rom;
     u8** m_rom_map;
     int m_rom_size;
-    int m_rom_bank_count;
     int m_card_ram_size;
     bool m_ready;
     char m_file_path[512];
@@ -87,15 +90,24 @@ private:
     char m_file_extension[512];
     char m_temp_path[512];
     u32 m_crc;
+    u32 m_bios_crc_syscard;
+    u32 m_bios_crc_gameexpress;
+    bool m_is_gameexpress;
     bool m_is_sgx;
     bool m_is_cdrom;
-    bool m_is_bios;
-    bool m_is_valid_bios;
-    CartridgeMapper m_mapper;
+    bool m_is_valid_bios_syscard;
+    bool m_is_valid_bios_gameexpress;
+    char m_bios_name_syscard[64];
+    char m_bios_name_gameexpress[64];
+    HuCardMapper m_mapper;
     GG_Keys m_avenue_pad_3_button;
     GG_Console_Type m_console_type;
     GG_CDROM_Type m_cdrom_type;
     bool m_force_backup_ram;
+    u8 m_syscard_bios[GG_BIOS_SYSCARD_SIZE] = {};
+    u8 m_gameexpress_bios[GG_BIOS_GAME_EXPRESS_SIZE] = {};
 };
 
-#endif /* CARTRIDGE_H */
+#include "media_inline.h"
+
+#endif /* MEDIA_H */

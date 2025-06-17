@@ -31,6 +31,7 @@
 #define GG_GAMEDB_CDROM                 0x0040
 #define GG_GAMEDB_BIOS_SYSCARD          0x0080
 #define GG_GAMEDB_BIOS_GAME_EXPRESS     0x0100
+#define GG_GAMEDB_GAME_EXPRESS_GAME     0x0200
 
 struct GG_DB_Entry
 {
@@ -67,6 +68,10 @@ const GG_DB_Entry k_game_database[] =
     // CARD RAM SIZE = 0x8000
     { 0x083C956A, "Populous (J)", GG_GAMEDB_CARD_RAM_8000 },
     { 0x0A9ADE99, "Populous (J) [Alt]", GG_GAMEDB_CARD_RAM_8000 },
+
+    // GAME EXPRESS BIOS GAMES
+    { 0x5E524EFC, "CD Mahjong - Bishoujo Chuushinha (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
+
 
     // AVENUE PAD 3
     { 0x933D5BCC, "Air Zonk (USA)", GG_GAMEDB_AVENUE_PAD_3_SELECT },

@@ -23,12 +23,12 @@
 #include "types.h"
 #include "mapper.h"
 
-class Cartridge;
+class Media;
 
 class SF2Mapper : public Mapper
 {
 public:
-    SF2Mapper(Cartridge* cartridge);
+    SF2Mapper(Media* media);
     virtual ~SF2Mapper();
     virtual u8 Read(u8 bank, u16 address);
     virtual void Write(u8 bank, u16 address, u8 value);

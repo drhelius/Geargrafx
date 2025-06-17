@@ -21,7 +21,7 @@
 #define INPUT_INLINE_H
 
 #include "input.h"
-#include "cartridge.h"
+#include "media.h"
 
 INLINE void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
 {
@@ -31,7 +31,7 @@ INLINE void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
     {
         GG_Keys iii_button = m_avenue_pad_3_button[controller];
         if (iii_button == GG_KEY_NONE)
-            iii_button = m_cartridge->GetAvenuePad3Button();
+            iii_button = m_media->GetAvenuePad3Button();
 
         if ((key == iii_button) || (key == GG_KEY_III))
         {
@@ -49,7 +49,7 @@ INLINE void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
     {
         GG_Keys iii_button = m_avenue_pad_3_button[controller];
         if (iii_button == GG_KEY_NONE)
-            iii_button = m_cartridge->GetAvenuePad3Button();
+            iii_button = m_media->GetAvenuePad3Button();
 
         if ((key == iii_button) || (key == GG_KEY_III))
         {

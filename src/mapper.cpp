@@ -19,10 +19,11 @@
 
 #include "mapper.h"
 #include "log.h"
+#include "media.h"
 
-Mapper::Mapper(Cartridge* cartridge)
+Mapper::Mapper(Media* media)
 {
-    m_cartridge = cartridge;
+    m_media = media;
 }
 
 Mapper::~Mapper()

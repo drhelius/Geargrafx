@@ -75,6 +75,7 @@ EXTERN void gui_render(void);
 EXTERN void gui_shortcut(gui_ShortCutEvent event);
 EXTERN void gui_load_rom(const char* path);
 EXTERN void gui_set_status_message(const char* message, u32 milliseconds);
+EXTERN void gui_set_error_message(const char* message);
 
 #undef GUI_IMPORT
 #undef EXTERN

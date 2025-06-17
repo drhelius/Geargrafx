@@ -209,7 +209,7 @@ void retro_reset(void)
     log_cb(RETRO_LOG_DEBUG, "Resetting...\n");
 
     check_variables();
-    core->ResetROM(true);
+    core->ResetMedia(true);
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
@@ -316,19 +316,19 @@ bool retro_load_game(const struct retro_game_info *info)
 
     if (IsValidPointer(info->data))
     {
-        log_cb(RETRO_LOG_INFO, "Loading game from buffer");
-        if (!core->LoadROMFromBuffer(reinterpret_cast<const u8*>(info->data), info->size, retro_game_path))
+        log_cb(RETRO_LOG_INFO, "Loading HuCard from buffer");
+        if (!core->LoadHuCardFromBuffer((const u8*)(info->data), info->size, retro_game_path))
         {
-            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted ROM.\n");
+            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted HuCard file.\n");
             return false;
         }
     }
     else
     {
-        log_cb(RETRO_LOG_INFO, "Loading game from file");
-        if (!core->LoadROM(retro_game_path))
+        log_cb(RETRO_LOG_INFO, "Loading Media from file");
+        if (!core->LoadMedia(retro_game_path))
         {
-            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted ROM.\n");
+            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted Media.\n");
             return false;
         }
     }
@@ -559,8 +559,8 @@ static void set_variabless(void)
         { "geargrafx_scanline_end", "Scanline End (Manual); 241|220|221|222|223|224|225|226|227|228|229|230|231|232|233|234|235|236|237|238|239|240" },
         { "geargrafx_composite_colors", "Composite Colors; Disabled|Enabled" },
         { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
-        { "geargrafx_force_pce_jap", "Force Japanese PC Engine (restart); Disabled|Enabled" },
-        { "geargrafx_force_sgx", "Force SuperGrafx (restart); Disabled|Enabled" },
+        { "geargrafx_console_type", "Emulated System (restart); Auto|PC Engine (JAP)|SuperGrafx (JAP)|TurboGrafx-16 (USA)" },
+        { "geargrafx_cdrom_type", "CD-ROM System (restart); Auto|Standard|Super CD-ROM|Arcade CD-ROM" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
         { "geargrafx_avenue_pad_3_switch", "Avenue Pad 3 Switch; Auto|SELECT|RUN" },
         { "geargrafx_soft_reset", "Soft Reset; Enabled|Disabled" },
@@ -670,20 +670,46 @@ static void check_variables(void)
         core->GetInput()->EnableCDROM(enabled);
     }
 
-    var.key = "geargrafx_force_pce_jap";
+    var.key = "geargrafx_console_type";
     var.value = NULL;
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        core->GetInput()->EnablePCEJap(strcmp(var.value, "Enabled") == 0);
+        GG_Console_Type console_type = GG_CONSOLE_AUTO;
+
+        if (strcmp(var.value, "Auto") == 0)
+            console_type = GG_CONSOLE_AUTO;
+        else if (strcmp(var.value, "PC Engine (JAP)") == 0)
+            console_type = GG_CONSOLE_PCE;
+        else if (strcmp(var.value, "SuperGrafx (JAP)") == 0)
+            console_type = GG_CONSOLE_SGX;
+        else if (strcmp(var.value, "TurboGrafx-16 (USA)") == 0)
+            console_type = GG_CONSOLE_TG16;
+        else
+            console_type = GG_CONSOLE_AUTO;
+
+        core->GetMedia()->SetConsoleType(console_type);
     }
 
-    var.key = "geargrafx_force_sgx";
+    var.key = "geargrafx_cdrom_type";
     var.value = NULL;
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        core->GetCartridge()->ForceSGX(strcmp(var.value, "Enabled") == 0);
+        GG_CDROM_Type cdrom_type = GG_CDROM_AUTO;
+
+        if (strcmp(var.value, "Auto") == 0)
+            cdrom_type = GG_CDROM_AUTO;
+        else if (strcmp(var.value, "PC Engine (JAP)") == 0)
+            cdrom_type = GG_CDROM_STANDARD;
+        else if (strcmp(var.value, "SuperGrafx (JAP)") == 0)
+            cdrom_type = GG_CDROM_SUPER_CDROM;
+        else if (strcmp(var.value, "TurboGrafx-16 (USA)") == 0)
+            cdrom_type = GG_CDROM_ARCADE_CARD;
+        else
+            cdrom_type = GG_CDROM_AUTO;
+
+        core->GetMedia()->SetCDROMType(cdrom_type);
     }
 
     var.key = "geargrafx_no_sprite_limit";

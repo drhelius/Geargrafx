@@ -25,7 +25,7 @@
 #include <sstream>
 #include "geargrafx_core.h"
 #include "common.h"
-#include "cartridge.h"
+#include "media.h"
 #include "memory.h"
 #include "huc6202.h"
 #include "huc6260.h"
@@ -55,7 +55,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_scsi_controller);
     InitPointer(m_audio);
     InitPointer(m_input);
-    InitPointer(m_cartridge);
+    InitPointer(m_media);
     InitPointer(m_debug_callback);
     m_paused = true;
     m_master_clock_cycles = 0;
@@ -63,7 +63,7 @@ GeargrafxCore::GeargrafxCore()
 
 GeargrafxCore::~GeargrafxCore()
 {
-    SafeDelete(m_cartridge);
+    SafeDelete(m_media);
     SafeDelete(m_input);
     SafeDelete(m_audio);
     SafeDelete(m_scsi_controller);
@@ -86,26 +86,26 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     srand((unsigned int)time(NULL));
 
     m_cdrom_media = new CdRomMedia();
-    m_cartridge = new Cartridge(m_cdrom_media);
+    m_media = new Media(m_cdrom_media);
     m_huc6280 = new HuC6280();
     m_huc6270_1 = new HuC6270(m_huc6280);
     m_huc6270_2 = new HuC6270(m_huc6280);
     m_huc6202 = new HuC6202(m_huc6270_1, m_huc6270_2, m_huc6280);
     m_huc6260 = new HuC6260(m_huc6202, m_huc6280);
-    m_input = new Input(m_cartridge);
+    m_input = new Input(m_media);
     m_adpcm = new Adpcm();
     m_cdrom_audio = new CdRomAudio(m_cdrom_media);
     m_audio = new Audio(m_adpcm, m_cdrom_audio);
     m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio);
     m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, m_audio, this);
-    m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_cartridge, m_input, m_audio, m_cdrom);
+    m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom);
 
     m_audio->Init();
     m_input->Init();
     m_cdrom_media->Init();
     m_cdrom->Init(m_huc6280, m_memory, m_adpcm);
     m_scsi_controller->Init(m_huc6280, m_cdrom);
-    m_cartridge->Init();
+    m_media->Init();
     m_memory->Init();
     m_huc6260->Init(pixel_format);
     m_huc6202->Init();
@@ -116,9 +116,9 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_cdrom_audio->Init(m_scsi_controller);
 }
 
-bool GeargrafxCore::LoadROM(const char* file_path)
+bool GeargrafxCore::LoadMedia(const char* file_path)
 {
-    if (m_cartridge->LoadFromFile(file_path))
+    if (m_media->LoadMedia(file_path))
     {
         m_memory->ResetDisassemblerRecords();
         Reset();
@@ -128,9 +128,9 @@ bool GeargrafxCore::LoadROM(const char* file_path)
         return false;
 }
 
-bool GeargrafxCore::LoadROMFromBuffer(const u8* buffer, int size, const char* path)
+bool GeargrafxCore::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
 {
-    if (m_cartridge->LoadFromBuffer(buffer, size, path))
+    if (m_media->LoadHuCardFromBuffer(buffer, size, path))
     {
         m_memory->ResetDisassemblerRecords();
         Reset();
@@ -138,6 +138,11 @@ bool GeargrafxCore::LoadROMFromBuffer(const u8* buffer, int size, const char* pa
     }
     else
         return false;
+}
+
+bool GeargrafxCore::LoadBios(const char* file_path, bool syscard)
+{
+    return m_media->LoadBios(file_path, syscard);
 }
 
 bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
@@ -146,7 +151,7 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
     runtime_info.screen_height = m_huc6260->GetCurrentHeight();
     runtime_info.width_scale = m_huc6260->GetWidthScale();
 
-    return m_cartridge->IsReady();
+    return m_media->IsReady();
 }
 
 void GeargrafxCore::SetDebugCallback(GG_Debug_Callback callback)
@@ -183,9 +188,9 @@ bool GeargrafxCore::IsPaused()
     return m_paused;
 }
 
-void GeargrafxCore::ResetROM(bool preserve_ram)
+void GeargrafxCore::ResetMedia(bool preserve_ram)
 {
-    if (!m_cartridge->IsReady())
+    if (!m_media->IsReady())
         return;
 
     using namespace std;
@@ -209,7 +214,7 @@ void GeargrafxCore::ResetROM(bool preserve_ram)
 
 void GeargrafxCore::ResetSound()
 {
-    m_audio->Reset(m_cartridge->IsCDROM());
+    m_audio->Reset(m_media->IsCDROM());
 }
 
 void GeargrafxCore::SaveRam()
@@ -219,7 +224,7 @@ void GeargrafxCore::SaveRam()
 
 void GeargrafxCore::SaveRam(const char* path, bool full_path)
 {
-    if (m_cartridge->IsReady() && m_memory->IsBackupRamUsed())
+    if (m_media->IsReady() && m_memory->IsBackupRamUsed())
     {
         using namespace std;
         string final_path;
@@ -230,11 +235,11 @@ void GeargrafxCore::SaveRam(const char* path, bool full_path)
             if (!full_path)
             {
                 final_path += "/";
-                final_path += m_cartridge->GetFileName();
+                final_path += m_media->GetFileName();
             }
         }
         else
-            final_path = m_cartridge->GetFilePath();
+            final_path = m_media->GetFilePath();
 
         string::size_type i = final_path.rfind('.', final_path.length());
         if (i != string::npos)
@@ -256,7 +261,7 @@ void GeargrafxCore::LoadRam()
 
 void GeargrafxCore::LoadRam(const char* path, bool full_path)
 {
-    if (m_cartridge->IsReady())
+    if (m_media->IsReady())
     {
         using namespace std;
         string final_path;
@@ -267,11 +272,11 @@ void GeargrafxCore::LoadRam(const char* path, bool full_path)
             if (!full_path)
             {
                 final_path += "/";
-                final_path += m_cartridge->GetFileName();
+                final_path += m_media->GetFileName();
             }
         }
         else
-            final_path = m_cartridge->GetFilePath();
+            final_path = m_media->GetFilePath();
 
         string::size_type i = final_path.rfind('.', final_path.length());
         if (i != string::npos)
@@ -313,10 +318,10 @@ std::string GeargrafxCore::GetSaveStatePath(const char* path, int index)
     {
         full_path = path;
         full_path += "/";
-        full_path += m_cartridge->GetFileName();
+        full_path += m_media->GetFileName();
     }
     else
-        full_path = m_cartridge->GetFilePath();
+        full_path = m_media->GetFilePath();
 
     string::size_type dot_index = full_path.rfind('.');
 
@@ -357,7 +362,7 @@ bool GeargrafxCore::SaveState(u8* buffer, size_t& size, bool screenshot)
 
     Debug("Saving state to buffer [%d bytes]...", size);
 
-    if (!m_cartridge->IsReady())
+    if (!m_media->IsReady())
     {
         Log("ERROR: Cartridge is not ready when trying to save state");
         return false;
@@ -392,7 +397,7 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
 {
     using namespace std;
 
-    if (!m_cartridge->IsReady())
+    if (!m_media->IsReady())
     {
         Log("ERROR: Cartridge is not ready when trying to save state");
         return false;
@@ -421,8 +426,8 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     header.version = GG_SAVESTATE_VERSION;
 
     header.timestamp = time(NULL);
-    strncpy_fit(header.rom_name, m_cartridge->GetFileName(), sizeof(header.rom_name));
-    header.rom_crc = m_cartridge->GetCRC();
+    strncpy_fit(header.rom_name, m_media->GetFileName(), sizeof(header.rom_name));
+    header.rom_crc = m_media->GetCRC();
     strncpy_fit(header.emu_build, GG_VERSION, sizeof(header.emu_build));
 
     Debug("Save state header magic: 0x%08x", header.magic);
@@ -506,7 +511,7 @@ bool GeargrafxCore::LoadState(const u8* buffer, size_t size)
 
     Debug("Loading state to buffer [%d bytes]...", size);
 
-    if (!m_cartridge->IsReady())
+    if (!m_media->IsReady())
     {
         Log("ERROR: Cartridge is not ready when trying to load state");
         return false;
@@ -526,7 +531,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 {
     using namespace std;
 
-    if (!m_cartridge->IsReady())
+    if (!m_media->IsReady())
     {
         Log("ERROR: Cartridge is not ready when trying to load state");
         return false;
@@ -590,7 +595,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         return false;
     }
 
-    if (header.rom_crc != m_cartridge->GetCRC())
+    if (header.rom_crc != m_media->GetCRC())
     {
         Log("ERROR: Invalid save state rom crc: 0x%08x", header.rom_crc);
         return false;
@@ -715,12 +720,10 @@ void GeargrafxCore::Reset()
     m_master_clock_cycles = 0;
     m_paused = false;
 
-    m_cartridge->GatherROMInfo();
-
-    GG_Console_Type console_type = m_cartridge->GetConsoleType();
-    bool force_backup_ram = m_cartridge->IsBackupRAMForced();
-    bool is_sgx = m_cartridge->IsSGX();
-    bool is_cdrom = m_cartridge->IsCDROM();
+    GG_Console_Type console_type = m_media->GetConsoleType();
+    bool force_backup_ram = m_media->IsBackupRAMForced();
+    bool is_sgx = m_media->IsSGX();
+    bool is_cdrom = m_media->IsCDROM();
 
     m_input->EnablePCEJap((console_type == GG_CONSOLE_PCE) || (console_type == GG_CONSOLE_SGX));
     m_input->EnableCDROM(is_cdrom || force_backup_ram);

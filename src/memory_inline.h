@@ -22,7 +22,7 @@
 
 #include <assert.h>
 #include "memory.h"
-#include "cartridge.h"
+#include "media.h"
 #include "huc6260.h"
 #include "huc6270.h"
 #include "huc6280.h"
@@ -113,7 +113,7 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
             }
             case 0x1800:
                 // CDROM
-                if (m_cartridge->IsCDROM())
+                if (m_media->IsCDROM())
                     return m_cdrom->ReadRegister(offset);
                 else
                     return 0xFF;
@@ -212,7 +212,7 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
             }
             case 0x1800:
                 // CDROM
-                if (m_cartridge->IsCDROM())
+                if (m_media->IsCDROM())
                     m_cdrom->WriteRegister(offset, value);
                 break;
             case 0x1C00:
@@ -275,7 +275,7 @@ INLINE u8* Memory::GetCDROMRAM()
 
 INLINE int Memory::GetWorkingRAMSize()
 {
-    return m_cartridge->IsSGX() ? 0x8000 : 0x2000;
+    return m_media->IsSGX() ? 0x8000 : 0x2000;
 }
 
 INLINE int Memory::GetCardRAMSize()

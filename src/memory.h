@@ -24,10 +24,7 @@
 #include <fstream>
 #include "common.h"
 
-#define GG_BIOS_SYSCARD_SIZE 0x40000
-#define GG_BIOS_GAME_EXPRESS_SIZE 0x8000
-
-class Cartridge;
+class Media;
 class HuC6260;
 class HuC6202;
 class HuC6280;
@@ -52,7 +49,7 @@ public:
     };
 
 public:
-    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio, CdRom* cdrom);
+    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom);
     ~Memory();
     void Init();
     void Reset();
@@ -83,7 +80,6 @@ public:
     bool IsBackupRamEnabled();
     bool IsBackupRamUsed();
     void UpdateBackupRam(bool enable);
-    bool LoadBios(const char* file_path, bool syscard);
     MemoryBankType GetBankType(u8 bank);
     void SaveRam(std::ostream &file);
     bool LoadRam(std::istream &file, s32 file_size);
@@ -97,7 +93,7 @@ private:
     HuC6260* m_huc6260;
     HuC6202* m_huc6202;
     HuC6280* m_huc6280;
-    Cartridge* m_cartridge;
+    Media* m_media;
     SF2Mapper* m_sf2_mapper;
     Input* m_input;
     Audio* m_audio;
@@ -110,8 +106,6 @@ private:
     u8 m_card_ram[0x30000] = {};
     u8 m_cdrom_ram[0x10000] = {};
     u8 m_backup_ram[0x2000] = {};
-    u8 m_syscard_bios[GG_BIOS_SYSCARD_SIZE] = {};
-    u8 m_gameexpress_bios[GG_BIOS_GAME_EXPRESS_SIZE] = {};
     u32 m_cdrom_ram_size;
     u32 m_card_ram_size;
     u8 m_card_ram_start;

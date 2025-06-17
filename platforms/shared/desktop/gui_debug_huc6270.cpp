@@ -41,7 +41,7 @@ void gui_debug_window_huc6270_info(int vdc)
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     bool* show = ((vdc == 1) ? &config_debug.show_huc6270_1_info : &config_debug.show_huc6270_2_info);
     char title[32];
-    if (core->GetCartridge()->IsSGX())
+    if (core->GetMedia()->IsSGX())
         snprintf(title, sizeof(title), "HuC6270 (%d) Info", vdc);
     else
         strncpy_fit(title, "HuC6270 Info", sizeof(title));
@@ -185,7 +185,7 @@ void gui_debug_window_huc6270_registers(int vdc)
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     bool* show = ((vdc == 1) ? &config_debug.show_huc6270_1_registers : &config_debug.show_huc6270_2_registers);
     char title[32];
-    if (core->GetCartridge()->IsSGX())
+    if (core->GetMedia()->IsSGX())
         snprintf(title, sizeof(title), "HuC6270 (%d) Registers", vdc);
     else
         strncpy_fit(title, "HuC6270 Registers", sizeof(title));
@@ -242,7 +242,7 @@ void gui_debug_window_huc6270_background(int vdc)
     HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     bool* show = ((vdc == 1) ? &config_debug.show_huc6270_1_background : &config_debug.show_huc6270_2_background);
     char title[32];
-    if (core->GetCartridge()->IsSGX())
+    if (core->GetMedia()->IsSGX())
         snprintf(title, sizeof(title), "HuC6270 (%d) Background", vdc);
     else
         strncpy_fit(title, "HuC6270 Background", sizeof(title));
@@ -407,7 +407,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
     emu_get_runtime(runtime);
     bool* show = ((vdc == 1) ? &config_debug.show_huc6270_1_sprites : &config_debug.show_huc6270_2_sprites);
     char title[32];
-    if (core->GetCartridge()->IsSGX())
+    if (core->GetMedia()->IsSGX())
         snprintf(title, sizeof(title), "HuC6270 (%d) Sprites", vdc);
     else
         strncpy_fit(title, "HuC6270 Sprites", sizeof(title));

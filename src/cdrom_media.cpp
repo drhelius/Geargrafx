@@ -25,10 +25,12 @@
 #include <cctype>
 #include <vector>
 #include "cdrom_media.h"
+#include "crc.h"
 
 CdRomMedia::CdRomMedia()
 {
     m_ready = false;
+    m_crc = 0;
     m_file_path[0] = 0;
     m_file_directory[0] = 0;
     m_file_name[0] = 0;
@@ -72,6 +74,7 @@ void CdRomMedia::Reset()
 {
     DestroyImgFiles();
     m_ready = false;
+    m_crc = 0;
     m_file_path[0] = 0;
     m_file_directory[0] = 0;
     m_file_name[0] = 0;
@@ -157,6 +160,7 @@ bool CdRomMedia::LoadCueFromFile(const char* path)
 
     return m_ready;
 }
+
 bool CdRomMedia::LoadCueFromBuffer(const u8* buffer, int size, const char* path)
 {
     if (IsValidPointer(buffer))
@@ -409,6 +413,78 @@ void CdRomMedia::SetupFileChunks(ImgFile* img_file)
 
     for (u32 i = 0; i < img_file->chunk_count; i++)
         InitPointer(img_file->chunks[i]);
+}
+
+void CdRomMedia::CalculateCRC()
+{
+    using namespace std;
+
+    m_crc = 0;
+
+    if (m_img_files.empty())
+    {
+        Debug("No image files to calculate CRC from");
+        return;
+    }
+
+    Debug("Calculating CRC for %d image files", m_img_files.size());
+
+    const u32 buffer_size = 1024 * 1024; // 1MB buffer for reading
+    u8* buffer = new u8[buffer_size];
+
+    for (size_t i = 0; i < m_img_files.size(); i++)
+    {
+        ImgFile* img_file = m_img_files[i];
+        
+        if (!IsValidPointer(img_file))
+        {
+            Log("ERROR: Invalid ImgFile pointer while calculating CRC");
+            continue;
+        }
+
+        Debug("Processing file %s for CRC calculation", img_file->file_path);
+
+        ifstream file(img_file->file_path, ios::in | ios::binary);
+        if (!file.is_open())
+        {
+            Log("ERROR: Failed to open file %s for CRC calculation", img_file->file_path);
+            continue;
+        }
+
+        // Skip to data offset for WAV files
+        u64 start_offset = img_file->is_wav ? img_file->wav_data_offset : 0;
+        file.seekg(start_offset, ios::beg);
+
+        if (file.fail())
+        {
+            Log("ERROR: Failed to seek to offset %llu in file %s", start_offset, img_file->file_path);
+            file.close();
+            continue;
+        }
+
+        u32 remaining_bytes = img_file->file_size;
+
+        while (remaining_bytes > 0 && !file.eof())
+        {
+            u32 to_read = (remaining_bytes < buffer_size) ? remaining_bytes : buffer_size;
+
+            file.read(reinterpret_cast<char*>(buffer), to_read);
+            u32 bytes_read = static_cast<u32>(file.gcount());
+
+            if (bytes_read > 0)
+            {
+                m_crc = CalculateCRC32(m_crc, buffer, bytes_read);
+                remaining_bytes -= bytes_read;
+            }
+
+            if (bytes_read < to_read)
+                break;
+        }
+
+        file.close();
+    }
+
+    SafeDeleteArray(buffer);
 }
 
 bool CdRomMedia::ParseCueFile(const char* cue_content)
@@ -717,6 +793,8 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
     Debug("CD-ROM length: %02d:%02d:%02d, Total sectors: %d",
         m_cdrom_length.minutes, m_cdrom_length.seconds, m_cdrom_length.frames,
         m_sector_count);
+
+    CalculateCRC();
 
     return !m_tracks.empty();
 }

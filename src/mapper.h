@@ -24,12 +24,12 @@
 #include <fstream>
 #include "types.h"
 
-class Cartridge;
+class Media;
 
 class Mapper
 {
 public:
-    Mapper(Cartridge* cartridge);
+    Mapper(Media* media);
     virtual ~Mapper();
     virtual u8 Read(u8 bank, u16 address) = 0;
     virtual void Write(u8 bank, u16 address, u8 value) = 0;
@@ -38,7 +38,7 @@ public:
     virtual void LoadState(std::istream& stream);
 
 protected:
-    Cartridge* m_cartridge;
+    Media* m_media;
 };
 
 #endif /* MAPPER_H */

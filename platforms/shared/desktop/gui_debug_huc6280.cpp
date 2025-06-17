@@ -210,7 +210,7 @@ static void get_bank_name(u8 mpr, u8 mpr_value, char *name, char* tooltip)
 
     GeargrafxCore* core = emu_get_core();
     Memory* memory = core->GetMemory();
-    Cartridge* cartridge = core->GetCartridge();
+    Media* media = core->GetMedia();
     Memory::MemoryBankType bank_type = memory->GetBankType(mpr_value);
 
     switch (bank_type)
@@ -256,7 +256,7 @@ static void get_bank_name(u8 mpr, u8 mpr_value, char *name, char* tooltip)
             u8 ram_bank = mpr_value - 0xF8;
             u16 ram_address = ram_bank << 13;
 
-            if (cartridge->IsSGX())
+            if (media->IsSGX())
             {
                 snprintf(name, 16, "WRAM $%02X", ram_bank);
                 snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (WRAM) $%04X-$%04X",

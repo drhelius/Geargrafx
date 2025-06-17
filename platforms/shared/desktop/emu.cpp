@@ -54,7 +54,7 @@ void emu_init(void)
 
     geargrafx = new GeargrafxCore();
     geargrafx->Init();
-    geargrafx->GetCartridge()->SetTempPath(config_temp_path);
+    geargrafx->GetMedia()->SetTempPath(config_temp_path);
 
     sound_queue = new SoundQueue();
     sound_queue->Start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT);
@@ -83,16 +83,19 @@ void emu_destroy(void)
         SafeDeleteArray(emu_savestates_screenshots[i].data);
 }
 
-void emu_load_rom(const char* file_path)
+bool emu_load_media(const char* file_path)
 {
     emu_debug_command = Debug_Command_None;
     reset_buffers();
 
     save_ram();
-    geargrafx->LoadROM(file_path);
+    if (!geargrafx->LoadMedia(file_path))
+        return false;
     load_ram();
 
     update_savestates_data();
+
+    return true;
 }
 
 void emu_update(void)
@@ -166,7 +169,7 @@ bool emu_is_debug_idle(void)
 
 bool emu_is_empty(void)
 {
-    return !geargrafx->GetCartridge()->IsReady();
+    return !geargrafx->GetMedia()->IsReady();
 }
 
 void emu_reset(void)
@@ -175,7 +178,7 @@ void emu_reset(void)
     reset_buffers();
 
     save_ram();
-    geargrafx->ResetROM(false);
+    geargrafx->ResetMedia(false);
     load_ram();
 }
 
@@ -227,7 +230,7 @@ void emu_load_ram(const char* file_path)
     if (!emu_is_empty())
     {
         save_ram();
-        geargrafx->ResetROM(false);
+        geargrafx->ResetMedia(false);
         geargrafx->LoadRam(file_path, true);
     }
     UNUSED(file_path);
@@ -298,18 +301,17 @@ void emu_get_info(char* info, int buffer_size)
 {
     if (!emu_is_empty())
     {
-        Cartridge* cart = geargrafx->GetCartridge();
+        Media* media = geargrafx->GetMedia();
         GG_Runtime_Info runtime;
         geargrafx->GetRuntimeInfo(runtime);
 
-        const char* filename = cart->GetFileName();
-        u32 crc = cart->GetCRC();
-        int rom_size = cart->GetROMSize();
-        int rom_banks = cart->GetROMBankCount();
-        const char* is_sgx = cart->IsSGX() ? "YES" : "NO";
-        const char* is_cdrom = cart->IsCDROM() ? "YES" : "NO";
+        const char* filename = media->GetFileName();
+        u32 crc = media->GetCRC();
+        int rom_size = media->GetROMSize();
+        const char* is_sgx = media->IsSGX() ? "YES" : "NO";
+        const char* is_cdrom = media->IsCDROM() ? "YES" : "NO";
 
-        snprintf(info, buffer_size, "File Name: %s\nCRC: %08X\nROM Size: %d bytes, %d KB\nROM Banks: %d\nSuperGrafx: %s\nCD-ROM: %s\nScreen Resolution: %dx%d", filename, crc, rom_size, rom_size / 1024, rom_banks, is_sgx, is_cdrom, runtime.screen_width, runtime.screen_height);
+        snprintf(info, buffer_size, "File Name: %s\nCRC: %08X\nROM Size: %d bytes, %d KB\nSuperGrafx: %s\nCD-ROM: %s\nScreen Resolution: %dx%d", filename, crc, rom_size, rom_size / 1024, is_sgx, is_cdrom, runtime.screen_width, runtime.screen_height);
     }
     else
     {
@@ -429,16 +431,16 @@ void emu_set_huc6280_registers_reset_value(int value)
 
 void emu_set_console_type(GG_Console_Type console_type)
 {
-    geargrafx->GetCartridge()->SetConsoleType(console_type);
+    geargrafx->GetMedia()->SetConsoleType(console_type);
 }
 void emu_set_cdrom_type(GG_CDROM_Type cdrom_type)
 {
-    geargrafx->GetCartridge()->SetCDROMType(cdrom_type);
+    geargrafx->GetMedia()->SetCDROMType(cdrom_type);
 }
 
 void emu_set_backup_ram(bool enabled)
 {
-    geargrafx->GetCartridge()->ForceBackupRAM(enabled);
+    geargrafx->GetMedia()->ForceBackupRAM(enabled);
 }
 
 void emu_set_turbo_tap(bool enabled)
@@ -458,7 +460,7 @@ void emu_set_avenue_pad_3_button(GG_Controllers controller, GG_Keys button)
 
 void emu_save_screenshot(const char* file_path)
 {
-    if (!geargrafx->GetCartridge()->IsReady())
+    if (!geargrafx->GetMedia()->IsReady())
         return;
 
     GG_Runtime_Info runtime;
@@ -471,12 +473,12 @@ void emu_save_screenshot(const char* file_path)
 
 void emu_load_syscard_bios(const char* file_path)
 {
-    geargrafx->GetMemory()->LoadBios(file_path, true);
+    geargrafx->LoadBios(file_path, true);
 }
 
 void emu_load_gameexpress_bios(const char* file_path)
 {
-    geargrafx->GetMemory()->LoadBios(file_path, false);
+    geargrafx->LoadBios(file_path, false);
 }
 
 static void save_ram(void)
@@ -572,7 +574,7 @@ static void update_debug(void)
 
 static void update_debug_background(void)
 {
-    bool is_sgx = geargrafx->GetCartridge()->IsSGX();
+    bool is_sgx = geargrafx->GetMedia()->IsSGX();
     int vdc_min = 0;
     int vdc_max = is_sgx ? 1 : 0;
 
@@ -635,7 +637,7 @@ static void update_debug_background(void)
 
 static void update_debug_sprites(void)
 {
-    bool is_sgx = geargrafx->GetCartridge()->IsSGX();
+    bool is_sgx = geargrafx->GetMedia()->IsSGX();
     int vdc_min = 0;
     int vdc_max = is_sgx ? 1 : 0;
 

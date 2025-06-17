@@ -46,9 +46,12 @@ static bool status_message_active = false;
 static char status_message[4096] = "";
 static u32 status_message_start_time = 0;
 static u32 status_message_duration = 0;
+static bool error_window_active = false;
+static char error_message[4096] = "";
 static void main_window(void);
 static void push_recent_rom(std::string path);
 static void show_status_message(void);
+static void show_error_window(void);
 static void set_style(void);
 static ImVec4 lerp(const ImVec4& a, const ImVec4& b, float t);
 
@@ -176,6 +179,7 @@ void gui_render(void)
         gui_show_info();
 
     show_status_message();
+    show_error_window();
 
     ImGui::Render();
 }
@@ -280,7 +284,13 @@ void gui_load_rom(const char* path)
 
     push_recent_rom(path);
     emu_resume();
-    emu_load_rom(path);
+    if (!emu_load_media(path))
+    {
+        std::string message("Error loading ROM:\n");
+        message += path;
+        gui_set_error_message(message.c_str());
+        return;
+    }
 
     gui_debug_reset();
 
@@ -300,7 +310,7 @@ void gui_load_rom(const char* path)
     }
 
     if (!emu_is_empty())
-        application_update_title_with_rom(emu_get_core()->GetCartridge()->GetFileName());
+        application_update_title_with_rom(emu_get_core()->GetMedia()->GetFileName());
 }
 
 void gui_set_status_message(const char* message, u32 milliseconds)
@@ -312,6 +322,12 @@ void gui_set_status_message(const char* message, u32 milliseconds)
         status_message_start_time = SDL_GetTicks();
         status_message_duration = milliseconds;
     }
+}
+
+void gui_set_error_message(const char* message)
+{
+    strcpy(error_message, message);
+    error_window_active = true;
 }
 
 static void main_window(void)
@@ -507,6 +523,28 @@ static void show_status_message(void)
         }
 
         ImGui::PopStyleVar();
+    }
+}
+
+static void show_error_window(void)
+{
+    if (error_window_active)
+    {
+        error_window_active = false;
+        ImGui::OpenPopup("Error");
+    }
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("%s\n\n", error_message);
+        ImGui::Separator();
+        if (ImGui::Button("OK"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 }
 

@@ -24,7 +24,7 @@
 #include "geargrafx_core.h"
 #include "input.h"
 #include "audio.h"
-#include "cartridge.h"
+#include "media.h"
 #include "memory.h"
 #include "huc6202.h"
 #include "huc6260.h"

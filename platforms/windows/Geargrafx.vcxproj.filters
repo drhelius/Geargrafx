@@ -115,7 +115,7 @@
     <ClCompile Include="..\..\src\audio.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cartridge.cpp">
+    <ClCompile Include="..\..\src\media.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cdrom_audio.cpp">
@@ -309,7 +309,10 @@
     <ClInclude Include="..\..\src\bit_ops.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cartridge.h">
+    <ClInclude Include="..\..\src\media.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\media_inline.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cdrom_media.h">

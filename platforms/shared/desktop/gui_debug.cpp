@@ -105,7 +105,7 @@ void gui_debug_windows(void)
             gui_debug_window_huc6270_sprites(1);
         if (config_debug.show_huc6270_1_info)
             gui_debug_window_huc6270_info(1);
-        if (emu_get_core()->GetCartridge()->IsSGX())
+        if (emu_get_core()->GetMedia()->IsSGX())
         {
             if (config_debug.show_huc6202_info)
                 gui_debug_window_huc6202_info();
@@ -120,11 +120,11 @@ void gui_debug_windows(void)
         }
         if (config_debug.show_psg)
             gui_debug_window_psg();
-        if (config_debug.show_cdrom && emu_get_core()->GetCartridge()->IsCDROM())
+        if (config_debug.show_cdrom && emu_get_core()->GetMedia()->IsCDROM())
             gui_debug_window_cdrom();
-        if (config_debug.show_cdrom_audio && emu_get_core()->GetCartridge()->IsCDROM())
+        if (config_debug.show_cdrom_audio && emu_get_core()->GetMedia()->IsCDROM())
             gui_debug_window_cdrom_audio();
-        if (config_debug.show_adpcm && emu_get_core()->GetCartridge()->IsCDROM())
+        if (config_debug.show_adpcm && emu_get_core()->GetMedia()->IsCDROM())
             gui_debug_window_adpcm();
         if (config_debug.show_trace_logger)
             gui_debug_window_trace_logger();

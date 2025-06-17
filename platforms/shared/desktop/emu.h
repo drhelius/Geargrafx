@@ -62,7 +62,7 @@ EXTERN bool emu_debug_irq_breakpoints;
 EXTERN void emu_init(void);
 EXTERN void emu_destroy(void);
 EXTERN void emu_update(void);
-EXTERN void emu_load_rom(const char* file_path);
+EXTERN bool emu_load_media(const char* file_path);
 EXTERN void emu_key_pressed(GG_Controllers controller, GG_Keys key);
 EXTERN void emu_key_released(GG_Controllers controller, GG_Keys key);
 EXTERN void emu_pause(void);

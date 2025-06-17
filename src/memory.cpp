@@ -22,18 +22,18 @@
 #include "huc6260.h"
 #include "huc6202.h"
 #include "huc6280.h"
-#include "cartridge.h"
+#include "media.h"
 #include "input.h"
 #include "audio.h"
 #include "cdrom.h"
 #include "sf2_mapper.h"
 
-Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Cartridge* cartridge, Input* input, Audio* audio, CdRom* cdrom)
+Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom)
 {
     m_huc6260 = huc6260;
     m_huc6202 = huc6202;
     m_huc6280 = huc6280;
-    m_cartridge = cartridge;
+    m_media = media;
     m_input = input;
     m_audio = audio;
     m_cdrom = cdrom;
@@ -81,7 +81,7 @@ void Memory::Init()
 #endif
 
     m_current_mapper = NULL;
-    m_sf2_mapper = new SF2Mapper(m_cartridge);
+    m_sf2_mapper = new SF2Mapper(m_media);
 
     Reset();
 }
@@ -119,7 +119,7 @@ void Memory::Reset()
         m_test_memory[i] = rand() & 0xFF;
 #endif
 
-    if (m_cartridge->GetMapper() == Cartridge::SF2_MAPPER)
+    if (m_media->GetMapper() == Media::SF2_MAPPER)
     {
         m_sf2_mapper->Reset();
         m_current_mapper = m_sf2_mapper;
@@ -127,7 +127,7 @@ void Memory::Reset()
     else
         m_current_mapper = NULL;
 
-    m_cdrom_ram_size = m_cartridge->IsCDROM() ? 0x10000 : 0;
+    m_cdrom_ram_size = m_media->IsCDROM() ? 0x10000 : 0;
 
     for (u32 i = 0; i < m_cdrom_ram_size; i++)
     {
@@ -137,7 +137,7 @@ void Memory::Reset()
             m_cdrom_ram[i] = m_wram_reset_value & 0xFF;
     }
 
-    m_card_ram_size = m_cartridge->GetCardRAMSize();
+    m_card_ram_size = m_media->GetCardRAMSize();
 
     if (m_card_ram_size == 0x8000)
     {
@@ -174,9 +174,6 @@ void Memory::Reset()
 
 void Memory::ReloadMemoryMap()
 {
-    if (m_cartridge->IsCDROM())
-        m_cartridge->LoadBios(m_syscard_bios, GG_BIOS_SYSCARD_SIZE);
-
     // 0x00 - 0x7F
     for (int i = 0x00; i <= 0x7F; i++)
     {
@@ -190,7 +187,7 @@ void Memory::ReloadMemoryMap()
         else
         {
             m_memory_map_write[i] = false;
-            m_memory_map[i] = m_cartridge->GetROMMap()[i];
+            m_memory_map[i] = m_media->GetROMMap()[i];
         }
     }
 
@@ -202,7 +199,7 @@ void Memory::ReloadMemoryMap()
     }
 
     // 0x80 - 0x87
-    if (m_cartridge->IsCDROM())
+    if (m_media->IsCDROM())
         for (int i = 0x80; i <= 0x87; i++)
         {
             // CDROM RAM
@@ -223,7 +220,7 @@ void Memory::ReloadMemoryMap()
     {
         // RAM
         m_memory_map_write[i] = true;
-        if (m_cartridge->IsSGX())
+        if (m_media->IsSGX())
             m_memory_map[i] = &m_wram[(i - 0xF8) * 0x2000];
         else
             m_memory_map[i] = &m_wram[0];
@@ -330,57 +327,9 @@ GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
     return record;
 }
 
-bool Memory::LoadBios(const char* file_path, bool syscard)
-{
-    using namespace std;
-    int expected_size = 0;
-    u8* bios = NULL;
-
-    if  (syscard)
-    {
-        expected_size = GG_BIOS_SYSCARD_SIZE;
-        bios = m_syscard_bios;
-    }
-    else
-    {
-        expected_size = GG_BIOS_GAME_EXPRESS_SIZE;
-        bios = m_gameexpress_bios;
-    }
-
-    bool ret = true;
-
-    ifstream file(file_path, ios::in | ios::binary | ios::ate);
-
-    if (file.is_open())
-    {
-        int size = static_cast<int> (file.tellg());
-
-        if (size != expected_size)
-        {
-            Log("Incorrect BIOS size %d: expected: %d. %s", size, expected_size, file_path);
-            ret = false;
-        }
-
-        memset(bios, 0x00, expected_size);
-
-        file.seekg(0, ios::beg);
-        file.read(reinterpret_cast<char*>(bios), MIN(size, expected_size));
-        file.close();
-
-        Log("BIOS %s loaded (%d bytes)", file_path, size);
-    }
-    else
-    {
-        Log("There was a problem opening the file %s", file_path);
-        return false;
-    }
-
-    return ret;
-}
-
 Memory::MemoryBankType Memory::GetBankType(u8 bank)
 {
-    if (m_cartridge->IsCDROM() && bank >= 0x80 && bank <= 0x87)
+    if (m_media->IsCDROM() && bank >= 0x80 && bank <= 0x87)
         return MEMORY_BANK_TYPE_CDROM_RAM;
 
     if (bank == 0xF7 && m_backup_ram_enabled)
@@ -393,7 +342,7 @@ Memory::MemoryBankType Memory::GetBankType(u8 bank)
         return MEMORY_BANK_TYPE_CARD_RAM;
 
     if (bank < 0x80)
-        return m_cartridge->IsCDROM() ? MEMORY_BANK_TYPE_BIOS : MEMORY_BANK_TYPE_ROM;
+        return m_media->IsCDROM() ? MEMORY_BANK_TYPE_BIOS : MEMORY_BANK_TYPE_ROM;
 
     return MEMORY_BANK_TYPE_UNUSED;
 }

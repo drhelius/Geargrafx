@@ -18,9 +18,9 @@
  */
 
 #include "sf2_mapper.h"
-#include "cartridge.h"
+#include "media.h"
 
-SF2Mapper::SF2Mapper(Cartridge* cartridge) : Mapper(cartridge)
+SF2Mapper::SF2Mapper(Media* media) : Mapper(media)
 {
     Reset();
 }
@@ -33,12 +33,12 @@ u8 SF2Mapper::Read(u8 bank, u16 address)
 {
     if (bank < 0x40)
     {
-        u8** rom_map = m_cartridge->GetROMMap();
+        u8** rom_map = m_media->GetROMMap();
         return rom_map[bank][address];
     }
     else
     {
-        u8* rom = m_cartridge->GetROM();
+        u8* rom = m_media->GetROM();
         int bank_address = (bank * 0x2000) + m_bank_address;
         return rom[bank_address + address];
     }

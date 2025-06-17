@@ -18,12 +18,12 @@
  */
 
 #include "input.h"
-#include "cartridge.h"
+#include "media.h"
 #include "common.h"
 
-Input::Input(Cartridge* cartridge)
+Input::Input(Media* media)
 {
-    m_cartridge = cartridge;
+    m_media = media;
     m_turbo_tap = false;
     m_pce_jap = false;
     m_cdrom = true;

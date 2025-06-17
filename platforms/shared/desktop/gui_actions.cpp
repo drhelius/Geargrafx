@@ -79,7 +79,7 @@ void gui_action_save_screenshot(const char* path)
 {
     using namespace std;
 
-    if (!emu_get_core()->GetCartridge()->IsReady())
+    if (!emu_get_core()->GetMedia()->IsReady())
         return;
 
     time_t now = time(0);
@@ -102,17 +102,17 @@ void gui_action_save_screenshot(const char* path)
             default:
             case Directory_Location_Default:
             {
-                file_path = file_path.assign(config_root_path)+ "/" + string(emu_get_core()->GetCartridge()->GetFileName()) + " - " + date_time + ".png";
+                file_path = file_path.assign(config_root_path)+ "/" + string(emu_get_core()->GetMedia()->GetFileName()) + " - " + date_time + ".png";
                 break;
             }
             case Directory_Location_ROM:
             {
-                file_path = file_path.assign(emu_get_core()->GetCartridge()->GetFilePath()) + " - " + date_time + ".png";
+                file_path = file_path.assign(emu_get_core()->GetMedia()->GetFilePath()) + " - " + date_time + ".png";
                 break;
             }
             case Directory_Location_Custom:
             {
-                file_path = file_path.assign(config_emulator.screenshots_path)+ "/" + string(emu_get_core()->GetCartridge()->GetFileName()) + " - " + date_time + ".png";
+                file_path = file_path.assign(config_emulator.screenshots_path)+ "/" + string(emu_get_core()->GetMedia()->GetFileName()) + " - " + date_time + ".png";
                 break;
             }
         }

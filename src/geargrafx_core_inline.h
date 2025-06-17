@@ -21,7 +21,7 @@
 #define GEARGRAFX_CORE_INLINE_H
 
 #include "geargrafx_core.h"
-#include "cartridge.h"
+#include "media.h"
 #include "huc6260.h"
 #include "huc6280.h"
 #include "audio.h"
@@ -31,11 +31,11 @@
 
 INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
 {
-    if (m_paused || !m_cartridge->IsReady())
+    if (m_paused || !m_media->IsReady())
         return false;
 
-    const bool is_cdrom = m_cartridge->IsCDROM();
-    const bool is_sgx = m_cartridge->IsSGX();
+    const bool is_cdrom = m_media->IsCDROM();
+    const bool is_sgx = m_media->IsSGX();
 #if defined(GG_DISABLE_DISASSEMBLER)
     const bool debugger = false;
 #else
@@ -152,9 +152,9 @@ INLINE Memory* GeargrafxCore::GetMemory()
     return m_memory;
 }
 
-INLINE Cartridge* GeargrafxCore::GetCartridge()
+INLINE Media* GeargrafxCore::GetMedia()
 {
-    return m_cartridge;
+    return m_media;
 }
 
 INLINE HuC6202* GeargrafxCore::GetHuC6202()
