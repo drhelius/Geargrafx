@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <errno.h>
 #endif
 #include "defines.h"
 #include "types.h"
