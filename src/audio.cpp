@@ -91,10 +91,28 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         int count_psg = m_psg->EndFrame(m_psg_buffer);
         int count_adpcm = m_adpcm->EndFrame(m_adpcm_buffer);
         int count_cdrom = m_cdrom_audio->EndFrame(m_cdrom_buffer);
-        assert(count_psg <= GG_AUDIO_BUFFER_SIZE);
-        assert(count_adpcm <= GG_AUDIO_BUFFER_SIZE);
-        assert(count_cdrom <= GG_AUDIO_BUFFER_SIZE);
-        assert(count_psg == count_adpcm && count_adpcm == count_cdrom);
+
+        if (count_psg > GG_AUDIO_BUFFER_SIZE)
+        {
+            Log("ERROR: Audio buffers exceeded maximum size");
+            count_psg = GG_AUDIO_BUFFER_SIZE;
+        }
+        if (count_adpcm > GG_AUDIO_BUFFER_SIZE)
+        {
+            Log("ERROR: Audio buffers exceeded maximum size");
+            count_adpcm = GG_AUDIO_BUFFER_SIZE;
+        }
+        if (count_cdrom > GG_AUDIO_BUFFER_SIZE)
+        {
+            Log("ERROR: Audio buffers exceeded maximum size");
+            count_cdrom = GG_AUDIO_BUFFER_SIZE;
+        }
+
+        if (count_psg != count_adpcm || count_adpcm != count_cdrom)
+        {
+            Log("ERROR: Audio buffers have different sample counts: PSG=%d, ADPCM=%d, CDROM=%d", count_psg, count_adpcm, count_cdrom);
+        }
+
         int samples = count_psg;
 
         *sample_count = samples;
