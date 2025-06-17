@@ -154,10 +154,62 @@ u8 Adpcm::ComputeLatency(int offset, bool read)
 
 void Adpcm::SaveState(std::ostream& stream)
 {
-    
+    using namespace std;
+
+    stream.write(reinterpret_cast<const char*> (m_adpcm_ram), sizeof(m_adpcm_ram));
+    stream.write(reinterpret_cast<const char*> (&m_read_value), sizeof(m_read_value));
+    stream.write(reinterpret_cast<const char*> (&m_write_value), sizeof(m_write_value));
+    stream.write(reinterpret_cast<const char*> (&m_read_cycles), sizeof(m_read_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_write_cycles), sizeof(m_write_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_read_address), sizeof(m_read_address));
+    stream.write(reinterpret_cast<const char*> (&m_write_address), sizeof(m_write_address));
+    stream.write(reinterpret_cast<const char*> (&m_address), sizeof(m_address));
+    stream.write(reinterpret_cast<const char*> (&m_samples_left), sizeof(m_samples_left));
+    stream.write(reinterpret_cast<const char*> (&m_sample_rate), sizeof(m_sample_rate));
+    stream.write(reinterpret_cast<const char*> (&m_cycles_per_sample), sizeof(m_cycles_per_sample));
+    stream.write(reinterpret_cast<const char*> (&m_control), sizeof(m_control));
+    stream.write(reinterpret_cast<const char*> (&m_dma), sizeof(m_dma));
+    stream.write(reinterpret_cast<const char*> (&m_dma_cycles), sizeof(m_dma_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_end_irq), sizeof(m_end_irq));
+    stream.write(reinterpret_cast<const char*> (&m_half_irq), sizeof(m_half_irq));
+    stream.write(reinterpret_cast<const char*> (&m_playing), sizeof(m_playing));
+    stream.write(reinterpret_cast<const char*> (&m_play_pending), sizeof(m_play_pending));
+    stream.write(reinterpret_cast<const char*> (&m_nibble_toggle), sizeof(m_nibble_toggle));
+    stream.write(reinterpret_cast<const char*> (&m_length), sizeof(m_length));
+    stream.write(reinterpret_cast<const char*> (&m_sample), sizeof(m_sample));
+    stream.write(reinterpret_cast<const char*> (&m_step_index), sizeof(m_step_index));
+    stream.write(reinterpret_cast<const char*> (&m_adpcm_cycle_counter), sizeof(m_adpcm_cycle_counter));
+    stream.write(reinterpret_cast<const char*> (&m_audio_cycle_counter), sizeof(m_audio_cycle_counter));
+    stream.write(reinterpret_cast<const char*> (&m_filter_state), sizeof(m_filter_state));
 }
 
 void Adpcm::LoadState(std::istream& stream)
 {
-    
+    using namespace std;
+
+    stream.read(reinterpret_cast<char*> (m_adpcm_ram), sizeof(m_adpcm_ram));
+    stream.read(reinterpret_cast<char*> (&m_read_value), sizeof(m_read_value));
+    stream.read(reinterpret_cast<char*> (&m_write_value), sizeof(m_write_value));
+    stream.read(reinterpret_cast<char*> (&m_read_cycles), sizeof(m_read_cycles));
+    stream.read(reinterpret_cast<char*> (&m_write_cycles), sizeof(m_write_cycles));
+    stream.read(reinterpret_cast<char*> (&m_read_address), sizeof(m_read_address));
+    stream.read(reinterpret_cast<char*> (&m_write_address), sizeof(m_write_address));
+    stream.read(reinterpret_cast<char*> (&m_address), sizeof(m_address));
+    stream.read(reinterpret_cast<char*> (&m_samples_left), sizeof(m_samples_left));
+    stream.read(reinterpret_cast<char*> (&m_sample_rate), sizeof(m_sample_rate));
+    stream.read(reinterpret_cast<char*> (&m_cycles_per_sample), sizeof(m_cycles_per_sample));
+    stream.read(reinterpret_cast<char*> (&m_control), sizeof(m_control));
+    stream.read(reinterpret_cast<char*> (&m_dma), sizeof(m_dma));
+    stream.read(reinterpret_cast<char*> (&m_dma_cycles), sizeof(m_dma_cycles));
+    stream.read(reinterpret_cast<char*> (&m_end_irq), sizeof(m_end_irq));
+    stream.read(reinterpret_cast<char*> (&m_half_irq), sizeof(m_half_irq));
+    stream.read(reinterpret_cast<char*> (&m_playing), sizeof(m_playing));
+    stream.read(reinterpret_cast<char*> (&m_play_pending), sizeof(m_play_pending));
+    stream.read(reinterpret_cast<char*> (&m_nibble_toggle), sizeof(m_nibble_toggle));
+    stream.read(reinterpret_cast<char*> (&m_length), sizeof(m_length));
+    stream.read(reinterpret_cast<char*> (&m_sample), sizeof(m_sample));
+    stream.read(reinterpret_cast<char*> (&m_step_index), sizeof(m_step_index));
+    stream.read(reinterpret_cast<char*> (&m_adpcm_cycle_counter), sizeof(m_adpcm_cycle_counter));
+    stream.read(reinterpret_cast<char*> (&m_audio_cycle_counter), sizeof(m_audio_cycle_counter));
+    stream.read(reinterpret_cast<char*> (&m_filter_state), sizeof(m_filter_state));
 }

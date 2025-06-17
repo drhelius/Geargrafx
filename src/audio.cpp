@@ -56,6 +56,7 @@ void Audio::Reset(bool cdrom)
 
     memset(m_psg_buffer, 0, sizeof(m_psg_buffer));
     memset(m_adpcm_buffer, 0, sizeof(m_adpcm_buffer));
+    memset(m_cdrom_buffer, 0, sizeof(m_cdrom_buffer));
 }
 
 void Audio::Mute(bool mute)
@@ -127,8 +128,6 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 void Audio::SaveState(std::ostream& stream)
 {
     using namespace std;
-    stream.write(reinterpret_cast<const char*> (m_psg_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
-    stream.write(reinterpret_cast<const char*> (m_adpcm_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
     stream.write(reinterpret_cast<const char*> (&m_cycle_counter), sizeof(m_cycle_counter));
     m_psg->SaveState(stream);
 }
@@ -136,8 +135,6 @@ void Audio::SaveState(std::ostream& stream)
 void Audio::LoadState(std::istream& stream)
 {
     using namespace std;
-    stream.read(reinterpret_cast<char*> (m_psg_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
-    stream.read(reinterpret_cast<char*> (m_adpcm_buffer), sizeof(s16) * GG_AUDIO_BUFFER_SIZE);
     stream.read(reinterpret_cast<char*> (&m_cycle_counter), sizeof(m_cycle_counter));
     m_psg->LoadState(stream);
 }

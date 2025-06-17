@@ -413,6 +413,13 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     m_huc6280->SaveState(stream);
     m_audio->SaveState(stream);
     m_input->SaveState(stream);
+    if (m_media->IsCDROM())
+    {
+        m_cdrom->SaveState(stream);
+        m_scsi_controller->SaveState(stream);
+        m_cdrom_audio->SaveState(stream);
+        m_adpcm->SaveState(stream);
+    }
 
 #if defined(__LIBRETRO__)
     GG_SaveState_Header_Libretro header;
@@ -612,6 +619,13 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     m_huc6280->LoadState(stream);
     m_audio->LoadState(stream);
     m_input->LoadState(stream);
+    if (m_media->IsCDROM())
+    {
+        m_cdrom->LoadState(stream);
+        m_scsi_controller->LoadState(stream);
+        m_cdrom_audio->LoadState(stream);
+        m_adpcm->LoadState(stream);
+    }
 
     return true;
 }

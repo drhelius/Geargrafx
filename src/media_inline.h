@@ -25,12 +25,7 @@
 
 inline u32 Media::GetCRC()
 {
-    return m_crc;
-}
-
-inline u32 Media::GetCdromCRC()
-{
-    return m_cdrom_media->GetCRC();
+    return m_is_cdrom ? m_cdrom_media->GetCRC() : m_crc;
 }
 
 inline bool Media::IsReady()

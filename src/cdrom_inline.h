@@ -61,9 +61,9 @@ INLINE void CdRom::LatchCdAudioSample()
     if (current_clock - m_cdaudio_sample_last_clock >= 700)
     {
         m_cdaudio_sample_last_clock = current_clock;
-        m_cdaudio_sample_right = !m_cdaudio_sample_right;
+        m_cdaudio_sample_toggle = !m_cdaudio_sample_toggle;
 
-        if (m_cdaudio_sample_right)
+        if (m_cdaudio_sample_toggle)
             m_cdaudio_sample = m_cdrom_audio->GetRightSample();
         else
             m_cdaudio_sample = m_cdrom_audio->GetLeftSample();

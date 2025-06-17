@@ -79,7 +79,7 @@ private:
     bool m_bram_enabled;
     u8 m_active_irqs;
     u8 m_enabled_irqs;
-    bool m_cdaudio_sample_right;
+    bool m_cdaudio_sample_toggle;
     s16 m_cdaudio_sample;
     u64 m_cdaudio_sample_last_clock;
 };

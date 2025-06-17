@@ -95,10 +95,34 @@ int CdRomAudio::EndFrame(s16* sample_buffer)
 
 void CdRomAudio::SaveState(std::ostream& stream)
 {
-    
+    using namespace std;
+
+    stream.write(reinterpret_cast<const char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+    stream.write(reinterpret_cast<const char*> (&m_current_state), sizeof(m_current_state));
+    stream.write(reinterpret_cast<const char*> (&m_start_lba), sizeof(m_start_lba));
+    stream.write(reinterpret_cast<const char*> (&m_stop_lba), sizeof(m_stop_lba));
+    stream.write(reinterpret_cast<const char*> (&m_current_lba), sizeof(m_current_lba));
+    stream.write(reinterpret_cast<const char*> (&m_current_sample), sizeof(m_current_sample));
+    stream.write(reinterpret_cast<const char*> (&m_stop_event), sizeof(m_stop_event));
+    stream.write(reinterpret_cast<const char*> (&m_seek_cycles), sizeof(m_seek_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_fader), sizeof(m_fader));
+    stream.write(reinterpret_cast<const char*> (&m_left_sample), sizeof(m_left_sample));
+    stream.write(reinterpret_cast<const char*> (&m_right_sample), sizeof(m_right_sample));
 }
 
 void CdRomAudio::LoadState(std::istream& stream)
 {
-    
+    using namespace std;
+
+    stream.read(reinterpret_cast<char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+    stream.read(reinterpret_cast<char*> (&m_current_state), sizeof(m_current_state));
+    stream.read(reinterpret_cast<char*> (&m_start_lba), sizeof(m_start_lba));
+    stream.read(reinterpret_cast<char*> (&m_stop_lba), sizeof(m_stop_lba));
+    stream.read(reinterpret_cast<char*> (&m_current_lba), sizeof(m_current_lba));
+    stream.read(reinterpret_cast<char*> (&m_current_sample), sizeof(m_current_sample));
+    stream.read(reinterpret_cast<char*> (&m_stop_event), sizeof(m_stop_event));
+    stream.read(reinterpret_cast<char*> (&m_seek_cycles), sizeof(m_seek_cycles));
+    stream.read(reinterpret_cast<char*> (&m_fader), sizeof(m_fader));
+    stream.read(reinterpret_cast<char*> (&m_left_sample), sizeof(m_left_sample));
+    stream.read(reinterpret_cast<char*> (&m_right_sample), sizeof(m_right_sample));
 }

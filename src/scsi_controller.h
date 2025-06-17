@@ -131,6 +131,8 @@ public:
     void StartStatus(ScsiStatus status, u8 length = 1);
     bool IsDataReady();
     Scsi_State* GetState();
+    void SaveState(std::ostream& stream);
+    void LoadState(std::istream& stream);
 
 private:
     void SetPhase(ScsiPhase phase);

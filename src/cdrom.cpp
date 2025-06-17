@@ -35,7 +35,7 @@ CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* au
     m_bram_enabled = false;
     m_active_irqs = 0;
     m_enabled_irqs = 0;
-    m_cdaudio_sample_right = false;
+    m_cdaudio_sample_toggle = false;
     m_cdaudio_sample = 0;
     m_cdaudio_sample_last_clock = 0;
     m_state.RESET = &m_reset;
@@ -62,7 +62,7 @@ void CdRom::Reset()
     m_bram_enabled = true;
     m_active_irqs = 0;
     m_enabled_irqs = 0;
-    m_cdaudio_sample_right = false;
+    m_cdaudio_sample_toggle = false;
     m_cdaudio_sample = 0;
     m_cdaudio_sample_last_clock = 0;
     m_memory->UpdateBackupRam(m_bram_enabled);
@@ -94,7 +94,7 @@ u8 CdRom::ReadRegister(u16 address)
             //Debug("CDROM Read BRAM Lock %02X", reg);
             m_bram_enabled = false;
             m_memory->UpdateBackupRam(m_bram_enabled);
-            return m_active_irqs | 0x10 | (m_cdaudio_sample_right ? 0x00 : 0x02);
+            return m_active_irqs | 0x10 | (m_cdaudio_sample_toggle ? 0x00 : 0x02);
         }
         case 0x04:
             // Reset
@@ -223,12 +223,26 @@ void CdRom::WriteRegister(u16 address, u8 value)
 
 void CdRom::SaveState(std::ostream& stream)
 {
-    UNUSED(stream);
     using namespace std;
+
+    stream.write(reinterpret_cast<const char*> (&m_reset), sizeof(m_reset));
+    stream.write(reinterpret_cast<const char*> (&m_bram_enabled), sizeof(m_bram_enabled));
+    stream.write(reinterpret_cast<const char*> (&m_active_irqs), sizeof(m_active_irqs));
+    stream.write(reinterpret_cast<const char*> (&m_enabled_irqs), sizeof(m_enabled_irqs));
+    stream.write(reinterpret_cast<const char*> (&m_cdaudio_sample_toggle), sizeof(m_cdaudio_sample_toggle));
+    stream.write(reinterpret_cast<const char*> (&m_cdaudio_sample), sizeof(m_cdaudio_sample));
+    stream.write(reinterpret_cast<const char*> (&m_cdaudio_sample_last_clock), sizeof(m_cdaudio_sample_last_clock));
 }
 
 void CdRom::LoadState(std::istream& stream)
 {
-    UNUSED(stream);
     using namespace std;
+
+    stream.read(reinterpret_cast<char*> (&m_reset), sizeof(m_reset));
+    stream.read(reinterpret_cast<char*> (&m_bram_enabled), sizeof(m_bram_enabled));
+    stream.read(reinterpret_cast<char*> (&m_active_irqs), sizeof(m_active_irqs));
+    stream.read(reinterpret_cast<char*> (&m_enabled_irqs), sizeof(m_enabled_irqs));
+    stream.read(reinterpret_cast<char*> (&m_cdaudio_sample_toggle), sizeof(m_cdaudio_sample_toggle));
+    stream.read(reinterpret_cast<char*> (&m_cdaudio_sample), sizeof(m_cdaudio_sample));
+    stream.read(reinterpret_cast<char*> (&m_cdaudio_sample_last_clock), sizeof(m_cdaudio_sample_last_clock));
 }

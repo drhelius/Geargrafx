@@ -629,3 +629,60 @@ u32 ScsiController::AudioLBA()
         }
     }
 }
+
+void ScsiController::SaveState(std::ostream& stream)
+{
+    using namespace std;
+
+    stream.write(reinterpret_cast<const char*> (&m_bus.db), sizeof(m_bus.db));
+    stream.write(reinterpret_cast<const char*> (&m_bus.signals), sizeof(m_bus.signals));
+    stream.write(reinterpret_cast<const char*> (&m_phase), sizeof(m_phase));
+    stream.write(reinterpret_cast<const char*> (&m_next_event), sizeof(m_next_event));
+    stream.write(reinterpret_cast<const char*> (&m_next_event_cycles), sizeof(m_next_event_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_next_load_cycles), sizeof(m_next_load_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_load_sector), sizeof(m_load_sector));
+    stream.write(reinterpret_cast<const char*> (&m_load_sector_count), sizeof(m_load_sector_count));
+    stream.write(reinterpret_cast<const char*> (&m_auto_ack_cycles), sizeof(m_auto_ack_cycles));
+    u32 command_buffer_size = m_command_buffer.size();
+    stream.write(reinterpret_cast<const char*> (&command_buffer_size), sizeof(command_buffer_size));
+    stream.write(reinterpret_cast<const char*> (m_command_buffer.data()), command_buffer_size * sizeof(u8));
+    u32 data_buffer_size = m_data_buffer.size();
+    stream.write(reinterpret_cast<const char*> (&data_buffer_size), sizeof(data_buffer_size));
+    stream.write(reinterpret_cast<const char*> (m_data_buffer.data()), data_buffer_size * sizeof(u8));
+    stream.write(reinterpret_cast<const char*> (&m_data_buffer_offset), sizeof(m_data_buffer_offset));
+    stream.write(reinterpret_cast<const char*> (&m_bus_changed), sizeof(m_bus_changed));
+    stream.write(reinterpret_cast<const char*> (&m_previous_signals), sizeof(m_previous_signals));
+    stream.write(reinterpret_cast<const char*> (&m_data_bus_latch), sizeof(m_data_bus_latch));
+    u32 current_sector = m_cdrom_media->GetCurrentSector();
+    stream.write(reinterpret_cast<const char*> (&current_sector), sizeof(current_sector));
+}
+
+void ScsiController::LoadState(std::istream& stream)
+{
+    using namespace std;
+
+    stream.read(reinterpret_cast<char*> (&m_bus.db), sizeof(m_bus.db));
+    stream.read(reinterpret_cast<char*> (&m_bus.signals), sizeof(m_bus.signals));
+    stream.read(reinterpret_cast<char*> (&m_phase), sizeof(m_phase));
+    stream.read(reinterpret_cast<char*> (&m_next_event), sizeof(m_next_event));
+    stream.read(reinterpret_cast<char*> (&m_next_event_cycles), sizeof(m_next_event_cycles));
+    stream.read(reinterpret_cast<char*> (&m_next_load_cycles), sizeof(m_next_load_cycles));
+    stream.read(reinterpret_cast<char*> (&m_load_sector), sizeof(m_load_sector));
+    stream.read(reinterpret_cast<char*> (&m_load_sector_count), sizeof(m_load_sector_count));
+    stream.read(reinterpret_cast<char*> (&m_auto_ack_cycles), sizeof(m_auto_ack_cycles));
+    u32 command_buffer_size;
+    stream.read(reinterpret_cast<char*> (&command_buffer_size), sizeof(command_buffer_size));
+    m_command_buffer.resize(command_buffer_size);
+    stream.read(reinterpret_cast<char*> (m_command_buffer.data()), command_buffer_size * sizeof(u8));
+    u32 data_buffer_size;
+    stream.read(reinterpret_cast<char*> (&data_buffer_size), sizeof(data_buffer_size));
+    m_data_buffer.resize(data_buffer_size);
+    stream.read(reinterpret_cast<char*> (m_data_buffer.data()), data_buffer_size * sizeof(u8));
+    stream.read(reinterpret_cast<char*> (&m_data_buffer_offset), sizeof(m_data_buffer_offset));
+    stream.read(reinterpret_cast<char*> (&m_bus_changed), sizeof(m_bus_changed));
+    stream.read(reinterpret_cast<char*> (&m_previous_signals), sizeof(m_previous_signals));
+    stream.read(reinterpret_cast<char*> (&m_data_bus_latch), sizeof(m_data_bus_latch));
+    u32 current_sector;
+    stream.read(reinterpret_cast<char*> (&current_sector), sizeof(current_sector));
+    m_cdrom_media->SetCurrentSector(current_sector);
+}

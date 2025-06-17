@@ -39,7 +39,6 @@ public:
     void Init();
     void Reset();
     u32 GetCRC();
-    u32 GetCdromCRC();
     bool IsReady();
     bool IsSGX();
     bool IsCDROM();
