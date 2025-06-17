@@ -376,9 +376,21 @@ static void menu_emulator(void)
                 if (ImGui::InputText("##syscard_bios_path", gui_syscard_bios_path, IM_ARRAYSIZE(gui_syscard_bios_path), ImGuiInputTextFlags_AutoSelectAll))
                 {
                     config_emulator.syscard_bios_path.assign(gui_syscard_bios_path);
-                    emu_load_syscard_bios(gui_syscard_bios_path);
+                    gui_load_bios(gui_syscard_bios_path, true);
                 }
                 ImGui::PopItemWidth();
+
+                ImGui::Separator();
+                if (emu_get_core()->GetMedia()->IsValidBios(true))
+                {
+                    ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "Valid BIOS: %s", emu_get_core()->GetMedia()->GetBiosName(true));
+                }
+                else
+                {
+                    ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "System Card BIOS not loaded or invalid!");
+                    ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "System Card 3.0 recommended for most games.");
+                }
+
                 ImGui::EndMenu();
             }
 
@@ -392,9 +404,20 @@ static void menu_emulator(void)
                 if (ImGui::InputText("##gameexpress_bios_path", gui_gameexpress_bios_path, IM_ARRAYSIZE(gui_gameexpress_bios_path), ImGuiInputTextFlags_AutoSelectAll))
                 {
                     config_emulator.gameexpress_bios_path.assign(gui_gameexpress_bios_path);
-                    emu_load_gameexpress_bios(gui_gameexpress_bios_path);
+                    gui_load_bios(gui_gameexpress_bios_path, false);
                 }
                 ImGui::PopItemWidth();
+
+                ImGui::Separator();
+                if (emu_get_core()->GetMedia()->IsValidBios(false))
+                {
+                    ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "Valid BIOS: %s", emu_get_core()->GetMedia()->GetBiosName(false));
+                }
+                else
+                {
+                    ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "Game Express BIOS not loaded or invalid!");
+                }
+
                 ImGui::EndMenu();
             }
             ImGui::EndMenu();
@@ -1005,9 +1028,9 @@ static void file_dialogs(void)
     if (choose_backup_ram_path)
         gui_file_dialog_choose_backup_ram_path();
     if (open_syscard_bios)
-        gui_file_dialog_load_syscard_bios();
+        gui_file_dialog_load_bios(true);
     if (open_gameexpress_bios)
-        gui_file_dialog_load_gameexpress_bios();
+        gui_file_dialog_load_bios(false);
     if (open_about)
     {
         gui_dialog_in_use = true;

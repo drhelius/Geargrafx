@@ -215,8 +215,10 @@ void gui_file_dialog_choose_backup_ram_path(void)
     }
 }
 
-void gui_file_dialog_load_syscard_bios(void)
+void gui_file_dialog_load_bios(bool syscard)
 {
+    char* bios_path = syscard ? gui_syscard_bios_path : gui_gameexpress_bios_path;
+    std::string* bios_config_path = syscard ? &config_emulator.syscard_bios_path : &config_emulator.gameexpress_bios_path;
     nfdchar_t *outPath;
     nfdfilteritem_t filterItem[1] = { { "BIOS Files", "pce,bin,rom,bios" } };
     nfdopendialogu8args_t args = { };
@@ -228,38 +230,14 @@ void gui_file_dialog_load_syscard_bios(void)
     nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
     if (result == NFD_OKAY)
     {
-        strncpy_fit(gui_syscard_bios_path, outPath, sizeof(gui_syscard_bios_path));
-        config_emulator.syscard_bios_path.assign(outPath);
-        emu_load_syscard_bios(outPath);
+        strncpy_fit(bios_path, outPath, sizeof(4096));
+        bios_config_path->assign(outPath);
+        gui_load_bios(outPath, syscard);
         NFD_FreePath(outPath);
     }
     else if (result != NFD_CANCEL)
     {
-        Log("System Card Load Bios Error: %s", NFD_GetError());
-    }
-}
-
-void gui_file_dialog_load_gameexpress_bios(void)
-{
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "BIOS Files", "pce,bin,rom,bios" } };
-    nfdopendialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
-
-    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        strncpy_fit(gui_gameexpress_bios_path, outPath, sizeof(gui_gameexpress_bios_path));
-        config_emulator.gameexpress_bios_path.assign(outPath);
-        emu_load_gameexpress_bios(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Log("Game Express Load Bios Error: %s", NFD_GetError());
+        Log("Load Bios Error: %s", NFD_GetError());
     }
 }
 

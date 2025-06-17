@@ -48,6 +48,8 @@ Media::Media(CdRomMedia* cdrom_media)
     m_is_cdrom = false;
     m_is_valid_bios_syscard = false;
     m_is_valid_bios_gameexpress = false;
+    m_is_loaded_bios_syscard = false;
+    m_is_loaded_bios_gameexpress = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
     m_console_type = GG_CONSOLE_AUTO;
@@ -253,6 +255,7 @@ bool Media::LoadBios(const char* file_path, bool syscard)
     int expected_size = 0;
     u8* bios = NULL;
     u32* bios_crc = NULL;
+    bool* loaded_bios;
 
     if (syscard)
     {
@@ -260,6 +263,7 @@ bool Media::LoadBios(const char* file_path, bool syscard)
         bios = m_syscard_bios;
         bios_crc = &m_bios_crc_syscard;
         m_is_valid_bios_syscard = false;
+        loaded_bios = &m_is_loaded_bios_syscard;
     }
     else
     {
@@ -267,6 +271,7 @@ bool Media::LoadBios(const char* file_path, bool syscard)
         bios = m_gameexpress_bios;
         bios_crc = &m_bios_crc_gameexpress;
         m_is_valid_bios_gameexpress = false;
+        loaded_bios = &m_is_loaded_bios_gameexpress;
     }
 
     bool ret = true;
@@ -280,7 +285,6 @@ bool Media::LoadBios(const char* file_path, bool syscard)
         if (size != expected_size)
         {
             Log("Incorrect BIOS size %d: expected: %d. %s", size, expected_size, file_path);
-            ret = false;
         }
 
         memset(bios, 0x00, expected_size);
@@ -297,8 +301,10 @@ bool Media::LoadBios(const char* file_path, bool syscard)
     else
     {
         Log("There was a problem opening the file %s", file_path);
-        return false;
+        ret = false;
     }
+
+    *loaded_bios = ret;
 
     return ret;
 }
@@ -563,7 +569,7 @@ void Media::GatherBIOSInfoFromDB(bool syscard)
 
             found = true;
             *is_valid_bios = true;
-            strncpy_fit(bios_name, k_game_database[i].title, sizeof(bios_name));
+            strncpy_fit(bios_name, k_game_database[i].title, 64);
 
             Log("BIOS found in database: %s. CRC: %08X", k_game_database[i].title, db_crc);
         }

@@ -48,9 +48,19 @@ inline bool Media::IsCDROM()
     return m_is_cdrom;
 }
 
+inline bool Media::IsGameExpress()
+{
+    return m_is_gameexpress;
+}
+
 inline bool Media::IsValidBios(bool syscard)
 {
     return syscard ? m_is_valid_bios_syscard : m_is_valid_bios_gameexpress;
+}
+
+inline bool Media::IsLoadedBios()
+{
+    return m_is_gameexpress ? m_is_loaded_bios_gameexpress : m_is_loaded_bios_syscard;
 }
 
 inline void Media::SetConsoleType(GG_Console_Type console_type)

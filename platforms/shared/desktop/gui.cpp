@@ -141,9 +141,9 @@ void gui_init(void)
     strcpy(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str());
     strcpy(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str());
     if (strlen(gui_syscard_bios_path) > 0)
-        emu_load_syscard_bios(gui_syscard_bios_path);
+        gui_load_bios(gui_syscard_bios_path, true);
     if (strlen(gui_gameexpress_bios_path) > 0)
-        emu_load_gameexpress_bios(gui_gameexpress_bios_path);
+        gui_load_bios(gui_gameexpress_bios_path, false);
 
     gui_debug_init();
     gui_init_menus();
@@ -276,19 +276,71 @@ void gui_shortcut(gui_ShortCutEvent event)
     }
 }
 
+void gui_load_bios(const char* path, bool syscard)
+{
+    using namespace std;
+    string fullpath(path);
+    string filename;
+
+    size_t pos = fullpath.find_last_of("/\\");
+    if (pos != string::npos)
+        filename = fullpath.substr(pos + 1);
+    else
+        filename = fullpath;
+
+    if (!emu_load_bios(path, syscard))
+    {
+        std::string message("Error loading BIOS: ");
+        message += filename;
+        gui_set_error_message(message.c_str());
+        return;
+    }
+
+    if (!emu_get_core()->GetMedia()->IsValidBios(syscard))
+    {
+        std::string message("Invalid BIOS: ");
+        message += filename;
+        message += "\nMake sure the file is a valid BIOS file.";
+        gui_set_error_message(message.c_str());
+        return;
+    }
+}
+
 void gui_load_rom(const char* path)
 {
-    std::string message("Loading ROM ");
+    using namespace std;
+
+    string message("Loading ROM ");
     message += path;
     gui_set_status_message(message.c_str(), 3000);
 
     push_recent_rom(path);
     emu_resume();
+
     if (!emu_load_media(path))
     {
-        std::string message("Error loading ROM:\n");
+        string message("Error loading ROM:\n");
         message += path;
         gui_set_error_message(message.c_str());
+
+        emu_get_core()->GetMedia()->Reset();
+        emu_reset();
+        return;
+    }
+
+    if (emu_get_core()->GetMedia()->IsCDROM() && !emu_get_core()->GetMedia()->IsLoadedBios())
+    {
+        bool is_gameexpress = emu_get_core()->GetMedia()->IsGameExpress();
+        string bios_name = is_gameexpress ? "Game Express BIOS" : "System Card BIOS";
+
+        std::string message;
+        message += bios_name;
+        message += " is required to run this ROM!!\n";
+        message += "Make sure you have a valid BIOS file in 'Menu->Emulator->BIOS'.";
+        gui_set_error_message(message.c_str());
+
+        emu_get_core()->GetMedia()->Reset();
+        emu_reset();
         return;
     }
 
