@@ -293,6 +293,7 @@ void gui_load_bios(const char* path, bool syscard)
         std::string message("Error loading BIOS:\n");
         message += filename;
         gui_set_error_message(message.c_str());
+        gui_action_reset();
         return;
     }
 
@@ -302,8 +303,11 @@ void gui_load_bios(const char* path, bool syscard)
         message += filename;
         message += "\n\nMake sure the file is a valid BIOS file.";
         gui_set_error_message(message.c_str());
+        gui_action_reset();
         return;
     }
+
+    gui_action_reset();
 }
 
 void gui_load_rom(const char* path)
@@ -324,7 +328,7 @@ void gui_load_rom(const char* path)
         gui_set_error_message(message.c_str());
 
         emu_get_core()->GetMedia()->Reset();
-        emu_reset();
+        gui_action_reset();
         return;
     }
 
@@ -340,7 +344,7 @@ void gui_load_rom(const char* path)
         gui_set_error_message(message.c_str());
 
         emu_get_core()->GetMedia()->Reset();
-        emu_reset();
+        gui_action_reset();
         return;
     }
 
