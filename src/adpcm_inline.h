@@ -338,6 +338,12 @@ INLINE void Adpcm::UpdateAudio(u32 cycles)
 
         s16 final_sample = (s16)CLAMP((int)m_filter_state, -32768, 32767);
 
+        if (m_cdrom->IsFaderEnabled(true))
+        {
+            double fader_value = m_cdrom->GetFaderValue();
+            final_sample = (s16)(final_sample * fader_value);
+        }
+
         m_buffer[m_buffer_index + 0] = final_sample;
         m_buffer[m_buffer_index + 1] = final_sample;
 

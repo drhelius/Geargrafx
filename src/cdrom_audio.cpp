@@ -23,6 +23,7 @@
 CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
 {
     m_cdrom_media = cdrom_media;
+    InitPointer(m_cdrom);
     InitPointer(m_scsi_controller);
     m_sample_cycle_counter = 0;
     m_buffer_index = 0;
@@ -34,7 +35,6 @@ CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
     m_current_sample = 0;
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_seek_cycles = 0;
-    m_fader = 0;
     m_left_sample = 0;
     m_right_sample = 0;
 
@@ -44,7 +44,6 @@ CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
     m_state.CURRENT_LBA = &m_current_lba;
     m_state.STOP_EVENT = &m_stop_event;
     m_state.SEEK_CYCLES = &m_seek_cycles;
-    m_state.FADER = &m_fader;
     m_state.FRAME_SAMPLES = &m_frame_samples;
     m_state.BUFFER = m_buffer;
 }
@@ -54,8 +53,9 @@ CdRomAudio::~CdRomAudio()
 
 }
 
-void CdRomAudio::Init(ScsiController* scsi_controller)
+void CdRomAudio::Init(CdRom* cdrom, ScsiController* scsi_controller)
 {
+    m_cdrom = cdrom;
     m_scsi_controller = scsi_controller;
     Reset();
 }
@@ -72,7 +72,6 @@ void CdRomAudio::Reset()
     m_current_sample = 0;
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_seek_cycles = 0;
-    m_fader = 0;
     m_left_sample = 0;
     m_right_sample = 0;
 }
@@ -105,7 +104,6 @@ void CdRomAudio::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_current_sample), sizeof(m_current_sample));
     stream.write(reinterpret_cast<const char*> (&m_stop_event), sizeof(m_stop_event));
     stream.write(reinterpret_cast<const char*> (&m_seek_cycles), sizeof(m_seek_cycles));
-    stream.write(reinterpret_cast<const char*> (&m_fader), sizeof(m_fader));
     stream.write(reinterpret_cast<const char*> (&m_left_sample), sizeof(m_left_sample));
     stream.write(reinterpret_cast<const char*> (&m_right_sample), sizeof(m_right_sample));
 }
@@ -122,7 +120,6 @@ void CdRomAudio::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_current_sample), sizeof(m_current_sample));
     stream.read(reinterpret_cast<char*> (&m_stop_event), sizeof(m_stop_event));
     stream.read(reinterpret_cast<char*> (&m_seek_cycles), sizeof(m_seek_cycles));
-    stream.read(reinterpret_cast<char*> (&m_fader), sizeof(m_fader));
     stream.read(reinterpret_cast<char*> (&m_left_sample), sizeof(m_left_sample));
     stream.read(reinterpret_cast<char*> (&m_right_sample), sizeof(m_right_sample));
 }

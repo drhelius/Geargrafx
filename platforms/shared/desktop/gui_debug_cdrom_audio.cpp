@@ -49,7 +49,7 @@ void gui_debug_window_cdrom_audio(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(120, 100), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(222, 212), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(222, 196), ImGuiCond_FirstUseEver);
     ImGui::Begin("CD-ROM Audio", &config_debug.show_cdrom_audio);
 
     ImGui::PushFont(gui_default_font);
@@ -165,9 +165,6 @@ void gui_debug_window_cdrom_audio(void)
 
     ImGui::TextColored(violet, "SEEK CYCLES "); ImGui::SameLine();
     ImGui::TextColored((*cdrom_audio_state->SEEK_CYCLES <= 0) ? gray : white, "%d", *cdrom_audio_state->SEEK_CYCLES);
-
-    ImGui::TextColored(violet, "FADER"); ImGui::SameLine();
-    ImGui::TextColored(white, "$%02X", *cdrom_audio_state->FADER);
 
     ImGui::PopFont();
 

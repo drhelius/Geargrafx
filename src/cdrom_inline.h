@@ -75,4 +75,35 @@ INLINE CdRom::CdRom_State* CdRom::GetState()
     return &m_state;
 }
 
+INLINE bool CdRom::IsFaderEnabled(bool adpcm)
+{
+    return (m_fader_enabled && (m_fader_adpcm == adpcm));
+}
+
+INLINE double CdRom::GetFaderValue()
+{
+    u64 elapsed_cycles = m_core->GetMasterClockCycles() - m_fader_start_cycles;
+
+    if (elapsed_cycles >= m_fader_cycles)
+        return 0.0;
+
+    double completed = double(elapsed_cycles) / double(m_fader_cycles);
+    return (1.0 - completed);
+}
+
+inline void CdRom::WriteFader(u8 value)
+{
+    m_fader = value;
+    m_fader_enabled = IS_SET_BIT(value, 3);
+    m_fader_adpcm = IS_SET_BIT(value, 1);
+    m_fader_fast = IS_SET_BIT(value, 2);
+    m_fader_start_cycles = m_core->GetMasterClockCycles();
+
+    double fader_seconds = m_fader_fast ? CDROM_FAST_FADE : CDROM_SLOW_FADE;
+    m_fader_cycles = (u64)(fader_seconds * GG_MASTER_CLOCK_RATE);
+
+    Debug("CDROM Fader: %02X, enabled: %d, adpcm: %d, fast: %d, cycles: %llu",
+          value, m_fader_enabled, m_fader_adpcm, m_fader_fast, m_fader_cycles);
+}
+
 #endif /* CDROM_INLINE_H */

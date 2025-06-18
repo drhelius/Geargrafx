@@ -21,6 +21,7 @@
 #define CDROM_AUDIO_INLINE_H
 
 #include "cdrom_audio.h"
+#include "cdrom.h"
 #include "cdrom_media.h"
 #include "scsi_controller.h"
 
@@ -132,6 +133,13 @@ INLINE void CdRomAudio::GenerateSamples()
     m_left_sample = (s16)((buffer[1] << 8) | buffer[0]);
     m_right_sample = (s16)((buffer[3] << 8) | buffer[2]);
 
+    if (m_cdrom->IsFaderEnabled(false))
+    {
+        double fader_value = m_cdrom->GetFaderValue();
+        m_left_sample = (s16)(m_left_sample * fader_value);
+        m_right_sample = (s16)(m_right_sample * fader_value);
+    }
+
     m_current_sample++;
     if (m_current_sample == (2352 / 4))
     {
@@ -161,17 +169,6 @@ INLINE void CdRomAudio::GenerateSamples()
             }
         }
     }
-}
-
-INLINE void CdRomAudio::WriteFader(u8 fader)
-{
-    Debug("CDROM Write Fader %02X", fader);
-    m_fader = fader;
-}
-
-INLINE u8 CdRomAudio::ReadFader()
-{
-    return m_fader;
 }
 
 INLINE s16 CdRomAudio::GetLeftSample()

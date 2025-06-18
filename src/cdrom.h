@@ -29,6 +29,9 @@
 #define CDROM_IRQ_STATUS_AND_MSG_IN 0x20
 #define CDROM_IRQ_DATA_IN           0x40
 
+#define CDROM_SLOW_FADE             6.0
+#define CDROM_FAST_FADE             2.5
+
 class CdRomAudio;
 class ScsiController;
 class HuC6280;
@@ -46,6 +49,7 @@ public:
         bool* BRAM_ENABLED;
         u8* ACTIVE_IRQS;
         u8* ENABLED_IRQS;
+        u8* FADER;
     };
 
 public:
@@ -58,6 +62,8 @@ public:
     void WriteRegister(u16 address, u8 value);
     void SetIRQ(u8 value);
     void ClearIRQ(u8 value);
+    bool IsFaderEnabled(bool adpcm);
+    double GetFaderValue();
     CdRom_State* GetState();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
@@ -65,6 +71,7 @@ public:
 private:
     void AssertIRQ2();
     void LatchCdAudioSample();
+    void WriteFader(u8 value);
 
 private:
     GeargrafxCore* m_core;
@@ -82,6 +89,12 @@ private:
     bool m_cdaudio_sample_toggle;
     s16 m_cdaudio_sample;
     u64 m_cdaudio_sample_last_clock;
+    u8 m_fader;
+    bool m_fader_enabled;
+    bool m_fader_adpcm;
+    bool m_fader_fast;
+    u64 m_fader_start_cycles;
+    u64 m_fader_cycles;
 };
 
 static const u8 k_super_cdrom_signature[4] = { 0x00, 0xAA, 0x55, 0x03 };

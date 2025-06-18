@@ -38,10 +38,12 @@ CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* au
     m_cdaudio_sample_toggle = false;
     m_cdaudio_sample = 0;
     m_cdaudio_sample_last_clock = 0;
+
     m_state.RESET = &m_reset;
     m_state.BRAM_ENABLED = &m_bram_enabled;
     m_state.ACTIVE_IRQS = &m_active_irqs;
     m_state.ENABLED_IRQS = &m_enabled_irqs;
+    m_state.FADER = &m_fader;
 }
 
 CdRom::~CdRom()
@@ -132,7 +134,7 @@ u8 CdRom::ReadRegister(u16 address)
             return m_adpcm->Read(reg);
         case 0x0F:
             // Audio Fader
-            return m_cdrom_audio->ReadFader();
+            return m_fader;
         case 0xC0:
         case 0xC1:
         case 0xC2:
@@ -213,7 +215,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
             break;
         case 0x0F:
             // Audio Fader
-            m_cdrom_audio->WriteFader(value);
+            WriteFader(value);
             break;
         default:
             Debug("CDROM Write Invalid register %04X, value: %02X", reg, value);
@@ -232,6 +234,12 @@ void CdRom::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_cdaudio_sample_toggle), sizeof(m_cdaudio_sample_toggle));
     stream.write(reinterpret_cast<const char*> (&m_cdaudio_sample), sizeof(m_cdaudio_sample));
     stream.write(reinterpret_cast<const char*> (&m_cdaudio_sample_last_clock), sizeof(m_cdaudio_sample_last_clock));
+    stream.write(reinterpret_cast<const char*> (&m_fader), sizeof(m_fader));
+    stream.write(reinterpret_cast<const char*> (&m_fader_enabled), sizeof(m_fader_enabled));
+    stream.write(reinterpret_cast<const char*> (&m_fader_adpcm), sizeof(m_fader_adpcm));
+    stream.write(reinterpret_cast<const char*> (&m_fader_fast), sizeof(m_fader_fast));
+    stream.write(reinterpret_cast<const char*> (&m_fader_start_cycles), sizeof(m_fader_start_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_fader_cycles), sizeof(m_fader_cycles));
 }
 
 void CdRom::LoadState(std::istream& stream)
@@ -245,4 +253,12 @@ void CdRom::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_cdaudio_sample_toggle), sizeof(m_cdaudio_sample_toggle));
     stream.read(reinterpret_cast<char*> (&m_cdaudio_sample), sizeof(m_cdaudio_sample));
     stream.read(reinterpret_cast<char*> (&m_cdaudio_sample_last_clock), sizeof(m_cdaudio_sample_last_clock));
+    stream.read(reinterpret_cast<char*> (&m_fader), sizeof(m_fader));
+    stream.read(reinterpret_cast<char*> (&m_fader_enabled), sizeof(m_fader_enabled));
+    stream.read(reinterpret_cast<char*> (&m_fader_adpcm), sizeof(m_fader_adpcm));
+    stream.read(reinterpret_cast<char*> (&m_fader_fast), sizeof(m_fader_fast));
+    stream.read(reinterpret_cast<char*> (&m_fader_start_cycles), sizeof(m_fader_start_cycles));
+    stream.read(reinterpret_cast<char*> (&m_fader_cycles), sizeof(m_fader_cycles));
+
+    m_memory->UpdateBackupRam(m_bram_enabled);
 }

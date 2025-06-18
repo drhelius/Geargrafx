@@ -32,7 +32,7 @@ void gui_debug_window_cdrom(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(75, 80), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(210, 566), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(210, 584), ImGuiCond_FirstUseEver);
     ImGui::Begin("CD-ROM", &config_debug.show_cdrom);
 
     ImGui::PushFont(gui_default_font);
@@ -127,6 +127,9 @@ void gui_debug_window_cdrom(void)
 
     ImGui::TextColored(violet, "SECTORS LEFT    "); ImGui::SameLine();
     ImGui::TextColored((*scsi_state->NEXT_LOAD_CYCLES <= 0) ? gray : white, "%d", *scsi_state->LOAD_SECTOR_COUNT);
+
+    ImGui::TextColored(violet, "FADER   "); ImGui::SameLine();
+    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *cdrom_state->FADER, BYTE_TO_BINARY(*cdrom_state->FADER));
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "MEDIA"); ImGui::Separator();
 

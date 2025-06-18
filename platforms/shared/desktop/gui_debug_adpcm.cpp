@@ -59,7 +59,7 @@ void gui_debug_window_adpcm(void)
 
     ImGui::TableNextColumn();
 
-    ImGui::PushStyleColor(ImGuiCol_Text, config_audio.mute_cd ? mid_gray : white);
+    ImGui::PushStyleColor(ImGuiCol_Text, config_audio.mute_adpcm ? mid_gray : white);
     ImGui::PushFont(gui_material_icons_font);
 
     char label[32];
