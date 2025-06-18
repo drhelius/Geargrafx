@@ -81,6 +81,7 @@ static void draw_breakpoints(void);
 static void prepare_drawable_lines(void);
 static void draw_disassembly(void);
 static void draw_context_menu(DisassemblerLine* line);
+static void add_cdrom_symbols();
 static void add_symbol(const char* line);
 static void add_auto_symbol(GG_Disassembler_Record* record, u16 address);
 static void add_breakpoint(int type);
@@ -149,6 +150,11 @@ void gui_debug_reset_symbols(void)
             SafeDelete(fixed_symbols[i][j]);
             SafeDelete(dynamic_symbols[i][j]);
         }
+    }
+
+    if (emu_get_core()->GetMedia()->IsCDROM())
+    {
+        add_cdrom_symbols();
     }
 }
 
@@ -821,6 +827,16 @@ static void draw_context_menu(DisassemblerLine* line)
         ImGui::EndPopup();
     }
     ImGui::PushFont(gui_default_font);
+}
+
+static void add_cdrom_symbols()
+{
+    for (int i = 0; i < k_cdrom_bios_symbol_count; i++)
+    {
+        char line[64];
+        snprintf(line, sizeof(line), "%04X %s", k_cdrom_bios_symbols[i].address, k_cdrom_bios_symbols[i].label);
+        add_symbol(line);
+    }
 }
 
 static void add_symbol(const char* line)
