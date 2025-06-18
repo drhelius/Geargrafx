@@ -405,13 +405,13 @@ void Media::GatherMediaInfo()
     if (m_is_cdrom)
     {
         m_crc = m_cdrom_media->GetCRC();
-        Log("CD-ROM CRC32: %08X", m_crc);
+        Log("CD-ROM CRC32: 0x%08X", m_crc);
     }
     else
     {
         m_crc = CalculateCRC32(0, m_rom, m_rom_size);
         Log("HuCard Size: %d KB, %d bytes (0x%0X)", m_rom_size / 1024, m_rom_size, m_rom_size);
-        Log("HuCard CRC32: %08X", m_crc);
+        Log("HuCard CRC32: 0x%08X", m_crc);
     }
 
     GatherMediaInfoFromDB();
