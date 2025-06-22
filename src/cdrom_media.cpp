@@ -478,7 +478,7 @@ void CdRomMedia::CalculateCRC()
 
     for (u32 sec = first_sector; sec <= max_index; sec++)
     {
-        u64 file_offset = first_data_track->file_offset + (u64)first_data_track->sector_size * sec;
+        u32 file_offset = first_data_track->file_offset + (first_data_track->sector_size * sec);
 
         if (first_data_track->sector_size == 2352)
             file_offset += 16;
@@ -846,7 +846,7 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
                 return false;
             }
 
-            u64 byte_offset = track.file_offset + (sector_offset * sector_size);
+            u32 byte_offset = track.file_offset + (sector_offset * sector_size);
 
             if (sector_size == 2352)
             {
@@ -908,7 +908,7 @@ bool CdRomMedia::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
                 return false;
             }
 
-            u64 byte_offset = track.file_offset + (sector_offset * sector_size) + offset;
+            u32 byte_offset = track.file_offset + (sector_offset * sector_size) + offset;
 
             if (byte_offset + size > img_file->file_size)
             {
@@ -928,7 +928,7 @@ bool CdRomMedia::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
     return false;
 }
 
-bool CdRomMedia::ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size)
+bool CdRomMedia::ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer, u32 size)
 {
     if (!IsValidPointer(img_file) || !IsValidPointer(buffer))
     {
@@ -1002,7 +1002,7 @@ bool CdRomMedia::LoadChunk(ImgFile* img_file, u32 chunk_index)
         return false;
     }
 
-    u64 file_offset = CalculateFileOffset(img_file, chunk_index);
+    u32 file_offset = CalculateFileOffset(img_file, chunk_index);
     file.seekg(file_offset, ios::beg);
 
     if (file.fail())
@@ -1031,9 +1031,9 @@ bool CdRomMedia::LoadChunk(ImgFile* img_file, u32 chunk_index)
     return true;
 }
 
-u64 CdRomMedia::CalculateFileOffset(ImgFile* img_file, u32 chunk_index)
+u32 CdRomMedia::CalculateFileOffset(ImgFile* img_file, u32 chunk_index)
 {
-    u64 offset = (u64)chunk_index * (u64)img_file->chunk_size;
+    u32 offset = chunk_index * img_file->chunk_size;
 
     if (img_file->is_wav)
         offset += img_file->wav_data_offset;
@@ -1041,10 +1041,10 @@ u64 CdRomMedia::CalculateFileOffset(ImgFile* img_file, u32 chunk_index)
     return offset;
 }
 
-u32 CdRomMedia::CalculateReadSize(ImgFile* img_file, u64 file_offset)
+u32 CdRomMedia::CalculateReadSize(ImgFile* img_file, u32 file_offset)
 {
     u32 to_read = img_file->chunk_size;
-    u64 effective_offset = file_offset;
+    u32 effective_offset = file_offset;
 
     if (img_file->is_wav)
         effective_offset -= img_file->wav_data_offset;
@@ -1104,8 +1104,8 @@ bool CdRomMedia::PreloadTrackChunks(u32 track_number)
     const Track& track = m_tracks[track_number];
 
     u32 sector_size = track.sector_size;
-    u64 start_offset = track.file_offset;
-    u64 total_bytes = track.sector_count * sector_size;
+    u32 start_offset = track.file_offset;
+    u32 total_bytes = track.sector_count * sector_size;
     u32 start_chunk = start_offset / track.img_file->chunk_size;
     u32 chunks_needed = (total_bytes + track.img_file->chunk_size - 1) / track.img_file->chunk_size;
 
@@ -1204,15 +1204,15 @@ u32 CdRomMedia::SeekTime(u32 start_lba, u32 end_lba)
 
     // Now, we use the algorithm to determine how long to wait
     if (lba_difference < 2)
-        return (9 * 1000 / 60);
+        return (u32)((9 * 1000 / 60));
     if (lba_difference < 5)
-        return (9 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2);
+        return (u32)((9 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2));
     else if (track_difference <= 80)
-        return (18 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2);
+        return (u32)((18 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2));
     else if (track_difference <= 160)
-        return (22 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2);
+        return (u32)((22 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2));
     else if (track_difference <= 644)
-        return (22 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2) + ((track_difference - 161) * 16.66 / 80);
+        return (u32)((22 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2) + ((track_difference - 161) * 16.66 / 80));
     else
-        return (48 * 1000 / 60) + ((track_difference - 644) * 16.66 / 195);
+        return (u32)((48 * 1000 / 60) + ((track_difference - 644) * 16.66 / 195));
 }

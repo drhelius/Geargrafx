@@ -111,8 +111,8 @@ private:
     bool ProcessWavFormat(ImgFile* img_file);
     bool FindWavDataChunk(ImgFile* img_file, std::ifstream& file);
     void SetupFileChunks(ImgFile* img_file);
-    u64 CalculateFileOffset(ImgFile* img_file, u32 chunk_index);
-    u32 CalculateReadSize(ImgFile* img_file, u64 file_offset);
+    u32 CalculateFileOffset(ImgFile* img_file, u32 chunk_index);
+    u32 CalculateReadSize(ImgFile* img_file, u32 file_offset);
     bool ParseCueFile(const char* cue_content);
     bool ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size);
     bool LoadChunk(ImgFile* img_file, u32 chunk_index);
@@ -134,7 +134,7 @@ private:
 };
 
 static const u32 k_cdrom_track_type_size[3] = { 2352, 2048, 2352};
-static const char* k_cdrom_track_type_name[3] = { "AUDIO", "MODE1/2048", "MODE1/2352" };
+static const char* const k_cdrom_track_type_name[3] = { "AUDIO", "MODE1/2048", "MODE1/2352" };
 
 INLINE u32 CdRomMedia::SectorTransferCycles()
 {

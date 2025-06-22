@@ -643,10 +643,10 @@ void ScsiController::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_load_sector), sizeof(m_load_sector));
     stream.write(reinterpret_cast<const char*> (&m_load_sector_count), sizeof(m_load_sector_count));
     stream.write(reinterpret_cast<const char*> (&m_auto_ack_cycles), sizeof(m_auto_ack_cycles));
-    u32 command_buffer_size = m_command_buffer.size();
+    u32 command_buffer_size = (u32)m_command_buffer.size();
     stream.write(reinterpret_cast<const char*> (&command_buffer_size), sizeof(command_buffer_size));
     stream.write(reinterpret_cast<const char*> (m_command_buffer.data()), command_buffer_size * sizeof(u8));
-    u32 data_buffer_size = m_data_buffer.size();
+    u32 data_buffer_size = (u32)m_data_buffer.size();
     stream.write(reinterpret_cast<const char*> (&data_buffer_size), sizeof(data_buffer_size));
     stream.write(reinterpret_cast<const char*> (m_data_buffer.data()), data_buffer_size * sizeof(u8));
     stream.write(reinterpret_cast<const char*> (&m_data_buffer_offset), sizeof(m_data_buffer_offset));

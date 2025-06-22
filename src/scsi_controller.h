@@ -182,7 +182,7 @@ private:
     u8 m_data_bus_latch;
 };
 
-static const char* k_scsi_phase_names[] = {
+static const char* const k_scsi_phase_names[] = {
     "BUS FREE",
     "SELECTION",
     "MESSAGE OUT",
@@ -194,7 +194,7 @@ static const char* k_scsi_phase_names[] = {
     "BUSY"
 };
 
-static const char* k_scsi_event_names[] = {
+static const char* const k_scsi_event_names[] = {
     "NONE",
     "SET COMMAND PHASE",
     "SET REQ SIGNAL",
