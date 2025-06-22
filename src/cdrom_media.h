@@ -114,7 +114,7 @@ private:
     u32 CalculateFileOffset(ImgFile* img_file, u32 chunk_index);
     u32 CalculateReadSize(ImgFile* img_file, u32 file_offset);
     bool ParseCueFile(const char* cue_content);
-    bool ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size);
+    bool ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer, u32 size);
     bool LoadChunk(ImgFile* img_file, u32 chunk_index);
     void CalculateCRC();
     u32 SeekFindGroup(u32 lba);
