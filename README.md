@@ -37,7 +37,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 ## Features
 
 - Accurate emulation supporting the entire HuCard PCE / SGX catalog.
-- Initial support for CD-ROM² and Super CD-ROM² systems (in development).
+- Support for CD-ROM², Super CD-ROM² and Arcade CD-ROM² systems.
 - Save states with preview.
 - Multi Tap (up to 5 players).
 - Standard Gamepad (2 buttons), Avenue Pad 3 (3 buttons, auto-configured based on game), Avenue Pad 6 (6 buttons).
