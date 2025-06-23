@@ -25,20 +25,24 @@
 #include "types.h"
 
 class Media;
+class Memory;
 
 class Mapper
 {
 public:
-    Mapper(Media* media);
+    Mapper(Media* media, Memory* memory);
     virtual ~Mapper();
     virtual u8 Read(u8 bank, u16 address) = 0;
     virtual void Write(u8 bank, u16 address, u8 value) = 0;
+    virtual u8 ReadHardware(u16 address);
+    virtual void WriteHardware(u16 address, u8 value);
     virtual void Reset() = 0;
     virtual void SaveState(std::ostream& stream);
     virtual void LoadState(std::istream& stream);
 
 protected:
     Media* m_media;
+    Memory* m_memory;
 };
 
 #endif /* MAPPER_H */

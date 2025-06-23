@@ -33,6 +33,7 @@ class Audio;
 class CdRom;
 class Mapper;
 class SF2Mapper;
+class ArcadeCardMapper;
 
 class Memory
 {
@@ -75,6 +76,8 @@ public:
     int GetCardRAMEnd();
     int GetBackupRAMSize();
     int GetCDROMRAMSize();
+    u8** GetMemoryMap();
+    bool* GetMemoryMapWrite();
     GG_Disassembler_Record** GetAllDisassemblerRecords();
     void EnableBackupRam(bool enable);
     bool IsBackupRamEnabled();
@@ -95,6 +98,7 @@ private:
     HuC6280* m_huc6280;
     Media* m_media;
     SF2Mapper* m_sf2_mapper;
+    ArcadeCardMapper* m_arcade_card_mapper;
     Input* m_input;
     Audio* m_audio;
     CdRom* m_cdrom;

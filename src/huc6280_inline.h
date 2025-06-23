@@ -113,7 +113,6 @@ INLINE void HuC6280::AssertIRQ2(bool asserted)
 {
     if (asserted)
     {
-        Debug("HuC6280 Assert IRQ2");
         m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 0);
     }
     else

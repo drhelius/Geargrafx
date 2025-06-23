@@ -22,6 +22,7 @@
     <ClCompile Include="..\..\src\miniz\miniz.c" />
     <ClCompile Include="..\..\src\adpcm.cpp" />
     <ClCompile Include="..\..\src\audio.cpp" />
+    <ClCompile Include="..\..\src\arcade_card_mapper.cpp" />
     <ClCompile Include="..\..\src\media.cpp" />
     <ClCompile Include="..\..\src\cdrom_audio.cpp" />
     <ClCompile Include="..\..\src\cdrom_media.cpp" />
@@ -82,6 +83,7 @@
     <ClInclude Include="..\..\src\adpcm_inline.h" />
     <ClInclude Include="..\..\src\audio_inline.h" />
     <ClInclude Include="..\..\src\audio.h" />
+    <ClInclude Include="..\..\src\arcade_card_mapper.h" />
     <ClInclude Include="..\..\src\bit_ops.h" />
     <ClInclude Include="..\..\src\media.h" />
     <ClInclude Include="..\..\src\media_inline.h" />

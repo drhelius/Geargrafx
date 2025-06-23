@@ -359,9 +359,9 @@ void ScsiController::CommandRead()
     u32 lba = ((m_command_buffer[1] & 0x1F) << 16) | (m_command_buffer[2] << 8) | m_command_buffer[3];
     u16 count = m_command_buffer[4];
 
-    if (count == 0)
+    if ((count == 0) || (lba >= m_cdrom_media->GetSectorCount()))
     {
-        Debug("SCSI CMD Read: count is 0");
+        Debug("SCSI CMD Read: Invalid sector");
         StartStatus(SCSI_STATUS_GOOD);
         return;
     }
@@ -388,6 +388,13 @@ void ScsiController::CommandAudioStartPosition()
     Debug("******");
 
     u32 start_lba = AudioLBA();
+    if (start_lba >= m_cdrom_media->GetSectorCount())
+    {
+        Debug("SCSI CMD Audio Start Position: Invalid start LBA %d", start_lba);
+        StartStatus(SCSI_STATUS_GOOD);
+        return;
+    }
+
     u8 mode = m_command_buffer[1];
 
     Debug("SCSI CMD Audio Start Position: start LBA %d, mode %02X", start_lba, mode);

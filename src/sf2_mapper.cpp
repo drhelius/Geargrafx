@@ -19,8 +19,9 @@
 
 #include "sf2_mapper.h"
 #include "media.h"
+#include "memory.h"
 
-SF2Mapper::SF2Mapper(Media* media) : Mapper(media)
+SF2Mapper::SF2Mapper(Media* media, Memory* memory) : Mapper(media, memory)
 {
     Reset();
 }

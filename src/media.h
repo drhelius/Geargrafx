@@ -30,7 +30,8 @@ public:
     enum HuCardMapper
     {
         STANDARD_MAPPER,
-        SF2_MAPPER
+        SF2_MAPPER,
+        ARCADE_CARD_MAPPER
     };
 
 public:
@@ -68,10 +69,10 @@ public:
     bool LoadCueFromFile(const char* path);
     bool LoadBios(const char* file_path, bool syscard);
     void SetTempPath(const char* path);
+    void GatherMediaInfo();
 
 private:
     bool LoadMediaFromZipFile(const char* path);
-    void GatherMediaInfo();
     void GatherMediaInfoFromDB();
     void GatherBIOSInfoFromDB(bool syscard);
     void GatherDataFromPath(const char* path);

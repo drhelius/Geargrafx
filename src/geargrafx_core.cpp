@@ -734,6 +734,8 @@ void GeargrafxCore::Reset()
     m_master_clock_cycles = 0;
     m_paused = false;
 
+    m_media->GatherMediaInfo();
+
     GG_Console_Type console_type = m_media->GetConsoleType();
     bool force_backup_ram = m_media->IsBackupRAMForced();
     bool is_sgx = m_media->IsSGX();

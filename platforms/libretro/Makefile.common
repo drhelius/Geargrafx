@@ -3,6 +3,7 @@ SOURCES_C   :=  $(SOURCE_DIR)/miniz/miniz.c
 SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
                 $(SOURCE_DIR)/adpcm.cpp \
                 $(SOURCE_DIR)/audio.cpp \
+                $(SOURCE_DIR)/arcade_card_mapper.cpp \
                 $(SOURCE_DIR)/media.cpp \
                 $(SOURCE_DIR)/cdrom_audio.cpp \
                 $(SOURCE_DIR)/cdrom_media.cpp \

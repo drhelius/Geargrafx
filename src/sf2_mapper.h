@@ -24,11 +24,12 @@
 #include "mapper.h"
 
 class Media;
+class Memory;
 
 class SF2Mapper : public Mapper
 {
 public:
-    SF2Mapper(Media* media);
+    SF2Mapper(Media* media, Memory* memory);
     virtual ~SF2Mapper();
     virtual u8 Read(u8 bank, u16 address);
     virtual void Write(u8 bank, u16 address, u8 value);

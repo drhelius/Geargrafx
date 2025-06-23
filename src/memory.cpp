@@ -27,6 +27,7 @@
 #include "audio.h"
 #include "cdrom.h"
 #include "sf2_mapper.h"
+#include "arcade_card_mapper.h"
 
 Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom)
 {
@@ -41,6 +42,7 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* medi
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
     InitPointer(m_sf2_mapper);
+    InitPointer(m_arcade_card_mapper);
     m_mpr_reset_value = -1;
     m_wram_reset_value = 0;
     m_card_ram_reset_value = 0;
@@ -63,6 +65,7 @@ Memory::~Memory()
         SafeDeleteArray(m_disassembler);
     }
     SafeDelete(m_sf2_mapper);
+    SafeDelete(m_arcade_card_mapper);
 }
 
 void Memory::Init()
@@ -81,7 +84,8 @@ void Memory::Init()
 #endif
 
     m_current_mapper = NULL;
-    m_sf2_mapper = new SF2Mapper(m_media);
+    m_sf2_mapper = new SF2Mapper(m_media, this);
+    m_arcade_card_mapper = new ArcadeCardMapper(m_media, this);
 
     Reset();
 }
@@ -123,6 +127,11 @@ void Memory::Reset()
     {
         m_sf2_mapper->Reset();
         m_current_mapper = m_sf2_mapper;
+    }
+    else if (m_media->GetMapper() == Media::ARCADE_CARD_MAPPER)
+    {
+        m_arcade_card_mapper->Reset();
+        m_current_mapper = m_arcade_card_mapper;
     }
     else
         m_current_mapper = NULL;

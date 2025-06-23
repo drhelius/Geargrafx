@@ -20,14 +20,27 @@
 #include "mapper.h"
 #include "log.h"
 #include "media.h"
+#include "memory.h"
 
-Mapper::Mapper(Media* media)
+Mapper::Mapper(Media* media, Memory* memory)
 {
     m_media = media;
+    m_memory = memory;
 }
 
 Mapper::~Mapper()
 {
+}
+
+u8 Mapper::ReadHardware(u16 address)
+{
+    Debug("Mapper::ReadHardware not implemented for address %04X", address);
+    return 0xFF;
+}
+
+void Mapper::WriteHardware(u16 address, u8 value)
+{
+    Debug("Mapper::WriteHardware not implemented for address %04X, value %02X", address, value);
 }
 
 void Mapper::SaveState(std::ostream&)

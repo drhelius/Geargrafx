@@ -114,7 +114,12 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
             case 0x1800:
                 // CDROM
                 if (m_media->IsCDROM())
-                    return m_cdrom->ReadRegister(offset);
+                {
+                    if (IsValidPointer(m_current_mapper) && (offset >= 0x1A00))
+                        return m_current_mapper->ReadHardware(offset);
+                    else
+                        return m_cdrom->ReadRegister(offset);
+                }
                 else
                     return 0xFF;
             case 0x1C00:
@@ -213,7 +218,12 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
             case 0x1800:
                 // CDROM
                 if (m_media->IsCDROM())
-                    m_cdrom->WriteRegister(offset, value);
+                {
+                    if (IsValidPointer(m_current_mapper) && (offset >= 0x1A00))
+                        m_current_mapper->WriteHardware(offset, value);
+                    else
+                        m_cdrom->WriteRegister(offset, value);
+                }
                 break;
             case 0x1C00:
                 // Unused
@@ -301,6 +311,16 @@ INLINE int Memory::GetBackupRAMSize()
 INLINE int Memory::GetCDROMRAMSize()
 {
     return m_cdrom_ram_size;
+}
+
+INLINE u8** Memory::GetMemoryMap()
+{
+    return m_memory_map;
+}
+
+INLINE bool* Memory::GetMemoryMapWrite()
+{
+    return m_memory_map_write;
 }
 
 INLINE GG_Disassembler_Record** Memory::GetAllDisassemblerRecords()

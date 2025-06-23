@@ -28,9 +28,10 @@
 #define GG_GAMEDB_CARD_RAM_8000         0x0008
 #define GG_GAMEDB_AVENUE_PAD_3_SELECT   0x0010
 #define GG_GAMEDB_AVENUE_PAD_3_RUN      0x0020
-#define GG_GAMEDB_GAME_EXPRESS_GAME     0x0040
-#define GG_GAMEDB_BIOS_SYSCARD          0x0080
-#define GG_GAMEDB_BIOS_GAME_EXPRESS     0x0100
+#define GG_GAMEDB_GAME_EXPRESS          0x0040
+#define GG_GAMEDB_ARCADE_CARD           0x0080
+#define GG_GAMEDB_BIOS_SYSCARD          0x4000
+#define GG_GAMEDB_BIOS_GAME_EXPRESS     0x8000
 #define GG_GAMEDB_CDROM     0x0200
 
 struct GG_DB_Entry
@@ -70,12 +71,43 @@ const GG_DB_Entry k_game_database[] =
     { 0x0A9ADE99, "Populous (J) [Alt]", GG_GAMEDB_CARD_RAM_8000 },
 
     // GAME EXPRESS CD-ROM GAMES
-    { 0x563E7822, "AV Tanjou (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
-    { 0xD74A8B08, "CD Bishoujo Pachinko - Kyuuma Yon Shimai (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
-    { 0x29AB009A, "CD Hanafuda - Bishoujo Fan Club (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
-    { 0x8FE1EC66, "CD Mahjong - Bishoujo Chuushinha (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },    
-    { 0xECF7F668, "CD Pachi-Slot - Bishoujo Gambler (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
-    { 0xAB786649, "Hi-Leg Fantasy (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS_GAME },
+    { 0x563E7822, "AV Tanjou (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS },
+    { 0xD74A8B08, "CD Bishoujo Pachinko - Kyuuma Yon Shimai (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS },
+    { 0x29AB009A, "CD Hanafuda - Bishoujo Fan Club (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS },
+    { 0x8FE1EC66, "CD Mahjong - Bishoujo Chuushinha (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS },
+    { 0xECF7F668, "CD Pachi-Slot - Bishoujo Gambler (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS },
+    { 0xAB786649, "Hi-Leg Fantasy (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS },
+
+    // ARCADE CARD GAMES
+    { 0xEF4294FC, "Garou Densetsu Special (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0xCDD5208E, "Formation Soccer 95 della Serie A (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0x083F480F, "Garou Densetsu Special (J) [Demo]" , GG_GAMEDB_ARCADE_CARD },
+    { 0x4B2CEDF2, "Garou Densetsu 2 - Aratanaru Tatakai (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0x97948AEF, "Garou Densetsu 2 - Aratanaru Tatakai (J) [Demo]" , GG_GAMEDB_ARCADE_CARD },
+    { 0x2D41EBF7, "Ginga Fukei Densetsu Sapphire (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0xC1FEA3C8, "Quest of Jongmaster - Janshin Densetsu (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0x6BDC0BDA, "Kabuki Ittouryoudan (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0x3DA7810B, "Mad Stalker - Full Metal Force (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0xDDD1DDBB, "Mad Stalker - Full Metal Force (J) [Deemo]" , GG_GAMEDB_ARCADE_CARD },
+    { 0x3769A61F, "Madou Monogatari I - Honoo no Sotsuenji (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0xBA3E56D9, "Ryuuko no Ken (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0x654C5174, "Shin Nihon Pro Wrestling - '94 Battlefield in Tokyo Dome (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0x9C980BF1, "Strider Hiryuu (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0x70F5F55B, "World Heroes 2 (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0xC55F9963, "World Heroes 2 (J) [Demo]" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0x00000000, "" , GG_GAMEDB_ARCADE_CARD },
+    { 0xB597F0A9, "Wrestling Universe - Fire Pro Joshi - Dome Choujo Taisen - Zenjo vs. JWP (J)" , GG_GAMEDB_ARCADE_CARD },
 
     // AVENUE PAD 3
     { 0x933D5BCC, "Air Zonk (USA)", GG_GAMEDB_AVENUE_PAD_3_SELECT },

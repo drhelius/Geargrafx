@@ -42,6 +42,7 @@ SOURCES_CXX := \
     $(SRC_DIR)/geargrafx_core.cpp \
     $(SRC_DIR)/adpcm.cpp \
     $(SRC_DIR)/audio.cpp \
+    $(SRC_DIR)/arcade_card_mapper.cpp \
     $(SRC_DIR)/cdrom_audio.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
     $(SRC_DIR)/cdrom.cpp \

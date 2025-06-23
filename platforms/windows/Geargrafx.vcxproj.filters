@@ -169,6 +169,9 @@
     <ClCompile Include="..\..\src\huc6202.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\arcade_card_mapper.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\shared\desktop\application.h">
@@ -457,6 +460,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\huc6202_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\arcade_card_mapper.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\arcade_card_mapper_inline.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

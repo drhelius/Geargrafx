@@ -213,9 +213,6 @@ bool Media::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
     m_rom_size = size;
     m_rom = new u8[m_rom_size];
     memcpy(m_rom, buffer, m_rom_size);
-
-    GatherMediaInfo();
-    InitRomMAP();
     m_ready = true;
 
     Debug("HuCard loaded from buffer. Size: %d bytes", m_rom_size);
@@ -226,26 +223,12 @@ bool Media::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
 bool Media::LoadCueFromBuffer(const u8* buffer, int size, const char* path)
 {
     m_ready = m_cdrom_media->LoadCueFromBuffer(buffer, size, path);
-
-    if (m_ready)
-    {
-        GatherMediaInfo();
-        InitRomMAP();
-    }
-
     return m_ready;
 }
 
 bool Media::LoadCueFromFile(const char* path)
 {
-    m_ready =  m_cdrom_media->LoadCueFromFile(path);
-
-    if (m_ready)
-    {
-        GatherMediaInfo();
-        InitRomMAP();
-    }
-
+    m_ready = m_cdrom_media->LoadCueFromFile(path);
     return m_ready;
 }
 
@@ -460,17 +443,24 @@ void Media::GatherMediaInfo()
     {
         case GG_CDROM_STANDARD:
             Log("CD-ROM Type: Standard");
+            if (m_mapper == ARCADE_CARD_MAPPER)
+                m_mapper = STANDARD_MAPPER;
             break;
         case GG_CDROM_SUPER_CDROM:
             Log("CD-ROM Type: Super CD-ROM");
+            if (m_mapper == ARCADE_CARD_MAPPER)
+                m_mapper = STANDARD_MAPPER;
             break;
         case GG_CDROM_ARCADE_CARD:
+            m_mapper = ARCADE_CARD_MAPPER;
             Log("CD-ROM Type: Arcade Card");
             break;
         default:
             Log("CD-ROM Type: Auto");
             break;
     }
+
+    InitRomMAP();
 }
 
 void Media::GatherMediaInfoFromDB()
@@ -513,13 +503,18 @@ void Media::GatherMediaInfoFromDB()
                 m_mapper = SF2_MAPPER;
                 Log("Media uses Street Fighter II mapper.");
             }
+            else if (k_game_database[i].flags & GG_GAMEDB_ARCADE_CARD)
+            {
+                m_mapper = ARCADE_CARD_MAPPER;
+                Log("Media is an Arcade Card game.");
+            }
             else
             {
                 m_mapper = STANDARD_MAPPER;
                 Log("Media uses standard mapper.");
             }
 
-            if (k_game_database[i].flags & GG_GAMEDB_GAME_EXPRESS_GAME)
+            if (k_game_database[i].flags & GG_GAMEDB_GAME_EXPRESS)
             {
                 m_is_gameexpress = true;
                 Log("Media is a Game Express game.");
