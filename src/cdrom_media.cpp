@@ -1149,7 +1149,9 @@ s32 CdRomMedia::GetTrackFromLBA(u32 lba)
         return -1;
     }
 
-    for (u8 i = 0; i < m_tracks.size(); i++)
+    u8 track_count = (u8)m_tracks.size();
+
+    for (u8 i = 0; i < track_count; i++)
     {
         if ((lba >= m_tracks[i].start_lba) && (lba <= m_tracks[i].end_lba))
         {
