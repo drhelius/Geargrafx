@@ -183,12 +183,12 @@ void gui_debug_window_arcade_card(void)
         ImGui::Text("$%08X", port->base);
         ImGui::TextColored(violet, "OFFSET      "); ImGui::SameLine();
         ImGui::Text("$%04X", port->offset);
-        ImGui::TextColored(violet, "INCREMENT.  "); ImGui::SameLine();
+        ImGui::TextColored(violet, "INCREMENT   "); ImGui::SameLine();
         ImGui::Text("$%04X", port->increment);
-        ImGui::TextColored(violet, "CONTROL.    "); ImGui::SameLine();
+        ImGui::TextColored(violet, "CONTROL     "); ImGui::SameLine();
         ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", port->control, BYTE_TO_BINARY(port->control));
 
-        ImGui::TextColored(violet, "ADD OFFSET.   "); ImGui::SameLine();
+        ImGui::TextColored(violet, "ADD OFFSET    "); ImGui::SameLine();
         ImGui::TextColored(port->add_offset ? green : gray, "%s", port->add_offset ? "ON" : "OFF");
         ImGui::TextColored(violet, "AUTO INCREMENT"); ImGui::SameLine();
         ImGui::TextColored(port->auto_increment ? green : gray, "%s", port->auto_increment ? "ON" : "OFF");
