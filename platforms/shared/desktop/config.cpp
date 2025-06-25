@@ -160,6 +160,7 @@ void config_read(void)
     config_debug.show_cdrom = read_bool("Debug", "CDROM", false);
     config_debug.show_cdrom_audio = read_bool("Debug", "CDROMAudio", false);
     config_debug.show_adpcm = read_bool("Debug", "ADPCM", false);
+    config_debug.show_arcade_card = read_bool("Debug", "ArcadeCard", false);
     config_debug.show_trace_logger = read_bool("Debug", "TraceLogger", false);
     config_debug.trace_counter = read_bool("Debug", "TraceCounter", true);
     config_debug.trace_bank = read_bool("Debug", "TraceBank", true);
@@ -180,6 +181,7 @@ void config_read(void)
     config_debug.reset_registers = read_int("Debug", "InitRegisters", 0);
     config_debug.reset_color_table = read_int("Debug", "InitColorTable", 0);
     config_debug.reset_mpr = read_int("Debug", "InitMPR", 0);
+    config_debug.reset_arcade_card = read_int("Debug", "InitArcadeCard", 1);
 
     config_emulator.maximized = read_bool("Emulator", "Maximized", false);
     config_emulator.fullscreen = read_bool("Emulator", "FullScreen", false);
@@ -361,6 +363,7 @@ void config_write(void)
     write_bool("Debug", "CDROM", config_debug.show_cdrom);
     write_bool("Debug", "CDROMAudio", config_debug.show_cdrom_audio);
     write_bool("Debug", "ADPCM", config_debug.show_adpcm);
+    write_bool("Debug", "ArcadeCard", config_debug.show_arcade_card);
     write_bool("Debug", "TraceLogger", config_debug.show_trace_logger);
     write_bool("Debug", "TraceCounter", config_debug.trace_counter);
     write_bool("Debug", "TraceBank", config_debug.trace_bank);
@@ -381,6 +384,7 @@ void config_write(void)
     write_int("Debug", "InitRegisters", config_debug.reset_registers);
     write_int("Debug", "InitColorTable", config_debug.reset_color_table);
     write_int("Debug", "InitMPR", config_debug.reset_mpr);
+    write_int("Debug", "InitArcadeCard", config_debug.reset_arcade_card);
 
     write_bool("Emulator", "Maximized", config_emulator.maximized);
     write_bool("Emulator", "FullScreen", config_emulator.fullscreen);

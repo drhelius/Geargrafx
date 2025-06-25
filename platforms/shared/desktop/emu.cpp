@@ -414,9 +414,9 @@ void emu_set_scanline_start_end(int start, int end)
     geargrafx->GetHuC6260()->SetScanlineEnd(end);
 }
 
-void emu_set_memory_reset_values(int mpr, int wram, int card_ram)
+void emu_set_memory_reset_values(int mpr, int wram, int card_ram, int arcade_card)
 {
-    geargrafx->GetMemory()->SetResetValues(mpr, wram, card_ram);
+    geargrafx->GetMemory()->SetResetValues(mpr, wram, card_ram, arcade_card);
 }
 
 void emu_set_huc6260_color_table_reset_value(int value)

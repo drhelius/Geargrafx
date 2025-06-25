@@ -114,7 +114,11 @@ void gui_init(void)
     emu_set_scanline_start_end(
                 config_debug.debug ? 0 : config_video.scanline_start,
                 config_debug.debug ? 241 : config_video.scanline_end);
-    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+    emu_set_memory_reset_values(
+                get_reset_value(config_debug.reset_mpr),
+                get_reset_value(config_debug.reset_ram),
+                get_reset_value(config_debug.reset_card_ram),
+                get_reset_value(config_debug.reset_arcade_card));
     emu_set_huc6260_color_table_reset_value(get_reset_value(config_debug.reset_color_table));
     emu_set_huc6280_registers_reset_value(get_reset_value(config_debug.reset_registers));
     emu_set_console_type((GG_Console_Type)config_emulator.console_type);

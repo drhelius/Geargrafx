@@ -44,6 +44,7 @@ public:
     bool IsSGX();
     bool IsCDROM();
     bool IsGameExpress();
+    bool IsArcadeCard();
     bool IsValidBios(bool syscard);
     bool IsLoadedBios();
     void SetConsoleType(GG_Console_Type console_type);

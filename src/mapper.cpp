@@ -32,15 +32,15 @@ Mapper::~Mapper()
 {
 }
 
-u8 Mapper::ReadHardware(u16 address)
+u8 Mapper::ReadHardware(u16)
 {
-    Debug("Mapper::ReadHardware not implemented for address %04X", address);
+    Debug("Mapper::ReadHardware not implemented");
     return 0xFF;
 }
 
-void Mapper::WriteHardware(u16 address, u8 value)
+void Mapper::WriteHardware(u16, u8)
 {
-    Debug("Mapper::WriteHardware not implemented for address %04X, value %02X", address, value);
+    Debug("Mapper::WriteHardware not implemented");
 }
 
 void Mapper::SaveState(std::ostream&)

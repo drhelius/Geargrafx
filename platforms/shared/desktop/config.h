@@ -159,6 +159,7 @@ struct config_Debug
     bool show_cdrom = false;
     bool show_cdrom_audio = false;
     bool show_adpcm = false;
+    bool show_arcade_card = false;
     bool show_trace_logger = false;
     bool trace_counter = true;
     bool trace_bank = true;
@@ -179,6 +180,7 @@ struct config_Debug
     int reset_registers = 0;
     int reset_color_table = 0;
     int reset_mpr = 0;
+    int reset_arcade_card = 1;
 };
 
 EXTERN mINI::INIFile* config_ini_file;

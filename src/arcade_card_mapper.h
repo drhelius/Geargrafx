@@ -29,6 +29,37 @@ class Memory;
 class ArcadeCardMapper : public Mapper
 {
 public:
+
+    enum ArcadeCard_OffSetTrigger
+    {
+        OFFSET_TRIGGER_NONE = 0,
+        OFFSET_TRIGGER_LOW__BYTE = 1,
+        OFFSET_TRIGGER_HIGH_BYTE = 2,
+        OFFSET_TRIGGER_REG_0A = 3
+    };
+
+    struct ArcadeCard_Port
+    {
+        u32 base;
+        u16 offset;
+        u16 increment;
+        u8 control;
+        bool add_offset;
+        bool auto_increment;
+        bool signed_offset;
+        bool increment_base;
+        ArcadeCard_OffSetTrigger offset_trigger;
+    };
+
+    struct ArcadeCard_State
+    {
+        ArcadeCard_Port* PORTS;
+        u32* REGISTER;
+        u8* SHIFT_AMOUNT;
+        u8* ROTATE_AMOUNT;
+    };
+
+public:
     ArcadeCardMapper(Media* media, Memory* memory);
     virtual ~ArcadeCardMapper();
     virtual u8 Read(u8 bank, u16 address);
@@ -38,6 +69,8 @@ public:
     virtual void Reset();
     virtual void SaveState(std::ostream& stream);
     virtual void LoadState(std::istream& stream);
+    u8* GetRAM(void);
+    ArcadeCard_State* GetState(void);
 
 private:
     u8 ReadPortData(u8 port);
@@ -52,28 +85,7 @@ private:
     u32 EffectiveAddress(u8 port);
 
 private:
-
-    enum ArcadeCard_OffSetTrigger
-    {
-        OFFSET_TRIGGER_NONE = 0,
-        OFFSET_TRIGGER_LOW__BYTE = 1,
-        OFFSET_TRIGGER_HIGH_BYTE = 2,
-        OFFSET_TRIGGER_REG_0A = 3
-    };
-
-    struct ArcadeCard_Port
-    {
-        u32 base; 
-        u16 offset;
-        u16 increment;
-        u8 control;
-        bool add_offset;
-        bool auto_increment;
-        bool signed_offset;
-        bool increment_base;
-        ArcadeCard_OffSetTrigger offset_trigger;
-    };
-
+    ArcadeCard_State m_state;
     u8* m_card_memory;
     ArcadeCard_Port m_ports[4];
     u32 m_register;

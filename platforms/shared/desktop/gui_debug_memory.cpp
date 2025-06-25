@@ -59,6 +59,7 @@ void gui_debug_memory_reset(void)
     mem_edit[MEMORY_EDITOR_SAT_2].Reset("SAT 2", (u8*)huc6270_2->GetSAT(), HUC6270_SAT_SIZE, 0, 2);
     mem_edit[MEMORY_EDITOR_CDROM_RAM].Reset("CDROM RAM", memory->GetCDROMRAM(), memory->GetCDROMRAMSize());
     mem_edit[MEMORY_EDITOR_ADPCM_RAM].Reset("ADPCM", adpcm->GetRAM(), 0x10000);
+    mem_edit[MEMORY_EDITOR_ARCADE_RAM].Reset("ARCADE", memory->GetArcadeRAM(), memory->GetArcadeCardRAMSize());
 }
 
 void gui_debug_window_memory(void)
@@ -151,6 +152,7 @@ static void draw_tabs(void)
     Media* media = core->GetMedia();
     bool is_sgx = media->IsSGX();
     bool is_cdrom = media->IsCDROM();
+    bool is_arcade_card = core->GetMedia()->IsArcadeCard();
 
     for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
     {
@@ -165,6 +167,8 @@ static void draw_tabs(void)
         if (i == MEMORY_EDITOR_CDROM_RAM && !is_cdrom)
             continue;
         if (i == MEMORY_EDITOR_ADPCM_RAM && !is_cdrom)
+            continue;
+        if (i == MEMORY_EDITOR_ARCADE_RAM && !is_arcade_card)
             continue;
 
         if (ImGui::BeginTabItem(mem_edit[i].GetTitle(), NULL, mem_edit_select == i ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))

@@ -172,6 +172,16 @@ void Memory::Reset()
             m_card_ram[i] = m_card_ram_reset_value & 0xFF;
     }
 
+    u8* arcade_ram = m_arcade_card_mapper->GetRAM();
+
+    for (u32 i = 0; i < 0x200000; i++)
+    {
+        if (m_arcade_card_reset_value < 0)
+            arcade_ram[i] = rand() & 0xFF;
+        else
+            arcade_ram[i] = m_arcade_card_reset_value & 0xFF;
+    }
+
     memset(m_backup_ram, 0xFF, 0x2000);
     memset(m_backup_ram, 0x00, 0x800);
     memcpy(m_backup_ram, k_backup_ram_init_string, 8);
@@ -236,11 +246,12 @@ void Memory::ReloadMemoryMap()
     }
 }
 
-void Memory::SetResetValues(int mpr, int wram, int card_ram)
+void Memory::SetResetValues(int mpr, int wram, int card_ram, int arcade_card)
 {
     m_card_ram_reset_value = card_ram;
     m_mpr_reset_value = mpr;
     m_wram_reset_value = wram;
+    m_arcade_card_reset_value = arcade_card;
 }
 
 void Memory::ResetDisassemblerRecords()

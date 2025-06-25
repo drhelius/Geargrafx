@@ -80,4 +80,14 @@ INLINE void ArcadeCardMapper::WriteControlRegister(u8 port, u8 value)
     m_ports[port].offset_trigger = (ArcadeCard_OffSetTrigger)((value >> 5) & 0x03);
 }
 
+INLINE u8* ArcadeCardMapper::GetRAM(void)
+{
+    return m_card_memory;
+}
+
+INLINE ArcadeCardMapper::ArcadeCard_State* ArcadeCardMapper::GetState(void)
+{
+    return &m_state;
+}
+
 #endif /* ARCADE_CARD_MAPPER_INLINE_H */

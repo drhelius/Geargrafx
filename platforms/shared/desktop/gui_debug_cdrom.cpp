@@ -150,3 +150,60 @@ void gui_debug_window_cdrom(void)
     ImGui::End();
     ImGui::PopStyleVar();
 }
+
+void gui_debug_window_arcade_card(void)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::SetNextWindowPos(ImVec2(85, 90), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(220, 470), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Arcade Card", &config_debug.show_arcade_card);
+
+    ImGui::PushFont(gui_default_font);
+
+    GeargrafxCore* core = emu_get_core();
+    Memory *memory = core->GetMemory();
+    ArcadeCardMapper* arcade_card_mapper = memory->GetArcadeCardMapper();
+    ArcadeCardMapper::ArcadeCard_State* arcade_card_state = arcade_card_mapper->GetState();
+
+    ImGui::TextColored(violet, "REGISTER     "); ImGui::SameLine();
+    ImGui::Text("$%08X", *arcade_card_state->REGISTER);
+
+    ImGui::TextColored(violet, "SHIFT AMOUNT "); ImGui::SameLine();
+    ImGui::Text("$%02X", *arcade_card_state->SHIFT_AMOUNT);
+
+    ImGui::TextColored(violet, "ROTATE AMOUNT"); ImGui::SameLine();
+    ImGui::Text("$%02X", *arcade_card_state->ROTATE_AMOUNT);
+
+    for (int i = 0; i < 4; i++)
+    {
+        ImGui::NewLine(); ImGui::TextColored(cyan, "PORT %d", i); ImGui::Separator();
+        ArcadeCardMapper::ArcadeCard_Port* port = &arcade_card_state->PORTS[i];
+
+        ImGui::TextColored(violet, "BASE ADDRESS"); ImGui::SameLine();
+        ImGui::Text("$%08X", port->base);
+        ImGui::TextColored(violet, "OFFSET      "); ImGui::SameLine();
+        ImGui::Text("$%04X", port->offset);
+        ImGui::TextColored(violet, "INCREMENT.  "); ImGui::SameLine();
+        ImGui::Text("$%04X", port->increment);
+        ImGui::TextColored(violet, "CONTROL.    "); ImGui::SameLine();
+        ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", port->control, BYTE_TO_BINARY(port->control));
+
+        ImGui::TextColored(violet, "ADD OFFSET.   "); ImGui::SameLine();
+        ImGui::TextColored(port->add_offset ? green : gray, "%s", port->add_offset ? "ON" : "OFF");
+        ImGui::TextColored(violet, "AUTO INCREMENT"); ImGui::SameLine();
+        ImGui::TextColored(port->auto_increment ? green : gray, "%s", port->auto_increment ? "ON" : "OFF");
+        ImGui::TextColored(violet, "SIGNED OFFSET "); ImGui::SameLine();
+        ImGui::TextColored(port->signed_offset ? green : gray, "%s", port->signed_offset ? "ON" : "OFF");
+        ImGui::TextColored(violet, "INCREMENT BASE"); ImGui::SameLine();
+        ImGui::TextColored(port->increment_base ? green : gray, "%s", port->increment_base ? "ON" : "OFF");
+
+        const char* k_arcade_card_offset_trigger_names[] = { "NONE     ", "LOW BYTE ", "HIGH BYTE", "REG 0A   " };
+        ImGui::TextColored(violet, "OFFSET TRIGGER"); ImGui::SameLine();
+        ImGui::TextColored(port->offset_trigger == ArcadeCardMapper::OFFSET_TRIGGER_NONE ? gray : yellow, "%s", k_arcade_card_offset_trigger_names[port->offset_trigger]);
+    }
+
+    ImGui::PopFont();
+
+    ImGui::End();
+    ImGui::PopStyleVar();
+}

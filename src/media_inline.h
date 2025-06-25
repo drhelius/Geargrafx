@@ -48,6 +48,11 @@ inline bool Media::IsGameExpress()
     return m_is_gameexpress;
 }
 
+inline bool Media::IsArcadeCard()
+{
+    return m_mapper == ARCADE_CARD_MAPPER;
+}
+
 inline bool Media::IsValidBios(bool syscard)
 {
     return syscard ? m_is_valid_bios_syscard : m_is_valid_bios_gameexpress;

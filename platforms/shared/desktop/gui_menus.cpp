@@ -887,18 +887,26 @@ static void menu_debug(void)
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_mpr", &config_debug.reset_mpr, "Random\0 0x00\0 0xFF\0\0"))
                 {
-                    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+                    emu_set_memory_reset_values(
+                            get_reset_value(config_debug.reset_mpr),
+                            get_reset_value(config_debug.reset_ram),
+                            get_reset_value(config_debug.reset_card_ram),
+                            get_reset_value(config_debug.reset_arcade_card));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("RAM"))
+            if (ImGui::BeginMenu("WRAM & CD-ROM RAM"))
             {
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_ram", &config_debug.reset_ram, "Random\0 0x00\0 0xFF\0\0"))
                 {
-                    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+                    emu_set_memory_reset_values(
+                            get_reset_value(config_debug.reset_mpr),
+                            get_reset_value(config_debug.reset_ram),
+                            get_reset_value(config_debug.reset_card_ram),
+                            get_reset_value(config_debug.reset_arcade_card));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
@@ -909,7 +917,26 @@ static void menu_debug(void)
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_card_ram", &config_debug.reset_card_ram, "Random\0 0x00\0 0xFF\0\0"))
                 {
-                    emu_set_memory_reset_values(get_reset_value(config_debug.reset_mpr), get_reset_value(config_debug.reset_ram), get_reset_value(config_debug.reset_card_ram));
+                    emu_set_memory_reset_values(
+                            get_reset_value(config_debug.reset_mpr),
+                            get_reset_value(config_debug.reset_ram),
+                            get_reset_value(config_debug.reset_card_ram),
+                            get_reset_value(config_debug.reset_arcade_card));
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Arcade Card RAM"))
+            {
+                ImGui::PushItemWidth(100.0f);
+                if (ImGui::Combo("##init_arcade_card_ram", &config_debug.reset_arcade_card, "Random\0 0x00\0 0xFF\0\0"))
+                {
+                    emu_set_memory_reset_values(
+                            get_reset_value(config_debug.reset_mpr),
+                            get_reset_value(config_debug.reset_ram),
+                            get_reset_value(config_debug.reset_card_ram),
+                            get_reset_value(config_debug.reset_arcade_card));
                 }
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
@@ -965,6 +992,7 @@ static void menu_debug(void)
 
         ImGui::Separator();
         ImGui::MenuItem("Show CD-ROM", "", &config_debug.show_cdrom, config_debug.debug && emu_get_core()->GetMedia()->IsCDROM());
+        ImGui::MenuItem("Show Arcade Card", "", &config_debug.show_arcade_card, config_debug.debug && emu_get_core()->GetMedia()->IsArcadeCard());
         ImGui::Separator();
         ImGui::MenuItem("Show PSG", "", &config_debug.show_psg, config_debug.debug);
         ImGui::MenuItem("Show CD-ROM Audio", "", &config_debug.show_cdrom_audio, config_debug.debug && emu_get_core()->GetMedia()->IsCDROM());

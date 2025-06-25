@@ -2,21 +2,7 @@
  * Geargrafx - PC Engine / TurboGrafx Emulator
  * Copyright (C) 2024  Ignacio Sanchez
 
- * This progr            if (config_debug.show_huc6270_2_sprites)
-                gui_debug_window_huc6270_sprites(2);
-            if (config_debug.show_huc6270_2_info)
-                gui_debug_window_huc6270_info(2);
-        }
-        if (config_debug.show_psg)
-            gui_debug_window_psg();
-        if (config_debug.show_cdrom && emu_get_core()->GetCartridge()->IsCDROM())
-            gui_debug_window_cdrom();
-        if (config_debug.show_cdrom_audio && emu_get_core()->GetCartridge()->IsCDROM())
-            gui_debug_window_cdrom_audio();
-        if (config_debug.show_adpcm && emu_get_core()->GetCartridge()->IsCDROM())
-            gui_debug_window_adpcm();
-        if (config_debug.show_trace_logger)
-            gui_debug_window_trace_logger();software: you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
@@ -126,6 +112,8 @@ void gui_debug_windows(void)
             gui_debug_window_cdrom_audio();
         if (config_debug.show_adpcm && emu_get_core()->GetMedia()->IsCDROM())
             gui_debug_window_adpcm();
+        if (config_debug.show_arcade_card && emu_get_core()->GetMedia()->IsArcadeCard())
+            gui_debug_window_arcade_card();
         if (config_debug.show_trace_logger)
             gui_debug_window_trace_logger();
 

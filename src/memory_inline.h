@@ -30,6 +30,8 @@
 #include "audio.h"
 #include "cdrom.h"
 #include "mapper.h"
+#include "sf2_mapper.h"
+#include "arcade_card_mapper.h"
 
 INLINE u8 Memory::Read(u16 address, bool block_transfer)
 {
@@ -283,6 +285,11 @@ INLINE u8* Memory::GetCDROMRAM()
     return m_cdrom_ram;
 }
 
+INLINE u8* Memory::GetArcadeRAM()
+{
+    return m_arcade_card_mapper->GetRAM();
+}
+
 INLINE int Memory::GetWorkingRAMSize()
 {
     return m_media->IsSGX() ? 0x8000 : 0x2000;
@@ -311,6 +318,19 @@ INLINE int Memory::GetBackupRAMSize()
 INLINE int Memory::GetCDROMRAMSize()
 {
     return m_cdrom_ram_size;
+}
+
+INLINE int Memory::GetArcadeCardRAMSize()
+{
+    if (m_media->IsArcadeCard())
+        return 0x200000;
+    else
+        return 0;
+}
+
+INLINE ArcadeCardMapper* Memory::GetArcadeCardMapper()
+{
+    return m_arcade_card_mapper;
 }
 
 INLINE u8** Memory::GetMemoryMap()

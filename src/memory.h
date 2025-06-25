@@ -62,7 +62,7 @@ public:
     u8 GetMprTMA(u8 bits);
     u32 GetPhysicalAddress(u16 address);
     u8 GetBank(u16 address);
-    void SetResetValues(int mpr, int wram, int card_ram);
+    void SetResetValues(int mpr, int wram, int card_ram, int arcade_card);
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
     GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
     void ResetDisassemblerRecords();
@@ -70,12 +70,15 @@ public:
     u8* GetCardRAM();
     u8* GetBackupRAM();
     u8* GetCDROMRAM();
+    u8* GetArcadeRAM();
     int GetWorkingRAMSize();
     int GetCardRAMSize();
     int GetCardRAMStart();
     int GetCardRAMEnd();
     int GetBackupRAMSize();
     int GetCDROMRAMSize();
+    int GetArcadeCardRAMSize();
+    ArcadeCardMapper* GetArcadeCardMapper();
     u8** GetMemoryMap();
     bool* GetMemoryMapWrite();
     GG_Disassembler_Record** GetAllDisassemblerRecords();
@@ -123,6 +126,7 @@ private:
     int m_mpr_reset_value;
     int m_wram_reset_value;
     int m_card_ram_reset_value;
+    int m_arcade_card_reset_value;
 };
 
 static const u8 k_backup_ram_init_string[8] = { 'H', 'U', 'B', 'M', 0x00, 0xA0, 0x10, 0x80 };

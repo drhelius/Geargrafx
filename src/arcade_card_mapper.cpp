@@ -26,6 +26,11 @@ ArcadeCardMapper::ArcadeCardMapper(Media* media, Memory* memory) : Mapper(media,
     Reset();
     InitPointer(m_card_memory);
     m_card_memory = new u8[0x200000];
+
+    m_state.PORTS = m_ports;
+    m_state.REGISTER = &m_register;
+    m_state.SHIFT_AMOUNT = &m_shift_amount;
+    m_state.ROTATE_AMOUNT = &m_rotate_amount;
 }
 
 ArcadeCardMapper::~ArcadeCardMapper()

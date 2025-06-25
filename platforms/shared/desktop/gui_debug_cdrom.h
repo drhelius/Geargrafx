@@ -27,6 +27,7 @@
 #endif
 
 EXTERN void gui_debug_window_cdrom(void);
+EXTERN void gui_debug_window_arcade_card(void);
 
 #undef GUI_DEBUG_CDROM_IMPORT
 #undef EXTERN

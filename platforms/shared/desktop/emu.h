@@ -99,7 +99,7 @@ EXTERN void emu_set_composite_palette(bool enabled);
 EXTERN void emu_video_no_sprite_limit(bool enabled);
 EXTERN void emu_set_overscan(int overscan);
 EXTERN void emu_set_scanline_start_end(int start, int end);
-EXTERN void emu_set_memory_reset_values(int mpr, int wram, int card_ram);
+EXTERN void emu_set_memory_reset_values(int mpr, int wram, int card_ram, int arcade_card);
 EXTERN void emu_set_huc6260_color_table_reset_value(int value);
 EXTERN void emu_set_huc6280_registers_reset_value(int value);
 EXTERN void emu_set_console_type(GG_Console_Type console_type);
