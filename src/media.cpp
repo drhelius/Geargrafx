@@ -127,6 +127,11 @@ bool Media::LoadMedia(const char* path)
         Log("ISO files are not supported. Please use CUE files.");
         m_ready = false;
     }
+    else if (strcmp(m_file_extension, "chd") == 0)
+    {
+        Log("CHD files are not supported. Please use CUE files.");
+        m_ready = false;
+    }
     else
     {
         ifstream file(path, ios::in | ios::binary | ios::ate);
@@ -160,6 +165,11 @@ bool Media::LoadMedia(const char* path)
                 {
                     m_is_cdrom = true;
                     m_ready = LoadCueFromBuffer((u8*)(buffer), size, path);
+                }
+                else if (strcmp(m_file_extension, "chd") == 0)
+                {
+                    m_is_cdrom = true;
+                    m_ready = LoadChdFromBuffer((u8*)(buffer), size, path);
                 }
                 else
                 {
@@ -229,6 +239,18 @@ bool Media::LoadCueFromBuffer(const u8* buffer, int size, const char* path)
 bool Media::LoadCueFromFile(const char* path)
 {
     m_ready = m_cdrom_media->LoadCueFromFile(path);
+    return m_ready;
+}
+
+bool Media::LoadChdFromBuffer(const u8* buffer, int size, const char* path)
+{
+    m_ready = m_cdrom_media->LoadChdFromBuffer(buffer, size, path);
+    return m_ready;
+}
+
+bool Media::LoadChdFromFile(const char* path)
+{
+    m_ready = m_cdrom_media->LoadChdFromFile(path);
     return m_ready;
 }
 

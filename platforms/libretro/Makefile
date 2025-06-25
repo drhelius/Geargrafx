@@ -35,6 +35,7 @@ endif
 export DEPSDIR := $(CURDIR)/
 CORE_DIR    += .
 SOURCE_DIR  += ../../src
+LIBCHDR_DIR  += ../shared/libchdr
 TARGET_NAME := geargrafx
 LIBM         = -lm
 
@@ -337,10 +338,15 @@ include Makefile.common
 
 OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
-INCLUDES += -I$(CORE_DIR) -I$(SOURCE_DIR)
+INCLUDES += -I$(CORE_DIR) -I$(SOURCE_DIR) \
+		-I$(LIBCHDR_DIR)/include \
+		-I$(LIBCHDR_DIR)/deps/zstd-1.5.6/lib \
+		-I$(LIBCHDR_DIR)/deps/zstd-1.5.6/common \
+		-I$(LIBCHDR_DIR)/deps/lzma-24.05/include \
+		-I$(LIBCHDR_DIR)/deps/zlib-1.3.1
 
-CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ $(INCLUDES) $(fpic)
-CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ $(INCLUDES) $(fpic)
+CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ -DZ7_ST -DZSTD_DISABLE_ASM $(INCLUDES) $(fpic)
+CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ -DZ7_ST -DZSTD_DISABLE_ASM $(INCLUDES) $(fpic)
 
 all: $(TARGET)
 	@echo Build complete: $(TARGET_NAME) $(BUILD_CONFIG) - $(GIT_VERSION) - $(platform)
