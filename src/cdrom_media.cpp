@@ -45,6 +45,25 @@ CdRomMedia::~CdRomMedia()
     DestroyImgFiles();
 }
 
+void CdRomMedia::InitTrack(Track& track)
+{
+    track.number = 0;
+    track.type = AUDIO_TRACK;
+    track.sector_size = 0;
+    track.sector_count = 0;
+    track.start_lba = 0;
+    track.start_msf = {0, 0, 0};
+    track.end_lba = 0;
+    track.end_msf = {0, 0, 0};
+    track.has_pregap = false;
+    track.pregap_length = 0;
+    track.has_lead_in = false;
+    track.lead_in_lba = 0;
+    track.lead_in_msf = {0, 0, 0};
+    track.img_file = NULL;
+    track.file_offset = 0;
+}
+
 void CdRomMedia::DestroyImgFiles()
 {
     int img_file_count = (int)(m_img_files.size());
@@ -522,6 +541,7 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
     string line;
 
     Track current_track;
+    InitTrack(current_track);
     ImgFile* current_img_file = NULL;
     bool in_track = false;
 
@@ -598,6 +618,7 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
             in_track = true;
             current_track = Track();
+            InitTrack(current_track);
 
             if (!IsValidPointer(current_img_file))
             {
@@ -655,11 +676,12 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                 continue;
             }
 
-            current_track.lead_in_msf.minutes = (u8)m;
-            current_track.lead_in_msf.seconds = (u8)s;
-            current_track.lead_in_msf.frames = (u8)f;
-            current_track.lead_in_lba = MsfToLba(&current_track.lead_in_msf);
-            current_track.has_lead_in = true;
+            GG_CdRomMSF pregap_msf;
+            pregap_msf.minutes = (u8)m;
+            pregap_msf.seconds = (u8)s;
+            pregap_msf.frames = (u8)f;
+            current_track.pregap_length = MsfToLba(&pregap_msf);
+            current_track.has_pregap = true;
             Debug("Track %d pregap at %02d:%02d:%02d", current_track.number, m, s, f);
         }
         else if (lowercase_line.find("index") == 0)
@@ -698,6 +720,18 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                 current_track.start_msf.seconds = (u8)s;
                 current_track.start_msf.frames = (u8)f;
                 current_track.start_lba = MsfToLba(&current_track.start_msf);
+
+                if (!current_track.has_lead_in && current_track.has_pregap)
+                {
+                    current_track.lead_in_lba = current_track.start_lba - current_track.pregap_length;
+                    LbaToMsf(current_track.lead_in_lba, &current_track.lead_in_msf);
+                    current_track.has_lead_in = true;
+                    Debug("Track %d lead-in at %02d:%02d:%02d",
+                          current_track.number,
+                          current_track.lead_in_msf.minutes,
+                          current_track.lead_in_msf.seconds,
+                          current_track.lead_in_msf.frames);
+                }
 
                 Debug("Track %d starts at %02d:%02d:%02d", current_track.number, m, s, f);
             }

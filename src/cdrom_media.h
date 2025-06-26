@@ -60,6 +60,8 @@ public:
         GG_CdRomMSF start_msf;
         u32 end_lba;
         GG_CdRomMSF end_msf;
+        bool has_pregap;
+        u32 pregap_length;
         bool has_lead_in;
         u32 lead_in_lba;
         GG_CdRomMSF lead_in_msf;
@@ -103,6 +105,7 @@ public:
     bool PreloadTrackChunks(u32 track_number);
 
 private:
+    void InitTrack(Track& track);
     void DestroyImgFiles();
     void GatherPaths(const char* path);
     bool GatherImgInfo(ImgFile* img_file);

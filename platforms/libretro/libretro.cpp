@@ -320,7 +320,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     if (IsValidPointer(info->data))
     {
-        log_cb(RETRO_LOG_INFO, "Loading HuCard from buffer");
+        log_cb(RETRO_LOG_INFO, "Loading HuCard from buffer.\n");
         if (!core->LoadHuCardFromBuffer((const u8*)(info->data), info->size, retro_game_path))
         {
             log_cb(RETRO_LOG_ERROR, "Invalid or corrupted HuCard file.\n");
@@ -329,7 +329,7 @@ bool retro_load_game(const struct retro_game_info *info)
     }
     else
     {
-        log_cb(RETRO_LOG_INFO, "Loading Media from file");
+        log_cb(RETRO_LOG_INFO, "Loading Media from file.\n");
         if (!core->LoadMedia(retro_game_path))
         {
             log_cb(RETRO_LOG_ERROR, "Invalid or corrupted Media.\n");
