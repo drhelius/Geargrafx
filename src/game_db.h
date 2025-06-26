@@ -55,10 +55,22 @@ const GG_DB_Entry k_game_database[] =
 
     // SGX
     { 0x8C4588E2, "1941 - Counter Attack (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
+    { 0xCD854B38, "1941 - Counter Attack (J) (SGX) [Alt 1]", GG_GAMEDB_SGX_REQUIRED },
     { 0x4C2126B0, "Aldynes (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
+    { 0xFF30DC62, "Aldynes (J) (SGX) [Alt 1]", GG_GAMEDB_SGX_REQUIRED },
+    { 0x33A92136, "Aldynes (J) (SGX) [Alt 2]", GG_GAMEDB_SGX_REQUIRED },
     { 0x3B13AF61, "Battle Ace (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
+    { 0x6D97373E, "Battle Ace (J) (SGX) [Alt 1]", GG_GAMEDB_SGX_REQUIRED },
+    { 0x130A2E77, "Battle Ace (J) (SGX) [Alt 2]", GG_GAMEDB_SGX_REQUIRED },
     { 0xB486A8ED, "Daimakaimura (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
+    { 0x3334202A, "Daimakaimura (J) (SGX) [Alt 1]", GG_GAMEDB_SGX_REQUIRED },
+    { 0xB9F758E4, "Daimakaimura (J) (SGX) [Alt 2]", GG_GAMEDB_SGX_REQUIRED },
+    { 0xB5BEE732, "Daimakaimura (J) (SGX) [Alt 3]", GG_GAMEDB_SGX_REQUIRED },
+    { 0x0E81080A, "Daimakaimura (J) (SGX) [Alt 4]", GG_GAMEDB_SGX_REQUIRED },
+    { 0x7E4D6CAF, "Daimakaimura (J) (SGX) [Alt 5]", GG_GAMEDB_SGX_REQUIRED },
+    { 0xD6722C04, "Daimakaimura (J) (SGX) [Alt 6]", GG_GAMEDB_SGX_REQUIRED },
     { 0x1F041166, "Madouou Granzort (J) (SGX)", GG_GAMEDB_SGX_REQUIRED },
+    { 0x6B0C982E, "Madouou Granzort (J) (SGX) [Alt]", GG_GAMEDB_SGX_REQUIRED },
 
     // OPTIONAL SGX
     { 0xBEBFE042, "Darius Plus (J) (SGX)", GG_GAMEDB_SGX_OPTIONAL },
