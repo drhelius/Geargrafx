@@ -199,7 +199,7 @@ bool Media::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
 
     if(size & 512)
     {
-        Debug("Removing 512 bytes header...");
+        Debug("Removing 512 bytes header from HuCard...");
         size &= ~512;
         buffer += 512;
     }
@@ -273,6 +273,14 @@ bool Media::LoadBios(const char* file_path, bool syscard)
         memset(bios, 0x00, expected_size);
 
         file.seekg(0, ios::beg);
+
+        if(size & 512)
+        {
+            Log("Removing 512 bytes header from BIOS...");
+            size &= ~512;
+            file.seekg(512, ios::beg);
+        }
+
         file.read(reinterpret_cast<char*>(bios), MIN(size, expected_size));
         file.close();
 
