@@ -43,8 +43,8 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 - Standard Gamepad (2 buttons), Avenue Pad 3 (3 buttons, auto-configured based on game), Avenue Pad 6 (6 buttons).
 - Adjustable scanline count (224p, 240p or manual).
 - RGB or Composite color output.
-- Compressed rom support (ZIP).
-- Internal database for automatic rom detection.
+- Compressed rom and CD images support (ZIP).
+- Internal database for automatic rom detection and hardware selection if `Auto` options are selected.
 - Supported platforms (standalone): Windows, Linux, BSD and macOS.
 - Supported platforms (libretro): Windows, Linux, macOS, Raspberry Pi, Android, iOS, tvOS, PlayStation Vita, PlayStation 3, Nintendo 3DS, Nintendo GameCube, Nintendo Wii, Nintendo WiiU, Nintendo Switch, Emscripten, Classic Mini systems (NES, SNES, C64, ...), OpenDingux, RetroFW and QNX.
 - Full debugger with just-in-time disassembler, CPU breakpoints, memory access breakpoints, code navigation (goto address, JP JR and CALL double clicking), debug symbols, automatic labels, memory editor, PSG inspector and video viewer including registries, tiles, sprites, backgrounds, CD-ROM sub-systems and both VDCs in SuperGrafx mode.
@@ -57,6 +57,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 
 ### Basic Usage
 - **BIOS**: Geargrafx requires a BIOS to run CD-ROM games. It is possible to load any BIOS but the System Card 3.0 with md5 ```38179df8f4ac870017db21ebcbf53114``` is recommended.
+- **CD-ROM Images**: Geargrafx supports zipped and unzipped `cue/bin`, `cue/img` and `cue/iso` images. Audio tracks can also be `WAV` encoded. It does not support MP3 or OGG audio tracks.
 - **Mouse Cursor**: Automatically hides when hovering over the main output window or when Main Menu is disabled.
 - **Portable Mode**: Create an empty file named `portable.ini` in the same directory as the application binary to enable portable mode.
 
@@ -67,7 +68,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 
 ### Command Line Usage
 ```
-geargrafx [options] [rom_file] [symbol_file]
+geargrafx [options] [rom_or_cue_file] [symbol_file]
 
 Options:
   -f, --fullscreen    Start in fullscreen mode
