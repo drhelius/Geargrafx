@@ -219,6 +219,18 @@ bool CdRomMedia::LoadCueFromBuffer(const u8* buffer, int size, const char* path)
     }
 }
 
+bool CdRomMedia::LoadChdFromFile(const char* path)
+{
+        Log("ERROR: Unable to load CHD CD-ROM Media from file: %s");
+        return false;
+}
+
+bool CdRomMedia::LoadChdFromBuffer(const u8* buffer, int size, const char* path)
+{
+        Log("ERROR: Unable to load CD-ROM Media from buffer %p. Size: %d", buffer, size);
+        return false;
+}
+
 void CdRomMedia::GatherPaths(const char* path)
 {
     using namespace std;
