@@ -707,15 +707,18 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                 continue;
             }
 
-            if (index_number == 0) {
+            if (index_number == 0)
+            {
                 current_track.lead_in_msf.minutes = (u8)m;
                 current_track.lead_in_msf.seconds = (u8)s;
                 current_track.lead_in_msf.frames = (u8)f;
                 current_track.lead_in_lba = MsfToLba(&current_track.lead_in_msf);
                 current_track.has_lead_in = true;
 
-                Debug("Track %d lead-in at %02d:%02d:%02d", current_track.number, m, s, f);
-            } else if (index_number == 1) {
+                Debug("Track %d lead-in (INDEX 00) at %02d:%02d:%02d", current_track.number, m, s, f);
+            }
+            else if (index_number == 1) 
+            {
                 current_track.start_msf.minutes = (u8)m;
                 current_track.start_msf.seconds = (u8)s;
                 current_track.start_msf.frames = (u8)f;
@@ -743,92 +746,82 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
     if (!m_tracks.empty())
     {
-        u32 cumulative_offset_lba = 0;
+        u32 cumulative_file_lba = 0;
+        u32 cumulative_pregap_lba = 0;
         ImgFile* prev_file = m_tracks[0].img_file;
         u32 prev_sector_size = m_tracks[0].sector_size;
 
         for (size_t i = 0; i < m_tracks.size(); i++)
         {
-            if (m_tracks[i].img_file != prev_file)
+            Track& track = m_tracks[i];
+
+            if (track.img_file != prev_file)
             {
                 u32 file_sectors = prev_file->file_size / prev_sector_size;
-                cumulative_offset_lba += file_sectors;
-                prev_file = m_tracks[i].img_file;
-                prev_sector_size = m_tracks[i].sector_size;
+                cumulative_file_lba += file_sectors;
+                prev_file = track.img_file;
+                prev_sector_size = track.sector_size;
             }
 
-            m_tracks[i].start_lba += cumulative_offset_lba;
+            if (track.has_pregap)
+            {
+                cumulative_pregap_lba += track.pregap_length;
+            }
 
-            if (m_tracks[i].has_lead_in)
-                m_tracks[i].lead_in_lba += cumulative_offset_lba;
+            track.start_lba += cumulative_file_lba + cumulative_pregap_lba;
+
+            if (track.has_pregap)
+            {
+                track.lead_in_lba = track.start_lba - track.pregap_length;
+                track.has_lead_in = true;
+                LbaToMsf(track.lead_in_lba, &track.lead_in_msf);
+            }
+            else if (track.has_lead_in)
+            {
+                track.lead_in_lba += cumulative_file_lba + cumulative_pregap_lba;
+                LbaToMsf(track.lead_in_lba, &track.lead_in_msf);
+            }
         }
 
         prev_file = m_tracks[0].img_file;
-        u32 file_offset = 0;
+        u32 last_file_offset = 0;
 
         for (size_t i = 0; i < m_tracks.size(); i++)
         {
-            if (m_tracks[i].img_file != prev_file)
+            Track& track = m_tracks[i];
+
+            if (track.img_file != prev_file)
             {
-                prev_file = m_tracks[i].img_file;
-                file_offset = 0;
+                prev_file = track.img_file;
+                last_file_offset = 0;
             }
 
-            if ((i + 1) < m_tracks.size())
+            if (i + 1 < m_tracks.size())
             {
-                if (m_tracks[i + 1].has_lead_in)
-                    m_tracks[i].sector_count = m_tracks[i + 1].lead_in_lba - m_tracks[i].start_lba;
-                else
-                    m_tracks[i].sector_count = m_tracks[i + 1].start_lba - m_tracks[i].start_lba;
-
-                m_tracks[i].end_lba = m_tracks[i].start_lba + m_tracks[i].sector_count - 1;
-                LbaToMsf(m_tracks[i].end_lba, &m_tracks[i].end_msf);
+                Track& next = m_tracks[i + 1];
+                u32 boundary = next.has_lead_in ? next.lead_in_lba : next.start_lba;
+                track.sector_count = boundary - track.start_lba;
             }
             else
             {
-                if (IsValidPointer(m_tracks[i].img_file))
-                {
-                    u32 prev_bytes = 0;
-                    for (size_t j = 0; j < i; j++)
-                    {
-                        if (m_tracks[j].img_file == m_tracks[i].img_file)
-                            prev_bytes += m_tracks[j].sector_count * m_tracks[j].sector_size;
-                    }
-
-                    u32 pregap_bytes = 0;
-                    for (size_t j = 0; j <= i; j++)
-                    {
-                        if (m_tracks[j].img_file == m_tracks[i].img_file && m_tracks[j].has_lead_in)
-                        {
-                            u32 pregap_sectors = m_tracks[j].start_lba - m_tracks[j].lead_in_lba;
-                            pregap_bytes += pregap_sectors * m_tracks[j].sector_size;
-                        }
-                    }
-
-                    u32 usable_bytes = m_tracks[i].img_file->file_size - prev_bytes - pregap_bytes;
-                    m_tracks[i].sector_count = usable_bytes / m_tracks[i].sector_size;
-                    m_tracks[i].end_lba = m_tracks[i].start_lba + m_tracks[i].sector_count - 1;
-                    LbaToMsf(m_tracks[i].end_lba, &m_tracks[i].end_msf);
-                }
-                else
-                {
-                    m_tracks[i].sector_count = 75 * 60 * 80;
-                    m_tracks[i].end_lba = m_tracks[i].start_lba + m_tracks[i].sector_count - 1;
-                    LbaToMsf(m_tracks[i].end_lba, &m_tracks[i].end_msf);
-                }
+                u32 remaining_bytes    = track.img_file->file_size  - last_file_offset;
+                track.sector_count     = remaining_bytes / track.sector_size;
             }
 
-            m_tracks[i].file_offset = file_offset;
-            file_offset += m_tracks[i].sector_count * m_tracks[i].sector_size;
+            track.end_lba = track.start_lba + track.sector_count - 1;
+            LbaToMsf(track.end_lba, &track.end_msf);
 
-            if (m_tracks[i].has_lead_in)
-            {
-                m_tracks[i].file_offset += (m_tracks[i].start_lba - m_tracks[i].lead_in_lba) * m_tracks[i].sector_size;
-            }
+            track.file_offset = last_file_offset;
 
-            Log("Track %d (%s): Start LBA: %d, End LBA: %d, Sectors: %d, File Offset: %d",
-                m_tracks[i].number, GetTrackTypeName(m_tracks[i].type),
-                m_tracks[i].start_lba, m_tracks[i].end_lba, m_tracks[i].sector_count, m_tracks[i].file_offset);
+            last_file_offset += track.sector_count * track.sector_size;
+
+            Log("Track %2d (%s): Start LBA: %6u, End LBA: %6u, Sectors: %6u, File Offset: %8u",
+                track.number,
+                GetTrackTypeName(track.type),
+                track.start_lba,
+                track.end_lba,
+                track.sector_count,
+                track.file_offset);
         }
     }
 
