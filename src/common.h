@@ -37,7 +37,7 @@
 #include "types.h"
 #include "log.h"
 #include "bit_ops.h"
-#include "miniz/miniz.h"
+#include <miniz.h>
 
 inline int AsHex(const char c)
 {

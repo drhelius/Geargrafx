@@ -22,7 +22,6 @@
 #include <algorithm>
 #include <assert.h>
 #include "media.h"
-#include "miniz/miniz.h"
 #include "game_db.h"
 #include "crc.h"
 #include "cdrom_media.h"
