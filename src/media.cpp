@@ -287,7 +287,7 @@ bool Media::LoadBios(const char* file_path, bool syscard)
         *bios_crc = CalculateCRC32(0, bios, expected_size);
         GatherBIOSInfoFromDB(syscard);
 
-        Log("BIOS %s loaded (%d bytes)", file_path, size);
+        Log("BIOS loaded (%d bytes): %s", size, file_path);
     }
     else
     {
