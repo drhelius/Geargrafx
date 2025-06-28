@@ -47,7 +47,6 @@ CdRomMedia::~CdRomMedia()
 
 void CdRomMedia::InitTrack(Track& track)
 {
-    track.number = 0;
     track.type = AUDIO_TRACK;
     track.sector_size = 0;
     track.sector_count = 0;
@@ -55,13 +54,21 @@ void CdRomMedia::InitTrack(Track& track)
     track.start_msf = {0, 0, 0};
     track.end_lba = 0;
     track.end_msf = {0, 0, 0};
-    track.has_pregap = false;
-    track.pregap_length = 0;
-    track.has_lead_in = false;
-    track.lead_in_lba = 0;
-    track.lead_in_msf = {0, 0, 0};
     track.img_file = NULL;
     track.file_offset = 0;
+    track.has_lead_in = false;
+    track.lead_in_lba = 0;
+}
+
+void CdRomMedia::InitParsedCueTrack(ParsedCueTrack& track)
+{
+    track.type = AUDIO_TRACK;
+    track.has_index0 = false;
+    track.index0_lba = 0;
+    track.has_pregap = false;
+    track.pregap_length = 0;
+    track.index1_lba = 0;
+    track.img_file = NULL;
 }
 
 void CdRomMedia::DestroyImgFiles()
@@ -539,10 +546,11 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
     istringstream stream(cue_content);
     string line;
+    vector<ParsedCueTrack> parsed_tracks;
+    ParsedCueTrack current_parsed_track;
+    InitParsedCueTrack(current_parsed_track);
 
-    Track current_track;
-    InitTrack(current_track);
-    ImgFile* current_img_file = NULL;
+    ImgFile* current_file = NULL;
     bool in_track = false;
 
     while (getline(stream, line))
@@ -570,7 +578,7 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
             }
             else
             {
-                istringstream file_stream(line.substr(4)); // Skip "FILE"
+                istringstream file_stream(line.substr(4));
                 file_stream >> current_file_path;
 
                 if (current_file_path.empty())
@@ -602,34 +610,35 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
             strncpy_fit(img_file->file_path, current_file_path.c_str(), sizeof(img_file->file_path));
             strncpy_fit(img_file->file_name, file_name.c_str(), sizeof(img_file->file_name));
+
             if (!GatherImgInfo(img_file))
             {
                 Log("ERROR: Failed to gather ImgFile info for %s", current_file_path.c_str());
                 SafeDelete(img_file);
                 return false;
             }
+
             m_img_files.push_back(img_file);
-            current_img_file = img_file;
+            current_file = img_file;
         }
         else if (lowercase_line.find("track") == 0)
         {
             if (in_track)
-                m_tracks.push_back(current_track);
+                parsed_tracks.push_back(current_parsed_track);
 
             in_track = true;
-            current_track = Track();
-            InitTrack(current_track);
+            current_parsed_track = ParsedCueTrack();
+            InitParsedCueTrack(current_parsed_track);
+            current_parsed_track.img_file = current_file;
 
-            if (!IsValidPointer(current_img_file))
+            if (!IsValidPointer(current_file))
             {
                 Log("ERROR: TRACK found without FILE in CUE");
                 return false;
             }
 
-            current_track.img_file = current_img_file;
-
             istringstream track_stream(line.substr(5));
-            track_stream >> current_track.number;
+            track_stream >> current_parsed_track.number;
 
             string type_str;
             track_stream >> type_str;
@@ -637,18 +646,18 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
             if (type_str == "audio")
             {
-                current_track.type = AUDIO_TRACK;
-                Debug("Found TRACK %d: AUDIO", current_track.number);
+                current_parsed_track.type = AUDIO_TRACK;
+                Debug("Found TRACK %d: AUDIO", current_parsed_track.number);
             }
             else if (type_str == "mode1/2048")
             {
-                current_track.type = DATA_TRACK_MODE1_2048;
-                Debug("Found TRACK %d: DATA (MODE1/2048)", current_track.number);
+                current_parsed_track.type = DATA_TRACK_MODE1_2048;
+                Debug("Found TRACK %d: DATA (MODE1/2048)", current_parsed_track.number);
             }
             else if (type_str == "mode1/2352")
             {
-                current_track.type = DATA_TRACK_MODE1_2352;
-                Debug("Found TRACK %d: DATA (MODE1/2352)", current_track.number);
+                current_parsed_track.type = DATA_TRACK_MODE1_2352;
+                Debug("Found TRACK %d: DATA (MODE1/2352)", current_parsed_track.number);
             }
             else if (type_str.find("mode2/") != string::npos)
             {
@@ -660,8 +669,6 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                 Log("WARNING: Unknown track type: %s", type_str.c_str());
                 return false;
             }
-
-            current_track.sector_size = GetTrackSectorSize(current_track.type);
         }
         else if (lowercase_line.find("pregap") == 0)
         {
@@ -680,16 +687,17 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
             pregap_msf.minutes = (u8)m;
             pregap_msf.seconds = (u8)s;
             pregap_msf.frames = (u8)f;
-            current_track.pregap_length = MsfToLba(&pregap_msf);
-            current_track.has_pregap = true;
-            Debug("Track %d pregap at %02d:%02d:%02d", current_track.number, m, s, f);
+            current_parsed_track.pregap_length = MsfToLba(&pregap_msf);
+            current_parsed_track.has_pregap = true;
+
+            Debug("Track %d pregap length %02d:%02d:%02d", current_parsed_track.number, m, s, f);
         }
         else if (lowercase_line.find("index") == 0)
         {
             if (!in_track)
             {
                 Log("ERROR: INDEX found outside of TRACK in CUE file");
-                continue;
+                return false;
             }
 
             int index_number;
@@ -707,125 +715,132 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                 continue;
             }
 
+            GG_CdRomMSF msf;
+            msf.minutes = (u8)m;
+            msf.seconds = (u8)s;
+            msf.frames = (u8)f;
+
             if (index_number == 0)
             {
-                current_track.lead_in_msf.minutes = (u8)m;
-                current_track.lead_in_msf.seconds = (u8)s;
-                current_track.lead_in_msf.frames = (u8)f;
-                current_track.lead_in_lba = MsfToLba(&current_track.lead_in_msf);
-                current_track.has_lead_in = true;
-
-                Debug("Track %d lead-in (INDEX 00) at %02d:%02d:%02d", current_track.number, m, s, f);
+                current_parsed_track.index0_lba = MsfToLba(&msf);
+                current_parsed_track.has_index0 = true;
+                Debug("Track %d lead-in (INDEX 00) at %02d:%02d:%02d", current_parsed_track.number, m, s, f);
             }
-            else if (index_number == 1) 
+            else if (index_number == 1)
             {
-                current_track.start_msf.minutes = (u8)m;
-                current_track.start_msf.seconds = (u8)s;
-                current_track.start_msf.frames = (u8)f;
-                current_track.start_lba = MsfToLba(&current_track.start_msf);
-
-                if (!current_track.has_lead_in && current_track.has_pregap)
-                {
-                    current_track.lead_in_lba = current_track.start_lba - current_track.pregap_length;
-                    LbaToMsf(current_track.lead_in_lba, &current_track.lead_in_msf);
-                    current_track.has_lead_in = true;
-                    Debug("Track %d lead-in at %02d:%02d:%02d",
-                          current_track.number,
-                          current_track.lead_in_msf.minutes,
-                          current_track.lead_in_msf.seconds,
-                          current_track.lead_in_msf.frames);
-                }
-
-                Debug("Track %d starts at %02d:%02d:%02d", current_track.number, m, s, f);
+                current_parsed_track.index1_lba = MsfToLba(&msf);
+                Debug("Track %d starts (INDEX 01) at %02d:%02d:%02d", current_parsed_track.number, m, s, f);
             }
         }
     }
 
     if (in_track)
-        m_tracks.push_back(current_track);
+        parsed_tracks.push_back(current_parsed_track);
 
-    if (!m_tracks.empty())
+    if (parsed_tracks.empty())
     {
-        u32 cumulative_file_lba = 0;
-        u32 cumulative_pregap_lba = 0;
-        ImgFile* prev_file = m_tracks[0].img_file;
-        u32 prev_sector_size = m_tracks[0].sector_size;
+        Log("ERROR: No valid tracks found in CUE file");
+        return false;
+    }
 
-        for (size_t i = 0; i < m_tracks.size(); i++)
+    ImgFile* prev_file = parsed_tracks[0].img_file;
+    u32 total_pregap_length = 0;
+    u32 file_offset = 0;
+
+    for (size_t i = 0; i < parsed_tracks.size(); ++i)
+    {
+        ParsedCueTrack& p = parsed_tracks[i];
+        Track track;
+        InitTrack(track);
+        track.type = p.type;
+        track.sector_size = GetTrackSectorSize(p.type);
+        track.img_file = p.img_file;
+
+        if (parsed_tracks[i].img_file != prev_file)
         {
-            Track& track = m_tracks[i];
-
-            if (track.img_file != prev_file)
-            {
-                u32 file_sectors = prev_file->file_size / prev_sector_size;
-                cumulative_file_lba += file_sectors;
-                prev_file = track.img_file;
-                prev_sector_size = track.sector_size;
-            }
-
-            if (track.has_pregap)
-            {
-                cumulative_pregap_lba += track.pregap_length;
-            }
-
-            track.start_lba += cumulative_file_lba + cumulative_pregap_lba;
-
-            if (track.has_pregap)
-            {
-                track.lead_in_lba = track.start_lba - track.pregap_length;
-                track.has_lead_in = true;
-                LbaToMsf(track.lead_in_lba, &track.lead_in_msf);
-            }
-            else if (track.has_lead_in)
-            {
-                track.lead_in_lba += cumulative_file_lba + cumulative_pregap_lba;
-                LbaToMsf(track.lead_in_lba, &track.lead_in_msf);
-            }
+            prev_file = parsed_tracks[i].img_file;
+            file_offset = 0;
         }
 
-        prev_file = m_tracks[0].img_file;
-        u32 last_file_offset = 0;
-
-        for (size_t i = 0; i < m_tracks.size(); i++)
+        if (p.has_pregap)
         {
-            Track& track = m_tracks[i];
+            total_pregap_length += p.pregap_length;
+        }
 
-            if (track.img_file != prev_file)
-            {
-                prev_file = track.img_file;
-                last_file_offset = 0;
-            }
+        track.start_lba = p.index1_lba + total_pregap_length;
+        LbaToMsf(track.start_lba, &track.start_msf);
 
-            if (i + 1 < m_tracks.size())
+        if (p.has_pregap)
+        {
+            track.has_lead_in = true;
+            track.lead_in_lba = p.index1_lba + total_pregap_length - p.pregap_length;
+        }
+        else if (p.has_index0)
+        {
+            track.has_lead_in = true;
+            track.lead_in_lba = p.index0_lba + total_pregap_length;
+        }
+
+        // Finalize previous track if it exists
+        if (!m_tracks.empty())
+        {
+            Track& prev = m_tracks.back();
+
+            if (track.has_lead_in)
             {
-                Track& next = m_tracks[i + 1];
-                u32 boundary = next.has_lead_in ? next.lead_in_lba : next.start_lba;
-                track.sector_count = boundary - track.start_lba;
+                prev.end_lba = track.lead_in_lba - 1;
             }
             else
             {
-                u32 remaining_bytes    = track.img_file->file_size  - last_file_offset;
-                track.sector_count     = remaining_bytes / track.sector_size;
+                prev.end_lba = track.start_lba - 1;
             }
 
-            track.end_lba = track.start_lba + track.sector_count - 1;
-            LbaToMsf(track.end_lba, &track.end_msf);
+            LbaToMsf(prev.end_lba, &prev.end_msf);
+            prev.sector_count = prev.end_lba - prev.start_lba + 1;
+            prev.file_offset = file_offset;
+            file_offset += prev.sector_count * prev.sector_size;
+        }
 
-            track.file_offset = last_file_offset;
+        m_tracks.push_back(track);
+    }
 
-            last_file_offset += track.sector_count * track.sector_size;
+    // Finalize last track
+    if (!m_tracks.empty())
+    {
+        Track& last = m_tracks.back();
 
-            Log("Track %2d (%s): Start LBA: %6u, End LBA: %6u, Sectors: %6u, File Offset: %8u",
-                track.number,
+        last.file_offset = file_offset;
+        u32 file_size_bytes = last.img_file->file_size;
+        u32 remaining_bytes = file_size_bytes - last.file_offset;
+        last.sector_count = remaining_bytes / last.sector_size;
+
+        if (remaining_bytes % last.sector_size != 0)
+        {
+            Log("WARNING: Last track has remaining bytes that do not fit into a full sector. "
+                "File size: %u, File offset: %llu, Sector size: %u",
+                file_size_bytes, last.file_offset, last.sector_size);
+            last.sector_count++;
+        }
+
+        last.end_lba = last.start_lba + last.sector_count - 1;
+        LbaToMsf(last.end_lba, &last.end_msf);
+    }
+
+    for (size_t i = 0; i < m_tracks.size(); ++i)
+    {
+        Track& track = m_tracks[i];
+
+        Log("Track %2d (%s): Start LBA: %6u, End LBA: %6u, Sectors: %6u, File Offset: %8llu",
+                i + 1,
                 GetTrackTypeName(track.type),
                 track.start_lba,
                 track.end_lba,
                 track.sector_count,
                 track.file_offset);
-        }
     }
 
-    Log("Successfully parsed CUE file with %d tracks", m_tracks.size());
+
+    Log("Successfully parsed CUE file with %d tracks", (int)m_tracks.size());
 
     if (m_tracks.empty())
     {
