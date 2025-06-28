@@ -68,7 +68,12 @@ void CdRomMedia::InitParsedCueTrack(ParsedCueTrack& track)
     track.has_pregap = false;
     track.pregap_length = 0;
     track.index1_lba = 0;
-    track.img_file = NULL;
+}
+
+void CdRomMedia::InitParsedCueFile(ParsedCueFile& cue_file)
+{
+    cue_file.img_file = NULL;
+    cue_file.tracks.clear();
 }
 
 void CdRomMedia::DestroyImgFiles()
@@ -215,6 +220,7 @@ bool CdRomMedia::LoadCueFromBuffer(const u8* buffer, int size, const char* path)
         else
         {
             Log("ERROR: Failed to parse CUE file");
+            Reset();
         }
 
         return m_ready;
@@ -546,11 +552,9 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
     istringstream stream(cue_content);
     string line;
-    vector<ParsedCueTrack> parsed_tracks;
+    vector<ParsedCueFile> parsed_files;
     ParsedCueTrack current_parsed_track;
     InitParsedCueTrack(current_parsed_track);
-
-    ImgFile* current_file = NULL;
     bool in_track = false;
 
     while (getline(stream, line))
@@ -565,6 +569,12 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
 
         if (lowercase_line.find("file") == 0)
         {
+            if (in_track)
+            {
+                in_track = false;
+                parsed_files.back().tracks.push_back(current_parsed_track);
+            }
+
             string current_file_path;
             string file_name;
 
@@ -619,19 +629,22 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
             }
 
             m_img_files.push_back(img_file);
-            current_file = img_file;
+
+            ParsedCueFile parsed_file;
+            InitParsedCueFile(parsed_file);
+            parsed_file.img_file = img_file;
+            parsed_files.push_back(parsed_file);
         }
         else if (lowercase_line.find("track") == 0)
         {
             if (in_track)
-                parsed_tracks.push_back(current_parsed_track);
+                parsed_files.back().tracks.push_back(current_parsed_track);
 
             in_track = true;
             current_parsed_track = ParsedCueTrack();
             InitParsedCueTrack(current_parsed_track);
-            current_parsed_track.img_file = current_file;
 
-            if (!IsValidPointer(current_file))
+            if (parsed_files.empty())
             {
                 Log("ERROR: TRACK found without FILE in CUE");
                 return false;
@@ -735,90 +748,88 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
     }
 
     if (in_track)
-        parsed_tracks.push_back(current_parsed_track);
+        parsed_files.back().tracks.push_back(current_parsed_track);
 
-    if (parsed_tracks.empty())
+    if (parsed_files.empty())
     {
-        Log("ERROR: No valid tracks found in CUE file");
+        Log("ERROR: No valid files found in CUE file");
         return false;
     }
 
-    ImgFile* prev_file = parsed_tracks[0].img_file;
     u32 total_pregap_length = 0;
-    u32 file_offset = 0;
 
-    for (size_t i = 0; i < parsed_tracks.size(); ++i)
+    for (size_t i = 0; i < parsed_files.size(); i++)
     {
-        ParsedCueTrack& p = parsed_tracks[i];
-        Track track;
-        InitTrack(track);
-        track.type = p.type;
-        track.sector_size = GetTrackSectorSize(p.type);
-        track.img_file = p.img_file;
+        ParsedCueFile& f = parsed_files[i];
 
-        if (parsed_tracks[i].img_file != prev_file)
+        if (f.tracks.empty())
         {
-            prev_file = parsed_tracks[i].img_file;
-            file_offset = 0;
+            Log("ERROR: No tracks found for file %s", f.img_file->file_path);
+            continue;
         }
 
-        if (p.has_pregap)
+        if (!IsValidPointer(f.img_file))
         {
-            total_pregap_length += p.pregap_length;
+            Log("ERROR: Invalid ImgFile pointer for file %s", f.img_file->file_path);
+            continue;
         }
 
-        track.start_lba = p.index1_lba + total_pregap_length;
-        LbaToMsf(track.start_lba, &track.start_msf);
+        u32 start_sector = ((i == 0) ? 0 : m_tracks.back().end_lba + 1);
 
-        if (p.has_pregap)
+        for (size_t j = 0; j < f.tracks.size(); j++)
         {
-            track.has_lead_in = true;
-            track.lead_in_lba = p.index1_lba + total_pregap_length - p.pregap_length;
-        }
-        else if (p.has_index0)
-        {
-            track.has_lead_in = true;
-            track.lead_in_lba = p.index0_lba + total_pregap_length;
-        }
+            ParsedCueTrack& p = f.tracks[j];
+            Track track;
+            InitTrack(track);
+            track.type = p.type;
+            track.sector_size = GetTrackSectorSize(p.type);
+            track.img_file = f.img_file;
 
-        // Finalize previous track if it exists
-        if (!m_tracks.empty())
-        {
-            Track& prev = m_tracks.back();
+            if (p.has_pregap)
+                total_pregap_length += p.pregap_length;
 
-            if (track.has_lead_in)
+            track.start_lba = p.index1_lba + total_pregap_length + start_sector;
+            LbaToMsf(track.start_lba, &track.start_msf);
+
+            if (p.has_pregap)
             {
-                prev.end_lba = track.lead_in_lba - 1;
+                track.has_lead_in = true;
+                track.lead_in_lba = p.index1_lba + total_pregap_length - p.pregap_length + start_sector;
             }
-            else
+            else if (p.has_index0)
             {
-                prev.end_lba = track.start_lba - 1;
+                track.has_lead_in = true;
+                track.lead_in_lba = p.index0_lba + start_sector;
             }
 
-            LbaToMsf(prev.end_lba, &prev.end_msf);
-            prev.sector_count = prev.end_lba - prev.start_lba + 1;
-            prev.file_offset = file_offset;
-            file_offset += prev.sector_count * prev.sector_size;
+            u32 current_file_offset = 0;
+
+            if(j != 0)
+            {
+                Track& prev = m_tracks.back();
+                prev.end_lba = track.has_lead_in ? track.lead_in_lba - 1 : track.start_lba - 1;
+                LbaToMsf(prev.end_lba, &prev.end_msf);
+
+                prev.sector_count = prev.end_lba - prev.start_lba + 1;
+                current_file_offset = prev.file_offset + (prev.sector_count * prev.sector_size);
+            }
+
+            track.file_offset = current_file_offset;
+
+            if (track.has_lead_in && !p.has_pregap)
+                track.file_offset += (track.start_lba - track.lead_in_lba) * track.sector_size;
+
+            m_tracks.push_back(track);
         }
 
-        m_tracks.push_back(track);
-    }
-
-    // Finalize last track
-    if (!m_tracks.empty())
-    {
         Track& last = m_tracks.back();
+        u32 last_size = (f.img_file->file_size - last.file_offset);
+        last.sector_count = last_size / last.sector_size;
 
-        last.file_offset = file_offset;
-        u32 file_size_bytes = last.img_file->file_size;
-        u32 remaining_bytes = file_size_bytes - last.file_offset;
-        last.sector_count = remaining_bytes / last.sector_size;
-
-        if (remaining_bytes % last.sector_size != 0)
+        if (last_size % last.sector_size != 0)
         {
-            Log("WARNING: Last track has remaining bytes that do not fit into a full sector. "
-                "File size: %u, File offset: %llu, Sector size: %u",
-                file_size_bytes, last.file_offset, last.sector_size);
+            Log("WARNING: Last track has remaining bytes that do not fit into a full sector:");
+            Log("File size: %u, File offset: %llu, Sector size: %u", f.img_file->file_size, last.file_offset, last.sector_size);
             last.sector_count++;
         }
 
@@ -838,7 +849,6 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
                 track.sector_count,
                 track.file_offset);
     }
-
 
     Log("Successfully parsed CUE file with %d tracks", (int)m_tracks.size());
 

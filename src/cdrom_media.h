@@ -76,7 +76,12 @@ private:
         bool has_pregap;
         uint32_t pregap_length;
         uint32_t index1_lba;
+    };
+
+    struct ParsedCueFile
+    {
         ImgFile* img_file;
+        std::vector<ParsedCueTrack> tracks;
     };
 
 public:
@@ -117,6 +122,7 @@ public:
 private:
     void InitTrack(Track& track);
     void InitParsedCueTrack(ParsedCueTrack& track);
+    void InitParsedCueFile(ParsedCueFile& cue_file);
     void DestroyImgFiles();
     void GatherPaths(const char* path);
     bool GatherImgInfo(ImgFile* img_file);
