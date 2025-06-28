@@ -145,9 +145,9 @@ void retro_set_environment(retro_environment_t cb)
 
     static const struct retro_system_content_info_override content_overrides[] = {
         {
-            "pce|sgx|bin|rom", // extensions
-            false,             // need_fullpath
-            false              // persistent_data
+            "pce|sgx",  // extensions
+            false,      // need_fullpath
+            false       // persistent_data
         },
         { NULL, false, false }
     };
@@ -257,7 +257,7 @@ void retro_get_system_info(struct retro_system_info *info)
     info->library_name     = "Geargrafx";
     info->library_version  = GG_VERSION;
     info->need_fullpath    = true;
-    info->valid_extensions = "pce|sgx|bin|rom|cue";
+    info->valid_extensions = "pce|sgx|cue";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
