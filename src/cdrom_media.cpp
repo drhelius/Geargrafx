@@ -756,8 +756,6 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
         return false;
     }
 
-    u32 total_pregap_length = 0;
-
     for (size_t i = 0; i < parsed_files.size(); i++)
     {
         ParsedCueFile& f = parsed_files[i];
@@ -775,6 +773,7 @@ bool CdRomMedia::ParseCueFile(const char* cue_content)
         }
 
         u32 start_sector = ((i == 0) ? 0 : m_tracks.back().end_lba + 1);
+        u32 total_pregap_length = 0;
 
         for (size_t j = 0; j < f.tracks.size(); j++)
         {
