@@ -31,32 +31,32 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     <tr>
       <td rowspan="2"><strong>Windows</strong></td>
       <td>x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.3/Geargrafx-1.5.3-windows-x64.zip">Geargrafx-1.5.3-windows-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.4/Geargrafx-1.5.4-windows-x64.zip">Geargrafx-1.5.4-windows-x64.zip</a></td>
       <td rowspan="2">May need <a href="https://go.microsoft.com/fwlink/?LinkId=746572">Visual C++ Redistributable</a> and <a href="https://apps.microsoft.com/detail/9nqpsl29bfff">OpenGL Compatibility Pack</a></td>
     </tr>
     <tr>
       <td>ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.3/Geargrafx-1.5.3-windows-arm64.zip">Geargrafx-1.5.3-windows-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.4/Geargrafx-1.5.4-windows-arm64.zip">Geargrafx-1.5.4-windows-arm64.zip</a></td>
     </tr>
     <tr>
       <td rowspan="2"><strong>macOS</strong></td>
       <td>Apple Silicon</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.3/Geargrafx-1.5.3-macos-arm.zip">Geargrafx-1.5.3-macos-arm.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.4/Geargrafx-1.5.4-macos-arm.zip">Geargrafx-1.5.4-macos-arm.zip</a></td>
       <td rowspan="2"></td>
     </tr>
     <tr>
       <td>Intel</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.3/Geargrafx-1.5.3-macos-intel.zip">Geargrafx-1.5.3-macos-intel.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.4/Geargrafx-1.5.4-macos-intel.zip">Geargrafx-1.5.4-macos-intel.zip</a></td>
     </tr>
     <tr>
       <td rowspan="2"><strong>Linux</strong></td>
       <td>Ubuntu 24.04</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.3/Geargrafx-1.5.3-ubuntu-24.04.zip">Geargrafx-1.5.3-ubuntu-24.04.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.4/Geargrafx-1.5.4-ubuntu-24.04.zip">Geargrafx-1.5.4-ubuntu-24.04.zip</a></td>
       <td rowspan="2">May need <code>libsdl2</code> and <code>libglew</code></td>
     </tr>
     <tr>
       <td>Ubuntu 22.04</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.3/Geargrafx-1.5.3-ubuntu-22.04.zip">Geargrafx-1.5.3-ubuntu-22.04.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.5.4/Geargrafx-1.5.4-ubuntu-22.04.zip">Geargrafx-1.5.4-ubuntu-22.04.zip</a></td>
     </tr>
     <tr>
       <td><strong>RetroArch</strong></td>
