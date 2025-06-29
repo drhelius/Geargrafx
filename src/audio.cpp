@@ -123,10 +123,20 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         {
             for (int i = 0; i < samples; i++)
             {
-                sample_buffer[i] = 0;
-                sample_buffer[i] += m_mute_psg ? 0 : m_psg_buffer[i];
-                sample_buffer[i] += m_mute_adpcm ? 0 : m_adpcm_buffer[i];
-                sample_buffer[i] += m_mute_cdrom ? 0 : m_cdrom_buffer[i];
+                int mix = 0;
+                if (!m_mute_psg)
+                    mix += m_psg_buffer[i];
+                if (!m_mute_adpcm)
+                    mix += m_adpcm_buffer[i];
+                if (!m_mute_cdrom)
+                    mix += m_cdrom_buffer[i];
+
+                if (mix > 32767)
+                    mix = 32767;
+                else if (mix < -32768)
+                    mix = -32768;
+
+                sample_buffer[i] = (s16)mix;
             }
         }
     }
