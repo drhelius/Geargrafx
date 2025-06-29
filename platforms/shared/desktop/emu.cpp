@@ -188,19 +188,19 @@ void emu_audio_mute(bool mute)
     geargrafx->GetAudio()->Mute(mute);
 }
 
-void emu_audio_mute_psg(bool mute)
+void emu_audio_psg_volume(float volume)
 {
-    geargrafx->GetAudio()->MutePSG(mute);
+    geargrafx->GetAudio()->SetPSGVolume(volume);
 }
 
-void emu_audio_mute_adpcm(bool mute)
+void emu_audio_adpcm_volume(float volume)
 {
-    geargrafx->GetAudio()->MuteADPCM(mute);
+    geargrafx->GetAudio()->SetADPCMVolume(volume);
 }
 
-void emu_audio_mute_cdrom(bool mute)
+void emu_audio_cdrom_volume(float volume)
 {
-    geargrafx->GetAudio()->MuteCDROM(mute);
+    geargrafx->GetAudio()->SetCDROMVolume(volume);
 }
 
 void emu_audio_reset(void)

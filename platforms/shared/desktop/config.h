@@ -90,9 +90,9 @@ struct config_Audio
 {
     bool enable = true;
     bool sync = true;
-    bool mute_psg = false;
-    bool mute_cd = false;
-    bool mute_adpcm = false;
+    float psg_volume = 1.0f;
+    float cdrom_volume = 1.0f;
+    float adpcm_volume = 1.0f;
 };
 
 struct config_Input

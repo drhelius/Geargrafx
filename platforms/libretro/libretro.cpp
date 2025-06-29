@@ -606,6 +606,9 @@ static void set_variabless(void)
         { "geargrafx_avenue_pad_3_switch", "Avenue Pad 3 Switch; Auto|SELECT|RUN" },
         { "geargrafx_soft_reset", "Soft Reset; Enabled|Disabled" },
         { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
+        { "geargrafx_psg_volume", "PSG Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
+        { "geargrafx_cdrom_volume", "PSG Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
+        { "geargrafx_adpcm_volume", "PSG Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
         { NULL }
     };
 
@@ -812,5 +815,41 @@ static void check_variables(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         allow_up_down = (strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_psg_volume";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int volume = atoi(var.value);
+        if (volume < 0 || volume > 200)
+            volume = 100;
+        float volume_f = (float)volume / 100.0f;
+        core->GetAudio()->SetPSGVolume(volume_f);
+    }
+
+    var.key = "geargrafx_cdrom_volume";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int volume = atoi(var.value);
+        if (volume < 0 || volume > 200)
+            volume = 100;
+        float volume_f = (float)volume / 100.0f;
+        core->GetAudio()->SetCDROMVolume(volume_f);
+    }
+
+    var.key = "geargrafx_adpcm_volume";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int volume = atoi(var.value);
+        if (volume < 0 || volume > 200)
+            volume = 100;
+        float volume_f = (float)volume / 100.0f;
+        core->GetAudio()->SetADPCMVolume(volume_f);
     }
 }

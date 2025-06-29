@@ -68,6 +68,9 @@ EXTERN SDL_Scancode* gui_configured_key;
 EXTERN int* gui_configured_button;
 EXTERN bool gui_dialog_in_use;
 EXTERN bool gui_shortcut_open_rom;
+EXTERN bool gui_audio_mute_cdrom;
+EXTERN bool gui_audio_mute_psg;
+EXTERN bool gui_audio_mute_adpcm;
 
 EXTERN void gui_init(void);
 EXTERN void gui_destroy(void);
