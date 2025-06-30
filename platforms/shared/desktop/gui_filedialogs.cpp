@@ -36,7 +36,7 @@ static void file_dialog_set_native_window(SDL_Window* window, nfdwindowhandle_t*
 void gui_file_dialog_open_rom(void)
 {
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "ROM/CD Files", "pce,sgx,cue,rom,bin,zip" } };
+    nfdfilteritem_t filterItem[1] = { { "ROM/CD Files", "pce,sgx,cue,zip" } };
     nfdopendialogu8args_t args = { };
     args.filterList = filterItem;
     args.filterCount = 1;
@@ -220,7 +220,7 @@ void gui_file_dialog_load_bios(bool syscard)
     char* bios_path = syscard ? gui_syscard_bios_path : gui_gameexpress_bios_path;
     std::string* bios_config_path = syscard ? &config_emulator.syscard_bios_path : &config_emulator.gameexpress_bios_path;
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "BIOS Files", "pce,bin,rom,bios" } };
+    nfdfilteritem_t filterItem[1] = { { "BIOS Files", "pce,rom,bios" } };
     nfdopendialogu8args_t args = { };
     args.filterList = filterItem;
     args.filterCount = 1;

@@ -59,21 +59,20 @@ void gui_debug_window_adpcm(void)
 
     ImGui::TableNextColumn();
 
-    ImGui::PushStyleColor(ImGuiCol_Text, config_audio.mute_adpcm ? mid_gray : white);
+    ImGui::PushStyleColor(ImGuiCol_Text, gui_audio_mute_adpcm ? mid_gray : white);
     ImGui::PushFont(gui_material_icons_font);
 
     char label[32];
-    snprintf(label, 32, "%s##adpcmmute", config_audio.mute_adpcm ? ICON_MD_MUSIC_OFF : ICON_MD_MUSIC_NOTE);
+    snprintf(label, 32, "%s##adpcmmute", gui_audio_mute_adpcm ? ICON_MD_MUSIC_OFF : ICON_MD_MUSIC_NOTE);
     if (ImGui::Button(label))
     {
-        config_audio.mute_adpcm = !config_audio.mute_adpcm;
-        emu_audio_mute_adpcm(config_audio.mute_adpcm);
+        gui_audio_mute_adpcm = !gui_audio_mute_adpcm;
+        emu_audio_adpcm_volume(gui_audio_mute_adpcm ? 0.0f : config_audio.adpcm_volume);
     }
+    ImGui::PopStyleColor();
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
         ImGui::SetTooltip("Mute ADPCM");
-    
     ImGui::PopFont();
-    ImGui::PopStyleColor();
 
     ImGui::TableNextColumn();
 

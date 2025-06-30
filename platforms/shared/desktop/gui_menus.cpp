@@ -820,19 +820,72 @@ static void menu_audio(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Mute PSG", "", &config_audio.mute_psg, config_audio.enable))
+        if (ImGui::MenuItem("Mute PSG", "", &gui_audio_mute_psg, config_audio.enable))
         {
-            emu_audio_mute_psg(config_audio.mute_psg);
+            emu_audio_psg_volume(gui_audio_mute_psg ? 0 : config_audio.psg_volume);
         }
 
-        if (ImGui::MenuItem("Mute CD-ROM", "", &config_audio.mute_cd, config_audio.enable))
+        if (ImGui::MenuItem("Mute CD-ROM", "", &gui_audio_mute_cdrom, config_audio.enable))
         {
-            emu_audio_mute_cdrom(config_audio.mute_cd);
+            emu_audio_cdrom_volume(gui_audio_mute_cdrom ? 0 : config_audio.cdrom_volume);
         }
 
-        if (ImGui::MenuItem("Mute ADPCM", "", &config_audio.mute_adpcm, config_audio.enable))
+        if (ImGui::MenuItem("Mute ADPCM", "", &gui_audio_mute_adpcm, config_audio.enable))
         {
-            emu_audio_mute_adpcm(config_audio.mute_adpcm);
+            emu_audio_adpcm_volume(gui_audio_mute_adpcm ? 0 : config_audio.adpcm_volume);
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("PSG Volume", config_audio.enable))
+        {
+            ImGui::PushItemWidth(200.0f);
+            if (ImGui::SliderFloat("##psg_volume", &config_audio.psg_volume, 0.0f, 2.0f, "Volume = %.2f"))
+            {
+                emu_audio_psg_volume(config_audio.psg_volume);
+            }
+            ImGui::PopItemWidth();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Anything above 1.00 may cause clipping.");
+                ImGui::EndTooltip();
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("CD-ROM Volume", config_audio.enable))
+        {
+            ImGui::PushItemWidth(200.0f);
+            if (ImGui::SliderFloat("##cdrom_volume", &config_audio.cdrom_volume, 0.0f, 2.0f, "Volume = %.2f"))
+            {
+                emu_audio_cdrom_volume(config_audio.cdrom_volume);
+            }
+            ImGui::PopItemWidth();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Anything above 1.00 may cause clipping.");
+                ImGui::EndTooltip();
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("ADPCM Volume", config_audio.enable))
+        {
+            ImGui::PushItemWidth(200.0f);
+            if (ImGui::SliderFloat("##adpcm_volume", &config_audio.adpcm_volume, 0.0f, 2.0f, "Volume = %.2f"))
+            {
+                emu_audio_adpcm_volume(config_audio.adpcm_volume);
+            }
+            ImGui::PopItemWidth();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Anything above 1.00 may cause clipping.");
+                ImGui::EndTooltip();
+            }
+            ImGui::EndMenu();
         }
 
         ImGui::Separator();

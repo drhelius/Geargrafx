@@ -91,7 +91,8 @@
         "cassert": "cpp",
         "__config": "cpp",
         "__assertion_handler": "cpp",
-        "__tree": "cpp"
+        "__tree": "cpp",
+        "forward_list": "cpp"
     },
     "todo-tree.tree.showBadges": true,
     "todo-tree.tree.disableCompactFolders": false,

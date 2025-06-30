@@ -254,9 +254,9 @@ void config_read(void)
 
     config_audio.enable = read_bool("Audio", "Enable", true);
     config_audio.sync = read_bool("Audio", "Sync", true);
-    config_audio.mute_psg = read_bool("Audio", "MutePSG", false);
-    config_audio.mute_cd = read_bool("Audio", "MuteCD", false);
-    config_audio.mute_adpcm = read_bool("Audio", "MuteADPCM", false);
+    config_audio.psg_volume = read_float("Audio", "PSGVolume", 1.0f);
+    config_audio.cdrom_volume = read_float("Audio", "CDROMVolume", 1.0f);
+    config_audio.adpcm_volume = read_float("Audio", "ADPCMVolume", 1.0f);
 
     config_input.turbo_tap = read_bool("Input", "TurboTap", false);
 
@@ -436,9 +436,9 @@ void config_write(void)
 
     write_bool("Audio", "Enable", config_audio.enable);
     write_bool("Audio", "Sync", config_audio.sync);
-    write_bool("Audio", "MutePSG", config_audio.mute_psg);
-    write_bool("Audio", "MuteCD", config_audio.mute_cd);
-    write_bool("Audio", "MuteADPCM", config_audio.mute_adpcm);
+    write_float("Audio", "PSGVolume", config_audio.psg_volume);
+    write_float("Audio", "CDROMVolume", config_audio.cdrom_volume);
+    write_float("Audio", "ADPCMVolume", config_audio.adpcm_volume);
 
     write_bool("Input", "TurboTap", config_input.turbo_tap);
 

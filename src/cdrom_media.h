@@ -52,7 +52,6 @@ public:
 
     struct Track
     {
-        u32 number;
         TrackType type;
         u32 sector_size;
         u32 sector_count;
@@ -60,13 +59,29 @@ public:
         GG_CdRomMSF start_msf;
         u32 end_lba;
         GG_CdRomMSF end_msf;
-        bool has_pregap;
-        u32 pregap_length;
-        bool has_lead_in;
-        u32 lead_in_lba;
-        GG_CdRomMSF lead_in_msf;
         ImgFile* img_file;
         u32 file_offset;
+        bool has_lead_in;
+        u32 lead_in_lba;
+    };
+
+private:
+
+    struct ParsedCueTrack
+    {
+        u32 number;
+        TrackType type;
+        bool has_index0;
+        u32 index0_lba;
+        bool has_pregap;
+        uint32_t pregap_length;
+        uint32_t index1_lba;
+    };
+
+    struct ParsedCueFile
+    {
+        ImgFile* img_file;
+        std::vector<ParsedCueTrack> tracks;
     };
 
 public:
@@ -108,6 +123,8 @@ public:
 
 private:
     void InitTrack(Track& track);
+    void InitParsedCueTrack(ParsedCueTrack& track);
+    void InitParsedCueFile(ParsedCueFile& cue_file);
     void DestroyImgFiles();
     void GatherPaths(const char* path);
     bool GatherImgInfo(ImgFile* img_file);

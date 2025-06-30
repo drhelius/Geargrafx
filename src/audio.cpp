@@ -31,10 +31,10 @@ Audio::Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio)
     m_cdrom_audio = cdrom_audio;
     InitPointer(m_psg);
     m_mute = false;
-    m_mute_psg = false;
-    m_mute_adpcm = false;
-    m_mute_cdrom = false;
     m_is_cdrom = false;
+    m_psg_volume = 1.0f;
+    m_adpcm_volume = 1.0f;
+    m_cdrom_volume = 1.0f;
 }
 
 Audio::~Audio()
@@ -57,26 +57,6 @@ void Audio::Reset(bool cdrom)
     memset(m_psg_buffer, 0, sizeof(m_psg_buffer));
     memset(m_adpcm_buffer, 0, sizeof(m_adpcm_buffer));
     memset(m_cdrom_buffer, 0, sizeof(m_cdrom_buffer));
-}
-
-void Audio::Mute(bool mute)
-{
-    m_mute = mute;
-}
-
-void Audio::MutePSG(bool mute)
-{
-    m_mute_psg = mute;
-}
-
-void Audio::MuteADPCM(bool mute)
-{
-    m_mute_adpcm = mute;
-}
-
-void Audio::MuteCDROM(bool mute)
-{
-    m_mute_cdrom = mute;
 }
 
 void Audio::EndFrame(s16* sample_buffer, int* sample_count)
@@ -123,10 +103,17 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         {
             for (int i = 0; i < samples; i++)
             {
-                sample_buffer[i] = 0;
-                sample_buffer[i] += m_mute_psg ? 0 : m_psg_buffer[i];
-                sample_buffer[i] += m_mute_adpcm ? 0 : m_adpcm_buffer[i];
-                sample_buffer[i] += m_mute_cdrom ? 0 : m_cdrom_buffer[i];
+                s32 mix = 0;
+                mix += (s32)(m_psg_buffer[i] * m_psg_volume);
+                mix += (s32)(m_adpcm_buffer[i] * m_adpcm_volume);
+                mix += (s32)(m_cdrom_buffer[i] * m_cdrom_volume);
+
+                if (mix > 32767)
+                    mix = 32767;
+                else if (mix < -32768)
+                    mix = -32768;
+
+                sample_buffer[i] = (s16)mix;
             }
         }
     }
@@ -136,7 +123,7 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         assert(count_psg <= GG_AUDIO_BUFFER_SIZE);
         *sample_count = count_psg;
 
-        if (m_mute || m_mute_psg)
+        if (m_mute || (m_psg_volume <= 0.0f))
             memset(sample_buffer, 0, sizeof(s16) * count_psg);
         else
             memcpy(sample_buffer, m_psg_buffer, sizeof(s16) * count_psg);

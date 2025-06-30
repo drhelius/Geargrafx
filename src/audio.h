@@ -36,9 +36,9 @@ public:
     void Init();
     void Reset(bool cdrom);
     void Mute(bool mute);
-    void MutePSG(bool mute);
-    void MuteADPCM(bool mute);
-    void MuteCDROM(bool mute);
+    void SetPSGVolume(float volume);
+    void SetADPCMVolume(float volume);
+    void SetCDROMVolume(float volume);
     void Clock(u32 cycles);
     void WritePSG(u32 address, u8 value);
     void EndFrame(s16* sample_buffer, int* sample_count);
@@ -48,9 +48,6 @@ public:
 
 private:
     bool m_mute;
-    bool m_mute_psg;
-    bool m_mute_adpcm;
-    bool m_mute_cdrom;
     bool m_is_cdrom;
     HuC6280PSG* m_psg;
     Adpcm* m_adpcm;
@@ -59,6 +56,9 @@ private:
     s16 m_adpcm_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     s16 m_cdrom_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     u32 m_cycle_counter;
+    float m_psg_volume;
+    float m_adpcm_volume;
+    float m_cdrom_volume;
 };
 
 #include "audio_inline.h"

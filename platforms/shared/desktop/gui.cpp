@@ -104,10 +104,14 @@ void gui_init(void)
 
     set_style();
 
+    gui_audio_mute_cdrom = false;
+    gui_audio_mute_psg = false;
+    gui_audio_mute_adpcm = false;
+
     emu_audio_mute(!config_audio.enable);
-    emu_audio_mute_psg(config_audio.mute_psg);
-    emu_audio_mute_cdrom(config_audio.mute_cd);
-    emu_audio_mute_adpcm(config_audio.mute_adpcm);
+    emu_audio_psg_volume(config_audio.psg_volume);
+    emu_audio_cdrom_volume(config_audio.cdrom_volume);
+    emu_audio_adpcm_volume(config_audio.adpcm_volume);
     emu_set_composite_palette(config_video.composite_palette);
     emu_video_no_sprite_limit(config_video.sprite_limit);
     emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);

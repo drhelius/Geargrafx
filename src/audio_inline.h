@@ -41,4 +41,24 @@ INLINE HuC6280PSG* Audio::GetPSG()
     return m_psg;
 }
 
+INLINE void Audio::Mute(bool mute)
+{
+    m_mute = mute;
+}
+
+INLINE void Audio::SetPSGVolume(float volume)
+{
+    m_psg_volume = CLAMP(volume, 0.0f, 2.0f);
+}
+
+INLINE void Audio::SetADPCMVolume(float volume)
+{
+    m_adpcm_volume = CLAMP(volume, 0.0f, 2.0f);
+}
+
+INLINE void Audio::SetCDROMVolume(float volume)
+{
+    m_cdrom_volume = CLAMP(volume, 0.0f, 2.0f);
+}
+
 #endif /* AUDIO_INLINE_H */

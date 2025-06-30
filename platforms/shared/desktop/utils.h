@@ -88,6 +88,7 @@ static inline void get_executable_path(char* path, size_t size)
         path[0] = '\0';
     }
 #else
+    UNUSED(size);
     path[0] = '\0';
 #endif
 }

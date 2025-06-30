@@ -62,21 +62,20 @@ void gui_debug_window_cdrom_audio(void)
 
     ImGui::TableNextColumn();
 
-    ImGui::PushStyleColor(ImGuiCol_Text, config_audio.mute_cd ? mid_gray : white);
+    ImGui::PushStyleColor(ImGuiCol_Text, gui_audio_mute_cdrom ? mid_gray : white);
     ImGui::PushFont(gui_material_icons_font);
 
     char label[32];
-    snprintf(label, 32, "%s##cdaudiomute", config_audio.mute_cd ? ICON_MD_MUSIC_OFF : ICON_MD_MUSIC_NOTE);
+    snprintf(label, 32, "%s##cdaudiomute", gui_audio_mute_cdrom ? ICON_MD_MUSIC_OFF : ICON_MD_MUSIC_NOTE);
     if (ImGui::Button(label))
     {
-        config_audio.mute_cd = !config_audio.mute_cd;
-        emu_audio_mute_cdrom(config_audio.mute_cd);
+        gui_audio_mute_cdrom = !gui_audio_mute_cdrom;
+        emu_audio_cdrom_volume(gui_audio_mute_cdrom ? 0.0f : config_audio.cdrom_volume);
     }
+    ImGui::PopStyleColor();
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
         ImGui::SetTooltip("Mute CD Audio");
-    
     ImGui::PopFont();
-    ImGui::PopStyleColor();
 
     ImGui::TableNextColumn();
 
