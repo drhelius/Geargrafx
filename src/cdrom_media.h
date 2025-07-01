@@ -110,7 +110,6 @@ public:
     bool LoadCueFromFile(const char* path);
     bool LoadCueFromBuffer(const u8* buffer, int size, const char* path);
     bool LoadChdFromFile(const char* path);
-    bool LoadChdFromBuffer(const u8* buffer, int size, const char* path);
     bool ReadSector(u32 lba, u8* buffer);
     bool ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size);
     u32 SeekTime(u32 start_lba, u32 end_lba);
