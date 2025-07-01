@@ -469,7 +469,7 @@ static void menu_emulator(void)
         if (ImGui::IsItemHovered())
         {
             ImGui::BeginTooltip();
-            ImGui::Text("This otion will add backup RAM support to HuCard games.");
+            ImGui::Text("This option will add backup RAM support to HuCard games.");
             ImGui::Text("It is recommended to leave this option enabled.");
             ImGui::Text("Reset the emulator to apply changes.");
             ImGui::EndTooltip();
