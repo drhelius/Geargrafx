@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_DEBUG_CDROM_H
-#define	GUI_DEBUG_CDROM_H
+#define GUI_DEBUG_CDROM_H
 
 #ifdef GUI_DEBUG_CDROM_IMPORT
     #define EXTERN

@@ -18,7 +18,7 @@
  */
 
 #ifndef EMU_H
-#define	EMU_H
+#define EMU_H
 
 #include "geargrafx.h"
 
@@ -113,4 +113,4 @@ EXTERN bool emu_load_bios(const char* file_path, bool syscard);
 
 #undef EMU_IMPORT
 #undef EXTERN
-#endif	/* EMU_H */
+#endif /* EMU_H */

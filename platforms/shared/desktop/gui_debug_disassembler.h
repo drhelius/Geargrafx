@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_DEBUG_DISASSEMBLER_H
-#define	GUI_DEBUG_DISASSEMBLER_H
+#define GUI_DEBUG_DISASSEMBLER_H
 
 #include "geargrafx.h"
 

@@ -128,7 +128,7 @@ INLINE void CdRomAudio::SetStopLBA(u32 lba, CdAudioStopEvent event)
 
 INLINE void CdRomAudio::GenerateSamples()
 {
-    u8 buffer[4] = {0};
+    u8 buffer[4] = { };
     m_cdrom_media->ReadBytes(m_current_lba, m_current_sample * 4, buffer, 4);
     m_left_sample = (s16)((buffer[1] << 8) | buffer[0]);
     m_right_sample = (s16)((buffer[3] << 8) | buffer[2]);

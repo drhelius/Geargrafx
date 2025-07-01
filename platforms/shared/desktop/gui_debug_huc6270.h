@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_DEBUG_HUC6270_H
-#define	GUI_DEBUG_HUC6270_H
+#define GUI_DEBUG_HUC6270_H
 
 #ifdef GUI_DEBUG_HUC6270_IMPORT
     #define EXTERN

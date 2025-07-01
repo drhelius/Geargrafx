@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_H
-#define	GUI_H
+#define GUI_H
 
 #include <SDL.h>
 #include "geargrafx.h"
@@ -83,4 +83,4 @@ EXTERN void gui_set_error_message(const char* message);
 
 #undef GUI_IMPORT
 #undef EXTERN
-#endif	/* GUI_H */
+#endif /* GUI_H */

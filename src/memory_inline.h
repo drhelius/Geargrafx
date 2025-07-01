@@ -18,7 +18,7 @@
  */
 
 #ifndef MEMORY_INLINE_H
-#define	MEMORY_INLINE_H
+#define MEMORY_INLINE_H
 
 #include <assert.h>
 #include "memory.h"

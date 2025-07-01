@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_DEBUG_MEMEDITOR_H
-#define	GUI_DEBUG_MEMEDITOR_H
+#define GUI_DEBUG_MEMEDITOR_H
 
 #include <stdint.h>
 #include <stdio.h>

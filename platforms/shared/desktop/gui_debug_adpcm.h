@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_DEBUG_ADPCM_H
-#define	GUI_DEBUG_ADPCM_H
+#define GUI_DEBUG_ADPCM_H
 
 #ifdef GUI_DEBUG_ADPCM_IMPORT
     #define EXTERN

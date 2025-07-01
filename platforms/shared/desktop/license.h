@@ -18,7 +18,7 @@
  */
 
 #ifndef LICENSE_H
-#define	LICENSE_H
+#define LICENSE_H
 
 static const char * GPL_LICENSE_STR = 
 "GNU GENERAL PUBLIC LICENSE"
@@ -642,4 +642,4 @@ static const char * GPL_LICENSE_STR =
 "\n"
 "\nEND OF TERMS AND CONDITIONS";
 
-#endif	/* LICENSE_H */
+#endif /* LICENSE_H */

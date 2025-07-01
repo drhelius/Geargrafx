@@ -242,7 +242,7 @@ static void sdl_destroy(void)
 static void sdl_load_gamepad_mappings(void)
 {
     std::string db_path;
-    char exe_path[1024] = {0};
+    char exe_path[1024] = { };
     get_executable_path(exe_path, sizeof(exe_path));
 
     if (exe_path[0] != '\0') {

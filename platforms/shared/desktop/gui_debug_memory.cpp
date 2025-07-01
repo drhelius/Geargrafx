@@ -31,7 +31,7 @@
 static MemEditor mem_edit[MEMORY_EDITOR_MAX];
 static int mem_edit_select = -1;
 static int current_mem_edit = 0;
-static char set_value_buffer[5] = {0};
+static char set_value_buffer[5] = { };
 
 static void memory_editor_menu(void);
 static void draw_tabs(void);

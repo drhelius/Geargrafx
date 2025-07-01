@@ -18,7 +18,7 @@
  */
 
 #ifndef CRC_H
-#define	CRC_H
+#define CRC_H
 
 #include "common.h"
 
@@ -83,4 +83,4 @@ static u32 CalculateCRC32(u32 crc, const u8 *buf, int size)
     return crc ^ ~0U;
 }
 
-#endif	/* CRC_H */
+#endif /* CRC_H */

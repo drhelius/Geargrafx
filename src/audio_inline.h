@@ -17,7 +17,7 @@
  *
  */
 #ifndef AUDIO_INLINE_H
-#define	AUDIO_INLINE_H
+#define AUDIO_INLINE_H
 
 #include "audio.h"
 #include "huc6280_psg.h"

@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_MENUS_H
-#define	GUI_MENUS_H
+#define GUI_MENUS_H
 
 #ifdef GUI_MENUS_IMPORT
     #define EXTERN

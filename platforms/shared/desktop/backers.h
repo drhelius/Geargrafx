@@ -18,7 +18,7 @@
  */
 
 #ifndef BACKERS_H
-#define	BACKERS_H
+#define BACKERS_H
 
 static const char * BACKERS_STR = 
 " · Dave Shadoff (dshadoff)"
@@ -31,4 +31,4 @@ static const char * BACKERS_STR =
 "\n · KPreston2900050"
 "\n · Nicholas Piegdon";
 
-#endif	/* BACKERS_H */
+#endif /* BACKERS_H */

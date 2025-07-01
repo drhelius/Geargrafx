@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_DEBUG_MEMORY_H
-#define	GUI_DEBUG_MEMORY_H
+#define GUI_DEBUG_MEMORY_H
 
 #include "geargrafx.h"
 

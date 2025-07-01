@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_DEBUG_CONSTANTS_H
-#define	GUI_DEBUG_CONSTANTS_H
+#define GUI_DEBUG_CONSTANTS_H
 
 #include "imgui/imgui.h"
 #include "geargrafx.h"
@@ -220,4 +220,4 @@ static const stDebugLabel k_cdrom_bios_symbols[k_cdrom_bios_symbol_count] =
     { 0xE0E1, "PSG_DRIVE"   }
 };
 
-#endif	/* GUI_DEBUG_CONSTANTS_H */
+#endif /* GUI_DEBUG_CONSTANTS_H */

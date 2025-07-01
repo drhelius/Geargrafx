@@ -18,7 +18,7 @@
  */
 
 #ifndef GEARGRAFX_H
-#define	GEARGRAFX_H
+#define GEARGRAFX_H
 
 #include "common.h"
 #include "geargrafx_core.h"

@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_DEBUG_PSG_H
-#define	GUI_DEBUG_PSG_H
+#define GUI_DEBUG_PSG_H
 
 #ifdef GUI_DEBUG_PSG_IMPORT
     #define EXTERN

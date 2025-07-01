@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_DEBUG_TEXT_H
-#define	GUI_DEBUG_TEXT_H
+#define GUI_DEBUG_TEXT_H
 
 #include <stdio.h>
 #include <stdarg.h>

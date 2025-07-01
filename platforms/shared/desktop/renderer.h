@@ -18,7 +18,7 @@
  */
 
 #ifndef RENDERER_H
-#define	RENDERER_H
+#define RENDERER_H
 
 #include <stdint.h>
 
@@ -49,4 +49,4 @@ EXTERN void renderer_end_render(void);
 
 #undef RENDERER_IMPORT
 #undef EXTERN
-#endif	/* RENDERER_H */
+#endif /* RENDERER_H */

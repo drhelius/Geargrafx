@@ -18,7 +18,7 @@
  */
 
 #ifndef BIT_OPS_H
-#define	BIT_OPS_H
+#define BIT_OPS_H
 
 #include "types.h"
 

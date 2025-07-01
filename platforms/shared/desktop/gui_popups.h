@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_POPUPS_H
-#define	GUI_POPUPS_H
+#define GUI_POPUPS_H
 
 #ifdef GUI_POPUPS_IMPORT
     #define EXTERN

@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_FILEDIALOGS_H
-#define	GUI_FILEDIALOGS_H
+#define GUI_FILEDIALOGS_H
 
 #ifdef GUI_FILEDIALOGS_IMPORT
     #define EXTERN

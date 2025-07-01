@@ -18,7 +18,7 @@
  */
 
 #ifndef GUI_ACTIONS_H
-#define	GUI_ACTIONS_H
+#define GUI_ACTIONS_H
 
 #ifdef GUI_ACTIONS_IMPORT
     #define EXTERN

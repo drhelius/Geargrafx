@@ -18,7 +18,7 @@
  */
 
 #ifndef UTILS_H
-#define	UTILS_H
+#define UTILS_H
 
 #include <string.h>
 #if defined(_WIN32)

@@ -617,7 +617,7 @@ static void set_variabless(void)
 
 static void check_variables(void)
 {
-    struct retro_variable var = {0};
+    struct retro_variable var = { };
 
     var.key = "geargrafx_turbotap";
     var.value = NULL;

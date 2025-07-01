@@ -18,7 +18,7 @@
  */
 
 #ifndef CONFIG_H
-#define	CONFIG_H
+#define CONFIG_H
 
 #include <SDL.h>
 #include "geargrafx.h"
@@ -204,4 +204,4 @@ EXTERN void config_write(void);
 
 #undef CONFIG_IMPORT
 #undef EXTERN
-#endif	/* CONFIG_H */
+#endif /* CONFIG_H */

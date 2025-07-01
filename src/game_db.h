@@ -18,7 +18,7 @@
  */
 
 #ifndef GAME_DB_H
-#define	GAME_DB_H
+#defineGAME_DB_H
 
 #include "common.h"
 
@@ -186,4 +186,4 @@ const GG_DB_Entry k_game_database[] =
     {0, 0, 0}
 };
 
-#endif	/* GAME_DB_H */
+#endif /* GAME_DB_H */
