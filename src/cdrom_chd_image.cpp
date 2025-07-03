@@ -17,17 +17,18 @@
  *
  */
 
-
 #include "cdrom_chd_image.h"
 
 CdRomChdImage::CdRomChdImage() : CdRomImage()
 {
     InitPointer(m_chd_file);
+    InitPointer(m_hunk_cache);
 }
 
 CdRomChdImage::~CdRomChdImage()
 {
     chd_close(m_chd_file);
+    DestroyHunkCache();
 }
 
 void CdRomChdImage::Init()
@@ -40,8 +41,14 @@ void CdRomChdImage::Reset()
 {
     CdRomImage::Reset();
 
+    m_hunk_bytes = 0;
+    m_hunk_count = 0;
+    m_sectors_per_hunk = 0;
+
     chd_close(m_chd_file);
     InitPointer(m_chd_file);
+
+    DestroyHunkCache();
 }
 
 bool CdRomChdImage::LoadFromFile(const char* path)
@@ -73,17 +80,46 @@ bool CdRomChdImage::LoadFromFile(const char* path)
     {
         const chd_header* header = chd_get_header(m_chd_file);
 
-        Debug("CHD Header: Version: %d, Hunk Size: %d, Total Hunks: %d, Flags: %04X",
-              header->version, header->hunkbytes, header->totalhunks, header->flags);
+        if (IsValidPointer(header))
+        {
+            Debug("CHD Header: Version: %d, Hunk Size: %d, Total Hunks: %d, Flags: %04X",
+                    header->version, header->hunkbytes, header->totalhunks, header->flags);
 
-        m_ready = ReadTOC();
+            m_hunk_bytes = header->hunkbytes;
+            m_hunk_count = header->totalhunks;
+            m_sectors_per_hunk = m_hunk_bytes / (2352 + 96);
+
+            if (m_hunk_bytes == 0 || m_hunk_count == 0)
+            {
+                Log("ERROR: Invalid CHD header - hunk size or count is zero");
+                chd_close(m_chd_file);
+                m_ready = false;
+            }
+            else if (m_hunk_bytes % (2352 + 96) != 0)
+            {
+                Log("ERROR: Invalid CHD hunk size %d, must be a multiple of 2448 (2352 + 96)", m_hunk_bytes);
+                chd_close(m_chd_file);
+                m_ready = false;
+            }
+            else
+            {
+                InitHunkCache();
+                m_ready = ReadTOC();
+            }
+        }
+        else
+        {
+            Log("ERROR: Failed to get CHD header for %s", path);
+            chd_close(m_chd_file);
+            m_ready = false;
+        }
     }
     else
     {
-        chd_close(m_chd_file);
-        m_ready = false;
         Log("ERROR: Unable to open CHD file %s.", path);
         Log("CHD ERROR: %d, %s", err, chd_error_string(err));
+        chd_close(m_chd_file);
+        m_ready = false;
     }
 
     if (!m_ready)
@@ -100,7 +136,53 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
         return false;
     }
 
-    // TODO
+    size_t track_count = m_toc.tracks.size();
+
+    for (size_t i = 0; i < track_count; i++)
+    {
+        const Track& track = m_toc.tracks[i];
+
+        u32 start = track.start_lba;
+        u32 end = start + track.sector_count;
+
+        if (lba >= start && lba < end)
+        {
+            u32 sector_index = (lba - track.start_lba) + track.file_offset;
+            u32 hunk_index  = sector_index / m_sectors_per_hunk;
+            u32 hunk_offset = sector_index % m_sectors_per_hunk;
+            u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
+
+            if (m_hunk_cache[hunk_index] == NULL)
+            {
+                m_hunk_cache[hunk_index] = new u8[m_hunk_bytes];
+
+                Debug("Caching hunk %u", hunk_index);
+
+                chd_error err = chd_read(m_chd_file, hunk_index, m_hunk_cache[hunk_index]);
+
+                if (err != CHDERR_NONE)
+                {
+                    Debug("ERROR: CHD read hunk %u failed: %d, %s", hunk_index, err, chd_error_string(err));
+                    return false;
+                }
+            }
+
+            u32 sector_offset = 0;
+
+            if (track.sector_size == 2352)
+                sector_offset = 16;
+
+            u32 final_offset = byte_offset_in_hunk + sector_offset;
+            assert(final_offset + 2048 <= m_hunk_bytes);
+
+            Debug("Reading LBA %d, sector_index %u, hunk_index %u, hunk_offset %u, byte_offset_in_hunk %d, sector_offset %d",
+                lba, sector_index, hunk_index, hunk_offset, byte_offset_in_hunk, sector_offset);
+
+            memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, 2048);
+
+            return true;
+        }
+    }
 
     Debug("ERROR: ReadSector failed - LBA %d not found in any track", lba);
 
@@ -121,7 +203,45 @@ bool CdRomChdImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
         return false;
     }
 
-    // TODO
+    size_t track_count = m_toc.tracks.size();
+
+    for (size_t i = 0; i < track_count; i++)
+    {
+        const Track& track = m_toc.tracks[i];
+
+        u32 start = track.start_lba;
+        u32 end = start + track.sector_count;
+
+        if (lba >= start && lba < end)
+        {
+            u32 sector_index = (lba - track.start_lba) + track.file_offset;
+            u32 hunk_index  = sector_index / m_sectors_per_hunk;
+            u32 hunk_offset = sector_index % m_sectors_per_hunk;
+            u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
+
+            if (m_hunk_cache[hunk_index] == NULL)
+            {
+                m_hunk_cache[hunk_index] = new u8[m_hunk_bytes];
+
+                Debug("Caching hunk %u", hunk_index);
+
+                chd_error err = chd_read(m_chd_file, hunk_index, m_hunk_cache[hunk_index]);
+
+                if (err != CHDERR_NONE)
+                {
+                    Debug("ERROR: CHD read hunk %u failed: %d, %s", hunk_index, err, chd_error_string(err));
+                    return false;
+                }
+            }
+
+            u32 final_offset = byte_offset_in_hunk + offset;
+            assert(final_offset + size <= m_hunk_bytes);
+
+            memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, size);
+
+            return true;
+        }
+    }
 
     Debug("ERROR: ReadBytes failed - LBA %d not found in any track", lba);
 
@@ -196,7 +316,6 @@ bool CdRomChdImage::ReadTOC()
         Track new_track;
         InitTrack(new_track);
 
-        new_track.file_offset = file_offset;
         new_track.type = GetTrackType(type);
         new_track.sector_size = TrackTypeSectorSize(new_track.type);
 
@@ -215,6 +334,7 @@ bool CdRomChdImage::ReadTOC()
 
         // Update file_offset: pregap_dv + data + postgap + alignment to 4 sectors
         file_offset += pregap_dv;
+        new_track.file_offset = file_offset;
         file_offset += data_frames;
         file_offset += postgap;
         file_offset += ((frames + 3) & ~3) - frames;
@@ -260,6 +380,33 @@ bool CdRomChdImage::ReadTOC()
 void CdRomChdImage::CalculateCRC()
 {
     m_crc = 0;
+}
+
+void CdRomChdImage::InitHunkCache()
+{
+    if (IsValidPointer(m_hunk_cache))
+    {
+        DestroyHunkCache();
+    }
+
+    m_hunk_cache = new u8*[m_hunk_count];
+
+    for (u32 i = 0; i < m_hunk_count; i++)
+    {
+        InitPointer(m_hunk_cache[i]);
+    }
+}
+
+void CdRomChdImage::DestroyHunkCache()
+{
+    if (IsValidPointer(m_hunk_cache))
+    {
+        for (u32 i = 0; i < m_hunk_count; i++)
+        {
+            SafeDeleteArray(m_hunk_cache[i]);
+        }
+        SafeDeleteArray(m_hunk_cache);
+    }
 }
 
 GG_CdRomTrackType CdRomChdImage::GetTrackType(const char* type_str)
