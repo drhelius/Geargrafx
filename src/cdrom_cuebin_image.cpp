@@ -346,6 +346,7 @@ void CdRomCueBinImage::DestroyImgFiles()
         }
     }
     m_img_files.clear();
+    m_track_files.clear();
 }
 
 bool CdRomCueBinImage::GatherImgInfo(ImgFile* img_file)
