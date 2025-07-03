@@ -61,7 +61,6 @@ private:
     struct TrackFile
     {
         ImgFile* img_file;
-        u32 file_offset;
     };
 
 public:

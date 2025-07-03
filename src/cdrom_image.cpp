@@ -185,4 +185,5 @@ void CdRomImage::InitTrack(Track& track)
     track.end_msf = {0, 0, 0};
     track.has_lead_in = false;
     track.lead_in_lba = 0;
+    track.file_offset = 0;
 }

@@ -39,6 +39,7 @@ public:
         GG_CdRomMSF end_msf;
         bool has_lead_in;
         u32 lead_in_lba;
+        u32 file_offset;
     };
 
     struct TableOfContents

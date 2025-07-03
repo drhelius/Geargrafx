@@ -154,7 +154,7 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
                 return false;
             }
 
-            u32 byte_offset = track_file.file_offset + (sector_offset * sector_size);
+            u32 byte_offset = track.file_offset + (sector_offset * sector_size);
 
             if (sector_size == 2352)
             {
@@ -219,7 +219,7 @@ bool CdRomCueBinImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
                 return false;
             }
 
-            u32 byte_offset = track_file.file_offset + (sector_offset * sector_size) + offset;
+            u32 byte_offset = track.file_offset + (sector_offset * sector_size) + offset;
 
             if (byte_offset + size > img_file->file_size)
             {
@@ -283,7 +283,7 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     const TrackFile& track_file = m_track_files[track_number];
 
     u32 sector_size = track.sector_size;
-    u32 start_offset = track_file.file_offset;
+    u32 start_offset = track.file_offset;
     u32 total_bytes = track.sector_count * sector_size;
     u32 start_chunk = start_offset / track_file.img_file->chunk_size;
     u32 chunks_needed = (total_bytes + track_file.img_file->chunk_size - 1) / track_file.img_file->chunk_size;
@@ -325,7 +325,6 @@ void CdRomCueBinImage::InitParsedCueFile(ParsedCueFile& cue_file)
 void CdRomCueBinImage::InitTrackFile(TrackFile& track_file)
 {
     track_file.img_file = NULL;
-    track_file.file_offset = 0;
 }
 
 void CdRomCueBinImage::DestroyImgFiles()
@@ -821,32 +820,30 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
             if(j != 0)
             {
                 Track& prev = m_toc.tracks.back();
-                TrackFile& prev_file = m_track_files.back();
                 prev.end_lba = track.has_lead_in ? track.lead_in_lba - 1 : track.start_lba - 1;
                 LbaToMsf(prev.end_lba, &prev.end_msf);
 
                 prev.sector_count = prev.end_lba - prev.start_lba + 1;
-                current_file_offset = prev_file.file_offset + (prev.sector_count * prev.sector_size);
+                current_file_offset = prev.file_offset + (prev.sector_count * prev.sector_size);
             }
 
-            track_file.file_offset = current_file_offset;
+            track.file_offset = current_file_offset;
 
             if (track.has_lead_in && !p.has_pregap)
-                track_file.file_offset += (track.start_lba - track.lead_in_lba) * track.sector_size;
+                track.file_offset += (track.start_lba - track.lead_in_lba) * track.sector_size;
 
             m_toc.tracks.push_back(track);
             m_track_files.push_back(track_file);
         }
 
         Track& last = m_toc.tracks.back();
-        TrackFile& last_file = m_track_files.back();
-        u32 last_size = (f.img_file->file_size - last_file.file_offset);
+        u32 last_size = (f.img_file->file_size - last.file_offset);
         last.sector_count = last_size / last.sector_size;
 
         if (last_size % last.sector_size != 0)
         {
             Log("WARNING: Last track has remaining bytes that do not fit into a full sector:");
-            Log("File size: %u, File offset: %llu, Sector size: %u", f.img_file->file_size, last_file.file_offset, last.sector_size);
+            Log("File size: %u, File offset: %llu, Sector size: %u", f.img_file->file_size, last.file_offset, last.sector_size);
             last.sector_count++;
         }
 
@@ -857,7 +854,6 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
     for (size_t i = 0; i < m_toc.tracks.size(); ++i)
     {
         Track& track = m_toc.tracks[i];
-        TrackFile& track_file = m_track_files[i];
 
         Log("Track %2d (%s): Start LBA: %6u, End LBA: %6u, Sectors: %6u, File Offset: %8llu",
                 i + 1,
@@ -865,7 +861,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
                 track.start_lba,
                 track.end_lba,
                 track.sector_count,
-                track_file.file_offset);
+                track.file_offset);
     }
 
     Log("Successfully parsed CUE file with %d tracks", (int)m_toc.tracks.size());
@@ -1098,7 +1094,7 @@ void CdRomCueBinImage::CalculateCRC()
 
     for (u32 sec = first_sector; sec <= max_index; sec++)
     {
-        u32 file_offset = first_data_track_file->file_offset + (first_data_track->sector_size * sec);
+        u32 file_offset = first_data_track->file_offset + (first_data_track->sector_size * sec);
 
         if (first_data_track->sector_size == 2352)
             file_offset += 16;

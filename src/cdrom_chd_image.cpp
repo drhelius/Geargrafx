@@ -100,7 +100,7 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
         return false;
     }
 
-    
+    // TODO
 
     Debug("ERROR: ReadSector failed - LBA %d not found in any track", lba);
 
@@ -121,7 +121,7 @@ bool CdRomChdImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
         return false;
     }
 
-    
+    // TODO
 
     Debug("ERROR: ReadBytes failed - LBA %d not found in any track", lba);
 
@@ -130,11 +130,13 @@ bool CdRomChdImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
 
 bool CdRomChdImage::PreloadDisc()
 {
+    // TODO
     return true;
 }
 
 bool CdRomChdImage::PreloadTrack(u32 track_number)
 {
+    // TODO
     return true;
 }
 
@@ -143,12 +145,13 @@ bool CdRomChdImage::ReadTOC()
     chd_error err;
     char metadata[512];
 
-    u32 start_sector = 0;
+    u32 current_lba = 0;
+    u32 file_offset = 0;
 
     for (int i = 0; i < 99; i++)
     {
         bool track_exists = false;
-        int track = 0, frames = 0, pad = 0, pregap = 0, postgap = 0;
+        int track = 0, frames = 0, pregap = 0, postgap = 0;
         char type[64], subtype[32], pgtype[32], pgsub[32];
         type[0] = subtype[0] = pgtype[0] = pgsub[0] = 0;
 
@@ -161,13 +164,11 @@ bool CdRomChdImage::ReadTOC()
                 Log("ERROR: Failed to parse CDROM_TRACK_METADATA2_FORMAT for track %d", i + 1);
                 return false;
             }
-
             track_exists = true;
         }
         else
         {
             err = chd_get_metadata(m_chd_file, CDROM_TRACK_METADATA_TAG, i, metadata, sizeof(metadata), NULL, NULL, NULL);
-
             if (err == CHDERR_NONE)
             {
                 if (sscanf(metadata, CDROM_TRACK_METADATA_FORMAT, &track, type, subtype, &frames) != 4)
@@ -175,7 +176,6 @@ bool CdRomChdImage::ReadTOC()
                     Log("ERROR: Failed to parse CDROM_TRACK_METADATA_FORMAT for track %d", i + 1);
                     return false;
                 }
-
                 track_exists = true;
             }
         }
@@ -186,35 +186,38 @@ bool CdRomChdImage::ReadTOC()
         Debug("Track %d: Type: %s, Subtype: %s, Frames: %d, Pregap: %d, Postgap: %d, PGType: %s, PGSub: %s", 
                 track, type, subtype, frames, pregap, postgap, pgtype, pgsub);
 
+        // Calculate real pregap and pregap_dv
+        u32 pregap_real = (pgtype[0] == 'V' ? 0 : pregap);
+        u32 pregap_dv = (pgtype[0] == 'V' ? pregap : 0);
+
+        // Advance current LBA by pregaps
+        current_lba += pregap_real + pregap_dv;
+
         Track new_track;
         InitTrack(new_track);
 
+        new_track.file_offset = file_offset;
         new_track.type = GetTrackType(type);
         new_track.sector_size = TrackTypeSectorSize(new_track.type);
 
-        u32 data_frames = frames;
-
-        if (pregap > 0)
-        {
-            data_frames -= pregap;
-            new_track.has_lead_in = true;
-            new_track.lead_in_lba = start_sector;
-        }
-        else
-        {
-            new_track.has_lead_in = false;
-            new_track.lead_in_lba = 0;
-        }
-
-        new_track.sector_count = data_frames;
-
-        new_track.start_lba = start_sector + pregap;
+        new_track.start_lba = current_lba;
         LbaToMsf(new_track.start_lba, &new_track.start_msf);
+
+        u32 data_frames = frames - pregap_dv;
+        new_track.sector_count = data_frames;
 
         new_track.end_lba = new_track.start_lba + data_frames - 1;
         LbaToMsf(new_track.end_lba, &new_track.end_msf);
 
-        start_sector = new_track.end_lba + 1;
+        // Advance current LBA past data and postgap
+        current_lba += data_frames;
+        current_lba += postgap;
+
+        // Update file_offset: pregap_dv + data + postgap + alignment to 4 sectors
+        file_offset += pregap_dv;
+        file_offset += data_frames;
+        file_offset += postgap;
+        file_offset += ((frames + 3) & ~3) - frames;
 
         m_toc.tracks.push_back(new_track);
     }
@@ -223,12 +226,13 @@ bool CdRomChdImage::ReadTOC()
     {
         Track& track = m_toc.tracks[i];
 
-        Log("Track %2d (%s): Start LBA: %6u, End LBA: %6u, Sectors: %6u",
+        Log("Track %2d (%s): Start LBA: %6u, End LBA: %6u, Sectors: %6u, File Offset: %8llu",
                 i + 1,
                 TrackTypeName(track.type),
                 track.start_lba,
                 track.end_lba,
-                track.sector_count);
+                track.sector_count,
+                track.file_offset);
     }
 
     Log("Successfully parsed CHD file with %d tracks", (int)m_toc.tracks.size());
