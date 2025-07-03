@@ -184,7 +184,7 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
     return false;
 }
 
-bool CdRomCueBinImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
+bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 {
     if (!m_ready || buffer == NULL)
     {
@@ -220,6 +220,7 @@ bool CdRomCueBinImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
             }
 
             u32 byte_offset = track.file_offset + (sector_offset * sector_size) + offset;
+            u32 size = count * 2;
 
             if (byte_offset + size > img_file->file_size)
             {
@@ -230,7 +231,7 @@ bool CdRomCueBinImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
 
             m_current_sector = lba;
 
-            return ReadFromImgFile(img_file, byte_offset, buffer, size);
+            return ReadFromImgFile(img_file, byte_offset, (u8*)buffer, size);
         }
     }
 

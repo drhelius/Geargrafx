@@ -189,7 +189,7 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
     return false;
 }
 
-bool CdRomChdImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
+bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 {
     if (!m_ready || buffer == NULL)
     {
@@ -223,8 +223,6 @@ bool CdRomChdImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
             {
                 m_hunk_cache[hunk_index] = new u8[m_hunk_bytes];
 
-                Debug("Caching hunk %u", hunk_index);
-
                 chd_error err = chd_read(m_chd_file, hunk_index, m_hunk_cache[hunk_index]);
 
                 if (err != CHDERR_NONE)
@@ -234,10 +232,17 @@ bool CdRomChdImage::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
                 }
             }
 
+            u32 size = count * 2;
             u32 final_offset = byte_offset_in_hunk + offset;
             assert(final_offset + size <= m_hunk_bytes);
 
             memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, size);
+
+            for (u32 i = 0; i < count; i++)
+            {
+                u16 u = (u16)buffer[i];
+                buffer[i] = (s16)((u >> 8) | (u << 8));
+            }
 
             return true;
         }

@@ -70,7 +70,7 @@ public:
     virtual void Reset() override;
     virtual bool LoadFromFile(const char* path) override;
     virtual bool ReadSector(u32 lba, u8* buffer) override;
-    virtual bool ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size) override;
+    virtual bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count) override;
     virtual bool PreloadDisc() override;
     virtual bool PreloadTrack(u32 track_number) override;
 

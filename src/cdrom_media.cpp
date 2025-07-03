@@ -94,11 +94,11 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
     }
 }
 
-bool CdRomMedia::ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size)
+bool CdRomMedia::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 {
     if (IsValidPointer(m_current_image))
     {
-        return m_current_image->ReadBytes(lba, offset, buffer, size);
+        return m_current_image->ReadSamples(lba, offset, buffer, count);
     }
     else
     {
