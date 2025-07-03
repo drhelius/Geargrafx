@@ -143,7 +143,7 @@ bool CdRomChdImage::ReadTOC()
     chd_error err;
     char metadata[512];
 
-    u32 current_lba = 0;
+    u32 start_sector = 0;
 
     for (int i = 0; i < 99; i++)
     {
@@ -191,19 +191,14 @@ bool CdRomChdImage::ReadTOC()
 
         new_track.type = GetTrackType(type);
         new_track.sector_size = TrackTypeSectorSize(new_track.type);
-        new_track.sector_count = frames;
 
-        new_track.start_lba = current_lba;
-        LbaToMsf(current_lba, &new_track.start_msf);
-
-        new_track.end_lba = current_lba + frames - 1;
-        LbaToMsf(new_track.end_lba, &new_track.end_msf);
+        u32 data_frames = frames;
 
         if (pregap > 0)
         {
+            data_frames -= pregap;
             new_track.has_lead_in = true;
-            new_track.lead_in_lba = current_lba - pregap;
-            LbaToMsf(new_track.lead_in_lba, &new_track.start_msf);
+            new_track.lead_in_lba = start_sector;
         }
         else
         {
@@ -211,7 +206,15 @@ bool CdRomChdImage::ReadTOC()
             new_track.lead_in_lba = 0;
         }
 
-        current_lba += frames;
+        new_track.sector_count = data_frames;
+
+        new_track.start_lba = start_sector + pregap;
+        LbaToMsf(new_track.start_lba, &new_track.start_msf);
+
+        new_track.end_lba = new_track.start_lba + data_frames - 1;
+        LbaToMsf(new_track.end_lba, &new_track.end_msf);
+
+        start_sector = new_track.end_lba + 1;
 
         m_toc.tracks.push_back(new_track);
     }
@@ -228,7 +231,7 @@ bool CdRomChdImage::ReadTOC()
                 track.sector_count);
     }
 
-    Log("Successfully parsed CUE file with %d tracks", (int)m_toc.tracks.size());
+    Log("Successfully parsed CHD file with %d tracks", (int)m_toc.tracks.size());
 
     if (m_toc.tracks.empty())
     {
