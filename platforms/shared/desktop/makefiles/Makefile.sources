@@ -68,8 +68,9 @@ SOURCES_CXX := \
     $(SRC_DIR)/audio.cpp \
     $(SRC_DIR)/arcade_card_mapper.cpp \
     $(SRC_DIR)/cdrom_audio.cpp \
+    $(SRC_DIR)/cdrom_cuebin_image.cpp \
+    $(SRC_DIR)/cdrom_image.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
-    $(SRC_DIR)/cdrom_media_file.cpp \
     $(SRC_DIR)/cdrom.cpp \
     $(SRC_DIR)/scsi_controller.cpp \
     $(SRC_DIR)/huc6202.cpp \

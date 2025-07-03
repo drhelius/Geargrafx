@@ -20,70 +20,16 @@
 #ifndef CDROM_MEDIA_H
 #define CDROM_MEDIA_H
 
-#include "common.h"
-#include "cdrom_common.h"
 #include <vector>
 #include <string>
+#include "common.h"
+#include "cdrom_common.h"
+#include "cdrom_image.h"
 
-#define CDROM_MEDIA_CHUNK_SIZE 256 * 1024 // 256KB
+class CdRomCueBinImage;
 
 class CdRomMedia
 {
-public:
-
-    struct ImgFile
-    {
-        char file_name[256];
-        char file_path[1024];
-        u32 file_size;
-        u32 chunk_size;
-        u32 chunk_count;
-        u8** chunks;
-        bool is_wav;
-        u32 wav_data_offset;
-    };
-
-    enum TrackType
-    {
-        AUDIO_TRACK,
-        DATA_TRACK_MODE1_2048,
-        DATA_TRACK_MODE1_2352
-    };
-
-    struct Track
-    {
-        TrackType type;
-        u32 sector_size;
-        u32 sector_count;
-        u32 start_lba;
-        GG_CdRomMSF start_msf;
-        u32 end_lba;
-        GG_CdRomMSF end_msf;
-        ImgFile* img_file;
-        u32 file_offset;
-        bool has_lead_in;
-        u32 lead_in_lba;
-    };
-
-private:
-
-    struct ParsedCueTrack
-    {
-        u32 number;
-        TrackType type;
-        bool has_index0;
-        u32 index0_lba;
-        bool has_pregap;
-        uint32_t pregap_length;
-        uint32_t index1_lba;
-    };
-
-    struct ParsedCueFile
-    {
-        ImgFile* img_file;
-        std::vector<ParsedCueTrack> tracks;
-    };
-
 public:
     CdRomMedia();
     ~CdRomMedia();
@@ -95,20 +41,14 @@ public:
     const char* GetFileDirectory();
     const char* GetFileName();
     const char* GetFileExtension();
-    const std::vector<Track>& GetTracks();
-    const std::vector<ImgFile*>& GetImgFiles();
-    u32 GetTrackSectorSize(TrackType type);
-    u32 GetTrackSectorSize(u8 track_number);
-    TrackType GetTrackType(u8 track_number);
-    const char* GetTrackTypeName(TrackType type);
-    const char* GetTrackTypeName(u8 track_number);
+    const std::vector<CdRomImage::Track>& GetTracks();
+    GG_CdRomTrackType GetTrackType(u8 track_number);
     u8 GetTrackCount();
     GG_CdRomMSF GetCdRomLength();
     u32 GetSectorCount();
     u32 GetCurrentSector();
     void SetCurrentSector(u32 sector);
     bool LoadCueFromFile(const char* path);
-    bool LoadCueFromBuffer(const u8* buffer, int size, const char* path);
     bool LoadChdFromFile(const char* path);
     bool ReadSector(u32 lba, u8* buffer);
     bool ReadBytes(u32 lba, u32 offset, u8* buffer, u32 size);
@@ -117,51 +57,17 @@ public:
     u32 GetFirstSectorOfTrack(u8 track);
     u32 GetLastSectorOfTrack(u8 track);
     s32 GetTrackFromLBA(u32 lba);
-    bool PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count);
-    bool PreloadTrackChunks(u32 track_number);
+    bool PreloadTrack(u32 track_number);
 
 private:
-    void InitTrack(Track& track);
-    void InitParsedCueTrack(ParsedCueTrack& track);
-    void InitParsedCueFile(ParsedCueFile& cue_file);
-    void DestroyImgFiles();
-    void GatherPaths(const char* path);
-    bool GatherImgInfo(ImgFile* img_file);
-    bool ValidateFile(const char* file_path);
-    bool ProcessFileFormat(ImgFile* img_file);
-    bool ProcessWavFormat(ImgFile* img_file);
-    bool FindWavDataChunk(ImgFile* img_file, std::ifstream& file);
-    void SetupFileChunks(ImgFile* img_file);
-    u32 CalculateFileOffset(ImgFile* img_file, u32 chunk_index);
-    u32 CalculateReadSize(ImgFile* img_file, u32 file_offset);
-    bool ParseCueFile(const char* cue_content);
-    bool ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer, u32 size);
-    bool LoadChunk(ImgFile* img_file, u32 chunk_index);
-    void CalculateCRC();
     u32 SeekFindGroup(u32 lba);
 
 private:
-    bool m_ready;
-    u32 m_crc;
-    char m_file_path[512];
-    char m_file_directory[512];
-    char m_file_name[512];
-    char m_file_extension[512];
-    std::vector<Track> m_tracks;
-    std::vector<ImgFile*> m_img_files;
-    GG_CdRomMSF m_cdrom_length;
-    u32 m_sector_count;
-    u32 m_current_sector;
+    CdRomImage* m_current_image;
+    CdRomCueBinImage* m_cue_bin_image;
+
 };
 
-static const u32 k_cdrom_track_type_size[3] = { 2352, 2048, 2352};
-static const char* const k_cdrom_track_type_name[3] = { "AUDIO", "MODE1/2048", "MODE1/2352" };
-
-INLINE u32 CdRomMedia::SectorTransferCycles()
-{
-    // Standard CD-ROM 1x speed: 75 sectors/sec
-    return GG_MASTER_CLOCK_RATE / 75;
-}
 
 // Seek time, based on the work by Dave Shadoff
 // https://github.com/pce-devel/PCECD_seek

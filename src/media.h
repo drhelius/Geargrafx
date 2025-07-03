@@ -66,7 +66,6 @@ public:
     u8** GetROMMap();
     bool LoadMedia(const char* path);
     bool LoadHuCardFromBuffer(const u8* buffer, int size, const char* path);
-    bool LoadCueFromBuffer(const u8* buffer, int size, const char* path);
     bool LoadCueFromFile(const char* path);
     bool LoadChdFromFile(const char* path);
     bool LoadBios(const char* file_path, bool syscard);

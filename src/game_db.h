@@ -18,7 +18,7 @@
  */
 
 #ifndef GAME_DB_H
-#defineGAME_DB_H
+#define GAME_DB_H
 
 #include "common.h"
 

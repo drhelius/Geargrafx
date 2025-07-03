@@ -22,6 +22,26 @@
 
 #include "common.h"
 
+static const u32 k_cdrom_track_type_size[3] = { 2352, 2048, 2352};
+static const char* const k_cdrom_track_type_name[3] = { "AUDIO", "MODE1/2048", "MODE1/2352" };
+
+enum GG_CdRomTrackType
+{
+    GG_CDROM_AUDIO_TRACK,
+    GG_CDROM_DATA_TRACK_MODE1_2048,
+    GG_CDROM_DATA_TRACK_MODE1_2352
+};
+
+INLINE u32 TrackTypeSectorSize(GG_CdRomTrackType type)
+{
+    return k_cdrom_track_type_size[type];
+}
+
+INLINE const char* TrackTypeName(GG_CdRomTrackType type)
+{
+    return k_cdrom_track_type_name[type];
+}
+
 struct GG_CdRomMSF
 {
     u8 minutes;

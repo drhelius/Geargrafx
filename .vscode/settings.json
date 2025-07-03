@@ -92,7 +92,8 @@
         "__config": "cpp",
         "__assertion_handler": "cpp",
         "__tree": "cpp",
-        "forward_list": "cpp"
+        "forward_list": "cpp",
+        "charconv": "cpp"
     },
     "todo-tree.tree.showBadges": true,
     "todo-tree.tree.disableCompactFolders": false,

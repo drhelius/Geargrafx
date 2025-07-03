@@ -460,7 +460,7 @@ void ScsiController::CommandReadSubcodeQ()
     CdRomAudio::CdAudioState audio_state = m_cdrom_audio->GetCurrentState();
     u32 current_lba = m_cdrom_media->GetCurrentSector();
     s32 current_track = m_cdrom_media->GetTrackFromLBA(current_lba);
-    bool is_data_track = current_track >= 0 ? m_cdrom_media->GetTrackType(current_track) != CdRomMedia::AUDIO_TRACK : false;
+    bool is_data_track = current_track >= 0 ? m_cdrom_media->GetTrackType(current_track) != GG_CDROM_AUDIO_TRACK : false;
     u8 adr_control = is_data_track ? 0x41 : 0x01;
 
     u32 lba_offset = current_track >= 0 ? m_cdrom_media->GetFirstSectorOfTrack(current_track) - current_lba : 0;
@@ -509,8 +509,9 @@ void ScsiController::CommandReadTOC()
         case 0x00:
         {
             u8 buffer[buffer_size] = { 0x01, 0x00, 0x00, 0x00 };
-            buffer[1] = DecToBcd((u8)m_cdrom_media->GetTracks().size());
-            Debug("Number of tracks: %d", m_cdrom_media->GetTracks().size());
+            u8 track_count = m_cdrom_media->GetTrackCount();
+            buffer[1] = DecToBcd(track_count);
+            Debug("Number of tracks: %d", track_count);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
             NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
@@ -538,18 +539,19 @@ void ScsiController::CommandReadTOC()
 
             u8 type = 0x04;
 
-            if (m_cdrom_media->GetTracks()[track - 1].type == CdRomMedia::AUDIO_TRACK)
+            if (m_cdrom_media->GetTrackType(track - 1) == GG_CDROM_AUDIO_TRACK)
                 type = 0x00;
 
             GG_CdRomMSF start_msf = { 0, 0, 0 };
-            if (track > m_cdrom_media->GetTracks().size())
+            if (track > m_cdrom_media->GetTrackCount())
             {
                 start_msf = m_cdrom_media->GetCdRomLength();
                 type = 0x00;
             }
             else
             {
-                u32 start_lba = m_cdrom_media->GetTracks()[track - 1].start_lba + 150;
+                u32 first_sector = m_cdrom_media->GetFirstSectorOfTrack(track - 1);
+                u32 start_lba = first_sector + 150;
                 LbaToMsf(start_lba, &start_msf);
             }
 

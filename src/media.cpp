@@ -121,6 +121,11 @@ bool Media::LoadMedia(const char* path)
     {
         m_ready = LoadMediaFromZipFile(path);
     }
+    else if (strcmp(m_file_extension, "cue") == 0)
+    {
+        m_is_cdrom = true;
+        m_ready = LoadCueFromFile(path);
+    }
     else if (strcmp(m_file_extension, "chd") == 0)
     {
         m_is_cdrom = true;
@@ -160,16 +165,8 @@ bool Media::LoadMedia(const char* path)
 
             if (!is_empty)
             {
-                if (strcmp(m_file_extension, "cue") == 0)
-                {
-                    m_is_cdrom = true;
-                    m_ready = LoadCueFromBuffer((u8*)(buffer), size, path);
-                }
-                else
-                {
-                    m_is_cdrom = false;
-                    m_ready = LoadHuCardFromBuffer((u8*)(buffer), size, path);
-                }
+                m_is_cdrom = false;
+                m_ready = LoadHuCardFromBuffer((u8*)(buffer), size, path);
             }
 
             SafeDeleteArray(buffer);
@@ -221,12 +218,6 @@ bool Media::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
 
     Debug("HuCard loaded from buffer. Size: %d bytes", m_rom_size);
 
-    return m_ready;
-}
-
-bool Media::LoadCueFromBuffer(const u8* buffer, int size, const char* path)
-{
-    m_ready = m_cdrom_media->LoadCueFromBuffer(buffer, size, path);
     return m_ready;
 }
 
@@ -398,6 +389,9 @@ bool Media::LoadMediaFromZipFile(const char* path)
             }
         }
     }
+
+    Log("ERROR: No valid ROM or CUE file found in ZIP archive %s", path);
+
     return false;
 }
 
