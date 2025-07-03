@@ -27,6 +27,7 @@
 #include "cdrom_image.h"
 
 class CdRomCueBinImage;
+class CdRomChdImage;
 
 class CdRomMedia
 {
@@ -65,7 +66,7 @@ private:
 private:
     CdRomImage* m_current_image;
     CdRomCueBinImage* m_cue_bin_image;
-
+    CdRomChdImage* m_chd_image;
 };
 
 

@@ -19,22 +19,26 @@
 
 #include "cdrom_media.h"
 #include "cdrom_cuebin_image.h"
+#include "cdrom_chd_image.h"
 
 CdRomMedia::CdRomMedia()
 {
+    InitPointer(m_current_image);
 }
 
 CdRomMedia::~CdRomMedia()
 {
     SafeDelete(m_cue_bin_image);
+    SafeDelete(m_chd_image);
 }
 
 void CdRomMedia::Init()
 {
-    InitPointer(m_current_image);
-
     m_cue_bin_image = new CdRomCueBinImage();
     m_cue_bin_image->Init();
+
+    m_chd_image = new CdRomChdImage();
+    m_chd_image->Init();
 
     Reset();
 }
@@ -44,6 +48,7 @@ void CdRomMedia::Reset()
     InitPointer(m_current_image);
 
     m_cue_bin_image->Reset();
+    m_chd_image->Reset();
 }
 
 bool CdRomMedia::LoadCueFromFile(const char* path)
@@ -63,121 +68,17 @@ bool CdRomMedia::LoadCueFromFile(const char* path)
 
 bool CdRomMedia::LoadChdFromFile(const char* path)
 {
-    return false; 
-    // Log("Loading CD-ROM Media from %s...", path);
-
-    // if (!IsValidPointer(path))
-    // {
-    //     Log("ERROR: Invalid path %s", path);
-    //     return false;
-    // }
-
-    // Reset();
-    // GatherPaths(path);
-
-    // if (strcmp(m_file_extension, "chd") != 0)
-    // {
-    //     Log("ERROR: Invalid file extension %s. Expected .chd", m_file_extension);
-    //     return false;
-    // }
-
-    // FILE* file = fopen(path, "rb");
-
-    // if (file)
-    // {
-    //     fseek(file, 0, SEEK_END);
-    //     long size = ftell(file);
-    //     fseek(file, 0, SEEK_SET);
-
-
-    //     if (size <= 0)
-    //     {
-    //         Log("ERROR: Unable to open file %s. Size: %ld", path, size);
-    //         fclose(file);
-    //         return false;
-    //     }
-
-    //     char metadata[512];
-    //     const chd_header *head;
-    //     chd_file *chd_file;
-
-    //     /* open CHD file */
-    //     if (chd_open_file(file, CHD_OPEN_READ, NULL, &chd_file) != CHDERR_NONE)
-    //     {
-    //         chd_close(chd_file);
-    //         fclose(file);
-    //         Log("ERROR: Unable to open CHD file %s", path);
-    //         return false;
-    //     }
-
-    //     /* retrieve CHD header */
-    //     head = chd_get_header(chd_file);
-
-    //     Debug("CHD file opened successfully: %s", path);
-    //     Debug("CHD Header: Version: %d, Length: %d, Compression: %d, Hunk Size: %d, Total Hunks: %d",
-    //           head->version, head->length, head->compression[0], head->hunkbytes, head->totalhunks);
-
-
-    //     for (int i = 0; i < 99; i++)
-    //     {
-    //         int tkid = 0, frames = 0, pad = 0, pregap = 0, postgap = 0;
-    //         char type[64], subtype[32], pgtype[32], pgsub[32];
-    //         type[0] = subtype[0] = pgtype[0] = pgsub[0] = 0;
-
-    //         chd_error err = chd_get_metadata(chd_file, CDROM_TRACK_METADATA2_TAG, i, metadata, sizeof(metadata), NULL, NULL, NULL);
-
-    //         if (err == CHDERR_NONE)
-    //         {
-    //             if (sscanf(metadata, CDROM_TRACK_METADATA2_FORMAT, &tkid, type, subtype, &frames, &pregap, pgtype, pgsub, &postgap) != 8)
-    //             {
-    //                 Log("ERROR: Failed to parse metadata for track %d in CHD file %s", i + 1, path);
-    //                 m_ready = false;
-    //                 break;
-    //             }
-    //         }
-    //         else
-    //         {
-    //             Log("ERROR: No metadata found for track %d in CHD file %s", i + 1, path);
-    //             Log("ERROR: CHD Error: %d", err);
-
-    //             err = chd_get_metadata(chd_file, CDROM_TRACK_METADATA_TAG, i, metadata, sizeof(metadata), NULL, NULL, NULL);
-
-    //             if (err == CHDERR_NONE)
-    //             {
-    //                 sscanf(metadata, CDROM_TRACK_METADATA_FORMAT, &tkid, type, subtype, &frames);
-    //             }
-    //             else
-    //             {
-    //                 Log("ERROR: No metadata found for track %d in CHD file %s", i + 1, path);
-    //                 Log("ERROR: CHD Error: %d", err);
-    //                 break;
-    //             }
-    //             continue;
-    //         }
-
-
-    //         Debug("Track %d: Type: %s, Subtype: %s, Frames: %d, Pregap: %d, Postgap: %d", 
-    //               tkid, type, subtype, frames, pregap, postgap);
-    //         Debug("Track %d: PGType: %s, PGSub: %s", 
-    //               tkid, pgtype, pgsub);
-    //     }
-
-    //     chd_close(chd_file);
-    //     fclose(file);
-
-    //     m_ready = false;
-    // }
-    // else
-    // {
-    //     Log("ERROR: There was a problem loading the file %s...", path);
-    //     m_ready = false;
-    // }
-
-    // if (!m_ready)
-    //     Reset();
-
-    // return m_ready;
-
+    if (m_chd_image->LoadFromFile(path))
+    {
+        m_current_image = m_chd_image;
+        return true;
+    }
+    else
+    {
+        Log("ERROR: Failed to load CHD file from %s", path);
+        Reset();
+        return false;
+    }
 }
 
 bool CdRomMedia::ReadSector(u32 lba, u8* buffer)

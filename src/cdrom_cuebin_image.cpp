@@ -48,7 +48,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path)
 {
     using namespace std;
 
-    Log("Loading CD-ROM Media from %s...", path);
+    Log("Loading CUE from %s...", path);
 
     if (!IsValidPointer(path))
     {
