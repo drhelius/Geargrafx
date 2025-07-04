@@ -8,11 +8,6 @@ SOURCES_C   :=  $(DEPS_DIR)/miniz/miniz.c \
                 $(DEPS_DIR)/lzma-24.05/src/LzmaEnc.c \
                 $(DEPS_DIR)/lzma-24.05/src/LzmaDec.c \
                 $(DEPS_DIR)/lzma-24.05/src/CpuArch.c \
-                $(DEPS_DIR)/zlib-1.3.1/adler32.c \
-                $(DEPS_DIR)/zlib-1.3.1/inffast.c \
-                $(DEPS_DIR)/zlib-1.3.1/inflate.c \
-                $(DEPS_DIR)/zlib-1.3.1/inftrees.c \
-                $(DEPS_DIR)/zlib-1.3.1/zutil.c
 
 SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
                 $(SOURCE_DIR)/geargrafx_core.cpp \

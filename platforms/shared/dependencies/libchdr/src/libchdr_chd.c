@@ -61,7 +61,7 @@
 #if defined(__PS3__) || defined(__PSL1GHT__)
 #define __MACTYPES__
 #endif
-#include <zlib.h>
+#include <miniz.h>
 
 #undef TRUE
 #undef FALSE
@@ -74,6 +74,24 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 #define SHA1_DIGEST_SIZE 20
+
+/***************************************************************************
+  drhelius: Wrap zlib alloc/free callbacks to match 
+  			miniz mz_alloc_func/mz_free_func ABI.
+***************************************************************************/
+
+static voidpf zlib_fast_alloc(voidpf opaque, uInt items, uInt size);
+static void zlib_fast_free(voidpf opaque, voidpf address);
+
+static void *zlib_alloc_wrapper(void *opaque, size_t items, size_t size)
+{
+    return zlib_fast_alloc(opaque, (uInt)items, (uInt)size);
+}
+
+static void zlib_free_wrapper(void *opaque, void *address)
+{
+    zlib_fast_free(opaque, address);
+}
 
 /***************************************************************************
     DEBUGGING
@@ -3243,8 +3261,8 @@ static chd_error zlib_codec_init(void *codec, uint32_t hunkbytes)
 	/* init the inflater first */
 	data->inflater.next_in = (Bytef *)data;	/* bogus, but that's ok */
 	data->inflater.avail_in = 0;
-	data->inflater.zalloc = zlib_fast_alloc;
-	data->inflater.zfree = zlib_fast_free;
+	data->inflater.zalloc = zlib_alloc_wrapper;
+	data->inflater.zfree = zlib_free_wrapper;
 	data->inflater.opaque = &data->allocator;
 	zerr = inflateInit2(&data->inflater, -MAX_WBITS);
 

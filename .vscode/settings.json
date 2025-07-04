@@ -93,7 +93,8 @@
         "__assertion_handler": "cpp",
         "__tree": "cpp",
         "forward_list": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "lzmadec.h": "c"
     },
     "todo-tree.tree.showBadges": true,
     "todo-tree.tree.disableCompactFolders": false,
