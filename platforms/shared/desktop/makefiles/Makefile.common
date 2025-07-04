@@ -37,6 +37,9 @@ endif
 
 CPPFLAGS += $(INCLUDES)
 CPPFLAGS += -Wall -Wextra -Wformat -fno-exceptions -DEMULATOR_BUILD=\"$(GIT_VERSION)\" -DZ7_ST -DZSTD_DISABLE_ASM
+
+$(DEPS_DIR)/%.o: CPPFLAGS += -w
+
 CXXFLAGS += -std=c++11
 CFLAGS += -std=c99
 

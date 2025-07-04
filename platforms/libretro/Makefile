@@ -347,6 +347,8 @@ INCLUDES += -I$(DEPS_DIR)/lzma/include
 CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ -DZ7_ST -DZSTD_DISABLE_ASM $(INCLUDES) $(fpic)
 CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ -DZ7_ST -DZSTD_DISABLE_ASM $(INCLUDES) $(fpic)
 
+$(DEPS_DIR)/%.o: CXXFLAGS += -w
+
 all: $(TARGET)
 	@echo Build complete: $(TARGET_NAME) $(BUILD_CONFIG) - $(GIT_VERSION) - $(platform)
 
