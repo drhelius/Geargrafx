@@ -19,6 +19,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include "cdrom_cuebin_image.h"
 #include "crc.h"
 
