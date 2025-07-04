@@ -19,10 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\miniz\miniz.c" />
     <ClCompile Include="..\..\src\adpcm.cpp" />
     <ClCompile Include="..\..\src\audio.cpp" />
     <ClCompile Include="..\..\src\arcade_card_mapper.cpp" />
+    <ClCompile Include="..\..\src\cdrom_chd_image.cpp" />
+    <ClCompile Include="..\..\src\cdrom_cuebin_image.cpp" />
+    <ClCompile Include="..\..\src\cdrom_image.cpp" />
     <ClCompile Include="..\..\src\media.cpp" />
     <ClCompile Include="..\..\src\cdrom_audio.cpp" />
     <ClCompile Include="..\..\src\cdrom_media.cpp" />
@@ -40,6 +42,46 @@
     <ClCompile Include="..\..\src\mapper.cpp" />
     <ClCompile Include="..\..\src\memory.cpp" />
     <ClCompile Include="..\..\src\sf2_mapper.cpp" />
+    <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_bitstream.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_cdrom.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_chd.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_flac.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_huffman.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\lzma\src\CpuArch.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\lzma\src\LzFind.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\lzma\src\LzmaDec.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\lzma\src\LzmaEnc.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\miniz\miniz.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
     <ClCompile Include="..\shared\desktop\sound_queue.cpp" />
     <ClCompile Include="..\shared\desktop\application.cpp" />
     <ClCompile Include="..\shared\desktop\config.cpp" />
@@ -77,8 +119,13 @@
     <ClCompile Include="..\shared\desktop\renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\arcade_card_mapper_inline.h" />
+    <ClInclude Include="..\..\src\cdrom_chd_image.h" />
+    <ClInclude Include="..\..\src\cdrom_cuebin_image.h" />
+    <ClInclude Include="..\..\src\cdrom_image.h" />
+    <ClInclude Include="..\..\src\crc.h" />
+    <ClInclude Include="..\..\src\huc6202_inline.h" />
     <ClInclude Include="..\..\src\huc6280_names.h" />
-    <ClInclude Include="..\..\src\miniz\miniz.h" />
     <ClInclude Include="..\..\src\adpcm.h" />
     <ClInclude Include="..\..\src\adpcm_inline.h" />
     <ClInclude Include="..\..\src\audio_inline.h" />
@@ -94,6 +141,7 @@
     <ClInclude Include="..\..\src\cdrom_audio_inline.h" />
     <ClInclude Include="..\..\src\cdrom_audio.h" />
     <ClInclude Include="..\..\src\cdrom_common.h" />
+    <ClInclude Include="..\..\src\memory_stream.h" />
     <ClInclude Include="..\..\src\scsi_controller.h" />
     <ClInclude Include="..\..\src\scsi_controller_inline.h" />
     <ClInclude Include="..\..\src\common.h" />
@@ -124,6 +172,18 @@
     <ClInclude Include="..\..\src\huc6280.h" />
     <ClInclude Include="..\..\src\sf2_mapper.h" />
     <ClInclude Include="..\..\src\types.h" />
+    <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\bitstream.h" />
+    <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\cdrom.h" />
+    <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\chd.h" />
+    <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\chdconfig.h" />
+    <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\coretypes.h" />
+    <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\flac.h" />
+    <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\huffman.h" />
+    <ClInclude Include="..\shared\dependencies\lzma\include\CpuArch.h" />
+    <ClInclude Include="..\shared\dependencies\lzma\include\LzFind.h" />
+    <ClInclude Include="..\shared\dependencies\lzma\include\LzmaDec.h" />
+    <ClInclude Include="..\shared\dependencies\lzma\include\LzmaEnc.h" />
+    <ClInclude Include="..\shared\dependencies\miniz\miniz.h" />
     <ClInclude Include="..\shared\desktop\imgui\imgui_impl_sdl2.h" />
     <ClInclude Include="..\shared\desktop\keyboard.h" />
     <ClInclude Include="..\shared\desktop\nfd\nfd_sdl2.h" />
@@ -256,7 +316,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;dependencies/SDL2-2.30.6/include;dependencies/SDL2-2.30.6/include/sdl2;dependencies/glew-2.2.0/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;dependencies/SDL2-2.30.6/include;dependencies/SDL2-2.30.6/include/sdl2;dependencies/glew-2.2.0/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -265,7 +325,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>UNICODE;WIN32;WIN64;NDEBUG;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Z7_ST;UNICODE;WIN32;WIN64;NDEBUG;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -338,7 +398,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;dependencies/SDL2-2.30.6/include;dependencies/SDL2-2.30.6/include/sdl2;dependencies/glew-2.2.0/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;dependencies/SDL2-2.30.6/include;dependencies/SDL2-2.30.6/include/sdl2;dependencies/glew-2.2.0/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -347,7 +407,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>DEBUG;UNICODE;WIN32;WIN64;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Z7_ST;DEBUG;UNICODE;WIN32;WIN64;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
