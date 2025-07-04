@@ -24,23 +24,26 @@ SOURCES_C   :=  $(DEPS_DIR)/miniz/miniz.c \
                 $(DEPS_DIR)/zlib-1.3.1/zutil.c
 
 SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
+                $(SOURCE_DIR)/geargrafx_core.cpp \
                 $(SOURCE_DIR)/adpcm.cpp \
                 $(SOURCE_DIR)/audio.cpp \
                 $(SOURCE_DIR)/arcade_card_mapper.cpp \
-                $(SOURCE_DIR)/media.cpp \
                 $(SOURCE_DIR)/cdrom_audio.cpp \
+                $(SOURCE_DIR)/cdrom_chd_image.cpp \
+                $(SOURCE_DIR)/cdrom_cuebin_image.cpp \
+                $(SOURCE_DIR)/cdrom_image.cpp \
                 $(SOURCE_DIR)/cdrom_media.cpp \
                 $(SOURCE_DIR)/cdrom.cpp \
-                $(SOURCE_DIR)/scsi_controller.cpp \
-                $(SOURCE_DIR)/geargrafx_core.cpp \
                 $(SOURCE_DIR)/huc6202.cpp \
                 $(SOURCE_DIR)/huc6260.cpp \
                 $(SOURCE_DIR)/huc6270.cpp \
+                $(SOURCE_DIR)/huc6280.cpp \
                 $(SOURCE_DIR)/huc6280_functors.cpp \
                 $(SOURCE_DIR)/huc6280_opcodes.cpp \
                 $(SOURCE_DIR)/huc6280_psg.cpp \
-                $(SOURCE_DIR)/huc6280.cpp \
                 $(SOURCE_DIR)/input.cpp \
                 $(SOURCE_DIR)/mapper.cpp \
+                $(SOURCE_DIR)/media.cpp \
                 $(SOURCE_DIR)/memory.cpp \
+                $(SOURCE_DIR)/scsi_controller.cpp \
                 $(SOURCE_DIR)/sf2_mapper.cpp

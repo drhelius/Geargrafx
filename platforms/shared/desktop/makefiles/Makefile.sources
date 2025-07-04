@@ -73,7 +73,6 @@ SOURCES_CXX := \
     $(SRC_DIR)/cdrom_image.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
     $(SRC_DIR)/cdrom.cpp \
-    $(SRC_DIR)/scsi_controller.cpp \
     $(SRC_DIR)/huc6202.cpp \
     $(SRC_DIR)/huc6260.cpp \
     $(SRC_DIR)/huc6270.cpp \
@@ -85,4 +84,5 @@ SOURCES_CXX := \
     $(SRC_DIR)/mapper.cpp \
     $(SRC_DIR)/media.cpp \
     $(SRC_DIR)/memory.cpp \
+    $(SRC_DIR)/scsi_controller.cpp \
     $(SRC_DIR)/sf2_mapper.cpp
