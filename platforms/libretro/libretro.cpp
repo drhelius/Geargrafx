@@ -602,14 +602,14 @@ static void set_variabless(void)
         { "geargrafx_console_type", "System (restart); Auto|PC Engine (JAP)|SuperGrafx (JAP)|TurboGrafx-16 (USA)" },
         { "geargrafx_cdrom_type", "CD-ROM (restart); Auto|Standard|Super CD-ROM|Arcade CD-ROM" },
         { "geargrafx_cdrom_bios", "CD-ROM Bios; Auto|System Card 1|System Card 2|System Card 3|Game Express" },
-        { "geargrafx_cdrom_preload", "Preload CD-ROM Image in RAM; Disabled|Enabled" },
+        { "geargrafx_cdrom_preload", "Preload CD-ROM (restart); Disabled|Enabled" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
         { "geargrafx_avenue_pad_3_switch", "Avenue Pad 3 Switch; Auto|SELECT|RUN" },
         { "geargrafx_soft_reset", "Soft Reset; Enabled|Disabled" },
         { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
         { "geargrafx_psg_volume", "PSG Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
-        { "geargrafx_cdrom_volume", "PSG Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
-        { "geargrafx_adpcm_volume", "PSG Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
+        { "geargrafx_cdrom_volume", "CD-ROM Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
+        { "geargrafx_adpcm_volume", "ADPCM Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
         { NULL }
     };
 
