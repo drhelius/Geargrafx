@@ -8,15 +8,6 @@ SOURCES_C   :=  $(DEPS_DIR)/miniz/miniz.c \
                 $(DEPS_DIR)/lzma-24.05/src/LzmaEnc.c \
                 $(DEPS_DIR)/lzma-24.05/src/LzmaDec.c \
                 $(DEPS_DIR)/lzma-24.05/src/CpuArch.c \
-                $(DEPS_DIR)/zstd-1.5.6/lib/decompress/zstd_decompress.c \
-                $(DEPS_DIR)/zstd-1.5.6/lib/decompress/huf_decompress.c \
-                $(DEPS_DIR)/zstd-1.5.6/lib/decompress/zstd_decompress_block.c \
-                $(DEPS_DIR)/zstd-1.5.6/lib/decompress/zstd_ddict.c \
-                $(DEPS_DIR)/zstd-1.5.6/lib/common/entropy_common.c \
-                $(DEPS_DIR)/zstd-1.5.6/lib/common/error_private.c \
-                $(DEPS_DIR)/zstd-1.5.6/lib/common/fse_decompress.c \
-                $(DEPS_DIR)/zstd-1.5.6/lib/common/xxhash.c \
-                $(DEPS_DIR)/zstd-1.5.6/lib/common/zstd_common.c \
                 $(DEPS_DIR)/zlib-1.3.1/adler32.c \
                 $(DEPS_DIR)/zlib-1.3.1/inffast.c \
                 $(DEPS_DIR)/zlib-1.3.1/inflate.c \

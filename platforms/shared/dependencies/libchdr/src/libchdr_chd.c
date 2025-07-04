@@ -49,7 +49,12 @@
 #include <libchdr/cdrom.h>
 #include <libchdr/flac.h>
 #include <libchdr/huffman.h>
+
+#ifdef USE_SYSTEM_ZSTD
 #include <zstd.h>
+#else
+#include <zstddeclib.c>
+#endif
 
 #include "LzmaEnc.h"
 #include "LzmaDec.h"
