@@ -342,7 +342,7 @@ INCLUDES += -I$(CORE_DIR) -I$(SOURCE_DIR)
 INCLUDES += -I$(DEPS_DIR)/miniz
 INCLUDES += -I$(DEPS_DIR)/libchdr/include
 INCLUDES += -I$(DEPS_DIR)/zstd
-INCLUDES += -I$(DEPS_DIR)/lzma-24.05/include
+INCLUDES += -I$(DEPS_DIR)/lzma/include
 
 CFLAGS   += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ -DZ7_ST -DZSTD_DISABLE_ASM $(INCLUDES) $(fpic)
 CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -Wall -fno-exceptions -D__LIBRETRO__ -DZ7_ST -DZSTD_DISABLE_ASM $(INCLUDES) $(fpic)
