@@ -49,8 +49,8 @@ public:
     u32 GetSectorCount();
     u32 GetCurrentSector();
     void SetCurrentSector(u32 sector);
-    bool LoadCueFromFile(const char* path);
-    bool LoadChdFromFile(const char* path);
+    bool LoadCueFromFile(const char* path, bool preload);
+    bool LoadChdFromFile(const char* path, bool preload);
     bool ReadSector(u32 lba, u8* buffer);
     bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count);
     u32 SeekTime(u32 start_lba, u32 end_lba);

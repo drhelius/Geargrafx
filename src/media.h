@@ -54,6 +54,8 @@ public:
     HuCardMapper GetMapper();
     void ForceBackupRAM(bool force);
     bool IsBackupRAMForced();
+    void PreloadCdRom(bool enable);
+    bool IsPreloadCdRomEnabled();
     int GetROMSize();
     int GetCardRAMSize();
     GG_Keys GetAvenuePad3Button();
@@ -109,6 +111,7 @@ private:
     GG_Console_Type m_console_type;
     GG_CDROM_Type m_cdrom_type;
     bool m_force_backup_ram;
+    bool m_preload_cdrom;
     u8 m_syscard_bios[GG_BIOS_SYSCARD_SIZE] = {};
     u8 m_gameexpress_bios[GG_BIOS_GAME_EXPRESS_SIZE] = {};
 };

@@ -438,6 +438,11 @@ void emu_set_cdrom_type(GG_CDROM_Type cdrom_type)
     geargrafx->GetMedia()->SetCDROMType(cdrom_type);
 }
 
+void emu_set_preload_cdrom(bool enabled)
+{
+    geargrafx->GetMedia()->PreloadCdRom(enabled);
+}
+
 void emu_set_backup_ram(bool enabled)
 {
     geargrafx->GetMedia()->ForceBackupRAM(enabled);

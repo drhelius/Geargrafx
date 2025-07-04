@@ -54,7 +54,7 @@ public:
     virtual ~CdRomImage();
     virtual void Init();
     virtual void Reset();
-    virtual bool LoadFromFile(const char* path) = 0;
+    virtual bool LoadFromFile(const char* path, bool preload) = 0;
     virtual bool ReadSector(u32 lba, u8* buffer) = 0;
     virtual bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count) = 0;
     virtual bool PreloadDisc() = 0;

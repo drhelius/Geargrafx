@@ -63,6 +63,7 @@ struct config_Emulator
     bool backup_ram = true;
     int console_type = 0;
     int cdrom_type = 0;
+    bool preload_cdrom = false;
 };
 
 struct config_Video

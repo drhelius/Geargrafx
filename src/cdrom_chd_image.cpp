@@ -51,7 +51,7 @@ void CdRomChdImage::Reset()
     DestroyHunkCache();
 }
 
-bool CdRomChdImage::LoadFromFile(const char* path)
+bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
 {
     using namespace std;
 
@@ -105,6 +105,9 @@ bool CdRomChdImage::LoadFromFile(const char* path)
             {
                 InitHunkCache();
                 m_ready = ReadTOC();
+
+                if (preload && m_ready)
+                    m_ready = PreloadDisc();
             }
         }
         else
@@ -152,20 +155,8 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
             u32 hunk_offset = sector_index % m_sectors_per_hunk;
             u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
 
-            if (m_hunk_cache[hunk_index] == NULL)
-            {
-                m_hunk_cache[hunk_index] = new u8[m_hunk_bytes];
-
-                Debug("Caching hunk %u", hunk_index);
-
-                chd_error err = chd_read(m_chd_file, hunk_index, m_hunk_cache[hunk_index]);
-
-                if (err != CHDERR_NONE)
-                {
-                    Debug("ERROR: CHD read hunk %u failed: %d, %s", hunk_index, err, chd_error_string(err));
-                    return false;
-                }
-            }
+            if (!LoadHunk(hunk_index))
+                return false;
 
             u32 sector_offset = 0;
 
@@ -219,18 +210,8 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
             u32 hunk_offset = sector_index % m_sectors_per_hunk;
             u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
 
-            if (m_hunk_cache[hunk_index] == NULL)
-            {
-                m_hunk_cache[hunk_index] = new u8[m_hunk_bytes];
-
-                chd_error err = chd_read(m_chd_file, hunk_index, m_hunk_cache[hunk_index]);
-
-                if (err != CHDERR_NONE)
-                {
-                    Debug("ERROR: CHD read hunk %u failed: %d, %s", hunk_index, err, chd_error_string(err));
-                    return false;
-                }
-            }
+            if (!LoadHunk(hunk_index))
+                return false;
 
             u32 size = count * 2;
             u32 final_offset = byte_offset_in_hunk + offset;
@@ -255,13 +236,56 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 
 bool CdRomChdImage::PreloadDisc()
 {
-    // TODO
+    if (!m_ready)
+    {
+        Debug("ERROR: PreloadDisc failed - Media not ready");
+        return false;
+    }
+
+    if (m_hunk_cache == NULL)
+    {
+        Log("ERROR: PreloadDisc failed - Hunk cache not initialized");
+        return false;
+    }
+
+    Log("Preloading CHD disc...");
+    chd_error err = chd_precache(m_chd_file);
+
+    if (err != CHDERR_NONE)
+    {
+        Log("ERROR: PreloadDisc failed - chd_precache returned error %d, %s", err, chd_error_string(err));
+        return false;
+    }
+
     return true;
 }
 
 bool CdRomChdImage::PreloadTrack(u32 track_number)
 {
-    // TODO
+    if (track_number >= m_toc.tracks.size())
+    {
+        Log("ERROR: PreloadTrack failed - Invalid track number %d", track_number);
+        return false;
+    }
+
+    const Track& track = m_toc.tracks[track_number];
+
+    u32 first_sector = track.file_offset;
+    u32 last_sector  = track.file_offset + track.sector_count - 1;
+    u32 first_hunk = first_sector / m_sectors_per_hunk;
+    u32 last_hunk  = last_sector  / m_sectors_per_hunk;
+
+    Debug("Preloading track %u: hunks %u to %u", track_number + 1, first_hunk, last_hunk);
+
+    for (u32 hunk = first_hunk; hunk <= last_hunk; hunk++)
+    {
+        if (!LoadHunk(hunk))
+        {
+            Log("ERROR: PreloadTrack failed - Unable to load hunk %u", hunk);
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -412,6 +436,32 @@ void CdRomChdImage::DestroyHunkCache()
         }
         SafeDeleteArray(m_hunk_cache);
     }
+}
+
+bool CdRomChdImage::LoadHunk(u32 hunk_index)
+{
+    if (hunk_index >= m_hunk_count)
+    {
+        Log("ERROR: LoadHunk failed - hunk index %u out of bounds (max: %u)", hunk_index, m_hunk_count - 1);
+        return false;
+    }
+
+    if (m_hunk_cache[hunk_index] == NULL)
+    {
+        m_hunk_cache[hunk_index] = new u8[m_hunk_bytes];
+
+        Debug("Caching hunk %u", hunk_index);
+
+        chd_error err = chd_read(m_chd_file, hunk_index, m_hunk_cache[hunk_index]);
+
+        if (err != CHDERR_NONE)
+        {
+            Log("ERROR: CHD read hunk %u failed: %d, %s", hunk_index, err, chd_error_string(err));
+            return false;
+        }
+    }
+
+    return true;
 }
 
 GG_CdRomTrackType CdRomChdImage::GetTrackType(const char* type_str)

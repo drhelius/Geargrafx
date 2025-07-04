@@ -54,6 +54,7 @@ Media::Media(CdRomMedia* cdrom_media)
     m_console_type = GG_CONSOLE_AUTO;
     m_cdrom_type = GG_CDROM_AUTO;
     m_force_backup_ram = false;
+    m_preload_cdrom = false;
 
     m_rom_map = new u8*[128];
     for (int i = 0; i < 128; i++)
@@ -223,13 +224,13 @@ bool Media::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
 
 bool Media::LoadCueFromFile(const char* path)
 {
-    m_ready = m_cdrom_media->LoadCueFromFile(path);
+    m_ready = m_cdrom_media->LoadCueFromFile(path, m_preload_cdrom);
     return m_ready;
 }
 
 bool Media::LoadChdFromFile(const char* path)
 {
-    m_ready = m_cdrom_media->LoadChdFromFile(path);
+    m_ready = m_cdrom_media->LoadChdFromFile(path, m_preload_cdrom);
     return m_ready;
 }
 

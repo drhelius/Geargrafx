@@ -51,9 +51,9 @@ void CdRomMedia::Reset()
     m_chd_image->Reset();
 }
 
-bool CdRomMedia::LoadCueFromFile(const char* path)
+bool CdRomMedia::LoadCueFromFile(const char* path, bool preload)
 {
-    if (m_cue_bin_image->LoadFromFile(path))
+    if (m_cue_bin_image->LoadFromFile(path, preload))
     {
         m_current_image = m_cue_bin_image;
         return true;
@@ -66,9 +66,9 @@ bool CdRomMedia::LoadCueFromFile(const char* path)
     }
 }
 
-bool CdRomMedia::LoadChdFromFile(const char* path)
+bool CdRomMedia::LoadChdFromFile(const char* path, bool preload)
 {
-    if (m_chd_image->LoadFromFile(path))
+    if (m_chd_image->LoadFromFile(path, preload))
     {
         m_current_image = m_chd_image;
         return true;

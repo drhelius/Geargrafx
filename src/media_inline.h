@@ -98,6 +98,16 @@ inline bool Media::IsBackupRAMForced()
     return m_force_backup_ram;
 }
 
+inline void Media::PreloadCdRom(bool enable)
+{
+    m_preload_cdrom = enable;
+}
+
+inline bool Media::IsPreloadCdRomEnabled()
+{
+    return m_preload_cdrom;
+}
+
 inline int Media::GetROMSize()
 {
     return m_rom_size;

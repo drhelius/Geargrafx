@@ -68,7 +68,7 @@ public:
     virtual ~CdRomCueBinImage();
     virtual void Init() override;
     virtual void Reset() override;
-    virtual bool LoadFromFile(const char* path) override;
+    virtual bool LoadFromFile(const char* path, bool preload) override;
     virtual bool ReadSector(u32 lba, u8* buffer) override;
     virtual bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count) override;
     virtual bool PreloadDisc() override;

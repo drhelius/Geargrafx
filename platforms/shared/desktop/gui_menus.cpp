@@ -425,7 +425,7 @@ static void menu_emulator(void)
 
         ImGui::Separator();
 
-        if (ImGui::BeginMenu("Console"))
+        if (ImGui::BeginMenu("Console Model"))
         {
             ImGui::PushItemWidth(170.0f);
             if (ImGui::Combo("##consoletype", &config_emulator.console_type, "Auto\0PC Engine (JAP)\0SuperGrafx (JAP)\0TurboGrafx-16 (USA)\0\0"))
@@ -444,7 +444,9 @@ static void menu_emulator(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("CD-ROM"))
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("CD-ROM Model"))
         {
             ImGui::PushItemWidth(150.0f);
             if (ImGui::Combo("##cdromtype", &config_emulator.cdrom_type, "Auto\0Standard\0Super CD-ROM\0Arcade CD-ROM\0\0"))
@@ -460,6 +462,18 @@ static void menu_emulator(void)
             }
 
             ImGui::EndMenu();
+        }
+
+        if (ImGui::MenuItem("Preload CD-ROM in RAM", "", &config_emulator.preload_cdrom))
+        {
+            emu_set_preload_cdrom(config_emulator.preload_cdrom);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("This option will preload all CD-ROM tracks in RAM.");
+            ImGui::Text("Load a new CD-ROM image to apply changes.");
+            ImGui::EndTooltip();
         }
 
         if (ImGui::MenuItem("Force Backup RAM", "", &config_emulator.backup_ram))

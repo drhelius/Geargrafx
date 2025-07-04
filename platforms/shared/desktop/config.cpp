@@ -206,6 +206,7 @@ void config_read(void)
     config_emulator.backup_ram = read_bool("Emulator", "BackupRAM", true);
     config_emulator.console_type = read_int("Emulator", "ConsoleType", 0);
     config_emulator.cdrom_type = read_int("Emulator", "CDROMType", 0);
+    config_emulator.preload_cdrom = read_bool("Emulator", "PreloadCDROM", false);
 
     if (config_emulator.savefiles_path.empty())
     {
@@ -409,6 +410,7 @@ void config_write(void)
     write_bool("Emulator", "BackupRAM", config_emulator.backup_ram);
     write_int("Emulator", "ConsoleType", config_emulator.console_type);
     write_int("Emulator", "CDROMType", config_emulator.cdrom_type);
+    write_bool("Emulator", "PreloadCDROM", config_emulator.preload_cdrom);
 
     for (int i = 0; i < config_max_recent_roms; i++)
     {

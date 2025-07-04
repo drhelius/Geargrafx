@@ -44,7 +44,7 @@ void CdRomCueBinImage::Reset()
     DestroyImgFiles();
 }
 
-bool CdRomCueBinImage::LoadFromFile(const char* path)
+bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
 {
     using namespace std;
 
@@ -112,6 +112,9 @@ bool CdRomCueBinImage::LoadFromFile(const char* path)
         m_ready = ParseCueFile(buffer);
 
         SafeDeleteArray(buffer);
+
+        if (preload && m_ready)
+            m_ready = PreloadDisc();
     }
     else
     {
@@ -953,40 +956,43 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
         return false;
     }
 
-    ifstream file(img_file->file_path, ios::in | ios::binary);
-
-    if (!file.is_open())
-    {
-        Log("ERROR: Cannot load chunk - Unable to open file %s", img_file->file_path);
-        return false;
-    }
-
-    u32 file_offset = CalculateFileOffset(img_file, chunk_index);
-    file.seekg(file_offset, ios::beg);
-
-    if (file.fail())
-    {
-        Log("ERROR: Cannot load chunk - Failed to seek to offset %llu in file %s", file_offset, img_file->file_path);
-        return false;
-    }
-
-    u32 to_read = CalculateReadSize(img_file, file_offset);
-
     if (!img_file->chunks[chunk_index])
+    {
+        ifstream file(img_file->file_path, ios::in | ios::binary);
+
+        if (!file.is_open())
+        {
+            Log("ERROR: Cannot load chunk - Unable to open file %s", img_file->file_path);
+            return false;
+        }
+
+        u32 file_offset = CalculateFileOffset(img_file, chunk_index);
+        file.seekg(file_offset, ios::beg);
+
+        if (file.fail())
+        {
+            Log("ERROR: Cannot load chunk - Failed to seek to offset %llu in file %s", file_offset, img_file->file_path);
+            return false;
+        }
+
         img_file->chunks[chunk_index] = new u8[img_file->chunk_size];
 
-    Debug("Loading chunk %d from %s", chunk_index, img_file->file_path);
-    file.read(reinterpret_cast<char*>(img_file->chunks[chunk_index]), to_read);
+        u32 to_read = CalculateReadSize(img_file, file_offset);
 
-    if (file.gcount() != to_read)
-    {
-        Debug("ERROR: Failed to read chunk %d from %s. Read %d bytes, expected %d bytes",
-            chunk_index, img_file->file_path, file.gcount(), to_read);
+        Debug("Loading chunk %d from %s", chunk_index, img_file->file_path);
+        file.read(reinterpret_cast<char*>(img_file->chunks[chunk_index]), to_read);
+
+        if (file.gcount() != to_read)
+        {
+            Debug("ERROR: Failed to read chunk %d from %s. Read %d bytes, expected %d bytes",
+                chunk_index, img_file->file_path, file.gcount(), to_read);
+            file.close();
+            return false;
+        }
+
         file.close();
-        return false;
     }
 
-    file.close();
     return true;
 }
 
