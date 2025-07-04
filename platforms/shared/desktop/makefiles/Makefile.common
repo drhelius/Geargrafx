@@ -24,7 +24,7 @@ INCLUDES += -I$(SRC_DIR) -I$(DESKTOP_SRC_DIR)
 INCLUDES += -I$(DEPS_DIR)/miniz
 INCLUDES += -I$(DEPS_DIR)/libchdr/include
 INCLUDES += -I$(DEPS_DIR)/zstd
-INCLUDES += -I$(DEPS_DIR)/lzma-24.05/include
+INCLUDES += -I$(DEPS_DIR)/lzma/include
 
 USE_CLANG ?= 0
 ifeq ($(USE_CLANG), 1)

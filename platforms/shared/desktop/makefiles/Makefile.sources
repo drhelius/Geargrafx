@@ -9,10 +9,10 @@ SOURCES_C := \
     $(DEPS_DIR)/libchdr/src/libchdr_chd.c \
     $(DEPS_DIR)/libchdr/src/libchdr_flac.c \
     $(DEPS_DIR)/libchdr/src/libchdr_huffman.c \
-    $(DEPS_DIR)/lzma-24.05/src/LzFind.c \
-    $(DEPS_DIR)/lzma-24.05/src/LzmaEnc.c \
-    $(DEPS_DIR)/lzma-24.05/src/LzmaDec.c \
-    $(DEPS_DIR)/lzma-24.05/src/CpuArch.c \
+    $(DEPS_DIR)/lzma/src/LzFind.c \
+    $(DEPS_DIR)/lzma/src/LzmaEnc.c \
+    $(DEPS_DIR)/lzma/src/LzmaDec.c \
+    $(DEPS_DIR)/lzma/src/CpuArch.c \
 
 SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/main.cpp \
