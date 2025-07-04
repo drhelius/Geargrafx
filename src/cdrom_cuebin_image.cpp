@@ -116,6 +116,8 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
 
         if (preload && m_ready)
             m_ready = PreloadDisc();
+
+        CalculateCRC();
     }
     else
     {
@@ -885,8 +887,6 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
     Debug("CD-ROM length: %02d:%02d:%02d, Total sectors: %d",
         m_toc.total_length.minutes, m_toc.total_length.seconds, m_toc.total_length.frames,
         m_toc.sector_count);
-
-    CalculateCRC();
 
     return !m_toc.tracks.empty();
 }
