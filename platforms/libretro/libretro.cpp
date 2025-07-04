@@ -602,6 +602,7 @@ static void set_variabless(void)
         { "geargrafx_console_type", "System (restart); Auto|PC Engine (JAP)|SuperGrafx (JAP)|TurboGrafx-16 (USA)" },
         { "geargrafx_cdrom_type", "CD-ROM (restart); Auto|Standard|Super CD-ROM|Arcade CD-ROM" },
         { "geargrafx_cdrom_bios", "CD-ROM Bios; Auto|System Card 1|System Card 2|System Card 3|Game Express" },
+        { "geargrafx_cdrom_preload", "Preload CD-ROM Image in RAM; Disabled|Enabled" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
         { "geargrafx_avenue_pad_3_switch", "Avenue Pad 3 Switch; Auto|SELECT|RUN" },
         { "geargrafx_soft_reset", "Soft Reset; Enabled|Disabled" },
@@ -771,6 +772,15 @@ static void check_variables(void)
             cdrom_bios = 3;
         else if (strcmp(var.value, "Game Express") == 0)
             cdrom_bios = 4;
+    }
+
+    var.key = "geargrafx_cdrom_preload";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        bool preload_cdrom = (strcmp(var.value, "Enabled") == 0);
+        core->GetMedia()->PreloadCdRom(preload_cdrom);
     }
 
     var.key = "geargrafx_no_sprite_limit";
