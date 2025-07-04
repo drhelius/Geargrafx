@@ -45,6 +45,10 @@
 #include <limits.h>
 #include <time.h>
 
+#if !defined(_WIN32)
+#include <sys/types.h>
+#endif
+
 #include <libchdr/chd.h>
 #include <libchdr/cdrom.h>
 #include <libchdr/flac.h>
