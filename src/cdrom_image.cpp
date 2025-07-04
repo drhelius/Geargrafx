@@ -93,7 +93,7 @@ s32 CdRomImage::GetTrackFromLBA(u32 lba)
     {
         if ((lba >= m_toc.tracks[i].start_lba) && (lba <= m_toc.tracks[i].end_lba))
         {
-            return i;
+            return (s32)i;
         }
     }
 
