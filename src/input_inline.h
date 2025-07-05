@@ -82,7 +82,7 @@ INLINE bool Input::GetSel()
     return m_sel;
 }
 
-INLINE  bool Input::GetClr()
+INLINE bool Input::GetClr()
 {
     return m_clr;
 }
@@ -100,6 +100,16 @@ INLINE void Input::EnableCDROM(bool enable)
 INLINE void Input::EnableTurboTap(bool enabled)
 {
     m_turbo_tap = enabled;
+}
+
+INLINE void Input::EnableTurbo(GG_Controllers controller, GG_Keys key, bool enabled)
+{
+    m_turbo_enabled[controller][key] = enabled;
+}
+
+INLINE void Input::SetTurboSpeed(GG_Controllers controller, GG_Keys key, u8 speed)
+{
+    m_turbo_speed[controller][key] = speed;
 }
 
 INLINE void Input::SetControllerType(GG_Controllers controller, GG_Controller_Type type)
@@ -145,19 +155,34 @@ INLINE void Input::UpdateRegister(u8 value)
     if (prev_clr && !m_clr)
         m_selected_extra_buttons = !m_selected_extra_buttons;
 
+    u16 raw_gamepad = m_gamepads[m_selected_pad];
+
+    for (int i = 0; i < 2; i++)
+    {
+        GG_Keys key = (i == 0) ? GG_KEY_I : GG_KEY_II;
+
+        if (m_turbo_enabled[m_selected_pad][i] && !(raw_gamepad & key))
+        {
+            if (m_turbo_state[m_selected_pad][i])
+                raw_gamepad &= ~key;
+            else
+                raw_gamepad |= key;
+        }
+    }
+
     if (!m_clr)
     {
         if ((m_controller_type[m_selected_pad] == GG_CONTROLLER_AVENUE_PAD_6) && m_selected_extra_buttons)
         {
             if (!m_sel)
-                m_register |= ((m_gamepads[m_selected_pad] >> 8) & 0x0F);
+                m_register |= ((raw_gamepad >> 8) & 0x0F);
         }
         else
         {
             if (m_sel)
-                m_register |= ((m_gamepads[m_selected_pad] >> 4) & 0x0F);
+                m_register |= ((raw_gamepad >> 4) & 0x0F);
             else
-                m_register |= (m_gamepads[m_selected_pad] & 0x0F);
+                m_register |= (raw_gamepad & 0x0F);
         }
     }
 }

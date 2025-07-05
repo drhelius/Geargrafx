@@ -39,6 +39,14 @@ Input::Input(Media* media)
         m_avenue_pad_3_state[i] = 0xFFFF;
         m_gamepads[i] = 0xFFFF;
         m_selected_extra_buttons = false;
+
+        for (int j = 0; j < 2; j++)
+        {
+            m_turbo_enabled[i][j] = false;
+            m_turbo_state[i][j] = false;
+            m_turbo_counter[i][j] = 0;
+            m_turbo_speed[i][j] = 4;
+        }
     }
 }
 
@@ -59,9 +67,39 @@ void Input::Reset()
         m_avenue_pad_3_state[i] = 0xFFFF;
         m_gamepads[i] = 0xFFFF;
         m_selected_extra_buttons = false;
+
+        for (int j = 0; j < 2; j++)
+        {
+            m_turbo_counter[i][j] = 0;
+            m_turbo_state[i][j] = false;
+        }
     }
 
     UpdateRegister(0xFF);
+}
+
+void Input::EndFrame()
+{
+    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+    {
+        for (int j = 0; j < 2; j++)
+        {
+            if (m_turbo_enabled[i][j])
+            {
+                m_turbo_counter[i][j]++;
+                if (m_turbo_counter[i][j] == m_turbo_speed[i][j])
+                {
+                    m_turbo_counter[i][j] = 0;
+                    m_turbo_state[i][j] = !m_turbo_state[i][j];
+                }
+            }
+            else
+            {
+                m_turbo_counter[i][j] = 0;
+                m_turbo_state[i][j] = false;
+            }
+        }
+    }
 }
 
 void Input::SaveState(std::ostream& stream)

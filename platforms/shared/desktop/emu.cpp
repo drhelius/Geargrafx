@@ -463,6 +463,19 @@ void emu_set_avenue_pad_3_button(GG_Controllers controller, GG_Keys button)
     geargrafx->GetInput()->SetAvenuePad3Button(controller, button);
 }
 
+void emu_set_turbo(GG_Controllers controller, GG_Keys button, bool enabled)
+{
+    geargrafx->GetInput()->EnableTurbo(controller, button, enabled);
+}
+
+void emu_set_turbo_speed(GG_Controllers controller, GG_Keys button, u8 speed)
+{
+    if (speed < 0)
+        speed = 1;
+
+    geargrafx->GetInput()->SetTurboSpeed(controller, button, speed);
+}
+
 void emu_save_screenshot(const char* file_path)
 {
     if (!geargrafx->GetMedia()->IsReady())

@@ -117,6 +117,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
         while (!stop);
 
         m_audio->EndFrame(sample_buffer, sample_count);
+        m_input->EndFrame();
 
         return m_huc6280->BreakpointHit() || m_huc6280->RunToBreakpointHit();
     }
@@ -143,6 +144,8 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
         while (!stop);
 
         m_audio->EndFrame(sample_buffer, sample_count);
+        m_input->EndFrame();
+
         return false;
     }
 }

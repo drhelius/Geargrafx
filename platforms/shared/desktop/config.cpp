@@ -100,6 +100,11 @@ void config_init(void)
     {
         config_input.controller_type[i] = 0;
         config_input.avenue_pad_3_button[i] = 0;
+        for (int j = 0; j < 2; j++)
+        {
+            config_input.turbo_enabled[i][j] = false;
+            config_input.turbo_speed[i][j] = 4;
+        }
 
         config_input_gamepad[i].detected = false;
         config_input_gamepad[i].gamepad_invert_x_axis = false;
@@ -267,6 +272,13 @@ void config_read(void)
         snprintf(input_group, sizeof(input_group), "Input%d", i + 1);
         config_input.controller_type[i] = read_int(input_group, "ControllerType", 0);
         config_input.avenue_pad_3_button[i] = read_int(input_group, "AvenuePad3Button", 0);
+        for (int j = 0; j < 2; j++)
+        {
+            char turbo_group[32];
+            snprintf(turbo_group, sizeof(turbo_group), "Turbo%d", j + 1);
+            config_input.turbo_enabled[i][j] = read_bool(input_group, turbo_group, false);
+            config_input.turbo_speed[i][j] = read_int(input_group, turbo_group, 4);
+        }
     }
 
     config_input_keyboard[0].key_left = (SDL_Scancode)read_int("InputKeyboard1", "KeyLeft", SDL_SCANCODE_LEFT);
@@ -450,6 +462,13 @@ void config_write(void)
         snprintf(input_group, sizeof(input_group), "Input%d", i + 1);
         write_int(input_group, "ControllerType", config_input.controller_type[i]);
         write_int(input_group, "AvenuePad3Button", config_input.avenue_pad_3_button[i]);
+        for (int j = 0; j < 2; j++)
+        {
+            char turbo_group[32];
+            snprintf(turbo_group, sizeof(turbo_group), "Turbo%d", j + 1);
+            write_bool(input_group, turbo_group, config_input.turbo_enabled[i][j]);
+            write_int(input_group, turbo_group, config_input.turbo_speed[i][j]);
+        }
     }
 
     write_int("InputKeyboard1", "KeyLeft", config_input_keyboard[0].key_left);

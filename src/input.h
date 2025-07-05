@@ -41,9 +41,12 @@ public:
     u8 GetIORegister();
     bool GetSel();
     bool GetClr();
+    void EndFrame();
     void EnablePCEJap(bool enable);
     void EnableCDROM(bool enable);
     void EnableTurboTap(bool enabled);
+    void EnableTurbo(GG_Controllers controller, GG_Keys key, bool enabled);
+    void SetTurboSpeed(GG_Controllers controller, GG_Keys key, u8 speed);
     void SetControllerType(GG_Controllers controller, GG_Controller_Type type);
     void SetAvenuePad3Button(GG_Controllers controller, GG_Keys button);
     void SaveState(std::ostream& stream);
@@ -63,6 +66,10 @@ private:
     bool m_selected_extra_buttons;
     GG_Keys m_avenue_pad_3_button[GG_MAX_GAMEPADS];
     u16 m_avenue_pad_3_state[GG_MAX_GAMEPADS];
+    bool m_turbo_enabled[GG_MAX_GAMEPADS][2];
+    bool m_turbo_state[GG_MAX_GAMEPADS][2];
+    u8 m_turbo_counter[GG_MAX_GAMEPADS][2];
+    u8 m_turbo_speed[GG_MAX_GAMEPADS][2];
 
 private:
     void UpdateRegister(u8 value);

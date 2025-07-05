@@ -109,6 +109,8 @@ EXTERN void emu_set_backup_ram(bool enabled);
 EXTERN void emu_set_turbo_tap(bool enabled);
 EXTERN void emu_set_pad_type(GG_Controllers controller, GG_Controller_Type type);
 EXTERN void emu_set_avenue_pad_3_button(GG_Controllers controller, GG_Keys button);
+EXTERN void emu_set_turbo(GG_Controllers controller, GG_Keys button, bool enabled);
+EXTERN void emu_set_turbo_speed(GG_Controllers controller, GG_Keys button, u8 speed);
 EXTERN void emu_save_screenshot(const char* file_path);
 EXTERN bool emu_load_bios(const char* file_path, bool syscard);
 

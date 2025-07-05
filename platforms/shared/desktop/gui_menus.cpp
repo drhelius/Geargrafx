@@ -668,7 +668,7 @@ static void menu_input(void)
             ImGui::EndTooltip();
         }
 
-        if (ImGui::BeginMenu("Controller Type"))
+        if (ImGui::BeginMenu("Controller"))
         {
             for (int i = 0; i < GG_MAX_GAMEPADS; i++)
             {
@@ -713,6 +713,53 @@ static void menu_input(void)
                             ImGui::EndTooltip();
                         }
                     }
+
+                    ImGui::Separator();
+
+                    if (ImGui::MenuItem("Turbo I", "", &config_input.turbo_enabled[i][0]))
+                    {
+                        emu_set_turbo((GG_Controllers)i, GG_KEY_I, config_input.turbo_enabled[i][0]);
+                    }
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::BeginTooltip();
+                        ImGui::Text("Click to enable or disable Turbo I for Player %d.", i + 1);
+                        ImGui::EndTooltip();
+                    }
+
+                    if (ImGui::SliderInt("##turbo_speed_i", &config_input.turbo_speed[i][0], 1, 20, "Turbo I Speed = %d", ImGuiSliderFlags_AlwaysClamp))
+                    {
+                        emu_set_turbo_speed((GG_Controllers)i, GG_KEY_I, config_input.turbo_speed[i][0]);
+                    }
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::BeginTooltip();
+                        ImGui::Text("The number of frames between each button I toggle.");
+                        ImGui::EndTooltip();
+                    }
+
+                    if (ImGui::MenuItem("Turbo II", "", &config_input.turbo_enabled[i][1]))
+                    {
+                        emu_set_turbo((GG_Controllers)i, GG_KEY_II, config_input.turbo_enabled[i][1]);
+                    }
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::BeginTooltip();
+                        ImGui::Text("Click to enable or disable Turbo II for Player %d.", i + 1);
+                        ImGui::EndTooltip();
+                    }
+
+                    if(ImGui::SliderInt("##turbo_speed_ii", &config_input.turbo_speed[i][1], 1, 20, "Turbo II Speed = %d", ImGuiSliderFlags_AlwaysClamp))
+                    {
+                        emu_set_turbo_speed((GG_Controllers)i, GG_KEY_II, config_input.turbo_speed[i][1]);
+                    }
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::BeginTooltip();
+                        ImGui::Text("The number of frames between each button II toggle.");
+                        ImGui::EndTooltip();
+                    }
+
                     ImGui::EndMenu();
                 }
             }
