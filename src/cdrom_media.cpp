@@ -176,7 +176,7 @@ u32 CdRomMedia::SeekTime(u32 start_lba, u32 end_lba)
 {
     u32 start_index = SeekFindGroup(start_lba);
     u32 target_index = SeekFindGroup(end_lba);
-    u32 lba_difference = (u32)std::abs((int)end_lba - (int)start_lba);
+    u32 lba_difference = (u32)abs((int)end_lba - (int)start_lba);
     double track_difference = 0.0;
 
     // Now we find the track difference

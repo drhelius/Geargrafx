@@ -20,6 +20,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stdlib.h>
 #include <string>
 #include <string.h>
 #include <time.h>
