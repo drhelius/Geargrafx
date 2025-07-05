@@ -215,6 +215,8 @@ else ifneq (,$(findstring qnx,$(platform)))
 else ifeq ($(platform), emscripten)
 	TARGET := $(TARGET_NAME)_libretro_emscripten.bc
 	STATIC_LINKING = 1
+	CFLAGS += -D_POSIX_C_SOURCE=200809L
+	CXXFLAGS += $(CFLAGS)
 # RS90
 else ifeq ($(platform), rs90)
 	TARGET := $(TARGET_NAME)_libretro.so
