@@ -191,10 +191,6 @@ INLINE void CdRomMedia::SetCurrentSector(u32 sector)
     {
         m_current_image->SetCurrentSector(sector);
     }
-    else
-    {
-        Log("ERROR: CdRomMedia::SetCurrentSector failed - Current image is NULL");
-    }
 }
 
 INLINE u32 CdRomMedia::SectorTransferCycles()

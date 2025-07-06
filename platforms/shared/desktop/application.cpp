@@ -432,6 +432,16 @@ static void sdl_events_emu(const SDL_Event* event)
                     emu_key_pressed(controller, GG_KEY_RUN);
                 else if (event->cbutton.button == config_input_gamepad[i].gamepad_select)
                     emu_key_pressed(controller, GG_KEY_SELECT);
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_toggle_turbo_I)
+                {
+                    config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
+                    emu_set_turbo(controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
+                }
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_toggle_turbo_II)
+                {
+                    config_input.turbo_enabled[controller][1] = !config_input.turbo_enabled[controller][1];
+                    emu_set_turbo(controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
+                }
 
                 if (config_input_gamepad[i].gamepad_directional == 1)
                     continue;
@@ -589,6 +599,16 @@ static void sdl_events_emu(const SDL_Event* event)
                     emu_key_pressed(controller, GG_KEY_RUN);
                 else if (key == config_input_keyboard[i].key_select)
                     emu_key_pressed(controller, GG_KEY_SELECT);
+                else if (key == config_input_keyboard[i].key_toggle_turbo_I)
+                {
+                    config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
+                    emu_set_turbo(controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
+                }
+                else if (key == config_input_keyboard[i].key_toggle_turbo_II)
+                {
+                    config_input.turbo_enabled[controller][1] = !config_input.turbo_enabled[controller][1];
+                    emu_set_turbo(controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
+                }
             }
         }
         break;

@@ -104,12 +104,29 @@ INLINE void Input::EnableTurboTap(bool enabled)
 
 INLINE void Input::EnableTurbo(GG_Controllers controller, GG_Keys key, bool enabled)
 {
-    m_turbo_enabled[controller][key] = enabled;
+    if (key < GG_KEY_I || key > GG_KEY_II)
+        return;
+
+    int index = key - 1;
+    m_turbo_enabled[controller][index] = enabled;
+}
+
+INLINE bool Input::IsTurboEnabled(GG_Controllers controller, GG_Keys key)
+{
+    if (key < GG_KEY_I || key > GG_KEY_II)
+        return false;
+
+    int index = key - 1;
+    return m_turbo_enabled[controller][index];
 }
 
 INLINE void Input::SetTurboSpeed(GG_Controllers controller, GG_Keys key, u8 speed)
 {
-    m_turbo_speed[controller][key] = speed;
+    if (key < GG_KEY_I || key > GG_KEY_II)
+        return;
+
+    int index = key - 1;
+    m_turbo_speed[controller][index] = speed;
 }
 
 INLINE void Input::SetControllerType(GG_Controllers controller, GG_Controller_Type type)
@@ -157,17 +174,20 @@ INLINE void Input::UpdateRegister(u8 value)
 
     u16 raw_gamepad = m_gamepads[m_selected_pad];
 
-    for (int i = 0; i < 2; i++)
+    if (m_turbo_enabled[m_selected_pad][0] && !(raw_gamepad & GG_KEY_I))
     {
-        GG_Keys key = (i == 0) ? GG_KEY_I : GG_KEY_II;
+        if (m_turbo_state[m_selected_pad][0])
+            raw_gamepad &= ~GG_KEY_I;
+        else
+            raw_gamepad |= GG_KEY_I;
+    }
 
-        if (m_turbo_enabled[m_selected_pad][i] && !(raw_gamepad & key))
-        {
-            if (m_turbo_state[m_selected_pad][i])
-                raw_gamepad &= ~key;
-            else
-                raw_gamepad |= key;
-        }
+    if (m_turbo_enabled[m_selected_pad][1] && !(raw_gamepad & GG_KEY_II))
+    {
+        if (m_turbo_state[m_selected_pad][1])
+            raw_gamepad &= ~GG_KEY_II;
+        else
+            raw_gamepad |= GG_KEY_II;
     }
 
     if (!m_clr)

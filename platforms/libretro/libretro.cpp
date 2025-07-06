@@ -37,7 +37,7 @@ static const char slash = '/';
 #define RETRO_DEVICE_PCE_AVENUE_PAD_6   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
 
 #define MAX_PADS GG_MAX_GAMEPADS
-#define MAX_BUTTONS 12
+#define MAX_BUTTONS 14
 
 static retro_environment_t environ_cb;
 static retro_video_refresh_t video_cb;
@@ -187,15 +187,14 @@ void retro_init(void)
 
     for (int i = 0; i < MAX_PADS; i++)
     {
+        input_device[i] = RETRO_DEVICE_PCE_PAD;
+
         for (int j = 0; j < MAX_BUTTONS; j++)
         {
             joypad_current[i][j] = 0;
             joypad_old[i][j] = 0;
         }
     }
-
-    for (int i = 0; i < MAX_PADS; i++)
-        input_device[i] = RETRO_DEVICE_PCE_PAD;
 
     libretro_supports_bitmasks = environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL);
 }
@@ -316,11 +315,11 @@ bool retro_load_game(const struct retro_game_info *info)
     load_bios();
 
     snprintf(retro_game_path, sizeof(retro_game_path), "%s", info->path);
-    log_cb(RETRO_LOG_INFO, "Loading game: %s\n", retro_game_path);
+    log_cb(RETRO_LOG_INFO, "retro_load_game: %s\n", retro_game_path);
 
     if (IsValidPointer(info->data))
     {
-        log_cb(RETRO_LOG_INFO, "Loading HuCard from buffer.\n");
+        log_cb(RETRO_LOG_INFO, "retro_load_game HuCard from buffer.\n");
         if (!core->LoadHuCardFromBuffer((const u8*)(info->data), info->size, retro_game_path))
         {
             log_cb(RETRO_LOG_ERROR, "Invalid or corrupted HuCard file.\n");
@@ -329,7 +328,7 @@ bool retro_load_game(const struct retro_game_info *info)
     }
     else
     {
-        log_cb(RETRO_LOG_INFO, "Loading Media from file.\n");
+        log_cb(RETRO_LOG_INFO, "retro_load_game Media from file.\n");
         if (!core->LoadMedia(retro_game_path))
         {
             log_cb(RETRO_LOG_ERROR, "Invalid or corrupted Media.\n");
@@ -492,8 +491,10 @@ static void set_controller_info(void)
         { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Run" },\
         { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "III" },\
         { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "IV" },\
-        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "V" },\
-        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "VI" },
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "V" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "VI" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "Toggle Turbo II" },\
+        { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "Toggle Turbo I" },
         button_ids(0)
         button_ids(1)
         button_ids(2)
@@ -574,13 +575,28 @@ static void update_input(void)
         joypad_current[j][5] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_B);
         joypad_current[j][8] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_Y);
         joypad_current[j][9] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_X);
-        joypad_current[j][10] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_L2);
-        joypad_current[j][11] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_R2);
+        joypad_current[j][10] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_L);
+        joypad_current[j][11] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_R);
+        joypad_current[j][12] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_L2);
+        joypad_current[j][13] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_R2);
     }
 
     for (int j = 0; j < MAX_PADS; j++)
         for (int i = 0; i < MAX_BUTTONS; i++)
         {
+            if (i > 11)
+            {
+                GG_Keys key = (i == 12) ? GG_KEY_II : GG_KEY_I;
+                if (joypad_current[j][i] && !joypad_old[j][i])
+                {
+                    bool turbo = core->GetInput()->IsTurboEnabled((GG_Controllers)j, key);
+                    core->GetInput()->EnableTurbo((GG_Controllers)j, key, !turbo);
+                    log_cb(RETRO_LOG_DEBUG, "Toggling Turbo %d for controller %d: %d\n", key, j, !turbo);
+                }
+
+                continue;
+            }
+
             if (joypad_current[j][i])
                 core->KeyPressed((GG_Controllers)j, keymap[i]);
             else
@@ -601,7 +617,7 @@ static void set_variabless(void)
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
         { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
         { "geargrafx_cdrom_type", "CD-ROM (restart); Auto|Standard|Super CD-ROM|Arcade CD-ROM" },
-        { "geargrafx_cdrom_bios", "CD-ROM Bios; Auto|System Card 1|System Card 2|System Card 3|Game Express" },
+        { "geargrafx_cdrom_bios", "CD-ROM Bios (restart); Auto|System Card 1|System Card 2|System Card 3|Game Express" },
         { "geargrafx_cdrom_preload", "Preload CD-ROM (restart); Disabled|Enabled" },
         { "geargrafx_psg_volume", "PSG Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
         { "geargrafx_cdrom_volume", "CD-ROM Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
@@ -611,6 +627,7 @@ static void set_variabless(void)
         { "geargrafx_turbotap", "TurboTap; Disabled|Enabled" },
         { "geargrafx_avenue_pad_3_switch", "Avenue Pad 3 Switch; Auto|SELECT|RUN" },
         { "geargrafx_turbo_p1_i", "P1 Turbo I; Disabled|Enabled" },
+        { "geargrafx_turbo_p1_ii", "P1 Turbo II; Disabled|Enabled" },
         { "geargrafx_turbo_p2_i", "P2 Turbo I; Disabled|Enabled" },
         { "geargrafx_turbo_p2_ii", "P2 Turbo II; Disabled|Enabled" },
         { "geargrafx_turbo_p3_i", "P3 Turbo I; Disabled|Enabled" },

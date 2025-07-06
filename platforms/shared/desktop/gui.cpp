@@ -140,11 +140,11 @@ void gui_init(void)
         else if (config_input.avenue_pad_3_button[i] == 2)
             key = GG_KEY_RUN;
         emu_set_avenue_pad_3_button((GG_Controllers)i, key);
-        for (int j = 0; j < 2; j++)
-        {
-            emu_set_turbo((GG_Controllers)i, (GG_Keys)j, config_input.turbo_enabled[i][j]);
-            emu_set_turbo_speed((GG_Controllers)i, (GG_Keys)j, config_input.turbo_speed[i][j]);
-        }
+
+        emu_set_turbo((GG_Controllers)i, GG_KEY_I, config_input.turbo_enabled[i][0]);
+        emu_set_turbo_speed((GG_Controllers)i, GG_KEY_I, config_input.turbo_speed[i][0]);
+        emu_set_turbo((GG_Controllers)i, GG_KEY_II, config_input.turbo_enabled[i][1]);
+        emu_set_turbo_speed((GG_Controllers)i, GG_KEY_II, config_input.turbo_speed[i][1]);
     }
     emu_debug_set_callback(gui_debug_callback);
 

@@ -66,6 +66,8 @@ void config_init(void)
     config_input_keyboard[0].key_IV = SDL_SCANCODE_V;
     config_input_keyboard[0].key_V = SDL_SCANCODE_B;
     config_input_keyboard[0].key_VI = SDL_SCANCODE_N;
+    config_input_keyboard[0].key_toggle_turbo_I = SDL_SCANCODE_W;
+    config_input_keyboard[0].key_toggle_turbo_II = SDL_SCANCODE_Q;
 
     config_input_keyboard[1].key_left = SDL_SCANCODE_J;
     config_input_keyboard[1].key_right = SDL_SCANCODE_L;
@@ -79,6 +81,8 @@ void config_init(void)
     config_input_keyboard[1].key_IV = SDL_SCANCODE_6;
     config_input_keyboard[1].key_V = SDL_SCANCODE_7;
     config_input_keyboard[1].key_VI = SDL_SCANCODE_8;
+    config_input_keyboard[1].key_toggle_turbo_I = SDL_SCANCODE_P;
+    config_input_keyboard[1].key_toggle_turbo_II = SDL_SCANCODE_O;
 
     for (int i = 2; i < GG_MAX_GAMEPADS; i++)
     {
@@ -94,6 +98,8 @@ void config_init(void)
         config_input_keyboard[i].key_IV = SDL_SCANCODE_UNKNOWN;
         config_input_keyboard[i].key_V = SDL_SCANCODE_UNKNOWN;
         config_input_keyboard[i].key_VI = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_toggle_turbo_I = SDL_SCANCODE_UNKNOWN;
+        config_input_keyboard[i].key_toggle_turbo_II = SDL_SCANCODE_UNKNOWN;
     }
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
@@ -107,6 +113,7 @@ void config_init(void)
         }
 
         config_input_gamepad[i].detected = false;
+        config_input_gamepad[i].gamepad_directional = 0;
         config_input_gamepad[i].gamepad_invert_x_axis = false;
         config_input_gamepad[i].gamepad_invert_y_axis = false;
         config_input_gamepad[i].gamepad_select = SDL_CONTROLLER_BUTTON_BACK;
@@ -119,6 +126,8 @@ void config_init(void)
         config_input_gamepad[i].gamepad_VI = SDL_CONTROLLER_BUTTON_RIGHTSHOULDER;
         config_input_gamepad[i].gamepad_x_axis = SDL_CONTROLLER_AXIS_LEFTX;
         config_input_gamepad[i].gamepad_y_axis = SDL_CONTROLLER_AXIS_LEFTY;
+        config_input_gamepad[i].gamepad_toggle_turbo_I = SDL_CONTROLLER_BUTTON_RIGHTSTICK;
+        config_input_gamepad[i].gamepad_toggle_turbo_II = SDL_CONTROLLER_BUTTON_LEFTSTICK;
     }
 
     config_ini_file = new mINI::INIFile(config_emu_file_path);
@@ -275,8 +284,9 @@ void config_read(void)
         for (int j = 0; j < 2; j++)
         {
             char turbo_group[32];
-            snprintf(turbo_group, sizeof(turbo_group), "Turbo%d", j + 1);
+            snprintf(turbo_group, sizeof(turbo_group), "TurboEnabled%d", j + 1);
             config_input.turbo_enabled[i][j] = read_bool(input_group, turbo_group, false);
+            snprintf(turbo_group, sizeof(turbo_group), "TurboSpeed%d", j + 1);
             config_input.turbo_speed[i][j] = read_int(input_group, turbo_group, 4);
         }
     }
@@ -293,6 +303,8 @@ void config_read(void)
     config_input_keyboard[0].key_IV = (SDL_Scancode)read_int("InputKeyboard1", "KeyIV", SDL_SCANCODE_V);
     config_input_keyboard[0].key_V = (SDL_Scancode)read_int("InputKeyboard1", "KeyV", SDL_SCANCODE_B);
     config_input_keyboard[0].key_VI = (SDL_Scancode)read_int("InputKeyboard1", "KeyVI", SDL_SCANCODE_N);
+    config_input_keyboard[0].key_toggle_turbo_I = (SDL_Scancode)read_int("InputKeyboard1", "KeyToogleTurboI", SDL_SCANCODE_W);
+    config_input_keyboard[0].key_toggle_turbo_II = (SDL_Scancode)read_int("InputKeyboard1", "KeyToogleTurboII", SDL_SCANCODE_Q);
 
     config_input_keyboard[1].key_left = (SDL_Scancode)read_int("InputKeyboard2", "KeyLeft", SDL_SCANCODE_J);
     config_input_keyboard[1].key_right = (SDL_Scancode)read_int("InputKeyboard2", "KeyRight", SDL_SCANCODE_L);
@@ -306,6 +318,8 @@ void config_read(void)
     config_input_keyboard[1].key_IV = (SDL_Scancode)read_int("InputKeyboard2", "KeyIV", SDL_SCANCODE_6);
     config_input_keyboard[1].key_V = (SDL_Scancode)read_int("InputKeyboard2", "KeyV", SDL_SCANCODE_7);
     config_input_keyboard[1].key_VI = (SDL_Scancode)read_int("InputKeyboard2", "KeyVI", SDL_SCANCODE_8);
+    config_input_keyboard[1].key_toggle_turbo_I = (SDL_Scancode)read_int("InputKeyboard2", "KeyToogleTurboI", SDL_SCANCODE_P);
+    config_input_keyboard[1].key_toggle_turbo_II = (SDL_Scancode)read_int("InputKeyboard2", "KeyToogleTurboII", SDL_SCANCODE_O);
 
     for (int i = 2; i < GG_MAX_GAMEPADS; i++)
     {
@@ -323,6 +337,8 @@ void config_read(void)
         config_input_keyboard[i].key_IV = (SDL_Scancode)read_int(input_group, "KeyIV", SDL_SCANCODE_UNKNOWN);
         config_input_keyboard[i].key_V = (SDL_Scancode)read_int(input_group, "KeyV", SDL_SCANCODE_UNKNOWN);
         config_input_keyboard[i].key_VI = (SDL_Scancode)read_int(input_group, "KeyVI", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_toggle_turbo_I = (SDL_Scancode)read_int(input_group, "KeyToogleTurboI", SDL_SCANCODE_UNKNOWN);
+        config_input_keyboard[i].key_toggle_turbo_II = (SDL_Scancode)read_int(input_group, "KeyToogleTurboII", SDL_SCANCODE_UNKNOWN);
     }
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
@@ -343,6 +359,8 @@ void config_read(void)
         config_input_gamepad[i].gamepad_IV = read_int(input_group, "GamepadIV", SDL_CONTROLLER_BUTTON_X);
         config_input_gamepad[i].gamepad_V = read_int(input_group, "GamepadV", SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
         config_input_gamepad[i].gamepad_VI = read_int(input_group, "GamepadVI", SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+        config_input_gamepad[i].gamepad_toggle_turbo_I = read_int(input_group, "GamepadToogleTurboI", SDL_CONTROLLER_BUTTON_LEFTSTICK);
+        config_input_gamepad[i].gamepad_toggle_turbo_II = read_int(input_group, "GamepadToogleTurboII", SDL_CONTROLLER_BUTTON_RIGHTSTICK);
     }
 
     Debug("Settings loaded");
@@ -465,8 +483,9 @@ void config_write(void)
         for (int j = 0; j < 2; j++)
         {
             char turbo_group[32];
-            snprintf(turbo_group, sizeof(turbo_group), "Turbo%d", j + 1);
+            snprintf(turbo_group, sizeof(turbo_group), "TurboEnabled%d", j + 1);
             write_bool(input_group, turbo_group, config_input.turbo_enabled[i][j]);
+            snprintf(turbo_group, sizeof(turbo_group), "TurboSpeed%d", j + 1);
             write_int(input_group, turbo_group, config_input.turbo_speed[i][j]);
         }
     }

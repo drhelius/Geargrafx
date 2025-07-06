@@ -119,6 +119,8 @@ struct config_Input_Keyboard
     SDL_Scancode key_IV;
     SDL_Scancode key_V;
     SDL_Scancode key_VI;
+    SDL_Scancode key_toggle_turbo_I;
+    SDL_Scancode key_toggle_turbo_II;
 };
 
 struct config_Input_Gamepad
@@ -137,6 +139,8 @@ struct config_Input_Gamepad
     int gamepad_VI;
     int gamepad_x_axis;
     int gamepad_y_axis;
+    int gamepad_toggle_turbo_I;
+    int gamepad_toggle_turbo_II;
 };
 
 struct config_Debug

@@ -794,6 +794,10 @@ static void menu_input(void)
                     keyboard_configuration_item("IV:", &config_input_keyboard[i].key_IV, i);
                     keyboard_configuration_item("V:", &config_input_keyboard[i].key_V, i);
                     keyboard_configuration_item("VI:", &config_input_keyboard[i].key_VI, i);
+                    ImGui::Separator();
+                    ImGui::TextDisabled("Turbo:");
+                    keyboard_configuration_item("Toggle Turbo I:", &config_input_keyboard[i].key_toggle_turbo_I, i);
+                    keyboard_configuration_item("Toggle Turbo II:", &config_input_keyboard[i].key_toggle_turbo_II, i);
 
                     gui_popup_modal_keyboard();
 
@@ -851,6 +855,10 @@ static void menu_input(void)
                         gamepad_configuration_item("IV:", &config_input_gamepad[i].gamepad_IV, i);
                         gamepad_configuration_item("V:", &config_input_gamepad[i].gamepad_V, i);
                         gamepad_configuration_item("VI:", &config_input_gamepad[i].gamepad_VI, i);
+                        ImGui::Separator();
+                        ImGui::TextDisabled("Turbo:");
+                        gamepad_configuration_item("Toggle Turbo I:", &config_input_gamepad[i].gamepad_toggle_turbo_I, i);
+                        gamepad_configuration_item("Toggle Turbo II:", &config_input_gamepad[i].gamepad_toggle_turbo_II, i);
 
                         gui_popup_modal_gamepad(i);
 
@@ -1213,7 +1221,7 @@ static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int
 static void gamepad_configuration_item(const char* text, int* button, int player)
 {
     ImGui::Text("%s", text);
-    ImGui::SameLine(100);
+    ImGui::SameLine(120);
 
     static const char* gamepad_names[16] = {"A", "B", "X" ,"Y", "BACK", "GUIDE", "START", "L3", "R3", "L1", "R1", "UP", "DOWN", "LEFT", "RIGHT", "15"};
     const char* button_name = (*button >= 0 && *button < 16) ? gamepad_names[*button] : "";
