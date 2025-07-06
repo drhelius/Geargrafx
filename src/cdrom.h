@@ -29,7 +29,7 @@
 #define CDROM_IRQ_STATUS_AND_MSG_IN 0x20
 #define CDROM_IRQ_DATA_IN           0x40
 
-#define CDROM_SLOW_FADE             6.0
+#define CDROM_SLOW_FADE             6.5
 #define CDROM_FAST_FADE             2.5
 
 class CdRomAudio;
