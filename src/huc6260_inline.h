@@ -186,7 +186,7 @@ void HuC6260::RenderFrameTemplate()
             u16 final_pixel = 0;
 
             if (vdcs_enabled == 0)
-                final_pixel = 0;
+                final_pixel = 0x100;
             else if (vdcs_enabled == 1)
                 final_pixel = pixel_1;
             else if (vdcs_enabled == 2)
@@ -194,6 +194,7 @@ void HuC6260::RenderFrameTemplate()
             else
             {
                 bool is_pixel_1_transparent = (pixel_1 & 0x2000);
+                bool is_pixel_2_transparent = (pixel_2 & 0x2000);
                 bool is_vdc_1_sprite = (pixel_1 & 0x1000);
                 bool is_vdc_2_sprite = (pixel_2 & 0x1000);
 
@@ -203,14 +204,13 @@ void HuC6260::RenderFrameTemplate()
                         final_pixel = is_pixel_1_transparent ? pixel_2 : pixel_1;
                         break;
                     case HuC6202::HuC6270_PRIORITY_SPRITES_2_ABOVE_BG_1:
-                        if (is_pixel_1_transparent || (is_vdc_2_sprite && !is_vdc_1_sprite))
+                        if (is_pixel_1_transparent || (is_vdc_2_sprite && !is_vdc_1_sprite && !is_pixel_2_transparent))
                             final_pixel = pixel_2;
                         else
                             final_pixel = pixel_1;
                         break;
                     case HuC6202::HuC6270_PRIORITY_SPRITES_1_BELOW_BG_2:
                     {
-                        bool is_pixel_2_transparent = (pixel_2 & 0x2000);
                         if (is_pixel_1_transparent || (is_vdc_1_sprite && !is_vdc_2_sprite && !is_pixel_2_transparent))
                             final_pixel = pixel_2;
                         else

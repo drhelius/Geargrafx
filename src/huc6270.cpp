@@ -554,7 +554,7 @@ void HuC6270::RenderLine()
 
     if((m_latched_cr & 0x80) == 0)
         for (int i = 0; i < width; i++)
-            m_line_buffer[i] = 0;
+            m_line_buffer[i] = 0x100;
 
     if (!m_burst_mode)
     {
