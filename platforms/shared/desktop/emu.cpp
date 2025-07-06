@@ -470,9 +470,6 @@ void emu_set_turbo(GG_Controllers controller, GG_Keys button, bool enabled)
 
 void emu_set_turbo_speed(GG_Controllers controller, GG_Keys button, u8 speed)
 {
-    if (speed < 0)
-        speed = 1;
-
     geargrafx->GetInput()->SetTurboSpeed(controller, button, speed);
 }
 

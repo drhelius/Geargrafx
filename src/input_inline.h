@@ -125,6 +125,9 @@ INLINE void Input::SetTurboSpeed(GG_Controllers controller, GG_Keys key, u8 spee
     if (key < GG_KEY_I || key > GG_KEY_II)
         return;
 
+    if (speed == 0)
+        speed = 1;
+
     int index = key - 1;
     m_turbo_speed[controller][index] = speed;
 }
