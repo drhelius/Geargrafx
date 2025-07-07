@@ -269,6 +269,7 @@ void config_read(void)
 
     config_audio.enable = read_bool("Audio", "Enable", true);
     config_audio.sync = read_bool("Audio", "Sync", true);
+    config_audio.huc6280a = read_bool("Audio", "HuC6280A", true);
     config_audio.psg_volume = read_float("Audio", "PSGVolume", 1.0f);
     config_audio.cdrom_volume = read_float("Audio", "CDROMVolume", 1.0f);
     config_audio.adpcm_volume = read_float("Audio", "ADPCMVolume", 1.0f);
@@ -468,6 +469,7 @@ void config_write(void)
 
     write_bool("Audio", "Enable", config_audio.enable);
     write_bool("Audio", "Sync", config_audio.sync);
+    write_bool("Audio", "HuC6280A", config_audio.huc6280a);
     write_float("Audio", "PSGVolume", config_audio.psg_volume);
     write_float("Audio", "CDROMVolume", config_audio.cdrom_volume);
     write_float("Audio", "ADPCMVolume", config_audio.adpcm_volume);

@@ -72,6 +72,7 @@ public:
     void Clock(u32 cycles);
     void Write(u16 address, u8 value);
     int EndFrame(s16* sample_buffer);
+    void EnableHuC6280A(bool enabled);
     HuC6280PSG_State* GetState();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
@@ -98,6 +99,10 @@ private:
     s32 m_frame_samples;
     s32 m_buffer_index;
     u16 m_volume_lut[32];
+    bool m_huc6280a;
+    u8 m_dc_offset;
+    float m_hpf_prev_input;
+    float m_hpf_prev_output;
 };
 
 #include "huc6280_psg_inline.h"

@@ -887,6 +887,18 @@ static void menu_audio(void)
             emu_audio_mute(!config_audio.enable);
         }
 
+        if (ImGui::MenuItem("HuC6280A PSG", "", &config_audio.huc6280a))
+        {
+            emu_audio_huc6280a(config_audio.huc6280a);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("When enabled, this option will emulate the HuC6280A audio chip.");
+            ImGui::Text("This chip will reduce clicks and pops in the audio output.");
+            ImGui::EndTooltip();
+        }
+
         ImGui::Separator();
 
         if (ImGui::MenuItem("Mute PSG", "", &gui_audio_mute_psg, config_audio.enable))

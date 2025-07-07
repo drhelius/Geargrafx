@@ -619,6 +619,7 @@ static void set_variabless(void)
         { "geargrafx_cdrom_type", "CD-ROM (restart); Auto|Standard|Super CD-ROM|Arcade CD-ROM" },
         { "geargrafx_cdrom_bios", "CD-ROM Bios (restart); Auto|System Card 1|System Card 2|System Card 3|Game Express" },
         { "geargrafx_cdrom_preload", "Preload CD-ROM (restart); Disabled|Enabled" },
+        { "geargrafx_psg_huc6280a", "HuC6280A Audio Chip; Enabled|Disabled" },
         { "geargrafx_psg_volume", "PSG Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
         { "geargrafx_cdrom_volume", "CD-ROM Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
         { "geargrafx_adpcm_volume", "ADPCM Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
@@ -817,6 +818,15 @@ static void check_variables(void)
     {
         bool preload_cdrom = (strcmp(var.value, "Enabled") == 0);
         core->GetMedia()->PreloadCdRom(preload_cdrom);
+    }
+
+    var.key = "geargrafx_psg_huc6280a";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        bool huc6280a = (strcmp(var.value, "Enabled") == 0);
+        core->GetAudio()->GetPSG()->EnableHuC6280A(huc6280a);
     }
 
     var.key = "geargrafx_no_sprite_limit";

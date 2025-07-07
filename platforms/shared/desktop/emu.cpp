@@ -182,6 +182,11 @@ void emu_reset(void)
     load_ram();
 }
 
+void emu_audio_huc6280a(bool enabled)
+{
+    geargrafx->GetAudio()->GetPSG()->EnableHuC6280A(enabled);
+}
+
 void emu_audio_mute(bool mute)
 {
     audio_enabled = !mute;

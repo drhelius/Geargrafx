@@ -26,6 +26,10 @@ HuC6280PSG::HuC6280PSG()
 {
     InitPointer(m_channels);
     InitPointer(m_ch);
+    m_huc6280a = true;
+    m_dc_offset = 16;
+    m_hpf_prev_input = 0.0f;
+    m_hpf_prev_output = 0.0f;
 }
 
 HuC6280PSG::~HuC6280PSG()
@@ -62,6 +66,9 @@ void HuC6280PSG::Reset()
     m_buffer_index = 0;
     m_sample_cycle_counter = 0;
     m_frame_samples = 0;
+
+    m_hpf_prev_input = 0.0f;
+    m_hpf_prev_output = 0.0f;
 
     m_channel_select = 0;
     m_main_vol = 0;
@@ -354,8 +361,8 @@ void HuC6280PSG::Sync()
 
             if (!ch->mute)
             {
-                ch->left_sample = (s16)((data - 16) * final_left_vol);
-                ch->right_sample = (s16)((data - 16) * final_right_vol);
+                ch->left_sample = (s16)((data - m_dc_offset) * final_left_vol);
+                ch->right_sample = (s16)((data - m_dc_offset) * final_right_vol);
             }
         }
 
@@ -395,10 +402,28 @@ int HuC6280PSG::EndFrame(s16* sample_buffer)
 
         for (int s = 0; s < samples; s++)
         {
-            s16 final_sample = 0;
-            for (int i = 0; i < 6; i++)
-                final_sample += m_channels[i].output[s];
-            sample_buffer[s] = final_sample;
+            if (m_huc6280a)
+            {
+                s16 final_sample = 0;
+                for (int i = 0; i < 6; i++)
+                    final_sample += m_channels[i].output[s];
+
+                sample_buffer[s] = final_sample;
+            }
+            else
+            {
+                float raw = 0.0f;
+                for (int i = 0; i < 6; i++)
+                    raw += m_channels[i].output[s];
+
+                const float hpf_r = 0.9985f;
+                float outSample = raw - m_hpf_prev_input + hpf_r * m_hpf_prev_output;
+
+                m_hpf_prev_input = raw;
+                m_hpf_prev_output = outSample;
+
+                sample_buffer[s] = (s16)outSample;
+            }
         }
     }
 

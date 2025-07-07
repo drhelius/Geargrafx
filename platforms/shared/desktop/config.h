@@ -91,6 +91,7 @@ struct config_Audio
 {
     bool enable = true;
     bool sync = true;
+    bool huc6280a = true;
     float psg_volume = 1.0f;
     float cdrom_volume = 1.0f;
     float adpcm_volume = 1.0f;
