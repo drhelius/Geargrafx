@@ -111,7 +111,7 @@ struct GG_SaveState_Header
     u32 screenshot_size;
     u16 screenshot_width;
     u16 screenshot_height;
-    u8 screshot_width_scale;
+    u8 screenshot_width_scale;
     char emu_build[32];
 };
 
