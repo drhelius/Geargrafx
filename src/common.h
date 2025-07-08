@@ -42,7 +42,13 @@
 
 inline int AsHex(const char c)
 {
-   return c >= 'A' ? c - 'A' + 0xA : c - '0';
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    if (c >= 'a' && c <= 'f')
+        return c - 'a' + 0xA;
+    if (c >= 'A' && c <= 'F')
+        return c - 'A' + 0xA;
+    return 0;
 }
 
 inline unsigned int Pow2Ceil(u16 n)
