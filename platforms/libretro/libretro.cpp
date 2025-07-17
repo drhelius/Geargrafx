@@ -441,7 +441,7 @@ static void load_bios(void)
             selected_bios = syscard2;
             break;
         case 3:
-            selected_bios = syscard2;
+            selected_bios = syscard3;
             break;
         case 4:
             selected_bios = gameexpress;
@@ -782,11 +782,11 @@ static void check_variables(void)
 
         if (strcmp(var.value, "Auto") == 0)
             cdrom_type = GG_CDROM_AUTO;
-        else if (strcmp(var.value, "PC Engine (JAP)") == 0)
+        else if (strcmp(var.value, "Standard") == 0)
             cdrom_type = GG_CDROM_STANDARD;
-        else if (strcmp(var.value, "SuperGrafx (JAP)") == 0)
+        else if (strcmp(var.value, "Super CD-ROM") == 0)
             cdrom_type = GG_CDROM_SUPER_CDROM;
-        else if (strcmp(var.value, "TurboGrafx-16 (USA)") == 0)
+        else if (strcmp(var.value, "Arcade CD-ROM") == 0)
             cdrom_type = GG_CDROM_ARCADE_CARD;
         else
             cdrom_type = GG_CDROM_AUTO;
