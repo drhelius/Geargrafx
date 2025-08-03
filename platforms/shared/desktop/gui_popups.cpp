@@ -176,9 +176,6 @@ void gui_popup_modal_about(void)
                 add_build_info("SDL %d.%d.%d (build)\n", application_sdl_build_version.major, application_sdl_build_version.minor, application_sdl_build_version.patch);
                 add_build_info("SDL %d.%d.%d (link)\n", application_sdl_link_version.major, application_sdl_link_version.minor, application_sdl_link_version.patch);
                 add_build_info("OpenGL %s\n", renderer_opengl_version);
-                #if !defined(__APPLE__)
-                add_build_info("GLEW %s\n", renderer_glew_version);
-                #endif
                 add_build_info("Dear ImGui %s (%d)\n", IMGUI_VERSION, IMGUI_VERSION_NUM);
 
                 #if defined(DEBUG)
