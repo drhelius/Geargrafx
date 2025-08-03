@@ -44,7 +44,7 @@ static void update_debug(void);
 static void update_debug_background(void);
 static void update_debug_sprites(void);
 
-void emu_init(void)
+bool emu_init(void)
 {
     emu_frame_buffer = new u8[2048 * 512 * 4];
     audio_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
@@ -57,7 +57,8 @@ void emu_init(void)
     geargrafx->GetMedia()->SetTempPath(config_temp_path);
 
     sound_queue = new SoundQueue();
-    sound_queue->Start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT);
+    if (!sound_queue->Start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT))
+        return false;
 
     for (int i = 0; i < 5; i++)
         InitPointer(emu_savestates_screenshots[i].data);
@@ -68,6 +69,8 @@ void emu_init(void)
     emu_debug_irq_breakpoints = false;
     emu_debug_command = Debug_Command_None;
     emu_debug_pc_changed = false;
+
+    return true;
 }
 
 void emu_destroy(void)
@@ -515,7 +518,7 @@ static void reset_buffers(void)
     emu_debug_background_buffer_width[1] = 32;
     emu_debug_background_buffer_height[1] = 32;
 
-     for (int i = 0; i < 2048 * 512 * 4; i++)
+    for (int i = 0; i < 2048 * 512 * 4; i++)
         emu_frame_buffer[i] = 0;
 
     for (int i = 0; i < GG_AUDIO_BUFFER_SIZE; i++)

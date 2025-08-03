@@ -72,7 +72,7 @@ EXTERN bool gui_audio_mute_cdrom;
 EXTERN bool gui_audio_mute_psg;
 EXTERN bool gui_audio_mute_adpcm;
 
-EXTERN void gui_init(void);
+EXTERN bool gui_init(void);
 EXTERN void gui_destroy(void);
 EXTERN void gui_render(void);
 EXTERN void gui_shortcut(gui_ShortCutEvent event);

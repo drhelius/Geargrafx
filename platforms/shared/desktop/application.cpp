@@ -45,7 +45,7 @@ static bool paused_when_focus_lost = false;
 static Uint64 frame_time_start;
 static Uint64 frame_time_end;
 
-static int sdl_init(void);
+static bool sdl_init(void);
 static void sdl_destroy(void);
 static void sdl_load_gamepad_mappings(void);
 static void sdl_events(void);
@@ -59,6 +59,7 @@ static void run_emulator(void);
 static void render(void);
 static void frame_throttle(void);
 static void save_window_size(void);
+static void log_sdl_error(void);
 
 int application_init(const char* rom_file, const char* symbol_file, bool force_fullscreen, bool force_windowed)
 {
@@ -79,14 +80,35 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
         config_emulator.show_menu = true;
     }
 
-    int ret = sdl_init();
-    emu_init();
+    if (!sdl_init())
+    {
+        Log("ERROR: Failed to initialize SDL");
+        return 1;
+    }
 
-    gui_init();
+    if (!emu_init())
+    {
+        Log("ERROR: Failed to initialize emulator");
+        return 2;
+    }
 
-    ImGui_ImplSDL2_InitForOpenGL(application_sdl_window, gl_context);
+    if (!gui_init())
+    {
+        Log("ERROR: Failed to initialize GUI");
+        return 3;
+    }
 
-    renderer_init();
+    if (!ImGui_ImplSDL2_InitForOpenGL(application_sdl_window, gl_context))
+    {
+        Log("ERROR: Failed to initialize ImGui for SDL2");
+        return 4;
+    }
+
+    if (!renderer_init())
+    {
+        Log("ERROR: Failed to initialize renderer");
+        return 5;
+    }
 
     SDL_GL_SetSwapInterval(config_video.sync ? 1 : 0);
 
@@ -98,6 +120,7 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
         Debug("Rom file argument: %s", rom_file);
         gui_load_rom(rom_file);
     }
+
     if (IsValidPointer(symbol_file) && (strlen(symbol_file) > 0))
     {
         Debug("Symbol file argument: %s", symbol_file);
@@ -105,7 +128,7 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
         gui_debug_load_symbols_file(symbol_file);
     }
 
-    return ret;
+    return 0;
 }
 
 void application_destroy(void)
@@ -123,6 +146,8 @@ void application_destroy(void)
 
 void application_mainloop(void)
 {
+    Log("Starting main loop...");
+
     while (running)
     {
         frame_time_start = SDL_GetPerformanceCounter();
@@ -145,6 +170,8 @@ void application_trigger_quit(void)
 void application_trigger_fullscreen(bool fullscreen)
 {
     SDL_SetWindowFullscreen(application_sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    log_sdl_error();
+
     if (config_debug.debug)
         config_emulator.show_menu = true;
     else
@@ -154,6 +181,7 @@ void application_trigger_fullscreen(bool fullscreen)
 void application_trigger_fit_to_content(int width, int height)
 {
     SDL_SetWindowSize(application_sdl_window, width, height);
+    log_sdl_error();
 }
 
 void application_update_title_with_rom(const char* rom)
@@ -161,9 +189,10 @@ void application_update_title_with_rom(const char* rom)
     char final_title[256];
     snprintf(final_title, 256, "%s - %s", WINDOW_TITLE, rom);
     SDL_SetWindowTitle(application_sdl_window, final_title);
+    log_sdl_error();
 }
 
-static int sdl_init(void)
+static bool sdl_init(void)
 {
     Debug("Initializing SDL...");
 
@@ -172,12 +201,13 @@ static int sdl_init(void)
 
 #if defined(_WIN32)
     SDL_SetHint(SDL_HINT_WINDOWS_DPI_SCALING, "1");
+    log_sdl_error();
 #endif
     
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
-        Log("ERROR: %s\n", SDL_GetError());
-        return 1;
+        log_sdl_error();
+        return false;
     }
 
     SDL_VERSION(&application_sdl_build_version);
@@ -197,14 +227,28 @@ static int sdl_init(void)
         window_flags = (SDL_WindowFlags)(window_flags | SDL_WINDOW_MAXIMIZED);
 
     application_sdl_window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config_emulator.window_width, config_emulator.window_height, window_flags);
+
+    if (!application_sdl_window)
+    {
+        log_sdl_error();
+        return false;
+    }
+
     gl_context = SDL_GL_CreateContext(application_sdl_window);
+
+    if (!gl_context)
+    {
+        log_sdl_error();
+        return false;
+    }
+
     SDL_GL_MakeCurrent(application_sdl_window, gl_context);
+    log_sdl_error();
+
     SDL_GL_SetSwapInterval(0);
+    log_sdl_error();
 
     SDL_SetWindowMinimumSize(application_sdl_window, 500, 300);
-
-    sdl_load_gamepad_mappings();
-    sdl_add_gamepads();
 
     int w, h;
     int display_w, display_h;
@@ -220,8 +264,12 @@ static int sdl_init(void)
     }
 
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
+    log_sdl_error();
 
-    return 0;
+    sdl_load_gamepad_mappings();
+    sdl_add_gamepads();
+
+    return true;
 }
 
 static void sdl_destroy(void)
@@ -913,4 +961,11 @@ static void save_window_size(void)
         config_emulator.window_height = height;
         config_emulator.maximized = (SDL_GetWindowFlags(application_sdl_window) & SDL_WINDOW_MAXIMIZED);
     }
+}
+
+static void log_sdl_error(void)
+{
+    const char* sdl_error = SDL_GetError();
+    if (sdl_error && sdl_error[0] != '\0')
+        Log("SDL Error: %s", sdl_error);
 }

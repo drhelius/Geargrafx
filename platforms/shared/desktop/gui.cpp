@@ -55,7 +55,7 @@ static void show_error_window(void);
 static void set_style(void);
 static ImVec4 lerp(const ImVec4& a, const ImVec4& b, float t);
 
-void gui_init(void)
+bool gui_init(void)
 {
     gui_main_window_width = 0;
     gui_main_window_height = 0;
@@ -63,6 +63,7 @@ void gui_init(void)
     if (NFD_Init() != NFD_OKAY)
     {
         Log("NFD Error: %s", NFD_GetError());
+        return false;
     }
 
     IMGUI_CHECKVERSION();
@@ -162,6 +163,8 @@ void gui_init(void)
 
     gui_debug_init();
     gui_init_menus();
+
+    return true;
 }
 
 void gui_destroy(void)
