@@ -39,7 +39,7 @@ jobs:
       run: sudo apt-get update -qq
 
     - name: Install dependencies
-      run: sudo apt-get install -y libsdl2-dev libglew-dev libgtk-3-dev
+      run: sudo apt-get install -y libsdl2-dev libgtk-3-dev
 
     - name: Get build number
       run: |
