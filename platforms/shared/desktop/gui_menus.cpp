@@ -77,7 +77,7 @@ void gui_main_menu(void)
     open_syscard_bios = false;
     open_gameexpress_bios = false;
 
-    if (config_emulator.show_menu && ImGui::BeginMainMenuBar())
+    if (application_show_menu && ImGui::BeginMainMenuBar())
     {
         gui_main_menu_hovered = ImGui::IsWindowHovered();
 
@@ -513,7 +513,14 @@ static void menu_video(void)
             application_trigger_fullscreen(config_emulator.fullscreen);
         }
 
-        ImGui::MenuItem("Show Menu", "CTRL+M", &config_emulator.show_menu);
+        ImGui::MenuItem("Always Show Menu", "CTRL+M", &config_emulator.always_show_menu);
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("This option will enable menu even in fullscreen.");
+            ImGui::Text("Menu always shows in debug mode.");
+            ImGui::EndTooltip();
+        }
 
         if (ImGui::MenuItem("Resize Window to Content"))
         {

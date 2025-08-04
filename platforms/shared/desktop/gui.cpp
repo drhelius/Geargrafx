@@ -287,7 +287,7 @@ void gui_shortcut(gui_ShortCutEvent event)
         gui_debug_memory_select_all();
         break;
     case gui_ShortcutShowMainMenu:
-        config_emulator.show_menu = !config_emulator.show_menu;
+        config_emulator.always_show_menu = !config_emulator.always_show_menu;
         break;
     default:
         break;
@@ -410,7 +410,7 @@ static void main_window(void)
     emu_get_runtime(runtime);
 
     int w = (int)ImGui::GetIO().DisplaySize.x;
-    int h = (int)ImGui::GetIO().DisplaySize.y - (config_emulator.show_menu ? gui_main_menu_height : 0);
+    int h = (int)ImGui::GetIO().DisplaySize.y - (application_show_menu ? gui_main_menu_height : 0);
 
     int selected_ratio = config_debug.debug ? 0 : config_video.ratio;
     float ratio = 0;
@@ -515,7 +515,7 @@ static void main_window(void)
     else
     {
         int window_x = (w - (w_corrected * scale_multiplier)) / 2;
-        int window_y = ((h - (h_corrected * scale_multiplier)) / 2) + (config_emulator.show_menu ? gui_main_menu_height : 0);
+        int window_y = ((h - (h_corrected * scale_multiplier)) / 2) + (application_show_menu ? gui_main_menu_height : 0);
 
         ImGui::SetNextWindowSize(ImVec2((float)gui_main_window_width, (float)gui_main_window_height));
         ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos + ImVec2((float)window_x, (float)window_y));
@@ -580,7 +580,7 @@ static void show_status_message(void)
 
     if (status_message_active)
     {
-        ImGui::SetNextWindowPos(ImVec2(0.0f, config_emulator.show_menu ? gui_main_menu_height : 0.0f));
+        ImGui::SetNextWindowPos(ImVec2(0.0f, application_show_menu ? gui_main_menu_height : 0.0f));
         ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, 0.0f));
         ImGui::SetNextWindowBgAlpha(0.9f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);

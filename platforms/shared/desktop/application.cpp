@@ -39,11 +39,13 @@
 #define WINDOW_TITLE GG_TITLE " " GG_VERSION
 #endif
 
-static SDL_GLContext gl_context;
+static SDL_GLContext gl_context = NULL;
 static bool running = true;
 static bool paused_when_focus_lost = false;
-static Uint64 frame_time_start;
-static Uint64 frame_time_end;
+static Uint64 frame_time_start = 0;
+static Uint64 frame_time_end = 0;
+static Uint32 mouse_last_motion_time = 0;
+static const Uint32 mouse_hide_timeout_ms = 1500;
 
 static bool sdl_init(void);
 static void sdl_destroy(void);
@@ -55,11 +57,20 @@ static void sdl_shortcuts_gui(const SDL_Event* event);
 static void sdl_add_gamepads(void);
 static void sdl_remove_gamepad(SDL_JoystickID instance_id);
 static void handle_mouse_cursor(void);
+static void handle_menu(void);
 static void run_emulator(void);
 static void render(void);
 static void frame_throttle(void);
 static void save_window_size(void);
 static void log_sdl_error(void);
+
+#if defined(__APPLE__)
+#include <SDL_syswm.h>
+static void* macos_fullscreen_observer = NULL;
+static void* macos_nswindow = NULL;
+extern "C" void* macos_install_fullscreen_observer(void* nswindow, void(*enter_cb)(), void(*exit_cb)());
+extern "C" void macos_set_native_fullscreen(void* nswindow, bool enter);
+#endif
 
 int application_init(const char* rom_file, const char* symbol_file, bool force_fullscreen, bool force_windowed)
 {
@@ -69,15 +80,15 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
     config_init();
     config_read();
 
+    application_show_menu = true;
+
     if (force_fullscreen)
     {
         config_emulator.fullscreen = true;
-        config_emulator.show_menu = false;
     }
     else if (force_windowed)
     {
         config_emulator.fullscreen = false;
-        config_emulator.show_menu = true;
     }
 
     if (!sdl_init())
@@ -153,6 +164,7 @@ void application_mainloop(void)
         frame_time_start = SDL_GetPerformanceCounter();
         sdl_events();
         handle_mouse_cursor();
+        handle_menu();
         run_emulator();
         render();
         frame_time_end = SDL_GetPerformanceCounter();
@@ -167,15 +179,29 @@ void application_trigger_quit(void)
     SDL_PushEvent(&event);
 }
 
+#if defined(__APPLE__)
+
+static void on_enter_fullscreen()
+{
+    config_emulator.fullscreen = true;
+}
+
+static void on_exit_fullscreen()
+{
+    config_emulator.fullscreen = false;
+}
+
+#endif
+
 void application_trigger_fullscreen(bool fullscreen)
 {
+#if defined(__APPLE__)
+    macos_set_native_fullscreen(macos_nswindow, fullscreen);
+#else
     SDL_SetWindowFullscreen(application_sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
     log_sdl_error();
-
-    if (config_debug.debug)
-        config_emulator.show_menu = true;
-    else
-        config_emulator.show_menu = !fullscreen;
+#endif
+    mouse_last_motion_time = SDL_GetTicks();
 }
 
 void application_trigger_fit_to_content(int width, int height)
@@ -244,6 +270,17 @@ static bool sdl_init(void)
 
     SDL_GL_MakeCurrent(application_sdl_window, gl_context);
     log_sdl_error();
+
+#if defined(__APPLE__)
+    SDL_SysWMinfo info;
+    SDL_VERSION(&info.version);
+    if (SDL_GetWindowWMInfo(application_sdl_window, &info))
+    {
+        void* nswindow = info.info.cocoa.window;
+        macos_nswindow = nswindow;
+        macos_fullscreen_observer = macos_install_fullscreen_observer(nswindow, on_enter_fullscreen, on_exit_fullscreen);
+    }
+#endif
 
     SDL_GL_SetSwapInterval(0);
     log_sdl_error();
@@ -353,18 +390,31 @@ static void sdl_load_gamepad_mappings(void)
 
 static void handle_mouse_cursor(void)
 {
-    bool hide_cursor = false;
+    if (!config_debug.debug && config_emulator.fullscreen)
+    {
+        Uint32 now = SDL_GetTicks();
 
-    if (gui_main_window_hovered && !config_debug.debug)
-        hide_cursor = true;
-
-    if (!config_emulator.show_menu && !config_debug.debug)
-        hide_cursor = true;
-
-    if (hide_cursor)
+        if ((now - mouse_last_motion_time) < mouse_hide_timeout_ms)
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+        else
+            ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+    }
+    else if (!config_debug.debug && gui_main_window_hovered)
         ImGui::SetMouseCursor(ImGuiMouseCursor_None);
     else
         ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+}
+
+static void handle_menu(void)
+{
+    if (config_emulator.always_show_menu)
+        application_show_menu = true;
+    else if (config_debug.debug)
+        application_show_menu = true;
+    else if (config_emulator.fullscreen)
+        application_show_menu = config_emulator.always_show_menu;
+    else
+        application_show_menu = true;
 }
 
 static void sdl_events(void)
@@ -448,6 +498,12 @@ static void sdl_events_emu(const SDL_Event* event)
                 }
                 break;
             }
+        }
+        break;
+
+        case (SDL_MOUSEMOTION):
+        {
+            mouse_last_motion_time = SDL_GetTicks();
         }
         break;
 
@@ -615,6 +671,7 @@ static void sdl_events_emu(const SDL_Event* event)
 
             if (key == SDL_SCANCODE_ESCAPE)
             {
+                config_emulator.fullscreen = false;
                 application_trigger_fullscreen(false);
                 break;
             }

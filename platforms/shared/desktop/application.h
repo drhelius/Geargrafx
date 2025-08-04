@@ -36,6 +36,7 @@ EXTERN int application_updated_gamepad_mappings;
 EXTERN float application_display_scale;
 EXTERN SDL_version application_sdl_build_version;
 EXTERN SDL_version application_sdl_link_version;
+EXTERN bool application_show_menu;
 
 EXTERN int application_init(const char* rom_file, const char* symbol_file, bool force_fullscreen, bool force_windowed);
 EXTERN void application_destroy(void);
