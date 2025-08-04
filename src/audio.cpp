@@ -72,19 +72,23 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         int count_adpcm = m_adpcm->EndFrame(m_adpcm_buffer);
         int count_cdrom = m_cdrom_audio->EndFrame(m_cdrom_buffer);
 
+        assert(count_psg <= GG_AUDIO_BUFFER_SIZE);
+        assert(count_adpcm <= GG_AUDIO_BUFFER_SIZE);
+        assert(count_cdrom <= GG_AUDIO_BUFFER_SIZE);
+
         if (count_psg > GG_AUDIO_BUFFER_SIZE)
         {
-            Log("ERROR: Audio buffers exceeded maximum size");
+            Log("ERROR: PSG Audio buffer exceeded maximum size");
             count_psg = GG_AUDIO_BUFFER_SIZE;
         }
         if (count_adpcm > GG_AUDIO_BUFFER_SIZE)
         {
-            Log("ERROR: Audio buffers exceeded maximum size");
+            Log("ERROR: ADPCMM Audio buffer exceeded maximum size");
             count_adpcm = GG_AUDIO_BUFFER_SIZE;
         }
         if (count_cdrom > GG_AUDIO_BUFFER_SIZE)
         {
-            Log("ERROR: Audio buffers exceeded maximum size");
+            Log("ERROR: CDA Audio buffer exceeded maximum size");
             count_cdrom = GG_AUDIO_BUFFER_SIZE;
         }
 
@@ -119,14 +123,34 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
     }
     else
     {
-        int count_psg = m_psg->EndFrame(m_psg_buffer);
-        assert(count_psg <= GG_AUDIO_BUFFER_SIZE);
-        *sample_count = count_psg;
+        int samples = m_psg->EndFrame(m_psg_buffer);
+
+        assert(samples <= GG_AUDIO_BUFFER_SIZE);
+
+        if (samples > GG_AUDIO_BUFFER_SIZE)
+        {
+            Log("ERROR: Audio buffer exceeded maximum size");
+            samples = GG_AUDIO_BUFFER_SIZE;
+        }
+
+        *sample_count = samples;
 
         if (m_mute || (m_psg_volume <= 0.0f))
-            memset(sample_buffer, 0, sizeof(s16) * count_psg);
+            memset(sample_buffer, 0, sizeof(s16) * samples);
         else
-            memcpy(sample_buffer, m_psg_buffer, sizeof(s16) * count_psg);
+        {
+            for (int i = 0; i < samples; i++)
+            {
+                s32 mix = (s32)(m_psg_buffer[i] * m_psg_volume);
+
+                if (mix > 32767)
+                    mix = 32767;
+                else if (mix < -32768)
+                    mix = -32768;
+
+                sample_buffer[i] = (s16)mix;
+            }
+        }
     }
 }
 
