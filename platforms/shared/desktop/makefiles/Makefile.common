@@ -73,7 +73,7 @@ else ifeq ($(UNAME_S), Darwin)
     TARGET := $(TARGET_NAME)
 else
     PLATFORM = "Generic Unix-like/BSD"
-    LDFLAGS += -lGL `sdl2-config --libs` -lSDL2
+    LDFLAGS += -lGL `sdl2-config --libs`
     CXXFLAGS += -std=gnu++11
     CPPFLAGS += `sdl2-config --cflags`
     TARGET := $(TARGET_NAME)

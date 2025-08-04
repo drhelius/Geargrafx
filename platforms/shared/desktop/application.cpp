@@ -18,8 +18,6 @@
  */
 
 #include <SDL.h>
-#include <fstream>
-#include <string>
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
 #include "geargrafx.h"
@@ -128,13 +126,13 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
 
     if (IsValidPointer(rom_file) && (strlen(rom_file) > 0))
     {
-        Debug("Rom file argument: %s", rom_file);
+        Log("Rom file argument: %s", rom_file);
         gui_load_rom(rom_file);
     }
 
     if (IsValidPointer(symbol_file) && (strlen(symbol_file) > 0))
     {
-        Debug("Symbol file argument: %s", symbol_file);
+        Log("Symbol file argument: %s", symbol_file);
         gui_debug_reset_symbols();
         gui_debug_load_symbols_file(symbol_file);
     }
@@ -229,7 +227,7 @@ static bool sdl_init(void)
     SDL_SetHint(SDL_HINT_WINDOWS_DPI_SCALING, "1");
     log_sdl_error();
 #endif
-    
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
         log_sdl_error();
@@ -330,14 +328,18 @@ static void sdl_load_gamepad_mappings(void)
     char exe_path[1024] = { };
     get_executable_path(exe_path, sizeof(exe_path));
 
-    if (exe_path[0] != '\0') {
+    if (exe_path[0] != '\0')
+    {
         db_path = std::string(exe_path) + "/gamecontrollerdb.txt";
-    } else {
+    }
+    else
+    {
         db_path = "gamecontrollerdb.txt";
     }
 
     std::ifstream file(db_path);
-    if (!file.is_open()) {
+    if (!file.is_open())
+    {
         file.open("gamecontrollerdb.txt");
     }
 
@@ -471,7 +473,7 @@ static void sdl_events_emu(const SDL_Event* event)
 {
     switch(event->type)
     {
-         case (SDL_DROPFILE):
+        case (SDL_DROPFILE):
         {
             char* dropped_filedir = event->drop.file;
             gui_load_rom(dropped_filedir);
