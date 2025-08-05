@@ -30,7 +30,7 @@ INLINE bool CdRomMedia::IsReady()
     }
     else
     {
-        Log("ERROR: CdRomMedia::IsReady failed - Current image is NULL");
+        Error("CdRomMedia::IsReady failed - Current image is NULL");
         return false;
     }
 }
@@ -43,7 +43,7 @@ INLINE u32 CdRomMedia::GetCRC()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetCRC failed - Current image is NULL");
+        Error("CdRomMedia::GetCRC failed - Current image is NULL");
         return 0;
     }
 }
@@ -56,7 +56,7 @@ INLINE const char* CdRomMedia::GetFilePath()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetFilePath failed - Current image is NULL");
+        Error("CdRomMedia::GetFilePath failed - Current image is NULL");
         return "";
     }
 }
@@ -69,7 +69,7 @@ INLINE const char* CdRomMedia::GetFileDirectory()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetFileDirectory failed - Current image is NULL");
+        Error("CdRomMedia::GetFileDirectory failed - Current image is NULL");
         return "";
     }
 }
@@ -82,7 +82,7 @@ INLINE const char* CdRomMedia::GetFileName()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetFileName failed - Current image is NULL");
+        Error("CdRomMedia::GetFileName failed - Current image is NULL");
         return "";
     }
 }
@@ -95,7 +95,7 @@ INLINE const char* CdRomMedia::GetFileExtension()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetFileExtension failed - Current image is NULL");
+        Error("CdRomMedia::GetFileExtension failed - Current image is NULL");
         return "";
     }
 }
@@ -108,7 +108,7 @@ INLINE const std::vector<CdRomImage::Track>& CdRomMedia::GetTracks()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetTracks failed - Current image is NULL");
+        Error("CdRomMedia::GetTracks failed - Current image is NULL");
         static std::vector<CdRomImage::Track> empty_tracks;
         return empty_tracks;
     }
@@ -122,7 +122,7 @@ INLINE u8 CdRomMedia::GetTrackCount()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetTrackCount failed - Current image is NULL");
+        Error("CdRomMedia::GetTrackCount failed - Current image is NULL");
         return 0;
     }
 }
@@ -135,13 +135,13 @@ INLINE GG_CdRomTrackType CdRomMedia::GetTrackType(u8 track_number)
             return m_current_image->GetTOC()->tracks[track_number].type;
         else
         {
-            Log("ERROR: CdRomMedia::GetTrackType failed - Track number %d out of bounds", track_number);
+            Error("CdRomMedia::GetTrackType failed - Track number %d out of bounds", track_number);
             return GG_CDROM_AUDIO_TRACK;
         }
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetTrackType failed - Current image is NULL");
+        Error("CdRomMedia::GetTrackType failed - Current image is NULL");
         return GG_CDROM_AUDIO_TRACK;
     }
 }
@@ -154,7 +154,7 @@ INLINE GG_CdRomMSF CdRomMedia::GetCdRomLength()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetCdRomLength failed - Current image is NULL");
+        Error("CdRomMedia::GetCdRomLength failed - Current image is NULL");
         return { 0, 0, 0 };
     }
 }
@@ -167,7 +167,7 @@ INLINE u32 CdRomMedia::GetSectorCount()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetSectorCount failed - Current image is NULL");
+        Error("CdRomMedia::GetSectorCount failed - Current image is NULL");
         return 0;
     }
 }
@@ -180,7 +180,7 @@ INLINE u32 CdRomMedia::GetCurrentSector()
     }
     else
     {
-        Log("ERROR: CdRomMedia::GetCurrentSector failed - Current image is NULL");
+        Error("CdRomMedia::GetCurrentSector failed - Current image is NULL");
         return 0;
     }
 }

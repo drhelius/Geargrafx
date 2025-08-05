@@ -93,31 +93,31 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
 
     if (!sdl_init())
     {
-        Log("ERROR: Failed to initialize SDL");
+        Error("Failed to initialize SDL");
         return 1;
     }
 
     if (!emu_init())
     {
-        Log("ERROR: Failed to initialize emulator");
+        Error("Failed to initialize emulator");
         return 2;
     }
 
     if (!gui_init())
     {
-        Log("ERROR: Failed to initialize GUI");
+        Error("Failed to initialize GUI");
         return 3;
     }
 
     if (!ImGui_ImplSDL2_InitForOpenGL(application_sdl_window, gl_context))
     {
-        Log("ERROR: Failed to initialize ImGui for SDL2");
+        Error("Failed to initialize ImGui for SDL2");
         return 4;
     }
 
     if (!renderer_init())
     {
-        Log("ERROR: Failed to initialize renderer");
+        Error("Failed to initialize renderer");
         return 5;
     }
 
@@ -374,7 +374,7 @@ static void sdl_load_gamepad_mappings(void)
                 updated_mappings++;
             else if (result == -1)
             {
-                Log("ERROR: Unable to load game controller mapping in line %d from gamecontrollerdb.txt", line_number);
+                Error("Unable to load game controller mapping in line %d from gamecontrollerdb.txt", line_number);
                 SDL_ERROR("SDL_GameControllerAddMapping");
             }
             line_number++;
@@ -383,7 +383,7 @@ static void sdl_load_gamepad_mappings(void)
     }
     else
     {
-        Log("ERROR: Game controller database not found (gamecontrollerdb.txt)!!");
+        Error("Game controller database not found (gamecontrollerdb.txt)!!");
         return;
     }
     Log("Added %d new game controller mappings from gamecontrollerdb.txt", added_mappings);

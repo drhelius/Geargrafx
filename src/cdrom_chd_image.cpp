@@ -60,7 +60,7 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
 
     if (!IsValidPointer(path))
     {
-        Log("ERROR: Invalid path %s", path);
+        Error("Invalid path %s", path);
         m_ready = false;
         return m_ready;
     }
@@ -70,7 +70,7 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
 
     if (strcmp(m_file_extension, "chd") != 0)
     {
-        Log("ERROR: Invalid file extension %s. Expected .chd", m_file_extension);
+        Error("Invalid file extension %s. Expected .chd", m_file_extension);
         m_ready = false;
         return m_ready;
     }
@@ -92,13 +92,13 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
 
             if (m_hunk_bytes == 0 || m_hunk_count == 0)
             {
-                Log("ERROR: Invalid CHD header - hunk size or count is zero");
+                Error("Invalid CHD header - hunk size or count is zero");
                 chd_close(m_chd_file);
                 m_ready = false;
             }
             else if (m_hunk_bytes % (2352 + 96) != 0)
             {
-                Log("ERROR: Invalid CHD hunk size %d, must be a multiple of 2448 (2352 + 96)", m_hunk_bytes);
+                Error("Invalid CHD hunk size %d, must be a multiple of 2448 (2352 + 96)", m_hunk_bytes);
                 chd_close(m_chd_file);
                 m_ready = false;
             }
@@ -115,15 +115,15 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
         }
         else
         {
-            Log("ERROR: Failed to get CHD header for %s", path);
+            Error("Failed to get CHD header for %s", path);
             chd_close(m_chd_file);
             m_ready = false;
         }
     }
     else
     {
-        Log("ERROR: Unable to open CHD file %s.", path);
-        Log("CHD ERROR: %d, %s", err, chd_error_string(err));
+        Error("Unable to open CHD file %s.", path);
+        Error("CHD: %d, %s", err, chd_error_string(err));
         chd_close(m_chd_file);
         m_ready = false;
     }
@@ -138,7 +138,7 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
 {
     if (!m_ready || buffer == NULL)
     {
-        Debug("ERROR: ReadSector failed - Media not ready or buffer is NULL");
+        Error("ReadSector failed - Media not ready or buffer is NULL");
         return false;
     }
 
@@ -178,7 +178,7 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
         }
     }
 
-    Debug("ERROR: ReadSector failed - LBA %d not found in any track", lba);
+    Error("ReadSector failed - LBA %d not found in any track", lba);
 
     return false;
 }
@@ -187,13 +187,13 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 {
     if (!m_ready || buffer == NULL)
     {
-        Debug("ERROR: ReadBytes failed - Media not ready or buffer is NULL");
+        Error("ReadBytes failed - Media not ready or buffer is NULL");
         return false;
     }
 
     if (lba >= m_toc.sector_count)
     {
-        Debug("ERROR: ReadBytes failed - LBA %d out of bounds (max: %d)", lba, m_toc.sector_count - 1);
+        Error("ReadBytes failed - LBA %d out of bounds (max: %d)", lba, m_toc.sector_count - 1);
         return false;
     }
 
@@ -232,7 +232,7 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
         }
     }
 
-    Debug("ERROR: ReadBytes failed - LBA %d not found in any track", lba);
+    Error("ReadBytes failed - LBA %d not found in any track", lba);
 
     return false;
 }
@@ -241,13 +241,13 @@ bool CdRomChdImage::PreloadDisc()
 {
     if (!m_ready)
     {
-        Debug("ERROR: PreloadDisc failed - Media not ready");
+        Error("PreloadDisc failed - Media not ready");
         return false;
     }
 
     if (m_hunk_cache == NULL)
     {
-        Log("ERROR: PreloadDisc failed - Hunk cache not initialized");
+        Error("PreloadDisc failed - Hunk cache not initialized");
         return false;
     }
 
@@ -256,7 +256,7 @@ bool CdRomChdImage::PreloadDisc()
 
     if (err != CHDERR_NONE)
     {
-        Log("ERROR: PreloadDisc failed - chd_precache returned error %d, %s", err, chd_error_string(err));
+        Error("PreloadDisc failed - chd_precache returned error %d, %s", err, chd_error_string(err));
         return false;
     }
 
@@ -267,7 +267,7 @@ bool CdRomChdImage::PreloadTrack(u32 track_number)
 {
     if (track_number >= m_toc.tracks.size())
     {
-        Log("ERROR: PreloadTrack failed - Invalid track number %d", track_number);
+        Error("PreloadTrack failed - Invalid track number %d", track_number);
         return false;
     }
 
@@ -284,7 +284,7 @@ bool CdRomChdImage::PreloadTrack(u32 track_number)
     {
         if (!LoadHunk(hunk))
         {
-            Log("ERROR: PreloadTrack failed - Unable to load hunk %u", hunk);
+            Error("PreloadTrack failed - Unable to load hunk %u", hunk);
             return false;
         }
     }
@@ -313,7 +313,7 @@ bool CdRomChdImage::ReadTOC()
         {
             if (sscanf(metadata, CDROM_TRACK_METADATA2_FORMAT, &track, type, subtype, &frames, &pregap, pgtype, pgsub, &postgap) != 8)
             {
-                Log("ERROR: Failed to parse CDROM_TRACK_METADATA2_FORMAT for track %d", i + 1);
+                Error("Failed to parse CDROM_TRACK_METADATA2_FORMAT for track %d", i + 1);
                 return false;
             }
             track_exists = true;
@@ -325,7 +325,7 @@ bool CdRomChdImage::ReadTOC()
             {
                 if (sscanf(metadata, CDROM_TRACK_METADATA_FORMAT, &track, type, subtype, &frames) != 4)
                 {
-                    Log("ERROR: Failed to parse CDROM_TRACK_METADATA_FORMAT for track %d", i + 1);
+                    Error("Failed to parse CDROM_TRACK_METADATA_FORMAT for track %d", i + 1);
                     return false;
                 }
                 track_exists = true;
@@ -456,7 +456,7 @@ void CdRomChdImage::CalculateCRC()
     {
         if (!ReadSector(sec + first_data_track->start_lba, buffer))
         {
-            Log("ERROR: CRC ReadSector failed for LBA %u", sec + first_data_track->start_lba);
+            Error("CRC ReadSector failed for LBA %u", sec + first_data_track->start_lba);
             SafeDeleteArray(buffer);
             return;
         }
@@ -498,7 +498,7 @@ bool CdRomChdImage::LoadHunk(u32 hunk_index)
 {
     if (hunk_index >= m_hunk_count)
     {
-        Log("ERROR: LoadHunk failed - hunk index %u out of bounds (max: %u)", hunk_index, m_hunk_count - 1);
+        Error("LoadHunk failed - hunk index %u out of bounds (max: %u)", hunk_index, m_hunk_count - 1);
         return false;
     }
 
@@ -512,7 +512,7 @@ bool CdRomChdImage::LoadHunk(u32 hunk_index)
 
         if (err != CHDERR_NONE)
         {
-            Log("ERROR: CHD read hunk %u failed: %d, %s", hunk_index, err, chd_error_string(err));
+            Error("CHD read hunk %u failed: %d, %s", hunk_index, err, chd_error_string(err));
             return false;
         }
     }

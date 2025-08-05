@@ -62,7 +62,7 @@ bool gui_init(void)
 
     if (NFD_Init() != NFD_OKAY)
     {
-        Log("NFD Error: %s", NFD_GetError());
+        Error("NFD Error: %s", NFD_GetError());
         return false;
     }
 

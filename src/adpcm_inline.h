@@ -351,7 +351,7 @@ INLINE void Adpcm::UpdateAudio(u32 cycles)
 
         if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
         {
-            Log("ERROR: ADPCM buffer overflow");
+            Error("ADPCM buffer overflow");
             m_buffer_index = 0;
         }
     }

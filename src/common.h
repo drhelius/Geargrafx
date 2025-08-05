@@ -219,7 +219,7 @@ inline bool extract_zip_to_folder(const char* zip_path, const char* out_folder)
 
     if (!status)
     {
-        Log("ERROR: mz_zip_reader_init_file() failed!");
+        Error("mz_zip_reader_init_file() failed!");
         return false;
     }
 
@@ -227,7 +227,7 @@ inline bool extract_zip_to_folder(const char* zip_path, const char* out_folder)
 
     if (!create_directory_if_not_exists(out_dir.c_str()))
     {
-        Log("ERROR: Failed to create directory %s", out_dir.c_str());
+        Error("Failed to create directory %s", out_dir.c_str());
         mz_zip_reader_end(&zip_archive);
         return false;
     }
@@ -239,7 +239,7 @@ inline bool extract_zip_to_folder(const char* zip_path, const char* out_folder)
         mz_zip_archive_file_stat file_stat;
         if (!mz_zip_reader_file_stat(&zip_archive, i, &file_stat))
         {
-            Log("ERROR: mz_zip_reader_file_stat failed for file %d", i);
+            Error("mz_zip_reader_file_stat failed for file %d", i);
             continue;
         }
 
@@ -250,7 +250,7 @@ inline bool extract_zip_to_folder(const char* zip_path, const char* out_folder)
 
         if (!mz_zip_reader_extract_to_file(&zip_archive, i, out_path.c_str(), 0))
         {
-            Log("ERROR: Failed to extract %s", out_path.c_str());
+            Error("Failed to extract %s", out_path.c_str());
         }
         else
         {

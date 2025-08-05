@@ -382,7 +382,7 @@ void HuC6280PSG::Sync()
 
             if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
             {
-                Log("ERROR: PSG buffer overflow");
+                Error("PSG buffer overflow");
                 m_buffer_index = 0;
             }
         }

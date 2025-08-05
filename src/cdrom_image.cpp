@@ -64,7 +64,7 @@ u32 CdRomImage::GetFirstSectorOfTrack(u8 track)
         return m_toc.tracks[track - 1].end_lba;
     }
 
-    Debug("ERROR: GetFirstSectorOfTrack failed - Track number %d out of bounds (max: %d)", track, m_toc.tracks.size());
+    Error("GetFirstSectorOfTrack failed - Track number %d out of bounds (max: %d)", track, m_toc.tracks.size());
     return 0;
 }
 
@@ -75,7 +75,7 @@ u32 CdRomImage::GetLastSectorOfTrack(u8 track)
         return m_toc.tracks[track].end_lba;
     }
 
-    Log("ERROR: GetLastSectorOfTrack failed - Track number %d out of bounds (max: %d)", track, m_toc.tracks.size());
+    Error("GetLastSectorOfTrack failed - Track number %d out of bounds (max: %d)", track, m_toc.tracks.size());
     return 0;
 }
 
@@ -83,7 +83,7 @@ s32 CdRomImage::GetTrackFromLBA(u32 lba)
 {
     if (lba >= m_toc.sector_count)
     {
-        Debug("ERROR: GetTrackNumber failed - LBA %d out of bounds (max: %d)", lba, m_toc.sector_count - 1);
+        Error("GetTrackNumber failed - LBA %d out of bounds (max: %d)", lba, m_toc.sector_count - 1);
         return -1;
     }
 
@@ -97,7 +97,7 @@ s32 CdRomImage::GetTrackFromLBA(u32 lba)
         }
     }
 
-    Debug("ERROR: GetTrackNumber failed - LBA %d not found in any track", lba);
+    Error("GetTrackNumber failed - LBA %d not found in any track", lba);
     return -1;
 }
 

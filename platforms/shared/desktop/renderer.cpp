@@ -68,7 +68,7 @@ bool renderer_init(void)
 
     if (version == 0)
     {
-        Log("GLAD ERROR: Failed to initialize OpenGL context");
+        Error("GLAD: Failed to initialize OpenGL context");
         return false;
     }
 

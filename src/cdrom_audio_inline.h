@@ -59,7 +59,7 @@ INLINE void CdRomAudio::Clock(u32 cycles)
 
         if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
         {
-            Log("ERROR: CD AUDIO buffer overflow");
+            Error("CD AUDIO buffer overflow");
             m_buffer_index = 0;
         }
     }
@@ -117,7 +117,7 @@ INLINE void CdRomAudio::SetStopLBA(u32 lba, CdAudioStopEvent event)
 {
     if (lba >= m_cdrom_media->GetSectorCount())
     {
-        Debug("ERROR: Invalid stop LBA %d", lba);
+        Error("Invalid stop LBA %d", lba);
         lba = m_cdrom_media->GetSectorCount() - 1;
     }
 
@@ -164,7 +164,7 @@ INLINE void CdRomAudio::GenerateSamples()
                     m_scsi_controller->StartStatus(ScsiController::SCSI_STATUS_GOOD);
                     break;
                 default:
-                    Log("ERROR: Unknown CD audio stop event");
+                    Error("Unknown CD audio stop event");
                     break;
             }
         }

@@ -102,7 +102,7 @@ void Media::SetTempPath(const char* path)
     }
     else
     {
-        Log("ERROR: Invalid temp path %s", path);
+        Error("Invalid temp path %s", path);
     }
 }
 
@@ -158,7 +158,7 @@ bool Media::LoadMedia(const char* path)
 
                 if (i == size - 1)
                 {
-                    Log("ERROR: File %s is empty!", path);
+                    Error("File %s is empty!", path);
                     is_empty = true;
                     m_ready = false;
                 }
@@ -174,7 +174,7 @@ bool Media::LoadMedia(const char* path)
         }
         else
         {
-            Log("ERROR: There was a problem loading the file %s...", path);
+            Error("There was a problem loading the file %s...", path);
             m_ready = false;
         }
     }
@@ -192,7 +192,7 @@ bool Media::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
 
     if (!IsValidPointer(buffer) || size <= 0)
     {
-        Log("ERROR: Unable to load HuCard from buffer: Buffer invalid %p. Size: %d", buffer, size);
+        Error("Unable to load HuCard from buffer: Buffer invalid %p. Size: %d", buffer, size);
         return false;
     }
 
@@ -209,7 +209,7 @@ bool Media::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
     assert((size % 0x2000) == 0);
     if ((size % 0x2000) != 0)
     {
-        Log("ERROR: Invalid size found: %d (0x%X) bytes", size, size);
+        Error("Invalid size found: %d (0x%X) bytes", size, size);
     }
 
     m_rom_size = size;
@@ -316,7 +316,7 @@ bool Media::LoadMediaFromZipFile(const char* path)
 
     if (!status)
     {
-        Log("ERROR: mz_zip_reader_init_mem() failed!");
+        Error("mz_zip_reader_init_mem() failed!");
         return false;
     }
 
@@ -325,7 +325,7 @@ bool Media::LoadMediaFromZipFile(const char* path)
         mz_zip_archive_file_stat file_stat;
         if (!mz_zip_reader_file_stat(&zip_archive, i, &file_stat))
         {
-            Log("ERROR: mz_zip_reader_file_stat() failed!");
+            Error("mz_zip_reader_file_stat() failed!");
             mz_zip_reader_end(&zip_archive);
             return false;
         }
@@ -344,7 +344,7 @@ bool Media::LoadMediaFromZipFile(const char* path)
             p = mz_zip_reader_extract_file_to_heap(&zip_archive, file_stat.m_filename, &uncomp_size, 0);
             if (!p)
             {
-                Log("ERROR: mz_zip_reader_extract_file_to_heap() failed!");
+                Error("mz_zip_reader_extract_file_to_heap() failed!");
                 mz_zip_reader_end(&zip_archive);
                 return false;
             }
@@ -385,13 +385,13 @@ bool Media::LoadMediaFromZipFile(const char* path)
             }
             else
             {
-                Log("ERROR: Failed to extract ZIP file %s to %s", path, temppath.c_str());
+                Error("Failed to extract ZIP file %s to %s", path, temppath.c_str());
                 return false;
             }
         }
     }
 
-    Log("ERROR: No valid ROM or CUE file found in ZIP archive %s", path);
+    Error("No valid ROM or CUE file found in ZIP archive %s", path);
 
     return false;
 }
@@ -703,7 +703,7 @@ bool Media::IsValidFile(const char* path)
 
     if (!IsValidPointer(path))
     {
-        Log("ERROR: Invalid path %s", path);
+        Error("Invalid path %s", path);
         return false;
     }
 
@@ -715,14 +715,14 @@ bool Media::IsValidFile(const char* path)
 
         if (size <= 0)
         {
-            Log("ERROR: Unable to open file %s. Size: %d", path, size);
+            Error("Unable to open file %s. Size: %d", path, size);
             file.close();
             return false;
         }
 
         if (file.bad() || file.fail() || !file.good() || file.eof())
         {
-            Log("ERROR: Unable to open file %s. Bad file!", path);
+            Error("Unable to open file %s. Bad file!", path);
             file.close();
             return false;
         }
@@ -732,7 +732,7 @@ bool Media::IsValidFile(const char* path)
     }
     else
     {
-        Log("ERROR: Unable to open file %s", path);
+        Error("Unable to open file %s", path);
         return false;
     }
 }

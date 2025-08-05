@@ -53,7 +53,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
 
     if (!IsValidPointer(path))
     {
-        Log("ERROR: Invalid path %s", path);
+        Error("Invalid path %s", path);
         m_ready = false;
         return m_ready;
     }
@@ -63,7 +63,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
 
     if (strcmp(m_file_extension, "cue") != 0)
     {
-        Log("ERROR: Invalid file extension %s. Expected .cue", m_file_extension);
+        Error("Invalid file extension %s. Expected .cue", m_file_extension);
         m_ready = false;
         return m_ready;
     }
@@ -76,7 +76,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
 
         if (size <= 0)
         {
-            Log("ERROR: Unable to open file %s. Size: %d", path, size);
+            Error("Unable to open file %s. Size: %d", path, size);
             file.close();
             m_ready = false;
             return m_ready;
@@ -84,7 +84,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
 
         if (file.bad() || file.fail() || !file.good() || file.eof())
         {
-            Log("ERROR: Unable to open file %s. Bad file!", path);
+            Error("Unable to open file %s. Bad file!", path);
             file.close();
             m_ready = false;
             return m_ready;
@@ -103,7 +103,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
 
             if (i == size - 1)
             {
-                Log("ERROR: File %s is empty!", path);
+                Error("File %s is empty!", path);
                 SafeDeleteArray(buffer);
                 m_ready = false;
                 return m_ready;
@@ -121,7 +121,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
     }
     else
     {
-        Log("ERROR: There was a problem loading the file %s...", path);
+        Error("There was a problem loading the file %s...", path);
         m_ready = false;
     }
 
@@ -135,7 +135,7 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
 {
     if (!m_ready || buffer == NULL)
     {
-        Debug("ERROR: ReadSector failed - Media not ready or buffer is NULL");
+        Error("ReadSector failed - Media not ready or buffer is NULL");
         return false;
     }
 
@@ -156,7 +156,7 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
 
             if (img_file == NULL || img_file->file_size == 0)
             {
-                Debug("ERROR: ReadSector failed - ImgFile is NULL or file size is 0");
+                Error("ReadSector failed - ImgFile is NULL or file size is 0");
                 return false;
             }
 
@@ -170,7 +170,7 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
 
             if (byte_offset + sector_size > img_file->file_size)
             {
-                Debug("ERROR: ReadSector failed - Byte offset %llu + sector size %d exceeds file size %d",
+                Error("ReadSector failed - Byte offset %llu + sector size %d exceeds file size %d",
                     byte_offset, sector_size, img_file->file_size);
                 return false;
             }
@@ -185,7 +185,7 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
         }
     }
 
-    Debug("ERROR: ReadSector failed - LBA %d not found in any track", lba);
+    Error("ReadSector failed - LBA %d not found in any track", lba);
 
     return false;
 }
@@ -194,13 +194,13 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 {
     if (!m_ready || buffer == NULL)
     {
-        Debug("ERROR: ReadBytes failed - Media not ready or buffer is NULL");
+        Error("ReadBytes failed - Media not ready or buffer is NULL");
         return false;
     }
 
     if (lba >= m_toc.sector_count)
     {
-        Debug("ERROR: ReadBytes failed - LBA %d out of bounds (max: %d)", lba, m_toc.sector_count - 1);
+        Error("ReadBytes failed - LBA %d out of bounds (max: %d)", lba, m_toc.sector_count - 1);
         return false;
     }
 
@@ -221,7 +221,7 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 
             if (img_file == NULL || img_file->file_size == 0)
             {
-                Debug("ERROR: ReadBytes failed - ImgFile is NULL or file size is 0");
+                Error("ReadBytes failed - ImgFile is NULL or file size is 0");
                 return false;
             }
 
@@ -230,7 +230,7 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 
             if (byte_offset + size > img_file->file_size)
             {
-                Debug("ERROR: ReadBytes failed - Byte offset %llu + size %d exceeds file size %d",
+                Error("ReadBytes failed - Byte offset %llu + size %d exceeds file size %d",
                     byte_offset, size, img_file->file_size);
                 return false;
             }
@@ -241,7 +241,7 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
         }
     }
 
-    Debug("ERROR: ReadBytes failed - LBA %d not found in any track", lba);
+    Error("ReadBytes failed - LBA %d not found in any track", lba);
 
     return false;
 }
@@ -254,7 +254,7 @@ bool CdRomCueBinImage::PreloadDisc()
 
     if (files_count == 0)
     {
-        Log("ERROR: No image files found to preload");
+        Error("No image files found to preload");
         return false;
     }
 
@@ -264,13 +264,13 @@ bool CdRomCueBinImage::PreloadDisc()
 
         if (!IsValidPointer(img_file))
         {
-            Log("ERROR: Invalid ImgFile pointer at index %u when preloading", i);
+            Error("Invalid ImgFile pointer at index %u when preloading", i);
             return false;
         }
 
         if (!PreloadChunks(img_file, 0, img_file->chunk_count))
         {
-            Log("ERROR: Failed to preload chunks for ImgFile %s", img_file->file_path);
+            Error("Failed to preload chunks for ImgFile %s", img_file->file_path);
             return false;
         }
     }
@@ -282,7 +282,7 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
 {
     if (track_number >= m_toc.tracks.size())
     {
-        Log("ERROR: PreloadTrackChunks failed - Track number %d out of bounds (max: %d)", track_number, m_toc.tracks.size() - 1);
+        Error("PreloadTrackChunks failed - Track number %d out of bounds (max: %d)", track_number, m_toc.tracks.size() - 1);
         return false;
     }
 
@@ -359,13 +359,13 @@ bool CdRomCueBinImage::GatherImgInfo(ImgFile* img_file)
 {
     if (!IsValidPointer(img_file))
     {
-        Log("ERROR: Invalid ImgFile pointer");
+        Error("Invalid ImgFile pointer");
         return false;
     }
 
     if (!IsValidPointer(img_file->file_path))
     {
-        Log("ERROR: Invalid file path in ImgFile");
+        Error("Invalid file path in ImgFile");
         return false;
     }
 
@@ -396,14 +396,14 @@ bool CdRomCueBinImage::ValidateFile(const char* file_path)
 
         if (size <= 0)
         {
-            Log("ERROR: Unable to open file %s. Size: %d", file_path, size);
+            Error("Unable to open file %s. Size: %d", file_path, size);
             file.close();
             return false;
         }
 
         if (file.bad() || file.fail() || !file.good() || file.eof())
         {
-            Log("ERROR: Unable to open file %s. Bad file!", file_path);
+            Error("Unable to open file %s. Bad file!", file_path);
             file.close();
             return false;
         }
@@ -412,7 +412,7 @@ bool CdRomCueBinImage::ValidateFile(const char* file_path)
         return true;
     }
 
-    Log("ERROR: Unable to open file %s", file_path);
+    Error("Unable to open file %s", file_path);
     return false;
 }
 
@@ -451,14 +451,14 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
 
     if (file.gcount() != 44)
     {
-        Log("ERROR: Failed to read WAV header from %s", img_file->file_path);
+        Error("Failed to read WAV header from %s", img_file->file_path);
         file.close();
         return false;
     }
 
     if (strncmp(header, "RIFF", 4) != 0 || strncmp(header + 8, "WAVE", 4) != 0)
     {
-        Log("ERROR: Invalid WAV format in %s", img_file->file_path);
+        Error("Invalid WAV format in %s", img_file->file_path);
         file.close();
         return false;
     }
@@ -469,7 +469,7 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
 
     if (sample_rate != 44100 || bits_per_sample != 16 || channels != 2)
     {
-        Log("ERROR: WAV file %s has incorrect format. Required: 44100Hz, 16-bit, stereo. Found: %dHz, %d-bit, %d channel(s)", img_file->file_path, sample_rate, bits_per_sample, channels);
+        Error("WAV file %s has incorrect format. Required: 44100Hz, 16-bit, stereo. Found: %dHz, %d-bit, %d channel(s)", img_file->file_path, sample_rate, bits_per_sample, channels);
         file.close();
         return false;
     }
@@ -515,7 +515,7 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, std::ifstream& file)
     
     if (!found_data)
     {
-        Log("ERROR: Failed to find 'data' chunk in WAV file %s", img_file->file_path);
+        Error("Failed to find 'data' chunk in WAV file %s", img_file->file_path);
         return false;
     }
     
@@ -572,7 +572,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
 
     if (!IsValidPointer(cue_content))
     {
-        Log("ERROR: Invalid CUE content pointer");
+        Error("Invalid CUE content pointer");
         return false;
     }
 
@@ -619,7 +619,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
 
                 if (current_file_path.empty())
                 {
-                    Log("ERROR: Invalid FILE format in CUE: %s", line.c_str());
+                    Error("Invalid FILE format in CUE: %s", line.c_str());
                     return false;
                 }
 
@@ -642,7 +642,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
 
             if (!GatherImgInfo(img_file))
             {
-                Log("ERROR: Failed to gather ImgFile info for %s", current_file_path.c_str());
+                Error("Failed to gather ImgFile info for %s", current_file_path.c_str());
                 SafeDelete(img_file);
                 return false;
             }
@@ -665,7 +665,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
 
             if (parsed_files.empty())
             {
-                Log("ERROR: TRACK found without FILE in CUE");
+                Error("TRACK found without FILE in CUE");
                 return false;
             }
 
@@ -693,7 +693,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
             }
             else if (type_str.find("mode2/") != string::npos)
             {
-                Log("ERROR: Unsupported track type MODE2: %s", type_str.c_str());
+                Error("Unsupported track type MODE2: %s", type_str.c_str());
                 return false;
             }
             else
@@ -711,7 +711,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
                 colon1 != ':' || colon2 != ':' ||
                 m < 0 || s < 0 || f < 0 || s >= 60 || f >= 75 || m > 99)
             {
-                Log("ERROR: Invalid time format in PREGAP entry");
+                Error("Invalid time format in PREGAP entry");
                 continue;
             }
 
@@ -728,7 +728,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
         {
             if (!in_track)
             {
-                Log("ERROR: INDEX found outside of TRACK in CUE file");
+                Error("INDEX found outside of TRACK in CUE file");
                 return false;
             }
 
@@ -743,7 +743,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
                 colon1 != ':' || colon2 != ':' ||
                 m < 0 || s < 0 || f < 0 || s >= 60 || f >= 75 || m > 99)
             {
-                Log("ERROR: Invalid time format in INDEX entry");
+                Error("Invalid time format in INDEX entry");
                 continue;
             }
 
@@ -771,7 +771,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
 
     if (parsed_files.empty())
     {
-        Log("ERROR: No valid files found in CUE file");
+        Error("No valid files found in CUE file");
         return false;
     }
 
@@ -781,13 +781,13 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
 
         if (f.tracks.empty())
         {
-            Log("ERROR: No tracks found for file %s", f.img_file->file_path);
+            Error("No tracks found for file %s", f.img_file->file_path);
             continue;
         }
 
         if (!IsValidPointer(f.img_file))
         {
-            Log("ERROR: Invalid ImgFile pointer for file %s", f.img_file->file_path);
+            Error("Invalid ImgFile pointer for file %s", f.img_file->file_path);
             continue;
         }
 
@@ -895,13 +895,13 @@ bool CdRomCueBinImage::ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer
 {
     if (!IsValidPointer(img_file) || !IsValidPointer(buffer))
     {
-        Debug("ERROR: ReadFromImgFile failed - Invalid ImgFile pointer or buffer");
+        Error("ReadFromImgFile failed - Invalid ImgFile pointer or buffer");
         return false;
     }
 
     if (offset + size > img_file->file_size)
     {
-        Debug("ERROR: ReadFromImgFile failed - Offset %llu + size %d exceeds file size %d",
+        Error("ReadFromImgFile failed - Offset %llu + size %d exceeds file size %d",
             offset, size, img_file->file_size);
         return false;
     }
@@ -914,7 +914,7 @@ bool CdRomCueBinImage::ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer
     {
         if (!LoadChunk(img_file, chunk_index))
         {
-            Debug("ERROR: Failed to load chunk %d", chunk_index);
+            Error("Failed to load chunk %d", chunk_index);
             return false;
         }
     }
@@ -935,7 +935,7 @@ bool CdRomCueBinImage::ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer
         {
             if (!LoadChunk(img_file, chunk_index + 1))
             {
-                Debug("ERROR: Failed to load chunk %d", chunk_index + 1);
+                Error("Failed to load chunk %d", chunk_index + 1);
                 return false;
             }
         }
@@ -953,7 +953,7 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
     if (!IsValidPointer(img_file))
     {
-        Log("ERROR: Cannot load chunk - Invalid ImgFile pointer");
+        Error("Cannot load chunk - Invalid ImgFile pointer");
         return false;
     }
 
@@ -963,7 +963,7 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
         if (!file.is_open())
         {
-            Log("ERROR: Cannot load chunk - Unable to open file %s", img_file->file_path);
+            Error("Cannot load chunk - Unable to open file %s", img_file->file_path);
             return false;
         }
 
@@ -972,7 +972,7 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
         if (file.fail())
         {
-            Log("ERROR: Cannot load chunk - Failed to seek to offset %llu in file %s", file_offset, img_file->file_path);
+            Error("Cannot load chunk - Failed to seek to offset %llu in file %s", file_offset, img_file->file_path);
             return false;
         }
 
@@ -985,7 +985,7 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
         if (file.gcount() != to_read)
         {
-            Debug("ERROR: Failed to read chunk %d from %s. Read %d bytes, expected %d bytes",
+            Error("Failed to read chunk %d from %s. Read %d bytes, expected %d bytes",
                 chunk_index, img_file->file_path, file.gcount(), to_read);
             file.close();
             return false;
@@ -1001,13 +1001,13 @@ bool CdRomCueBinImage::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 cou
 {
     if (!IsValidPointer(img_file))
     {
-        Log("ERROR: Cannot preload chunks - Invalid ImgFile pointer");
+        Error("Cannot preload chunks - Invalid ImgFile pointer");
         return false;
     }
 
     if (start_chunk >= img_file->chunk_count)
     {
-        Log("ERROR: Cannot preload chunks - Start chunk index %d out of bounds (max: %d)",
+        Error("Cannot preload chunks - Start chunk index %d out of bounds (max: %d)",
             start_chunk, img_file->chunk_count - 1);
         return false;
     }
@@ -1026,7 +1026,7 @@ bool CdRomCueBinImage::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 cou
         {
             if (!LoadChunk(img_file, i))
             {
-                Log("ERROR: Failed to preload chunk %d", i);
+                Error("Failed to preload chunk %d", i);
                 return false;
             }
         }
@@ -1079,7 +1079,7 @@ void CdRomCueBinImage::CalculateCRC()
 
     if (!IsValidPointer(img_file))
     {
-        Log("ERROR: Invalid ImgFile pointer for first data track");
+        Error("Invalid ImgFile pointer for first data track");
         SafeDeleteArray(buffer);
         return;
     }
@@ -1087,7 +1087,7 @@ void CdRomCueBinImage::CalculateCRC()
     ifstream file(img_file->file_path, ios::in | ios::binary);
     if (!file.is_open())
     {
-        Log("ERROR: Failed to open file %s for CRC calculation",
+        Error("Failed to open file %s for CRC calculation",
             img_file->file_path);
         SafeDeleteArray(buffer);
         return;
@@ -1110,7 +1110,7 @@ void CdRomCueBinImage::CalculateCRC()
         file.seekg(file_offset, ios::beg);
         if (file.fail())
         {
-            Log("ERROR: Seek failed for sector %u in file %s",
+            Error("Seek failed for sector %u in file %s",
                 sec, img_file->file_path);
             break;
         }
@@ -1120,7 +1120,7 @@ void CdRomCueBinImage::CalculateCRC()
 
         if (bytes_read != sector_data_size)
         {
-            Log("ERROR: Incomplete read for sector %u: %u bytes read, expected %u",
+            Error("Incomplete read for sector %u: %u bytes read, expected %u",
                 sec, bytes_read, sector_data_size);
             break;
         }

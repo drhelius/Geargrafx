@@ -60,7 +60,7 @@ bool CdRomMedia::LoadCueFromFile(const char* path, bool preload)
     }
     else
     {
-        Log("ERROR: Failed to load CUE file from %s", path);
+        Error("Failed to load CUE file from %s", path);
         Reset();
         return false;
     }
@@ -75,7 +75,7 @@ bool CdRomMedia::LoadChdFromFile(const char* path, bool preload)
     }
     else
     {
-        Log("ERROR: Failed to load CHD file from %s", path);
+        Error("Failed to load CHD file from %s", path);
         Reset();
         return false;
     }
@@ -89,7 +89,7 @@ bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
     }
     else
     {
-        Log("ERROR: ReadSector failed - Current image is NULL");
+        Error("ReadSector failed - Current image is NULL");
         return false;
     }
 }
@@ -102,7 +102,7 @@ bool CdRomMedia::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
     }
     else
     {
-        Log("ERROR: ReadBytes failed - Current image is NULL");
+        Error("ReadBytes failed - Current image is NULL");
         return false;
     }
 }
@@ -115,7 +115,7 @@ bool CdRomMedia::PreloadTrack(u32 track_number)
     }
     else
     {
-        Log("ERROR: PreloadTrack failed - Current image is NULL");
+        Error("PreloadTrack failed - Current image is NULL");
         return false;
     }
 }
@@ -128,7 +128,7 @@ u32 CdRomMedia::GetFirstSectorOfTrack(u8 track)
     }
     else
     {
-        Log("ERROR: GetFirstSectorOfTrack failed - Current image is NULL");
+        Error("GetFirstSectorOfTrack failed - Current image is NULL");
         return 0;
     }
 }
@@ -141,7 +141,7 @@ u32 CdRomMedia::GetLastSectorOfTrack(u8 track)
     }
     else
     {
-        Log("ERROR: GetLastSectorOfTrack failed - Current image is NULL");
+        Error("GetLastSectorOfTrack failed - Current image is NULL");
         return 0;
     }
 }
@@ -154,7 +154,7 @@ s32 CdRomMedia::GetTrackFromLBA(u32 lba)
     }
     else
     {
-        Log("ERROR: GetTrackFromLBA failed - Current image is NULL");
+        Error("GetTrackFromLBA failed - Current image is NULL");
         return -1;
     }
 }

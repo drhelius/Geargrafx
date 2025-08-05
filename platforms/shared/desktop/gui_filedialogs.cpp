@@ -54,7 +54,7 @@ void gui_file_dialog_open_rom(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Open ROM Error: %s", NFD_GetError());
+        Error("Open ROM Error: %s", NFD_GetError());
     }
 }
 
@@ -76,7 +76,7 @@ void gui_file_dialog_load_ram(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Load RAM Error: %s", NFD_GetError());
+        Error("Load RAM Error: %s", NFD_GetError());
     }
 }
 
@@ -99,7 +99,7 @@ void gui_file_dialog_save_ram(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Save RAM Error: %s", NFD_GetError());
+        Error("Save RAM Error: %s", NFD_GetError());
     }
 }
 
@@ -124,7 +124,7 @@ void gui_file_dialog_load_state(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Load State Error: %s", NFD_GetError());
+        Error("Load State Error: %s", NFD_GetError());
     }
 }
 
@@ -150,7 +150,7 @@ void gui_file_dialog_save_state(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Save State Error: %s", NFD_GetError());
+        Error("Save State Error: %s", NFD_GetError());
     }
 }
 
@@ -171,7 +171,7 @@ void gui_file_dialog_choose_savestate_path(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Savestate Path Error: %s", NFD_GetError());
+        Error("Savestate Path Error: %s", NFD_GetError());
     }
 }
 
@@ -191,7 +191,7 @@ void gui_file_dialog_choose_screenshot_path(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Screenshot Path Error: %s", NFD_GetError());
+        Error("Screenshot Path Error: %s", NFD_GetError());
     }
 }
 
@@ -211,7 +211,7 @@ void gui_file_dialog_choose_backup_ram_path(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Backup RAM Path Error: %s", NFD_GetError());
+        Error("Backup RAM Path Error: %s", NFD_GetError());
     }
 }
 
@@ -237,7 +237,7 @@ void gui_file_dialog_load_bios(bool syscard)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Load Bios Error: %s", NFD_GetError());
+        Error("Load Bios Error: %s", NFD_GetError());
     }
 }
 
@@ -260,7 +260,7 @@ void gui_file_dialog_load_symbols(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Load Symbols Error: %s", NFD_GetError());
+        Error("Load Symbols Error: %s", NFD_GetError());
     }
 }
 
@@ -283,7 +283,7 @@ void gui_file_dialog_save_screenshot(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Save Screenshot Error: %s", NFD_GetError());
+        Error("Save Screenshot Error: %s", NFD_GetError());
     }
 }
 
@@ -306,7 +306,7 @@ void gui_file_dialog_save_memory_dump(bool binary)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Save Memory Dump Error: %s", NFD_GetError());
+        Error("Save Memory Dump Error: %s", NFD_GetError());
     }
 }
 
@@ -329,7 +329,7 @@ void gui_file_dialog_save_disassembler(bool full)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Save Disassembler Error: %s", NFD_GetError());
+        Error("Save Disassembler Error: %s", NFD_GetError());
     }
 }
 
@@ -352,7 +352,7 @@ void gui_file_dialog_save_log(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Log("Save Log Error: %s", NFD_GetError());
+        Error("Save Log Error: %s", NFD_GetError());
     }
 }
 

@@ -298,8 +298,8 @@ void GeargrafxCore::LoadRam(const char* path, bool full_path)
             }
             else
             {
-                Log("ERROR: Failed to load RAM from %s", final_path.c_str());
-                Log("ERROR: Invalid RAM size: %d", file_size);
+                Error("Failed to load RAM from %s", final_path.c_str());
+                Error("Invalid RAM size: %d", file_size);
             }
         }
         else
@@ -352,7 +352,7 @@ bool GeargrafxCore::SaveState(const char* path, int index, bool screenshot)
     if (ret)
         Log("Saved state to %s", full_path.c_str());
     else
-        Log("ERROR: Failed to save state to %s", full_path.c_str());
+        Error("Failed to save state to %s", full_path.c_str());
     return ret;
 }
 
@@ -364,7 +364,7 @@ bool GeargrafxCore::SaveState(u8* buffer, size_t& size, bool screenshot)
 
     if (!m_media->IsReady())
     {
-        Log("ERROR: Cartridge is not ready when trying to save state");
+        Error("Cartridge is not ready when trying to save state");
         return false;
     }
 
@@ -373,7 +373,7 @@ bool GeargrafxCore::SaveState(u8* buffer, size_t& size, bool screenshot)
         stringstream stream;
         if (!SaveState(stream, size, screenshot))
         {
-            Log("ERROR: Failed to save state to stream to calculate size");
+            Error("Failed to save state to stream to calculate size");
             return false;
         }
         return true;
@@ -384,7 +384,7 @@ bool GeargrafxCore::SaveState(u8* buffer, size_t& size, bool screenshot)
 
         if (!SaveState(direct_stream, size, screenshot))
         {
-            Log("ERROR: Failed to save state to buffer");
+            Error("Failed to save state to buffer");
             return false;
         }
 
@@ -399,7 +399,7 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
 
     if (!m_media->IsReady())
     {
-        Log("ERROR: Cartridge is not ready when trying to save state");
+        Error("Cartridge is not ready when trying to save state");
         return false;
     }
 
@@ -502,11 +502,11 @@ bool GeargrafxCore::LoadState(const char* path, int index)
         if (ret)
             Log("Loaded state from %s", full_path.c_str());
         else
-            Log("ERROR: Failed to load state from %s", full_path.c_str());
+            Error("Failed to load state from %s", full_path.c_str());
     }
     else
     {
-        Log("ERROR: Load state file doesn't exist: %s", full_path.c_str());
+        Error("Load state file doesn't exist: %s", full_path.c_str());
     }
 
     stream.close();
@@ -521,13 +521,13 @@ bool GeargrafxCore::LoadState(const u8* buffer, size_t size)
 
     if (!m_media->IsReady())
     {
-        Log("ERROR: Cartridge is not ready when trying to load state");
+        Error("Cartridge is not ready when trying to load state");
         return false;
     }
 
     if (!IsValidPointer(buffer) || (size == 0))
     {
-        Log("ERROR: Invalid load state buffer");
+        Error("Invalid load state buffer");
         return false;
     }
 
@@ -541,7 +541,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     if (!m_media->IsReady())
     {
-        Log("ERROR: Cartridge is not ready when trying to load state");
+        Error("Cartridge is not ready when trying to load state");
         return false;
     }
 
@@ -570,7 +570,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     if (header.version != GG_SAVESTATE_VERSION)
     {
-        Log("ERROR: Invalid save state version: %d", header.version);
+        Error("Invalid save state version: %d", header.version);
         return false;
     }
 
@@ -593,19 +593,19 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     if (header.version != GG_SAVESTATE_VERSION)
     {
-        Log("ERROR: Invalid save state version: %d", header.version);
+        Error("Invalid save state version: %d", header.version);
         return false;
     }
 
     if (header.size != size)
     {
-        Log("ERROR: Invalid save state size: %d", header.size);
+        Error("Invalid save state size: %d", header.size);
         return false;
     }
 
     if (header.rom_crc != m_media->GetCRC())
     {
-        Log("ERROR: Invalid save state rom crc: 0x%08x", header.rom_crc);
+        Error("Invalid save state rom crc: 0x%08x", header.rom_crc);
         return false;
     }
 #endif
@@ -679,7 +679,7 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
 
     if (!IsValidPointer(screenshot->data) || (screenshot->size == 0))
     {
-        Log("ERROR: Invalid save state screenshot buffer");
+        Error("Invalid save state screenshot buffer");
         return false;
     }
 
@@ -691,7 +691,7 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
 
     if (stream.fail())
     {
-        Log("ERROR: Savestate file doesn't exist %s", full_path.c_str());
+        Error("Savestate file doesn't exist %s", full_path.c_str());
         stream.close();
         return false;
     }
@@ -708,7 +708,7 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
 
     if (screenshot->size < header.screenshot_size)
     {
-        Log("ERROR: Invalid screenshot buffer size %d < %d", screenshot->size, header.screenshot_size);
+        Error("Invalid screenshot buffer size %d < %d", screenshot->size, header.screenshot_size);
         stream.close();
         return false;
     }
