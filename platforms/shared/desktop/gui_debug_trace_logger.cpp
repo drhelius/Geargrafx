@@ -21,7 +21,7 @@
 #include "gui_debug_trace_logger.h"
 
 #include <deque>
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "gui.h"
 #include "gui_filedialogs.h"
 #include "config.h"

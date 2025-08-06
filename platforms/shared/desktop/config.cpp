@@ -22,7 +22,7 @@
 #include "geargrafx.h"
 
 #define MINI_CASE_SENSITIVE
-#include "mINI/ini.h"
+#include "ini.h"
 
 #define CONFIG_IMPORT
 #include "config.h"

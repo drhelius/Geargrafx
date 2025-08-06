@@ -27,7 +27,7 @@
 #if defined(_WIN32)
 #define STBIW_WINDOWS_UTF8
 #endif
-#include "stb/stb_image_write.h"
+#include "stb_image_write.h"
 
 static GeargrafxCore* geargrafx;
 static SoundQueue* sound_queue;

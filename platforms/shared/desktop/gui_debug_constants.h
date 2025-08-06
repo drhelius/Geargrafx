@@ -20,7 +20,7 @@
 #ifndef GUI_DEBUG_CONSTANTS_H
 #define GUI_DEBUG_CONSTANTS_H
 
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "geargrafx.h"
 
 static const ImVec4 cyan =          ImVec4(0.10f, 0.90f, 0.90f, 1.0f);

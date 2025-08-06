@@ -28,8 +28,8 @@
 #include "application.h"
 #include "config.h"
 #include "emu.h"
-#include "nfd/nfd.h"
-#include "nfd/nfd_sdl2.h"
+#include "nfd.h"
+#include "nfd_sdl2.h"
 
 static void file_dialog_set_native_window(SDL_Window* window, nfdwindowhandle_t* native_window);
 

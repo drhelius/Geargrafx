@@ -1,11 +1,11 @@
-include ../shared/desktop/makefiles/Makefile.sources
+include ../shared/makefiles/Makefile.sources
 
-SOURCES_MM += $(DESKTOP_SRC_DIR)/nfd/nfd_cocoa.mm
-SOURCES_MM += $(DESKTOP_SRC_DIR)/macos/fullscreen.mm
+SOURCES_MM += $(DEPS_DIR)/nfd/nfd_cocoa.mm
+SOURCES_MM += fullscreen.mm
 OBJECTS += $(SOURCES_MM:.mm=.o)
 LDFLAGS += -framework AppKit -framework UniformTypeIdentifiers
 
-include ../shared/desktop/makefiles/Makefile.common
+include ../shared/makefiles/Makefile.common
 
 APP_NAME=Geargrafx
 

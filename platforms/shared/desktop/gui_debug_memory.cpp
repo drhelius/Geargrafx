@@ -21,7 +21,7 @@
 #include "gui_debug_memory.h"
 
 #include "geargrafx.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "gui_debug_memeditor.h"
 #include "gui_filedialogs.h"
 #include "config.h"

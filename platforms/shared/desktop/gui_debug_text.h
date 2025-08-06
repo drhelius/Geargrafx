@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include "imgui/imgui.h"
+#include "imgui.h"
 
 const char k_color_marker_start = '{';
 const char k_color_marker_end = '}';

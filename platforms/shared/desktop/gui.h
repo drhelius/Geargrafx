@@ -22,7 +22,7 @@
 
 #include <SDL.h>
 #include "geargrafx.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
 
 #ifdef GUI_IMPORT
     #define EXTERN

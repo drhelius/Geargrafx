@@ -94,19 +94,45 @@
     <ClCompile Include="..\shared\desktop\gui_menus.cpp" />
     <ClCompile Include="..\shared\desktop\gui_popups.cpp" />
     <ClCompile Include="..\shared\desktop\gui.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\imgui.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\imgui_impl_opengl2.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\imgui_impl_sdl2.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\implot_demo.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\implot_items.cpp" />
-    <ClCompile Include="..\shared\desktop\imgui\implot.cpp" />
+    <ClCompile Include="..\shared\dependencies\imgui\imgui.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_demo.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_draw.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_impl_opengl2.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_impl_sdl2.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_tables.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_widgets.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\implot_demo.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\implot_items.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\implot.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
     <ClCompile Include="..\shared\desktop\main.cpp" />
-    <ClCompile Include="..\shared\desktop\nfd\nfd_win.cpp" />
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\nfd\nfd_win.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
     <ClCompile Include="..\shared\desktop\renderer.cpp" />
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\arcade_card_mapper_inline.h" />
@@ -175,9 +201,9 @@
     <ClInclude Include="..\shared\dependencies\lzma\include\LzmaEnc.h" />
     <ClInclude Include="..\shared\dependencies\miniz\miniz.h" />
     <ClInclude Include="..\shared\dependencies\zstd\zstddeclib.c" />
-    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_sdl2.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl2.h" />
     <ClInclude Include="..\shared\desktop\keyboard.h" />
-    <ClInclude Include="..\shared\desktop\nfd\nfd_sdl2.h" />
+    <ClInclude Include="..\shared\dependencies\nfd\nfd_sdl2.h" />
     <ClInclude Include="..\shared\desktop\sound_queue.h" />
     <ClInclude Include="..\shared\desktop\application.h" />
     <ClInclude Include="..\shared\desktop\backers.h" />
@@ -203,23 +229,23 @@
     <ClInclude Include="..\shared\desktop\gui_menus.h" />
     <ClInclude Include="..\shared\desktop\gui_popups.h" />
     <ClInclude Include="..\shared\desktop\gui.h" />
-    <ClInclude Include="..\shared\desktop\imgui\fonts\IconsMaterialDesign.h" />
-    <ClInclude Include="..\shared\desktop\imgui\fonts\MaterialIcons.h" />
-    <ClInclude Include="..\shared\desktop\imgui\fonts\RobotoMedium.h" />
-    <ClInclude Include="..\shared\desktop\imgui\imconfig.h" />
-    <ClInclude Include="..\shared\desktop\imgui\imgui.h" />
-    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_opengl2.h" />
-    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_sdl.h" />
-    <ClInclude Include="..\shared\desktop\imgui\imgui_internal.h" />
-    <ClInclude Include="..\shared\desktop\imgui\implot_internal.h" />
-    <ClInclude Include="..\shared\desktop\imgui\implot.h" />
-    <ClInclude Include="..\shared\desktop\imgui\imstb_rectpack.h" />
-    <ClInclude Include="..\shared\desktop\imgui\imstb_textedit.h" />
-    <ClInclude Include="..\shared\desktop\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\fonts\IconsMaterialDesign.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\fonts\MaterialIcons.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\fonts\RobotoMedium.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\imconfig.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\imgui.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_opengl2.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_internal.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\implot_internal.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\implot.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\shared\dependencies\imgui\imstb_truetype.h" />
     <ClInclude Include="..\shared\desktop\license.h" />
-    <ClInclude Include="..\shared\desktop\mINI\ini.h" />
-    <ClInclude Include="..\shared\desktop\nfd\nfd.h" />
-    <ClInclude Include="..\shared\desktop\stb\stb_image_write.h" />
+    <ClInclude Include="..\shared\dependencies\mINI\ini.h" />
+    <ClInclude Include="..\shared\dependencies\nfd\nfd.h" />
+    <ClInclude Include="..\shared\dependencies\stb\stb_image_write.h" />
     <ClInclude Include="..\shared\desktop\renderer.h" />
     <ClInclude Include="..\shared\desktop\utils.h" />
     <ClInclude Include="resource.h" />

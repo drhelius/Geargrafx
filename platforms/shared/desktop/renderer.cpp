@@ -26,8 +26,8 @@
     #include <SDL_opengl.h>
 #endif
 
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_opengl2.h"
+#include "imgui.h"
+#include "imgui_impl_opengl2.h"
 #include "emu.h"
 #include "config.h"
 #include "geargrafx.h"

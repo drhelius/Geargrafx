@@ -20,7 +20,7 @@
 #define GUI_DEBUG_CDROM_IMPORT
 #include "gui_debug_cdrom.h"
 
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "geargrafx.h"
 #include "gui_debug_constants.h"
 #include "gui.h"

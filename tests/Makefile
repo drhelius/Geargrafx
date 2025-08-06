@@ -7,6 +7,12 @@ PLATFORM = "undefined"
 
 OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
+INCLUDES += -I$(SRC_DIR)
+INCLUDES += -I$(DEPS_DIR)/libchdr/include
+INCLUDES += -I$(DEPS_DIR)/lzma/include
+INCLUDES += -I$(DEPS_DIR)/miniz
+INCLUDES += -I$(DEPS_DIR)/zstd
+
 USE_CLANG ?= 0
 ifeq ($(USE_CLANG), 1)
     CXX = clang++
@@ -16,10 +22,12 @@ else
     CC = gcc
 endif
 
-CPPFLAGS += -I$(SRC_DIR)
-CPPFLAGS += -Wall -Wextra -Wformat -DGG_TESTING=1 -DGG_DISABLE_DISASSEMBLER=1 -DEMULATOR_BUILD=\"$(GIT_VERSION)\"
+CPPFLAGS += $(INCLUDES)
+CPPFLAGS += -Wall -Wextra -Wformat -fno-exceptions -DGG_TESTING=1 -DGG_DISABLE_DISASSEMBLER=1 -DEMULATOR_BUILD=\"$(GIT_VERSION)\" -DZ7_ST -DZSTD_DISABLE_ASM
 CXXFLAGS += -std=c++11
 CFLAGS += -std=c99
+
+$(DEPS_DIR)/%.o: CPPFLAGS += -w
 
 DEBUG ?= 0
 ifeq ($(DEBUG), 1)

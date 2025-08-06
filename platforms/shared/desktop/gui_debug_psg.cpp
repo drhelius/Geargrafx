@@ -20,9 +20,9 @@
 #define GUI_DEBUG_PSG_IMPORT
 #include "gui_debug_psg.h"
 
-#include "imgui/imgui.h"
-#include "imgui/implot.h"
-#include "imgui/fonts/IconsMaterialDesign.h"
+#include "imgui.h"
+#include "implot.h"
+#include "fonts/IconsMaterialDesign.h"
 #include "geargrafx.h"
 #include "gui.h"
 #include "gui_debug_constants.h"

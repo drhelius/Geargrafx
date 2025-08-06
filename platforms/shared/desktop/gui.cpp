@@ -18,12 +18,12 @@
  */
 
 #include <math.h>
-#include "imgui/imgui.h"
-#include "imgui/implot.h"
-#include "imgui/fonts/RobotoMedium.h"
-#include "imgui/fonts/MaterialIcons.h"
-#include "imgui/fonts/IconsMaterialDesign.h"
-#include "nfd/nfd.h"
+#include "imgui.h"
+#include "implot.h"
+#include "fonts/RobotoMedium.h"
+#include "fonts/MaterialIcons.h"
+#include "fonts/IconsMaterialDesign.h"
+#include "nfd.h"
 #include "config.h"
 #include "application.h"
 #include "emu.h"

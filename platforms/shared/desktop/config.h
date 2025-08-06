@@ -23,8 +23,8 @@
 #include <SDL.h>
 #include "geargrafx.h"
 #define MINI_CASE_SENSITIVE
-#include "mINI/ini.h"
-#include "imgui/imgui.h"
+#include "ini.h"
+#include "imgui.h"
 
 #ifdef CONFIG_IMPORT
     #define EXTERN

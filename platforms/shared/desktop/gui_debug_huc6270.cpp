@@ -20,7 +20,7 @@
 #define GUI_DEBUG_HUC6270_IMPORT
 #include "gui_debug_huc6270.h"
 
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "geargrafx.h"
 #include "gui_debug_constants.h"
 #include "gui_debug_memory.h"

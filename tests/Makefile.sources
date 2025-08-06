@@ -1,28 +1,41 @@
 SRC_DIR = ../src
+DEPS_DIR = ../platforms/shared/dependencies
 TEST_SRC_DIR=.
 
 SOURCES_C := \
-    $(SRC_DIR)/miniz/miniz.c \
+    $(DEPS_DIR)/libchdr/src/libchdr_bitstream.c \
+    $(DEPS_DIR)/libchdr/src/libchdr_cdrom.c \
+    $(DEPS_DIR)/libchdr/src/libchdr_chd.c \
+    $(DEPS_DIR)/libchdr/src/libchdr_flac.c \
+    $(DEPS_DIR)/libchdr/src/libchdr_huffman.c \
+    $(DEPS_DIR)/lzma/src/LzFind.c \
+    $(DEPS_DIR)/lzma/src/LzmaEnc.c \
+    $(DEPS_DIR)/lzma/src/LzmaDec.c \
+    $(DEPS_DIR)/lzma/src/CpuArch.c \
+    $(DEPS_DIR)/miniz/miniz.c \
 
 SOURCES_CXX := \
     $(TEST_SRC_DIR)/main.cpp \
+    $(SRC_DIR)/geargrafx_core.cpp \
     $(SRC_DIR)/adpcm.cpp \
     $(SRC_DIR)/audio.cpp \
     $(SRC_DIR)/arcade_card_mapper.cpp \
-    $(SRC_DIR)/media.cpp \
     $(SRC_DIR)/cdrom_audio.cpp \
+    $(SRC_DIR)/cdrom_chd_image.cpp \
+    $(SRC_DIR)/cdrom_cuebin_image.cpp \
+    $(SRC_DIR)/cdrom_image.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
     $(SRC_DIR)/cdrom.cpp \
-    $(SRC_DIR)/scsi_controller.cpp \
-    $(SRC_DIR)/geargrafx_core.cpp \
     $(SRC_DIR)/huc6202.cpp \
     $(SRC_DIR)/huc6260.cpp \
     $(SRC_DIR)/huc6270.cpp \
+    $(SRC_DIR)/huc6280.cpp \
     $(SRC_DIR)/huc6280_functors.cpp \
     $(SRC_DIR)/huc6280_opcodes.cpp \
     $(SRC_DIR)/huc6280_psg.cpp \
-    $(SRC_DIR)/huc6280.cpp \
     $(SRC_DIR)/input.cpp \
     $(SRC_DIR)/mapper.cpp \
+    $(SRC_DIR)/media.cpp \
     $(SRC_DIR)/memory.cpp \
+    $(SRC_DIR)/scsi_controller.cpp \
     $(SRC_DIR)/sf2_mapper.cpp

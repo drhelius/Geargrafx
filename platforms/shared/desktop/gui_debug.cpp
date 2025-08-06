@@ -21,7 +21,7 @@
 #include "gui_debug.h"
 
 #include "geargrafx.h"
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "gui_debug_disassembler.h"
 #include "gui_debug_huc6280.h"
 #include "gui_debug_huc6270.h"
