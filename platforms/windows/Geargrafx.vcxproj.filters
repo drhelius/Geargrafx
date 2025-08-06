@@ -208,9 +208,6 @@
     <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_huffman.c">
       <Filter>dependencies\libchdr\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\dependencies\zstd\zstddeclib.c">
-      <Filter>dependencies\zstd</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\shared\desktop\application.h">
@@ -548,6 +545,9 @@
     </ClInclude>
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\huffman.h">
       <Filter>dependencies\libchdr\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\zstd\zstddeclib.c">
+      <Filter>dependencies\zstd</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
   </ItemGroup>
