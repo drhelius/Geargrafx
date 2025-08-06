@@ -72,6 +72,7 @@
     <ClCompile Include="..\shared\dependencies\miniz\miniz.c">
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
+    <ClCompile Include="..\shared\dependencies\zstd\zstddeclib.c" />
     <ClCompile Include="..\shared\desktop\sound_queue.cpp" />
     <ClCompile Include="..\shared\desktop\application.cpp" />
     <ClCompile Include="..\shared\desktop\config.cpp" />
@@ -221,9 +222,16 @@
     <ClInclude Include="..\shared\desktop\stb\stb_image_write.h" />
     <ClInclude Include="..\shared\desktop\renderer.h" />
     <ClInclude Include="..\shared\desktop\utils.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="Geargrafx.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="iconfile.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Geargrafx.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

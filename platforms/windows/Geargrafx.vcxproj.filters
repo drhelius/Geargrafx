@@ -181,9 +181,6 @@
     <ClCompile Include="..\shared\dependencies\miniz\miniz.c">
       <Filter>dependencies\miniz</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\dependencies\zstd\zstddeclib.c">
-      <Filter>dependencies\zstd</Filter>
-    </ClCompile>
     <ClCompile Include="..\shared\dependencies\lzma\src\CpuArch.c">
       <Filter>dependencies\lzma\src</Filter>
     </ClCompile>
@@ -210,6 +207,9 @@
     </ClCompile>
     <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_huffman.c">
       <Filter>dependencies\libchdr\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\zstd\zstddeclib.c">
+      <Filter>dependencies\zstd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -549,6 +549,7 @@
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\huffman.h">
       <Filter>dependencies\libchdr\include</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -599,5 +600,11 @@
     <Filter Include="dependencies\libchdr\include">
       <UniqueIdentifier>{0e3c9919-0854-40c3-9fbe-d756d654eb1a}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="iconfile.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Geargrafx.rc" />
   </ItemGroup>
 </Project>
