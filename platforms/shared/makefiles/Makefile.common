@@ -30,7 +30,7 @@ INCLUDES += -I$(DEPS_DIR)/mINI
 INCLUDES += -I$(DEPS_DIR)/miniz
 INCLUDES += -I$(DEPS_DIR)/nfd
 INCLUDES += -I$(DEPS_DIR)/stb
-v
+INCLUDES += -I$(DEPS_DIR)/zstd
 
 USE_CLANG ?= 0
 ifeq ($(USE_CLANG), 1)
