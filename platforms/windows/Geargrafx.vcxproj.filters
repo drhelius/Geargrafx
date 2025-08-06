@@ -73,39 +73,6 @@
     <ClCompile Include="..\shared\desktop\renderer.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\imgui.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\imgui_demo.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\imgui_draw.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\imgui_impl_opengl2.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\imgui_impl_sdl2.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\imgui_tables.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\imgui_widgets.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\implot.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\implot_demo.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\imgui\implot_items.cpp">
-      <Filter>desktop\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\desktop\nfd\nfd_win.cpp">
-      <Filter>desktop\nfd</Filter>
-    </ClCompile>
     <ClCompile Include="..\shared\desktop\sound_queue.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
@@ -208,6 +175,39 @@
     <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_huffman.c">
       <Filter>dependencies\libchdr\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_demo.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_draw.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_impl_opengl2.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_impl_sdl2.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_tables.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_widgets.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\implot.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\implot_demo.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\imgui\implot_items.cpp">
+      <Filter>dependencies\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\nfd\nfd_win.cpp">
+      <Filter>dependencies\nfd</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\shared\desktop\application.h">
@@ -290,45 +290,6 @@
     </ClInclude>
     <ClInclude Include="..\shared\desktop\utils.h">
       <Filter>desktop</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\imconfig.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\imgui.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_opengl2.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_sdl.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\imgui_internal.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\implot.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\implot_internal.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\imstb_rectpack.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\imstb_textedit.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\imstb_truetype.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\nfd\nfd.h">
-      <Filter>desktop\nfd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\stb\stb_image_write.h">
-      <Filter>desktop\stb</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\mINI\ini.h">
-      <Filter>desktop\mINI</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\sound_queue.h">
       <Filter>desktop</Filter>
@@ -462,21 +423,6 @@
     <ClInclude Include="..\..\src\types.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\fonts\IconsMaterialDesign.h">
-      <Filter>desktop\imgui\fonts</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\fonts\MaterialIcons.h">
-      <Filter>desktop\imgui\fonts</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\fonts\RobotoMedium.h">
-      <Filter>desktop\imgui\fonts</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\imgui\imgui_impl_sdl2.h">
-      <Filter>desktop\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\desktop\nfd\nfd_sdl2.h">
-      <Filter>desktop\nfd</Filter>
-    </ClInclude>
     <ClInclude Include="..\shared\desktop\keyboard.h">
       <Filter>desktop</Filter>
     </ClInclude>
@@ -550,6 +496,63 @@
       <Filter>dependencies\zstd</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="..\shared\dependencies\glad\glad.h">
+      <Filter>dependencies\glad</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\fonts\IconsMaterialDesign.h">
+      <Filter>dependencies\imgui\fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\fonts\MaterialIcons.h">
+      <Filter>dependencies\imgui\fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\fonts\RobotoMedium.h">
+      <Filter>dependencies\imgui\fonts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imconfig.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imgui.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_opengl2.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl2.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_internal.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\implot.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\implot_internal.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imstb_rectpack.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imstb_textedit.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imstb_truetype.h">
+      <Filter>dependencies\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\mINI\ini.h">
+      <Filter>dependencies\mINI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\nfd\nfd.h">
+      <Filter>dependencies\nfd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\nfd\nfd_sdl2.h">
+      <Filter>dependencies\nfd</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\stb\stb_image_write.h">
+      <Filter>dependencies\stb</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -560,21 +563,6 @@
     </Filter>
     <Filter Include="desktop">
       <UniqueIdentifier>{b305c14e-49f4-4f2f-9d40-5b15a839fbb7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="desktop\imgui">
-      <UniqueIdentifier>{2845bb6f-3a7e-4dd9-a512-26cc2d70d318}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="desktop\imgui\fonts">
-      <UniqueIdentifier>{e751b237-67eb-4f7d-8eb9-2dff996a9ef4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="desktop\mINI">
-      <UniqueIdentifier>{b57ba6f5-bb7b-4e67-a5d9-a0c067357f4c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="desktop\stb">
-      <UniqueIdentifier>{35f248dc-8fee-4dca-a836-403a5186a022}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="desktop\nfd">
-      <UniqueIdentifier>{fc50fbb4-e133-436b-af1a-a97b7279fdb1}</UniqueIdentifier>
     </Filter>
     <Filter Include="dependencies\miniz">
       <UniqueIdentifier>{466b2296-06dc-4afd-a898-3c4ed168681e}</UniqueIdentifier>
@@ -599,6 +587,24 @@
     </Filter>
     <Filter Include="dependencies\libchdr\include">
       <UniqueIdentifier>{0e3c9919-0854-40c3-9fbe-d756d654eb1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\imgui">
+      <UniqueIdentifier>{e0759fc4-5e41-4967-af3f-6c065f466652}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\stb">
+      <UniqueIdentifier>{6e599b1a-7bc8-4a3f-9481-c8c04182c459}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\mINI">
+      <UniqueIdentifier>{b20161bf-e4e8-4d15-b5e1-74a0a7c0d526}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\nfd">
+      <UniqueIdentifier>{14314ca2-0367-417c-8852-c55ff87bb46f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\glad">
+      <UniqueIdentifier>{eee9f957-716d-47d4-a4f4-3d987c06a27a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\imgui\fonts">
+      <UniqueIdentifier>{0ff4493d-dd39-4604-9082-9f79eae3d893}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

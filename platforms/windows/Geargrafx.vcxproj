@@ -184,6 +184,7 @@
     <ClInclude Include="..\..\src\huc6280.h" />
     <ClInclude Include="..\..\src\sf2_mapper.h" />
     <ClInclude Include="..\..\src\types.h" />
+    <ClInclude Include="..\shared\dependencies\glad\glad.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\bitstream.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\cdrom.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\chd.h" />
