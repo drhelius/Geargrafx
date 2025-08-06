@@ -125,14 +125,10 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\main.cpp" />
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
-    </ClCompile>
     <ClCompile Include="..\shared\dependencies\nfd\nfd_win.cpp">
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\renderer.cpp" />
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\arcade_card_mapper_inline.h" />
