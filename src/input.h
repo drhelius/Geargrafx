@@ -24,8 +24,6 @@
 #include <fstream>
 #include "common.h"
 
-#define GG_MAX_GAMEPADS 5
-
 class Media;
 
 class Input
