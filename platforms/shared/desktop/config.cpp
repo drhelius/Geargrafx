@@ -112,7 +112,6 @@ void config_init(void)
             config_input.turbo_speed[i][j] = 4;
         }
 
-        config_input_gamepad[i].detected = false;
         config_input_gamepad[i].gamepad_directional = 0;
         config_input_gamepad[i].gamepad_invert_x_axis = false;
         config_input_gamepad[i].gamepad_invert_y_axis = false;
@@ -346,7 +345,6 @@ void config_read(void)
     {
         char input_group[32];
         snprintf(input_group, sizeof(input_group), "InputGamepad%d", i + 1);
-        config_input_gamepad[i].detected = read_bool(input_group, "Detected", false);
         config_input_gamepad[i].gamepad_directional = read_int(input_group, "GamepadDirectional", 0);
         config_input_gamepad[i].gamepad_invert_x_axis = read_bool(input_group, "GamepadInvertX", false);
         config_input_gamepad[i].gamepad_invert_y_axis = read_bool(input_group, "GamepadInvertY", false);
@@ -540,7 +538,6 @@ void config_write(void)
     {
         char input_group[32];
         snprintf(input_group, sizeof(input_group), "InputGamepad%d", i + 1);
-        write_bool(input_group, "Detected", config_input_gamepad[i].detected);
         write_int(input_group, "GamepadDirectional", config_input_gamepad[i].gamepad_directional);
         write_bool(input_group, "GamepadInvertX", config_input_gamepad[i].gamepad_invert_x_axis);
         write_bool(input_group, "GamepadInvertY", config_input_gamepad[i].gamepad_invert_y_axis);

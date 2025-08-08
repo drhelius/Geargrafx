@@ -126,7 +126,6 @@ struct config_Input_Keyboard
 
 struct config_Input_Gamepad
 {
-    bool detected;
     int gamepad_directional;
     bool gamepad_invert_x_axis;
     bool gamepad_invert_y_axis;
