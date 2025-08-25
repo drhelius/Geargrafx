@@ -30,6 +30,7 @@ CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* au
     m_scsi_controller = scsi_controller;
     m_audio = audio;
     InitPointer(m_adpcm);
+    InitPointer(m_huc6280);
     InitPointer(m_memory);
     m_reset = 0;
     m_bram_enabled = false;
@@ -38,6 +39,12 @@ CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* au
     m_cdaudio_sample_toggle = false;
     m_cdaudio_sample = 0;
     m_cdaudio_sample_last_clock = 0;
+    m_fader = 0;
+    m_fader_enabled = false;
+    m_fader_adpcm = false;
+    m_fader_fast = false;
+    m_fader_start_cycles = 0;
+    m_fader_cycles = 0;
 
     m_state.RESET = &m_reset;
     m_state.BRAM_ENABLED = &m_bram_enabled;
@@ -67,6 +74,12 @@ void CdRom::Reset()
     m_cdaudio_sample_toggle = false;
     m_cdaudio_sample = 0;
     m_cdaudio_sample_last_clock = 0;
+    m_fader = 0;
+    m_fader_enabled = false;
+    m_fader_adpcm = false;
+    m_fader_fast = false;
+    m_fader_start_cycles = 0;
+    m_fader_cycles = 0;
     m_memory->UpdateBackupRam(m_bram_enabled);
 }
 
