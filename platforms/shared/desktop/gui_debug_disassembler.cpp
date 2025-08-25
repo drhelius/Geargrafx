@@ -952,24 +952,24 @@ static const char* k_irq_symbol_format[6] = {
 static void add_auto_symbol(GG_Disassembler_Record* record, u16 address)
 {
     DebugSymbol s;
-    s.bank = record->bank;
-    s.address = address;
     bool insert = false;
 
-    if (record->jump)
+    if (record->irq > 0)
+    {
+        s.address = address;
+        s.bank = record->bank;
+        insert = true;
+        snprintf(s.text, 64, k_irq_symbol_format[record->irq], record->bank, address);
+    }
+    else if (record->jump)
     {
         s.address = record->jump_address;
         s.bank = record->jump_bank;
+        insert = true;
         if (record->subroutine)
             snprintf(s.text, 64, "SUB_%02X_%04X", record->jump_bank, record->jump_address);
         else
             snprintf(s.text, 64, "TAG_%02X_%04X", record->jump_bank, record->jump_address);
-        insert = true;
-    }
-    else if (record->irq > 0)
-    {
-        snprintf(s.text, 64, k_irq_symbol_format[record->irq], record->bank, address);
-        insert = true;
     }
 
     if (insert)
