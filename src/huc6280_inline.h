@@ -89,8 +89,6 @@ inline void HuC6280::HandleIRQ()
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_debug_next_irq =((0xFFFA - vector) >> 1) + 3;
-    if (m_breakpoints_irq_enabled)
-        m_cpu_breakpoint_hit = true;
     u16 dest = m_PC.GetValue();
     PushCallStack(pc, dest, pc);
 #endif
@@ -414,7 +412,7 @@ INLINE void HuC6280::CheckBreakpoints()
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
 
-    m_cpu_breakpoint_hit = false;
+    m_cpu_breakpoint_hit = (m_breakpoints_irq_enabled && m_debug_next_irq > 0);
     m_run_to_breakpoint_hit = false;
 
     if (m_run_to_breakpoint_requested)
