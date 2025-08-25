@@ -69,10 +69,6 @@ private:
     bool m_turbo_state[GG_MAX_GAMEPADS][2];
     u8 m_turbo_counter[GG_MAX_GAMEPADS][2];
     u8 m_turbo_speed[GG_MAX_GAMEPADS][2];
-
-private:
-    void UpdateRegister(u8 value);
-
 };
 
 #include "input_inline.h"

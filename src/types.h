@@ -31,6 +31,8 @@ typedef int32_t s32;
 typedef uint64_t u64;
 typedef int64_t s64;
 
+typedef void (*GG_Input_Pump_Fn)(void);
+
 struct GG_Runtime_Info
 {
     int screen_width;

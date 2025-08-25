@@ -69,7 +69,70 @@ INLINE u8 Input::ReadK()
 
 INLINE void Input::WriteO(u8 value)
 {
-    UpdateRegister(value);
+    bool prev_sel = m_sel;
+    bool prev_clr = m_clr;
+    m_sel = IS_SET_BIT(value, 0);
+    m_clr = IS_SET_BIT(value, 1);
+    m_register = 0x30;
+
+    if (m_pce_jap)
+        m_register = SET_BIT(m_register, 6);
+    if (!m_cdrom)
+        m_register = SET_BIT(m_register, 7);
+
+    if (m_turbo_tap)
+    {
+        if(!m_clr && !prev_sel && m_sel && m_selected_pad < GG_MAX_GAMEPADS)
+            m_selected_pad++;
+
+        if(m_sel && !prev_clr && m_clr)
+            m_selected_pad = 0;
+
+        if (m_selected_pad >= GG_MAX_GAMEPADS)
+        {
+            m_register |= 0x0F;
+            return;
+        }
+    }
+    else
+        m_selected_pad = 0;
+
+    if (prev_clr && !m_clr)
+        m_selected_extra_buttons = !m_selected_extra_buttons;
+
+    u16 raw_gamepad = m_gamepads[m_selected_pad];
+
+    if (m_turbo_enabled[m_selected_pad][0] && !(raw_gamepad & GG_KEY_I))
+    {
+        if (m_turbo_state[m_selected_pad][0])
+            raw_gamepad &= ~GG_KEY_I;
+        else
+            raw_gamepad |= GG_KEY_I;
+    }
+
+    if (m_turbo_enabled[m_selected_pad][1] && !(raw_gamepad & GG_KEY_II))
+    {
+        if (m_turbo_state[m_selected_pad][1])
+            raw_gamepad &= ~GG_KEY_II;
+        else
+            raw_gamepad |= GG_KEY_II;
+    }
+
+    if (!m_clr)
+    {
+        if ((m_controller_type[m_selected_pad] == GG_CONTROLLER_AVENUE_PAD_6) && m_selected_extra_buttons)
+        {
+            if (!m_sel)
+                m_register |= ((raw_gamepad >> 8) & 0x0F);
+        }
+        else
+        {
+            if (m_sel)
+                m_register |= ((raw_gamepad >> 4) & 0x0F);
+            else
+                m_register |= (raw_gamepad & 0x0F);
+        }
+    }
 }
 
 INLINE u8 Input::GetIORegister()
@@ -140,74 +203,6 @@ INLINE void Input::SetControllerType(GG_Controllers controller, GG_Controller_Ty
 INLINE void Input::SetAvenuePad3Button(GG_Controllers controller, GG_Keys button)
 {
     m_avenue_pad_3_button[controller] = button;
-}
-
-INLINE void Input::UpdateRegister(u8 value)
-{
-    bool prev_sel = m_sel;
-    bool prev_clr = m_clr;
-    m_sel = IS_SET_BIT(value, 0);
-    m_clr = IS_SET_BIT(value, 1);
-    m_register = 0x30;
-
-    if (m_pce_jap)
-        m_register = SET_BIT(m_register, 6);
-    if (!m_cdrom)
-        m_register = SET_BIT(m_register, 7);
-
-    if (m_turbo_tap)
-    {
-        if(!m_clr && !prev_sel && m_sel && m_selected_pad < GG_MAX_GAMEPADS)
-            m_selected_pad++;
-
-        if(m_sel && !prev_clr && m_clr)
-            m_selected_pad = 0;
-
-        if (m_selected_pad >= GG_MAX_GAMEPADS)
-        {
-            m_register |= 0x0F;
-            return;
-        }
-    }
-    else
-        m_selected_pad = 0;
-
-    if (prev_clr && !m_clr)
-        m_selected_extra_buttons = !m_selected_extra_buttons;
-
-    u16 raw_gamepad = m_gamepads[m_selected_pad];
-
-    if (m_turbo_enabled[m_selected_pad][0] && !(raw_gamepad & GG_KEY_I))
-    {
-        if (m_turbo_state[m_selected_pad][0])
-            raw_gamepad &= ~GG_KEY_I;
-        else
-            raw_gamepad |= GG_KEY_I;
-    }
-
-    if (m_turbo_enabled[m_selected_pad][1] && !(raw_gamepad & GG_KEY_II))
-    {
-        if (m_turbo_state[m_selected_pad][1])
-            raw_gamepad &= ~GG_KEY_II;
-        else
-            raw_gamepad |= GG_KEY_II;
-    }
-
-    if (!m_clr)
-    {
-        if ((m_controller_type[m_selected_pad] == GG_CONTROLLER_AVENUE_PAD_6) && m_selected_extra_buttons)
-        {
-            if (!m_sel)
-                m_register |= ((raw_gamepad >> 8) & 0x0F);
-        }
-        else
-        {
-            if (m_sel)
-                m_register |= ((raw_gamepad >> 4) & 0x0F);
-            else
-                m_register |= (raw_gamepad & 0x0F);
-        }
-    }
 }
 
 #endif /* INPUT_INLINE_H */

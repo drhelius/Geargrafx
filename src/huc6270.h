@@ -74,7 +74,7 @@ public:
 public:
     HuC6270(HuC6280* huC6280);
     ~HuC6270();
-    void Init(HuC6260* huC6260, HuC6202* huC6202);
+    void Init(HuC6260* huC6260, HuC6202* huC6202, GG_Input_Pump_Fn input_pump_fn);
     void Reset();
     u16 Clock();
     void SetHSyncHigh();
@@ -149,6 +149,7 @@ private:
     s32 m_sprite_count;
     bool m_sprite_overflow;
     HuC6270_Sprite_Data m_sprites[HUC6270_SPRITES * 2] = {};
+    GG_Input_Pump_Fn m_input_pump_fn;
 
 private:
     void EndOfLine();

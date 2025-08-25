@@ -79,7 +79,7 @@ GeargrafxCore::~GeargrafxCore()
     SafeDelete(m_memory);
 }
 
-void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
+void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_format)
 {
     Log("Loading %s core %s by Ignacio Sanchez", GG_TITLE, GG_VERSION);
 
@@ -109,8 +109,8 @@ void GeargrafxCore::Init(GG_Pixel_Format pixel_format)
     m_memory->Init();
     m_huc6260->Init(pixel_format);
     m_huc6202->Init();
-    m_huc6270_1->Init(m_huc6260, m_huc6202);
-    m_huc6270_2->Init(m_huc6260, m_huc6202);
+    m_huc6270_1->Init(m_huc6260, m_huc6202, input_pump_fn);
+    m_huc6270_2->Init(m_huc6260, m_huc6202, NULL);
     m_huc6280->Init(m_memory, m_huc6202);
     m_adpcm->Init(this, m_cdrom, m_scsi_controller);
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);

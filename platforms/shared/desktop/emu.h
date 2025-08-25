@@ -59,7 +59,7 @@ EXTERN bool emu_audio_sync;
 EXTERN bool emu_debug_disable_breakpoints;
 EXTERN bool emu_debug_irq_breakpoints;
 
-EXTERN bool emu_init(void);
+EXTERN bool emu_init(GG_Input_Pump_Fn input_pump_fn);
 EXTERN void emu_destroy(void);
 EXTERN void emu_update(void);
 EXTERN bool emu_load_media(const char* file_path);

@@ -44,7 +44,7 @@ static void update_debug(void);
 static void update_debug_background(void);
 static void update_debug_sprites(void);
 
-bool emu_init(void)
+bool emu_init(GG_Input_Pump_Fn input_pump_fn)
 {
     emu_frame_buffer = new u8[2048 * 512 * 4];
     audio_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
@@ -53,7 +53,7 @@ bool emu_init(void)
     reset_buffers();
 
     geargrafx = new GeargrafxCore();
-    geargrafx->Init();
+    geargrafx->Init(input_pump_fn);
     geargrafx->GetMedia()->SetTempPath(config_temp_path);
 
     sound_queue = new SoundQueue();

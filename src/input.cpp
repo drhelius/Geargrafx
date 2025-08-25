@@ -31,14 +31,14 @@ Input::Input(Media* media)
     m_clr = false;
     m_register = 0;
     m_selected_pad = 0;
+    m_selected_extra_buttons = false;
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
+        m_gamepads[i] = 0xFFFF;
         m_controller_type[i] = GG_CONTROLLER_STANDARD;
         m_avenue_pad_3_button[i] = GG_KEY_NONE;
         m_avenue_pad_3_state[i] = 0xFFFF;
-        m_gamepads[i] = 0xFFFF;
-        m_selected_extra_buttons = false;
 
         for (int j = 0; j < 2; j++)
         {
@@ -61,21 +61,21 @@ void Input::Reset()
     m_clr = true;
     m_register = 0;
     m_selected_pad = 0;
+    m_selected_extra_buttons = false;
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
-        m_avenue_pad_3_state[i] = 0xFFFF;
         m_gamepads[i] = 0xFFFF;
-        m_selected_extra_buttons = false;
+        m_avenue_pad_3_state[i] = 0xFFFF;
 
         for (int j = 0; j < 2; j++)
         {
-            m_turbo_counter[i][j] = 0;
             m_turbo_state[i][j] = false;
+            m_turbo_counter[i][j] = 0;
         }
     }
 
-    UpdateRegister(0xFF);
+    WriteO(0xFF);
 }
 
 void Input::EndFrame()

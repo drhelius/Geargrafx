@@ -55,7 +55,7 @@ public:
 public:
     GeargrafxCore();
     ~GeargrafxCore();
-    void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
+    void Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     bool RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug = NULL);
     bool LoadMedia(const char* file_path);
     bool LoadHuCardFromBuffer(const u8* buffer, int size, const char* path = NULL);

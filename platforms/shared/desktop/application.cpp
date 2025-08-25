@@ -42,6 +42,8 @@ static bool running = true;
 static bool paused_when_focus_lost = false;
 static Uint64 frame_time_start = 0;
 static Uint64 frame_time_end = 0;
+static bool input_updated = false;
+static Uint16 input_last_state[GG_MAX_GAMEPADS] = { };
 static Uint32 mouse_last_motion_time = 0;
 static const Uint32 mouse_hide_timeout_ms = 1500;
 
@@ -49,11 +51,14 @@ static bool sdl_init(void);
 static void sdl_destroy(void);
 static void sdl_load_gamepad_mappings(void);
 static void sdl_events(void);
+static void sdl_events_quit(const SDL_Event* event);
 static void sdl_events_app(const SDL_Event* event);
-static void sdl_events_emu(const SDL_Event* event);
-static void sdl_shortcuts_gui(const SDL_Event* event);
+static void sdl_events_shortcuts_gui(const SDL_Event* event);
+static void sdl_events_emu(void);
 static void sdl_add_gamepads(void);
 static void sdl_remove_gamepad(SDL_JoystickID instance_id);
+static Uint16 input_build_state(int controller);
+static void input_apply_state(int controller, Uint16 before, Uint16 now);
 static void handle_mouse_cursor(void);
 static void handle_menu(void);
 static void run_emulator(void);
@@ -97,7 +102,7 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
         return 1;
     }
 
-    if (!emu_init())
+    if (!emu_init(application_input_pump))
     {
         Error("Failed to initialize emulator");
         return 2;
@@ -303,6 +308,11 @@ void application_assign_gamepad(int slot, int device_index)
 
     application_gamepad[slot] = controller;
     Debug("Game controller %d assigned to Player %d", device_index, slot + 1);
+}
+
+void application_input_pump(void)
+{
+    sdl_events_emu();
 }
 
 static bool sdl_init(void)
@@ -511,25 +521,24 @@ static void handle_menu(void)
 static void sdl_events(void)
 {
     SDL_Event event;
-        
+
     while (SDL_PollEvent(&event))
     {
-        sdl_events_app(&event);
+        sdl_events_quit(&event);
 
         if (running)
         {
+            sdl_events_app(&event);
+
             ImGui_ImplSDL2_ProcessEvent(&event);
 
             if (!gui_in_use)
-            {
-                sdl_events_emu(&event);
-                sdl_shortcuts_gui(&event);
-            }
+                sdl_events_shortcuts_gui(&event);
         }
     }
 }
 
-static void sdl_events_app(const SDL_Event* event)
+static void sdl_events_quit(const SDL_Event* event)
 {
     if (event->type == SDL_QUIT)
     {
@@ -542,9 +551,44 @@ static void sdl_events_app(const SDL_Event* event)
         running = false;
         return;
     }
+}
 
+static void sdl_events_app(const SDL_Event* event)
+{
     switch (event->type)
     {
+        case (SDL_DROPFILE):
+        {
+            char* dropped_filedir = event->drop.file;
+            gui_load_rom(dropped_filedir);
+            SDL_free(dropped_filedir);
+            SDL_SetWindowInputFocus(application_sdl_window);
+            break;
+        }
+        case SDL_WINDOWEVENT:
+        {
+            switch (event->window.event)
+            {
+                case SDL_WINDOWEVENT_FOCUS_GAINED:
+                {
+                    if (!paused_when_focus_lost)
+                        emu_resume();
+                    break;
+                }
+                case SDL_WINDOWEVENT_FOCUS_LOST:
+                {
+                    paused_when_focus_lost = emu_is_paused();
+                    emu_pause();
+                    break;
+                }
+            }
+            break;
+        }
+        case (SDL_MOUSEMOTION):
+        {
+            mouse_last_motion_time = SDL_GetTicks();
+            break;
+        }
         case SDL_CONTROLLERDEVICEADDED:
         {
             sdl_add_gamepads();
@@ -555,204 +599,10 @@ static void sdl_events_app(const SDL_Event* event)
             sdl_remove_gamepad(event->cdevice.which);
             break;
         }
-    }
-}
-
-static void sdl_events_emu(const SDL_Event* event)
-{
-    switch(event->type)
-    {
-        case (SDL_DROPFILE):
-        {
-            char* dropped_filedir = event->drop.file;
-            gui_load_rom(dropped_filedir);
-            SDL_free(dropped_filedir);
-            SDL_SetWindowInputFocus(application_sdl_window);
-        }
-        break;
-
-        case SDL_WINDOWEVENT:
-        {
-            switch (event->window.event)
-            {
-                case SDL_WINDOWEVENT_FOCUS_GAINED:
-                {
-                    if (!paused_when_focus_lost)
-                        emu_resume();
-                }
-                break;
-
-                case SDL_WINDOWEVENT_FOCUS_LOST:
-                {
-                    paused_when_focus_lost = emu_is_paused();
-                    emu_pause();
-                }
-                break;
-            }
-        }
-        break;
-
-        case (SDL_MOUSEMOTION):
-        {
-            mouse_last_motion_time = SDL_GetTicks();
-        }
-        break;
-
-        case SDL_CONTROLLERBUTTONDOWN:
-        {
-            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-            {
-                if (!IsValidPointer(application_gamepad[i]))
-                    continue;
-
-                GG_Controllers controller = (GG_Controllers)i;
-                SDL_JoystickID id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[i]));
-
-                if (event->cbutton.which != id)
-                    continue;
-                
-                if (event->cbutton.button == config_input_gamepad[i].gamepad_I)
-                    emu_key_pressed(controller, GG_KEY_I);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_II)
-                    emu_key_pressed(controller, GG_KEY_II);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_III)
-                    emu_key_pressed(controller, GG_KEY_III);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_IV)
-                    emu_key_pressed(controller, GG_KEY_IV);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_V)
-                    emu_key_pressed(controller, GG_KEY_V);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_VI)
-                    emu_key_pressed(controller, GG_KEY_VI);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_run)
-                    emu_key_pressed(controller, GG_KEY_RUN);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_select)
-                    emu_key_pressed(controller, GG_KEY_SELECT);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_toggle_turbo_I)
-                {
-                    config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
-                    emu_set_turbo(controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
-                }
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_toggle_turbo_II)
-                {
-                    config_input.turbo_enabled[controller][1] = !config_input.turbo_enabled[controller][1];
-                    emu_set_turbo(controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
-                }
-
-                if (config_input_gamepad[i].gamepad_directional == 1)
-                    continue;
-                
-                if (event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
-                    emu_key_pressed(controller, GG_KEY_UP);
-                else if (event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
-                    emu_key_pressed(controller, GG_KEY_DOWN);
-                else if (event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
-                    emu_key_pressed(controller, GG_KEY_LEFT);
-                else if (event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
-                    emu_key_pressed(controller, GG_KEY_RIGHT);
-            }
-        }
-        break;
-
-        case SDL_CONTROLLERBUTTONUP:
-        {
-            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-            {
-                if (!IsValidPointer(application_gamepad[i]))
-                    continue;
-
-                GG_Controllers controller = (GG_Controllers)i;
-                SDL_JoystickID id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[i]));
-
-                if (event->cbutton.which != id)
-                    continue;
-                
-                if (event->cbutton.button == config_input_gamepad[i].gamepad_I)
-                    emu_key_released(controller, GG_KEY_I);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_II)
-                    emu_key_released(controller, GG_KEY_II);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_III)
-                    emu_key_released(controller, GG_KEY_III);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_IV)
-                    emu_key_released(controller, GG_KEY_IV);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_V)
-                    emu_key_released(controller, GG_KEY_V);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_VI)
-                    emu_key_released(controller, GG_KEY_VI);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_run)
-                    emu_key_released(controller, GG_KEY_RUN);
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_select)
-                    emu_key_released(controller, GG_KEY_SELECT);
-
-                if (config_input_gamepad[i].gamepad_directional == 1)
-                    continue;
-                
-                if (event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
-                    emu_key_released(controller, GG_KEY_UP);
-                else if (event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
-                    emu_key_released(controller, GG_KEY_DOWN);
-                else if (event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
-                    emu_key_released(controller, GG_KEY_LEFT);
-                else if (event->cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
-                    emu_key_released(controller, GG_KEY_RIGHT);
-            }
-        }
-        break;
-
-        case SDL_CONTROLLERAXISMOTION:
-        {
-            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-            {
-                if (!IsValidPointer(application_gamepad[i]))
-                    continue;
-
-                GG_Controllers controller = (GG_Controllers)i;
-                SDL_JoystickID id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[i]));
-
-                if (config_input_gamepad[i].gamepad_directional == 0)
-                    continue;
-
-                if (event->caxis.which != id)
-                    continue;
-
-                const int STICK_DEAD_ZONE = 8000;
-                    
-                if(event->caxis.axis == config_input_gamepad[i].gamepad_x_axis)
-                {
-                    int x_motion = event->caxis.value * (config_input_gamepad[i].gamepad_invert_x_axis ? -1 : 1);
-
-                    if (x_motion < -STICK_DEAD_ZONE)
-                        emu_key_pressed(controller, GG_KEY_LEFT);
-                    else if (x_motion > STICK_DEAD_ZONE)
-                        emu_key_pressed(controller, GG_KEY_RIGHT);
-                    else
-                    {
-                        emu_key_released(controller, GG_KEY_LEFT);
-                        emu_key_released(controller, GG_KEY_RIGHT);
-                    }
-                }
-                else if(event->caxis.axis == config_input_gamepad[i].gamepad_y_axis)
-                {
-                    int y_motion = event->caxis.value * (config_input_gamepad[i].gamepad_invert_y_axis ? -1 : 1);
-
-                    if (y_motion < -STICK_DEAD_ZONE)
-                        emu_key_pressed(controller, GG_KEY_UP);
-                    else if (y_motion > STICK_DEAD_ZONE)
-                        emu_key_pressed(controller, GG_KEY_DOWN);
-                    else
-                    {
-                        emu_key_released(controller, GG_KEY_UP);
-                        emu_key_released(controller, GG_KEY_DOWN);
-                    }
-                }
-            }
-        }
-        break;
-
         case SDL_KEYDOWN:
         {
             if (event->key.repeat != 0)
                 break;
-
             if (event->key.keysym.mod & KMOD_CTRL)
                 break;
             if (event->key.keysym.mod & KMOD_SHIFT)
@@ -771,31 +621,7 @@ static void sdl_events_emu(const SDL_Event* event)
             {
                 GG_Controllers controller = (GG_Controllers)i;
 
-                if (key == config_input_keyboard[i].key_left)
-                    emu_key_pressed(controller, GG_KEY_LEFT);
-                else if (key == config_input_keyboard[i].key_right)
-                    emu_key_pressed(controller, GG_KEY_RIGHT);
-                else if (key == config_input_keyboard[i].key_up)
-                    emu_key_pressed(controller, GG_KEY_UP);
-                else if (key == config_input_keyboard[i].key_down)
-                    emu_key_pressed(controller, GG_KEY_DOWN);
-                else if (key == config_input_keyboard[i].key_I)
-                    emu_key_pressed(controller, GG_KEY_I);
-                else if (key == config_input_keyboard[i].key_II)
-                    emu_key_pressed(controller, GG_KEY_II);
-                else if (key == config_input_keyboard[i].key_III)
-                    emu_key_pressed(controller, GG_KEY_III);
-                else if (key == config_input_keyboard[i].key_IV)
-                    emu_key_pressed(controller, GG_KEY_IV);
-                else if (key == config_input_keyboard[i].key_V)
-                    emu_key_pressed(controller, GG_KEY_V);
-                else if (key == config_input_keyboard[i].key_VI)
-                    emu_key_pressed(controller, GG_KEY_VI);
-                else if (key == config_input_keyboard[i].key_run)
-                    emu_key_pressed(controller, GG_KEY_RUN);
-                else if (key == config_input_keyboard[i].key_select)
-                    emu_key_pressed(controller, GG_KEY_SELECT);
-                else if (key == config_input_keyboard[i].key_toggle_turbo_I)
+                if (key == config_input_keyboard[i].key_toggle_turbo_I)
                 {
                     config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
                     emu_set_turbo(controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
@@ -806,48 +632,38 @@ static void sdl_events_emu(const SDL_Event* event)
                     emu_set_turbo(controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
                 }
             }
+            break;
         }
-        break;
-
-        case SDL_KEYUP:
+        case SDL_CONTROLLERBUTTONDOWN:
         {
-            int key = event->key.keysym.scancode;
-
             for (int i = 0; i < GG_MAX_GAMEPADS; i++)
             {
-                GG_Controllers controller = (GG_Controllers)i;
+                if (!IsValidPointer(application_gamepad[i]))
+                    continue;
 
-                if (key == config_input_keyboard[i].key_left)
-                    emu_key_released(controller, GG_KEY_LEFT);
-                else if (key == config_input_keyboard[i].key_right)
-                    emu_key_released(controller, GG_KEY_RIGHT);
-                else if (key == config_input_keyboard[i].key_up)
-                    emu_key_released(controller, GG_KEY_UP);
-                else if (key == config_input_keyboard[i].key_down)
-                    emu_key_released(controller, GG_KEY_DOWN);
-                else if (key == config_input_keyboard[i].key_I)
-                    emu_key_released(controller, GG_KEY_I);
-                else if (key == config_input_keyboard[i].key_II)
-                    emu_key_released(controller, GG_KEY_II);
-                else if (key == config_input_keyboard[i].key_III)
-                    emu_key_released(controller, GG_KEY_III);
-                else if (key == config_input_keyboard[i].key_IV)
-                    emu_key_released(controller, GG_KEY_IV);
-                else if (key == config_input_keyboard[i].key_V)
-                    emu_key_released(controller, GG_KEY_V);
-                else if (key == config_input_keyboard[i].key_VI)
-                    emu_key_released(controller, GG_KEY_VI);
-                else if (key == config_input_keyboard[i].key_run)
-                    emu_key_released(controller, GG_KEY_RUN);
-                else if (key == config_input_keyboard[i].key_select)
-                    emu_key_released(controller, GG_KEY_SELECT);
+                GG_Controllers controller = (GG_Controllers)i;
+                SDL_JoystickID id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[i]));
+
+                if (event->cbutton.which != id)
+                    continue;
+
+                if (event->cbutton.button == config_input_gamepad[i].gamepad_toggle_turbo_I)
+                {
+                    config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
+                    emu_set_turbo(controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
+                }
+                else if (event->cbutton.button == config_input_gamepad[i].gamepad_toggle_turbo_II)
+                {
+                    config_input.turbo_enabled[controller][1] = !config_input.turbo_enabled[controller][1];
+                    emu_set_turbo(controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
+                }
             }
+            break;
         }
-        break;
     }
 }
 
-static void sdl_shortcuts_gui(const SDL_Event* event)
+static void sdl_events_shortcuts_gui(const SDL_Event* event)
 {
     if (event->type == SDL_KEYDOWN)
     {
@@ -936,6 +752,26 @@ static void sdl_shortcuts_gui(const SDL_Event* event)
                     gui_shortcut(gui_ShortcutDebugGoBack);
                 break;
         }
+    }
+}
+
+static void sdl_events_emu(void)
+{
+    if (input_updated || gui_in_use)
+        return;
+    input_updated = true;
+
+    SDL_PumpEvents();
+
+    for (int controller = 0; controller < GG_MAX_GAMEPADS; controller++)
+    {
+        Uint16 now = input_build_state(controller);
+        Uint16 before = input_last_state[controller];
+
+        if (now != before)
+            input_apply_state(controller, before, now);
+
+        input_last_state[controller] = now;
     }
 }
 
@@ -1058,11 +894,125 @@ static void sdl_remove_gamepad(SDL_JoystickID instance_id)
     }
 }
 
+static Uint16 input_build_state(int controller)
+{
+    const Uint8* keyboard_state = SDL_GetKeyboardState(NULL);
+    Uint16 ret = 0;
+
+    if (keyboard_state[config_input_keyboard[controller].key_left])
+        ret |= GG_KEY_LEFT;
+    if (keyboard_state[config_input_keyboard[controller].key_right])
+        ret |= GG_KEY_RIGHT;
+    if (keyboard_state[config_input_keyboard[controller].key_up])
+        ret |= GG_KEY_UP;
+    if (keyboard_state[config_input_keyboard[controller].key_down])
+        ret |= GG_KEY_DOWN;
+    if (keyboard_state[config_input_keyboard[controller].key_I])
+        ret |= GG_KEY_I;
+    if (keyboard_state[config_input_keyboard[controller].key_II])
+        ret |= GG_KEY_II;
+    if (keyboard_state[config_input_keyboard[controller].key_III])
+        ret |= GG_KEY_III;
+    if (keyboard_state[config_input_keyboard[controller].key_IV])
+        ret |= GG_KEY_IV;
+    if (keyboard_state[config_input_keyboard[controller].key_V])
+        ret |= GG_KEY_V;
+    if (keyboard_state[config_input_keyboard[controller].key_VI])
+        ret |= GG_KEY_VI;
+    if (keyboard_state[config_input_keyboard[controller].key_run])
+        ret |= GG_KEY_RUN;
+    if (keyboard_state[config_input_keyboard[controller].key_select])
+        ret |= GG_KEY_SELECT;
+
+    SDL_GameController* sdl_controller = application_gamepad[controller];
+
+    if (IsValidPointer(sdl_controller))
+    {
+        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_I))
+            ret |= GG_KEY_I;
+        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_II))
+            ret |= GG_KEY_II;
+        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_III))
+            ret |= GG_KEY_III;
+        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_IV))
+            ret |= GG_KEY_IV;
+        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_V))
+            ret |= GG_KEY_V;
+        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_VI))
+            ret |= GG_KEY_VI;
+        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_run))
+            ret |= GG_KEY_RUN;
+        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_select))
+            ret |= GG_KEY_SELECT;
+
+        // Use D-Pad
+        if (config_input_gamepad[controller].gamepad_directional == 0)
+        {
+            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
+                ret |= GG_KEY_LEFT;
+            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
+                ret |= GG_KEY_RIGHT;
+            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_UP))
+                ret |= GG_KEY_UP;
+            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN))
+                ret |= GG_KEY_DOWN;
+        }
+        // Use analog sticks
+        else
+        {
+            const Sint16 STICK_DEAD_ZONE = 8000;
+            const Sint16 rawx = SDL_GameControllerGetAxis(sdl_controller, (SDL_GameControllerAxis)config_input_gamepad[controller].gamepad_x_axis);
+            const Sint16 rawy = SDL_GameControllerGetAxis(sdl_controller, (SDL_GameControllerAxis)config_input_gamepad[controller].gamepad_y_axis);
+
+            const Sint16 x = config_input_gamepad[controller].gamepad_invert_x_axis ? -rawx : rawx;
+            const Sint16 y = config_input_gamepad[controller].gamepad_invert_y_axis ? -rawy : rawy;
+
+            if (x < -STICK_DEAD_ZONE)
+                ret |= GG_KEY_LEFT;
+            else if (x > STICK_DEAD_ZONE)
+                ret |= GG_KEY_RIGHT;
+
+            if (y < -STICK_DEAD_ZONE)
+                ret |= GG_KEY_UP;
+            else if (y > STICK_DEAD_ZONE)
+                ret |= GG_KEY_DOWN;
+        }
+    }
+
+    return ret;
+}
+
+static void input_apply_state(int controller, Uint16 before, Uint16 now)
+{
+    Uint16 pressed  = now & (Uint16)(~before);
+    Uint16 released = before & (Uint16)(~now);
+
+    if ((pressed | released) == 0)
+        return;
+
+    static const Uint16 keys[12] = {
+        GG_KEY_LEFT, GG_KEY_RIGHT, GG_KEY_UP, GG_KEY_DOWN,
+        GG_KEY_I, GG_KEY_II, GG_KEY_III, GG_KEY_IV,
+        GG_KEY_V, GG_KEY_VI, GG_KEY_RUN, GG_KEY_SELECT
+    };
+
+    for (unsigned i = 0; i < 12; i++)
+    {
+        Uint16 key = keys[i];
+        if (pressed & key)  emu_key_pressed((GG_Controllers)controller, (GG_Keys)key);
+        if (released & key) emu_key_released((GG_Controllers)controller, (GG_Keys)key);
+    }
+}
+
 static void run_emulator(void)
 {
     config_emulator.paused = emu_is_paused();
     emu_audio_sync = config_audio.sync;
     emu_update();
+
+    if (!input_updated)
+        sdl_events_emu();
+    input_updated = false;
 }
 
 static void render(void)

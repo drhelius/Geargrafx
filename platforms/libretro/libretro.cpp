@@ -65,6 +65,7 @@ static bool allow_up_down = false;
 static bool allow_soft_reset = false;
 static int cdrom_bios = 0;
 
+static bool input_updated = false;
 static bool libretro_supports_bitmasks;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
 static int joypad_old[MAX_PADS][MAX_BUTTONS];
@@ -174,13 +175,7 @@ void retro_init(void)
     log_cb(RETRO_LOG_INFO, "%s (%s) libretro\n", GG_TITLE, GG_VERSION);
 
     core = new GeargrafxCore();
-
-#ifdef PS2
-    core->Init(GG_PIXEL_BGR555);
-#else
-    core->Init(GG_PIXEL_RGB565);
-#endif
-
+    core->Init(update_input, GG_PIXEL_RGB565);
     core->GetRuntimeInfo(runtime_info);
 
     frame_buffer = new u8[2048 * 512 * 2];
@@ -276,10 +271,12 @@ void retro_run(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &core_options_updated) && core_options_updated)
         check_variables();
 
-    update_input();
-
     audio_sample_count = 0;
     core->RunToVBlank(frame_buffer, audio_buf, &audio_sample_count);
+
+    if (!input_updated)
+        update_input();
+    input_updated = false;
 
     core->GetRuntimeInfo(runtime_info);
 
@@ -508,6 +505,10 @@ static void set_controller_info(void)
 
 static void update_input(void)
 {
+    if (input_updated)
+        return;
+    input_updated = true;
+
     int16_t joypad_bits[MAX_PADS];
 
     input_poll_cb();

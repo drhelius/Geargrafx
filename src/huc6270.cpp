@@ -25,6 +25,7 @@ HuC6270::HuC6270(HuC6280* huC6280)
 {
     m_huc6280 = huC6280;
     InitPointer(m_huc6260);
+    InitPointer(m_input_pump_fn);
     m_state.AR = &m_address_register;
     m_state.SR = &m_status_register;
     m_state.R = m_register;
@@ -39,10 +40,11 @@ HuC6270::~HuC6270()
 {
 }
 
-void HuC6270::Init(HuC6260* huC6260, HuC6202* huC6202)
+void HuC6270::Init(HuC6260* huC6260, HuC6202* huC6202, GG_Input_Pump_Fn input_pump_fn)
 {
     m_huc6260 = huC6260;
     m_huc6202 = huC6202;
+    m_input_pump_fn = input_pump_fn;
     Reset();
 }
 
@@ -538,6 +540,8 @@ void HuC6270::VBlankIRQ()
     {
         m_status_register |= HUC6270_STATUS_VBLANK;
         m_huc6202->AssertIRQ1(this, true);
+        if(IsValidPointer(m_input_pump_fn))
+            m_input_pump_fn();
     }
 
     if (m_trigger_sat_transfer || (m_register[HUC6270_REG_DCR] & 0x10))
