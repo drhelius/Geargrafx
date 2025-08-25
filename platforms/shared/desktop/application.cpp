@@ -44,6 +44,7 @@ static Uint64 frame_time_start = 0;
 static Uint64 frame_time_end = 0;
 static bool input_updated = false;
 static Uint16 input_last_state[GG_MAX_GAMEPADS] = { };
+static bool input_turbo_toggle_prev[GG_MAX_GAMEPADS][2] = { };
 static Uint32 mouse_last_motion_time = 0;
 static const Uint32 mouse_hide_timeout_ms = 1500;
 
@@ -59,6 +60,7 @@ static void sdl_add_gamepads(void);
 static void sdl_remove_gamepad(SDL_JoystickID instance_id);
 static Uint16 input_build_state(int controller);
 static void input_apply_state(int controller, Uint16 before, Uint16 now);
+static bool input_get_button(SDL_GameController* controller, int mapping);
 static void handle_mouse_cursor(void);
 static void handle_menu(void);
 static void run_emulator(void);
@@ -599,67 +601,6 @@ static void sdl_events_app(const SDL_Event* event)
             sdl_remove_gamepad(event->cdevice.which);
             break;
         }
-        case SDL_KEYDOWN:
-        {
-            if (event->key.repeat != 0)
-                break;
-            if (event->key.keysym.mod & KMOD_CTRL)
-                break;
-            if (event->key.keysym.mod & KMOD_SHIFT)
-                break;
-
-            int key = event->key.keysym.scancode;
-
-            if (key == SDL_SCANCODE_ESCAPE)
-            {
-                config_emulator.fullscreen = false;
-                application_trigger_fullscreen(false);
-                break;
-            }
-
-            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-            {
-                GG_Controllers controller = (GG_Controllers)i;
-
-                if (key == config_input_keyboard[i].key_toggle_turbo_I)
-                {
-                    config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
-                    emu_set_turbo(controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
-                }
-                else if (key == config_input_keyboard[i].key_toggle_turbo_II)
-                {
-                    config_input.turbo_enabled[controller][1] = !config_input.turbo_enabled[controller][1];
-                    emu_set_turbo(controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
-                }
-            }
-            break;
-        }
-        case SDL_CONTROLLERBUTTONDOWN:
-        {
-            for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-            {
-                if (!IsValidPointer(application_gamepad[i]))
-                    continue;
-
-                GG_Controllers controller = (GG_Controllers)i;
-                SDL_JoystickID id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[i]));
-
-                if (event->cbutton.which != id)
-                    continue;
-
-                if (event->cbutton.button == config_input_gamepad[i].gamepad_toggle_turbo_I)
-                {
-                    config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
-                    emu_set_turbo(controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
-                }
-                else if (event->cbutton.button == config_input_gamepad[i].gamepad_toggle_turbo_II)
-                {
-                    config_input.turbo_enabled[controller][1] = !config_input.turbo_enabled[controller][1];
-                    emu_set_turbo(controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
-                }
-            }
-            break;
-        }
     }
 }
 
@@ -672,50 +613,74 @@ static void sdl_events_shortcuts_gui(const SDL_Event* event)
         switch (key)
         {
             case SDL_SCANCODE_Q:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     application_trigger_quit();
                 break;
             case SDL_SCANCODE_A:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutDebugSelectAll);
                 break;
             case SDL_SCANCODE_C:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutDebugCopy);
                 break;
             case SDL_SCANCODE_V:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutDebugPaste);
                 break;
             case SDL_SCANCODE_O:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutOpenROM);
                 break;
             case SDL_SCANCODE_R:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutReset);
                 break;
             case SDL_SCANCODE_P:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutPause);
                 break;
             case SDL_SCANCODE_F:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutFFWD);
                 break;
             case SDL_SCANCODE_L:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutLoadState);
                 break;
             case SDL_SCANCODE_S:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutSaveState);
                 break;
             case SDL_SCANCODE_X:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutScreenshot);
                 break;
             case SDL_SCANCODE_M:
+                if (event->key.repeat != 0)
+                    break;
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutShowMainMenu);
                 break;
@@ -732,6 +697,8 @@ static void sdl_events_shortcuts_gui(const SDL_Event* event)
                 gui_shortcut(gui_ShortcutDebugRuntocursor);
                 break;
             case SDL_SCANCODE_F9:
+                if (event->key.repeat != 0)
+                    break;
                 gui_shortcut(gui_ShortcutDebugBreakpoint);
                 break;
             case SDL_SCANCODE_F10:
@@ -744,12 +711,23 @@ static void sdl_events_shortcuts_gui(const SDL_Event* event)
                     gui_shortcut(gui_ShortcutDebugStepInto);
                 break;
             case SDL_SCANCODE_F12:
+                if (event->key.repeat != 0)
+                    break;
                 config_emulator.fullscreen = !config_emulator.fullscreen;
                 application_trigger_fullscreen(config_emulator.fullscreen);
                 break;
             case SDL_SCANCODE_BACKSPACE:
                 if (event->key.keysym.mod & KMOD_CTRL)
                     gui_shortcut(gui_ShortcutDebugGoBack);
+                break;
+            case SDL_SCANCODE_ESCAPE:
+                if (event->key.repeat != 0)
+                    break;
+                if (config_emulator.fullscreen && !config_emulator.always_show_menu)
+                {
+                    config_emulator.fullscreen = false;
+                    application_trigger_fullscreen(false);
+                }
                 break;
         }
     }
@@ -763,7 +741,9 @@ static void sdl_events_emu(void)
 
     SDL_PumpEvents();
 
-    for (int controller = 0; controller < GG_MAX_GAMEPADS; controller++)
+    int max_controller = config_input.turbo_tap ? GG_MAX_GAMEPADS : 1;
+
+    for (int controller = 0; controller < max_controller; controller++)
     {
         Uint16 now = input_build_state(controller);
         Uint16 before = input_last_state[controller];
@@ -924,26 +904,34 @@ static Uint16 input_build_state(int controller)
     if (keyboard_state[config_input_keyboard[controller].key_select])
         ret |= GG_KEY_SELECT;
 
+    bool kb_turbo_I  = keyboard_state[config_input_keyboard[controller].key_toggle_turbo_I] != 0;
+    bool kb_turbo_II = keyboard_state[config_input_keyboard[controller].key_toggle_turbo_II] != 0;
+    bool gp_turbo_I = false;
+    bool gp_turbo_II = false;
+
     SDL_GameController* sdl_controller = application_gamepad[controller];
 
     if (IsValidPointer(sdl_controller))
     {
-        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_I))
+        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_I))
             ret |= GG_KEY_I;
-        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_II))
+        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_II))
             ret |= GG_KEY_II;
-        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_III))
+        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_III))
             ret |= GG_KEY_III;
-        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_IV))
+        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_IV))
             ret |= GG_KEY_IV;
-        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_V))
+        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_V))
             ret |= GG_KEY_V;
-        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_VI))
+        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_VI))
             ret |= GG_KEY_VI;
-        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_run))
+        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_run))
             ret |= GG_KEY_RUN;
-        if (SDL_GameControllerGetButton(sdl_controller, (SDL_GameControllerButton)config_input_gamepad[controller].gamepad_select))
+        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_select))
             ret |= GG_KEY_SELECT;
+
+        gp_turbo_I  = input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_toggle_turbo_I);
+        gp_turbo_II = input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_toggle_turbo_II);
 
         // Use D-Pad
         if (config_input_gamepad[controller].gamepad_directional == 0)
@@ -979,6 +967,23 @@ static Uint16 input_build_state(int controller)
         }
     }
 
+    bool pressed_turbo_I  = kb_turbo_I || gp_turbo_I;
+    bool pressed_turbo_II = kb_turbo_II || gp_turbo_II;
+
+    if (pressed_turbo_I && !input_turbo_toggle_prev[controller][0])
+    {
+        config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
+        emu_set_turbo((GG_Controllers)controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
+    }
+    if (pressed_turbo_II && !input_turbo_toggle_prev[controller][1])
+    {
+        config_input.turbo_enabled[controller][1] = !config_input.turbo_enabled[controller][1];
+        emu_set_turbo((GG_Controllers)controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
+    }
+
+    input_turbo_toggle_prev[controller][0] = pressed_turbo_I;
+    input_turbo_toggle_prev[controller][1] = pressed_turbo_II;
+
     return ret;
 }
 
@@ -1002,6 +1007,24 @@ static void input_apply_state(int controller, Uint16 before, Uint16 now)
         if (pressed & key)  emu_key_pressed((GG_Controllers)controller, (GG_Keys)key);
         if (released & key) emu_key_released((GG_Controllers)controller, (GG_Keys)key);
     }
+}
+
+static bool input_get_button(SDL_GameController* controller, int mapping)
+{
+    if (!IsValidPointer(controller))
+        return false;
+
+    if (mapping >= 0 && mapping < SDL_CONTROLLER_BUTTON_MAX)
+        return SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)mapping) != 0;
+
+    if (mapping >= GAMEPAD_VBTN_AXIS_BASE)
+    {
+        int axis = mapping - GAMEPAD_VBTN_AXIS_BASE;
+        Sint16 value = SDL_GameControllerGetAxis(controller, (SDL_GameControllerAxis)axis);
+        return value > GAMEPAD_VBTN_AXIS_THRESHOLD;
+    }
+
+    return false;
 }
 
 static void run_emulator(void)

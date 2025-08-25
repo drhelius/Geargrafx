@@ -786,6 +786,8 @@ static void menu_input(void)
 
                 if (ImGui::BeginMenu(keyboard_name))
                 {
+                    ImGui::TextDisabled("Keyboard %s", keyboard_name);
+                    ImGui::Separator();
                     keyboard_configuration_item("Left:", &config_input_keyboard[i].key_left, i);
                     keyboard_configuration_item("Right:", &config_input_keyboard[i].key_right, i);
                     keyboard_configuration_item("Up:", &config_input_keyboard[i].key_up, i);
@@ -859,6 +861,8 @@ static void menu_input(void)
 
                     if (ImGui::BeginMenu("Button Configuration"))
                     {
+                        ImGui::TextDisabled("Gamepad %s", gamepad_name);
+                        ImGui::Separator();
                         gamepad_configuration_item("Select:", &config_input_gamepad[i].gamepad_select, i);
                         gamepad_configuration_item("Run:", &config_input_gamepad[i].gamepad_run, i);
                         gamepad_configuration_item("I:", &config_input_gamepad[i].gamepad_I, i);
@@ -1249,8 +1253,27 @@ static void gamepad_configuration_item(const char* text, int* button, int player
     ImGui::Text("%s", text);
     ImGui::SameLine(120);
 
-    static const char* gamepad_names[16] = {"A", "B", "X" ,"Y", "BACK", "GUIDE", "START", "L3", "R3", "L1", "R1", "UP", "DOWN", "LEFT", "RIGHT", "15"};
-    const char* button_name = (*button >= 0 && *button < 16) ? gamepad_names[*button] : "";
+    const char* button_name = "";
+
+    if (*button == SDL_CONTROLLER_BUTTON_INVALID)
+    {
+        button_name = "";
+    }
+    else if (*button >= 0 && *button < SDL_CONTROLLER_BUTTON_MAX)
+    {
+        static const char* gamepad_names[21] = {"A", "B", "X" ,"Y", "BACK", "GUIDE", "START", "L3", "R3", "L1", "R1", "UP", "DOWN", "LEFT", "RIGHT", "MISC", "PAD1", "PAD2", "PAD3", "PAD4", "TOUCH"};
+        button_name = gamepad_names[*button];
+    }
+    else if (*button >= GAMEPAD_VBTN_AXIS_BASE)
+    {
+        int axis = *button - GAMEPAD_VBTN_AXIS_BASE;
+        if (axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+            button_name = "L2";
+        else if (axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+            button_name = "R2";
+        else
+            button_name = "??";
+    }
 
     char button_label[256];
     snprintf(button_label, 256, "%s##%s%d", button_name, text, player);

@@ -84,6 +84,21 @@ void gui_popup_modal_gamepad(int pad)
             }
         }
 
+        for (int a = SDL_CONTROLLER_AXIS_LEFTX; a < SDL_CONTROLLER_AXIS_MAX; a++)
+        {
+            if (a != SDL_CONTROLLER_AXIS_TRIGGERLEFT && a != SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+                continue;
+
+            Sint16 value = SDL_GameControllerGetAxis(application_gamepad[pad], (SDL_GameControllerAxis)a);
+
+            if (value > GAMEPAD_VBTN_AXIS_THRESHOLD)
+            {
+                *gui_configured_button = GAMEPAD_VBTN_AXIS_BASE + a;
+                ImGui::CloseCurrentPopup();
+                break;
+            }
+        }
+
         if (ImGui::Button("Cancel", ImVec2(120, 0)))
         {
             ImGui::CloseCurrentPopup();
