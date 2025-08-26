@@ -954,7 +954,7 @@ static void add_auto_symbol(GG_Disassembler_Record* record, u16 address)
     DebugSymbol s;
     bool insert = false;
 
-    if (record->irq > 0)
+    if (record->irq > 0 && record->irq < 6)
     {
         s.address = address;
         s.bank = record->bank;
