@@ -70,7 +70,7 @@ void gui_debug_window_huc6270_info(int vdc)
     ImGui::TextColored(violet, "V STATE "); ImGui::SameLine();
     ImGui::TextColored(blue, "%s", v_states[*huc6270_state->V_STATE]);
 
-    ImGui::NewLine(); ImGui::TextColored(cyan, "CONTROL REGISTRY"); ImGui::Separator();
+    ImGui::NewLine(); ImGui::TextColored(cyan, "CONTROL REGISTER"); ImGui::Separator();
 
     ImGui::TextColored(violet, "BACKGRND"); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & 0x0080 ? green : gray, "%s", huc6270_state->R[HUC6270_REG_CR] & 0x0080 ? "ON " : "OFF"); ImGui::SameLine();
@@ -92,7 +92,7 @@ void gui_debug_window_huc6270_info(int vdc)
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_SCANLINE ? yellow : gray, "SCAN"); ImGui::SameLine();
     ImGui::TextColored(huc6270_state->R[HUC6270_REG_CR] & HUC6270_CONTROL_VBLANK ? yellow : gray, "VERT");
 
-    ImGui::NewLine(); ImGui::TextColored(cyan, "STATUS REGISTRY"); ImGui::Separator(); 
+    ImGui::NewLine(); ImGui::TextColored(cyan, "STATUS REGISTER"); ImGui::Separator(); 
 
     ImGui::TextColored(violet, "INT ACT "); ImGui::SameLine();
     ImGui::TextColored(*huc6270_state->SR & HUC6270_STATUS_COLLISION ? green : gray, "COLL"); ImGui::SameLine();
