@@ -106,7 +106,7 @@ void gui_file_dialog_save_ram(void)
 void gui_file_dialog_load_state(void)
 {
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Save State Files", "state" } };
+    nfdfilteritem_t filterItem[1] = { { "Save State Files", "state,state1,state2,state3,state4,state5" } };
     nfdopendialogu8args_t args = { };
     args.filterList = filterItem;
     args.filterCount = 1;
