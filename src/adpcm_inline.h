@@ -50,6 +50,9 @@ inline void Adpcm::SoftReset()
     m_step_index = 0;
     m_play_pending = false;
     m_filter_state = 0.0f;
+    m_dc_prev_x = 0.0f;
+    m_dc_prev_y = 0.0f;
+    m_gain_smooth = 1.0f;
     SetEndIRQ(false);
     SetHalfIRQ(false);
 }
@@ -330,19 +333,28 @@ INLINE void Adpcm::UpdateAudio(u32 cycles)
     {
         m_audio_cycle_counter -= GG_CDAUDIO_CYCLES_PER_SAMPLE;
 
-        s16 raw_sample = (m_sample - 2048) * 10;
+        // Convert to signed and amplify
+        float x = (float)((int)m_sample - 2048) * 10.0f;
 
-        // IIR low-pass filter
-        const float alpha = 0.3f;
-        m_filter_state = (alpha * (float)(raw_sample)) + ((1.0f - alpha) * m_filter_state);
+        // One-pole DC blocker: y[n] = x[n] - x[n-1] + R * y[n-1]
+        const float R = 0.997f;
+        float y = x - m_dc_prev_x + R * m_dc_prev_y;
+        m_dc_prev_x = x;
+        m_dc_prev_y = y;
 
-        s16 final_sample = (s16)CLAMP((int)m_filter_state, -32768, 32767);
+        // IIR Low-pass filter
+        const float alpha_lpf = 0.4f;
+        m_filter_state += alpha_lpf * (y - m_filter_state);
 
-        if (m_cdrom->IsFaderEnabled(true))
-        {
-            double fader_value = m_cdrom->GetFaderValue();
-            final_sample = (s16)(final_sample * fader_value);
-        }
+        // Smooth gain
+        float target_gain = m_cdrom->IsFaderEnabled(true) ? (float)m_cdrom->GetFaderValue() : 1.0f;
+        const float gain_smooth = 0.003f;
+        m_gain_smooth += (target_gain - m_gain_smooth) * gain_smooth;
+
+        int out32 = (int)(m_filter_state * m_gain_smooth);
+
+        // Clamp to 16-bit signed
+        s16 final_sample = (s16)CLAMP(out32, -32768, 32767);
 
         m_buffer[m_buffer_index + 0] = final_sample;
         m_buffer[m_buffer_index + 1] = final_sample;

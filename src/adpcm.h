@@ -114,6 +114,9 @@ private:
     s32 m_frame_samples;
     s16 m_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     float m_filter_state;
+    float m_dc_prev_x;
+    float m_dc_prev_y;
+    float m_gain_smooth;
 };
 
 static const s16 k_adpcm_index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };

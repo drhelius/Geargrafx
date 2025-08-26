@@ -87,6 +87,9 @@ void Adpcm::Reset()
     m_buffer_index = 0;
     m_frame_samples = 0;
     m_filter_state = 0.0f;
+    m_dc_prev_x = 0.0f;
+    m_dc_prev_y = 0.0f;
+    m_gain_smooth = 1.0f;
     memset(m_adpcm_ram, 0, sizeof(m_adpcm_ram));
 }
 
