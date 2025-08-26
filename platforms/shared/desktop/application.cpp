@@ -876,6 +876,10 @@ static void sdl_remove_gamepad(SDL_JoystickID instance_id)
 
 static Uint16 input_build_state(int controller)
 {
+    SDL_Keymod mods = SDL_GetModState();
+    if (mods & (KMOD_CTRL | KMOD_SHIFT | KMOD_ALT | KMOD_GUI))
+        return 0;
+
     const Uint8* keyboard_state = SDL_GetKeyboardState(NULL);
     Uint16 ret = 0;
 

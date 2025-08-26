@@ -1276,7 +1276,7 @@ static void gamepad_configuration_item(const char* text, int* button, int player
     }
 
     char button_label[256];
-    snprintf(button_label, 256, "%s##%s%d", button_name, text, player);
+    snprintf(button_label, sizeof(button_label), "%s##%s%d", button_name, text, player);
 
     if (ImGui::Button(button_label, ImVec2(70,0)))
     {
