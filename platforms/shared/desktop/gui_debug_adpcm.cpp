@@ -46,7 +46,7 @@ void gui_debug_window_adpcm(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(200, 90), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(214, 408), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(214, 426), ImGuiCond_FirstUseEver);
     ImGui::Begin("CD-ROM ADPCM", &config_debug.show_adpcm);
 
     ImGui::PushFont(gui_default_font);
@@ -127,6 +127,10 @@ void gui_debug_window_adpcm(void)
 
     ImGui::TextColored(violet, "LENGTH"); ImGui::SameLine();
     ImGui::TextColored(white, "%d", *adpcm_state->LENGTH);
+
+    float frequency = (32000.0f / (16.0f - (float)*adpcm_state->SAMPLE_RATE)) / 1000.0f;
+    ImGui::TextColored(violet, "FREQUENCY"); ImGui::SameLine();
+    ImGui::TextColored(white, "%.2f KHz", frequency);
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "REGISTERS"); ImGui::Separator();
 
