@@ -1374,7 +1374,7 @@ static void draw_savestate_slot_info(int slot)
 
         ImGui::Text("%s", emu_savestates[slot].rom_name);
         char date[64];
-        GetDateTimeString(emu_savestates[slot].timestamp, date, sizeof(date));
+        get_date_time_string(emu_savestates[slot].timestamp, date, sizeof(date));
         ImGui::Text("%s", date);
 
         if (IsValidPointer(emu_savestates_screenshots[slot].data))

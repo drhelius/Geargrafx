@@ -238,7 +238,7 @@ static void memory_editor_menu(void)
             if (ImGui::InputTextWithHint("##set_value", word_bytes == 1 ? "XX" : "XXXX", set_value_buffer, IM_ARRAYSIZE(set_value_buffer), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
             {
                 u16 value = 0;
-                if (parseHexString(set_value_buffer, strlen(set_value_buffer), &value))
+                if (parse_hex_string(set_value_buffer, strlen(set_value_buffer), &value))
                 {
                     mem_edit[current_mem_edit].SetValueToSelection((int)value);
                     set_value_buffer[0] = 0;
@@ -248,7 +248,7 @@ static void memory_editor_menu(void)
             if (ImGui::Button("Set!", ImVec2(40, 0)))
             {
                 u16 value = 0;
-                if (parseHexString(set_value_buffer, strlen(set_value_buffer), &value))
+                if (parse_hex_string(set_value_buffer, strlen(set_value_buffer), &value))
                 {
                     mem_edit[current_mem_edit].SetValueToSelection((int)value);
                     set_value_buffer[0] = 0;

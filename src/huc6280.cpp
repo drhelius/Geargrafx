@@ -155,8 +155,8 @@ bool HuC6280::AddBreakpoint(int type, char* text, bool read, bool write, bool ex
     if ((input_len == 9) && (text[4] == '-'))
     {
         // format: AAAA-BBBB
-        if (parseHexString(text, 4, &brk.address1) && 
-            parseHexString(text + 5, 4, &brk.address2))
+        if (parse_hex_string(text, 4, &brk.address1) &&
+            parse_hex_string(text + 5, 4, &brk.address2))
         {
             brk.range = true;
         }
@@ -168,7 +168,7 @@ bool HuC6280::AddBreakpoint(int type, char* text, bool read, bool write, bool ex
     else if ((input_len > 0) && (input_len <= 4))
     {
         // format: AAAA
-        if (!parseHexString(text, input_len, &brk.address1))
+        if (!parse_hex_string(text, input_len, &brk.address1))
         {
             return false;
         }

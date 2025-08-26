@@ -919,10 +919,10 @@ static void add_symbol(const char* line)
 
         // Parse the bank and address values
         u16 bank_value = 0;
-        if (parseHexString(bank_str.c_str(), bank_str.length(), &bank_value))
+        if (parse_hex_string(bank_str.c_str(), bank_str.length(), &bank_value))
         {
             u16 address_value = 0;
-            if (parseHexString(addr_str.c_str(), addr_str.length(), &address_value))
+            if (parse_hex_string(addr_str.c_str(), addr_str.length(), &address_value))
             {
                 s.bank = bank_value;
                 s.address = address_value;
@@ -1208,7 +1208,7 @@ static void disassembler_menu(void)
             if (go)
             {
                 u16 address_value = 0;
-                if (parseHexString(goto_address, strlen(goto_address), &address_value))
+                if (parse_hex_string(goto_address, strlen(goto_address), &address_value))
                 {
                     request_goto_address(address_value);
                 }
@@ -1282,7 +1282,7 @@ static void disassembler_menu(void)
             if (go)
             {
                 u16 address_value = 0;
-                if (parseHexString(runto_address, strlen(runto_address), &address_value))
+                if (parse_hex_string(runto_address, strlen(runto_address), &address_value))
                 {
                     gui_debug_runto_address(address_value);
                 }
@@ -1412,7 +1412,7 @@ static void add_bookmark_popup(void)
         if (ImGui::Button("OK", ImVec2(90, 0)))
         {
             u16 bookmark_address = 0;
-            if (parseHexString(address_bookmark, strlen(address_bookmark), &bookmark_address))
+            if (parse_hex_string(address_bookmark, strlen(address_bookmark), &bookmark_address))
             {
                 if (strlen(name_bookmark) == 0)
                 {

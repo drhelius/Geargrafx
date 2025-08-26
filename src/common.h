@@ -40,7 +40,37 @@
 #include "bit_ops.h"
 #include <miniz.h>
 
-inline int AsHex(const char c)
+inline u16 read_u16_le(const u8* p)
+{
+    return (u16)p[0] | ((u16)p[1] << 8);
+}
+
+inline u32 read_u32_le(const u8* p)
+{
+    return (u32)p[0] | ((u32)p[1] << 8) | ((u32)p[2] << 16) | ((u32)p[3] << 24);
+}
+
+inline u16 read_u16_be(const u8* p)
+{
+    return (u16)p[1] | ((u16)p[0] << 8);
+}
+
+inline u32 read_u32_be(const u8* p)
+{
+    return (u32)p[3] | ((u32)p[2] << 8) | ((u32)p[1] << 16) | ((u32)p[0] << 24);
+}
+
+inline u16 hi(u16 a)
+{
+    return (u16)(a >> 8);
+}
+
+inline u16 lo(u16 a)
+{
+    return (u16)(a & 0xFF);
+}
+
+inline int as_hex(const char c)
 {
     if (c >= '0' && c <= '9')
         return c - '0';
@@ -51,7 +81,7 @@ inline int AsHex(const char c)
     return 0;
 }
 
-inline unsigned int Pow2Ceil(u16 n)
+inline unsigned int pow_2_ceil(u16 n)
 {
     --n;
     n |= n >> 1;
@@ -62,25 +92,25 @@ inline unsigned int Pow2Ceil(u16 n)
     return n;
 }
 
-inline void GetDateTimeString(time_t timestamp, char* buffer, size_t size)
+inline void get_date_time_string(time_t timestamp, char* buffer, size_t size)
 {
     struct tm* timeinfo = localtime(&timestamp);
     strftime(buffer, size, "%Y-%m-%d %H:%M:%S", timeinfo);
 }
 
-inline void GetCurrentDateTimeString(char* buffer, size_t size)
+inline void get_current_date_time_string(char* buffer, size_t size)
 {
     time_t timestamp = time(NULL);
-    GetDateTimeString(timestamp, buffer, size);
+    get_date_time_string(timestamp, buffer, size);
 }
 
-inline bool isHexDigit(char c)
+inline bool is_hex_digit(char c)
 {
     return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
 template<typename T>
-inline bool parseHexString(const char* str, size_t len, T* result, size_t max_digits = sizeof(T) * 2)
+inline bool parse_hex_string(const char* str, size_t len, T* result, size_t max_digits = sizeof(T) * 2)
 {
     if (len == 0 || len > max_digits)
         return false;
@@ -88,7 +118,7 @@ inline bool parseHexString(const char* str, size_t len, T* result, size_t max_di
     *result = 0;
     for (size_t i = 0; i < len; i++)
     {
-        if (!isHexDigit(str[i]))
+        if (!is_hex_digit(str[i]))
             return false;
 
         *result = (*result << 4);
@@ -103,19 +133,19 @@ inline bool parseHexString(const char* str, size_t len, T* result, size_t max_di
     return true;
 }
 
-inline bool parseHexString(const char* str, size_t len, u8* result)
+inline bool parse_hex_string(const char* str, size_t len, u8* result)
 {
-    return parseHexString<u8>(str, len, result, 2);
+    return parse_hex_string<u8>(str, len, result, 2);
 }
 
-inline bool parseHexString(const char* str, size_t len, u16* result)
+inline bool parse_hex_string(const char* str, size_t len, u16* result)
 {
-    return parseHexString<u16>(str, len, result, 4);
+    return parse_hex_string<u16>(str, len, result, 4);
 }
 
-inline bool parseHexString(const char* str, size_t len, u32* result)
+inline bool parse_hex_string(const char* str, size_t len, u32* result)
 {
-    return parseHexString<u32>(str, len, result, 8);
+    return parse_hex_string<u32>(str, len, result, 8);
 }
 
 inline char* strncpy_fit(char* dest, const char* src, size_t dest_size)
