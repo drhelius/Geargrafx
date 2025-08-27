@@ -287,6 +287,58 @@ void gui_file_dialog_save_screenshot(void)
     }
 }
 
+void gui_file_dialog_save_sprite(int vdc, int index)
+{
+    char default_name[32];
+    snprintf(default_name, 32, "sprite_vdc%d_id%02d.png", vdc, index);
+
+    nfdchar_t *outPath;
+    nfdfilteritem_t filterItem[1] = { { "PNG Files", "png" } };
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = NULL;
+    args.defaultName = default_name;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        gui_action_save_sprite(outPath, vdc, index);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        Error("Save Sprite Error: %s", NFD_GetError());
+    }
+}
+
+void gui_file_dialog_save_background(int vdc)
+{
+    char default_name[32];
+    snprintf(default_name, 32, "background_vdc%d.png", vdc);
+
+    nfdchar_t *outPath;
+    nfdfilteritem_t filterItem[1] = { { "PNG Files", "png" } };
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = NULL;
+    args.defaultName = default_name;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        gui_action_save_background(outPath, vdc);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        Error("Save Background Error: %s", NFD_GetError());
+    }
+}
+
 void gui_file_dialog_save_memory_dump(bool binary)
 {
     nfdchar_t *outPath;

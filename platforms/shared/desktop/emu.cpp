@@ -494,6 +494,38 @@ void emu_save_screenshot(const char* file_path)
     Log("Screenshot saved to %s", file_path);
 }
 
+void emu_save_sprite(const char* file_path, int vdc, int index)
+{
+    if (!geargrafx->GetMedia()->IsReady())
+        return;
+
+    update_debug_sprites();
+
+    int width = emu_debug_sprite_widths[vdc][index];
+    int height = emu_debug_sprite_heights[vdc][index];
+    u8* buffer = emu_debug_sprite_buffers[vdc][index];
+
+    stbi_write_png(file_path, width, height, 4, buffer, width * 4);
+
+    Log("Sprite saved to %s", file_path);
+}
+
+void emu_save_background(const char* file_path, int vdc)
+{
+    if (!geargrafx->GetMedia()->IsReady())
+        return;
+
+    update_debug_background();
+
+    int width = emu_debug_background_buffer_width[vdc];
+    int height = emu_debug_background_buffer_height[vdc];
+    u8* buffer = emu_debug_background_buffer[vdc];
+
+    stbi_write_png(file_path, width, height, 4, buffer, width * 4);
+
+    Log("Background saved to %s", file_path);
+}
+
 bool emu_load_bios(const char* file_path, bool syscard)
 {
     return geargrafx->LoadBios(file_path, syscard);

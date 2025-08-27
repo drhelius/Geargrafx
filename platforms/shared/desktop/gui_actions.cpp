@@ -123,3 +123,29 @@ void gui_action_save_screenshot(const char* path)
     string message = "Screenshot saved to " + file_path;
     gui_set_status_message(message.c_str(), 3000);
 }
+
+void gui_action_save_sprite(const char* path, int vdc, int index)
+{
+    using namespace std;
+
+    if (!emu_get_core()->GetMedia()->IsReady())
+        return;
+
+    emu_save_sprite(path, vdc, index);
+
+    string message = "Sprite saved to " + string(path);
+    gui_set_status_message(message.c_str(), 3000);
+}
+
+void gui_action_save_background(const char* path, int vdc)
+{
+    using namespace std;
+
+    if (!emu_get_core()->GetMedia()->IsReady())
+        return;
+
+    emu_save_background(path, vdc);
+
+    string message = "Background saved to " + string(path);
+    gui_set_status_message(message.c_str(), 3000);
+}

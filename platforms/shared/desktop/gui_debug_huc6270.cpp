@@ -22,6 +22,7 @@
 
 #include "imgui.h"
 #include "geargrafx.h"
+#include "gui_filedialogs.h"
 #include "gui_debug_constants.h"
 #include "gui_debug_memory.h"
 #include "gui.h"
@@ -29,6 +30,9 @@
 #include "emu.h"
 #include "renderer.h"
 #include "utils.h"
+
+static void draw_context_menu_sprites(int vdc, int index);
+static void draw_context_menu_background(int vdc);
 
 void gui_debug_window_huc6270_info(int vdc)
 {
@@ -320,6 +324,8 @@ void gui_debug_window_huc6270_background(int vdc)
 
         ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_background[vdc - 1], ImVec2(size_h, size_v), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width[vdc - 1] / texture_size_h, emu_debug_background_buffer_height[vdc - 1] / texture_size_v));
 
+        draw_context_menu_background(vdc);
+
         if (show_grid)
         {
             float x = p.x;
@@ -444,6 +450,8 @@ void gui_debug_window_huc6270_sprites(int vdc)
 
         ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_sprites[vdc - 1][s], ImVec2(fwidth, fheight), ImVec2(0.0f, 0.0f), ImVec2(tex_h, tex_v));
 
+        draw_context_menu_sprites(vdc, s);
+
         float mouse_x = io.MousePos.x - p[s].x;
         float mouse_y = io.MousePos.y - p[s].y;
 
@@ -551,4 +559,36 @@ void gui_debug_window_huc6270_sprites(int vdc)
 
     ImGui::End();
     ImGui::PopStyleVar();
+}
+
+static void draw_context_menu_sprites(int vdc, int index)
+{
+    ImGui::PopFont();
+
+    char ctx_id[16];
+    snprintf(ctx_id, sizeof(ctx_id), "##spr_ctx_%d_%02d", vdc, index);
+
+    if (ImGui::BeginPopupContextItem(ctx_id))
+    {
+        if (ImGui::Selectable("Save Sprite As..."))
+            gui_file_dialog_save_sprite(vdc - 1, index);
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::PushFont(gui_default_font);
+}
+
+static void draw_context_menu_background(int vdc)
+{
+    char ctx_id[16];
+    snprintf(ctx_id, sizeof(ctx_id), "##bg_ctx_%d", vdc);
+
+    if (ImGui::BeginPopupContextItem(ctx_id))
+    {
+        if (ImGui::Selectable("Save Background As..."))
+            gui_file_dialog_save_background(vdc - 1);
+
+        ImGui::EndPopup();
+    }
 }

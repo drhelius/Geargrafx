@@ -113,6 +113,8 @@ EXTERN void emu_set_avenue_pad_3_button(GG_Controllers controller, GG_Keys butto
 EXTERN void emu_set_turbo(GG_Controllers controller, GG_Keys button, bool enabled);
 EXTERN void emu_set_turbo_speed(GG_Controllers controller, GG_Keys button, u8 speed);
 EXTERN void emu_save_screenshot(const char* file_path);
+EXTERN void emu_save_sprite(const char* file_path, int vdc, int index);
+EXTERN void emu_save_background(const char* file_path, int vdc);
 EXTERN bool emu_load_bios(const char* file_path, bool syscard);
 
 #undef EMU_IMPORT
