@@ -41,6 +41,7 @@ public:
     void Reset();
     u32 GetCRC();
     bool IsReady();
+    bool IsHES();
     bool IsSGX();
     bool IsCDROM();
     bool IsGameExpress();
@@ -97,6 +98,7 @@ private:
     u32 m_crc;
     u32 m_bios_crc_syscard;
     u32 m_bios_crc_gameexpress;
+    bool m_is_hes;
     bool m_is_gameexpress;
     bool m_is_sgx;
     bool m_is_cdrom;

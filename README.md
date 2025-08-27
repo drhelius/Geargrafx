@@ -83,6 +83,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 - Adjustable scanline count (224p, 240p or manual).
 - RGB or Composite color output.
 - Compressed rom and CD images support (pce, sgx, cue, zip and chd).
+- Music rom support: HES.
 - Internal database for automatic rom detection and hardware selection if `Auto` options are selected.
 - Supported platforms (standalone): Windows, Linux, BSD and macOS.
 - Supported platforms (libretro): Windows, Linux, macOS, Raspberry Pi, Android, iOS, tvOS, PlayStation Vita, PlayStation 3, Nintendo 3DS, Nintendo GameCube, Nintendo Wii, Nintendo WiiU, Nintendo Switch, Emscripten, Classic Mini systems (NES, SNES, C64, ...), OpenDingux, RetroFW and QNX.

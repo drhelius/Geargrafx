@@ -42,6 +42,7 @@ Media::Media(CdRomMedia* cdrom_media)
     m_crc = 0;
     m_bios_crc_syscard = 0;
     m_bios_crc_gameexpress = 0;
+    m_is_hes = false;
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
@@ -82,6 +83,7 @@ void Media::Reset()
     m_file_name[0] = 0;
     m_file_extension[0] = 0;
     m_crc = 0;
+    m_is_hes = false;
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
@@ -336,7 +338,7 @@ bool Media::LoadMediaFromZipFile(const char* path)
         string extension = fn.substr(fn.find_last_of(".") + 1);
         transform(extension.begin(), extension.end(), extension.begin(), (int(*)(int)) tolower);
 
-        if ((extension == "pce") || (extension == "sgx") || (extension == "rom"))
+        if ((extension == "pce") || (extension == "sgx") || (extension == "hes") || (extension == "rom"))
         {
             void *p;
             size_t uncomp_size;
@@ -416,6 +418,12 @@ void Media::GatherMediaInfo()
     {
         m_is_sgx = true;
         Log("Forcing SuperGrafx (SGX) because of user request");
+    }
+
+    if (strcmp(m_file_extension, "hes") == 0)
+    {
+        m_is_hes = true;
+        Log("Media is a HES music rom");
     }
 
     if (!m_is_sgx && (strcmp(m_file_extension, "sgx") == 0))

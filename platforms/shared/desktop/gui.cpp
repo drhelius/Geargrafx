@@ -36,6 +36,7 @@
 #include "gui_menus.h"
 #include "gui_popups.h"
 #include "gui_actions.h"
+#include "gui_hes.h"
 #include "gui_debug.h"
 #include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
@@ -161,6 +162,7 @@ bool gui_init(void)
     if (strlen(gui_gameexpress_bios_path) > 0)
         gui_load_bios(gui_gameexpress_bios_path, false);
 
+    gui_hes_init();
     gui_debug_init();
     gui_init_menus();
 
@@ -169,6 +171,7 @@ bool gui_init(void)
 
 void gui_destroy(void)
 {
+    gui_hes_destroy();
     gui_debug_destroy();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
@@ -406,6 +409,12 @@ void gui_set_error_message(const char* message)
 
 static void main_window(void)
 {
+    if (emu_get_core()->GetMedia()->IsHES())
+    {
+        gui_draw_hes_visualization();
+        return;
+    }
+
     GG_Runtime_Info runtime;
     emu_get_runtime(runtime);
 

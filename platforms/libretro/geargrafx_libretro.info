@@ -1,7 +1,7 @@
 # Software Information
 display_name = "NEC - PC Engine / SuperGrafx / CD (Geargrafx)"
 authors = "Ignacio Sanchez"
-supported_extensions = "pce|sgx|cue|chd"
+supported_extensions = "pce|sgx|hes|cue|chd"
 corename = "Geargrafx"
 categories = "Emulator"
 license = "GPLv3"

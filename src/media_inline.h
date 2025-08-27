@@ -33,6 +33,11 @@ inline bool Media::IsReady()
     return m_ready;
 }
 
+inline bool Media::IsHES()
+{
+    return m_is_hes;
+}
+
 inline bool Media::IsSGX()
 {
     return m_is_sgx;
