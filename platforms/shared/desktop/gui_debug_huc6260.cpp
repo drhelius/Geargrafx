@@ -111,7 +111,7 @@ void gui_debug_window_huc6260_palettes(void)
                     ImVec4 float_color = color_333_to_float(color);
                     char id[16];
                     snprintf(id, 16, "##bg_pal_%d_%d", row, col);
-                    ImGui::ColorEdit3(id, (float*)&float_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip);
+                    ImGui::ColorEdit3(id, (float*)&float_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker);
                     if (col != 15)
                         ImGui::SameLine(0, 10);
                 }
@@ -161,7 +161,7 @@ void gui_debug_window_huc6260_palettes(void)
                     ImVec4 float_color = color_333_to_float(color);
                     char id[16];
                     snprintf(id, 16, "##spr_pal_%d_%d", row, col);
-                    ImGui::ColorEdit3(id, (float*)&float_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip);
+                    ImGui::ColorEdit3(id, (float*)&float_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoPicker);
                     if (col != 15)
                         ImGui::SameLine(0, 10);
                 }
