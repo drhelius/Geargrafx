@@ -202,6 +202,7 @@ void config_read(void)
     config_emulator.ffwd_speed = read_int("Emulator", "FFWD", 1);
     config_emulator.save_slot = read_int("Emulator", "SaveSlot", 0);
     config_emulator.start_paused = read_bool("Emulator", "StartPaused", false);
+    config_emulator.pause_when_inactive = read_bool("Emulator", "PauseWhenInactive", true);
     config_emulator.savefiles_dir_option = read_int("Emulator", "SaveFilesDirOption", 0);
     config_emulator.savefiles_path = read_string("Emulator", "SaveFilesPath");
     config_emulator.savestates_dir_option = read_int("Emulator", "SaveStatesDirOption", 0);
@@ -422,6 +423,7 @@ void config_write(void)
     write_int("Emulator", "FFWD", config_emulator.ffwd_speed);
     write_int("Emulator", "SaveSlot", config_emulator.save_slot);
     write_bool("Emulator", "StartPaused", config_emulator.start_paused);
+    write_bool("Emulator", "PauseWhenInactive", config_emulator.pause_when_inactive);
     write_int("Emulator", "SaveFilesDirOption", config_emulator.savefiles_dir_option);
     write_string("Emulator", "SaveFilesPath", config_emulator.savefiles_path);
     write_int("Emulator", "SaveStatesDirOption", config_emulator.savestates_dir_option);
