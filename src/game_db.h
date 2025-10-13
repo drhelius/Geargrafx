@@ -74,6 +74,7 @@ const GG_DB_Entry k_game_database[] =
 
     // OPTIONAL SGX
     { 0xBEBFE042, "Darius Plus (J) (SGX)", GG_GAMEDB_SGX_OPTIONAL },
+    { 0xEB2466F9, "Darius Alpha (J) (SGX)", GG_GAMEDB_SGX_OPTIONAL },
 
     // SF2 MAPPER
     { 0xD15CB6BB, "Street Fighter II' - Champion Edition (J)", GG_GAMEDB_SF2_MAPPER },
