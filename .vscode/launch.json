@@ -15,7 +15,8 @@
                 "program": "${workspaceFolder}/platforms/macos/geargrafx",
                 "cwd": "${workspaceFolder}/platforms/macos",
                 "MIMode": "lldb",
-                "externalConsole": true
+                "externalConsole": true,
+                "targetArchitecture": "arm64"
             },
             "args": [],
             "stopAtEntry": false,
