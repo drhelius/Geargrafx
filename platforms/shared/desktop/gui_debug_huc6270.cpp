@@ -409,6 +409,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
     GeargrafxCore* core = emu_get_core();
     HuC6270* huc6270 = vdc == 1 ? core->GetHuC6270_1() : core->GetHuC6270_2();
     u16* sat = huc6270->GetSAT();
+    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
     GG_Runtime_Info runtime;
     emu_get_runtime(runtime);
     bool* show = ((vdc == 1) ? &config_debug.show_huc6270_1_sprites : &config_debug.show_huc6270_2_sprites);
@@ -496,13 +497,26 @@ void gui_debug_window_huc6270_sprites(int vdc)
             int palette = sprite_flags & 0x0F;
             bool priority = (sprite_flags & 0x0080) != 0;
 
-            float real_x = (float)(sprite_x - 32);
+            const float hds_scale = (runtime.screen_width == 512) ? 2.0f : 8.0f;
+            const int base_x_offset = (runtime.screen_width == 512) ? 64 : 32;
+            int per_res_x_offset = 0;
+            int hds = (int)((huc6270_state->R[HUC6270_REG_HSR] >> 8) & 0x7F);
+            int base_hds = 4;
+            int hds_delta = hds - base_hds;
+            if (runtime.screen_width != 256)
+            {
+                per_res_x_offset = (int)roundf(hds_delta * hds_scale);
+            }
+
+            float real_x = (float)(sprite_x - base_x_offset + per_res_x_offset);
             float real_y = (float)(sprite_y - 64);
+            float width_f = (float)width;
+            float height_f = (float)height;
 
             float rectx_min = p_screen.x + (real_x * screen_scale);
-            float rectx_max = p_screen.x + ((real_x + width) * screen_scale);
+            float rectx_max = p_screen.x + ((real_x + width_f) * screen_scale);
             float recty_min = p_screen.y + (real_y * screen_scale);
-            float recty_max = p_screen.y + ((real_y + height) * screen_scale);
+            float recty_max = p_screen.y + ((real_y + height_f) * screen_scale);
 
             rectx_min = fminf(fmaxf(rectx_min, p_screen.x), p_screen.x + (runtime.screen_width * screen_scale));
             rectx_max = fminf(fmaxf(rectx_max, p_screen.x), p_screen.x + (runtime.screen_width * screen_scale));
