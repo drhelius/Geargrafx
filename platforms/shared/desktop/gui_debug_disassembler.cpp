@@ -166,7 +166,8 @@ void gui_debug_reset_breakpoints(void)
 
 void gui_debug_load_symbols_file(const char* file_path)
 {
-    std::ifstream file(file_path);
+    std::ifstream file;
+    open_ifstream_utf8(file, file_path, std::ios::in);
 
     if (file.is_open())
     {
@@ -306,7 +307,7 @@ void gui_debug_window_disassembler(void)
 
 void gui_debug_save_disassembler(const char* file_path, bool full)
 {
-    FILE* file = fopen(file_path, "w");
+    FILE* file = fopen_utf8(file_path, "w");
 
     if (IsValidPointer(file))
     {

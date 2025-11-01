@@ -438,10 +438,11 @@ static void sdl_load_gamepad_mappings(void)
         db_path = "gamecontrollerdb.txt";
     }
 
-    std::ifstream file(db_path);
+    std::ifstream file;
+    open_ifstream_utf8(file, db_path.c_str(), std::ios::in);
     if (!file.is_open())
     {
-        file.open("gamecontrollerdb.txt");
+        open_ifstream_utf8(file, "gamecontrollerdb.txt", std::ios::in);
     }
 
     int added_mappings = 0;

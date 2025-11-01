@@ -141,7 +141,8 @@ bool Media::LoadMedia(const char* path)
     }
     else
     {
-        ifstream file(path, ios::in | ios::binary | ios::ate);
+        ifstream file;
+        open_ifstream_utf8(file, path, ios::in | ios::binary | ios::ate);
         int size = (int)(file.tellg());
 
         if (file.is_open())
@@ -715,7 +716,8 @@ bool Media::IsValidFile(const char* path)
         return false;
     }
 
-    ifstream file(path, ios::in | ios::binary | ios::ate);
+    ifstream file;
+    open_ifstream_utf8(file, path, ios::in | ios::binary | ios::ate);
 
     if (file.is_open())
     {

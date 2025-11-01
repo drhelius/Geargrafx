@@ -247,7 +247,8 @@ void GeargrafxCore::SaveRam(const char* path, bool full_path)
 
         Log("Saving RAM file: %s", final_path.c_str());
 
-        ofstream file(final_path.c_str(), ios::out | ios::binary);
+        ofstream file;
+        open_ofstream_utf8(file, final_path.c_str(), ios::out | ios::binary);
         m_memory->SaveRam(file);
 
         Debug("RAM saved");
@@ -284,7 +285,8 @@ void GeargrafxCore::LoadRam(const char* path, bool full_path)
 
         Log("Loading RAM file: %s", final_path.c_str());
 
-        ifstream file(final_path.c_str(), ios::in | ios::binary);
+        ifstream file;
+        open_ifstream_utf8(file, final_path.c_str(), ios::in | ios::binary);
 
         if (!file.fail())
         {
@@ -345,7 +347,8 @@ bool GeargrafxCore::SaveState(const char* path, int index, bool screenshot)
     string full_path = GetSaveStatePath(path, index);
     Debug("Saving state to %s...", full_path.c_str());
 
-    ofstream stream(full_path.c_str(), ios::out | ios::binary);
+    ofstream stream;
+    open_ofstream_utf8(stream, full_path.c_str(), ios::out | ios::binary);
 
     size_t size;
     bool ret = SaveState(stream, size, screenshot);
@@ -493,7 +496,7 @@ bool GeargrafxCore::LoadState(const char* path, int index)
     Debug("Loading state from %s...", full_path.c_str());
 
     ifstream stream;
-    stream.open(full_path.c_str(), ios::in | ios::binary);
+    open_ifstream_utf8(stream, full_path.c_str(), ios::in | ios::binary);
 
     if (!stream.fail())
     {
@@ -639,7 +642,7 @@ bool GeargrafxCore::GetSaveStateHeader(int index, const char* path, GG_SaveState
     Debug("Loading state header from %s...", full_path.c_str());
 
     ifstream stream;
-    stream.open(full_path.c_str(), ios::in | ios::binary);
+    open_ifstream_utf8(stream, full_path.c_str(), ios::in | ios::binary);
 
     if (stream.fail())
     {
@@ -687,7 +690,7 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
     Debug("Loading state screenshot from %s...", full_path.c_str());
 
     ifstream stream;
-    stream.open(full_path.c_str(), ios::in | ios::binary);
+    open_ifstream_utf8(stream, full_path.c_str(), ios::in | ios::binary);
 
     if (stream.fail())
     {

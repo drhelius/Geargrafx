@@ -173,7 +173,7 @@ void gui_debug_trace_logger_clear(void)
 
 void gui_debug_save_log(const char* file_path)
 {
-    FILE* file = fopen(file_path, "w");
+    FILE* file = fopen_utf8(file_path, "w");
 
     if (file != NULL)
     {

@@ -49,6 +49,43 @@
 #include <sys/types.h>
 #endif
 
+// UTF-8 file path support for Windows
+#if defined(_WIN32)
+#include <windows.h>
+static FILE* utf8_fopen(const char* path, const char* mode)
+{
+	if (!path || !mode)
+		return NULL;
+
+	int path_size = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
+	int mode_size = MultiByteToWideChar(CP_UTF8, 0, mode, -1, NULL, 0);
+
+	if (path_size <= 0 || mode_size <= 0)
+		return NULL;
+
+	wchar_t* wpath = (wchar_t*)malloc(path_size * sizeof(wchar_t));
+	wchar_t* wmode = (wchar_t*)malloc(mode_size * sizeof(wchar_t));
+
+	if (!wpath || !wmode) {
+		if (wpath) free(wpath);
+		if (wmode) free(wmode);
+		return NULL;
+	}
+
+	MultiByteToWideChar(CP_UTF8, 0, path, -1, wpath, path_size);
+	MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, mode_size);
+
+	FILE* file = _wfopen(wpath, wmode);
+
+	free(wpath);
+	free(wmode);
+
+	return file;
+}
+#else
+#define utf8_fopen fopen
+#endif
+
 #include <libchdr/chd.h>
 #include <libchdr/cdrom.h>
 #include <libchdr/flac.h>
@@ -3425,7 +3462,7 @@ static core_file *core_stdio_fopen(char const *path) {
 	core_file *file = malloc(sizeof(core_file));
 	if (!file)
 		return NULL;
-	if (!(file->argp = fopen(path, "rb"))) {
+	if (!(file->argp = utf8_fopen(path, "rb"))) {
 		free(file);
 		return NULL;
 	}

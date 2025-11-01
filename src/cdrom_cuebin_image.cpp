@@ -21,6 +21,7 @@
 #include <sstream>
 #include <algorithm>
 #include "cdrom_cuebin_image.h"
+#include "cdrom_common.h"
 #include "crc.h"
 
 CdRomCueBinImage::CdRomCueBinImage() : CdRomImage()
@@ -68,7 +69,8 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
         return m_ready;
     }
 
-    ifstream file(path, ios::in | ios::binary | ios::ate);
+    ifstream file;
+    open_ifstream_utf8(file, path, ios::in | ios::binary | ios::ate);
 
     if (file.is_open())
     {
@@ -388,7 +390,8 @@ bool CdRomCueBinImage::ValidateFile(const char* file_path)
 {
     using namespace std;
 
-    ifstream file(file_path, ios::in | ios::binary | ios::ate);
+    ifstream file;
+    open_ifstream_utf8(file, file_path, ios::in | ios::binary | ios::ate);
 
     if (file.is_open())
     {
@@ -424,7 +427,8 @@ bool CdRomCueBinImage::ProcessFileFormat(ImgFile* img_file)
     string extension = file_path.substr(file_path.find_last_of(".") + 1);
     transform(extension.begin(), extension.end(), extension.begin(), (int(*)(int)) tolower);
 
-    ifstream file(img_file->file_path, ios::in | ios::binary | ios::ate);
+    ifstream file;
+    open_ifstream_utf8(file, img_file->file_path, ios::in | ios::binary | ios::ate);
     int size = (int)(file.tellg());
     file.close();
 
@@ -442,7 +446,8 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
 
     Debug("WAV file detected: %s", img_file->file_path);
 
-    ifstream file(img_file->file_path, ios::in | ios::binary);
+    ifstream file;
+    open_ifstream_utf8(file, img_file->file_path, ios::in | ios::binary);
     if (!file.is_open())
         return false;
 
@@ -959,7 +964,8 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
     if (!img_file->chunks[chunk_index])
     {
-        ifstream file(img_file->file_path, ios::in | ios::binary);
+        ifstream file;
+        open_ifstream_utf8(file, img_file->file_path, ios::in | ios::binary);
 
         if (!file.is_open())
         {
@@ -1084,7 +1090,8 @@ void CdRomCueBinImage::CalculateCRC()
         return;
     }
 
-    ifstream file(img_file->file_path, ios::in | ios::binary);
+    ifstream file;
+    open_ifstream_utf8(file, img_file->file_path, ios::in | ios::binary);
     if (!file.is_open())
     {
         Error("Failed to open file %s for CRC calculation",
