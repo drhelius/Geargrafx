@@ -35,6 +35,7 @@ static char build_info[4096] = "";
 static int info_pos = 0;
 
 static void add_build_info(const char* fmt, ...);
+static void check_hotkey_duplicates_popup(config_Hotkey* current_hotkey);
 
 void gui_popup_modal_keyboard()
 {
@@ -96,6 +97,51 @@ void gui_popup_modal_gamepad(int pad)
                 *gui_configured_button = GAMEPAD_VBTN_AXIS_BASE + a;
                 ImGui::CloseCurrentPopup();
                 break;
+            }
+        }
+
+        if (ImGui::Button("Cancel", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
+void gui_popup_modal_hotkey()
+{
+    if (ImGui::BeginPopupModal("Hotkey Configuration", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Press any key combination...\n");
+        ImGui::Text("Hold Ctrl, Shift, or Alt before pressing the key\n\n");
+        ImGui::Separator();
+
+        SDL_Keymod mods = SDL_GetModState();
+
+        for (ImGuiKey i = ImGuiKey_NamedKey_BEGIN; i < ImGuiKey_NamedKey_END; i = (ImGuiKey)(i + 1))
+        {
+            // Skip modifier keys
+            if (i == ImGuiKey_LeftCtrl || i == ImGuiKey_RightCtrl ||
+                i == ImGuiKey_LeftShift || i == ImGuiKey_RightShift ||
+                i == ImGuiKey_LeftAlt || i == ImGuiKey_RightAlt ||
+                i == ImGuiKey_LeftSuper || i == ImGuiKey_RightSuper ||
+                i == ImGuiKey_CapsLock)
+                continue;
+
+            if (ImGui::IsKeyPressed(i, false))
+            {
+                SDL_Keycode key_code = ImGuiKeyToSDLKeycode(i);
+                SDL_Scancode key = SDL_GetScancodeFromKey(key_code);
+
+                if (key != SDL_SCANCODE_UNKNOWN)
+                {
+                    gui_configured_hotkey->key = key;
+                    gui_configured_hotkey->mod = mods;
+                    config_update_hotkey_string(gui_configured_hotkey);
+                    check_hotkey_duplicates_popup(gui_configured_hotkey);
+                    ImGui::CloseCurrentPopup();
+                    break;
+                }
             }
         }
 
@@ -311,4 +357,26 @@ static void add_build_info(const char* fmt, ...)
         build_info[info_pos] = '\0';
     }
     va_end(args);
+}
+
+static void check_hotkey_duplicates_popup(config_Hotkey* current_hotkey)
+{
+    if (current_hotkey->key == SDL_SCANCODE_UNKNOWN)
+        return;
+
+    for (int i = 0; i < config_HotkeyIndex_COUNT; i++)
+    {
+        config_Hotkey* other = &config_hotkeys[i];
+
+        if (other == current_hotkey)
+            continue;
+
+        if (other->key == current_hotkey->key &&
+            other->mod == current_hotkey->mod)
+        {
+            other->key = SDL_SCANCODE_UNKNOWN;
+            other->mod = KMOD_NONE;
+            config_update_hotkey_string(other);
+        }
+    }
 }

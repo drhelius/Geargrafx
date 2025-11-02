@@ -330,7 +330,7 @@ static void draw_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Start / Continue (F5)");
+        ImGui::SetTooltip("Start / Continue (%s)", config_hotkeys[config_HotkeyIndex_DebugContinue].str);
     }
 
     ImGui::SameLine();
@@ -340,7 +340,7 @@ static void draw_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Stop (F7)");
+        ImGui::SetTooltip("Stop (%s)", config_hotkeys[config_HotkeyIndex_DebugBreak].str);
     }
 
     ImGui::SameLine();
@@ -350,7 +350,7 @@ static void draw_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Step Over (F10)");
+        ImGui::SetTooltip("Step Over (%s)", config_hotkeys[config_HotkeyIndex_DebugStepOver].str);
     }
 
     ImGui::SameLine();
@@ -360,7 +360,7 @@ static void draw_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Step Into (F11)");
+        ImGui::SetTooltip("Step Into (%s)", config_hotkeys[config_HotkeyIndex_DebugStepInto].str);
     }
 
     ImGui::SameLine();
@@ -370,7 +370,7 @@ static void draw_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Step Out (Shift+F11)");
+        ImGui::SetTooltip("Step Out (%s)", config_hotkeys[config_HotkeyIndex_DebugStepOut].str);
     }
 
     ImGui::SameLine();
@@ -381,7 +381,7 @@ static void draw_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Step Frame (F6)");
+        ImGui::SetTooltip("Step Frame (%s)", config_hotkeys[config_HotkeyIndex_DebugStepFrame].str);
     }
 
     ImGui::SameLine();
@@ -391,7 +391,7 @@ static void draw_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Run to Cursor (F8)");
+        ImGui::SetTooltip("Run to Cursor (%s)", config_hotkeys[config_HotkeyIndex_DebugRunToCursor].str);
     }
 
     ImGui::SameLine();
@@ -401,7 +401,7 @@ static void draw_controls(void)
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Reset (CTRL+R)");
+        ImGui::SetTooltip("Reset (%s)", config_hotkeys[config_HotkeyIndex_Reset].str);
     }
 
     ImGui::PopFont();
@@ -1189,7 +1189,7 @@ static void disassembler_menu(void)
 
     if (ImGui::BeginMenu("Go"))
     {
-        if (ImGui::MenuItem("Back", "CTRL+BACKSPACE"))
+        if (ImGui::MenuItem("Back", config_hotkeys[config_HotkeyIndex_DebugGoBack].str))
         {
             gui_debug_go_back();
         }
@@ -1225,43 +1225,43 @@ static void disassembler_menu(void)
 
     if (ImGui::BeginMenu("Run"))
     {
-        if (ImGui::MenuItem("Start", "F5"))
+        if (ImGui::MenuItem("Start", config_hotkeys[config_HotkeyIndex_DebugContinue].str))
         {
             emu_debug_continue();
         }
 
-        if (ImGui::MenuItem("Stop", "F7"))
+        if (ImGui::MenuItem("Stop", config_hotkeys[config_HotkeyIndex_DebugBreak].str))
         {
             emu_debug_break();
         }
 
-        if (ImGui::MenuItem("Step Over", "F10"))
+        if (ImGui::MenuItem("Step Over", config_hotkeys[config_HotkeyIndex_DebugStepOver].str))
         {
             emu_debug_step_over();
         }
 
-        if (ImGui::MenuItem("Step Into", "F11"))
+        if (ImGui::MenuItem("Step Into", config_hotkeys[config_HotkeyIndex_DebugStepInto].str))
         {
             emu_debug_step_into();
         }
 
-        if (ImGui::MenuItem("Step Out", "Shift+F11"))
+        if (ImGui::MenuItem("Step Out", config_hotkeys[config_HotkeyIndex_DebugStepOut].str))
         {
             emu_debug_step_out();
         }
 
-        if (ImGui::MenuItem("Step Frame", "F6"))
+        if (ImGui::MenuItem("Step Frame", config_hotkeys[config_HotkeyIndex_DebugStepFrame].str))
         {
             emu_debug_step_frame();
             gui_debug_memory_step_frame();
         }
 
-        if (ImGui::MenuItem("Run to Cursor", "F8"))
+        if (ImGui::MenuItem("Run to Cursor", config_hotkeys[config_HotkeyIndex_DebugRunToCursor].str))
         {
             gui_debug_runtocursor();
         }
 
-        if (ImGui::MenuItem("Reset", "CTRL+R"))
+        if (ImGui::MenuItem("Reset", config_hotkeys[config_HotkeyIndex_Reset].str))
         {
             emu_reset();
         }
@@ -1298,7 +1298,7 @@ static void disassembler_menu(void)
 
     if (ImGui::BeginMenu("Breakpoints"))
     {
-        if (ImGui::MenuItem("Toggle Selected Line", "F9"))
+        if (ImGui::MenuItem("Toggle Selected Line", config_hotkeys[config_HotkeyIndex_DebugBreakpoint].str))
         {
             gui_debug_toggle_breakpoint();
         }

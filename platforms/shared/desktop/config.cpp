@@ -36,6 +36,9 @@ static bool read_bool(const char* group, const char* key, bool default_value);
 static void write_bool(const char* group, const char* key, bool boolean);
 static std::string read_string(const char* group, const char* key);
 static void write_string(const char* group, const char* key, std::string value);
+static config_Hotkey read_hotkey(const char* group, const char* key, config_Hotkey default_value);
+static void write_hotkey(const char* group, const char* key, config_Hotkey hotkey);
+static config_Hotkey make_hotkey(SDL_Scancode key, SDL_Keymod mod);
 
 void config_init(void)
 {
@@ -128,6 +131,31 @@ void config_init(void)
         config_input_gamepad[i].gamepad_toggle_turbo_I = SDL_CONTROLLER_BUTTON_RIGHTSTICK;
         config_input_gamepad[i].gamepad_toggle_turbo_II = SDL_CONTROLLER_BUTTON_LEFTSTICK;
     }
+
+    config_hotkeys[config_HotkeyIndex_OpenROM] = make_hotkey(SDL_SCANCODE_O, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Quit] = make_hotkey(SDL_SCANCODE_Q, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Reset] = make_hotkey(SDL_SCANCODE_R, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Pause] = make_hotkey(SDL_SCANCODE_P, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_FFWD] = make_hotkey(SDL_SCANCODE_F, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SaveState] = make_hotkey(SDL_SCANCODE_S, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_LoadState] = make_hotkey(SDL_SCANCODE_L, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Screenshot] = make_hotkey(SDL_SCANCODE_X, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Fullscreen] = make_hotkey(SDL_SCANCODE_F12, KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_ShowMainMenu] = make_hotkey(SDL_SCANCODE_M, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_DebugStepInto] = make_hotkey(SDL_SCANCODE_F11, KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugStepOver] = make_hotkey(SDL_SCANCODE_F10, KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugStepOut] = make_hotkey(SDL_SCANCODE_F11, KMOD_SHIFT);
+    config_hotkeys[config_HotkeyIndex_DebugStepFrame] = make_hotkey(SDL_SCANCODE_F6, KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugContinue] = make_hotkey(SDL_SCANCODE_F5, KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugBreak] = make_hotkey(SDL_SCANCODE_F7, KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugRunToCursor] = make_hotkey(SDL_SCANCODE_F8, KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugBreakpoint] = make_hotkey(SDL_SCANCODE_F9, KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugGoBack] = make_hotkey(SDL_SCANCODE_BACKSPACE, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot1] = make_hotkey(SDL_SCANCODE_1, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot2] = make_hotkey(SDL_SCANCODE_2, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot3] = make_hotkey(SDL_SCANCODE_3, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot4] = make_hotkey(SDL_SCANCODE_4, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot5] = make_hotkey(SDL_SCANCODE_5, KMOD_CTRL);
 
     config_ini_file = new mINI::INIFile(config_emu_file_path);
 }
@@ -363,6 +391,32 @@ void config_read(void)
         config_input_gamepad[i].gamepad_toggle_turbo_II = read_int(input_group, "GamepadToogleTurboII", SDL_CONTROLLER_BUTTON_RIGHTSTICK);
     }
 
+    // Read hotkeys
+    config_hotkeys[config_HotkeyIndex_OpenROM] = read_hotkey("Hotkeys", "OpenROM", make_hotkey(SDL_SCANCODE_O, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Quit] = read_hotkey("Hotkeys", "Quit", make_hotkey(SDL_SCANCODE_Q, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Reset] = read_hotkey("Hotkeys", "Reset", make_hotkey(SDL_SCANCODE_R, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Pause] = read_hotkey("Hotkeys", "Pause", make_hotkey(SDL_SCANCODE_P, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_FFWD] = read_hotkey("Hotkeys", "FFWD", make_hotkey(SDL_SCANCODE_F, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SaveState] = read_hotkey("Hotkeys", "SaveState", make_hotkey(SDL_SCANCODE_S, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_LoadState] = read_hotkey("Hotkeys", "LoadState", make_hotkey(SDL_SCANCODE_L, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Screenshot] = read_hotkey("Hotkeys", "Screenshot", make_hotkey(SDL_SCANCODE_X, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Fullscreen] = read_hotkey("Hotkeys", "Fullscreen", make_hotkey(SDL_SCANCODE_F12, KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_ShowMainMenu] = read_hotkey("Hotkeys", "ShowMainMenu", make_hotkey(SDL_SCANCODE_M, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_DebugStepInto] = read_hotkey("Hotkeys", "DebugStepInto", make_hotkey(SDL_SCANCODE_F11, KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugStepOver] = read_hotkey("Hotkeys", "DebugStepOver", make_hotkey(SDL_SCANCODE_F10, KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugStepOut] = read_hotkey("Hotkeys", "DebugStepOut", make_hotkey(SDL_SCANCODE_F11, KMOD_SHIFT));
+    config_hotkeys[config_HotkeyIndex_DebugStepFrame] = read_hotkey("Hotkeys", "DebugStepFrame", make_hotkey(SDL_SCANCODE_F6, KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugContinue] = read_hotkey("Hotkeys", "DebugContinue", make_hotkey(SDL_SCANCODE_F5, KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugBreak] = read_hotkey("Hotkeys", "DebugBreak", make_hotkey(SDL_SCANCODE_F7, KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugRunToCursor] = read_hotkey("Hotkeys", "DebugRunToCursor", make_hotkey(SDL_SCANCODE_F8, KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugBreakpoint] = read_hotkey("Hotkeys", "DebugBreakpoint", make_hotkey(SDL_SCANCODE_F9, KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugGoBack] = read_hotkey("Hotkeys", "DebugGoBack", make_hotkey(SDL_SCANCODE_BACKSPACE, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot1] = read_hotkey("Hotkeys", "SelectSlot1", make_hotkey(SDL_SCANCODE_1, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot2] = read_hotkey("Hotkeys", "SelectSlot2", make_hotkey(SDL_SCANCODE_2, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot3] = read_hotkey("Hotkeys", "SelectSlot3", make_hotkey(SDL_SCANCODE_3, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot4] = read_hotkey("Hotkeys", "SelectSlot4", make_hotkey(SDL_SCANCODE_4, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot5] = read_hotkey("Hotkeys", "SelectSlot5", make_hotkey(SDL_SCANCODE_5, KMOD_CTRL));
+
     Debug("Settings loaded");
 }
 
@@ -555,6 +609,32 @@ void config_write(void)
         write_int(input_group, "GamepadVI", config_input_gamepad[i].gamepad_VI);
     }
 
+    // Write hotkeys
+    write_hotkey("Hotkeys", "OpenROM", config_hotkeys[config_HotkeyIndex_OpenROM]);
+    write_hotkey("Hotkeys", "Quit", config_hotkeys[config_HotkeyIndex_Quit]);
+    write_hotkey("Hotkeys", "Reset", config_hotkeys[config_HotkeyIndex_Reset]);
+    write_hotkey("Hotkeys", "Pause", config_hotkeys[config_HotkeyIndex_Pause]);
+    write_hotkey("Hotkeys", "FFWD", config_hotkeys[config_HotkeyIndex_FFWD]);
+    write_hotkey("Hotkeys", "SaveState", config_hotkeys[config_HotkeyIndex_SaveState]);
+    write_hotkey("Hotkeys", "LoadState", config_hotkeys[config_HotkeyIndex_LoadState]);
+    write_hotkey("Hotkeys", "Screenshot", config_hotkeys[config_HotkeyIndex_Screenshot]);
+    write_hotkey("Hotkeys", "Fullscreen", config_hotkeys[config_HotkeyIndex_Fullscreen]);
+    write_hotkey("Hotkeys", "ShowMainMenu", config_hotkeys[config_HotkeyIndex_ShowMainMenu]);
+    write_hotkey("Hotkeys", "DebugStepInto", config_hotkeys[config_HotkeyIndex_DebugStepInto]);
+    write_hotkey("Hotkeys", "DebugStepOver", config_hotkeys[config_HotkeyIndex_DebugStepOver]);
+    write_hotkey("Hotkeys", "DebugStepOut", config_hotkeys[config_HotkeyIndex_DebugStepOut]);
+    write_hotkey("Hotkeys", "DebugStepFrame", config_hotkeys[config_HotkeyIndex_DebugStepFrame]);
+    write_hotkey("Hotkeys", "DebugContinue", config_hotkeys[config_HotkeyIndex_DebugContinue]);
+    write_hotkey("Hotkeys", "DebugBreak", config_hotkeys[config_HotkeyIndex_DebugBreak]);
+    write_hotkey("Hotkeys", "DebugRunToCursor", config_hotkeys[config_HotkeyIndex_DebugRunToCursor]);
+    write_hotkey("Hotkeys", "DebugBreakpoint", config_hotkeys[config_HotkeyIndex_DebugBreakpoint]);
+    write_hotkey("Hotkeys", "DebugGoBack", config_hotkeys[config_HotkeyIndex_DebugGoBack]);
+    write_hotkey("Hotkeys", "SelectSlot1", config_hotkeys[config_HotkeyIndex_SelectSlot1]);
+    write_hotkey("Hotkeys", "SelectSlot2", config_hotkeys[config_HotkeyIndex_SelectSlot2]);
+    write_hotkey("Hotkeys", "SelectSlot3", config_hotkeys[config_HotkeyIndex_SelectSlot3]);
+    write_hotkey("Hotkeys", "SelectSlot4", config_hotkeys[config_HotkeyIndex_SelectSlot4]);
+    write_hotkey("Hotkeys", "SelectSlot5", config_hotkeys[config_HotkeyIndex_SelectSlot5]);
+
     if (config_ini_file->write(config_ini_data, true))
     {
         Debug("Settings saved");
@@ -665,4 +745,66 @@ static void write_string(const char* group, const char* key, std::string value)
 {
     config_ini_data[group][key] = value;
     Debug("Save string setting: [%s][%s]=%s", group, key, value.c_str());
+}
+
+static config_Hotkey read_hotkey(const char* group, const char* key, config_Hotkey default_value)
+{
+    config_Hotkey ret = default_value;
+
+    std::string scancode_key = std::string(key) + "Scancode";
+    std::string mod_key = std::string(key) + "Mod";
+
+    ret.key = (SDL_Scancode)read_int(group, scancode_key.c_str(), default_value.key);
+    ret.mod = (SDL_Keymod)read_int(group, mod_key.c_str(), default_value.mod);
+
+    config_update_hotkey_string(&ret);
+
+    return ret;
+}
+
+static void write_hotkey(const char* group, const char* key, config_Hotkey hotkey)
+{
+    std::string scancode_key = std::string(key) + "Scancode";
+    std::string mod_key = std::string(key) + "Mod";
+
+    write_int(group, scancode_key.c_str(), hotkey.key);
+    write_int(group, mod_key.c_str(), hotkey.mod);
+}
+
+static config_Hotkey make_hotkey(SDL_Scancode key, SDL_Keymod mod)
+{
+    config_Hotkey hotkey;
+    hotkey.key = key;
+    hotkey.mod = mod;
+    config_update_hotkey_string(&hotkey);
+    return hotkey;
+}
+
+void config_update_hotkey_string(config_Hotkey* hotkey)
+{
+    if (hotkey->key == SDL_SCANCODE_UNKNOWN)
+    {
+        strcpy(hotkey->str, "");
+        return;
+    }
+
+    std::string result = "";
+
+    if (hotkey->mod & (KMOD_CTRL | KMOD_LCTRL | KMOD_RCTRL))
+        result += "Ctrl+";
+    if (hotkey->mod & (KMOD_SHIFT | KMOD_LSHIFT | KMOD_RSHIFT))
+        result += "Shift+";
+    if (hotkey->mod & (KMOD_ALT | KMOD_LALT | KMOD_RALT))
+        result += "Alt+";
+    if (hotkey->mod & (KMOD_GUI | KMOD_LGUI | KMOD_RGUI))
+        result += "Cmd+";
+
+    const char* key_name = SDL_GetScancodeName(hotkey->key);
+    if (key_name && strlen(key_name) > 0)
+        result += key_name;
+    else
+        result += "Unknown";
+
+    strncpy(hotkey->str, result.c_str(), sizeof(hotkey->str) - 1);
+    hotkey->str[sizeof(hotkey->str) - 1] = '\0';
 }

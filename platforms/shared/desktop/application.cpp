@@ -68,6 +68,7 @@ static void render(void);
 static void frame_throttle(void);
 static void save_window_size(void);
 static void log_sdl_error(const char* action, const char* file, int line);
+static bool check_hotkey(const SDL_Event* event, const config_Hotkey& hotkey, bool allow_repeat);
 
 #define SDL_ERROR(action) log_sdl_error(action, __FILE__, __LINE__)
 
@@ -608,131 +609,103 @@ static void sdl_events_app(const SDL_Event* event)
     }
 }
 
+static bool check_hotkey(const SDL_Event* event, const config_Hotkey& hotkey, bool allow_repeat)
+{
+    if (event->type != SDL_KEYDOWN)
+        return false;
+
+    if (!allow_repeat && event->key.repeat != 0)
+        return false;
+
+    if (event->key.keysym.scancode != hotkey.key)
+        return false;
+
+    SDL_Keymod mods = (SDL_Keymod)event->key.keysym.mod;
+    SDL_Keymod expected = hotkey.mod;
+
+    SDL_Keymod mods_normalized = (SDL_Keymod)0;
+    if (mods & (KMOD_LCTRL | KMOD_RCTRL)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_CTRL);
+    if (mods & (KMOD_LSHIFT | KMOD_RSHIFT)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_SHIFT);
+    if (mods & (KMOD_LALT | KMOD_RALT)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_ALT);
+    if (mods & (KMOD_LGUI | KMOD_RGUI)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_GUI);
+
+    SDL_Keymod expected_normalized = (SDL_Keymod)0;
+    if (expected & (KMOD_LCTRL | KMOD_RCTRL | KMOD_CTRL)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_CTRL);
+    if (expected & (KMOD_LSHIFT | KMOD_RSHIFT | KMOD_SHIFT)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_SHIFT);
+    if (expected & (KMOD_LALT | KMOD_RALT | KMOD_ALT)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_ALT);
+    if (expected & (KMOD_LGUI | KMOD_RGUI | KMOD_GUI)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_GUI);
+
+    return mods_normalized == expected_normalized;
+}
+
 static void sdl_events_shortcuts_gui(const SDL_Event* event)
 {
-    if (event->type == SDL_KEYDOWN)
-    {
-        int key = event->key.keysym.scancode;
+    if (event->type != SDL_KEYDOWN)
+        return;
 
-        switch (key)
+    // Check special case hotkeys first
+    if (check_hotkey(event, config_hotkeys[config_HotkeyIndex_Quit], false))
+    {
+        application_trigger_quit();
+        return;
+    }
+
+    if (check_hotkey(event, config_hotkeys[config_HotkeyIndex_Fullscreen], false))
+    {
+        config_emulator.fullscreen = !config_emulator.fullscreen;
+        application_trigger_fullscreen(config_emulator.fullscreen);
+        return;
+    }
+
+    // Check slot selection hotkeys
+    for (int i = 0; i < 5; i++)
+    {
+        if (check_hotkey(event, config_hotkeys[config_HotkeyIndex_SelectSlot1 + i], false))
         {
-            case SDL_SCANCODE_Q:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    application_trigger_quit();
-                break;
-            case SDL_SCANCODE_A:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutDebugSelectAll);
-                break;
-            case SDL_SCANCODE_C:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutDebugCopy);
-                break;
-            case SDL_SCANCODE_V:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutDebugPaste);
-                break;
-            case SDL_SCANCODE_O:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutOpenROM);
-                break;
-            case SDL_SCANCODE_R:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutReset);
-                break;
-            case SDL_SCANCODE_P:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutPause);
-                break;
-            case SDL_SCANCODE_F:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutFFWD);
-                break;
-            case SDL_SCANCODE_L:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutLoadState);
-                break;
-            case SDL_SCANCODE_S:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutSaveState);
-                break;
-            case SDL_SCANCODE_X:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutScreenshot);
-                break;
-            case SDL_SCANCODE_M:
-                if (event->key.repeat != 0)
-                    break;
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutShowMainMenu);
-                break;
-            case SDL_SCANCODE_F5:
-                gui_shortcut(gui_ShortcutDebugContinue);
-                break;
-            case SDL_SCANCODE_F6:
-                gui_shortcut(gui_ShortcutDebugStepFrame);
-                break;
-            case SDL_SCANCODE_F7:
-                gui_shortcut(gui_ShortcutDebugBreak);
-                break;
-            case SDL_SCANCODE_F8:
-                gui_shortcut(gui_ShortcutDebugRuntocursor);
-                break;
-            case SDL_SCANCODE_F9:
-                if (event->key.repeat != 0)
-                    break;
-                gui_shortcut(gui_ShortcutDebugBreakpoint);
-                break;
-            case SDL_SCANCODE_F10:
-                gui_shortcut(gui_ShortcutDebugStepOver);
-                break;
-            case SDL_SCANCODE_F11:
-                if (event->key.keysym.mod & KMOD_SHIFT)
-                    gui_shortcut(gui_ShortcutDebugStepOut);
-                else
-                    gui_shortcut(gui_ShortcutDebugStepInto);
-                break;
-            case SDL_SCANCODE_F12:
-                if (event->key.repeat != 0)
-                    break;
-                config_emulator.fullscreen = !config_emulator.fullscreen;
-                application_trigger_fullscreen(config_emulator.fullscreen);
-                break;
-            case SDL_SCANCODE_BACKSPACE:
-                if (event->key.keysym.mod & KMOD_CTRL)
-                    gui_shortcut(gui_ShortcutDebugGoBack);
-                break;
-            case SDL_SCANCODE_ESCAPE:
-                if (event->key.repeat != 0)
-                    break;
-                if (config_emulator.fullscreen && !config_emulator.always_show_menu)
-                {
-                    config_emulator.fullscreen = false;
-                    application_trigger_fullscreen(false);
-                }
-                break;
+            config_emulator.save_slot = i;
+            return;
+        }
+    }
+
+    // Check all hotkeys mapped to gui shortcuts
+    for (int i = 0; i < GUI_HOTKEY_MAP_COUNT; i++)
+    {
+        if (gui_hotkey_map[i].shortcut >= 0 && check_hotkey(event, config_hotkeys[gui_hotkey_map[i].config_index], gui_hotkey_map[i].allow_repeat))
+        {
+            gui_shortcut((gui_ShortCutEvent)gui_hotkey_map[i].shortcut);
+            return;
+        }
+    }
+
+    // Fixed hotkeys for debug copy/paste/select operations
+    int key = event->key.keysym.scancode;
+    SDL_Keymod mods = (SDL_Keymod)event->key.keysym.mod;
+
+    if (event->key.repeat == 0 && key == SDL_SCANCODE_A && (mods & KMOD_CTRL))
+    {
+        gui_shortcut(gui_ShortcutDebugSelectAll);
+        return;
+    }
+
+    if (event->key.repeat == 0 && key == SDL_SCANCODE_C && (mods & KMOD_CTRL))
+    {
+        gui_shortcut(gui_ShortcutDebugCopy);
+        return;
+    }
+
+    if (event->key.repeat == 0 && key == SDL_SCANCODE_V && (mods & KMOD_CTRL))
+    {
+        gui_shortcut(gui_ShortcutDebugPaste);
+        return;
+    }
+
+    // ESC to exit fullscreen
+    if (event->key.repeat == 0 && key == SDL_SCANCODE_ESCAPE)
+    {
+        if (config_emulator.fullscreen && !config_emulator.always_show_menu)
+        {
+            config_emulator.fullscreen = false;
+            application_trigger_fullscreen(false);
         }
     }
 }

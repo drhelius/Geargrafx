@@ -23,6 +23,7 @@
 #include <SDL.h>
 #include "geargrafx.h"
 #include "imgui.h"
+#include "config.h"
 
 #ifdef GUI_IMPORT
     #define EXTERN
@@ -54,6 +55,35 @@ enum gui_ShortCutEvent
     gui_ShortcutShowMainMenu
 };
 
+struct gui_HotkeyMapping
+{
+    int shortcut;
+    int config_index;
+    bool allow_repeat;
+};
+
+#define GUI_HOTKEY_MAP_COUNT 17
+
+const gui_HotkeyMapping gui_hotkey_map[GUI_HOTKEY_MAP_COUNT] = {
+    {gui_ShortcutOpenROM, config_HotkeyIndex_OpenROM, false},
+    {gui_ShortcutReset, config_HotkeyIndex_Reset, false},
+    {gui_ShortcutPause, config_HotkeyIndex_Pause, false},
+    {gui_ShortcutFFWD, config_HotkeyIndex_FFWD, false},
+    {gui_ShortcutSaveState, config_HotkeyIndex_SaveState, false},
+    {gui_ShortcutLoadState, config_HotkeyIndex_LoadState, false},
+    {gui_ShortcutScreenshot, config_HotkeyIndex_Screenshot, false},
+    {gui_ShortcutShowMainMenu, config_HotkeyIndex_ShowMainMenu, false},
+    {gui_ShortcutDebugStepInto, config_HotkeyIndex_DebugStepInto, true},
+    {gui_ShortcutDebugStepOver, config_HotkeyIndex_DebugStepOver, true},
+    {gui_ShortcutDebugStepOut, config_HotkeyIndex_DebugStepOut, true},
+    {gui_ShortcutDebugStepFrame, config_HotkeyIndex_DebugStepFrame, true},
+    {gui_ShortcutDebugContinue, config_HotkeyIndex_DebugContinue, true},
+    {gui_ShortcutDebugBreak, config_HotkeyIndex_DebugBreak, true},
+    {gui_ShortcutDebugRuntocursor, config_HotkeyIndex_DebugRunToCursor, false},
+    {gui_ShortcutDebugBreakpoint, config_HotkeyIndex_DebugBreakpoint, false},
+    {gui_ShortcutDebugGoBack, config_HotkeyIndex_DebugGoBack, false},
+};
+
 EXTERN bool gui_in_use;
 EXTERN bool gui_main_window_hovered;
 EXTERN bool gui_main_menu_hovered;
@@ -66,11 +96,14 @@ EXTERN int gui_main_window_height;
 EXTERN int gui_main_menu_height;
 EXTERN SDL_Scancode* gui_configured_key;
 EXTERN int* gui_configured_button;
+EXTERN config_Hotkey* gui_configured_hotkey;
 EXTERN bool gui_dialog_in_use;
 EXTERN bool gui_shortcut_open_rom;
 EXTERN bool gui_audio_mute_cdrom;
 EXTERN bool gui_audio_mute_psg;
 EXTERN bool gui_audio_mute_adpcm;
+// extern const int GUI_HOTKEY_MAP_COUNT;
+// extern const gui_HotkeyMapping gui_hotkey_map[];
 
 EXTERN bool gui_init(void);
 EXTERN void gui_destroy(void);

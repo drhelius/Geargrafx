@@ -144,6 +144,42 @@ struct config_Input_Gamepad
     int gamepad_toggle_turbo_II;
 };
 
+enum config_HotkeyIndex
+{
+    config_HotkeyIndex_OpenROM = 0,
+    config_HotkeyIndex_Quit,
+    config_HotkeyIndex_Reset,
+    config_HotkeyIndex_Pause,
+    config_HotkeyIndex_FFWD,
+    config_HotkeyIndex_SaveState,
+    config_HotkeyIndex_LoadState,
+    config_HotkeyIndex_Screenshot,
+    config_HotkeyIndex_Fullscreen,
+    config_HotkeyIndex_ShowMainMenu,
+    config_HotkeyIndex_DebugStepInto,
+    config_HotkeyIndex_DebugStepOver,
+    config_HotkeyIndex_DebugStepOut,
+    config_HotkeyIndex_DebugStepFrame,
+    config_HotkeyIndex_DebugContinue,
+    config_HotkeyIndex_DebugBreak,
+    config_HotkeyIndex_DebugRunToCursor,
+    config_HotkeyIndex_DebugBreakpoint,
+    config_HotkeyIndex_DebugGoBack,
+    config_HotkeyIndex_SelectSlot1,
+    config_HotkeyIndex_SelectSlot2,
+    config_HotkeyIndex_SelectSlot3,
+    config_HotkeyIndex_SelectSlot4,
+    config_HotkeyIndex_SelectSlot5,
+    config_HotkeyIndex_COUNT
+};
+
+struct config_Hotkey
+{
+    SDL_Scancode key;
+    SDL_Keymod mod;
+    char str[64];
+};
+
 struct config_Debug
 {
     bool debug = false;
@@ -203,12 +239,14 @@ EXTERN config_Audio config_audio;
 EXTERN config_Input config_input;
 EXTERN config_Input_Keyboard config_input_keyboard[GG_MAX_GAMEPADS];
 EXTERN config_Input_Gamepad config_input_gamepad[GG_MAX_GAMEPADS];
+EXTERN config_Hotkey config_hotkeys[config_HotkeyIndex_COUNT];
 EXTERN config_Debug config_debug;
 
 EXTERN void config_init(void);
 EXTERN void config_destroy(void);
 EXTERN void config_read(void);
 EXTERN void config_write(void);
+EXTERN void config_update_hotkey_string(config_Hotkey* hotkey);
 
 #undef CONFIG_IMPORT
 #undef EXTERN
