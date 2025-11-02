@@ -102,8 +102,6 @@ EXTERN bool gui_shortcut_open_rom;
 EXTERN bool gui_audio_mute_cdrom;
 EXTERN bool gui_audio_mute_psg;
 EXTERN bool gui_audio_mute_adpcm;
-// extern const int GUI_HOTKEY_MAP_COUNT;
-// extern const gui_HotkeyMapping gui_hotkey_map[];
 
 EXTERN bool gui_init(void);
 EXTERN void gui_destroy(void);
