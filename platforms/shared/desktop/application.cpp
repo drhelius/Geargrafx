@@ -45,6 +45,7 @@ static Uint64 frame_time_end = 0;
 static bool input_updated = false;
 static Uint16 input_last_state[GG_MAX_GAMEPADS] = { };
 static bool input_turbo_toggle_prev[GG_MAX_GAMEPADS][2] = { };
+static bool input_gamepad_shortcut_prev[GG_MAX_GAMEPADS][config_HotkeyIndex_COUNT] = { };
 static Uint32 mouse_last_motion_time = 0;
 static const Uint32 mouse_hide_timeout_ms = 1500;
 
@@ -60,6 +61,7 @@ static void sdl_add_gamepads(void);
 static void sdl_remove_gamepad(SDL_JoystickID instance_id);
 static Uint16 input_build_state(int controller);
 static void input_apply_state(int controller, Uint16 before, Uint16 now);
+static void input_check_gamepad_shortcuts(int controller);
 static bool input_get_button(SDL_GameController* controller, int mapping);
 static void handle_mouse_cursor(void);
 static void handle_menu(void);
@@ -729,6 +731,8 @@ static void sdl_events_emu(void)
             input_apply_state(controller, before, now);
 
         input_last_state[controller] = now;
+
+        input_check_gamepad_shortcuts(controller);
     }
 }
 
@@ -987,6 +991,43 @@ static void input_apply_state(int controller, Uint16 before, Uint16 now)
         Uint16 key = keys[i];
         if (pressed & key)  emu_key_pressed((GG_Controllers)controller, (GG_Keys)key);
         if (released & key) emu_key_released((GG_Controllers)controller, (GG_Keys)key);
+    }
+}
+
+static void input_check_gamepad_shortcuts(int controller)
+{
+    SDL_GameController* sdl_controller = application_gamepad[controller];
+    if (!IsValidPointer(sdl_controller))
+        return;
+
+    for (int i = 0; i < config_HotkeyIndex_COUNT; i++)
+    {
+        int button_mapping = config_input_gamepad_shortcuts[controller].gamepad_shortcuts[i];
+        if (button_mapping == SDL_CONTROLLER_BUTTON_INVALID)
+            continue;
+
+        bool button_pressed = input_get_button(sdl_controller, button_mapping);
+
+        if (button_pressed && !input_gamepad_shortcut_prev[controller][i])
+        {
+            if (i >= config_HotkeyIndex_SelectSlot1 && i <= config_HotkeyIndex_SelectSlot5)
+            {
+                config_emulator.save_slot = i - config_HotkeyIndex_SelectSlot1;
+            }
+            else
+            {
+                for (int j = 0; j < GUI_HOTKEY_MAP_COUNT; j++)
+                {
+                    if (gui_hotkey_map[j].config_index == i)
+                    {
+                        gui_shortcut((gui_ShortCutEvent)gui_hotkey_map[j].shortcut);
+                        break;
+                    }
+                }
+            }
+        }
+
+        input_gamepad_shortcut_prev[controller][i] = button_pressed;
     }
 }
 
