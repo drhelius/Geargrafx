@@ -34,6 +34,10 @@ INLINE void Audio::Clock(u32 cycles)
 INLINE void Audio::WritePSG(u32 address, u8 value)
 {
     m_psg->Write(address, value);
+#ifndef GG_DISABLE_VGMRECORDER
+    if (m_vgm_recording_enabled)
+        m_vgm_recorder.WriteHuC6280(address, value);
+#endif
 }
 
 INLINE HuC6280PSG* Audio::GetPSG()

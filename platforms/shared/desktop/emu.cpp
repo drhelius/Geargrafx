@@ -767,3 +767,37 @@ static void update_debug_sprites(void)
         }
     }
 }
+
+void emu_start_vgm_recording(const char* file_path)
+{
+    if (!geargrafx->GetMedia()->IsReady())
+        return;
+
+    if (geargrafx->GetAudio()->IsVgmRecording())
+    {
+        emu_stop_vgm_recording();
+    }
+
+    // PC Engine audio chip always runs at 3.579545 MHz
+    int clock_rate = 3579545;
+
+    if (geargrafx->GetAudio()->StartVgmRecording(file_path, clock_rate))
+    {
+        Log("VGM recording started: %s", file_path);
+    }
+}
+
+void emu_stop_vgm_recording(void)
+{
+    if (geargrafx->GetAudio()->IsVgmRecording())
+    {
+        geargrafx->GetAudio()->StopVgmRecording();
+        Log("VGM recording stopped");
+    }
+}
+
+bool emu_is_vgm_recording(void)
+{
+    return geargrafx->GetAudio()->IsVgmRecording();
+}
+

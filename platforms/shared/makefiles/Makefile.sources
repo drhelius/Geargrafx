@@ -72,4 +72,5 @@ SOURCES_CXX := \
     $(SRC_DIR)/media.cpp \
     $(SRC_DIR)/memory.cpp \
     $(SRC_DIR)/scsi_controller.cpp \
-    $(SRC_DIR)/sf2_mapper.cpp
+    $(SRC_DIR)/sf2_mapper.cpp \
+    $(SRC_DIR)/vgm_recorder.cpp

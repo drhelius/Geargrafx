@@ -37,6 +37,7 @@ EXTERN void gui_file_dialog_choose_backup_ram_path(void);
 EXTERN void gui_file_dialog_load_bios(bool syscard);
 EXTERN void gui_file_dialog_load_symbols(void);
 EXTERN void gui_file_dialog_save_screenshot(void);
+EXTERN void gui_file_dialog_save_vgm(void);
 EXTERN void gui_file_dialog_save_sprite(int vdc, int index);
 EXTERN void gui_file_dialog_save_background(int vdc);
 EXTERN void gui_file_dialog_save_memory_dump(bool binary);

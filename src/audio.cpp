@@ -35,6 +35,7 @@ Audio::Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio)
     m_psg_volume = 1.0f;
     m_adpcm_volume = 1.0f;
     m_cdrom_volume = 1.0f;
+    m_vgm_recording_enabled = false;
 }
 
 Audio::~Audio()
@@ -152,6 +153,11 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
             }
         }
     }
+
+#ifndef GG_DISABLE_VGMRECORDER
+    if (m_vgm_recording_enabled)
+        m_vgm_recorder.UpdateTiming(*sample_count / 2);
+#endif
 }
 
 void Audio::SaveState(std::ostream& stream)
@@ -166,4 +172,80 @@ void Audio::LoadState(std::istream& stream)
     using namespace std;
     stream.read(reinterpret_cast<char*> (&m_cycle_counter), sizeof(m_cycle_counter));
     m_psg->LoadState(stream);
+}
+
+bool Audio::StartVgmRecording(const char* file_path, int clock_rate)
+{
+    if (m_vgm_recording_enabled)
+        return false;
+
+    m_vgm_recorder.Start(file_path, clock_rate);
+    m_vgm_recording_enabled = m_vgm_recorder.IsRecording();
+
+    // Write initial state of all audio registers to VGM
+    if (m_vgm_recording_enabled)
+    {
+        // Get PSG state
+        HuC6280PSG::HuC6280PSG_State* psg_state = m_psg->GetState();
+
+        // Write PSG registers (0x0800-0x0809)
+        // 0x0800 - Channel select
+        m_vgm_recorder.WriteHuC6280(0x0800, *psg_state->CHANNEL_SELECT);
+
+        // 0x0801 - Main amplitude
+        m_vgm_recorder.WriteHuC6280(0x0801, *psg_state->MAIN_AMPLITUDE);
+
+        // For each channel, write frequency, control, amplitude, and waveform data
+        for (int i = 0; i < 6; i++)
+        {
+            // Select channel
+            m_vgm_recorder.WriteHuC6280(0x0800, i);
+
+            // 0x0802 - Frequency low
+            m_vgm_recorder.WriteHuC6280(0x0802, psg_state->CHANNELS[i].frequency & 0xFF);
+
+            // 0x0803 - Frequency high
+            m_vgm_recorder.WriteHuC6280(0x0803, (psg_state->CHANNELS[i].frequency >> 8) & 0x0F);
+
+            // 0x0804 - Control
+            m_vgm_recorder.WriteHuC6280(0x0804, psg_state->CHANNELS[i].control);
+
+            // 0x0805 - Amplitude
+            m_vgm_recorder.WriteHuC6280(0x0805, psg_state->CHANNELS[i].amplitude);
+
+            // 0x0806 - Waveform data (32 writes)
+            for (int j = 0; j < 32; j++)
+            {
+                m_vgm_recorder.WriteHuC6280(0x0806, psg_state->CHANNELS[i].wave_data[j]);
+            }
+
+            // 0x0807 - Noise control (channels 4 and 5 only)
+            if (i >= 4)
+            {
+                m_vgm_recorder.WriteHuC6280(0x0807, psg_state->CHANNELS[i].noise_control);
+            }
+        }
+
+        // 0x0808 - LFO frequency
+        m_vgm_recorder.WriteHuC6280(0x0808, *psg_state->LFO_FREQUENCY & 0xFF);
+
+        // 0x0809 - LFO control
+        m_vgm_recorder.WriteHuC6280(0x0809, *psg_state->LFO_CONTROL);
+    }
+
+    return m_vgm_recording_enabled;
+}
+
+void Audio::StopVgmRecording()
+{
+    if (m_vgm_recording_enabled)
+    {
+        m_vgm_recorder.Stop();
+        m_vgm_recording_enabled = false;
+    }
+}
+
+bool Audio::IsVgmRecording() const
+{
+    return m_vgm_recording_enabled;
 }

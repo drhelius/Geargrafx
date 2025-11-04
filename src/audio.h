@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include "common.h"
+#include "vgm_recorder.h"
 
 class Adpcm;
 class HuC6280PSG;
@@ -45,6 +46,9 @@ public:
     HuC6280PSG* GetPSG();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
+    bool StartVgmRecording(const char* file_path, int clock_rate);
+    void StopVgmRecording();
+    bool IsVgmRecording() const;
 
 private:
     bool m_mute;
@@ -59,6 +63,8 @@ private:
     float m_psg_volume;
     float m_adpcm_volume;
     float m_cdrom_volume;
+    VgmRecorder m_vgm_recorder;
+    bool m_vgm_recording_enabled;
 };
 
 #include "audio_inline.h"

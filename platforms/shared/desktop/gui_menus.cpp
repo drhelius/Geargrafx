@@ -38,6 +38,7 @@ static bool open_state = false;
 static bool save_state = false;
 static bool open_about = false;
 static bool save_screenshot = false;
+static bool save_vgm = false;
 static bool choose_savestates_path = false;
 static bool choose_screenshots_path = false;
 static bool choose_backup_ram_path = false;
@@ -72,6 +73,7 @@ void gui_main_menu(void)
     save_state = false;
     open_about = false;
     save_screenshot = false;
+    save_vgm = false;
     choose_savestates_path = false;
     choose_screenshots_path = false;
     gui_main_menu_hovered = false;
@@ -1069,6 +1071,23 @@ static void menu_audio(void)
             }
         }
 
+#ifndef GG_DISABLE_VGMRECORDER
+        ImGui::Separator();
+
+        bool is_recording = emu_is_vgm_recording();
+
+        if (ImGui::MenuItem("Start VGM Recording...", "", false, !is_recording && !emu_is_empty()))
+        {
+            save_vgm = true;
+        }
+
+        if (ImGui::MenuItem("Stop VGM Recording", "", false, is_recording))
+        {
+            emu_stop_vgm_recording();
+            gui_set_status_message("VGM recording stopped", 3000);
+        }
+#endif
+
         ImGui::EndMenu();
     }
 }
@@ -1273,6 +1292,8 @@ static void file_dialogs(void)
         gui_file_dialog_save_state();
     if (save_screenshot)
         gui_file_dialog_save_screenshot();
+    if (save_vgm)
+        gui_file_dialog_save_vgm();
     if (choose_savestates_path)
         gui_file_dialog_choose_savestate_path();
     if (choose_screenshots_path)

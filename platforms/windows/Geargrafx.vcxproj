@@ -42,6 +42,7 @@
     <ClCompile Include="..\..\src\mapper.cpp" />
     <ClCompile Include="..\..\src\memory.cpp" />
     <ClCompile Include="..\..\src\sf2_mapper.cpp" />
+    <ClCompile Include="..\..\src\vgm_recorder.cpp" />
     <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_bitstream.c">
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
@@ -184,6 +185,7 @@
     <ClInclude Include="..\..\src\huc6280_timing.h" />
     <ClInclude Include="..\..\src\huc6280.h" />
     <ClInclude Include="..\..\src\sf2_mapper.h" />
+    <ClInclude Include="..\..\src\vgm_recorder.h" />
     <ClInclude Include="..\..\src\types.h" />
     <ClInclude Include="..\shared\dependencies\glad\glad.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\bitstream.h" />

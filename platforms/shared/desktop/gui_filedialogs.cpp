@@ -287,6 +287,30 @@ void gui_file_dialog_save_screenshot(void)
     }
 }
 
+void gui_file_dialog_save_vgm(void)
+{
+    nfdchar_t *outPath;
+    nfdfilteritem_t filterItem[1] = { { "VGM Files", "vgm" } };
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = NULL;
+    args.defaultName = NULL;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        emu_start_vgm_recording(outPath);
+        gui_set_status_message("VGM recording started", 3000);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        Error("Save VGM Error: %s", NFD_GetError());
+    }
+}
+
 void gui_file_dialog_save_sprite(int vdc, int index)
 {
     char default_name[32];

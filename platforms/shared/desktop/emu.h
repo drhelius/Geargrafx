@@ -116,6 +116,9 @@ EXTERN void emu_save_screenshot(const char* file_path);
 EXTERN void emu_save_sprite(const char* file_path, int vdc, int index);
 EXTERN void emu_save_background(const char* file_path, int vdc);
 EXTERN bool emu_load_bios(const char* file_path, bool syscard);
+EXTERN void emu_start_vgm_recording(const char* file_path);
+EXTERN void emu_stop_vgm_recording(void);
+EXTERN bool emu_is_vgm_recording(void);
 
 #undef EMU_IMPORT
 #undef EXTERN
