@@ -369,22 +369,22 @@ Memory::MemoryBankType Memory::GetBankType(u8 bank)
 
 void Memory::SaveRam(std::ostream &file)
 {
-    Debug("Saving backup RAM to file");
+    Debug("Saving BRAM to file");
 
-    file.write(reinterpret_cast<const char*> (m_backup_ram), sizeof(u8) * 0x800);
+    file.write(reinterpret_cast<const char*> (m_backup_ram), sizeof(u8) * 0x2000);
 }
 
 bool Memory::LoadRam(std::istream &file, s32 file_size)
 {
-    Debug("Loading backup RAM from file");
+    Debug("Loading BRAM from file");
 
-    if (file_size != 0x800)
+    if (file_size > 0x2000)
     {
-        Log("Invalid backup RAM size: %d", file_size);
+        Log("Invalid BRAM size: %d", file_size);
         return false;
     }
 
-    file.read(reinterpret_cast<char*> (m_backup_ram), sizeof(u8) * 0x800);
+    file.read(reinterpret_cast<char*> (m_backup_ram), sizeof(u8) * file_size);
 
     return true;
 }

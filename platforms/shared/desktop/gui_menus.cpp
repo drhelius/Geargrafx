@@ -159,12 +159,12 @@ static void menu_geargrafx(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Save RAM As..."))
+        if (ImGui::MenuItem("Save BRAM As..."))
         {
             save_ram = true;
         }
 
-        if (ImGui::MenuItem("Load RAM From..."))
+        if (ImGui::MenuItem("Load BRAM From..."))
         {
             open_ram = true;
         }

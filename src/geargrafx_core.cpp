@@ -245,13 +245,13 @@ void GeargrafxCore::SaveRam(const char* path, bool full_path)
         if (i != string::npos)
             final_path.replace(i, final_path.length() - i, ".sav");
 
-        Log("Saving RAM file: %s", final_path.c_str());
+        Log("Saving BRAM file: %s", final_path.c_str());
 
         ofstream file;
         open_ofstream_utf8(file, final_path.c_str(), ios::out | ios::binary);
         m_memory->SaveRam(file);
 
-        Debug("RAM saved");
+        Debug("BRAM saved");
     }
 }
 
@@ -283,7 +283,7 @@ void GeargrafxCore::LoadRam(const char* path, bool full_path)
         if (i != string::npos)
             final_path.replace(i, final_path.length() - i, ".sav");
 
-        Log("Loading RAM file: %s", final_path.c_str());
+        Log("Loading BRAM file: %s", final_path.c_str());
 
         ifstream file;
         open_ifstream_utf8(file, final_path.c_str(), ios::in | ios::binary);
@@ -296,17 +296,17 @@ void GeargrafxCore::LoadRam(const char* path, bool full_path)
 
             if (m_memory->LoadRam(file, file_size))
             {
-                Debug("RAM loaded");
+                Debug("BRAM loaded");
             }
             else
             {
-                Error("Failed to load RAM from %s", final_path.c_str());
-                Error("Invalid RAM size: %d", file_size);
+                Error("Failed to load BRAM from %s", final_path.c_str());
+                Error("Invalid BRAM size: %d", file_size);
             }
         }
         else
         {
-            Log("RAM file doesn't exist: %s", final_path.c_str());
+            Log("BRAM file doesn't exist: %s", final_path.c_str());
         }
     }
 }

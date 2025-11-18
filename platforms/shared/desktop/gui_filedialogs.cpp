@@ -61,7 +61,7 @@ void gui_file_dialog_open_rom(void)
 void gui_file_dialog_load_ram(void)
 {
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "RAM Files", "sav" } };
+    nfdfilteritem_t filterItem[1] = { { "BRAM Files", "sav,bram,srm" } };
     nfdopendialogu8args_t args = { };
     args.filterList = filterItem;
     args.filterCount = 1;
@@ -76,14 +76,14 @@ void gui_file_dialog_load_ram(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Error("Load RAM Error: %s", NFD_GetError());
+        Error("Load BRAM Error: %s", NFD_GetError());
     }
 }
 
 void gui_file_dialog_save_ram(void)
 {
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "RAM Files", "sav" } };
+    nfdfilteritem_t filterItem[1] = { { "BRAM Files", "sav,bram,srm" } };
     nfdsavedialogu8args_t args = { };
     args.filterList = filterItem;
     args.filterCount = 1;
@@ -99,7 +99,7 @@ void gui_file_dialog_save_ram(void)
     }
     else if (result != NFD_CANCEL)
     {
-        Error("Save RAM Error: %s", NFD_GetError());
+        Error("Save BRAM Error: %s", NFD_GetError());
     }
 }
 
