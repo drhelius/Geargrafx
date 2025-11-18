@@ -371,7 +371,7 @@ void Memory::SaveRam(std::ostream &file)
 {
     Debug("Saving BRAM to file");
 
-    file.write(reinterpret_cast<const char*> (m_backup_ram), sizeof(u8) * 0x2000);
+    file.write(reinterpret_cast<const char*> (m_backup_ram), sizeof(u8) * 0x800);
 }
 
 bool Memory::LoadRam(std::istream &file, s32 file_size)
