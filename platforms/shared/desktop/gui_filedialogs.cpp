@@ -61,7 +61,7 @@ void gui_file_dialog_open_rom(void)
 void gui_file_dialog_load_ram(void)
 {
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "BRAM Files", "sav,bram,srm" } };
+    nfdfilteritem_t filterItem[1] = { { "BRAM Files", "sav,bram,ram,srm" } };
     nfdopendialogu8args_t args = { };
     args.filterList = filterItem;
     args.filterCount = 1;

@@ -241,7 +241,6 @@ void emu_load_ram(const char* file_path)
         geargrafx->ResetMedia(false);
         geargrafx->LoadRam(file_path, true);
     }
-    UNUSED(file_path);
 }
 
 void emu_save_state_slot(int index)

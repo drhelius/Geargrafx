@@ -241,9 +241,12 @@ void GeargrafxCore::SaveRam(const char* path, bool full_path)
         else
             final_path = m_media->GetFilePath();
 
-        string::size_type i = final_path.rfind('.', final_path.length());
-        if (i != string::npos)
-            final_path.replace(i, final_path.length() - i, ".sav");
+        if (!full_path)
+        {
+            string::size_type i = final_path.rfind('.', final_path.length());
+            if (i != string::npos)
+                final_path.replace(i, final_path.length() - i, ".sav");
+        }
 
         Log("Saving BRAM file: %s", final_path.c_str());
 
@@ -279,9 +282,12 @@ void GeargrafxCore::LoadRam(const char* path, bool full_path)
         else
             final_path = m_media->GetFilePath();
 
-        string::size_type i = final_path.rfind('.', final_path.length());
-        if (i != string::npos)
-            final_path.replace(i, final_path.length() - i, ".sav");
+        if (!full_path)
+        {
+            string::size_type i = final_path.rfind('.', final_path.length());
+            if (i != string::npos)
+                final_path.replace(i, final_path.length() - i, ".sav");
+        }
 
         Log("Loading BRAM file: %s", final_path.c_str());
 
