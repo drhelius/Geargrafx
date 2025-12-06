@@ -434,7 +434,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
     ImGui::Columns(2, "spr", false);
     ImGui::SetColumnOffset(1, 180.0f);
 
-    ImGui::BeginChild("sprites", ImVec2(0, 0.0f), ImGuiChildFlags_Border);
+    ImGui::BeginChild("sprites", ImVec2(0, 0.0f), ImGuiChildFlags_Borders);
     bool window_hovered = ImGui::IsWindowHovered();
 
     ImVec2 p[64];
