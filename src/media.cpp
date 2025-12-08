@@ -87,6 +87,7 @@ void Media::Reset()
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
+    m_is_mb128 = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
 
@@ -551,6 +552,12 @@ void Media::GatherMediaInfoFromDB()
             {
                 m_avenue_pad_3_button = GG_KEY_RUN;
                 Log("Media uses Avenue Pad 3 run button.");
+            }
+
+            if (k_game_database[i].flags & GG_GAMEDB_MB128)
+            {
+                m_is_mb128 = true;
+                Log("Media supports MB128 backup memory.");
             }
         }
         else

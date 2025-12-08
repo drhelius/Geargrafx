@@ -69,6 +69,9 @@ public:
     void SaveRam(const char* path, bool full_path = false);
     void LoadRam();
     void LoadRam(const char* path, bool full_path = false);
+    void SaveMB128(const char* path, bool full_path = false);
+    void LoadMB128(const char* path, bool full_path = false);
+    void EnableMB128(GG_MB128_Mode mode);
     bool SaveState(const char* path = NULL, int index = -1, bool screenshot = false);
     bool SaveState(u8* buffer, size_t& size, bool screenshot = false);
     bool LoadState(const char* path = NULL, int index = -1);
@@ -120,6 +123,7 @@ private:
     bool m_paused;
     GG_Debug_Callback m_debug_callback;
     u64 m_master_clock_cycles;
+    GG_MB128_Mode m_mb128_mode;
 };
 
 #include "geargrafx_core_inline.h"

@@ -50,6 +50,7 @@ static struct retro_log_callback logging;
 retro_log_printf_t log_cb;
 
 static char retro_system_directory[4096];
+static char retro_save_directory[4096];
 static char retro_game_path[4096];
 
 static s16 audio_buf[GG_AUDIO_BUFFER_SIZE];
@@ -91,6 +92,8 @@ static GG_Runtime_Info runtime_info;
 static u8* frame_buffer;
 
 static void load_bios(void);
+static void save_mb128(void);
+static void load_mb128(void);
 static void set_controller_info(void);
 static void update_input(void);
 static void set_variabless(void);
@@ -171,6 +174,12 @@ void retro_init(void)
         snprintf(retro_system_directory, sizeof(retro_system_directory), "%s", dir);
     else
         snprintf(retro_system_directory, sizeof(retro_system_directory), "%s", ".");
+
+    dir = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir)
+        snprintf(retro_save_directory, sizeof(retro_save_directory), "%s", dir);
+    else
+        snprintf(retro_save_directory, sizeof(retro_save_directory), "%s", ".");
 
     log_cb(RETRO_LOG_INFO, "%s (%s) libretro\n", GG_TITLE, GG_VERSION);
 
@@ -343,11 +352,14 @@ bool retro_load_game(const struct retro_game_info *info)
     bool achievements = true;
     environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements);
 
+    load_mb128();
+
     return true;
 }
 
 void retro_unload_game(void)
 {
+    save_mb128();
 }
 
 unsigned retro_get_region(void)
@@ -455,6 +467,26 @@ static void load_bios(void)
 
     snprintf(bios_path, 4113, "%s%c%s", retro_system_directory, slash, gameexpress);
     core->LoadBios(bios_path, false);
+}
+
+static void save_mb128(void)
+{
+    if (core->GetInput()->GetMB128()->IsDirty())
+    {
+        char mb128_path[4113];
+        snprintf(mb128_path, 4113, "%s%cgeargrafx_mb128.sav", retro_save_directory, slash);
+        core->SaveMB128(mb128_path, true);
+    }
+}
+
+static void load_mb128(void)
+{
+    if (core->GetInput()->GetMB128()->IsConnected())
+    {
+        char mb128_path[4113];
+        snprintf(mb128_path, 4113, "%s%cgeargrafx_mb128.sav", retro_save_directory, slash);
+        core->LoadMB128(mb128_path, true);
+    }
 }
 
 static void set_controller_info(void)
@@ -627,6 +659,7 @@ static void set_variabless(void)
         { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
         { "geargrafx_soft_reset", "Allow Soft Reset; Enabled|Disabled" },
         { "geargrafx_turbotap", "TurboTap; Disabled|Enabled" },
+        { "geargrafx_mb128", "MB128 Backup Memory; Auto|Enabled|Disabled" },
         { "geargrafx_avenue_pad_3_switch", "Avenue Pad 3 Switch; Auto|SELECT|RUN" },
         { "geargrafx_turbo_p1_i", "P1 Turbo I; Disabled|Enabled" },
         { "geargrafx_turbo_p1_ii", "P1 Turbo II; Disabled|Enabled" },
@@ -664,6 +697,28 @@ static void check_variables(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         core->GetInput()->EnableTurboTap(strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_mb128";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        bool was_connected = core->GetInput()->GetMB128()->IsConnected();
+
+        GG_MB128_Mode mode = GG_MB128_AUTO;
+        if (strcmp(var.value, "Enabled") == 0)
+            mode = GG_MB128_ENABLED;
+        else if (strcmp(var.value, "Disabled") == 0)
+            mode = GG_MB128_DISABLED;
+        core->EnableMB128(mode);
+
+        bool is_connected = core->GetInput()->GetMB128()->IsConnected();
+
+        if (is_connected && !was_connected)
+            load_mb128();
+        else if (!is_connected && was_connected)
+            save_mb128();
     }
 
     var.key = "geargrafx_aspect_ratio";

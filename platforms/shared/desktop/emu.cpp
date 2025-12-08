@@ -36,6 +36,8 @@ static bool audio_enabled;
 
 static void save_ram(void);
 static void load_ram(void);
+static void save_mb128(void);
+static void load_mb128(void);
 static void reset_buffers(void);
 static const char* get_configurated_dir(int option, const char* path); 
 static void init_debug(void);
@@ -76,6 +78,7 @@ bool emu_init(GG_Input_Pump_Fn input_pump_fn)
 void emu_destroy(void)
 {
     save_ram();
+    save_mb128();
     SafeDeleteArray(audio_buffer);
     SafeDelete(sound_queue);
     SafeDelete(geargrafx);
@@ -92,9 +95,11 @@ bool emu_load_media(const char* file_path)
     reset_buffers();
 
     save_ram();
+    save_mb128();
     if (!geargrafx->LoadMedia(file_path))
         return false;
     load_ram();
+    load_mb128();
 
     update_savestates_data();
 
@@ -181,8 +186,10 @@ void emu_reset(void)
     reset_buffers();
 
     save_ram();
+    save_mb128();
     geargrafx->ResetMedia(false);
     load_ram();
+    load_mb128();
 }
 
 void emu_audio_huc6280a(bool enabled)
@@ -460,6 +467,20 @@ void emu_set_turbo_tap(bool enabled)
     geargrafx->GetInput()->EnableTurboTap(enabled);
 }
 
+void emu_set_mb128_mode(GG_MB128_Mode mode)
+{
+    bool was_connected = geargrafx->GetInput()->GetMB128()->IsConnected();
+
+    geargrafx->EnableMB128(mode);
+
+    bool is_connected = geargrafx->GetInput()->GetMB128()->IsConnected();
+
+    if (is_connected && !was_connected)
+        load_mb128();
+    else if (!is_connected && was_connected)
+        save_mb128();
+}
+
 void emu_set_pad_type(GG_Controllers controller, GG_Controller_Type type)
 {
     geargrafx->GetInput()->SetControllerType(controller, type);
@@ -540,6 +561,21 @@ static void load_ram(void)
 {
     const char* dir = get_configurated_dir(config_emulator.backup_ram_dir_option, config_emulator.backup_ram_path.c_str());
     geargrafx->LoadRam(dir);
+}
+
+static void save_mb128(void)
+{
+    if (geargrafx->GetInput()->GetMB128()->IsDirty())
+    {
+        const char* dir = (config_emulator.mb128_dir_option == 0) ? config_root_path : config_emulator.mb128_path.c_str();
+        geargrafx->SaveMB128(dir);
+    }
+}
+
+static void load_mb128(void)
+{
+    const char* dir = (config_emulator.mb128_dir_option == 0) ? config_root_path : config_emulator.mb128_path.c_str();
+    geargrafx->LoadMB128(dir);
 }
 
 static void reset_buffers(void)

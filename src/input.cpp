@@ -48,6 +48,9 @@ Input::Input(Media* media)
             m_turbo_speed[i][j] = 4;
         }
     }
+
+    m_mb128.Connect(false);
+    m_mb128.Reset();
 }
 
 void Input::Init()
@@ -74,6 +77,8 @@ void Input::Reset()
             m_turbo_counter[i][j] = 0;
         }
     }
+
+    m_mb128.Reset();
 
     WriteO(0xFF);
 }
@@ -110,6 +115,12 @@ void Input::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_register), sizeof(m_register));
     stream.write(reinterpret_cast<const char*> (&m_selected_pad), sizeof(m_selected_pad));
     stream.write(reinterpret_cast<const char*> (&m_selected_extra_buttons), sizeof(m_selected_extra_buttons));
+
+    bool mb128_included = m_mb128.IsConnected();
+    stream.write(reinterpret_cast<const char*> (&mb128_included), sizeof(mb128_included));
+
+    if (mb128_included)
+        m_mb128.SaveState(stream);
 }
 
 void Input::LoadState(std::istream& stream)
@@ -123,4 +134,10 @@ void Input::LoadState(std::istream& stream)
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
         m_gamepads[i] = 0xFFFF;
+
+    bool mb128_included = false;
+    stream.read(reinterpret_cast<char*> (&mb128_included), sizeof(mb128_included));
+
+    if (mb128_included)
+        m_mb128.LoadState(stream);
 }

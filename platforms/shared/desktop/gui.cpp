@@ -132,6 +132,7 @@ bool gui_init(void)
     emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
     emu_set_preload_cdrom(config_emulator.preload_cdrom);
     emu_set_backup_ram(config_emulator.backup_ram);
+    emu_set_mb128_mode((GG_MB128_Mode)config_emulator.mb128_mode);
     emu_set_composite_palette(config_video.composite_palette);
     emu_set_turbo_tap(config_input.turbo_tap);
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
@@ -155,6 +156,7 @@ bool gui_init(void)
     strcpy(gui_savestates_path, config_emulator.savestates_path.c_str());
     strcpy(gui_screenshots_path, config_emulator.screenshots_path.c_str());
     strcpy(gui_backup_ram_path, config_emulator.backup_ram_path.c_str());
+    strcpy(gui_mb128_path, config_emulator.mb128_path.c_str());
     strcpy(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str());
     strcpy(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str());
     if (strlen(gui_syscard_bios_path) > 0)

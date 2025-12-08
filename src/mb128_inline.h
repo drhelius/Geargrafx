@@ -17,26 +17,29 @@
  *
  */
 
-#ifndef GUI_MENUS_H
-#define GUI_MENUS_H
+#ifndef MB12_INLINE_H
+#define MB12_INLINE_H
 
-#ifdef GUI_MENUS_IMPORT
-    #define EXTERN
-#else
-    #define EXTERN extern
-#endif
+#include "mb128.h"
 
-EXTERN char gui_savefiles_path[4096];
-EXTERN char gui_savestates_path[4096];
-EXTERN char gui_screenshots_path[4096];
-EXTERN char gui_backup_ram_path[4096];
-EXTERN char gui_mb128_path[4096];
-EXTERN char gui_syscard_bios_path[4096];
-EXTERN char gui_gameexpress_bios_path[4096];
+INLINE bool MB128::IsConnected() const
+{
+    return m_connected;
+}
 
-EXTERN void gui_init_menus(void);
-EXTERN void gui_main_menu(void);
+INLINE bool MB128::IsActive() const
+{
+    return m_active;
+}
 
-#undef GUI_MENUS_IMPORT
-#undef EXTERN
-#endif /* GUI_MENUS_H */
+INLINE u8* MB128::GetRAM()
+{
+    return m_ram;
+}
+
+INLINE const u8* MB128::GetRAM() const
+{
+    return m_ram;
+}
+
+#endif /* MB12_INLINE_H */

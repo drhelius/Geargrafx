@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include "common.h"
+#include "mb128.h"
 
 class Media;
 
@@ -48,6 +49,8 @@ public:
     void SetTurboSpeed(GG_Controllers controller, GG_Keys key, u8 speed);
     void SetControllerType(GG_Controllers controller, GG_Controller_Type type);
     void SetAvenuePad3Button(GG_Controllers controller, GG_Keys button);
+    void EnableMB128(bool enable);
+    MB128* GetMB128();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -69,6 +72,7 @@ private:
     bool m_turbo_state[GG_MAX_GAMEPADS][2];
     u8 m_turbo_counter[GG_MAX_GAMEPADS][2];
     u8 m_turbo_speed[GG_MAX_GAMEPADS][2];
+    MB128 m_mb128;
 };
 
 #include "input_inline.h"

@@ -60,6 +60,7 @@ void gui_debug_memory_reset(void)
     mem_edit[MEMORY_EDITOR_CDROM_RAM].Reset("CDROM RAM", memory->GetCDROMRAM(), memory->GetCDROMRAMSize());
     mem_edit[MEMORY_EDITOR_ADPCM_RAM].Reset("ADPCM", adpcm->GetRAM(), 0x10000);
     mem_edit[MEMORY_EDITOR_ARCADE_RAM].Reset("ARCADE", memory->GetArcadeRAM(), memory->GetArcadeCardRAMSize());
+    mem_edit[MEMORY_EDITOR_MB128].Reset("MB128", core->GetInput()->GetMB128()->GetRAM(), 0x20000);
 }
 
 void gui_debug_window_memory(void)
@@ -169,6 +170,8 @@ static void draw_tabs(void)
         if (i == MEMORY_EDITOR_ADPCM_RAM && !is_cdrom)
             continue;
         if (i == MEMORY_EDITOR_ARCADE_RAM && !is_arcade_card)
+            continue;
+        if (i == MEMORY_EDITOR_MB128 && !core->GetInput()->GetMB128()->IsConnected())
             continue;
 
         if (ImGui::BeginTabItem(mem_edit[i].GetTitle(), NULL, mem_edit_select == i ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))

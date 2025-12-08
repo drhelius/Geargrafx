@@ -54,6 +54,9 @@ struct config_Emulator
     int screenshots_dir_option = 0;
     std::string backup_ram_path;
     int backup_ram_dir_option = 0;
+    std::string mb128_path;
+    int mb128_dir_option = 0;
+    int mb128_mode = 0;
     std::string syscard_bios_path;
     std::string gameexpress_bios_path;
     std::string screenshots_path;

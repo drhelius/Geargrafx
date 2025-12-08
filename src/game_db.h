@@ -30,9 +30,10 @@
 #define GG_GAMEDB_AVENUE_PAD_3_RUN      0x0020
 #define GG_GAMEDB_GAME_EXPRESS          0x0040
 #define GG_GAMEDB_ARCADE_CARD           0x0080
+#define GG_GAMEDB_MB128                 0x0100
+#define GG_GAMEDB_CDROM                 0x0200
 #define GG_GAMEDB_BIOS_SYSCARD          0x4000
 #define GG_GAMEDB_BIOS_GAME_EXPRESS     0x8000
-#define GG_GAMEDB_CDROM     0x0200
 
 struct GG_DB_Entry
 {

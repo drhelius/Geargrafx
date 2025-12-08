@@ -59,6 +59,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_debug_callback);
     m_paused = true;
     m_master_clock_cycles = 0;
+    m_mb128_mode = GG_MB128_AUTO;
 }
 
 GeargrafxCore::~GeargrafxCore()
@@ -261,6 +262,83 @@ void GeargrafxCore::SaveRam(const char* path, bool full_path)
 void GeargrafxCore::LoadRam()
 {
     LoadRam(NULL);
+}
+
+void GeargrafxCore::SaveMB128(const char* path, bool full_path)
+{
+    if (m_input->GetMB128()->IsConnected())
+    {
+        using namespace std;
+        string final_path;
+
+        if (IsValidPointer(path))
+        {
+            final_path = path;
+            if (!full_path)
+                final_path += "/mb128.sav";
+        }
+        else
+        {
+            final_path = "mb128.sav";
+        }
+
+        Log("Saving MB128 file: %s", final_path.c_str());
+
+        ofstream file;
+        open_ofstream_utf8(file, final_path.c_str(), ios::out | ios::binary);
+        file.write(reinterpret_cast<const char*>(m_input->GetMB128()->GetRAM()), 0x20000);
+
+        m_input->GetMB128()->ClearDirty();
+        Debug("MB128 saved");
+    }
+}
+
+void GeargrafxCore::LoadMB128(const char* path, bool full_path)
+{
+    if (m_input->GetMB128()->IsConnected())
+    {
+        using namespace std;
+        string final_path;
+
+        if (IsValidPointer(path))
+        {
+            final_path = path;
+            if (!full_path)
+                final_path += "/mb128.sav";
+        }
+        else
+        {
+            final_path = "mb128.sav";
+        }
+
+        Log("Loading MB128 file: %s", final_path.c_str());
+
+        ifstream file;
+        open_ifstream_utf8(file, final_path.c_str(), ios::in | ios::binary);
+
+        if (!file.fail())
+        {
+            file.seekg(0, file.end);
+            s32 file_size = (s32)file.tellg();
+            file.seekg(0, file.beg);
+
+            if (file_size == 0x20000)
+            {
+                file.read(reinterpret_cast<char*>(m_input->GetMB128()->GetRAM()), 0x20000);
+                m_input->GetMB128()->ClearDirty();
+                Debug("MB128 loaded");
+            }
+            else
+            {
+                Error("Failed to load MB128 from %s", final_path.c_str());
+                Error("Invalid MB128 size: %d (expected %d)", file_size, 0x20000);
+            }
+        }
+        else
+        {
+            Log("MB128 file doesn't exist: %s", final_path.c_str());
+        }
+    }
 }
 
 void GeargrafxCore::LoadRam(const char* path, bool full_path)
@@ -767,4 +845,27 @@ void GeargrafxCore::Reset()
     m_adpcm->Reset();
     m_audio->Reset(is_cdrom);
     m_input->Reset();
+
+    EnableMB128(m_mb128_mode);
+}
+
+void GeargrafxCore::EnableMB128(GG_MB128_Mode mode)
+{
+    m_mb128_mode = mode;
+    bool enable = false;
+
+    switch (mode)
+    {
+        case GG_MB128_AUTO:
+            enable = m_media->IsMB128();
+            break;
+        case GG_MB128_ENABLED:
+            enable = true;
+            break;
+        case GG_MB128_DISABLED:
+            enable = false;
+            break;
+    }
+
+    m_input->EnableMB128(enable);
 }

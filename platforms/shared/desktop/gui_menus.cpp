@@ -42,6 +42,7 @@ static bool save_vgm = false;
 static bool choose_savestates_path = false;
 static bool choose_screenshots_path = false;
 static bool choose_backup_ram_path = false;
+static bool choose_mb128_path = false;
 static bool open_syscard_bios = false;
 static bool open_gameexpress_bios = false;
 
@@ -78,6 +79,7 @@ void gui_main_menu(void)
     choose_screenshots_path = false;
     gui_main_menu_hovered = false;
     choose_backup_ram_path = false;
+    choose_mb128_path = false;
     open_syscard_bios = false;
     open_gameexpress_bios = false;
 
@@ -328,6 +330,40 @@ static void menu_emulator(void)
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("MB128 Save Dir"))
+        {
+            ImGui::PushItemWidth(220.0f);
+            ImGui::Combo("##mb128_option", &config_emulator.mb128_dir_option, "Default Location\0Custom Location\0\0");
+
+            switch (config_emulator.mb128_dir_option)
+            {
+                case 0:
+                {
+                    ImGui::Text("%s", config_root_path);
+                    break;
+                }
+                case 1:
+                {
+                    if (ImGui::MenuItem("Choose..."))
+                    {
+                        choose_mb128_path = true;
+                    }
+
+                    ImGui::PushItemWidth(450);
+                    if (ImGui::InputText("##mb128_path", gui_mb128_path, IM_ARRAYSIZE(gui_mb128_path), ImGuiInputTextFlags_AutoSelectAll))
+                    {
+                        config_emulator.mb128_path.assign(gui_mb128_path);
+                    }
+                    ImGui::PopItemWidth();
+                    break;
+                }
+                default:
+                    break;
+            }
+
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Screenshots Dir"))
         {
             ImGui::PushItemWidth(220.0f);
@@ -491,6 +527,18 @@ static void menu_emulator(void)
             ImGui::Text("It is recommended to leave this option enabled.");
             ImGui::Text("Reset the emulator to apply changes.");
             ImGui::EndTooltip();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("MB128 Backup Memory"))
+        {
+            ImGui::PushItemWidth(100.0f);
+            if (ImGui::Combo("##mb128_backup", &config_emulator.mb128_mode, "Auto\0Enabled\0Disabled\0\0"))
+            {
+                emu_set_mb128_mode((GG_MB128_Mode)config_emulator.mb128_mode);
+            }
+            ImGui::EndMenu();
         }
 
         ImGui::Separator();
@@ -1300,6 +1348,8 @@ static void file_dialogs(void)
         gui_file_dialog_choose_screenshot_path();
     if (choose_backup_ram_path)
         gui_file_dialog_choose_backup_ram_path();
+    if (choose_mb128_path)
+        gui_file_dialog_choose_mb128_path();
     if (open_syscard_bios)
         gui_file_dialog_load_bios(true);
     if (open_gameexpress_bios)

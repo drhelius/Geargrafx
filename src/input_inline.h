@@ -64,11 +64,21 @@ INLINE void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
 
 INLINE u8 Input::ReadK()
 {
+    if (m_mb128.IsConnected() && m_mb128.IsActive())
+    {
+        u8 low  = m_mb128.Read() & 0x0F;   // MB128 drives only low nibble
+        u8 high = m_register & 0xF0;
+        return high | low;
+    }
+
     return m_register;
 }
 
 INLINE void Input::WriteO(u8 value)
 {
+    if (m_mb128.IsConnected())
+        m_mb128.Write(value);
+
     bool prev_sel = m_sel;
     bool prev_clr = m_clr;
     m_sel = IS_SET_BIT(value, 0);
@@ -203,6 +213,16 @@ INLINE void Input::SetControllerType(GG_Controllers controller, GG_Controller_Ty
 INLINE void Input::SetAvenuePad3Button(GG_Controllers controller, GG_Keys button)
 {
     m_avenue_pad_3_button[controller] = button;
+}
+
+INLINE void Input::EnableMB128(bool enable)
+{
+    m_mb128.Connect(enable);
+}
+
+INLINE MB128* Input::GetMB128()
+{
+    return &m_mb128;
 }
 
 #endif /* INPUT_INLINE_H */

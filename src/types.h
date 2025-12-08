@@ -93,6 +93,13 @@ enum GG_Controller_Type
     GG_CONTROLLER_AVENUE_PAD_6
 };
 
+enum GG_MB128_Mode
+{
+    GG_MB128_AUTO = 0,
+    GG_MB128_ENABLED,
+    GG_MB128_DISABLED
+};
+
 enum GG_Controllers
 {
     GG_CONTROLLER_1 = 0,

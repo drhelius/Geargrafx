@@ -244,6 +244,9 @@ void config_read(void)
     config_emulator.screenshots_path = read_string("Emulator", "ScreenshotPath");
     config_emulator.backup_ram_dir_option = read_int("Emulator", "BackupRAMDirOption", 0);
     config_emulator.backup_ram_path = read_string("Emulator", "BackupRAMPath");
+    config_emulator.mb128_dir_option = read_int("Emulator", "MB128DirOption", 0);
+    config_emulator.mb128_path = read_string("Emulator", "MB128Path");
+    config_emulator.mb128_mode = read_int("Emulator", "MB128Mode", 0);
     config_emulator.last_open_path = read_string("Emulator", "LastOpenPath");
     config_emulator.syscard_bios_path = read_string("Emulator", "SysCardBiosPath");
     config_emulator.gameexpress_bios_path = read_string("Emulator", "GameExpressBiosPath");
@@ -271,6 +274,11 @@ void config_read(void)
     if (config_emulator.backup_ram_path.empty())
     {
         config_emulator.backup_ram_path = config_root_path;
+    }
+
+    if (config_emulator.mb128_path.empty())
+    {
+        config_emulator.mb128_path = config_root_path;
     }
 
     for (int i = 0; i < config_max_recent_roms; i++)
@@ -503,6 +511,9 @@ void config_write(void)
     write_string("Emulator", "ScreenshotPath", config_emulator.screenshots_path);
     write_int("Emulator", "BackupRAMDirOption", config_emulator.backup_ram_dir_option);
     write_string("Emulator", "BackupRAMPath", config_emulator.backup_ram_path);
+    write_int("Emulator", "MB128DirOption", config_emulator.mb128_dir_option);
+    write_string("Emulator", "MB128Path", config_emulator.mb128_path);
+    write_int("Emulator", "MB128Mode", config_emulator.mb128_mode);
     write_string("Emulator", "LastOpenPath", config_emulator.last_open_path);
     write_string("Emulator", "SysCardBiosPath", config_emulator.syscard_bios_path);
     write_string("Emulator", "GameExpressBiosPath", config_emulator.gameexpress_bios_path);

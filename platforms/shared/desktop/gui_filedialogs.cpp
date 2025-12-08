@@ -215,6 +215,26 @@ void gui_file_dialog_choose_backup_ram_path(void)
     }
 }
 
+void gui_file_dialog_choose_mb128_path(void)
+{
+    nfdchar_t *outPath;
+    nfdpickfolderu8args_t args = { };
+    args.defaultPath = config_emulator.mb128_path.c_str();
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        strncpy_fit(gui_mb128_path, outPath, sizeof(gui_mb128_path));
+        config_emulator.mb128_path.assign(outPath);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        Error("MB128 Path Error: %s", NFD_GetError());
+    }
+}
+
 void gui_file_dialog_load_bios(bool syscard)
 {
     char* bios_path = syscard ? gui_syscard_bios_path : gui_gameexpress_bios_path;
