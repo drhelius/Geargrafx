@@ -183,8 +183,8 @@ const GG_DB_Entry k_game_database[] =
 
     // MB128 COMPATIBLE
     { 0x05B6E0FA, "Bishoujo Senshi Sailor Moon Collection (J)", GG_GAMEDB_MB128 },
+    { 0x771A3258, "Brandish (J)", GG_GAMEDB_MB128 },
     { 0x367DE1F4, "Magicoal (J)", GG_GAMEDB_MB128 },
-    { 0x2DF5FA07, "Mahjong Sword - Princess Quest Gaiden (J)", GG_GAMEDB_MB128 },
     { 0xDC2760EA, "Princess Maker 2 (J)", GG_GAMEDB_MB128 },
     { 0x655C319F, "Private Eye dol (J)", GG_GAMEDB_MB128 },
     { 0x9B8A510C, "Shin Megami Tensei (J)", GG_GAMEDB_MB128 },
