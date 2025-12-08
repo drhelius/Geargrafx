@@ -473,8 +473,8 @@ static void save_mb128(void)
 {
     if (core->GetInput()->GetMB128()->IsDirty())
     {
-        char mb128_path[4113];
-        snprintf(mb128_path, 4113, "%s%cgeargrafx_mb128.sav", retro_save_directory, slash);
+        char mb128_path[4120];
+        snprintf(mb128_path, sizeof(mb128_path), "%s%cgeargrafx_mb128.sav", retro_save_directory, slash);
         core->SaveMB128(mb128_path, true);
     }
 }
@@ -483,8 +483,8 @@ static void load_mb128(void)
 {
     if (core->GetInput()->GetMB128()->IsConnected())
     {
-        char mb128_path[4113];
-        snprintf(mb128_path, 4113, "%s%cgeargrafx_mb128.sav", retro_save_directory, slash);
+        char mb128_path[4120];
+        snprintf(mb128_path, sizeof(mb128_path), "%s%cgeargrafx_mb128.sav", retro_save_directory, slash);
         core->LoadMB128(mb128_path, true);
     }
 }
