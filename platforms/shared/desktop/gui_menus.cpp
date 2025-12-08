@@ -531,7 +531,7 @@ static void menu_emulator(void)
 
         ImGui::Separator();
 
-        if (ImGui::BeginMenu("MB128 Backup Memory"))
+        if (ImGui::BeginMenu("Memory Base 128"))
         {
             ImGui::PushItemWidth(100.0f);
             if (ImGui::Combo("##mb128_backup", &config_emulator.mb128_mode, "Auto\0Enabled\0Disabled\0\0"))
@@ -540,6 +540,8 @@ static void menu_emulator(void)
             }
             ImGui::EndMenu();
         }
+
+        ImGui::TextColored(ImVec4(0.50f, 0.50f, 0.50f, 1.0f), "Status: %s", emu_get_core()->GetInput()->GetMB128()->IsConnected() ? "CONNECTED" : "DISCONNECTED");
 
         ImGui::Separator();
 
