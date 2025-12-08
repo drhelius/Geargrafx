@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
     int ret = 0;
 
     core = new GeargrafxCore();
-    core->Init();
+    core->Init(NULL);
     cpu = core->GetHuC6280();
     memory = core->GetMemory();
 
