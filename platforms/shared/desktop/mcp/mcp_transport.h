@@ -27,9 +27,6 @@
 #include "log.h"
 
 #ifdef _WIN32
-    #ifndef WIN32_LEAN_AND_MEAN
-        #define WIN32_LEAN_AND_MEAN
-    #endif
     #include <winsock2.h>
     #include <ws2tcpip.h>
     #pragma comment(lib, "ws2_32.lib")
@@ -172,7 +169,7 @@ public:
             "\r\n" +
             jsonLine;
 
-        int sent = ::send(m_current_client, http_response.c_str(), http_response.length(), 0);
+        int sent = ::send(m_current_client, http_response.c_str(), (int)http_response.length(), 0);
 
         if (sent <= 0)
         {
@@ -252,7 +249,7 @@ public:
                     size_t pos = request.find("\r\n\r\n");
                     if (pos != std::string::npos)
                     {
-                        header_end = pos + 4;
+                        header_end = (int)(pos + 4);
 
                         // Log the full request headers for debugging
                         Debug("[MCP] HTTP headers:\n%s", request.substr(0, header_end).c_str());
@@ -289,7 +286,7 @@ public:
                 // Check if we have the complete body
                 if (header_end > 0 && content_length >= 0)
                 {
-                    int body_length = request.length() - header_end;
+                    int body_length = (int)request.length() - header_end;
                     if (body_length >= content_length)
                         break;
                 }
@@ -318,7 +315,7 @@ public:
                     "Connection: close\r\n"
                     "\r\n";
 
-                ::send(client, options_response.c_str(), options_response.length(), 0);
+                ::send(client, options_response.c_str(), (int)options_response.length(), 0);
 
                 std::lock_guard<std::mutex> lock(m_mutex);
                 SOCKET_CLOSE(m_current_client);
@@ -351,7 +348,7 @@ public:
                     "\r\n"
                     "{\"error\":\"SSE streaming not supported by this server\"}";
 
-                ::send(client, method_not_allowed.c_str(), method_not_allowed.length(), 0);
+                ::send(client, method_not_allowed.c_str(), (int)method_not_allowed.length(), 0);
 
                 std::lock_guard<std::mutex> lock(m_mutex);
                 SOCKET_CLOSE(m_current_client);

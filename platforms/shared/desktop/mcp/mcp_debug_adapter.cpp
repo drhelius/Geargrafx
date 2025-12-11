@@ -19,10 +19,10 @@
 
 #include "mcp_debug_adapter.h"
 #include "log.h"
-#include "emu.h"
-#include "gui_debug_disassembler.h"
-#include "gui_debug_memory.h"
-#include "gui_debug_memeditor.h"
+#include "../emu.h"
+#include "../gui_debug_disassembler.h"
+#include "../gui_debug_memory.h"
+#include "../gui_debug_memeditor.h"
 #include <cstring>
 #include <sstream>
 #include <iomanip>
