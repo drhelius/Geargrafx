@@ -1771,7 +1771,7 @@ void gui_debug_remove_disassembler_bookmark(u16 address)
 int gui_debug_get_disassembler_bookmarks(void** bookmarks_ptr)
 {
     *bookmarks_ptr = (void*)&bookmarks;
-    return bookmarks.size();
+    return (int)bookmarks.size();
 }
 
 int gui_debug_get_symbols(void** symbols_ptr)

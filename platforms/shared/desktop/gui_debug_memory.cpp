@@ -439,7 +439,7 @@ int gui_debug_memory_get_bookmarks(int editor, void** bookmarks_ptr)
 
     std::vector<MemEditor::Bookmark>* bookmarks = mem_edit[editor].GetBookmarks();
     *bookmarks_ptr = (void*)bookmarks;
-    return bookmarks->size();
+    return (int)bookmarks->size();
 }
 
 int gui_debug_memory_get_watches(int editor, void** watches_ptr)
@@ -452,7 +452,7 @@ int gui_debug_memory_get_watches(int editor, void** watches_ptr)
 
     std::vector<MemEditor::Watch>* watches = mem_edit[editor].GetWatches();
     *watches_ptr = (void*)watches;
-    return watches->size();
+    return (int)watches->size();
 }
 
 void gui_debug_memory_get_selection(int editor, int* start, int* end)

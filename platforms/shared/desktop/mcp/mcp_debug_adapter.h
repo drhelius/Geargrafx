@@ -24,7 +24,7 @@
 #include <string>
 #include "json.hpp"
 #include "geargrafx.h"
-#include "gui_debug_memory.h"
+#include "../gui_debug_memory.h"
 
 using json = nlohmann::json;
 
