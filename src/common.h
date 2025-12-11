@@ -148,6 +148,29 @@ inline bool parse_hex_string(const char* str, size_t len, u32* result)
     return parse_hex_string<u32>(str, len, result, 8);
 }
 
+template<typename T>
+inline bool parse_hex_with_prefix(const std::string& hex_str, T* result)
+{
+    const char* str = hex_str.c_str();
+    size_t len = hex_str.length();
+
+    if (len >= 2)
+    {
+        if ((str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) || str[0] == '$')
+        {
+            str += (str[0] == '$') ? 1 : 2;
+            len -= (str[0] == '$') ? 1 : 2;
+        }
+    }
+    else if (len >= 1 && str[0] == '$')
+    {
+        str += 1;
+        len -= 1;
+    }
+
+    return parse_hex_string(str, len, result);
+}
+
 inline char* strncpy_fit(char* dest, const char* src, size_t dest_size)
 {
     if (dest_size != 0)

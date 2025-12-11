@@ -40,6 +40,7 @@ MemEditor::MemEditor()
     m_preview_data_type = 0;
     m_preview_endianess = 0;
     m_jump_to_address = -1;
+    m_scroll_to_address = -1;
     InitPointer(m_mem_data);
     m_mem_size = 0;
     m_mem_base_addr = 0;
@@ -392,6 +393,12 @@ void MemEditor::Draw(bool ascii, bool preview, bool options, bool cursors)
                 ImGui::SetScrollY((m_jump_to_address / m_bytes_per_row) * character_size.y);
                 m_selection_start = m_selection_end = m_jump_to_address;
                 m_jump_to_address = -1;
+            }
+
+            if (m_scroll_to_address >= 0 && m_scroll_to_address < m_mem_size)
+            {
+                ImGui::SetScrollY((m_scroll_to_address / m_bytes_per_row) * character_size.y);
+                m_scroll_to_address = -1;
             }
 
             ImGui::EndTable();
@@ -966,6 +973,24 @@ void MemEditor::SearchCapture()
     memcpy(m_search_data, m_mem_data, m_mem_size);
 }
 
+int MemEditor::PerformSearch(int op, int compare_type, int compare_value, int data_type)
+{
+    m_search_operator = op;
+    m_search_compare_type = compare_type;
+    m_search_compare_specific_value = compare_value;
+    m_search_compare_specific_address = compare_value;
+    m_search_data_type = data_type;
+
+    CalculateSearchResults();
+
+    return (int)m_search_results.size();
+}
+
+std::vector<MemEditor::Search>* MemEditor::GetSearchResults()
+{
+    return &m_search_results;
+}
+
 void MemEditor::StepFrame()
 {
     if (m_search_auto)
@@ -980,6 +1005,32 @@ int MemEditor::GetWordBytes()
 char* MemEditor::GetTitle()
 {
     return m_title;
+}
+
+std::vector<MemEditor::Watch>* MemEditor::GetWatches()
+{
+    return &m_watches;
+}
+
+void MemEditor::GetSelection(int* start, int* end)
+{
+    *start = m_selection_start;
+    *end = m_selection_end;
+}
+
+void MemEditor::SetSelection(int start, int end)
+{
+    m_selection_start = start;
+    m_selection_end = end;
+}
+
+void MemEditor::ScrollToAddress(int address)
+{
+    if (address >= m_mem_base_addr && address < (m_mem_base_addr + m_mem_size))
+    {
+        int offset = address - m_mem_base_addr;
+        m_scroll_to_address = offset;
+    }
 }
 
 void MemEditor::WatchWindow()

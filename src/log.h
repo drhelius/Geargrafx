@@ -27,6 +27,8 @@
 #if defined(__LIBRETRO__)
 #include "libretro.h"
 extern retro_log_printf_t log_cb;
+#else
+extern bool g_mcp_server_active;
 #endif
 
 #if defined(GG_DEBUG)
@@ -42,6 +44,9 @@ extern retro_log_printf_t log_cb;
 #define Log(msg, ...) (Log_func(msg, ##__VA_ARGS__))
 #define Error(msg, ...) (Log_func("ERROR [%s:%d] " msg, __FILE__, __LINE__, ##__VA_ARGS__))
 
+// Forward declaration for MCP flag
+
+
 inline void Log_func(const char* const msg, ...)
 {
     char buffer[512];
@@ -56,18 +61,26 @@ inline void Log_func(const char* const msg, ...)
         log_cb(RETRO_LOG_INFO, "%s\n", buffer);
         return;
     }
-#endif
-
-//#if defined(GG_DEBUG)
-#if 0
-    static int count = 1;
-    printf("%d: %s\n", count, buffer);
-    count++;
+    else
+    {
+        printf("%s\n", buffer);
+        fflush(stdout);
+        return;
+    }
 #else
-    printf("%s\n", buffer);
+    if (g_mcp_server_active)
+    {
+        fprintf(stderr, "%s\n", buffer);
+        fflush(stderr);
+        return;
+    }
+    else
+    {
+        printf("%s\n", buffer);
+        fflush(stdout);
+        return;
+    }
 #endif
-
-    fflush(stdout);
 }
 
 #endif /* LOG_H */

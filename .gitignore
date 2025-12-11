@@ -4,6 +4,7 @@
 *.app/
 
 # Visual Studio files
+.vscode/mcp.json
 .vs/
 ipch/
 [Oo]bj

@@ -68,6 +68,7 @@ struct config_Emulator
     int console_type = 0;
     int cdrom_type = 0;
     bool preload_cdrom = false;
+    int mcp_tcp_port = 7777;
 };
 
 struct config_Video

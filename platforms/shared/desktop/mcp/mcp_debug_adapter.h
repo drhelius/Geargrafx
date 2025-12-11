@@ -1,0 +1,190 @@
+/*
+ * Geargrafx - PC Engine / TurboGrafx Emulator
+ * Copyright (C) 2024  Ignacio Sanchez
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses/
+ *
+ */
+
+#ifndef MCP_DEBUG_ADAPTER_H
+#define MCP_DEBUG_ADAPTER_H
+
+#include <vector>
+#include <string>
+#include "json.hpp"
+#include "geargrafx.h"
+#include "gui_debug_memory.h"
+
+using json = nlohmann::json;
+
+enum MemoryArea
+{
+    MEMORY_AREA_RAM = MEMORY_EDITOR_RAM,
+    MEMORY_AREA_ZERO_PAGE = MEMORY_EDITOR_ZERO_PAGE,
+    MEMORY_AREA_CDROM_RAM = MEMORY_EDITOR_CDROM_RAM,
+    MEMORY_AREA_ROM = MEMORY_EDITOR_ROM,
+    MEMORY_AREA_VRAM_1 = MEMORY_EDITOR_VRAM_1,
+    MEMORY_AREA_VRAM_2 = MEMORY_EDITOR_VRAM_2,
+    MEMORY_AREA_SAT_1 = MEMORY_EDITOR_SAT_1,
+    MEMORY_AREA_SAT_2 = MEMORY_EDITOR_SAT_2,
+    MEMORY_AREA_PALETTES = MEMORY_EDITOR_PALETTES,
+    MEMORY_AREA_CARD_RAM = MEMORY_EDITOR_CARD_RAM,
+    MEMORY_AREA_BACKUP_RAM = MEMORY_EDITOR_BACKUP_RAM,
+    MEMORY_AREA_ADPCM_RAM = MEMORY_EDITOR_ADPCM_RAM,
+    MEMORY_AREA_ARCADE_RAM = MEMORY_EDITOR_ARCADE_RAM,
+    MEMORY_AREA_MB128 = MEMORY_EDITOR_MB128,
+    MEMORY_AREA_MAX = MEMORY_EDITOR_MAX
+};
+
+struct MemoryAreaInfo
+{
+    int id;
+    std::string name;
+    u32 size;
+    u8* data;
+};
+
+struct RegistersSnapshot
+{
+    u16 PC;
+    u8 A;
+    u8 X;
+    u8 Y;
+    u8 S;
+    u8 P;
+    s32 SPEED;
+    bool TIMER;
+    u8 TIMER_COUNTER;
+    u8 TIMER_RELOAD;
+    u8 IDR;
+    u8 IRR;
+};
+
+struct BreakpointInfo
+{
+    bool enabled;
+    int type;
+    u16 address1;
+    u16 address2;
+    bool read;
+    bool write;
+    bool execute;
+    bool range;
+    std::string type_name;
+};
+
+struct DisasmLine
+{
+    u32 address;
+    u8 bank;
+    std::string name;
+    std::string bytes;
+    std::string segment;
+    int size;
+    bool jump;
+    u16 jump_address;
+    u8 jump_bank;
+    bool subroutine;
+    int irq;
+};
+
+class DebugAdapter
+{
+public:
+    DebugAdapter(GeargrafxCore* core)
+    {
+        m_core = core;
+    }
+
+    // Execution control
+    void Pause();
+    void Resume();
+    void StepInto();
+    void StepOver();
+    void StepOut();
+    void StepFrame();
+    void Reset();
+    json GetDebugStatus();
+
+    // Breakpoints
+    void SetBreakpoint(u16 address, int type, bool read, bool write, bool execute);
+    void SetBreakpointRange(u16 start_address, u16 end_address, int type, bool read, bool write, bool execute);
+    void ClearBreakpointByAddress(u16 address, int type, u16 end_address = 0);
+    std::vector<BreakpointInfo> ListBreakpoints();
+
+    // Registers
+    RegistersSnapshot GetRegisters();
+    void SetRegister(const std::string& name, u32 value);
+
+    // Memory areas (matching debugger memory editor)
+    std::vector<MemoryAreaInfo> ListMemoryAreas();
+    std::vector<u8> ReadMemoryArea(int area, u32 offset, size_t size);
+    void WriteMemoryArea(int area, u32 offset, const std::vector<u8>& data);
+
+    // Disassembly (using existing disassembler records)
+    std::vector<DisasmLine> GetDisassemblyAroundPc(size_t before, size_t after);
+    std::vector<DisasmLine> GetDisassemblyRange(u16 start, size_t count);
+
+    // Media info
+    json GetMediaInfo();
+
+    // Chip status info
+    json GetHuC6280Status();
+    json GetHuC6270Registers(int vdc);
+    json GetHuC6270Status(int vdc);
+    json GetHuC6260Status();
+    json GetHuC6202Status();
+    json GetPSGStatus();
+    json GetCDROMStatus();
+    json GetArcadeCardStatus();
+    json GetCDROMAudioStatus();
+    json GetADPCMStatus();
+    json GetScreenshot();
+    json ListSprites(int vdc);
+    json GetSpriteImage(int sprite_index, int vdc);
+
+    // Disassembler operations
+    json RunToAddress(u16 address);
+    json AddDisassemblerBookmark(u16 address, const std::string& name);
+    json RemoveDisassemblerBookmark(u16 address);
+    json ListDisassemblerBookmarks();
+    json AddSymbol(u8 bank, u16 address, const std::string& name);
+    json RemoveSymbol(u8 bank, u16 address);
+    json ListSymbols();
+    json ListCallStack();
+
+    // Memory area operations
+    json SelectMemoryRange(int area, int start_address, int end_address);
+    json SetMemorySelectionValue(int area, u8 value);
+    json GetMemorySelection(int area);
+    json AddMemoryBookmark(int area, int address, const std::string& name);
+    json RemoveMemoryBookmark(int area, int address);
+    json ListMemoryBookmarks(int area);
+    json AddMemoryWatch(int area, int address, const std::string& notes);
+    json RemoveMemoryWatch(int area, int address);
+    json ListMemoryWatches(int area);
+    json MemorySearchCapture(int area);
+    json MemorySearch(int area, const std::string& op, const std::string& compare_type, int compare_value, const std::string& data_type);
+
+    // Core access
+    GeargrafxCore* GetCore() { return m_core; }
+
+private:
+    GeargrafxCore* m_core;
+
+    const char* GetBreakpointTypeName(int type);
+    MemoryAreaInfo GetMemoryAreaInfo(int area);
+};
+
+#endif /* MCP_DEBUG_ADAPTER_H */

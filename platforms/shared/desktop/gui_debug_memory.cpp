@@ -334,3 +334,157 @@ static void memory_editor_menu(void)
 
     ImGui::EndMenuBar();
 }
+
+void gui_debug_memory_select_range(int editor, int start_address, int end_address)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+        return;
+
+    mem_edit_select = editor;
+    mem_edit[editor].SetSelection(start_address, end_address);
+    mem_edit[editor].ScrollToAddress(start_address);
+}
+
+void gui_debug_memory_set_selection_value(int editor, u8 value)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+        return;
+
+    mem_edit[editor].SetValueToSelection(value);
+}
+
+void gui_debug_memory_add_bookmark(int editor, int address, const char* name)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+        return;
+
+    std::vector<MemEditor::Bookmark>* bookmarks = mem_edit[editor].GetBookmarks();
+    MemEditor::Bookmark bookmark;
+    bookmark.address = address;
+
+    if (name && strlen(name) > 0)
+    {
+        snprintf(bookmark.name, sizeof(bookmark.name), "%s", name);
+    }
+    else
+    {
+        snprintf(bookmark.name, sizeof(bookmark.name), "Bookmark_%04X", address);
+    }
+
+    bookmarks->push_back(bookmark);
+}
+
+void gui_debug_memory_remove_bookmark(int editor, int address)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+        return;
+
+    std::vector<MemEditor::Bookmark>* bookmarks = mem_edit[editor].GetBookmarks();
+
+    for (std::vector<MemEditor::Bookmark>::iterator it = bookmarks->begin(); it != bookmarks->end(); ++it)
+    {
+        if (it->address == address)
+        {
+            bookmarks->erase(it);
+            break;
+        }
+    }
+}
+
+void gui_debug_memory_add_watch(int editor, int address, const char* notes)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+        return;
+
+    std::vector<MemEditor::Watch>* watches = mem_edit[editor].GetWatches();
+    MemEditor::Watch watch;
+    watch.address = address;
+
+    if (notes && strlen(notes) > 0)
+    {
+        snprintf(watch.notes, sizeof(watch.notes), "%s", notes);
+    }
+    else
+    {
+        snprintf(watch.notes, sizeof(watch.notes), "Watch_%04X", address);
+    }
+
+    watches->push_back(watch);
+}
+
+void gui_debug_memory_remove_watch(int editor, int address)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+        return;
+
+    std::vector<MemEditor::Watch>* watches = mem_edit[editor].GetWatches();
+
+    for (std::vector<MemEditor::Watch>::iterator it = watches->begin(); it != watches->end(); ++it)
+    {
+        if (it->address == address)
+        {
+            watches->erase(it);
+            break;
+        }
+    }
+}
+
+int gui_debug_memory_get_bookmarks(int editor, void** bookmarks_ptr)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+    {
+        *bookmarks_ptr = nullptr;
+        return 0;
+    }
+
+    std::vector<MemEditor::Bookmark>* bookmarks = mem_edit[editor].GetBookmarks();
+    *bookmarks_ptr = (void*)bookmarks;
+    return bookmarks->size();
+}
+
+int gui_debug_memory_get_watches(int editor, void** watches_ptr)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+    {
+        *watches_ptr = nullptr;
+        return 0;
+    }
+
+    std::vector<MemEditor::Watch>* watches = mem_edit[editor].GetWatches();
+    *watches_ptr = (void*)watches;
+    return watches->size();
+}
+
+void gui_debug_memory_get_selection(int editor, int* start, int* end)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+    {
+        *start = -1;
+        *end = -1;
+        return;
+    }
+
+    mem_edit[editor].GetSelection(start, end);
+}
+
+void gui_debug_memory_search_capture(int editor)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+        return;
+
+    mem_edit[editor].SearchCapture();
+}
+
+int gui_debug_memory_search(int editor, int op, int compare_type, int compare_value, int data_type, void** results_ptr)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+    {
+        *results_ptr = nullptr;
+        return 0;
+    }
+
+    int count = mem_edit[editor].PerformSearch(op, compare_type, compare_value, data_type);
+    std::vector<MemEditor::Search>* results = mem_edit[editor].GetSearchResults();
+    *results_ptr = (void*)results;
+    return count;
+}

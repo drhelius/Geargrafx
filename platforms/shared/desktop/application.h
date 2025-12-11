@@ -43,7 +43,7 @@ EXTERN SDL_version application_sdl_build_version;
 EXTERN SDL_version application_sdl_link_version;
 EXTERN bool application_show_menu;
 
-EXTERN int application_init(const char* rom_file, const char* symbol_file, bool force_fullscreen, bool force_windowed);
+EXTERN int application_init(const char* rom_file, const char* symbol_file, bool force_fullscreen, bool force_windowed, int mcp_mode, int mcp_tcp_port);
 EXTERN void application_destroy(void);
 EXTERN void application_mainloop(void);
 EXTERN void application_trigger_quit(void);

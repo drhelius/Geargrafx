@@ -1,0 +1,136 @@
+/*
+ * Geargrafx - PC Engine / TurboGrafx Emulator
+ * Copyright (C) 2024  Ignacio Sanchez
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses/
+ *
+ */
+
+#ifndef MCP_MANAGER_H
+#define MCP_MANAGER_H
+
+#include "mcp_server.h"
+#include "mcp_transport.h"
+#include "mcp_debug_adapter.h"
+
+extern bool g_mcp_server_active;
+
+enum McpTransportMode
+{
+    MCP_TRANSPORT_STDIO,
+    MCP_TRANSPORT_TCP
+};
+
+class McpManager
+{
+public:
+    McpManager()
+    {
+        m_debugAdapter = NULL;
+        m_server = NULL;
+        m_transport_mode = MCP_TRANSPORT_STDIO;
+        m_tcp_port = 7777;
+    }
+
+    ~McpManager()
+    {
+        Stop();
+        SafeDelete(m_debugAdapter);
+    }
+
+    void Init(GeargrafxCore* core)
+    {
+        m_debugAdapter = new DebugAdapter(core);
+    }
+
+    void SetTransportMode(McpTransportMode mode, int tcp_port = 7777)
+    {
+        m_transport_mode = mode;
+        m_tcp_port = tcp_port;
+    }
+
+    void Start()
+    {
+        if (m_server && m_server->IsRunning())
+            return;
+
+        g_mcp_server_active = true;
+
+        McpTransportInterface* transport = NULL;
+        if (m_transport_mode == MCP_TRANSPORT_TCP)
+            transport = new HttpTransport(m_tcp_port);
+        else
+            transport = new StdioTransport();
+
+        m_server = new McpServer(
+            transport,
+            *m_debugAdapter,
+            m_commandQueue,
+            m_responseQueue
+        );
+        m_server->Start();
+    }
+
+    void Stop()
+    {
+        if (m_server)
+        {
+            m_server->Stop();
+
+            if (m_server->GetTransport())
+                m_server->GetTransport()->close();
+
+            SafeDelete(m_server);
+            g_mcp_server_active = false;
+        }
+    }
+
+    bool IsRunning() const
+    {
+        return m_server && m_server->IsRunning();
+    }
+
+    void PumpCommands()
+    {
+        DebugCommand* cmd = NULL;
+        while ((cmd = m_commandQueue.Pop()) != NULL)
+        {
+            DebugResponse* resp = new DebugResponse();
+            resp->requestId = cmd->requestId;
+            resp->isError = false;
+
+            resp->result = m_server->ExecuteCommand(cmd->toolName, cmd->arguments);
+
+            if (resp->result.contains("error"))
+            {
+                resp->isError = true;
+                resp->errorCode = -32603;
+                resp->errorMessage = resp->result["error"];
+            }
+
+            m_responseQueue.Push(resp);
+            SafeDelete(cmd);
+        }
+    }
+
+private:
+    DebugAdapter* m_debugAdapter;
+    McpServer* m_server;
+    CommandQueue m_commandQueue;
+    ResponseQueue m_responseQueue;
+    McpTransportMode m_transport_mode;
+    int m_tcp_port;
+};
+
+#endif /* MCP_MANAGER_H */

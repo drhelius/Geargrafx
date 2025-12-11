@@ -24,6 +24,7 @@ INCLUDES += -I$(SRC_DIR) -I$(DESKTOP_SRC_DIR)
 
 INCLUDES += -I$(DEPS_DIR)/glad
 INCLUDES += -I$(DEPS_DIR)/imgui
+INCLUDES += -I$(DEPS_DIR)/json
 INCLUDES += -I$(DEPS_DIR)/libchdr/include
 INCLUDES += -I$(DEPS_DIR)/lzma/include
 INCLUDES += -I$(DEPS_DIR)/mINI

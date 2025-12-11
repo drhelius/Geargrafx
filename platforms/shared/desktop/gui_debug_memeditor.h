@@ -71,13 +71,19 @@ public:
     void OpenSearchWindow();
     void AddWatch();
     void RemoveWatches();
+    std::vector<Watch>* GetWatches();
     void SetGuiFont(ImFont* gui_font);
     void BookMarkPopup();
     void WatchPopup();
-    void SearchCapture();
     void StepFrame();
     int GetWordBytes();
     char* GetTitle();
+    void GetSelection(int* start, int* end);
+    void SetSelection(int start, int end);
+    void ScrollToAddress(int address);
+    void SearchCapture();
+    int PerformSearch(int op, int compare_type, int compare_value, int data_type);
+    std::vector<Search>* GetSearchResults();
 
 private:
     bool IsColumnSeparator(int current_column, int column_count);
@@ -115,6 +121,7 @@ private:
     int m_preview_data_type;
     int m_preview_endianess;
     int m_jump_to_address;
+    int m_scroll_to_address;
     uint8_t* m_mem_data;
     int m_mem_size;
     int m_mem_base_addr;

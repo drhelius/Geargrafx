@@ -22,6 +22,7 @@
 #include "geargrafx.h"
 #include "sound_queue.h"
 #include "config.h"
+#include "mcp/mcp_manager.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #if defined(_WIN32)
@@ -33,6 +34,7 @@ static GeargrafxCore* geargrafx;
 static SoundQueue* sound_queue;
 static s16* audio_buffer;
 static bool audio_enabled;
+static McpManager* mcp_manager = nullptr;
 
 static void save_ram(void);
 static void load_ram(void);
@@ -72,6 +74,9 @@ bool emu_init(GG_Input_Pump_Fn input_pump_fn)
     emu_debug_command = Debug_Command_None;
     emu_debug_pc_changed = false;
 
+    mcp_manager = new McpManager();
+    mcp_manager->Init(geargrafx);
+
     return true;
 }
 
@@ -79,6 +84,7 @@ void emu_destroy(void)
 {
     save_ram();
     save_mb128();
+    SafeDelete(mcp_manager);
     SafeDeleteArray(audio_buffer);
     SafeDelete(sound_queue);
     SafeDelete(geargrafx);
@@ -108,6 +114,8 @@ bool emu_load_media(const char* file_path)
 
 void emu_update(void)
 {
+    emu_mcp_pump_commands();
+
     if (emu_is_empty())
         return;
 
@@ -514,6 +522,47 @@ void emu_save_screenshot(const char* file_path)
     Log("Screenshot saved to %s", file_path);
 }
 
+int emu_get_screenshot_png(unsigned char** out_buffer)
+{
+    if (!geargrafx->GetMedia()->IsReady())
+        return 0;
+
+    GG_Runtime_Info runtime;
+    emu_get_runtime(runtime);
+
+    int stride = runtime.screen_width * 4;
+    int len = 0;
+
+    *out_buffer = stbi_write_png_to_mem(emu_frame_buffer, stride, 
+                                         runtime.screen_width, runtime.screen_height, 
+                                         4, &len);
+
+    return len;
+}
+
+int emu_get_sprite_png(int vdc, int sprite_index, unsigned char** out_buffer)
+{
+    if (!geargrafx->GetMedia()->IsReady())
+        return 0;
+
+    if (vdc < 0 || vdc > 1 || sprite_index < 0 || sprite_index > 63)
+        return 0;
+
+    update_debug_sprites();
+
+    int width = emu_debug_sprite_widths[vdc][sprite_index];
+    int height = emu_debug_sprite_heights[vdc][sprite_index];
+    u8* buffer = emu_debug_sprite_buffers[vdc][sprite_index];
+
+    if (!buffer || width == 0 || height == 0)
+        return 0;
+
+    int len = 0;
+    *out_buffer = stbi_write_png_to_mem(buffer, width * 4, width, height, 4, &len);
+
+    return len;
+}
+
 void emu_save_sprite(const char* file_path, int vdc, int index)
 {
     if (!geargrafx->GetMedia()->IsReady())
@@ -834,5 +883,34 @@ void emu_stop_vgm_recording(void)
 bool emu_is_vgm_recording(void)
 {
     return geargrafx->GetAudio()->IsVgmRecording();
+}
+
+void emu_mcp_set_transport(int mode, int tcp_port)
+{
+    if (mcp_manager)
+        mcp_manager->SetTransportMode((McpTransportMode)mode, tcp_port);
+}
+
+void emu_mcp_start(void)
+{
+    if (mcp_manager)
+        mcp_manager->Start();
+}
+
+void emu_mcp_stop(void)
+{
+    if (mcp_manager)
+        mcp_manager->Stop();
+}
+
+bool emu_mcp_is_running(void)
+{
+    return mcp_manager && mcp_manager->IsRunning();
+}
+
+void emu_mcp_pump_commands(void)
+{
+    if (mcp_manager && mcp_manager->IsRunning())
+        mcp_manager->PumpCommands();
 }
 

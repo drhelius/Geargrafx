@@ -79,6 +79,12 @@
     <ClCompile Include="..\shared\desktop\sound_queue.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
+    <ClCompile Include="..\shared\desktop\mcp\mcp_debug_adapter.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\mcp\mcp_server.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\adpcm.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -305,6 +311,21 @@
     </ClInclude>
     <ClInclude Include="..\shared\desktop\sound_queue.h">
       <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\mcp\mcp_transport.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\mcp\mcp_debug_adapter.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\mcp\mcp_server.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\mcp\mcp_manager.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\json\json.hpp">
+      <Filter>dependencies</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\adpcm.h">
       <Filter>src</Filter>

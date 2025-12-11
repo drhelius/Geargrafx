@@ -64,7 +64,6 @@ public:
         u8* TIMER_RELOAD;
         u8* IDR;
         u8* IRR;
-        u32* CYCLES;
     };
 
     enum GG_Breakpoint_Type
