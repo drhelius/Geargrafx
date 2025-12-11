@@ -199,7 +199,7 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
      "servers": {
        "geargrafx": {
          "type": "http",
-         "url": "http://localhost:7777/mcp",
+         "url": "http://localhost:7777",
          "headers": {}
        }
      }
@@ -212,7 +212,7 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
      "github.copilot.chat.mcp.servers": {
        "geargrafx": {
          "type": "http",
-         "url": "http://localhost:7777/mcp"
+         "url": "http://localhost:7777"
        }
      }
    }
@@ -224,7 +224,7 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
      "mcpServers": {
        "geargrafx": {
          "type": "http",
-         "url": "http://localhost:7777/mcp"
+         "url": "http://localhost:7777"
        }
      }
    }
