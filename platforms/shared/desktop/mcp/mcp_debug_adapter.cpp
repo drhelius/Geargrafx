@@ -28,11 +28,6 @@
 #include <iomanip>
 #include <vector>
 
-struct DebugSymbol
-{
-    char text[64];
-};
-
 struct DisassemblerBookmark
 {
     u16 address;
@@ -268,7 +263,7 @@ std::vector<u8> DebugAdapter::ReadMemoryArea(int area, u32 offset, size_t size)
     if (info.data == NULL || offset >= info.size)
         return result;
 
-    u32 bytes_to_read = size;
+    u32 bytes_to_read = (u32)size;
     if (offset + bytes_to_read > info.size)
         bytes_to_read = info.size - offset;
 

@@ -31,13 +31,6 @@
 #include "config.h"
 #include "emu.h"
 
-struct DebugSymbol
-{
-    int bank;
-    u16 address;
-    char text[64];
-};
-
 struct DisassemblerLine
 {
     u16 address;

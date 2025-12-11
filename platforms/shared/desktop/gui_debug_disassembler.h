@@ -28,6 +28,13 @@
     #define EXTERN extern
 #endif
 
+struct DebugSymbol
+{
+    int bank;
+    u16 address;
+    char text[64];
+};
+
 EXTERN void gui_debug_disassembler_init(void);
 EXTERN void gui_debug_disassembler_destroy(void);
 EXTERN void gui_debug_disassembler_reset(void);
