@@ -273,24 +273,22 @@ jobs:
         mkdir -p mcpb/server
         mkdir -p mcpb/mcp/resources
 
-        # Copy gamecontrollerdb.txt
-        cp download/gamecontrollerdb.txt mcpb/
-
-        # Copy MCP resources
-        cp -r download/mcp/resources/* mcpb/mcp/resources/
-
-        # Copy binary based on platform
         if [ "${{ matrix.variant.platform }}" = "darwin" ]; then
-          # Extract macOS app bundle
           cd download
           unzip -q ${{ env.NAME_UPPER }}.app.zip
           cd ..
           cp download/${{ env.NAME_UPPER }}.app/Contents/MacOS/${{ env.NAME_LOWER }} mcpb/server/
+          cp platforms/shared/gamecontrollerdb.txt mcpb/
+          cp -r platforms/shared/desktop/mcp/resources/* mcpb/mcp/resources/
         elif [ "${{ matrix.variant.platform }}" = "win32" ]; then
           cp download/${{ env.NAME_UPPER }}.exe mcpb/server/
           cp download/SDL2.dll mcpb/server/
+          cp download/gamecontrollerdb.txt mcpb/
+          cp -r download/mcp/resources/* mcpb/mcp/resources/
         else
           cp download/${{ env.NAME_LOWER }} mcpb/server/
+          cp download/gamecontrollerdb.txt mcpb/
+          cp -r download/mcp/resources/* mcpb/mcp/resources/
         fi
     - name: Create manifest.json
       run: |
