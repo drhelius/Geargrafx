@@ -31,52 +31,52 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     <tr>
       <td rowspan="4"><strong>Windows</strong></td>
       <td>Desktop x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-1.6.6-windows-x64.zip">Geargrafx-1.6.6-windows-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-1.6.7-windows-x64.zip">Geargrafx-1.6.7-windows-x64.zip</a></td>
       <td rowspan="4">May need <a href="https://go.microsoft.com/fwlink/?LinkId=746572">Visual C++ Redistributable</a> and <a href="https://apps.microsoft.com/detail/9nqpsl29bfff">OpenGL Compatibility Pack</a></td>
     </tr>
     <tr>
       <td>Desktop ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-1.6.6-windows-arm64.zip">Geargrafx-1.6.6-windows-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-1.6.7-windows-arm64.zip">Geargrafx-1.6.7-windows-arm64.zip</a></td>
     </tr>
     <tr>
       <td>MCP x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-windows-x64.mcpb">Geargrafx-windows-x64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-windows-x64.mcpb">Geargrafx-windows-x64.mcpb</a></td>
     </tr>
     <tr>
       <td>MCP ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-windows-arm64.mcpb">Geargrafx-windows-arm64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-windows-arm64.mcpb">Geargrafx-windows-arm64.mcpb</a></td>
     </tr>
     <tr>
       <td rowspan="4"><strong>macOS</strong></td>
       <td>Desktop Apple Silicon</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-1.6.6-macos-arm.zip">Geargrafx-1.6.6-macos-arm.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-1.6.7-macos-arm.zip">Geargrafx-1.6.7-macos-arm.zip</a></td>
       <td rowspan="4"></td>
     </tr>
     <tr>
       <td>Desktop Intel</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-1.6.6-macos-intel.zip">Geargrafx-1.6.6-macos-intel.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-1.6.7-macos-intel.zip">Geargrafx-1.6.7-macos-intel.zip</a></td>
     </tr>
     <tr>
       <td>MCP ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-macos-arm64.mcpb">Geargrafx-macos-arm64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-macos-arm64.mcpb">Geargrafx-macos-arm64.mcpb</a></td>
     </tr>
     <tr>
       <td>MCP x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-macos-x64.mcpb">Geargrafx-macos-x64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-macos-x64.mcpb">Geargrafx-macos-x64.mcpb</a></td>
     </tr>
     <tr>
       <td rowspan="3"><strong>Linux</strong></td>
       <td>Desktop Ubuntu 24.04</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-1.6.6-ubuntu-24.04.zip">Geargrafx-1.6.6-ubuntu-24.04.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-1.6.7-ubuntu-24.04.zip">Geargrafx-1.6.7-ubuntu-24.04.zip</a></td>
       <td rowspan="3">May need <code>libsdl2</code></td>
     </tr>
     <tr>
       <td>Desktop Ubuntu 22.04</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-1.6.6-ubuntu-22.04.zip">Geargrafx-1.6.6-ubuntu-22.04.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-1.6.7-ubuntu-22.04.zip">Geargrafx-1.6.7-ubuntu-22.04.zip</a></td>
     </tr>
     <tr>
       <td>MCP x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.6/Geargrafx-linux-x64.mcpb">Geargrafx-linux-x64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.7/Geargrafx-linux-x64.mcpb">Geargrafx-linux-x64.mcpb</a></td>
     </tr>
     <tr>
       <td><strong>RetroArch</strong></td>
