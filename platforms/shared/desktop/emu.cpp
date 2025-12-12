@@ -908,6 +908,11 @@ bool emu_mcp_is_running(void)
     return mcp_manager && mcp_manager->IsRunning();
 }
 
+int emu_mcp_get_transport_mode(void)
+{
+    return mcp_manager ? mcp_manager->GetTransportMode() : -1;
+}
+
 void emu_mcp_pump_commands(void)
 {
     if (mcp_manager && mcp_manager->IsRunning())

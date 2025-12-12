@@ -155,6 +155,9 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
     {
         Log("Auto-starting MCP server (mode: %s, port: %d)...", 
             mcp_mode == 0 ? "stdio" : "http", mcp_tcp_port);
+        config_debug.debug = true;
+        emu_set_overscan(0);
+        emu_set_scanline_start_end(0, 241);
         emu_mcp_set_transport(mcp_mode, mcp_tcp_port);
         emu_mcp_start();
     }

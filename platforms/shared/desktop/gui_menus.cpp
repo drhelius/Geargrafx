@@ -52,7 +52,6 @@ static void menu_video(void);
 static void menu_input(void);
 static void menu_audio(void);
 static void menu_debug(void);
-static void menu_mcp(void);
 static void menu_about(void);
 static void file_dialogs(void);
 static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int player);
@@ -94,7 +93,6 @@ void gui_main_menu(void)
         menu_input();
         menu_audio();
         menu_debug();
-        menu_mcp();
         menu_about();
 
         gui_main_menu_height = (int)ImGui::GetWindowSize().y;
@@ -1161,6 +1159,51 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
+        if (ImGui::BeginMenu("MCP Server", config_debug.debug))
+        {
+            bool mcp_running = emu_mcp_is_running();
+            int transport_mode = emu_mcp_get_transport_mode();
+            bool http_running = mcp_running && (transport_mode == 1);
+            bool stdio_running = mcp_running && (transport_mode == 0);
+
+            if (ImGui::MenuItem("Start HTTP Server", "", false, !mcp_running))
+            {
+                emu_mcp_set_transport(1, config_emulator.mcp_tcp_port);
+                emu_mcp_start();
+            }
+
+            if (ImGui::MenuItem("Stop HTTP Server", "", false, http_running))
+            {
+                emu_mcp_stop();
+            }
+
+            ImGui::Separator();
+
+            if (stdio_running)
+                ImGui::TextColored(ImVec4(0.90f, 0.70f, 0.10f, 1.0f), "STDIO mode active");
+            else if (http_running)
+                ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "Listening on %d", config_emulator.mcp_tcp_port);
+            else
+                ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "Stopped");
+
+            ImGui::Separator();
+
+            ImGui::Text("HTTP Port:");
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(50);
+            if (ImGui::InputInt("##mcp_port", &config_emulator.mcp_tcp_port, 0, 0))
+            {
+                if (config_emulator.mcp_tcp_port < 1)
+                    config_emulator.mcp_tcp_port = 1;
+                if (config_emulator.mcp_tcp_port > 65535)
+                    config_emulator.mcp_tcp_port = 65535;
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
         if (ImGui::BeginMenu("Reset Values", config_debug.debug))
         {
             if (ImGui::BeginMenu("CPU Registers"))
@@ -1306,51 +1349,6 @@ static void menu_debug(void)
             }
             ImGui::PopItemWidth();
             ImGui::EndMenu();
-        }
-
-        ImGui::EndMenu();
-    }
-#endif
-}
-
-static void menu_mcp(void)
-{
-#if !defined(GG_DISABLE_DISASSEMBLER)
-    if (ImGui::BeginMenu("MCP"))
-    {
-        gui_in_use = true;
-
-        bool mcp_running = emu_mcp_is_running();
-
-        if (ImGui::MenuItem("Start HTTP Server", "", false, !mcp_running))
-        {
-            emu_mcp_set_transport(1, config_emulator.mcp_tcp_port);
-            emu_mcp_start();
-        }
-
-        if (ImGui::MenuItem("Stop HTTP Server", "", false, mcp_running))
-        {
-            emu_mcp_stop();
-        }
-
-        ImGui::Separator();
-
-        if (mcp_running)
-            ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "Listening on %d", config_emulator.mcp_tcp_port);
-        else
-            ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "Stopped");
-
-        ImGui::Separator();
-
-        ImGui::Text("HTTP Port:");
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(50);
-        if (ImGui::InputInt("##mcp_port", &config_emulator.mcp_tcp_port, 0, 0))
-        {
-            if (config_emulator.mcp_tcp_port < 1)
-                config_emulator.mcp_tcp_port = 1;
-            if (config_emulator.mcp_tcp_port > 65535)
-                config_emulator.mcp_tcp_port = 65535;
         }
 
         ImGui::EndMenu();

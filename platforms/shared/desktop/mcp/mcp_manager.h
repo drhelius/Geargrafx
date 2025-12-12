@@ -69,9 +69,15 @@ public:
 
         McpTransportInterface* transport = NULL;
         if (m_transport_mode == MCP_TRANSPORT_TCP)
+        {
+            Log("[MCP] Starting HTTP transport on port %d", m_tcp_port);
             transport = new HttpTransport(m_tcp_port);
+        }
         else
+        {
+            Log("[MCP] Starting STDIO transport");
             transport = new StdioTransport();
+        }
 
         m_server = new McpServer(
             transport,
@@ -99,6 +105,11 @@ public:
     bool IsRunning() const
     {
         return m_server && m_server->IsRunning();
+    }
+
+    int GetTransportMode() const
+    {
+        return (int)m_transport_mode;
     }
 
     void PumpCommands()
