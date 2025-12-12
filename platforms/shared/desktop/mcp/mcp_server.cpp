@@ -280,7 +280,7 @@ void McpServer::HandleToolsList(const json& request)
 
     // Breakpoint tools
     tools.push_back({
-        {"name", "debug_set_breakpoint"},
+        {"name", "set_breakpoint"},
         {"description", "Set a breakpoint at specified address in PC Engine memory (ROM/RAM, VRAM, Palette, or hardware registers)"},
         {"inputSchema", {
             {"type", "object"},
@@ -305,7 +305,7 @@ void McpServer::HandleToolsList(const json& request)
     });
 
     tools.push_back({
-        {"name", "debug_set_breakpoint_range"},
+        {"name", "set_breakpoint_range"},
         {"description", "Set a breakpoint for an address range"},
         {"inputSchema", {
             {"type", "object"},
@@ -334,7 +334,7 @@ void McpServer::HandleToolsList(const json& request)
     });
 
     tools.push_back({
-        {"name", "debug_clear_breakpoint"},
+        {"name", "remove_breakpoint"},
         {"description", "Clear a breakpoint. Single address breakpoints: provide 'address' only. Range breakpoints: provide both 'address' and 'end_address' matching the exact range"},
         {"inputSchema", {
             {"type", "object"},
@@ -363,7 +363,7 @@ void McpServer::HandleToolsList(const json& request)
     });
 
     tools.push_back({
-        {"name", "debug_list_breakpoints"},
+        {"name", "list_breakpoints"},
         {"description", "List all breakpoints"},
         {"inputSchema", {
             {"type", "object"},
@@ -373,7 +373,7 @@ void McpServer::HandleToolsList(const json& request)
 
     // Memory tools
     tools.push_back({
-        {"name", "debug_list_memory_areas"},
+        {"name", "list_memory_areas"},
         {"description", "List all available memory areas (RAM, ROM, VRAM, etc.)"},
         {"inputSchema", {
             {"type", "object"},
@@ -382,7 +382,7 @@ void McpServer::HandleToolsList(const json& request)
     });
 
     tools.push_back({
-        {"name", "debug_read_memory"},
+        {"name", "read_memory"},
         {"description", "Read memory from a specific memory area"},
         {"inputSchema", {
             {"type", "object"},
@@ -405,7 +405,7 @@ void McpServer::HandleToolsList(const json& request)
     });
 
     tools.push_back({
-        {"name", "debug_write_memory"},
+        {"name", "write_memory"},
         {"description", "Write memory to a specific memory area"},
         {"inputSchema", {
             {"type", "object"},
@@ -429,7 +429,7 @@ void McpServer::HandleToolsList(const json& request)
 
     // Register tools
     tools.push_back({
-        {"name", "debug_write_cpu_register"},
+        {"name", "write_huc6280_register"},
         {"description", "Write to a HuC6280 CPU register"},
         {"inputSchema", {
             {"type", "object"},
@@ -857,7 +857,7 @@ void McpServer::HandleToolsList(const json& request)
     });
 
     tools.push_back({
-        {"name", "list_call_stack"},
+        {"name", "get_call_stack"},
         {"description", "List the current call stack (function calls hierarchy)"},
         {"inputSchema", {
             {"type", "object"},
@@ -1057,7 +1057,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         return m_debugAdapter.GetDebugStatus();
     }
     // Breakpoints
-    else if (normalizedTool == "debug_set_breakpoint")
+    else if (normalizedTool == "set_breakpoint")
     {
         std::string addrStr = arguments["address"];
         u16 address;
@@ -1075,7 +1075,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         m_debugAdapter.SetBreakpoint(address, breakpoint_type, read, write, execute);
         return {{"success", true}, {"address", addrStr}, {"memory_area", memory_area}};
     }
-    else if (normalizedTool == "debug_set_breakpoint_range")
+    else if (normalizedTool == "set_breakpoint_range")
     {
         std::string startAddrStr = arguments["start_address"];
         std::string endAddrStr = arguments["end_address"];
@@ -1100,7 +1100,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
                                          read, write, execute);
         return {{"success", true}, {"start_address", startAddrStr}, {"end_address", endAddrStr}, {"memory_area", memory_area}};
     }
-    else if (normalizedTool == "debug_clear_breakpoint")
+    else if (normalizedTool == "remove_breakpoint")
     {
         std::string addrStr = arguments["address"];
         u16 address;
@@ -1122,7 +1122,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         m_debugAdapter.ClearBreakpointByAddress(address, breakpoint_type, end_address);
         return {{"success", true}, {"address", addrStr}, {"memory_area", memory_area}};
     }
-    else if (normalizedTool == "debug_list_breakpoints")
+    else if (normalizedTool == "list_breakpoints")
     {
         std::vector<BreakpointInfo> breakpoints = m_debugAdapter.ListBreakpoints();
         json bpArray = json::array();
@@ -1151,7 +1151,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         return {{"breakpoints", bpArray}};
     }
     // Memory
-    else if (normalizedTool == "debug_list_memory_areas")
+    else if (normalizedTool == "list_memory_areas")
     {
         std::vector<MemoryAreaInfo> areas = m_debugAdapter.ListMemoryAreas();
         json areaArray = json::array();
@@ -1165,7 +1165,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         }
         return {{"areas", areaArray}};
     }
-    else if (normalizedTool == "debug_read_memory")
+    else if (normalizedTool == "read_memory")
     {
         int area = arguments["area"];
         std::string offsetStr = arguments["offset"];
@@ -1186,7 +1186,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
 
         return {{"area", area}, {"offset", offsetStr}, {"data", hex_ss.str()}};
     }
-    else if (normalizedTool == "debug_write_memory")
+    else if (normalizedTool == "write_memory")
     {
         int area = arguments["area"];
         std::string offsetStr = arguments["offset"];
@@ -1212,7 +1212,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         return {{"success", true}, {"area", area}, {"offset", offsetStr}, {"bytes_written", data.size()}};
     }
     // Registers
-    else if (normalizedTool == "debug_write_cpu_register")
+    else if (normalizedTool == "write_huc6280_register")
     {
         std::string name = arguments["name"];
         std::string valueStr = arguments["value"];
@@ -1441,7 +1441,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     {
         return m_debugAdapter.ListSymbols();
     }
-    else if (normalizedTool == "list_call_stack")
+    else if (normalizedTool == "get_call_stack")
     {
         return m_debugAdapter.ListCallStack();
     }

@@ -32,13 +32,13 @@ The server exposes 50 tools organized in the following categories:
 - `debug_get_status` - Get debug status (paused, at_breakpoint, pc address)
 
 ### CPU & Registers
-- `debug_write_cpu_register` - Set register value
+- `write_huc6280_register` - Set register value
 - `get_huc6280_status` - Get complete HuC6280 CPU status (registers, MPR, timer, interrupts, I/O, speed)
 
 ### Memory Operations
-- `debug_list_memory_areas` - List all available memory areas
-- `debug_read_memory` - Read from specific memory area
-- `debug_write_memory` - Write to specific memory area
+- `list_memory_areas` - List all available memory areas
+- `read_memory` - Read from specific memory area
+- `write_memory` - Write to specific memory area
 - `get_memory_selection` - Get current memory selection range
 - `select_memory_range` - Select a range of memory addresses
 - `set_memory_selection_value` - Set all bytes in selection to specified value
@@ -60,13 +60,13 @@ The server exposes 50 tools organized in the following categories:
 - `add_disassembler_bookmark` - Add bookmark in disassembler
 - `remove_disassembler_bookmark` - Remove disassembler bookmark
 - `list_disassembler_bookmarks` - List all disassembler bookmarks
-- `list_call_stack` - View function call hierarchy
+- `get_call_stack` - View function call hierarchy
 
 ### Breakpoints
-- `debug_set_breakpoint` - Set execution, read, or write breakpoint (supports 5 memory areas: rom_ram, vram, palette, huc6270_reg, huc6260_reg)
-- `debug_set_breakpoint_range` - Set breakpoint for an address range (supports 5 memory areas)
-- `debug_clear_breakpoint` - Remove breakpoint
-- `debug_list_breakpoints` - List all breakpoints
+- `set_breakpoint` - Set execution, read, or write breakpoint (supports 5 memory areas: rom_ram, vram, palette, huc6270_reg, huc6260_reg)
+- `set_breakpoint_range` - Set breakpoint for an address range (supports 5 memory areas)
+- `remove_breakpoint` - Remove breakpoint
+- `list_breakpoints` - List all breakpoints
 
 ### Hardware Status
 - `get_media_info` - Get loaded ROM/CD info
