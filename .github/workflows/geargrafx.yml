@@ -273,6 +273,9 @@ jobs:
         mkdir -p mcpb/server
         mkdir -p mcpb/mcp/resources
 
+        # Copy icon
+        cp platforms/macos/image.png mcpb/icon.png
+
         if [ "${{ matrix.variant.platform }}" = "darwin" ]; then
           cd download
           unzip -q ${{ env.NAME_UPPER }}.app.zip

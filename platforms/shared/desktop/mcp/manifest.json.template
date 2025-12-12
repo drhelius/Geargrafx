@@ -18,12 +18,13 @@
   "support": "https://github.com/drhelius/Geargrafx/issues",
   "keywords": ["emulator", "pc-engine", "turbografx-16", "debugging", "retro-gaming", "hardware-emulation"],
   "license": "GPL-3.0",
+  "icon": "icon.png",
   "server": {
     "type": "binary",
     "entry_point": "server/{{BINARY_NAME}}",
     "mcp_config": {
       "command": "${__dirname}/server/{{BINARY_NAME}}",
-      "args": ["--mcp"]
+      "args": ["--mcp-stdio"]
     }
   },
   "compatibility": {
