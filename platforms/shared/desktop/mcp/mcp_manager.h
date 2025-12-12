@@ -24,7 +24,7 @@
 #include "mcp_transport.h"
 #include "mcp_debug_adapter.h"
 
-extern bool g_mcp_server_active;
+extern bool g_mcp_stdio_mode;
 
 enum McpTransportMode
 {
@@ -65,8 +65,6 @@ public:
         if (m_server && m_server->IsRunning())
             return;
 
-        g_mcp_server_active = true;
-
         McpTransportInterface* transport = NULL;
         if (m_transport_mode == MCP_TRANSPORT_TCP)
         {
@@ -75,7 +73,7 @@ public:
         }
         else
         {
-            Log("[MCP] Starting STDIO transport");
+            g_mcp_stdio_mode = true;
             transport = new StdioTransport();
         }
 
@@ -98,7 +96,7 @@ public:
                 m_server->GetTransport()->close();
 
             SafeDelete(m_server);
-            g_mcp_server_active = false;
+            g_mcp_stdio_mode = false;
         }
     }
 

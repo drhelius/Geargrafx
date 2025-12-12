@@ -7,7 +7,7 @@
   "long_description": "{{NAME_UPPER}} is a high-accuracy PC Engine (TurboGrafx-16) emulator with comprehensive debugging capabilities exposed through the Model Context Protocol. This MCP server allows AI assistants to debug, inspect, and control the emulator, providing tools for memory inspection, breakpoint management, register access, and hardware state monitoring.",
   "author": {
     "name": "Nacho Sanchez",
-    "url": "https://x.com/drhelius"
+    "url": "https://github.com/drhelius/Geargrafx"
   },
   "repository": {
     "type": "git",

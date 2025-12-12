@@ -49,7 +49,7 @@ static bool input_gamepad_shortcut_prev[GG_MAX_GAMEPADS][config_HotkeyIndex_COUN
 static Uint32 mouse_last_motion_time = 0;
 static const Uint32 mouse_hide_timeout_ms = 1500;
 
-bool g_mcp_server_active = false;
+bool g_mcp_stdio_mode = false;
 
 static bool sdl_init(void);
 static void sdl_destroy(void);

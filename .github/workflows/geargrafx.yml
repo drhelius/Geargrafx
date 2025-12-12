@@ -273,8 +273,7 @@ jobs:
         mkdir -p mcpb/server
         mkdir -p mcpb/mcp/resources
 
-        # Copy icon
-        cp platforms/macos/image.png mcpb/icon.png
+        cp platforms/shared/desktop/mcp/icon.png mcpb/icon.png
 
         if [ "${{ matrix.variant.platform }}" = "darwin" ]; then
           cd download
