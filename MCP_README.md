@@ -15,6 +15,7 @@ This server provides comprehensive tools for game development, rom hacking, reve
 - **Bookmarks**: Memory and disassembler bookmarks for navigation
 - **Call Stack**: View function call hierarchy
 - **Screenshot Capture**: Get current frame as PNG image
+- **Documentation Resources**: Built-in hardware and programming documentation for AI context
 - **GUI Integration**: MCP server runs alongside the emulator GUI, sharing the same state
 
 ## Available MCP Tools
@@ -107,7 +108,7 @@ The default mode uses standard input/output for communication. The emulator is l
 
 ### HTTP Transport
 
-The HTTP transport mode runs the emulator with an embedded web server on `localhost:7777`. The emulator stays running independently while the AI client connects via HTTP.
+The HTTP transport mode runs the emulator with an embedded web server on `localhost:7777/mcp`. The emulator stays running independently while the AI client connects via HTTP.
 
 **Advantages:**
 - Persistent emulator instance
@@ -185,10 +186,11 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
 1. **Start the emulator manually** with HTTP transport:
    ```bash
    ./geargrafx --mcp-http
-   # Server will start on http://localhost:7777
+   # Server will start on http://localhost:7777/mcp
    
    # Or specify a custom port:
    ./geargrafx --mcp-http --mcp-http-port 3000
+   # Server will start on http://localhost:3000/mcp
    ```
 
    You can optionally start the server using the "MCP" menu in the GUI.
@@ -199,7 +201,7 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
      "servers": {
        "geargrafx": {
          "type": "http",
-         "url": "http://localhost:7777",
+         "url": "http://localhost:7777/mcp",
          "headers": {}
        }
      }
@@ -212,7 +214,7 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
      "github.copilot.chat.mcp.servers": {
        "geargrafx": {
          "type": "http",
-         "url": "http://localhost:7777"
+         "url": "http://localhost:7777/mcp"
        }
      }
    }
@@ -224,7 +226,7 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
      "mcpServers": {
        "geargrafx": {
          "type": "http",
-         "url": "http://localhost:7777"
+         "url": "http://localhost:7777/mcp"
        }
      }
    }
@@ -251,6 +253,74 @@ Once configured, you can ask your AI assistant:
 - "Step through the next 5 instructions"
 - "Show me the VDC registers"
 - "Capture a screenshot of the current frame"
+
+## Available Resources
+
+In addition to tools, the MCP server provides documentation resources that AI assistants can access to better understand the PC Engine / TurboGrafx-16 hardware and programming.
+
+Resources are organized into categories and are automatically loaded when the server starts. They provide context and reference material for AI-assisted debugging and development.
+
+### Hardware Documentation Resources
+
+Complete technical reference documentation for all PC Engine / TurboGrafx-16 hardware components:
+
+- **HuC6280 CPU — 8-bit CMOS Microprocessor** (`geargrafx://hardware/huc6280_cpu`)
+  - 65C02-compatible core architecture
+  - CPU registers (A/X/Y/S/P/PC) and status flags
+  - Memory Management Unit (MMU) with 8×8KB page mapping
+  - Interrupt controller, 7-bit timer, I/O ports
+  - Clock speeds (1.79MHz/7.16MHz switchable)
+
+- **HuC6280 Instruction Set Reference** (`geargrafx://hardware/huc6280_instructions`)
+  - Complete instruction set with all 65C02 base opcodes
+  - HuC6280 extensions (BBR/BBS/RMB/SMB/TST/TAM/TMA/SAX/SAY/SXY/ST0/ST1/ST2/CSL/CSH/CLA/CLX/CLY/TAI/TDD/TIA/TII/TIN)
+  - Addressing modes, cycle counts, flags affected
+
+- **HuC6280 PSG — Programmable Sound Generator** (`geargrafx://hardware/huc6280_psg`)
+  - 6 waveform channels with 32-sample waveform memory
+  - Dual noise generators (channels 5 and 6)
+  - Low Frequency Oscillator (LFO)
+  - Stereo balance control and Direct D/A mode (DDA)
+
+- **HuC6270 VDC — Video Display Controller** (`geargrafx://hardware/huc6270_vdc`)
+  - 64KB VRAM with internal registers (R00-R13)
+  - Display timing control and sprite rendering
+  - Sprite Attribute Table (SAT) and DMA operations
+  - Dual-VDC SuperGrafx support
+
+- **HuC6260 VCE — Video Color Encoder** (`geargrafx://hardware/huc6260_vce`)
+  - 512×9-bit color RAM (3-bit R/G/B per entry)
+  - Palette organization (16 palettes × 16 colors)
+  - Color table access and analog video output
+
+- **HuC6202 VPC — Video Priority Controller** (`geargrafx://hardware/huc6202_vpc`)
+  - SuperGrafx dual-VDC (VDC#1/VDC#2) arbitration
+  - Priority control registers and window-based layer visibility
+  - Per-pixel priority resolution
+
+- **PC Engine Memory Map** (`geargrafx://hardware/memory_map`)
+  - 64KB logical / 2MB physical address space
+  - MMU 8KB page translation (MPR0-MPR7)
+  - Hardware register layout (VDC/$0000, VCE/$0400, PSG/$0800, Timer/$0C00, Input/$1000, IRQ/$1400)
+  - RAM configuration, ROM banking, CD-ROM/Arcade Card extensions
+
+### How Resources Work
+
+Resources are read-only documentation that AI assistants can reference during conversations:
+
+1. **Automatic Loading**: Resources are loaded when the MCP server starts
+2. **Context Enhancement**: AI assistants can retrieve resources to understand hardware specifics
+3. **Format**: Resources are provided in Markdown format for easy reading
+4. **URIs**: Each resource has a unique URI like `geargrafx://category/resource_id`
+
+### Accessing Resources
+
+Resources are accessed through the MCP protocol's resource capabilities:
+
+- `resources/list` - List all available resources
+- `resources/read` - Read the content of a specific resource
+
+AI clients automatically handle resource retrieval, so you typically don't need to manually request them. The AI assistant will fetch relevant resources when needed to answer your questions or provide better debugging assistance.
 
 ## How It Works
 

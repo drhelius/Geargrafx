@@ -43,10 +43,11 @@ jobs:
       working-directory: platforms/linux
     - name: Prepare artifact directory
       run: |
-        mkdir -p artifact
+        mkdir -p artifact/mcp
         cp platforms/shared/README.txt artifact
         cp platforms/shared/gamecontrollerdb.txt artifact
         cp platforms/linux/${{ env.NAME_LOWER }} artifact
+        cp -r platforms/shared/desktop/mcp/resources artifact/mcp/
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:
@@ -194,11 +195,12 @@ jobs:
       working-directory: platforms/windows
     - name: Prepare artifact directory
       run: |
-        mkdir -p artifact
+        mkdir -p artifact/mcp
         cp platforms/shared/README.txt artifact
         cp platforms/shared/gamecontrollerdb.txt artifact
         cp platforms/windows/dependencies/SDL2-2.30.6/lib/${{ matrix.architecture }}/SDL2.dll artifact
         cp platforms/windows/release/${{ env.NAME_UPPER }}.exe artifact
+        cp -r platforms/shared/desktop/mcp/resources artifact/mcp/
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:
@@ -229,10 +231,11 @@ jobs:
           gmake
     - name: Prepare artifact directory
       run: |
-        mkdir -p artifact
+        mkdir -p artifact/mcp
         cp platforms/shared/README.txt artifact
         cp platforms/shared/gamecontrollerdb.txt artifact
         cp platforms/bsd/${{ env.NAME_LOWER }} artifact
+        cp -r platforms/shared/desktop/mcp/resources artifact/mcp/
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:

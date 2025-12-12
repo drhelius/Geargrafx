@@ -18,8 +18,11 @@
  */
 
 #include "mcp_server.h"
+#include "../utils.h"
 #include <sstream>
 #include <iomanip>
+#include <fstream>
+#include "log.h"
 
 static void* ReaderThreadFunc(void* arg)
 {
@@ -151,6 +154,14 @@ void McpServer::HandleLine(const std::string& line)
     {
         HandleToolsCall(request);
     }
+    else if (method == "resources/list")
+    {
+        HandleResourcesList(request);
+    }
+    else if (method == "resources/read")
+    {
+        HandleResourcesRead(request);
+    }
     else
     {
         int64_t id = request.contains("id") ? request["id"].get<int64_t>() : 0;
@@ -181,7 +192,8 @@ void McpServer::HandleInitialize(const json& request)
     response["result"] = {
         {"protocolVersion", protocolVersion},
         {"capabilities", {
-            {"tools", json::object()}
+            {"tools", json::object()},
+            {"resources", json::object()}
         }},
         {"serverInfo", {
             {"name", "geargrafx-mcp-server"},
@@ -1501,7 +1513,170 @@ void McpServer::SendError(int64_t id, int code, const std::string& message, cons
         error["error"]["data"] = data;
     }
 
+    Log("[MCP] Sending error: %s", error.dump().c_str());
+
     SendResponse(error);
 }
 
+void McpServer::LoadResources()
+{
+    char exePath[1024];
+    get_executable_path(exePath, sizeof(exePath));
+
+    if (exePath[0] == '\0')
+        return;
+
+    std::string resourcesPath = std::string(exePath) + "/mcp/resources";
+
+    LoadResourcesFromCategory("hardware", resourcesPath + "/hardware/toc.json");
+}
+
+void McpServer::LoadResourcesFromCategory(const std::string& category, const std::string& tocPath)
+{
+    // Read toc.json file
+    std::ifstream file(tocPath);
+    if (!file.is_open())
+    {
+        // Resources directory not found, silently skip
+        Log("[MCP] Warning: Resources TOC file not found: %s", tocPath.c_str());
+        return;
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string content = buffer.str();
+    file.close();
+
+    if (!json::accept(content))
+    {
+        Log("[MCP] Warning: Invalid JSON in resources TOC file: %s", tocPath.c_str());
+        return;
+    }
+
+    json toc = json::parse(content);
+    
+    if (!toc.contains("toc") || !toc["toc"].is_array())
+    {
+        Log("[MCP] Warning: Invalid TOC format in resources TOC file: %s", tocPath.c_str());
+        return;
+    }
+
+    // Get the directory containing toc.json
+    std::string tocDir = tocPath.substr(0, tocPath.find_last_of("/\\"));
+
+    for (const auto& item : toc["toc"])
+    {
+        if (!item.contains("uri") || !item.contains("title"))
+            continue;
+
+        ResourceInfo resource;
+        resource.uri = "geargrafx://" + category + "/" + item["uri"].get<std::string>();
+        resource.title = item["title"].get<std::string>();
+        resource.description = item.contains("description") ? item["description"].get<std::string>() : "";
+        resource.mimeType = item.contains("mimeType") ? item["mimeType"].get<std::string>() : "text/plain";
+        resource.category = category;
+        resource.filePath = tocDir + "/" + item["uri"].get<std::string>() + ".md";
+
+        m_resources.push_back(resource);
+        m_resourceMap[resource.uri] = resource;
+    }
+}
+
+std::string McpServer::ReadFileContents(const std::string& filePath)
+{
+    std::ifstream file(filePath);
+    if (!file.is_open())
+    {
+        Log("[MCP] Warning: Failed to open resource file: %s", filePath.c_str());
+        return "";
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
+void McpServer::HandleResourcesList(const json& request)
+{
+    if (!request.contains("id"))
+    {
+        SendError(0, -32600, "Invalid Request: missing id");
+        return;
+    }
+
+    int64_t id = request["id"];
+
+    json resources = json::array();
+
+    for (const auto& resource : m_resources)
+    {
+        json resourceJson;
+        resourceJson["uri"] = resource.uri;
+        resourceJson["name"] = resource.title;
+        resourceJson["description"] = resource.description;
+        resourceJson["mimeType"] = resource.mimeType;
+
+        resources.push_back(resourceJson);
+    }
+
+    json response;
+    response["jsonrpc"] = "2.0";
+    response["id"] = id;
+    response["result"] = {
+        {"resources", resources}
+    };
+
+    SendResponse(response);
+}
+
+void McpServer::HandleResourcesRead(const json& request)
+{
+    if (!request.contains("id"))
+    {
+        SendError(0, -32600, "Invalid Request: missing id");
+        return;
+    }
+
+    int64_t id = request["id"];
+
+    if (!request.contains("params") || !request["params"].contains("uri"))
+    {
+        SendError(id, -32602, "Invalid params: missing uri");
+        return;
+    }
+
+    std::string uri = request["params"]["uri"];
+
+    // Find resource
+    auto it = m_resourceMap.find(uri);
+    if (it == m_resourceMap.end())
+    {
+        SendError(id, -32602, "Resource not found: " + uri);
+        return;
+    }
+
+    const ResourceInfo& resource = it->second;
+    std::string content = ReadFileContents(resource.filePath);
+
+    if (content.empty())
+    {
+        SendError(id, -32602, "Failed to read resource file: " + resource.filePath);
+        return;
+    }
+
+    json response;
+    response["jsonrpc"] = "2.0";
+    response["id"] = id;
+    response["result"] = {
+        {"contents", json::array({
+            {
+                {"uri", resource.uri},
+                {"mimeType", resource.mimeType},
+                {"text", content}
+            }
+        })}
+    };
+
+    SendResponse(response);
+}
 

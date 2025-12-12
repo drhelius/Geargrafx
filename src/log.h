@@ -44,9 +44,6 @@ extern bool g_mcp_server_active;
 #define Log(msg, ...) (Log_func(msg, ##__VA_ARGS__))
 #define Error(msg, ...) (Log_func("ERROR [%s:%d] " msg, __FILE__, __LINE__, ##__VA_ARGS__))
 
-// Forward declaration for MCP flag
-
-
 inline void Log_func(const char* const msg, ...)
 {
     char buffer[512];

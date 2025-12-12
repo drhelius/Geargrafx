@@ -20,6 +20,8 @@
 #ifndef MCP_TRANSPORT_H
 #define MCP_TRANSPORT_H
 
+#define MCP_HTTP_ENDPOINT_PATH "/mcp"
+
 #include <string>
 #include <iostream>
 #include <mutex>
@@ -192,6 +194,48 @@ public:
         return true;
     }
 
+    // Helper function to extract path from HTTP request line
+    std::string extract_http_path(const std::string& request)
+    {
+        // Request format: "METHOD /path HTTP/1.1\r\n..."
+        size_t method_end = request.find(' ');
+        if (method_end == std::string::npos)
+            return "";
+
+        size_t path_start = method_end + 1;
+        size_t path_end = request.find(' ', path_start);
+        if (path_end == std::string::npos)
+            return "";
+
+        return request.substr(path_start, path_end - path_start);
+    }
+
+    // Helper function to validate path and send 404 if invalid
+    // Returns true if path is valid, false if rejected (and response already sent)
+    bool validate_and_reject_invalid_path(const std::string& request, socket_t client)
+    {
+        std::string path = extract_http_path(request);
+        if (path == MCP_HTTP_ENDPOINT_PATH)
+            return true;
+
+        Debug("[MCP] Rejecting request to invalid path: %s", path.c_str());
+        const char* not_found_response = 
+            "HTTP/1.1 404 Not Found\r\n"
+            "Content-Type: text/plain\r\n"
+            "Content-Length: 13\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Connection: close\r\n"
+            "\r\n"
+            "404 Not Found";
+        ::send(client, not_found_response, strlen(not_found_response), 0);
+        SOCKET_CLOSE(client);
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_current_client = INVALID_SOCKET_VALUE;
+        }
+        return false;
+    }
+
     bool recv(std::string& jsonLine)
     {
         while (!m_closed && m_server_socket != INVALID_SOCKET_VALUE)
@@ -257,6 +301,9 @@ public:
                         // Check if this is an OPTIONS request (CORS preflight)
                         if (request.find("OPTIONS ") == 0)
                         {
+                            if (!validate_and_reject_invalid_path(request, client))
+                                continue;
+
                             is_options = true;
                             content_length = 0;
                             break;
@@ -326,6 +373,9 @@ public:
             // Handle POST with body (normal MCP request)
             if (!read_error && header_end > 0 && content_length > 0)
             {
+                if (!validate_and_reject_invalid_path(request, client))
+                    continue;
+
                 jsonLine = request.substr(header_end, content_length);
                 Debug("[MCP] HTTP POST request received (%d bytes): %s", 
                     (int)jsonLine.length(), 
@@ -337,6 +387,9 @@ public:
             // We don't support SSE, so respond with 405 Method Not Allowed
             if (!read_error && header_end > 0 && request.find("GET ") == 0)
             {
+                if (!validate_and_reject_invalid_path(request, client))
+                    continue;
+                
                 Debug("[MCP] HTTP GET request (SSE not supported, responding 405)");
 
                 std::string method_not_allowed = 
@@ -360,6 +413,9 @@ public:
             // According to spec, all MCP messages should have a JSON-RPC body
             if (!read_error && header_end > 0 && content_length == 0 && request.find("POST ") == 0)
             {
+                if (!validate_and_reject_invalid_path(request, client))
+                    continue;
+
                 Debug("[MCP] HTTP POST without body (non-standard, closing connection)");
 
                 std::lock_guard<std::mutex> lock(m_mutex);

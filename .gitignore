@@ -2,6 +2,7 @@
 *.DS_Store
 *.dylib
 *.app/
+platforms/macos/mcp
 
 # Visual Studio files
 .vscode/mcp.json

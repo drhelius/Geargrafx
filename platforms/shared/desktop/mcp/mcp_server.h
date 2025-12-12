@@ -25,11 +25,24 @@
 #include <condition_variable>
 #include <thread>
 #include <atomic>
+#include <vector>
+#include <string>
+#include <map>
 #include "json.hpp"
 #include "mcp_transport.h"
 #include "mcp_debug_adapter.h"
 
 using json = nlohmann::json;
+
+struct ResourceInfo
+{
+    std::string uri;
+    std::string title;
+    std::string description;
+    std::string mimeType;
+    std::string category;
+    std::string filePath;
+};
 
 struct DebugCommand
 {
@@ -135,6 +148,7 @@ public:
         if (m_running.load())
             return;
 
+        LoadResources();
         m_running.store(true);
         m_thread = std::thread(&McpServer::Run, this);
     }
@@ -170,6 +184,12 @@ private:
     void HandleInitialize(const json& request);
     void HandleToolsList(const json& request);
     void HandleToolsCall(const json& request);
+    void HandleResourcesList(const json& request);
+    void HandleResourcesRead(const json& request);
+
+    void LoadResources();
+    void LoadResourcesFromCategory(const std::string& category, const std::string& tocPath);
+    std::string ReadFileContents(const std::string& filePath);
 
     void SendResponse(const json& response);
     void SendError(int64_t id, int code, const std::string& message, const json& data = json::object());
@@ -181,6 +201,8 @@ private:
     std::thread m_thread;
     std::atomic<bool> m_running;
     bool m_initialized;
+    std::vector<ResourceInfo> m_resources;
+    std::map<std::string, ResourceInfo> m_resourceMap;
 };
 
 #endif /* MCP_SERVER_H */
