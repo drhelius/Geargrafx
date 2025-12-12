@@ -20,6 +20,8 @@
 #include "geargrafx.h"
 #include "application.h"
 
+extern bool g_mcp_stdio_mode;
+
 int main(int argc, char* argv[])
 {
     char* rom_file = NULL;
@@ -60,6 +62,7 @@ int main(int argc, char* argv[])
             }
             else if (strcmp(argv[i], "--mcp-stdio") == 0)
             {
+                g_mcp_stdio_mode = true;  // Disable logging immediately
                 mcp_stdio_set = true;
                 mcp_mode = 0;
             }

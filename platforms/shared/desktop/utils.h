@@ -80,6 +80,13 @@ static inline void get_executable_path(char* path, size_t size)
     {
         char* last_slash = strrchr(path, '\\');
         if (last_slash) *last_slash = '\0';
+
+        // Check if we're in an MCPB bundle (server\ subfolder)
+        char* server_pos = strstr(path, "\\server");
+        if (server_pos && (server_pos[7] == '\0' || server_pos[7] == '\\'))
+        {
+            *server_pos = '\0';  // Truncate at server\ to get bundle root
+        }
     }
     else
     {
@@ -92,8 +99,14 @@ static inline void get_executable_path(char* path, size_t size)
         strncpy(path, dir, size);
         path[size - 1] = '\0';
 
+        // Check if we're in an MCPB bundle (server/ subfolder)
+        char* server_pos = strstr(path, "/server");
+        if (server_pos && (server_pos[7] == '\0' || server_pos[7] == '/'))
+        {
+            *server_pos = '\0';  // Truncate at server/ to get bundle root
+        }
         // If running inside a .app bundle, use Contents/Resources as data root
-        if (ends_with(path, "/Contents/MacOS"))
+        else if (ends_with(path, "/Contents/MacOS"))
         {
             size_t len = strlen(path);
             const char* repl = "Resources";
@@ -116,6 +129,13 @@ static inline void get_executable_path(char* path, size_t size)
         path[len] = '\0';
         char* last_slash = strrchr(path, '/');
         if (last_slash) *last_slash = '\0';
+
+        // Check if we're in an MCPB bundle (server/ subfolder)
+        char* server_pos = strstr(path, "/server");
+        if (server_pos && (server_pos[7] == '\0' || server_pos[7] == '/'))
+        {
+            *server_pos = '\0';  // Truncate at server/ to get bundle root
+        }
     }
     else
     {

@@ -140,7 +140,7 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
 
 ## Quick Start
 
-### STDIO Mode with VS Code (Recommended)
+### STDIO Mode with VS Code
 
 1. **Install [GitHub Copilot extension](https://code.visualstudio.com/docs/copilot/overview)** in VS Code
 
@@ -173,6 +173,30 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
 
 ### STDIO Mode with Claude Desktop
 
+#### Option 1: Desktop Extension (Recommended)
+
+The easiest way to install Geargrafx MCP server on Claude Desktop is using the MCPB package:
+
+1. **Download the latest MCPB package** for your platform from the [releases page](https://github.com/drhelius/geargrafx/releases):
+   - **macOS Intel:** `geargrafx-macos-x64.mcpb`
+   - **macOS Apple Silicon:** `geargrafx-macos-arm64.mcpb`
+   - **Windows Intel/AMD:** `geargrafx-windows-x64.mcpb`
+   - **Windows ARM:** `geargrafx-windows-arm64.mcpb`
+   - **Linux Intel/AMD:** `geargrafx-linux-x64.mcpb`
+
+2. **Install the extension**:
+   - Open Claude Desktop
+   - Navigate to **Settings > Extensions**
+   - Click **Advanced settings**
+   - In the Extension Developer section, click **Install Extension…**
+   - Select the downloaded `.mcpb` file
+
+3. **Start debugging**: The extension is now available in your conversations. The emulator will automatically launch when Claude needs to access debugging tools.
+
+#### Option 2: Manual Configuration
+
+If you prefer to build from source or configure manually:
+
 1. **Edit Claude Desktop config file**:
 
    Follow [these instructions](https://modelcontextprotocol.io/quickstart/user#for-claude-desktop-users) to access Claude's config file, then edit it to include:
@@ -195,11 +219,11 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
 
    **Important:** Update the `command` path to match your build location.
 
-3. **Restart Claude Desktop**
+2. **Restart Claude Desktop**
 
-4. **Start debugging**: The emulator will launch when Claude needs to access debugging tools
+3. **Start debugging**: The emulator will launch when Claude needs to access debugging tools
 
-### HTTP Mode (Advanced)
+### HTTP Mode
 
 1. **Start the emulator manually** with HTTP transport:
    ```bash
@@ -258,31 +282,30 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
 
 Once configured, you can ask your AI assistant:
 
+### Basic Commands
+
 - "What game is currently loaded?"
 - "Load the ROM at /path/to/game.pce"
-- "Is the emulator running or paused?"
 - "Show me the current CPU registers"
-- "What's the value of PC?"
 - "Read 16 bytes from RAM starting at 0x2000"
-- "List all available memory areas"
-- "Show me the disassembly around the current PC"
 - "Set a breakpoint at address 0x8000"
 - "Pause execution and show me all sprites"
-- "What's in the call stack?"
 - "Step through the next 5 instructions"
-- "Show me the VDC registers"
 - "Capture a screenshot of the current frame"
-- "Save the current state to slot 3"
-- "List all save state slots"
-- "Load the state from slot 1"
-- "Enable fast forward at 2x speed"
-- "Load symbols from /path/to/game.sym"
 - "Press the up button on player 1 controller"
-- "Release the run button on player 2"
 - "Set player 1 controller to avenue pad 6 type"
-- "Enable turbo tap for 5 players"
-- "Press buttons i and ii on player 1 simultaneously"
-- "What controller type is player 2 using?"
+
+### Advanced Debugging Workflows
+
+- "Find the VBlank interrupt handler, analyze what it does, and add symbols for all the subroutines it calls"
+
+- "Locate the sprite update routine. Study how this game manages its sprite system, explain the algorithm, and add bookmarks to key sections. Also add watches for any sprite-related variables you find"
+
+- "There's a data decompression routine around address 0xC000. Step through it instruction by instruction, reverse engineer the compression algorithm, and explain how it works with examples"
+
+- "Find where the game stores its level data in ROM. Analyze the data structure format, create a memory map showing each section, and add symbols for the data tables"
+
+- "The game is rendering corrupted graphics. Examine the VDC registers, check the VRAM contents, inspect the sprite attribute table, and diagnose what's causing the corruption. Set up watches on relevant memory addresses"
 
 ## Available Resources
 
@@ -362,7 +385,7 @@ AI clients automatically handle resource retrieval, so you typically don't need 
 
 ## Architecture
 
-### STDIO Transport (Default)
+### STDIO Transport
 ```
 ┌─────────────────┐                    ┌──────────────────┐
 │   VS Code /     │       stdio        │    Geargrafx     │
@@ -380,7 +403,7 @@ AI clients automatically handle resource retrieval, so you typically don't need 
                                        └──────────────────┘
 ```
 
-### HTTP Transport (Advanced)
+### HTTP Transport
 ```
 ┌─────────────────┐                    ┌──────────────────┐
 │   VS Code /     │  HTTP (port 7777)  │    Geargrafx     │

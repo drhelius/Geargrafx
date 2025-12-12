@@ -1835,7 +1835,8 @@ void McpServer::LoadResources()
     if (exe_path[0] == '\0')
         return;
 
-    std::string resourcesPath = std::string(exe_path) + "/mcp/resources";
+    std::string base_path = exe_path;
+    std::string resourcesPath = base_path + "/mcp/resources";
 
     LoadResourcesFromCategory("hardware", resourcesPath + "/hardware/toc.json");
 }
