@@ -494,6 +494,11 @@ void emu_set_pad_type(GG_Controllers controller, GG_Controller_Type type)
     geargrafx->GetInput()->SetControllerType(controller, type);
 }
 
+GG_Controller_Type emu_get_pad_type(GG_Controllers controller)
+{
+    return geargrafx->GetInput()->GetControllerType(controller);
+}
+
 void emu_set_avenue_pad_3_button(GG_Controllers controller, GG_Keys button)
 {
     geargrafx->GetInput()->SetAvenuePad3Button(controller, button);

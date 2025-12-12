@@ -110,6 +110,7 @@ EXTERN void emu_set_backup_ram(bool enabled);
 EXTERN void emu_set_turbo_tap(bool enabled);
 EXTERN void emu_set_mb128_mode(GG_MB128_Mode mode);
 EXTERN void emu_set_pad_type(GG_Controllers controller, GG_Controller_Type type);
+EXTERN GG_Controller_Type emu_get_pad_type(GG_Controllers controller);
 EXTERN void emu_set_avenue_pad_3_button(GG_Controllers controller, GG_Keys button);
 EXTERN void emu_set_turbo(GG_Controllers controller, GG_Keys button, bool enabled);
 EXTERN void emu_set_turbo_speed(GG_Controllers controller, GG_Keys button, u8 speed);

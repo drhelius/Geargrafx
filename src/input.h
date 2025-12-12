@@ -48,6 +48,7 @@ public:
     bool IsTurboEnabled(GG_Controllers controller, GG_Keys key);
     void SetTurboSpeed(GG_Controllers controller, GG_Keys key, u8 speed);
     void SetControllerType(GG_Controllers controller, GG_Controller_Type type);
+    GG_Controller_Type GetControllerType(GG_Controllers controller);
     void SetAvenuePad3Button(GG_Controllers controller, GG_Keys button);
     void EnableMB128(bool enable);
     MB128* GetMB128();

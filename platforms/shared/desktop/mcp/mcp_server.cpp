@@ -461,7 +461,7 @@ void McpServer::HandleToolsList(const json& request)
 
     // Disassembly tool
     tools.push_back({
-        {"name", "debug_get_disassembly"},
+        {"name", "get_disassembly"},
         {"description", "Get disassembled HuC6280 assembly code from PC Engine memory. Returns address, bank, segment, instruction, and raw bytes."},
         {"inputSchema", {
             {"type", "object"},
@@ -500,7 +500,7 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "get_huc6270_registers"},
-        {"description", "Get all 32 HuC6270 VDC registers. Use vdc parameter (1 or 2) for SuperGrafx"},
+        {"description", "Get all 20 HuC6270 VDC registers (0x00-0x13), Address Register, and Status Register. Use vdc parameter (1 or 2) for SuperGrafx"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -509,6 +509,31 @@ void McpServer::HandleToolsList(const json& request)
             {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
         }}
             }}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "write_huc6270_register"},
+        {"description", "Write to a HuC6270 VDC register (0-19) or Address Register (20). Use vdc parameter (1 or 2) for SuperGrafx. Status Register is read-only."},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+        {"register", {
+            {"type", "integer"},
+            {"description", "Register number (0-19 for data registers, 20 for Address Register)"},
+            {"minimum", 0},
+            {"maximum", 20}
+        }},
+        {"value", {
+            {"type", "string"},
+            {"description", "16-bit hex value (e.g., '1234', '0x1234', '$1234')"}
+        }},
+        {"vdc", {
+            {"type", "integer"},
+            {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+        }}
+            }},
+            {"required", json::array({"register", "value"})}
         }}
     });
 
@@ -595,6 +620,212 @@ void McpServer::HandleToolsList(const json& request)
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()}
+        }}
+    });
+
+    // Media and state management tools
+    tools.push_back({
+        {"name", "load_media"},
+        {"description", "Load a ROM file or CD-ROM image (.pce, .sgx, .hes, .cue, .zip). Automatically loads .sym symbol file if present. Resets emulator on successful load"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"file_path", {
+                    {"type", "string"},
+                    {"description", "Absolute path to ROM or CD-ROM file"}
+                }}
+            }},
+            {"required", json::array({"file_path"})}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "load_symbols"},
+        {"description", "Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries). Adds to existing symbols"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"file_path", {
+                    {"type", "string"},
+                    {"description", "Absolute path to symbol file"}
+                }}
+            }},
+            {"required", json::array({"file_path"})}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "list_save_state_slots"},
+        {"description", "List all 5 save state slots with their information (rom name, timestamp, screenshot availability)"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", json::object()}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "select_save_state_slot"},
+        {"description", "Select active save state slot (1-5) for save_state and load_state operations"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"slot", {
+                    {"type", "integer"},
+                    {"description", "Slot number (1-5)"},
+                    {"minimum", 1},
+                    {"maximum", 5}
+                }}
+            }},
+            {"required", json::array({"slot"})}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "save_state"},
+        {"description", "Save emulator state to currently selected slot (use select_save_state_slot to change)"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", json::object()}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "load_state"},
+        {"description", "Load emulator state from currently selected slot (use select_save_state_slot to change)"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", json::object()}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "set_fast_forward_speed"},
+        {"description", "Set fast forward speed multiplier (0: 1.5x, 1: 2x, 2: 2.5x, 3: 3x, 4: Unlimited)"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"speed", {
+                    {"type", "integer"},
+                    {"description", "Speed index (0-4)"},
+                    {"minimum", 0},
+                    {"maximum", 4}
+                }}
+            }},
+            {"required", json::array({"speed"})}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "toggle_fast_forward"},
+        {"description", "Toggle fast forward mode on or off. When enabled, emulator runs at configured speed (see set_fast_forward_speed)"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"enabled", {
+                    {"type", "boolean"},
+                    {"description", "true to enable fast forward, false to disable"}
+                }}
+            }},
+            {"required", json::array({"enabled"})}
+        }}
+    });
+
+    // Controller input tools
+    tools.push_back({
+        {"name", "controller_press_button"},
+        {"description", "Press a button on a controller (player 1-5). Buttons: up, down, left, right, select, run, i, ii, iii, iv, v, vi"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"player", {
+                    {"type", "integer"},
+                    {"description", "Player number (1-5)"},
+                    {"minimum", 1},
+                    {"maximum", 5}
+                }},
+                {"button", {
+                    {"type", "string"},
+                    {"description", "Button name: up, down, left, right, select, run, i, ii, iii, iv, v, vi"},
+                    {"enum", json::array({"up", "down", "left", "right", "select", "run", "i", "ii", "iii", "iv", "v", "vi"})}
+                }}
+            }},
+            {"required", json::array({"player", "button"})}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "controller_release_button"},
+        {"description", "Release a button on a controller (player 1-5). Buttons: up, down, left, right, select, run, i, ii, iii, iv, v, vi"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"player", {
+                    {"type", "integer"},
+                    {"description", "Player number (1-5)"},
+                    {"minimum", 1},
+                    {"maximum", 5}
+                }},
+                {"button", {
+                    {"type", "string"},
+                    {"description", "Button name: up, down, left, right, select, run, i, ii, iii, iv, v, vi"},
+                    {"enum", json::array({"up", "down", "left", "right", "select", "run", "i", "ii", "iii", "iv", "v", "vi"})}
+                }}
+            }},
+            {"required", json::array({"player", "button"})}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "controller_set_type"},
+        {"description", "Set controller type for a player (1-5). Types: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"player", {
+                    {"type", "integer"},
+                    {"description", "Player number (1-5)"},
+                    {"minimum", 1},
+                    {"maximum", 5}
+                }},
+                {"type", {
+                    {"type", "string"},
+                    {"description", "Controller type"},
+                    {"enum", json::array({"standard", "avenue_pad_3", "avenue_pad_6"})}
+                }}
+            }},
+            {"required", json::array({"player", "type"})}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "controller_set_turbo_tap"},
+        {"description", "Enable or disable Turbo Tap (multitap) to allow 5 players. Disable for single player only"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"enabled", {
+                    {"type", "boolean"},
+                    {"description", "true to enable Turbo Tap (5 players), false for single player"}
+                }}
+            }},
+            {"required", json::array({"enabled"})}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "controller_get_type"},
+        {"description", "Get the current controller type for a player (1-5). Returns: standard, avenue_pad_3, or avenue_pad_6"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"player", {
+                    {"type", "integer"},
+                    {"description", "Player number (1-5)"},
+                    {"minimum", 1},
+                    {"maximum", 5}
+                }}
+            }},
+            {"required", json::array({"player"})}
         }}
     });
 
@@ -1236,7 +1467,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         return {{"success", true}, {"register", name}, {"value", valueStr}};
     }
     // Disassembly
-    else if (normalizedTool == "debug_get_disassembly")
+    else if (normalizedTool == "get_disassembly")
     {
         size_t offset = arguments.value("offset", 15);
 
@@ -1286,6 +1517,18 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         int vdc = arguments.value("vdc", 1);
         return m_debugAdapter.GetHuC6270Registers(vdc);
     }
+    else if (normalizedTool == "write_huc6270_register")
+    {
+        int reg = arguments["register"];
+        std::string valueStr = arguments["value"];
+        int vdc = arguments.value("vdc", 1);
+
+        u16 value;
+        if (!parse_hex_with_prefix(valueStr, &value))
+            return {{"error", "Invalid value format"}};
+        
+        return m_debugAdapter.WriteHuC6270Register(vdc, reg, value);
+    }
     else if (normalizedTool == "get_huc6270_status")
     {
         int vdc = arguments.value("vdc", 1);
@@ -1322,6 +1565,72 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     else if (normalizedTool == "get_screenshot")
     {
         return m_debugAdapter.GetScreenshot();
+    }
+    // Media and state management
+    else if (normalizedTool == "load_media")
+    {
+        std::string file_path = arguments["file_path"];
+        return m_debugAdapter.LoadMedia(file_path);
+    }
+    else if (normalizedTool == "load_symbols")
+    {
+        std::string file_path = arguments["file_path"];
+        return m_debugAdapter.LoadSymbols(file_path);
+    }
+    else if (normalizedTool == "list_save_state_slots")
+    {
+        return m_debugAdapter.ListSaveStateSlots();
+    }
+    else if (normalizedTool == "select_save_state_slot")
+    {
+        int slot = arguments["slot"];
+        return m_debugAdapter.SelectSaveStateSlot(slot);
+    }
+    else if (normalizedTool == "save_state")
+    {
+        return m_debugAdapter.SaveState();
+    }
+    else if (normalizedTool == "load_state")
+    {
+        return m_debugAdapter.LoadState();
+    }
+    else if (normalizedTool == "set_fast_forward_speed")
+    {
+        int speed = arguments["speed"];
+        return m_debugAdapter.SetFastForwardSpeed(speed);
+    }
+    else if (normalizedTool == "toggle_fast_forward")
+    {
+        bool enabled = arguments["enabled"];
+        return m_debugAdapter.ToggleFastForward(enabled);
+    }
+    else if (normalizedTool == "controller_press_button")
+    {
+        int player = arguments["player"];
+        std::string button = arguments["button"];
+        return m_debugAdapter.ControllerPressButton(player, button);
+    }
+    else if (normalizedTool == "controller_release_button")
+    {
+        int player = arguments["player"];
+        std::string button = arguments["button"];
+        return m_debugAdapter.ControllerReleaseButton(player, button);
+    }
+    else if (normalizedTool == "controller_set_type")
+    {
+        int player = arguments["player"];
+        std::string type = arguments["type"];
+        return m_debugAdapter.ControllerSetType(player, type);
+    }
+    else if (normalizedTool == "controller_set_turbo_tap")
+    {
+        bool enabled = arguments["enabled"];
+        return m_debugAdapter.ControllerSetTurboTap(enabled);
+    }
+    else if (normalizedTool == "controller_get_type")
+    {
+        int player = arguments["player"];
+        return m_debugAdapter.ControllerGetType(player);
     }
     else if (normalizedTool == "list_sprites")
     {
@@ -1520,13 +1829,13 @@ void McpServer::SendError(int64_t id, int code, const std::string& message, cons
 
 void McpServer::LoadResources()
 {
-    char exePath[1024];
-    get_executable_path(exePath, sizeof(exePath));
+    char exe_path[1024];
+    get_executable_path(exe_path, sizeof(exe_path));
 
-    if (exePath[0] == '\0')
+    if (exe_path[0] == '\0')
         return;
 
-    std::string resourcesPath = std::string(exePath) + "/mcp/resources";
+    std::string resourcesPath = std::string(exe_path) + "/mcp/resources";
 
     LoadResourcesFromCategory("hardware", resourcesPath + "/hardware/toc.json");
 }

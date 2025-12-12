@@ -20,7 +20,7 @@ This server provides comprehensive tools for game development, rom hacking, reve
 
 ## Available MCP Tools
 
-The server exposes 50 tools organized in the following categories:
+The server exposes tools organized in the following categories:
 
 ### Execution Control
 - `debug_pause` - Pause emulation
@@ -29,6 +29,7 @@ The server exposes 50 tools organized in the following categories:
 - `debug_step_over` - Step over subroutine calls
 - `debug_step_out` - Step out of current subroutine
 - `debug_step_frame` - Step one frame
+- `debug_run_to_cursor` - Continue execution until reaching specified address
 - `debug_reset` - Reset emulation
 - `debug_get_status` - Get debug status (paused, at_breakpoint, pc address)
 
@@ -53,8 +54,7 @@ The server exposes 50 tools organized in the following categories:
 - `memory_search` - Search memory with operators (<, >, ==, !=, <=, >=), compare types (previous, value, address), and data types (hex, signed, unsigned)
 
 ### Disassembly & Debugging
-- `debug_get_disassembly` - Get disassembly around PC or specified address
-- `debug_run_to_cursor` - Continue execution until reaching specified address
+- `get_disassembly` - Get disassembly around PC or specified address
 - `add_symbol` - Add symbol (label) at specified address
 - `remove_symbol` - Remove symbol
 - `list_symbols` - List all defined symbols
@@ -70,9 +70,9 @@ The server exposes 50 tools organized in the following categories:
 - `list_breakpoints` - List all breakpoints
 
 ### Hardware Status
-- `get_media_info` - Get loaded ROM/CD info
 - `get_huc6270_status` - Get VDC status (position, state, control, interrupts)
-- `get_huc6270_registers` - Get all 32 VDC registers
+- `get_huc6270_registers` - Get all 20 VDC registers (0x00-0x13), Address Register (AR), and Status Register (SR)
+- `write_huc6270_register` - Write to a VDC register (0-19) or Address Register (20=AR). Status Register is read-only. Use vdc parameter (1 or 2) for SuperGrafx
 - `get_huc6260_status` - Get VCE status (position, sync signals, control)
 - `get_huc6202_status` - Get VPC status (SuperGrafx only)
 - `get_psg_status` - Get PSG status for all 6 channels
@@ -87,6 +87,24 @@ The server exposes 50 tools organized in the following categories:
 
 ### Screen Capture
 - `get_screenshot` - Capture current screen frame as base64 PNG
+
+### Media & State Management
+- `get_media_info` - Get loaded ROM/CD info
+- `load_media` - Load ROM file or CD-ROM image (.pce, .sgx, .hes, .cue, .zip). Automatically loads .sym symbol file if present
+- `load_symbols` - Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries)
+- `list_save_state_slots` - List all 5 save state slots with information (rom name, timestamp, validity)
+- `select_save_state_slot` - Select active save state slot (1-5) for save/load operations
+- `save_state` - Save emulator state to currently selected slot
+- `load_state` - Load emulator state from currently selected slot
+- `set_fast_forward_speed` - Set fast forward speed multiplier (0: 1.5x, 1: 2x, 2: 2.5x, 3: 3x, 4: Unlimited)
+- `toggle_fast_forward` - Toggle fast forward mode on/off
+
+### Controller Input
+- `controller_press_button` - Press a button on a controller (player 1-5). Buttons: up, down, left, right, select, run, i, ii, iii, iv, v, vi
+- `controller_release_button` - Release a button on a controller (player 1-5)
+- `controller_set_type` - Set controller type for a player: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)
+- `controller_get_type` - Get the current controller type for a player (returns: standard, avenue_pad_3, or avenue_pad_6)
+- `controller_set_turbo_tap` - Enable or disable Turbo Tap (multitap) for 5-player support
 
 ## Transport Modes
 
@@ -241,6 +259,7 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
 Once configured, you can ask your AI assistant:
 
 - "What game is currently loaded?"
+- "Load the ROM at /path/to/game.pce"
 - "Is the emulator running or paused?"
 - "Show me the current CPU registers"
 - "What's the value of PC?"
@@ -253,6 +272,17 @@ Once configured, you can ask your AI assistant:
 - "Step through the next 5 instructions"
 - "Show me the VDC registers"
 - "Capture a screenshot of the current frame"
+- "Save the current state to slot 3"
+- "List all save state slots"
+- "Load the state from slot 1"
+- "Enable fast forward at 2x speed"
+- "Load symbols from /path/to/game.sym"
+- "Press the up button on player 1 controller"
+- "Release the run button on player 2"
+- "Set player 1 controller to avenue pad 6 type"
+- "Enable turbo tap for 5 players"
+- "Press buttons i and ii on player 1 simultaneously"
+- "What controller type is player 2 using?"
 
 ## Available Resources
 

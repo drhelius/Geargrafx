@@ -28,25 +28,6 @@
 
 using json = nlohmann::json;
 
-enum MemoryArea
-{
-    MEMORY_AREA_RAM = MEMORY_EDITOR_RAM,
-    MEMORY_AREA_ZERO_PAGE = MEMORY_EDITOR_ZERO_PAGE,
-    MEMORY_AREA_CDROM_RAM = MEMORY_EDITOR_CDROM_RAM,
-    MEMORY_AREA_ROM = MEMORY_EDITOR_ROM,
-    MEMORY_AREA_VRAM_1 = MEMORY_EDITOR_VRAM_1,
-    MEMORY_AREA_VRAM_2 = MEMORY_EDITOR_VRAM_2,
-    MEMORY_AREA_SAT_1 = MEMORY_EDITOR_SAT_1,
-    MEMORY_AREA_SAT_2 = MEMORY_EDITOR_SAT_2,
-    MEMORY_AREA_PALETTES = MEMORY_EDITOR_PALETTES,
-    MEMORY_AREA_CARD_RAM = MEMORY_EDITOR_CARD_RAM,
-    MEMORY_AREA_BACKUP_RAM = MEMORY_EDITOR_BACKUP_RAM,
-    MEMORY_AREA_ADPCM_RAM = MEMORY_EDITOR_ADPCM_RAM,
-    MEMORY_AREA_ARCADE_RAM = MEMORY_EDITOR_ARCADE_RAM,
-    MEMORY_AREA_MB128 = MEMORY_EDITOR_MB128,
-    MEMORY_AREA_MAX = MEMORY_EDITOR_MAX
-};
-
 struct MemoryAreaInfo
 {
     int id;
@@ -116,6 +97,7 @@ public:
     void StepFrame();
     void Reset();
     json GetDebugStatus();
+    json RunToAddress(u16 address);
 
     // Breakpoints
     void SetBreakpoint(u16 address, int type, bool read, bool write, bool execute);
@@ -136,12 +118,10 @@ public:
     std::vector<DisasmLine> GetDisassemblyAroundPc(size_t before, size_t after);
     std::vector<DisasmLine> GetDisassemblyRange(u16 start, size_t count);
 
-    // Media info
-    json GetMediaInfo();
-
     // Chip status info
     json GetHuC6280Status();
     json GetHuC6270Registers(int vdc);
+    json WriteHuC6270Register(int vdc, int reg, u16 value);
     json GetHuC6270Status(int vdc);
     json GetHuC6260Status();
     json GetHuC6202Status();
@@ -154,13 +134,30 @@ public:
     json ListSprites(int vdc);
     json GetSpriteImage(int sprite_index, int vdc);
 
+    // Media and state management
+    json GetMediaInfo();
+    json LoadMedia(const std::string& file_path);
+    json ListSaveStateSlots();
+    json SelectSaveStateSlot(int slot);
+    json SaveState();
+    json LoadState();
+    json SetFastForwardSpeed(int speed);
+    json ToggleFastForward(bool enabled);
+
+    // Controller input
+    json ControllerPressButton(int player, const std::string& button);
+    json ControllerReleaseButton(int player, const std::string& button);
+    json ControllerSetType(int player, const std::string& type);
+    json ControllerSetTurboTap(bool enabled);
+    json ControllerGetType(int player);
+
     // Disassembler operations
-    json RunToAddress(u16 address);
     json AddDisassemblerBookmark(u16 address, const std::string& name);
     json RemoveDisassemblerBookmark(u16 address);
     json ListDisassemblerBookmarks();
     json AddSymbol(u8 bank, u16 address, const std::string& name);
     json RemoveSymbol(u8 bank, u16 address);
+    json LoadSymbols(const std::string& file_path);
     json ListSymbols();
     json ListCallStack();
 

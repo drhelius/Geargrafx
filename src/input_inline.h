@@ -210,6 +210,11 @@ INLINE void Input::SetControllerType(GG_Controllers controller, GG_Controller_Ty
     m_controller_type[controller] = type;
 }
 
+INLINE GG_Controller_Type Input::GetControllerType(GG_Controllers controller)
+{
+    return m_controller_type[controller];
+}
+
 INLINE void Input::SetAvenuePad3Button(GG_Controllers controller, GG_Keys button)
 {
     m_avenue_pad_3_button[controller] = button;

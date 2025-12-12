@@ -20,9 +20,12 @@
 #include "mcp_debug_adapter.h"
 #include "log.h"
 #include "../emu.h"
+#include "../gui.h"
+#include "../gui_actions.h"
 #include "../gui_debug_disassembler.h"
 #include "../gui_debug_memory.h"
 #include "../gui_debug_memeditor.h"
+#include "../config.h"
 #include <cstring>
 #include <sstream>
 #include <iomanip>
@@ -243,7 +246,7 @@ std::vector<MemoryAreaInfo> DebugAdapter::ListMemoryAreas()
 {
     std::vector<MemoryAreaInfo> result;
 
-    for (int i = 0; i < MEMORY_AREA_MAX; i++)
+    for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
     {
         MemoryAreaInfo info = GetMemoryAreaInfo(i);
         if (info.data != NULL && info.size > 0)
@@ -441,42 +444,42 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
 
     switch (area)
     {
-        case MEMORY_AREA_RAM:
+        case MEMORY_EDITOR_RAM:
             info.name = "WRAM";
             info.data = memory->GetWorkingRAM();
             info.size = 0x2000 * (is_sgx ? 4 : 1);
             break;
-        case MEMORY_AREA_ZERO_PAGE:
+        case MEMORY_EDITOR_ZERO_PAGE:
             info.name = "ZP";
             info.data = memory->GetWorkingRAM();
             info.size = 0x100;
             break;
-        case MEMORY_AREA_ROM:
+        case MEMORY_EDITOR_ROM:
             info.name = "ROM";
             info.data = media->GetROM();
             info.size = media->GetROMSize();
             break;
-        case MEMORY_AREA_CARD_RAM:
+        case MEMORY_EDITOR_CARD_RAM:
             info.name = "CARD RAM";
             info.data = memory->GetCardRAM();
             info.size = memory->GetCardRAMSize();
             break;
-        case MEMORY_AREA_BACKUP_RAM:
+        case MEMORY_EDITOR_BACKUP_RAM:
             info.name = "BRAM";
             info.data = memory->GetBackupRAM();
             info.size = memory->IsBackupRamEnabled() ? 0x800 : 0;
             break;
-        case MEMORY_AREA_PALETTES:
+        case MEMORY_EDITOR_PALETTES:
             info.name = "PALETTES";
             info.data = (u8*)huc6260->GetColorTable();
             info.size = 512;
             break;
-        case MEMORY_AREA_VRAM_1:
+        case MEMORY_EDITOR_VRAM_1:
             info.name = is_sgx ? "VRAM 1" : "VRAM";
             info.data = (u8*)huc6270_1->GetVRAM();
             info.size = HUC6270_VRAM_SIZE;
             break;
-        case MEMORY_AREA_VRAM_2:
+        case MEMORY_EDITOR_VRAM_2:
             if (is_sgx)
             {
                 info.name = "VRAM 2";
@@ -484,12 +487,12 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
                 info.size = HUC6270_VRAM_SIZE;
             }
             break;
-        case MEMORY_AREA_SAT_1:
+        case MEMORY_EDITOR_SAT_1:
             info.name = is_sgx ? "SAT 1" : "SAT";
             info.data = (u8*)huc6270_1->GetSAT();
             info.size = HUC6270_SAT_SIZE;
             break;
-        case MEMORY_AREA_SAT_2:
+        case MEMORY_EDITOR_SAT_2:
             if (is_sgx)
             {
                 info.name = "SAT 2";
@@ -497,7 +500,7 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
                 info.size = HUC6270_SAT_SIZE;
             }
             break;
-        case MEMORY_AREA_CDROM_RAM:
+        case MEMORY_EDITOR_CDROM_RAM:
             if (media->IsCDROM())
             {
                 info.name = "CDROM RAM";
@@ -505,7 +508,7 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
                 info.size = memory->GetCDROMRAMSize();
             }
             break;
-        case MEMORY_AREA_ADPCM_RAM:
+        case MEMORY_EDITOR_ADPCM_RAM:
             if (media->IsCDROM())
             {
                 info.name = "ADPCM";
@@ -513,7 +516,7 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
                 info.size = 0x10000;
             }
             break;
-        case MEMORY_AREA_ARCADE_RAM:
+        case MEMORY_EDITOR_ARCADE_RAM:
             if (media->IsArcadeCard())
             {
                 info.name = "ARCADE";
@@ -521,7 +524,7 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
                 info.size = memory->GetArcadeCardRAMSize();
             }
             break;
-        case MEMORY_AREA_MB128:
+        case MEMORY_EDITOR_MB128:
             if (m_core->GetInput()->GetMB128()->IsConnected())
             {
                 info.name = "MB128";
@@ -739,7 +742,8 @@ json DebugAdapter::GetHuC6270Registers(int vdc)
 
     json registers = json::array();
 
-    for (int i = 0; i < 32; i++)
+    // HuC6270 has 20 valid registers (0x00-0x13), although the array has 32 slots
+    for (int i = 0; i < 20; i++)
     {
         json reg;
         reg["index"] = i;
@@ -751,7 +755,72 @@ json DebugAdapter::GetHuC6270Registers(int vdc)
         registers.push_back(reg);
     }
 
+    // Add address register
+    json ar;
+    ar["index"] = "AR";
+    std::ostringstream ar_ss;
+    ar_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << *huc6270_state->AR;
+    ar["value"] = ar_ss.str();
+    registers.push_back(ar);
+
+    // Add status register (read-only)
+    json sr;
+    sr["index"] = "SR";
+    std::ostringstream sr_ss;
+    sr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << *huc6270_state->SR;
+    sr["value"] = sr_ss.str();
+    registers.push_back(sr);
+
     return registers;
+}
+
+json DebugAdapter::WriteHuC6270Register(int vdc, int reg, u16 value)
+{
+    json result;
+
+    if (vdc < 1 || vdc > 2)
+    {
+        result["error"] = "Invalid VDC number (must be 1 or 2)";
+        return result;
+    }
+
+    if (reg < 0 || reg > 20)
+    {
+        result["error"] = "Invalid register number (must be 0-19 or 20 for AR)";
+        return result;
+    }
+
+    HuC6270* huc6270 = (vdc == 1) ? m_core->GetHuC6270_1() : m_core->GetHuC6270_2();
+
+    if (!huc6270)
+    {
+        result["error"] = "VDC not available";
+        return result;
+    }
+
+    HuC6270::HuC6270_State* huc6270_state = huc6270->GetState();
+
+    if (reg == 20)
+    {
+        // Write to Address Register
+        *huc6270_state->AR = value;
+        result["register"] = "AR";
+    }
+    else
+    {
+        // Write to data registers (0-19)
+        huc6270_state->R[reg] = value;
+        result["register"] = reg;
+    }
+
+    result["success"] = true;
+    result["vdc"] = vdc;
+
+    std::ostringstream ss;
+    ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << value;
+    result["value"] = ss.str();
+
+    return result;
 }
 
 json DebugAdapter::GetHuC6270Status(int vdc)
@@ -1241,6 +1310,361 @@ json DebugAdapter::GetScreenshot()
     result["mimeType"] = "image/png";
     result["width"] = runtime.screen_width;
     result["height"] = runtime.screen_height;
+
+    return result;
+}
+
+json DebugAdapter::LoadMedia(const std::string& file_path)
+{
+    json result;
+
+    if (file_path.empty())
+    {
+        result["error"] = "File path is required";
+        Log("[MCP] LoadMedia failed: File path is required");
+        return result;
+    }
+
+    gui_load_rom(file_path.c_str());
+
+    if (!m_core || !m_core->GetMedia()->IsReady())
+    {
+        result["error"] = "Failed to load media file";
+        Log("[MCP] LoadMedia failed: %s", file_path.c_str());
+        return result;
+    }
+
+    result["success"] = true;
+    result["file_path"] = file_path;
+    result["rom_name"] = m_core->GetMedia()->GetFileName();
+    result["is_cdrom"] = m_core->GetMedia()->IsCDROM();
+    result["is_sgx"] = m_core->GetMedia()->IsSGX();
+
+    return result;
+}
+
+json DebugAdapter::LoadSymbols(const std::string& file_path)
+{
+    json result;
+
+    if (file_path.empty())
+    {
+        result["error"] = "File path is required";
+        Log("[MCP] LoadSymbols failed: File path is required");
+        return result;
+    }
+
+    gui_debug_load_symbols_file(file_path.c_str());
+
+    result["success"] = true;
+    result["file_path"] = file_path;
+
+    return result;
+}
+
+json DebugAdapter::ListSaveStateSlots()
+{
+    json result;
+    json slots = json::array();
+
+    for (int i = 0; i < 5; i++)
+    {
+        json slot;
+        slot["slot"] = i + 1;
+        slot["selected"] = (config_emulator.save_slot == i);
+
+        if (emu_savestates[i].rom_name[0] != 0)
+        {
+            slot["rom_name"] = emu_savestates[i].rom_name;
+            slot["timestamp"] = emu_savestates[i].timestamp;
+            slot["version"] = emu_savestates[i].version;
+            slot["valid"] = (emu_savestates[i].version == GG_SAVESTATE_VERSION);
+            slot["has_screenshot"] = IsValidPointer(emu_savestates_screenshots[i].data);
+
+            if (emu_savestates[i].emu_build[0] != 0)
+                slot["emu_build"] = emu_savestates[i].emu_build;
+        }
+        else
+        {
+            slot["empty"] = true;
+        }
+
+        slots.push_back(slot);
+    }
+
+    result["slots"] = slots;
+    result["current_slot"] = config_emulator.save_slot + 1;
+
+    return result;
+}
+
+json DebugAdapter::SelectSaveStateSlot(int slot)
+{
+    json result;
+
+    if (slot < 1 || slot > 5)
+    {
+        result["error"] = "Invalid slot number (must be 1-5)";
+        Log("[MCP] SelectSaveStateSlot failed: Invalid slot %d", slot);
+        return result;
+    }
+
+    config_emulator.save_slot = slot - 1;
+
+    result["success"] = true;
+    result["slot"] = slot;
+
+    return result;
+}
+
+json DebugAdapter::SaveState()
+{
+    json result;
+
+    if (!m_core || !m_core->GetMedia()->IsReady())
+    {
+        result["error"] = "No media loaded";
+        Log("[MCP] SaveState failed: No media loaded");
+        return result;
+    }
+
+    int slot = config_emulator.save_slot + 1;
+    emu_save_state_slot(slot);
+
+    result["success"] = true;
+    result["slot"] = slot;
+    result["rom_name"] = m_core->GetMedia()->GetFileName();
+
+    return result;
+}
+
+json DebugAdapter::LoadState()
+{
+    json result;
+
+    if (!m_core || !m_core->GetMedia()->IsReady())
+    {
+        result["error"] = "No media loaded";
+        Log("[MCP] LoadState failed: No media loaded");
+        return result;
+    }
+
+    int slot = config_emulator.save_slot + 1;
+
+    if (emu_savestates[config_emulator.save_slot].rom_name[0] == 0)
+    {
+        result["error"] = "Save state slot is empty";
+        Log("[MCP] LoadState failed: Slot %d is empty", slot);
+        return result;
+    }
+
+    emu_load_state_slot(slot);
+
+    result["success"] = true;
+    result["slot"] = slot;
+
+    return result;
+}
+
+json DebugAdapter::SetFastForwardSpeed(int speed)
+{
+    json result;
+
+    if (speed < 0 || speed > 4)
+    {
+        result["error"] = "Invalid speed (must be 0-4: 0=1.5x, 1=2x, 2=2.5x, 3=3x, 4=Unlimited)";
+        Log("[MCP] SetFastForwardSpeed failed: Invalid speed %d", speed);
+        return result;
+    }
+
+    config_emulator.ffwd_speed = speed;
+
+    result["success"] = true;
+    result["speed"] = speed;
+    
+    const char* speed_names[] = {"1.5x", "2x", "2.5x", "3x", "Unlimited"};
+    result["speed_name"] = speed_names[speed];
+
+    return result;
+}
+
+json DebugAdapter::ToggleFastForward(bool enabled)
+{
+    json result;
+
+    config_emulator.ffwd = enabled;
+    gui_action_ffwd();
+
+    result["success"] = true;
+    result["enabled"] = enabled;
+    result["speed"] = config_emulator.ffwd_speed;
+
+    return result;
+}
+
+json DebugAdapter::ControllerPressButton(int player, const std::string& button)
+{
+    json result;
+
+    // Convert player 1-5 to GG_Controllers enum (0-4)
+    if (player < 1 || player > 5)
+    {
+        result["error"] = "Invalid player number (must be 1-5)";
+        return result;
+    }
+    GG_Controllers controller = static_cast<GG_Controllers>(player - 1);
+
+    // Convert button string to GG_Keys enum
+    GG_Keys key = GG_KEY_NONE;
+    if (button == "i") key = GG_KEY_I;
+    else if (button == "ii") key = GG_KEY_II;
+    else if (button == "select") key = GG_KEY_SELECT;
+    else if (button == "run") key = GG_KEY_RUN;
+    else if (button == "up") key = GG_KEY_UP;
+    else if (button == "right") key = GG_KEY_RIGHT;
+    else if (button == "down") key = GG_KEY_DOWN;
+    else if (button == "left") key = GG_KEY_LEFT;
+    else if (button == "iii") key = GG_KEY_III;
+    else if (button == "iv") key = GG_KEY_IV;
+    else if (button == "v") key = GG_KEY_V;
+    else if (button == "vi") key = GG_KEY_VI;
+    else
+    {
+        result["error"] = "Invalid button name";
+        return result;
+    }
+
+    emu_key_pressed(controller, key);
+
+    result["success"] = true;
+    result["player"] = player;
+    result["button"] = button;
+
+    return result;
+}
+
+json DebugAdapter::ControllerReleaseButton(int player, const std::string& button)
+{
+    json result;
+
+    // Convert player 1-5 to GG_Controllers enum (0-4)
+    if (player < 1 || player > 5)
+    {
+        result["error"] = "Invalid player number (must be 1-5)";
+        return result;
+    }
+    GG_Controllers controller = static_cast<GG_Controllers>(player - 1);
+
+    // Convert button string to GG_Keys enum
+    GG_Keys key = GG_KEY_NONE;
+    if (button == "i") key = GG_KEY_I;
+    else if (button == "ii") key = GG_KEY_II;
+    else if (button == "select") key = GG_KEY_SELECT;
+    else if (button == "run") key = GG_KEY_RUN;
+    else if (button == "up") key = GG_KEY_UP;
+    else if (button == "right") key = GG_KEY_RIGHT;
+    else if (button == "down") key = GG_KEY_DOWN;
+    else if (button == "left") key = GG_KEY_LEFT;
+    else if (button == "iii") key = GG_KEY_III;
+    else if (button == "iv") key = GG_KEY_IV;
+    else if (button == "v") key = GG_KEY_V;
+    else if (button == "vi") key = GG_KEY_VI;
+    else
+    {
+        result["error"] = "Invalid button name";
+        return result;
+    }
+
+    emu_key_released(controller, key);
+
+    result["success"] = true;
+    result["player"] = player;
+    result["button"] = button;
+
+    return result;
+}
+
+json DebugAdapter::ControllerSetType(int player, const std::string& type)
+{
+    json result;
+
+    // Convert player 1-5 to GG_Controllers enum (0-4)
+    if (player < 1 || player > 5)
+    {
+        result["error"] = "Invalid player number (must be 1-5)";
+        return result;
+    }
+    GG_Controllers controller = static_cast<GG_Controllers>(player - 1);
+
+    // Convert type string to GG_Controller_Type enum
+    GG_Controller_Type controller_type;
+    if (type == "standard")
+        controller_type = GG_CONTROLLER_STANDARD;
+    else if (type == "avenue_pad_3")
+        controller_type = GG_CONTROLLER_AVENUE_PAD_3;
+    else if (type == "avenue_pad_6")
+        controller_type = GG_CONTROLLER_AVENUE_PAD_6;
+    else
+    {
+        result["error"] = "Invalid controller type (must be: standard, avenue_pad_3, avenue_pad_6)";
+        return result;
+    }
+
+    emu_set_pad_type(controller, controller_type);
+
+    result["success"] = true;
+    result["player"] = player;
+    result["type"] = type;
+
+    return result;
+}
+
+json DebugAdapter::ControllerSetTurboTap(bool enabled)
+{
+    json result;
+
+    emu_set_turbo_tap(enabled);
+
+    result["success"] = true;
+    result["enabled"] = enabled;
+
+    return result;
+}
+
+json DebugAdapter::ControllerGetType(int player)
+{
+    json result;
+
+    // Convert player 1-5 to GG_Controllers enum (0-4)
+    if (player < 1 || player > 5)
+    {
+        result["error"] = "Invalid player number (must be 1-5)";
+        return result;
+    }
+    GG_Controllers controller = static_cast<GG_Controllers>(player - 1);
+
+    GG_Controller_Type controller_type = emu_get_pad_type(controller);
+
+    std::string type_name;
+    switch (controller_type)
+    {
+        case GG_CONTROLLER_STANDARD:
+            type_name = "standard";
+            break;
+        case GG_CONTROLLER_AVENUE_PAD_3:
+            type_name = "avenue_pad_3";
+            break;
+        case GG_CONTROLLER_AVENUE_PAD_6:
+            type_name = "avenue_pad_6";
+            break;
+        default:
+            type_name = "unknown";
+            break;
+    }
+
+    result["success"] = true;
+    result["player"] = player;
+    result["type"] = type_name;
 
     return result;
 }
@@ -1792,7 +2216,7 @@ json DebugAdapter::ListMemoryBookmarks(int area)
         return result;
     }
 
-    if (area < 0 || area >= MEMORY_AREA_MAX)
+    if (area < 0 || area >= MEMORY_EDITOR_MAX)
     {
         result["error"] = "Invalid area number";
         return result;
@@ -1837,7 +2261,7 @@ json DebugAdapter::ListMemoryWatches(int area)
         return result;
     }
 
-    if (area < 0 || area >= MEMORY_AREA_MAX)
+    if (area < 0 || area >= MEMORY_EDITOR_MAX)
     {
         result["error"] = "Invalid area number";
         return result;
@@ -1882,7 +2306,7 @@ json DebugAdapter::GetMemorySelection(int area)
         return result;
     }
 
-    if (area < 0 || area >= MEMORY_AREA_MAX)
+    if (area < 0 || area >= MEMORY_EDITOR_MAX)
     {
         result["error"] = "Invalid area number";
         return result;
