@@ -1,0 +1,32 @@
+{
+  "manifest_version": "0.3",
+  "name": "{{NAME_LOWER}}-mcp",
+  "display_name": "{{NAME_UPPER}} MCP Server",
+  "version": "{{VERSION}}",
+  "description": "Model Context Protocol server for {{NAME_UPPER}} PC Engine / TurboGrafx-16 emulator",
+  "long_description": "{{NAME_UPPER}} is a high-accuracy PC Engine (TurboGrafx-16) emulator with comprehensive debugging capabilities exposed through the Model Context Protocol. This MCP server allows AI assistants to debug, inspect, and control the emulator, providing tools for memory inspection, breakpoint management, register access, and hardware state monitoring.",
+  "author": {
+    "name": "Nacho Sanchez",
+    "url": "https://x.com/drhelius"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/drhelius/Geargrafx.git"
+  },
+  "homepage": "https://github.com/drhelius/Geargrafx",
+  "documentation": "https://github.com/drhelius/Geargrafx/blob/main/platforms/shared/desktop/mcp/MCP_README.md",
+  "support": "https://github.com/drhelius/Geargrafx/issues",
+  "keywords": ["emulator", "pc-engine", "turbografx-16", "debugging", "retro-gaming", "hardware-emulation"],
+  "license": "GPL-3.0",
+  "server": {
+    "type": "binary",
+    "entry_point": "server/{{BINARY_NAME}}",
+    "mcp_config": {
+      "command": "${__dirname}/server/{{BINARY_NAME}}",
+      "args": ["--mcp"]
+    }
+  },
+  "compatibility": {
+    "platforms": ["{{PLATFORM}}"]
+  }
+}
