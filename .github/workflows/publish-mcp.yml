@@ -63,6 +63,6 @@ jobs:
     - name: Install mcp-publisher
       run: brew install mcp-publisher
     - name: Login to MCP Registry
-      run: publisher login github-oidc
+      run: mcp-publisher login github-oidc
     - name: Publish to MCP Registry
-      run: publisher publish server.json
+      run: mcp-publisher publish
