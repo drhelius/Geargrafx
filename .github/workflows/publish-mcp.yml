@@ -41,11 +41,12 @@ jobs:
     - name: Calculate SHA256 hashes for MCPB packages
       run: |
         cd mcpb-packages
-        echo "SHA256_MACOS_ARM64=$(shasum -a 256 ${{ env.NAME_UPPER }}-macos-arm64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
-        echo "SHA256_MACOS_X64=$(shasum -a 256 ${{ env.NAME_UPPER }}-macos-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
-        echo "SHA256_WINDOWS_ARM64=$(shasum -a 256 ${{ env.NAME_UPPER }}-windows-arm64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
-        echo "SHA256_WINDOWS_X64=$(shasum -a 256 ${{ env.NAME_UPPER }}-windows-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
-        echo "SHA256_LINUX_X64=$(shasum -a 256 ${{ env.NAME_UPPER }}-linux-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        TAG="${{ steps.release_info.outputs.tag }}"
+        echo "SHA256_MACOS_ARM64=$(shasum -a 256 ${{ env.NAME_UPPER }}-${TAG}-mcpb-macos-arm64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "SHA256_MACOS_X64=$(shasum -a 256 ${{ env.NAME_UPPER }}-${TAG}-mcpb-macos-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "SHA256_WINDOWS_ARM64=$(shasum -a 256 ${{ env.NAME_UPPER }}-${TAG}-mcpb-windows-arm64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "SHA256_WINDOWS_X64=$(shasum -a 256 ${{ env.NAME_UPPER }}-${TAG}-mcpb-windows-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "SHA256_LINUX_X64=$(shasum -a 256 ${{ env.NAME_UPPER }}-${TAG}-mcpb-linux-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
     - name: Generate MCP server.json
       run: |
         cp platforms/shared/desktop/mcp/server.json.template server.json
