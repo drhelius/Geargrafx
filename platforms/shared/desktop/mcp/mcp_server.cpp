@@ -283,7 +283,7 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "debug_get_status"},
-        {"description", "Get current debugger status (paused: true/false, at_breakpoint: true/false, pc: address if at breakpoint)"},
+        {"description", "Get current debugger status (paused: true/false, at_breakpoint: true/false, pc: logical address if at breakpoint)"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()}
@@ -293,24 +293,24 @@ void McpServer::HandleToolsList(const json& request)
     // Breakpoint tools
     tools.push_back({
         {"name", "set_breakpoint"},
-        {"description", "Set a breakpoint at specified address in PC Engine memory (ROM/RAM, VRAM, Palette, or hardware registers)"},
+        {"description", "Set a breakpoint at specified logical address in PC Engine memory (ROM/RAM, VRAM, Palette, or hardware registers)"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"address", {
-            {"type", "string"},
-            {"description", "Hex address (e.g., '8000', '0x8000', '$8000')"}
-        }},
-        {"memory_area", {
-            {"type", "string"},
-            {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg"},
-            {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
-        }},
-        {"type", {
-            {"type", "string"},
-            {"description", "Breakpoint type: exec (default), read, write"},
-            {"enum", json::array({"exec", "read", "write"})}
-        }}
+                {"address", {
+                    {"type", "string"},
+                    {"description", "Logical address in hex (e.g., '8000', '0x8000', '$8000')"}
+                }},
+                {"memory_area", {
+                    {"type", "string"},
+                    {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg"},
+                    {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
+                }},
+                {"type", {
+                    {"type", "string"},
+                    {"description", "Breakpoint type: exec (default), read, write"},
+                    {"enum", json::array({"exec", "read", "write"})}
+                }}
             }},
             {"required", json::array({"address"})}
         }}
@@ -318,28 +318,28 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "set_breakpoint_range"},
-        {"description", "Set a breakpoint for an address range"},
+        {"description", "Set a breakpoint for a logical address range"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"start_address", {
-            {"type", "string"},
-            {"description", "Start hex address (e.g., '8000')"}
-        }},
-        {"end_address", {
-            {"type", "string"},
-            {"description", "End hex address (e.g., '8FFF')"}
-        }},
-        {"memory_area", {
-            {"type", "string"},
-            {"description", "Memory area: rom_ram, vram, palette, huc6270_reg, huc6260_reg"},
-            {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
-        }},
-        {"type", {
-            {"type", "string"},
-            {"description", "Breakpoint type: exec, read, write"},
-            {"enum", json::array({"exec", "read", "write"})}
-        }}
+                {"start_address", {
+                    {"type", "string"},
+                    {"description", "Start logical address in hex (e.g., '8000')"}
+                }},
+                {"end_address", {
+                    {"type", "string"},
+                    {"description", "End logical address in hex (e.g., '8FFF')"}
+                }},
+                {"memory_area", {
+                    {"type", "string"},
+                    {"description", "Memory area: rom_ram, vram, palette, huc6270_reg, huc6260_reg"},
+                    {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
+                }},
+                {"type", {
+                    {"type", "string"},
+                    {"description", "Breakpoint type: exec, read, write"},
+                    {"enum", json::array({"exec", "read", "write"})}
+                }}
             }},
             {"required", json::array({"start_address", "end_address"})}
         }}
@@ -347,28 +347,28 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "remove_breakpoint"},
-        {"description", "Clear a breakpoint. Single address breakpoints: provide 'address' only. Range breakpoints: provide both 'address' and 'end_address' matching the exact range"},
+        {"description", "Clear a breakpoint. Single address: provide 'address' only. Range: provide both 'address' and 'end_address' matching the exact range. Uses logical addresses."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"address", {
-            {"type", "string"},
-            {"description", "Hex address (e.g., '8000'). For ranges: the start address"}
-        }},
-        {"end_address", {
-            {"type", "string"},
-            {"description", "Hex end address (e.g., '8FFF'). Required only for range breakpoints. Must match the end address used when creating the range"}
-        }},
-        {"memory_area", {
-            {"type", "string"},
-            {"description", "Memory area: rom_ram, vram, palette, huc6270_reg, huc6260_reg"},
-            {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
-        }},
-        {"type", {
-            {"type", "string"},
-            {"description", "Breakpoint type: exec, read, write"},
-            {"enum", json::array({"exec", "read", "write"})}
-        }}
+                {"address", {
+                    {"type", "string"},
+                    {"description", "Logical address in hex (e.g., '8000'). For ranges: the start address"}
+                }},
+                {"end_address", {
+                    {"type", "string"},
+                    {"description", "Logical end address in hex (e.g., '8FFF'). Required only for range breakpoints. Must match the end address used when creating the range"}
+                }},
+                {"memory_area", {
+                    {"type", "string"},
+                    {"description", "Memory area: rom_ram, vram, palette, huc6270_reg, huc6260_reg"},
+                    {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
+                }},
+                {"type", {
+                    {"type", "string"},
+                    {"description", "Breakpoint type: exec, read, write"},
+                    {"enum", json::array({"exec", "read", "write"})}
+                }}
             }},
             {"required", json::array({"address"})}
         }}
@@ -386,7 +386,7 @@ void McpServer::HandleToolsList(const json& request)
     // Memory tools
     tools.push_back({
         {"name", "list_memory_areas"},
-        {"description", "List all available memory areas (RAM, ROM, VRAM, etc.)"},
+        {"description", "List memory editor tabs (physical memory spaces like WRAM, VRAM, ROM banks). Each area has 0-based offsets (though CPU may accesses them at different logical addresses)."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()}
@@ -399,18 +399,18 @@ void McpServer::HandleToolsList(const json& request)
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"area", {
-            {"type", "integer"},
-            {"description", "Memory area ID (use list_memory_areas to get IDs)"}
-        }},
-        {"offset", {
-            {"type", "string"},
-            {"description", "Hex offset within the area (e.g., '0100')"}
-        }},
-        {"size", {
-            {"type", "integer"},
-            {"description", "Number of bytes to read"}
-        }}
+                {"area", {
+                    {"type", "integer"},
+                    {"description", "Memory editor tab ID (use list_memory_areas to get IDs and physical offsets)"}
+                }},
+                {"offset", {
+                    {"type", "string"},
+                    {"description", "0-based hex offset within the physical memory area (e.g., '0100' for byte 256 of that space)"}
+                }},
+                {"size", {
+                    {"type", "integer"},
+                    {"description", "Number of bytes to read"}
+                }}
             }},
             {"required", json::array({"area", "offset", "size"})}
         }}
@@ -422,18 +422,18 @@ void McpServer::HandleToolsList(const json& request)
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"area", {
-            {"type", "integer"},
-            {"description", "Memory area ID (use list_memory_areas to get IDs)"}
-        }},
-        {"offset", {
-            {"type", "string"},
-            {"description", "Hex offset within the area (e.g., '0100')"}
-        }},
-        {"bytes", {
-            {"type", "string"},
-            {"description", "Hex bytes separated by spaces (e.g., 'A9 00 85 10')"}
-        }}
+                {"area", {
+                    {"type", "integer"},
+                    {"description", "Memory editor tab ID (use list_memory_areas to get IDs and physical offsets)"}
+                }},
+                {"offset", {
+                    {"type", "string"},
+                    {"description", "0-based hex offset within the physical memory area (e.g., '0100' for byte 256 of that space)"}
+                }},
+                {"bytes", {
+                    {"type", "string"},
+                    {"description", "Hex bytes separated by spaces (e.g., 'A9 00 85 10')"}
+                }}
             }},
             {"required", json::array({"area", "offset", "bytes"})}
         }}
@@ -446,14 +446,14 @@ void McpServer::HandleToolsList(const json& request)
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"name", {
-            {"type", "string"},
-            {"description", "Register name (PC, A, X, Y, S, P)"}
-        }},
-        {"value", {
-            {"type", "string"},
-            {"description", "Hex value"}
-        }}
+                {"name", {
+                    {"type", "string"},
+                    {"description", "Register name (PC, A, X, Y, S, P)"}
+                }},
+                {"value", {
+                    {"type", "string"},
+                    {"description", "Hex value"}
+                }}
             }},
             {"required", json::array({"name", "value"})}
         }}
@@ -462,18 +462,18 @@ void McpServer::HandleToolsList(const json& request)
     // Disassembly tool
     tools.push_back({
         {"name", "get_disassembly"},
-        {"description", "Get disassembled HuC6280 assembly code from PC Engine memory. Returns address, bank, segment, instruction, and raw bytes."},
+        {"description", "Get disassembled HuC6280 assembly code from PC Engine memory. Returns logical address, bank, segment, instruction, and raw bytes."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"start", {
-            {"type", "string"},
-            {"description", "Start hex address (optional, defaults to PC). Accepts formats: 'E177', '0xE177', '$E177'"}
-        }},
-        {"offset", {
-            {"type", "integer"},
-            {"description", "Number of instruction lines to disassemble (default 15)"}
-        }}
+                {"start", {
+                    {"type", "string"},
+                    {"description", "Start logical address in hex (optional, defaults to PC). Accepts formats: 'E177', '0xE177', '$E177'"}
+                }},
+                {"offset", {
+                    {"type", "integer"},
+                    {"description", "Number of instruction lines to disassemble (default 15)"}
+                }}
             }}
         }}
     });
@@ -504,10 +504,10 @@ void McpServer::HandleToolsList(const json& request)
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"vdc", {
-            {"type", "integer"},
-            {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
-        }}
+                {"vdc", {
+                    {"type", "integer"},
+                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                }}
             }}
         }}
     });
@@ -518,20 +518,20 @@ void McpServer::HandleToolsList(const json& request)
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"register", {
-            {"type", "integer"},
-            {"description", "Register number (0-19 for data registers, 20 for Address Register)"},
-            {"minimum", 0},
-            {"maximum", 20}
-        }},
-        {"value", {
-            {"type", "string"},
-            {"description", "16-bit hex value (e.g., '1234', '0x1234', '$1234')"}
-        }},
-        {"vdc", {
-            {"type", "integer"},
-            {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
-        }}
+                {"register", {
+                    {"type", "integer"},
+                    {"description", "Register number (0-19 for data registers, 20 for Address Register)"},
+                    {"minimum", 0},
+                    {"maximum", 20}
+                }},
+                {"value", {
+                    {"type", "string"},
+                    {"description", "16-bit hex value (e.g., '1234', '0x1234', '$1234')"}
+                }},
+                {"vdc", {
+                    {"type", "integer"},
+                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                }}
             }},
             {"required", json::array({"register", "value"})}
         }}
@@ -543,10 +543,10 @@ void McpServer::HandleToolsList(const json& request)
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"vdc", {
-            {"type", "integer"},
-            {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
-        }}
+                {"vdc", {
+                    {"type", "integer"},
+                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                }}
             }}
         }}
     });
@@ -835,10 +835,10 @@ void McpServer::HandleToolsList(const json& request)
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"vdc", {
-            {"type", "integer"},
-            {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
-        }}
+                {"vdc", {
+                    {"type", "integer"},
+                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                }}
             }}
         }}
     });
@@ -849,14 +849,14 @@ void McpServer::HandleToolsList(const json& request)
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-        {"sprite_index", {
-            {"type", "integer"},
-            {"description", "Sprite index (0-63)"}
-        }},
-        {"vdc", {
-            {"type", "integer"},
-            {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
-        }}
+                {"sprite_index", {
+                    {"type", "integer"},
+                    {"description", "Sprite index (0-63)"}
+                }},
+                {"vdc", {
+                    {"type", "integer"},
+                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                }}
             }},
             {"required", json::array({"sprite_index"})}
         }}
@@ -865,13 +865,13 @@ void McpServer::HandleToolsList(const json& request)
     // Disassembler tools
     tools.push_back({
         {"name", "debug_run_to_cursor"},
-        {"description", "Continue execution until reaching specified address"},
+        {"description", "Continue execution until reaching specified logical address"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Hex address (e.g., 'E177')"}
+                    {"description", "Logical address in hex (e.g., 'E177')"}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -880,13 +880,13 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "add_disassembler_bookmark"},
-        {"description", "Add a bookmark in the disassembler window at specified address"},
+        {"description", "Add a bookmark in the disassembler window at specified logical address"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Hex address (e.g., 'E177')"}
+                    {"description", "Logical address in hex (e.g., 'E177')"}
                 }},
                 {"name", {
                     {"type", "string"},
@@ -899,13 +899,13 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "remove_disassembler_bookmark"},
-        {"description", "Remove a bookmark from the disassembler window at specified address"},
+        {"description", "Remove a bookmark from the disassembler window at specified logical address"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Hex address (e.g., 'E177')"}
+                    {"description", "Logical address in hex (e.g., 'E177')"}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -914,7 +914,7 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "add_symbol"},
-        {"description", "Add a symbol (label) at specified address with bank"},
+        {"description", "Add a symbol (label) at specified logical address with bank"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -924,7 +924,7 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "Address in hex (e.g., 'E177')"}
+                    {"description", "Logical address in hex (e.g., 'E177')"}
                 }},
                 {"name", {
                     {"type", "string"},
@@ -937,7 +937,7 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "remove_symbol"},
-        {"description", "Remove a symbol from specified address and bank"},
+        {"description", "Remove a symbol from specified logical address and bank"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -947,7 +947,7 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "Address in hex (e.g., 'E177')"}
+                    {"description", "Logical address in hex (e.g., 'E177')"}
                 }}
             }},
             {"required", json::array({"bank", "address"})}
@@ -957,21 +957,21 @@ void McpServer::HandleToolsList(const json& request)
     // Memory editor tools
     tools.push_back({
         {"name", "select_memory_range"},
-        {"description", "Select a range of memory addresses in a memory area"},
+        {"description", "Select a range of 0-based offsets in a memory editor tab"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }},
                 {"start_address", {
                     {"type", "string"},
-                    {"description", "Start address in hex (e.g., '2000')"}
+                    {"description", "Start 0-based offset in hex (e.g., '0100')"}
                 }},
                 {"end_address", {
                     {"type", "string"},
-                    {"description", "End address in hex (e.g., '20FF')"}
+                    {"description", "End 0-based offset in hex (e.g., '01FF')"}
                 }}
             }},
             {"required", json::array({"area", "start_address", "end_address"})}
@@ -980,13 +980,13 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "set_memory_selection_value"},
-        {"description", "Set all bytes in current memory selection to specified value"},
+        {"description", "Set all bytes in current memory selection to specified value. Use get_memory_selection and select_memory_range to manage selection."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }},
                 {"value", {
                     {"type", "string"},
@@ -1005,11 +1005,11 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "Address in hex (e.g., '2000')"}
+                    {"description", "0-based offset in hex (e.g., '0100' for byte 256 of physical memory space)"}
                 }},
                 {"name", {
                     {"type", "string"},
@@ -1028,11 +1028,11 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "Address in hex (e.g., '2000')"}
+                    {"description", "0-based offset in hex (e.g., '0100' for byte 256 of physical memory space)"}
                 }}
             }},
             {"required", json::array({"area", "address"})}
@@ -1047,11 +1047,11 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "Address in hex (e.g., '2000')"}
+                    {"description", "0-based offset in hex (e.g., '0100' for byte 256 of physical memory space)"}
                 }},
                 {"notes", {
                     {"type", "string"},
@@ -1070,11 +1070,11 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "Address in hex (e.g., '2000')"}
+                    {"description", "0-based offset in hex (e.g., '0100' for byte 256 of physical memory space)"}
                 }}
             }},
             {"required", json::array({"area", "address"})}
@@ -1116,7 +1116,7 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }}
             }},
             {"required", json::array({"area"})}
@@ -1131,7 +1131,7 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }}
             }},
             {"required", json::array({"area"})}
@@ -1146,7 +1146,7 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }}
             }},
             {"required", json::array({"area"})}
@@ -1161,7 +1161,7 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }}
             }},
             {"required", json::array({"area"})}
@@ -1176,7 +1176,7 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory area ID (use list_memory_areas to get available areas and their IDs)"}
+                    {"description", "Memory editor tab ID (use list_memory_areas)"}
                 }},
                 {"operator", {
                     {"type", "string"},
