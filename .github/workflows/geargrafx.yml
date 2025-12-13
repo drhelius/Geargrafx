@@ -319,12 +319,12 @@ jobs:
         elif [ "$PLATFORM_NAME" = "win32" ]; then
           PLATFORM_NAME="windows"
         fi
-        zip -r ../${{ env.NAME_UPPER }}-${PLATFORM_NAME}-${{ matrix.variant.arch }}.mcpb *
+        zip -r ../${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-mcpb-${PLATFORM_NAME}-${{ matrix.variant.arch }}.mcpb *
     - name: Archive MCPB
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-mcpb-${{ matrix.variant.platform == 'darwin' && 'macos' || matrix.variant.platform == 'win32' && 'windows' || matrix.variant.platform }}-${{ matrix.variant.arch }}
-        path: ${{ env.NAME_UPPER }}-${{ matrix.variant.platform == 'darwin' && 'macos' || matrix.variant.platform == 'win32' && 'windows' || matrix.variant.platform }}-${{ matrix.variant.arch }}.mcpb
+        path: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-mcpb-${{ matrix.variant.platform == 'darwin' && 'macos' || matrix.variant.platform == 'win32' && 'windows' || matrix.variant.platform }}-${{ matrix.variant.arch }}.mcpb
   release:
     name: Release
     needs: [linux, macos, windows, bsd, mcpb]
