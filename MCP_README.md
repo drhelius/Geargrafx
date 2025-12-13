@@ -18,94 +18,6 @@ This server provides tools for game development, rom hacking, reverse engineerin
 - **Documentation Resources**: Built-in hardware and programming documentation for AI context
 - **GUI Integration**: MCP server runs alongside the emulator GUI, sharing the same state
 
-## Available MCP Tools
-
-The server exposes tools organized in the following categories:
-
-### Execution Control
-- `debug_pause` - Pause emulation
-- `debug_continue` - Resume emulation  
-- `debug_step_into` - Step one instruction
-- `debug_step_over` - Step over subroutine calls
-- `debug_step_out` - Step out of current subroutine
-- `debug_step_frame` - Step one frame
-- `debug_run_to_cursor` - Continue execution until reaching specified address
-- `debug_reset` - Reset emulation
-- `debug_get_status` - Get debug status (paused, at_breakpoint, pc address)
-
-### CPU & Registers
-- `write_huc6280_register` - Set register value
-- `get_huc6280_status` - Get complete HuC6280 CPU status (registers, MPR, timer, interrupts, I/O, speed)
-
-### Memory Operations
-- `list_memory_areas` - List all available memory areas
-- `read_memory` - Read from specific memory area
-- `write_memory` - Write to specific memory area
-- `get_memory_selection` - Get current memory selection range
-- `select_memory_range` - Select a range of memory addresses
-- `set_memory_selection_value` - Set all bytes in selection to specified value
-- `add_memory_bookmark` - Add bookmark in memory area
-- `remove_memory_bookmark` - Remove memory bookmark
-- `list_memory_bookmarks` - List all bookmarks in memory area
-- `add_memory_watch` - Add watch (tracked memory location)
-- `remove_memory_watch` - Remove memory watch
-- `list_memory_watches` - List all watches in memory area
-- `memory_search_capture` - Capture memory snapshot for search comparison
-- `memory_search` - Search memory with operators (<, >, ==, !=, <=, >=), compare types (previous, value, address), and data types (hex, signed, unsigned)
-
-### Disassembly & Debugging
-- `get_disassembly` - Get disassembly around PC or specified address
-- `add_symbol` - Add symbol (label) at specified address
-- `remove_symbol` - Remove symbol
-- `list_symbols` - List all defined symbols
-- `add_disassembler_bookmark` - Add bookmark in disassembler
-- `remove_disassembler_bookmark` - Remove disassembler bookmark
-- `list_disassembler_bookmarks` - List all disassembler bookmarks
-- `get_call_stack` - View function call hierarchy
-
-### Breakpoints
-- `set_breakpoint` - Set execution, read, or write breakpoint (supports 5 memory areas: rom_ram, vram, palette, huc6270_reg, huc6260_reg)
-- `set_breakpoint_range` - Set breakpoint for an address range (supports 5 memory areas)
-- `remove_breakpoint` - Remove breakpoint
-- `list_breakpoints` - List all breakpoints
-
-### Hardware Status
-- `get_huc6270_status` - Get VDC status (position, state, control, interrupts)
-- `get_huc6270_registers` - Get all 20 VDC registers (0x00-0x13), Address Register (AR), and Status Register (SR)
-- `write_huc6270_register` - Write to a VDC register (0-19) or Address Register (20=AR). Status Register is read-only. Use vdc parameter (1 or 2) for SuperGrafx
-- `get_huc6260_status` - Get VCE status (position, sync signals, control)
-- `get_huc6202_status` - Get VPC status (SuperGrafx only)
-- `get_psg_status` - Get PSG status for all 6 channels
-- `get_cdrom_status` - Get CD-ROM drive status (CD games only)
-- `get_cdrom_audio_status` - Get CD-ROM audio playback status
-- `get_adpcm_status` - Get ADPCM audio status
-- `get_arcade_card_status` - Get Arcade Card status
-
-### Sprites
-- `list_sprites` - List all 64 sprites with position, size, pattern, palette
-- `get_sprite_image` - Get sprite image as base64 PNG
-
-### Screen Capture
-- `get_screenshot` - Capture current screen frame as base64 PNG
-
-### Media & State Management
-- `get_media_info` - Get loaded ROM/CD info
-- `load_media` - Load ROM file or CD-ROM image (.pce, .sgx, .hes, .cue, .zip). Automatically loads .sym symbol file if present
-- `load_symbols` - Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries)
-- `list_save_state_slots` - List all 5 save state slots with information (rom name, timestamp, validity)
-- `select_save_state_slot` - Select active save state slot (1-5) for save/load operations
-- `save_state` - Save emulator state to currently selected slot
-- `load_state` - Load emulator state from currently selected slot
-- `set_fast_forward_speed` - Set fast forward speed multiplier (0: 1.5x, 1: 2x, 2: 2.5x, 3: 3x, 4: Unlimited)
-- `toggle_fast_forward` - Toggle fast forward mode on/off
-
-### Controller Input
-- `controller_press_button` - Press a button on a controller (player 1-5). Buttons: up, down, left, right, select, run, i, ii, iii, iv, v, vi
-- `controller_release_button` - Release a button on a controller (player 1-5)
-- `controller_set_type` - Set controller type for a player: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)
-- `controller_get_type` - Get the current controller type for a player (returns: standard, avenue_pad_3, or avenue_pad_6)
-- `controller_set_turbo_tap` - Enable or disable Turbo Tap (multitap) for 5-player support
-
 ## Transport Modes
 
 The Geargrafx MCP server supports two transport modes:
@@ -269,7 +181,95 @@ Once configured, you can ask your AI assistant:
 
 - "The game is rendering corrupted graphics. Examine the VDC registers, check the VRAM contents, inspect the sprite attribute table, and diagnose what's causing the corruption. Set up watches on relevant memory addresses"
 
-## Available Resources
+## Available MCP Tools
+
+The server exposes tools organized in the following categories:
+
+### Execution Control
+- `debug_pause` - Pause emulation
+- `debug_continue` - Resume emulation  
+- `debug_step_into` - Step one instruction
+- `debug_step_over` - Step over subroutine calls
+- `debug_step_out` - Step out of current subroutine
+- `debug_step_frame` - Step one frame
+- `debug_run_to_cursor` - Continue execution until reaching specified address
+- `debug_reset` - Reset emulation
+- `debug_get_status` - Get debug status (paused, at_breakpoint, pc address)
+
+### CPU & Registers
+- `write_huc6280_register` - Set register value
+- `get_huc6280_status` - Get complete HuC6280 CPU status (registers, MPR, timer, interrupts, I/O, speed)
+
+### Memory Operations
+- `list_memory_areas` - List all available memory areas
+- `read_memory` - Read from specific memory area
+- `write_memory` - Write to specific memory area
+- `get_memory_selection` - Get current memory selection range
+- `select_memory_range` - Select a range of memory addresses
+- `set_memory_selection_value` - Set all bytes in selection to specified value
+- `add_memory_bookmark` - Add bookmark in memory area
+- `remove_memory_bookmark` - Remove memory bookmark
+- `list_memory_bookmarks` - List all bookmarks in memory area
+- `add_memory_watch` - Add watch (tracked memory location)
+- `remove_memory_watch` - Remove memory watch
+- `list_memory_watches` - List all watches in memory area
+- `memory_search_capture` - Capture memory snapshot for search comparison
+- `memory_search` - Search memory with operators (<, >, ==, !=, <=, >=), compare types (previous, value, address), and data types (hex, signed, unsigned)
+
+### Disassembly & Debugging
+- `get_disassembly` - Get disassembly around PC or specified address
+- `add_symbol` - Add symbol (label) at specified address
+- `remove_symbol` - Remove symbol
+- `list_symbols` - List all defined symbols
+- `add_disassembler_bookmark` - Add bookmark in disassembler
+- `remove_disassembler_bookmark` - Remove disassembler bookmark
+- `list_disassembler_bookmarks` - List all disassembler bookmarks
+- `get_call_stack` - View function call hierarchy
+
+### Breakpoints
+- `set_breakpoint` - Set execution, read, or write breakpoint (supports 5 memory areas: rom_ram, vram, palette, huc6270_reg, huc6260_reg)
+- `set_breakpoint_range` - Set breakpoint for an address range (supports 5 memory areas)
+- `remove_breakpoint` - Remove breakpoint
+- `list_breakpoints` - List all breakpoints
+
+### Hardware Status
+- `get_huc6270_status` - Get VDC status (position, state, control, interrupts)
+- `get_huc6270_registers` - Get all 20 VDC registers (0x00-0x13), Address Register (AR), and Status Register (SR)
+- `write_huc6270_register` - Write to a VDC register (0-19) or Address Register (20=AR). Status Register is read-only. Use vdc parameter (1 or 2) for SuperGrafx
+- `get_huc6260_status` - Get VCE status (position, sync signals, control)
+- `get_huc6202_status` - Get VPC status (SuperGrafx only)
+- `get_psg_status` - Get PSG status for all 6 channels
+- `get_cdrom_status` - Get CD-ROM drive status (CD games only)
+- `get_cdrom_audio_status` - Get CD-ROM audio playback status
+- `get_adpcm_status` - Get ADPCM audio status
+- `get_arcade_card_status` - Get Arcade Card status
+
+### Sprites
+- `list_sprites` - List all 64 sprites with position, size, pattern, palette
+- `get_sprite_image` - Get sprite image as base64 PNG
+
+### Screen Capture
+- `get_screenshot` - Capture current screen frame as base64 PNG
+
+### Media & State Management
+- `get_media_info` - Get loaded ROM/CD info
+- `load_media` - Load ROM file or CD-ROM image (.pce, .sgx, .hes, .cue, .zip). Automatically loads .sym symbol file if present
+- `load_symbols` - Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries)
+- `list_save_state_slots` - List all 5 save state slots with information (rom name, timestamp, validity)
+- `select_save_state_slot` - Select active save state slot (1-5) for save/load operations
+- `save_state` - Save emulator state to currently selected slot
+- `load_state` - Load emulator state from currently selected slot
+- `set_fast_forward_speed` - Set fast forward speed multiplier (0: 1.5x, 1: 2x, 2: 2.5x, 3: 3x, 4: Unlimited)
+- `toggle_fast_forward` - Toggle fast forward mode on/off
+
+### Controller Input
+- `controller_press_button` - Press a button on a controller (player 1-5). Buttons: up, down, left, right, select, run, i, ii, iii, iv, v, vi
+- `controller_release_button` - Release a button on a controller (player 1-5)
+- `controller_set_type` - Set controller type for a player: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)
+- `controller_get_type` - Get the current controller type for a player (returns: standard, avenue_pad_3, or avenue_pad_6)
+- `controller_set_turbo_tap` - Enable or disable Turbo Tap (multitap) for 5-player support
+
+## Available MCP Resources
 
 In addition to tools, the MCP server provides documentation resources that AI assistants can access to better understand the PC Engine / TurboGrafx-16 hardware and programming.
 
