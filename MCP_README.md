@@ -1,8 +1,8 @@
 # Geargrafx MCP Server
 
-A [Model Context Protocol](https://modelcontextprotocol.io/introduction) (MCP) server for the Geargrafx emulator, enabling AI-assisted debugging and development of TurboGrafx-16 / PC Engine / SuperGrafx games.
+A [Model Context Protocol](https://modelcontextprotocol.io/introduction) server for the Geargrafx emulator, enabling AI-assisted debugging and development of TurboGrafx-16 / PC Engine / SuperGrafx games.
 
-This server provides comprehensive tools for game development, rom hacking, reverse engineering, and debugging through standardized MCP protocols compatible with AI agents like GitHub Copilot, Claude Desktop, ChatGPT and others.
+This server provides tools for game development, rom hacking, reverse engineering, and debugging through standardized MCP protocols compatible with AI agents like GitHub Copilot, Claude, ChatGPT and others.
 
 ## Features
 
@@ -114,29 +114,9 @@ The Geargrafx MCP server supports two transport modes:
 
 The default mode uses standard input/output for communication. The emulator is launched by the AI client and communicates through stdin/stdout pipes.
 
-**Advantages:**
-- Automatic lifecycle management (client starts/stops the emulator)
-- No network configuration needed
-- More secure (no open ports)
-
-**Use cases:**
-- VS Code GitHub Copilot
-- Claude Desktop
-- Any MCP client with process management
-
 ### HTTP Transport
 
 The HTTP transport mode runs the emulator with an embedded web server on `localhost:7777/mcp`. The emulator stays running independently while the AI client connects via HTTP.
-
-**Advantages:**
-- Persistent emulator instance
-- Can connect/disconnect AI clients without restarting
-- Manual emulator control while debugging with AI
-
-**Use cases:**
-- Advanced debugging workflows
-- Multiple AI client connections
-- Manual emulator testing with AI assistance
 
 ## Quick Start
 
@@ -164,12 +144,13 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
    - **Linux:** `/path/to/geargrafx`
    - **Windows:** `C:/path/to/geargrafx.exe`
 
-3. **Restart VS Code** for settings to take effect
+3. **Restart VS Code** may be necessary for settings to take effect
 
 4. **Open GitHub Copilot Chat** and start debugging:
    - The emulator will auto-start with MCP server enabled
    - Load a game ROM
    - Start chatting with Copilot about the game state
+   - You can add context from "MCP Resources" if needed
 
 ### STDIO Mode with Claude Desktop
 
@@ -177,12 +158,7 @@ The HTTP transport mode runs the emulator with an embedded web server on `localh
 
 The easiest way to install Geargrafx MCP server on Claude Desktop is using the MCPB package:
 
-1. **Download the latest MCPB package** for your platform from the [releases page](https://github.com/drhelius/geargrafx/releases):
-   - **macOS Intel:** `geargrafx-macos-x64.mcpb`
-   - **macOS Apple Silicon:** `geargrafx-macos-arm64.mcpb`
-   - **Windows Intel/AMD:** `geargrafx-windows-x64.mcpb`
-   - **Windows ARM:** `geargrafx-windows-arm64.mcpb`
-   - **Linux Intel/AMD:** `geargrafx-linux-x64.mcpb`
+1. **Download the latest MCPB package** for your platform from the [releases page](https://github.com/drhelius/geargrafx/releases).
 
 2. **Install the extension**:
    - Open Claude Desktop
@@ -191,7 +167,7 @@ The easiest way to install Geargrafx MCP server on Claude Desktop is using the M
    - In the Extension Developer section, click **Install Extension…**
    - Select the downloaded `.mcpb` file
 
-3. **Start debugging**: The extension is now available in your conversations. The emulator will automatically launch when Claude needs to access debugging tools.
+3. **Start debugging**: The extension is now available in your conversations. The emulator will automatically launch when the tool is enabled.
 
 #### Option 2: Manual Configuration
 
@@ -221,8 +197,6 @@ If you prefer to build from source or configure manually:
 
 2. **Restart Claude Desktop**
 
-3. **Start debugging**: The emulator will launch when Claude needs to access debugging tools
-
 ### HTTP Mode
 
 1. **Start the emulator manually** with HTTP transport:
@@ -250,18 +224,6 @@ If you prefer to build from source or configure manually:
    }
    ```
 
-   Or User Settings JSON:
-   ```json
-   {
-     "github.copilot.chat.mcp.servers": {
-       "geargrafx": {
-         "type": "http",
-         "url": "http://localhost:7777/mcp"
-       }
-     }
-   }
-   ```
-
 3. **Or configure Claude Desktop**:
    ```json
    {
@@ -276,7 +238,7 @@ If you prefer to build from source or configure manually:
 
 4. **Restart your AI client** and start debugging
 
-> **Note:** The MCP HTTP Server must be running standalone before connecting the AI client. Default port is 7777 (configurable with `--mcp-http-port`). In HTTP mode, the emulator stays running even when the AI client disconnects. You can manually load games and interact with the GUI while the AI assistant connects as needed.
+> **Note:** The MCP HTTP Server must be running standalone before connecting the AI client.
 
 ## Usage Examples
 
@@ -311,75 +273,25 @@ Once configured, you can ask your AI assistant:
 
 In addition to tools, the MCP server provides documentation resources that AI assistants can access to better understand the PC Engine / TurboGrafx-16 hardware and programming.
 
-Resources are organized into categories and are automatically loaded when the server starts. They provide context and reference material for AI-assisted debugging and development.
+MCP clients usually offer reources in the "Add context..." section of the chat interface. You may need to manually add them when you think they are relevant.
 
 ### Hardware Documentation Resources
 
 Complete technical reference documentation for all PC Engine / TurboGrafx-16 hardware components:
 
 - **HuC6280 CPU — 8-bit CMOS Microprocessor** (`geargrafx://hardware/huc6280_cpu`)
-  - 65C02-compatible core architecture
-  - CPU registers (A/X/Y/S/P/PC) and status flags
-  - Memory Management Unit (MMU) with 8×8KB page mapping
-  - Interrupt controller, 7-bit timer, I/O ports
-  - Clock speeds (1.79MHz/7.16MHz switchable)
-
 - **HuC6280 Instruction Set Reference** (`geargrafx://hardware/huc6280_instructions`)
-  - Complete instruction set with all 65C02 base opcodes
-  - HuC6280 extensions (BBR/BBS/RMB/SMB/TST/TAM/TMA/SAX/SAY/SXY/ST0/ST1/ST2/CSL/CSH/CLA/CLX/CLY/TAI/TDD/TIA/TII/TIN)
-  - Addressing modes, cycle counts, flags affected
-
 - **HuC6280 PSG — Programmable Sound Generator** (`geargrafx://hardware/huc6280_psg`)
-  - 6 waveform channels with 32-sample waveform memory
-  - Dual noise generators (channels 5 and 6)
-  - Low Frequency Oscillator (LFO)
-  - Stereo balance control and Direct D/A mode (DDA)
-
 - **HuC6270 VDC — Video Display Controller** (`geargrafx://hardware/huc6270_vdc`)
-  - 64KB VRAM with internal registers (R00-R13)
-  - Display timing control and sprite rendering
-  - Sprite Attribute Table (SAT) and DMA operations
-  - Dual-VDC SuperGrafx support
-
 - **HuC6260 VCE — Video Color Encoder** (`geargrafx://hardware/huc6260_vce`)
-  - 512×9-bit color RAM (3-bit R/G/B per entry)
-  - Palette organization (16 palettes × 16 colors)
-  - Color table access and analog video output
-
 - **HuC6202 VPC — Video Priority Controller** (`geargrafx://hardware/huc6202_vpc`)
-  - SuperGrafx dual-VDC (VDC#1/VDC#2) arbitration
-  - Priority control registers and window-based layer visibility
-  - Per-pixel priority resolution
-
 - **PC Engine Memory Map** (`geargrafx://hardware/memory_map`)
-  - 64KB logical / 2MB physical address space
-  - MMU 8KB page translation (MPR0-MPR7)
-  - Hardware register layout (VDC/$0000, VCE/$0400, PSG/$0800, Timer/$0C00, Input/$1000, IRQ/$1400)
-  - RAM configuration, ROM banking, CD-ROM/Arcade Card extensions
 
-### How Resources Work
-
-Resources are read-only documentation that AI assistants can reference during conversations:
-
-1. **Automatic Loading**: Resources are loaded when the MCP server starts
-2. **Context Enhancement**: AI assistants can retrieve resources to understand hardware specifics
-3. **Format**: Resources are provided in Markdown format for easy reading
-4. **URIs**: Each resource has a unique URI like `geargrafx://category/resource_id`
-
-### Accessing Resources
-
-Resources are accessed through the MCP protocol's resource capabilities:
-
-- `resources/list` - List all available resources
-- `resources/read` - Read the content of a specific resource
-
-AI clients automatically handle resource retrieval, so you typically don't need to manually request them. The AI assistant will fetch relevant resources when needed to answer your questions or provide better debugging assistance.
-
-## How It Works
+## How MCP Works in Geargrafx
 
 - The MCP server runs **alongside** the GUI in a background thread
-- The emulator GUI remains fully functional (you can play/debug normally)
-- Commands from the AI are queued and executed on the main thread
+- The emulator GUI remains fully functional (you can play/debug normally while using MCP)
+- Commands from the AI are queued and executed on the GUI thread
 - Both GUI and MCP share the same emulator state
 - Changes made through MCP are instantly reflected in the GUI and vice versa
 
@@ -389,8 +301,8 @@ AI clients automatically handle resource retrieval, so you typically don't need 
 ```
 ┌─────────────────┐                    ┌──────────────────┐
 │   VS Code /     │       stdio        │    Geargrafx     │
-│ Claude Desktop  │◄──────────────────►│   MCP Server     │
-│   (AI Client)   │       pipes        │  (Background)    │
+│ Claude Desktop  │◄──────────────────►│    MCP Server    │
+│   (AI Client)   │       pipes        │   (background)   │
 └─────────────────┘                    └──────────────────┘
         │                                       │
         └───► Launches ►────────────────────────┘
@@ -408,7 +320,7 @@ AI clients automatically handle resource retrieval, so you typically don't need 
 ┌─────────────────┐                    ┌──────────────────┐
 │   VS Code /     │  HTTP (port 7777)  │    Geargrafx     │
 │ Claude Desktop  │◄──────────────────►│ MCP HTTP Server  │
-│   (AI Client)   │                    │   (listener)     │
+│   (AI Client)   │                    │    (listener)    │
 └─────────────────┘                    └──────────────────┘
                                                 │
                                                 │ Shared State
