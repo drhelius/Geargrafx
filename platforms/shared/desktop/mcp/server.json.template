@@ -7,7 +7,7 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-macos-arm64.mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-{{VERSION}}-mcpb-macos-arm64.mcpb",
       "fileSha256": "{{SHA256_MACOS_ARM64}}",
       "transport": {
         "type": "stdio"
@@ -15,7 +15,7 @@
     },
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-macos-x64.mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-{{VERSION}}-mcpb-macos-x64.mcpb",
       "fileSha256": "{{SHA256_MACOS_X64}}",
       "transport": {
         "type": "stdio"
@@ -23,7 +23,7 @@
     },
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-windows-arm64.mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-{{VERSION}}-mcpb-windows-arm64.mcpb",
       "fileSha256": "{{SHA256_WINDOWS_ARM64}}",
       "transport": {
         "type": "stdio"
@@ -31,7 +31,7 @@
     },
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-windows-x64.mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-{{VERSION}}-mcpb-windows-x64.mcpb",
       "fileSha256": "{{SHA256_WINDOWS_X64}}",
       "transport": {
         "type": "stdio"
@@ -39,7 +39,7 @@
     },
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-linux-x64.mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-{{VERSION}}-mcpb-linux-x64.mcpb",
       "fileSha256": "{{SHA256_LINUX_X64}}",
       "transport": {
         "type": "stdio"
