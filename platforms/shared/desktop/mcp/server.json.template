@@ -1,0 +1,49 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "io.github.drhelius/{{NAME_LOWER}}",
+  "title": "{{NAME_UPPER}} MCP Server",
+  "description": "MCP server for {{NAME_UPPER}} PC Engine / TurboGrafx-16 emulator",
+  "version": "{{VERSION}}",
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-macos-arm64.mcpb",
+      "fileSha256": "{{SHA256_MACOS_ARM64}}",
+      "transport": {
+        "type": "stdio"
+      }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-macos-x64.mcpb",
+      "fileSha256": "{{SHA256_MACOS_X64}}",
+      "transport": {
+        "type": "stdio"
+      }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-windows-arm64.mcpb",
+      "fileSha256": "{{SHA256_WINDOWS_ARM64}}",
+      "transport": {
+        "type": "stdio"
+      }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-windows-x64.mcpb",
+      "fileSha256": "{{SHA256_WINDOWS_X64}}",
+      "transport": {
+        "type": "stdio"
+      }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-linux-x64.mcpb",
+      "fileSha256": "{{SHA256_LINUX_X64}}",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

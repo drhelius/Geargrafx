@@ -376,3 +376,51 @@ jobs:
           --generate-notes
       env:
         GITHUB_TOKEN: ${{ github.TOKEN }}
+  publish_mcp:
+    name: Publish to MCP Registry
+    needs: [release]
+    if: github.event_name != 'pull_request' && startswith(github.ref, 'refs/tags/')
+    runs-on: macos-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Download MCPB packages from release
+      run: |
+        mkdir -p mcpb-packages
+        cd mcpb-packages
+        gh release download ${{ github.ref_name }} --pattern "*.mcpb"
+      env:
+        GITHUB_TOKEN: ${{ github.TOKEN }}
+    - name: Calculate SHA256 hashes for MCPB packages
+      run: |
+        cd mcpb-packages
+        echo "SHA256_MACOS_ARM64=$(sha256sum ${{ env.NAME_UPPER }}-macos-arm64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "SHA256_MACOS_X64=$(sha256sum ${{ env.NAME_UPPER }}-macos-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "SHA256_WINDOWS_ARM64=$(sha256sum ${{ env.NAME_UPPER }}-windows-arm64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "SHA256_WINDOWS_X64=$(sha256sum ${{ env.NAME_UPPER }}-windows-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "SHA256_LINUX_X64=$(sha256sum ${{ env.NAME_UPPER }}-linux-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+    - name: Generate MCP server.json
+      run: |
+        cp platforms/shared/desktop/mcp/server.json.template server.json
+        sed -i '' "s/{{NAME_LOWER}}/${{ env.NAME_LOWER }}/g" server.json
+        sed -i '' "s/{{NAME_UPPER}}/${{ env.NAME_UPPER }}/g" server.json
+        sed -i '' "s/{{VERSION}}/${{ github.ref_name }}/g" server.json
+        sed -i '' "s/{{SHA256_MACOS_ARM64}}/${{ env.SHA256_MACOS_ARM64 }}/g" server.json
+        sed -i '' "s/{{SHA256_MACOS_X64}}/${{ env.SHA256_MACOS_X64 }}/g" server.json
+        sed -i '' "s/{{SHA256_WINDOWS_ARM64}}/${{ env.SHA256_WINDOWS_ARM64 }}/g" server.json
+        sed -i '' "s/{{SHA256_WINDOWS_X64}}/${{ env.SHA256_WINDOWS_X64 }}/g" server.json
+        sed -i '' "s/{{SHA256_LINUX_X64}}/${{ env.SHA256_LINUX_X64 }}/g" server.json
+        
+        echo "Generated server.json:"
+        cat server.json
+    - name: Install mcp-publisher
+      run: brew install mcp-publisher
+    - name: Login to MCP Registry
+      run: mcp-publisher login github-oidc
+    - name: Publish to MCP Registry
+      run: mcp-publisher publish
