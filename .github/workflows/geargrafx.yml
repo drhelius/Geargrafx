@@ -51,7 +51,7 @@ jobs:
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-${{ matrix.os }}
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-desktop-${{ matrix.os == 'ubuntu-24.04' && 'ubuntu24.04' || matrix.os == 'ubuntu-22.04' && 'ubuntu22.04' || matrix.os }}-x64
         path: artifact/*
   linux-clang:
     name: Linux (Clang/LLVM)
@@ -95,7 +95,7 @@ jobs:
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-libretro-linux
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-libretro-linux-x64
         path: platforms/libretro/${{ env.NAME_LOWER }}_libretro.so
   macos:
     name: macOS
@@ -167,7 +167,7 @@ jobs:
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-macos-${{ matrix.architecture }}
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-desktop-macos-${{ matrix.architecture == 'arm' && 'arm64' || 'intel' }}
         path: artifact/*
   windows:
     name: Windows
@@ -203,7 +203,7 @@ jobs:
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-windows-${{ matrix.architecture }}
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-desktop-windows-${{ matrix.architecture }}
         path: artifact/*
   bsd:
     name: BSD
@@ -238,7 +238,7 @@ jobs:
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-bsd
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-desktop-bsd-x64
         path: artifact/*
   mcpb:
     name: MCPB
@@ -266,7 +266,7 @@ jobs:
     - name: Download artifact
       uses: actions/download-artifact@v4
       with:
-        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-${{ matrix.variant.platform == 'darwin' && format('macos-{0}', matrix.variant.architecture) || matrix.variant.platform == 'linux' && matrix.variant.os || format('windows-{0}', matrix.variant.architecture) }}
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-desktop-${{ matrix.variant.platform == 'darwin' && format('macos-{0}', matrix.variant.architecture == 'arm' && 'arm64' || 'intel') || matrix.variant.platform == 'linux' && format('{0}-x64', matrix.variant.os == 'ubuntu-24.04' && 'ubuntu24.04' || 'ubuntu22.04') || format('windows-{0}', matrix.variant.architecture) }}
         path: download
     - name: Prepare MCPB structure
       run: |
