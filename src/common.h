@@ -60,14 +60,14 @@ inline u32 read_u32_be(const u8* p)
     return (u32)p[3] | ((u32)p[2] << 8) | ((u32)p[1] << 16) | ((u32)p[0] << 24);
 }
 
-inline u16 hi(u16 a)
+inline u8 hi(u16 a)
 {
-    return (u16)(a >> 8);
+    return (u8)(a >> 8);
 }
 
-inline u16 lo(u16 a)
+inline u8 lo(u16 a)
 {
-    return (u16)(a & 0xFF);
+    return (u8)(a & 0xFF);
 }
 
 inline int as_hex(const char c)
@@ -90,6 +90,11 @@ inline unsigned int pow_2_ceil(u16 n)
     n |= n >> 8;
     ++n;
     return n;
+}
+
+inline bool is_pow2(u32 x)
+{
+    return x && ((x & (x - 1)) == 0);
 }
 
 inline void get_date_time_string(time_t timestamp, char* buffer, size_t size)
