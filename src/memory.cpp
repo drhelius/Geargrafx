@@ -266,7 +266,7 @@ void Memory::ResetDisassemblerRecords()
 
 void Memory::SetMprTAM(u8 bits, u8 value)
 {
-    assert((bits != 0) && !(bits & (bits - 1)));
+    //assert((bits != 0) && !(bits & (bits - 1)));
 
     if(bits == 0)
     {
@@ -292,7 +292,7 @@ void Memory::SetMprTAM(u8 bits, u8 value)
 
 u8 Memory::GetMprTMA(u8 bits)
 {
-    assert((bits != 0) && !(bits & (bits - 1)));
+    //assert((bits != 0) && !(bits & (bits - 1)));
 
     if(bits == 0)
     {
