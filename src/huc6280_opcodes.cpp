@@ -853,7 +853,7 @@ void HuC6280::OPCode0x88()
 void HuC6280::OPCode0x89()
 {
     // BIT #nn
-    OPCodes_BIT_Immediate(m_PC.GetValue());
+    OPCodes_BIT(m_PC.GetValue());
     m_PC.Increment();
 }
 

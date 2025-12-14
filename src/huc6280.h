@@ -220,7 +220,6 @@ private:
     void OPCodes_ASL_Memory(u16 address);
     void OPcodes_Branch(bool condition);
     void OPCodes_BIT(u16 address);
-    void OPCodes_BIT_Immediate(u16 address);
     void OPCodes_BRK();
     void OPCodes_Subroutine();
     void OPCodes_CMP(EightBitRegister* reg, u8 value);

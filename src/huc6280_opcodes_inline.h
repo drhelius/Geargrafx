@@ -158,16 +158,6 @@ INLINE void HuC6280::OPCodes_BIT(u16 address)
     m_P.SetValue(flags);
 }
 
-INLINE void HuC6280::OPCodes_BIT_Immediate(u16 address)
-{
-    u8 value = m_memory->Read(address);
-    u8 result = m_A.GetValue() & value;
-    ClearFlag(FLAG_ZERO);
-    u8 flags = m_P.GetValue();
-    flags |= (m_zn_flags_lut[result] & FLAG_ZERO);
-    m_P.SetValue(flags);
-}
-
 INLINE void HuC6280::OPCodes_BRK()
 {
     u16 pc = m_PC.GetValue();
