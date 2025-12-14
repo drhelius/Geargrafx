@@ -79,6 +79,16 @@ public:
         return cmd;
     }
 
+    void Clear()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        while (!m_queue.empty())
+        {
+            SafeDelete(m_queue.front());
+            m_queue.pop();
+        }
+    }
+
 private:
     std::queue<DebugCommand*> m_queue;
     std::mutex m_mutex;
@@ -112,6 +122,17 @@ public:
         std::lock_guard<std::mutex> lock(m_mutex);
         m_running = false;
         m_cv.notify_all();
+    }
+
+    void Reset()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        while (!m_queue.empty())
+        {
+            SafeDelete(m_queue.front());
+            m_queue.pop();
+        }
+        m_running = true;
     }
 
 private:

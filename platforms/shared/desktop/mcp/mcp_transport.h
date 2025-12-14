@@ -25,6 +25,7 @@
 #include <string>
 #include <iostream>
 #include <mutex>
+#include <condition_variable>
 #include <cerrno>
 #include "log.h"
 
@@ -178,6 +179,7 @@ public:
             Error("[MCP] HTTP send() failed: %d", sent);
             SOCKET_CLOSE(m_current_client);
             m_current_client = INVALID_SOCKET_VALUE;
+            m_client_cv.notify_all();
             return false;
         }
 
@@ -190,6 +192,7 @@ public:
         // Close connection after response (VS Code will reconnect for next request)
         SOCKET_CLOSE(m_current_client);
         m_current_client = INVALID_SOCKET_VALUE;
+        m_client_cv.notify_all();
 
         return true;
     }
@@ -232,6 +235,7 @@ public:
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             m_current_client = INVALID_SOCKET_VALUE;
+            m_client_cv.notify_all();
         }
         return false;
     }
@@ -240,7 +244,22 @@ public:
     {
         while (!m_closed && m_server_socket != INVALID_SOCKET_VALUE)
         {
-            // Always accept new connection (we close after each response)
+            // Wait until any previous client has been responded to and closed
+            {
+                std::unique_lock<std::mutex> lock(m_mutex);
+                m_client_cv.wait(lock, [this]
+                {
+                    return m_closed || m_current_client == INVALID_SOCKET_VALUE;
+                });
+
+                if (m_closed)
+                {
+                    Debug("[MCP] Server closed, stopping recv loop");
+                    return false;
+                }
+            }
+
+            // Accept new connection (we close after each response)
             struct sockaddr_in client_addr;
             socklen_t client_len = sizeof(client_addr);
             socket_t client = accept(m_server_socket, (struct sockaddr*)&client_addr, &client_len);
@@ -346,6 +365,7 @@ public:
                 std::lock_guard<std::mutex> lock(m_mutex);
                 SOCKET_CLOSE(m_current_client);
                 m_current_client = INVALID_SOCKET_VALUE;
+                m_client_cv.notify_all();
                 continue; // Wait for next connection
             }
 
@@ -367,6 +387,7 @@ public:
                 std::lock_guard<std::mutex> lock(m_mutex);
                 SOCKET_CLOSE(m_current_client);
                 m_current_client = INVALID_SOCKET_VALUE;
+                m_client_cv.notify_all();
                 continue; // Wait for next connection
             }
 
@@ -406,6 +427,7 @@ public:
                 std::lock_guard<std::mutex> lock(m_mutex);
                 SOCKET_CLOSE(m_current_client);
                 m_current_client = INVALID_SOCKET_VALUE;
+                m_client_cv.notify_all();
                 continue; // Wait for next request
             }
 
@@ -421,6 +443,7 @@ public:
                 std::lock_guard<std::mutex> lock(m_mutex);
                 SOCKET_CLOSE(m_current_client);
                 m_current_client = INVALID_SOCKET_VALUE;
+                m_client_cv.notify_all();
                 continue; // Wait for next request
             }
 
@@ -439,6 +462,7 @@ public:
                 std::lock_guard<std::mutex> lock(m_mutex);
                 SOCKET_CLOSE(m_current_client);
                 m_current_client = INVALID_SOCKET_VALUE;
+                m_client_cv.notify_all();
                 continue; // Wait for next connection
             }
         }
@@ -449,6 +473,7 @@ public:
     void close()
     {
         m_closed = true;
+        m_client_cv.notify_all();
 
         if (m_current_client != INVALID_SOCKET_VALUE)
         {
@@ -465,6 +490,7 @@ public:
 
 private:
     std::mutex m_mutex;
+    std::condition_variable m_client_cv;
     bool m_closed;
     socket_t m_server_socket;
     socket_t m_current_client;

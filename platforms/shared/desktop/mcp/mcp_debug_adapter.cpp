@@ -170,7 +170,7 @@ std::vector<BreakpointInfo> DebugAdapter::ListBreakpoints()
     HuC6280* cpu = m_core->GetHuC6280();
     std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
 
-    for (const auto& brk : *breakpoints)
+    for (const HuC6280::GG_Breakpoint& brk : *breakpoints)
     {
         BreakpointInfo info;
         info.enabled = brk.enabled;

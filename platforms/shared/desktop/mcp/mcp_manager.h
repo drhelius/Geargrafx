@@ -65,6 +65,9 @@ public:
         if (m_server && m_server->IsRunning())
             return;
 
+        m_commandQueue.Clear();
+        m_responseQueue.Reset();
+
         McpTransportInterface* transport = NULL;
         if (m_transport_mode == MCP_TRANSPORT_TCP)
         {
