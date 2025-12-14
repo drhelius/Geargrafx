@@ -463,7 +463,7 @@ void ScsiController::CommandReadSubcodeQ()
     bool is_data_track = current_track >= 0 ? m_cdrom_media->GetTrackType(current_track) != GG_CDROM_AUDIO_TRACK : false;
     u8 adr_control = is_data_track ? 0x41 : 0x01;
 
-    u32 lba_offset = current_track >= 0 ? m_cdrom_media->GetFirstSectorOfTrack(current_track) - current_lba : 0;
+    u32 lba_offset = current_track >= 0 ? current_lba - m_cdrom_media->GetFirstSectorOfTrack(current_track) : 0;
 
     GG_CdRomMSF relative;
     GG_CdRomMSF absolute;
