@@ -368,51 +368,38 @@ INLINE void HuC6280::OPCodes_ROR_Memory(u16 address)
 
 INLINE void HuC6280::OPCodes_SBC(u8 value)
 {
-    u16 result = 0;
+    s32 result;
+    u8 a = m_A.GetValue();
+    u8 inverted_value = (u8)(~value);
 
     if (IsSetFlag(FLAG_DECIMAL))
     {
         m_cycles++;
 
-        u16 tmp = (m_A.GetValue() & 0x0f) - (value & 0x0f) - (IsSetFlag(FLAG_CARRY) ? 0 : 1);
-        result = m_A.GetValue() - value - (IsSetFlag(FLAG_CARRY) ? 0 : 1);
-
-        if (result & 0x8000)
-            result -= 0x60;
-
-        if (tmp & 0x8000)
+        result = (a & 0x0F) + (inverted_value & 0x0F) + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
+        if (result <= 0x0F)
             result -= 0x06;
 
-#if defined(GG_TESTING)
-        u16 bin_result = m_A.GetValue() + ~value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
-        if ((m_A.GetValue() ^ bin_result) & (~value ^ bin_result) & 0x80)
-            SetFlag(FLAG_OVERFLOW);
-        else
-            ClearFlag(FLAG_OVERFLOW);
-#endif
-
-        if ((u16)result <= (u16)m_A.GetValue() || (result & 0xff0) == 0xff0)
-            SetFlag(FLAG_CARRY);
-        else
-            ClearFlag(FLAG_CARRY);
+        result = (a & 0xF0) + (inverted_value & 0xF0) + (result > 0x0F ? 0x10 : 0) + (result & 0x0F);
+        if (result <= 0xFF)
+            result -= 0x60;
     }
     else
     {
-        value = ~value;
-        result = (u16)m_A.GetValue() + (u16)value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
+        result = (u16)a + (u16)inverted_value + (IsSetFlag(FLAG_CARRY) ? 1 : 0);
 
-        if(~(m_A.GetValue() ^ value) & (m_A.GetValue() ^ result) & 0x80)
+        if (~(a ^ inverted_value) & (a ^ result) & 0x80)
             SetFlag(FLAG_OVERFLOW);
         else
             ClearFlag(FLAG_OVERFLOW);
-
-        if(result > 0xFF)
-            SetFlag(FLAG_CARRY);
-        else
-            ClearFlag(FLAG_CARRY);
     }
 
-    SetOrClearZNFlags((u8)result);
+    ClearFlag(FLAG_CARRY | FLAG_NEGATIVE | FLAG_ZERO);
+    SetZNFlags((u8)result);
+
+    if (result > 0xFF)
+        SetFlag(FLAG_CARRY);
+
     m_A.SetValue((u8)result);
 }
 
