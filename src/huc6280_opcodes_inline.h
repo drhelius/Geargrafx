@@ -462,37 +462,45 @@ INLINE void HuC6280::OPCodes_Transfer(EightBitRegister* source, EightBitRegister
 INLINE void HuC6280::OPCodes_TRB(u16 address)
 {
     u8 value = m_memory->Read(address);
+#if defined(GG_TESTING)
     u8 result = ~m_A.GetValue() & value;
     m_memory->Write(address, result);
-#if defined(GG_TESTING)
     ClearFlag(FLAG_ZERO);
-#else
-    ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
-#endif
     u8 flags = m_P.GetValue();
     flags |= (m_zn_flags_lut[m_A.GetValue() & value] & FLAG_ZERO);
-#if !defined(GG_TESTING)
-    flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
-#endif
     m_P.SetValue(flags);
+#else
+    ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
+    u8 flags = m_P.GetValue();
+    flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
+    value &= ~m_A.GetValue();
+    if (value == 0)
+        flags |= FLAG_ZERO;
+    m_P.SetValue(flags);
+    m_memory->Write(address, value);
+#endif
 }
 
 INLINE void HuC6280::OPCodes_TSB(u16 address)
 {
     u8 value = m_memory->Read(address);
+#if defined(GG_TESTING)
     u8 result = m_A.GetValue() | value;
     m_memory->Write(address, result);
-#if defined(GG_TESTING)
     ClearFlag(FLAG_ZERO);
-#else
-    ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
-#endif
     u8 flags = m_P.GetValue();
     flags |= (m_zn_flags_lut[m_A.GetValue() & value] & FLAG_ZERO);
-#if !defined(GG_TESTING)
-    flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
-#endif
     m_P.SetValue(flags);
+#else
+    ClearFlag(FLAG_ZERO | FLAG_OVERFLOW | FLAG_NEGATIVE);
+    u8 flags = m_P.GetValue();
+    flags |= (value & (FLAG_OVERFLOW | FLAG_NEGATIVE));
+    value |= m_A.GetValue();
+    if (value == 0)
+        flags |= FLAG_ZERO;
+    m_P.SetValue(flags);
+    m_memory->Write(address, value);
+#endif
 }
 
 INLINE void HuC6280::OPCodes_TST(u8 value, u16 address)
