@@ -669,8 +669,8 @@ INLINE void HuC6280::OPCodes_TransferStart()
     m_transfer_state = 2;
 
     StackPush8(m_Y.GetValue());
-    StackPush8(m_X.GetValue());
     StackPush8(m_A.GetValue());
+    StackPush8(m_X.GetValue());
 
     m_transfer_source = Fetch16();
     m_transfer_dest = Fetch16();
@@ -684,8 +684,8 @@ INLINE void HuC6280::OPCodes_TransferStart()
 INLINE void HuC6280::OPCodes_TransferEnd()
 {
     m_transfer_state = 0;
-    m_A.SetValue(StackPop8());
     m_X.SetValue(StackPop8());
+    m_A.SetValue(StackPop8());
     m_Y.SetValue(StackPop8());
     m_PC.SetValue(m_PC.GetValue() + 6);
     m_cycles += 3;
