@@ -115,8 +115,7 @@ public:
     void WriteMemoryArea(int area, u32 offset, const std::vector<u8>& data);
 
     // Disassembly (using existing disassembler records)
-    std::vector<DisasmLine> GetDisassemblyAroundPc(size_t before, size_t after);
-    std::vector<DisasmLine> GetDisassemblyRange(u16 start, size_t count);
+    std::vector<DisasmLine> GetDisassembly(u16 start_address, u16 end_address, int bank = -1);
 
     // Chip status info
     json GetHuC6280Status();

@@ -20,6 +20,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <string>
 #include <string.h>
 #if defined(_WIN32)
 #include <windows.h>
@@ -147,5 +148,17 @@ static inline void get_executable_path(char* path, size_t size)
 #endif
 }
 
+static inline void strip_color_tags(std::string& str)
+{
+    size_t pos = 0;
+    while ((pos = str.find('{', pos)) != std::string::npos)
+    {
+        size_t end_pos = str.find('}', pos);
+        if (end_pos != std::string::npos)
+            str.erase(pos, end_pos - pos + 1);
+        else
+            pos++;
+    }
+}
 
 #endif /* UTILS_H */

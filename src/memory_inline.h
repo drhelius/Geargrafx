@@ -262,7 +262,18 @@ INLINE u8 Memory::GetBank(u16 address)
 
 INLINE GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address)
 {
-    return m_disassembler[GetPhysicalAddress(address)];
+    u32 physical_address = GetPhysicalAddress(address);
+    if (physical_address >= 0x200000)
+        return NULL;
+    return m_disassembler[physical_address];
+}
+
+INLINE GG_Disassembler_Record* Memory::GetDisassemblerRecord(u16 address, u8 bank)
+{
+    u32 physical_address = ((u32)bank << 13) | (address & 0x1FFF);
+    if (physical_address >= 0x200000)
+        return NULL;
+    return m_disassembler[physical_address];
 }
 
 INLINE u8* Memory::GetWorkingRAM()

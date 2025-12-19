@@ -64,6 +64,7 @@ public:
     u8 GetBank(u16 address);
     void SetResetValues(int mpr, int wram, int card_ram, int arcade_card);
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
+    GG_Disassembler_Record* GetDisassemblerRecord(u16 address, u8 bank);
     GG_Disassembler_Record* GetOrCreateDisassemblerRecord(u16 address);
     void ResetDisassemblerRecords();
     u8* GetWorkingRAM();

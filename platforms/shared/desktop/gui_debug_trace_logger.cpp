@@ -26,6 +26,7 @@
 #include "gui_filedialogs.h"
 #include "config.h"
 #include "emu.h"
+#include "utils.h"
 
 static bool trace_logger_enabled = false;
 static int trace_logger_count = 0;
@@ -139,16 +140,7 @@ void gui_debug_trace_logger_update(void)
         snprintf(counter, sizeof(counter), "%d  ", trace_logger_instruction_count);
 
         std::string instr = record->name;
-        
-        size_t pos = 0;
-        while ((pos = instr.find('{', pos)) != std::string::npos)
-        {
-            size_t end_pos = instr.find('}', pos);
-            if (end_pos != std::string::npos)
-                instr.erase(pos, end_pos - pos + 1);
-            else 
-                pos++;
-        }
+        strip_color_tags(instr);
 
         char line[256];
         snprintf(line, sizeof(line), "%s%s%04X   %s%s%s   %s",

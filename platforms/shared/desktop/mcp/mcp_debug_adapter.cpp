@@ -19,6 +19,7 @@
 
 #include "mcp_debug_adapter.h"
 #include "log.h"
+#include "../utils.h"
 #include "../emu.h"
 #include "../gui.h"
 #include "../gui_actions.h"
@@ -291,95 +292,63 @@ void DebugAdapter::WriteMemoryArea(int area, u32 offset, const std::vector<u8>& 
     }
 }
 
-std::vector<DisasmLine> DebugAdapter::GetDisassemblyAroundPc(size_t before, size_t after)
+std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_address, int bank)
 {
     std::vector<DisasmLine> result;
     Memory* memory = m_core->GetMemory();
-    HuC6280* cpu = m_core->GetHuC6280();
-    HuC6280::HuC6280_State* state = cpu->GetState();
-    u16 pc = state->PC->GetValue();
 
-    // Start from a point before PC (approximate)
-    u16 start = pc - (u16)(before * 3); // Assume avg 3 bytes per instruction
+    bool use_explicit_bank = (bank >= 0 && bank <= 0xFF);
 
-    // Collect lines until we have enough before PC
-    std::vector<DisasmLine> candidates;
-    u16 addr = start;
+    // Scan backwards from to find any instruction that might span into our range
+    u16 scan_start = start_address;
+    const int MAX_INSTRUCTION_SIZE = 7;
 
-    for (size_t i = 0; i < before + after + 10 && addr < 0xFFFF; i++)
+    for (int lookback = 1; lookback < MAX_INSTRUCTION_SIZE && scan_start > 0; lookback++)
     {
-        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(addr);
+        u16 check_addr = start_address - lookback;
 
-        if (IsValidPointer(record) && record->name[0] != 0)
+        if (use_explicit_bank)
         {
-            DisasmLine line;
-            line.address = addr;
-            line.bank = record->bank;
-            line.name = record->name;
-            line.bytes = record->bytes;
-            line.segment = record->segment;
-            line.size = record->size;
-            line.jump = record->jump;
-            line.jump_address = record->jump_address;
-            line.jump_bank = record->jump_bank;
-            line.subroutine = record->subroutine;
-            line.irq = record->irq;
+            u16 start_offset = start_address & 0x1FFF;
+            if (lookback > start_offset)
+                break;  // Would go past bank boundary
+            check_addr = (start_address & 0xE000) | (start_offset - lookback);
+        }
 
-            candidates.push_back(line);
+        GG_Disassembler_Record* record = nullptr;
 
-            if (addr >= pc && candidates.size() >= before + 1)
-            {
-                // Found PC, collect 'after' more lines
-                addr = addr + (u16)record->size;
-                for (size_t j = 0; j < after && addr < 0xFFFF; j++)
-                {
-                    GG_Disassembler_Record* next_record = memory->GetDisassemblerRecord(addr);
-                    if (IsValidPointer(next_record) && next_record->name[0] != 0)
-                    {
-                        DisasmLine next_line;
-                        next_line.address = addr;
-                        next_line.bank = next_record->bank;
-                        next_line.name = next_record->name;
-                        next_line.bytes = next_record->bytes;
-                        next_line.segment = next_record->segment;
-                        next_line.size = next_record->size;
-                        next_line.jump = next_record->jump;
-                        next_line.jump_address = next_record->jump_address;
-                        next_line.jump_bank = next_record->jump_bank;
-                        next_line.subroutine = next_record->subroutine;
-                        next_line.irq = next_record->irq;
-
-                        candidates.push_back(next_line);
-                        addr = addr + (u16)next_record->size;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                break;
-            }
-
-            addr = addr + (u16)record->size;
+        if (use_explicit_bank)
+        {
+            record = memory->GetDisassemblerRecord(check_addr, (u8)bank);
         }
         else
         {
-            addr++;
+            record = memory->GetDisassemblerRecord(check_addr);
+        }
+
+        if (IsValidPointer(record) && record->name[0] != 0)
+        {
+            // Check if this instruction spans into our range
+            u16 instr_end = check_addr + record->size - 1;
+            if (instr_end >= start_address)
+            {
+                // This instruction overlaps with our range, start from here
+                scan_start = check_addr;
+                break;
+            }
         }
     }
 
-    return candidates;
-}
+    u16 addr = scan_start;
 
-std::vector<DisasmLine> DebugAdapter::GetDisassemblyRange(u16 start, size_t count)
-{
-    std::vector<DisasmLine> result;
-    Memory* memory = m_core->GetMemory();
-    u16 addr = start;
-
-    for (size_t i = 0; i < count && addr < 0xFFFF; i++)
+    while (addr <= end_address)
     {
-        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(addr);
+        GG_Disassembler_Record* record = nullptr;
+
+        if (use_explicit_bank)
+            record = memory->GetDisassemblerRecord(addr, (u8)bank);
+        else
+            record = memory->GetDisassemblerRecord(addr);
 
         if (IsValidPointer(record) && record->name[0] != 0)
         {
@@ -387,6 +356,7 @@ std::vector<DisasmLine> DebugAdapter::GetDisassemblyRange(u16 start, size_t coun
             line.address = addr;
             line.bank = record->bank;
             line.name = record->name;
+            strip_color_tags(line.name);
             line.bytes = record->bytes;
             line.segment = record->segment;
             line.size = record->size;
@@ -397,12 +367,36 @@ std::vector<DisasmLine> DebugAdapter::GetDisassemblyRange(u16 start, size_t coun
             line.irq = record->irq;
 
             result.push_back(line);
-            addr = addr + (u16)record->size;
+
+            // Move to next instruction
+            // Handle wrap-around within the bank when explicit bank is used
+            if (use_explicit_bank)
+            {
+                u16 offset_in_bank = addr & 0x1FFF;
+                offset_in_bank += (u16)record->size;
+                if (offset_in_bank >= 0x2000)
+                {
+                    // Reached end of bank
+                    break;
+                }
+                addr = (start_address & 0xE000) | offset_in_bank;
+            }
+            else
+            {
+                addr = addr + (u16)record->size;
+            }
+
+            if (record->size == 0)
+                addr++;
         }
         else
         {
-            break;
+            // No record at this address, try next byte
+            addr++;
         }
+
+        if (addr < start_address && !use_explicit_bank)
+            break;
     }
 
     return result;

@@ -467,19 +467,28 @@ void McpServer::HandleToolsList(const json& request)
     // Disassembly tool
     tools.push_back({
         {"name", "get_disassembly"},
-        {"description", "Get disassembled HuC6280 assembly code from PC Engine memory. Returns logical address, bank, segment, instruction, and raw bytes."},
+        {"description", "Get disassembled HuC6280 assembly code for a logical address range. "
+                        "Returns: logical address, bank, segment, mnemonic, and raw bytes. "
+                        "NOTE: Disassembled records only exist for code that has been executed during emulation."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
-                {"start", {
+                {"start_address", {
                     {"type", "string"},
-                    {"description", "Start logical address in hex (optional, defaults to PC). Accepts formats: 'E177', '0xE177', '$E177'"}
+                    {"description", "Start logical address in hex (required). Accepts formats: 'E177', '0xE177', '$E177'"}
                 }},
-                {"offset", {
-                    {"type", "integer"},
-                    {"description", "Number of instruction lines to disassemble (default 15)"}
+                {"end_address", {
+                    {"type", "string"},
+                    {"description", "End logical address in hex (required). Must be >= start_address. Accepts formats: 'E177', '0xE177', '$E177'"}
+                }},
+                {"bank", {
+                    {"type", "string"},
+                    {"description", "Optional bank in hex (00-FF). When provided, overrides the current MPR mapping for address translation. "
+                                    "The physical address is constructed as: (bank << 13) | (logical_address & 0x1FFF). "
+                                    "Use this when you want to inspect a specific ROM/RAM bank regardless of current CPU memory mapping."}
                 }}
-            }}
+            }},
+            {"required", json::array({"start_address", "end_address"})}
         }}
     });
 
@@ -1474,38 +1483,85 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     // Disassembly
     else if (normalizedTool == "get_disassembly")
     {
-        size_t offset = arguments.value("offset", 15);
+        if (!arguments.contains("start_address"))
+            return {{"error", "start_address is required"}};
+        if (!arguments.contains("end_address"))
+            return {{"error", "end_address is required"}};
 
-        std::vector<DisasmLine> lines;
+        std::string startAddrStr = arguments["start_address"];
+        std::string endAddrStr = arguments["end_address"];
+        u16 start_address, end_address;
 
-        if (arguments.contains("start"))
+        if (!parse_hex_with_prefix(startAddrStr, &start_address))
+            return {{"error", "Invalid start_address format"}};
+        if (!parse_hex_with_prefix(endAddrStr, &end_address))
+            return {{"error", "Invalid end_address format"}};
+        if (start_address > end_address)
+            return {{"error", "start_address must be <= end_address"}};
+
+        // Optional bank parameter (-1 means use current MPR mappings)
+        int bank = -1;
+        if (arguments.contains("bank"))
         {
-            std::string addrStr = arguments["start"];
-            u16 address;
-            if (!parse_hex_with_prefix(addrStr, &address))
-                return {{"error", "Invalid start address format"}};
-
-            lines = m_debugAdapter.GetDisassemblyRange(address, offset);
-        }
-        else
-        {
-            lines = m_debugAdapter.GetDisassemblyAroundPc(0, offset);
+            std::string bankStr = arguments["bank"];
+            u8 bank_value;
+            if (!parse_hex_with_prefix(bankStr, &bank_value))
+                return {{"error", "Invalid bank format (must be 00-FF in hex)"}};
+            bank = bank_value;
         }
 
-        std::ostringstream disasm_ss;
+        std::vector<DisasmLine> lines = m_debugAdapter.GetDisassembly(start_address, end_address, bank);
+
+        json result;
+        json instructions = json::array();
+
         for (const DisasmLine& line : lines)
         {
-            disasm_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(6)
-                     << line.address << "-" << std::setw(2) << (int)line.bank << ": "
-                     << line.segment << "  " << line.name << "  ; " << line.bytes;
+            json instr;
+            std::ostringstream addr_ss, bank_ss, jump_ss;
+
+            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << line.address;
+            bank_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << (int)line.bank;
+
+            instr["address"] = addr_ss.str();
+            instr["bank"] = bank_ss.str();
+            instr["segment"] = line.segment;
+            instr["instruction"] = line.name;
+            instr["bytes"] = line.bytes;
+            instr["size"] = line.size;
+
             if (line.jump)
             {
-                disasm_ss << "  [jump to " << std::hex << std::setw(4) << line.jump_address << "]";
+                jump_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << line.jump_address;
+                instr["jump_target"] = jump_ss.str();
+                instr["is_subroutine"] = line.subroutine;
             }
-            disasm_ss << "\n";
+
+            if (line.irq > 0)
+            {
+                instr["irq"] = line.irq;
+            }
+
+            instructions.push_back(instr);
         }
 
-        return {{"disassembly", disasm_ss.str()}};
+        result["instructions"] = instructions;
+        result["count"] = lines.size();
+        result["start_address"] = startAddrStr;
+        result["end_address"] = endAddrStr;
+        if (bank >= 0)
+        {
+            std::ostringstream bank_ss;
+            bank_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << bank;
+            result["bank"] = bank_ss.str();
+        }
+
+        if (lines.empty())
+        {
+            result["note"] = "No disassembly records found. You may have asked for code that has not been executed yet. Code is only disassembled as it is executed.";
+        }
+
+        return result;
     }
     // Media info
     else if (normalizedTool == "get_media_info")
