@@ -750,6 +750,27 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("Background Color"))
+        {
+            ImGui::ColorEdit3("##normal_bg", config_video.background_color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float);
+            ImGui::SameLine();
+            ImGui::Text("Normal Background");
+
+            ImGui::Separator();
+
+            if (ImGui::ColorEdit3("##debugger_bg", config_video.background_color_debugger, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float))
+            {
+                ImGuiStyle& style = ImGui::GetStyle();
+                style.Colors[ImGuiCol_DockingEmptyBg] = ImVec4(config_video.background_color_debugger[0], config_video.background_color_debugger[1], config_video.background_color_debugger[2], 1.0f);
+            }
+            ImGui::SameLine();
+            ImGui::Text("Debugger Background");
+
+            ImGui::EndMenu();
+        }
+
         ImGui::EndMenu();
     }
 }
