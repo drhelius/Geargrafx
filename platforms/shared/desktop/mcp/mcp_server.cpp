@@ -746,8 +746,8 @@ void McpServer::HandleToolsList(const json& request)
 
     // Controller input tools
     tools.push_back({
-        {"name", "controller_press_button"},
-        {"description", "Press a button on a controller (player 1-5). Buttons: up, down, left, right, select, run, i, ii, iii, iv, v, vi"},
+        {"name", "controller_button"},
+        {"description", "Control a button on a controller (player 1-5). Use action 'press' to hold the button down, 'release' to let it go, or 'press_and_release' to simulate a quick button tap (presses and automatically releases after a few frames). Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -759,33 +759,16 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"button", {
                     {"type", "string"},
-                    {"description", "Button name: up, down, left, right, select, run, i, ii, iii, iv, v, vi"},
-                    {"enum", json::array({"up", "down", "left", "right", "select", "run", "i", "ii", "iii", "iv", "v", "vi"})}
-                }}
-            }},
-            {"required", json::array({"player", "button"})}
-        }}
-    });
-
-    tools.push_back({
-        {"name", "controller_release_button"},
-        {"description", "Release a button on a controller (player 1-5). Buttons: up, down, left, right, select, run, i, ii, iii, iv, v, vi"},
-        {"inputSchema", {
-            {"type", "object"},
-            {"properties", {
-                {"player", {
-                    {"type", "integer"},
-                    {"description", "Player number (1-5)"},
-                    {"minimum", 1},
-                    {"maximum", 5}
+                    {"description", "Button name: up, down, left, right, select, run, I, II, III, IV, V, VI"},
+                    {"enum", json::array({"up", "down", "left", "right", "select", "run", "I", "II", "III", "IV", "V", "VI"})}
                 }},
-                {"button", {
+                {"action", {
                     {"type", "string"},
-                    {"description", "Button name: up, down, left, right, select, run, i, ii, iii, iv, v, vi"},
-                    {"enum", json::array({"up", "down", "left", "right", "select", "run", "i", "ii", "iii", "iv", "v", "vi"})}
+                    {"description", "Action to perform: 'press' holds the button, 'release' lets it go, 'press_and_release' simulates a quick tap"},
+                    {"enum", json::array({"press", "release", "press_and_release"})}
                 }}
             }},
-            {"required", json::array({"player", "button"})}
+            {"required", json::array({"player", "button", "action"})}
         }}
     });
 
@@ -1665,17 +1648,12 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         bool enabled = arguments["enabled"];
         return m_debugAdapter.ToggleFastForward(enabled);
     }
-    else if (normalizedTool == "controller_press_button")
+    else if (normalizedTool == "controller_button")
     {
         int player = arguments["player"];
         std::string button = arguments["button"];
-        return m_debugAdapter.ControllerPressButton(player, button);
-    }
-    else if (normalizedTool == "controller_release_button")
-    {
-        int player = arguments["player"];
-        std::string button = arguments["button"];
-        return m_debugAdapter.ControllerReleaseButton(player, button);
+        std::string action = arguments["action"];
+        return m_debugAdapter.ControllerButton(player, button, action);
     }
     else if (normalizedTool == "controller_set_type")
     {

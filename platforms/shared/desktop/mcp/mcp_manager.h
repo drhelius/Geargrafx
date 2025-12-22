@@ -23,6 +23,7 @@
 #include "mcp_server.h"
 #include "mcp_transport.h"
 #include "mcp_debug_adapter.h"
+#include <vector>
 
 extern bool g_mcp_stdio_mode;
 
@@ -30,6 +31,13 @@ enum McpTransportMode
 {
     MCP_TRANSPORT_STDIO,
     MCP_TRANSPORT_TCP
+};
+
+struct DelayedButtonRelease
+{
+    int player;
+    std::string button;
+    int frames_remaining;
 };
 
 class McpManager
@@ -115,6 +123,18 @@ public:
 
     void PumpCommands()
     {
+        for (size_t i = 0; i < m_delayedReleases.size(); )
+        {
+            m_delayedReleases[i].frames_remaining--;
+            if (m_delayedReleases[i].frames_remaining <= 0)
+            {
+                m_debugAdapter->ControllerButton(m_delayedReleases[i].player, m_delayedReleases[i].button, "release");
+                m_delayedReleases.erase(m_delayedReleases.begin() + i);
+            }
+            else
+                i++;
+        }
+
         DebugCommand* cmd = NULL;
         while ((cmd = m_commandQueue.Pop()) != NULL)
         {
@@ -131,6 +151,17 @@ public:
                 resp->errorMessage = resp->result["error"];
             }
 
+            if (resp->result.contains("__delayed_release") && resp->result["__delayed_release"] == true)
+            {
+                DelayedButtonRelease release;
+                release.player = resp->result["player"];
+                release.button = resp->result["button"];
+                release.frames_remaining = 10;
+                m_delayedReleases.push_back(release);
+
+                resp->result.erase("__delayed_release");
+            }
+
             m_responseQueue.Push(resp);
             SafeDelete(cmd);
         }
@@ -143,6 +174,7 @@ private:
     ResponseQueue m_responseQueue;
     McpTransportMode m_transport_mode;
     int m_tcp_port;
+    std::vector<DelayedButtonRelease> m_delayedReleases;
 };
 
 #endif /* MCP_MANAGER_H */

@@ -1496,9 +1496,16 @@ json DebugAdapter::ToggleFastForward(bool enabled)
     return result;
 }
 
-json DebugAdapter::ControllerPressButton(int player, const std::string& button)
+json DebugAdapter::ControllerButton(int player, const std::string& button, const std::string& action)
 {
     json result;
+
+    // Validate action
+    if (action != "press" && action != "release" && action != "press_and_release")
+    {
+        result["error"] = "Invalid action (must be: press, release, press_and_release)";
+        return result;
+    }
 
     // Convert player 1-5 to GG_Controllers enum (0-4)
     if (player < 1 || player > 5)
@@ -1528,52 +1535,25 @@ json DebugAdapter::ControllerPressButton(int player, const std::string& button)
         return result;
     }
 
-    emu_key_pressed(controller, key);
+    if (action == "press")
+    {
+        emu_key_pressed(controller, key);
+    }
+    else if (action == "release")
+    {
+        emu_key_released(controller, key);
+    }
+    else if (action == "press_and_release")
+    {
+        emu_key_pressed(controller, key);
+        // Mark for delayed release - McpManager will handle releasing after some frames
+        result["__delayed_release"] = true;
+    }
 
     result["success"] = true;
     result["player"] = player;
     result["button"] = button;
-
-    return result;
-}
-
-json DebugAdapter::ControllerReleaseButton(int player, const std::string& button)
-{
-    json result;
-
-    // Convert player 1-5 to GG_Controllers enum (0-4)
-    if (player < 1 || player > 5)
-    {
-        result["error"] = "Invalid player number (must be 1-5)";
-        return result;
-    }
-    GG_Controllers controller = static_cast<GG_Controllers>(player - 1);
-
-    // Convert button string to GG_Keys enum
-    GG_Keys key = GG_KEY_NONE;
-    if (button == "i") key = GG_KEY_I;
-    else if (button == "ii") key = GG_KEY_II;
-    else if (button == "select") key = GG_KEY_SELECT;
-    else if (button == "run") key = GG_KEY_RUN;
-    else if (button == "up") key = GG_KEY_UP;
-    else if (button == "right") key = GG_KEY_RIGHT;
-    else if (button == "down") key = GG_KEY_DOWN;
-    else if (button == "left") key = GG_KEY_LEFT;
-    else if (button == "iii") key = GG_KEY_III;
-    else if (button == "iv") key = GG_KEY_IV;
-    else if (button == "v") key = GG_KEY_V;
-    else if (button == "vi") key = GG_KEY_VI;
-    else
-    {
-        result["error"] = "Invalid button name";
-        return result;
-    }
-
-    emu_key_released(controller, key);
-
-    result["success"] = true;
-    result["player"] = player;
-    result["button"] = button;
+    result["action"] = action;
 
     return result;
 }

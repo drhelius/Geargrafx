@@ -144,8 +144,7 @@ public:
     json ToggleFastForward(bool enabled);
 
     // Controller input
-    json ControllerPressButton(int player, const std::string& button);
-    json ControllerReleaseButton(int player, const std::string& button);
+    json ControllerButton(int player, const std::string& button, const std::string& action);
     json ControllerSetType(int player, const std::string& type);
     json ControllerSetTurboTap(bool enabled);
     json ControllerGetType(int player);

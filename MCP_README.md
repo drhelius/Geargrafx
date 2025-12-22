@@ -166,7 +166,7 @@ Once configured, you can ask your AI assistant:
 - "Pause execution and show me all sprites"
 - "Step through the next 5 instructions"
 - "Capture a screenshot of the current frame"
-- "Press the up button on player 1 controller"
+- "Tap the up button on player 1 controller"
 - "Set player 1 controller to avenue pad 6 type"
 
 ### Advanced Debugging Workflows
@@ -217,7 +217,7 @@ The server exposes tools organized in the following categories:
 - `memory_search` - Search memory with operators (<, >, ==, !=, <=, >=), compare types (previous, value, address), and data types (hex, signed, unsigned)
 
 ### Disassembly & Debugging
-- `get_disassembly` - Get disassembly around PC or specified address
+- `get_disassembly` - Get disassembly for specified address range
 - `add_symbol` - Add symbol (label) at specified address
 - `remove_symbol` - Remove symbol
 - `list_symbols` - List all defined symbols
@@ -263,8 +263,7 @@ The server exposes tools organized in the following categories:
 - `toggle_fast_forward` - Toggle fast forward mode on/off
 
 ### Controller Input
-- `controller_press_button` - Press a button on a controller (player 1-5). Buttons: up, down, left, right, select, run, i, ii, iii, iv, v, vi
-- `controller_release_button` - Release a button on a controller (player 1-5)
+- `controller_button` - Control a button on a controller (player 1-5). Use action 'press' to hold the button, 'release' to let it go, or 'press_and_release' to simulate a quick tap. Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI
 - `controller_set_type` - Set controller type for a player: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)
 - `controller_get_type` - Get the current controller type for a player (returns: standard, avenue_pad_3, or avenue_pad_6)
 - `controller_set_turbo_tap` - Enable or disable Turbo Tap (multitap) for 5-player support
