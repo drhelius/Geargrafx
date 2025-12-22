@@ -31,6 +31,7 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 
 struct DisassemblerBookmark
 {
@@ -1515,20 +1516,22 @@ json DebugAdapter::ControllerButton(int player, const std::string& button, const
     }
     GG_Controllers controller = static_cast<GG_Controllers>(player - 1);
 
-    // Convert button string to GG_Keys enum
+    std::string button_lower = button;
+    std::transform(button_lower.begin(), button_lower.end(), button_lower.begin(), ::tolower);
+
     GG_Keys key = GG_KEY_NONE;
-    if (button == "i") key = GG_KEY_I;
-    else if (button == "ii") key = GG_KEY_II;
-    else if (button == "select") key = GG_KEY_SELECT;
-    else if (button == "run") key = GG_KEY_RUN;
-    else if (button == "up") key = GG_KEY_UP;
-    else if (button == "right") key = GG_KEY_RIGHT;
-    else if (button == "down") key = GG_KEY_DOWN;
-    else if (button == "left") key = GG_KEY_LEFT;
-    else if (button == "iii") key = GG_KEY_III;
-    else if (button == "iv") key = GG_KEY_IV;
-    else if (button == "v") key = GG_KEY_V;
-    else if (button == "vi") key = GG_KEY_VI;
+    if (button_lower == "i") key = GG_KEY_I;
+    else if (button_lower == "ii") key = GG_KEY_II;
+    else if (button_lower == "select") key = GG_KEY_SELECT;
+    else if (button_lower == "run") key = GG_KEY_RUN;
+    else if (button_lower == "up") key = GG_KEY_UP;
+    else if (button_lower == "right") key = GG_KEY_RIGHT;
+    else if (button_lower == "down") key = GG_KEY_DOWN;
+    else if (button_lower == "left") key = GG_KEY_LEFT;
+    else if (button_lower == "iii") key = GG_KEY_III;
+    else if (button_lower == "iv") key = GG_KEY_IV;
+    else if (button_lower == "v") key = GG_KEY_V;
+    else if (button_lower == "vi") key = GG_KEY_VI;
     else
     {
         result["error"] = "Invalid button name";
