@@ -376,4 +376,3 @@ jobs:
           --generate-notes
       env:
         GITHUB_TOKEN: ${{ github.TOKEN }}
-

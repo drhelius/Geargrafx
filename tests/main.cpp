@@ -35,9 +35,9 @@ int excluded_tests[] = {
 bool run_file(const char* filename);
 bool run_test(RSJresource& test);
 
-GeargrafxCore* core = nullptr;
-HuC6280* cpu = nullptr;
-Memory* memory = nullptr;
+GeargrafxCore* core = NULL;
+HuC6280* cpu = NULL;
+Memory* memory = NULL;
 
 int main(int argc, char* argv[])
 {

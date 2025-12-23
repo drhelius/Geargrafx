@@ -180,13 +180,3 @@ On power-up, the VPC registers are initialized as follows:
 
 This configuration enables only VDC #1 output with default priority and
 disables both windows.
-
----
-
-## 10. Summary
-
-- HuC6202 combines video output from two VDCs
-- Priority and visibility are controlled per pixel
-- Two horizontal windows define four independent priority regions
-- Store-immediate instructions can be redirected per VDC
-- Output is a single 9-bit pixel stream forwarded to the VCE

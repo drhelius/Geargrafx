@@ -59,7 +59,7 @@ SR bit meanings (low byte, bit 7..0):
 Additional notes from documentation:
 
 - BSY corresponds to VRAM access activity and is not cleared by reading SR.
-- High byte reads of SR return a fixed value (documented as 0x0016 for the high byte portion).
+- High byte reads of SR return 0x00.
 
 ---
 
@@ -136,8 +136,6 @@ CR bit fields (16-bit):
 | 2 | RC | Scanline Detect |
 | 3 | VC | Vertical Blanking Detect |
 
-
-
 ### 6.2 EX — External Sync (bits 4–5)
 
 | EX5 EX4 | VSYNC | HSYNC |
@@ -147,14 +145,10 @@ CR bit fields (16-bit):
 | 10 | invalid | invalid |
 | 11 | output | output |
 
-
-
 ### 6.3 SB / BB — Sprite & Background Blanking (bits 6–7)
 
 - SB: sprite display control
 - BB: background display control
-
-
 
 ### 6.4 TE — DISP Output Select (bits 8–9)
 
@@ -164,8 +158,6 @@ CR bit fields (16-bit):
 | 01 | BURST position indicator (low active) |
 | 10 | Internal horizontal SYNC |
 | 11 | Invalid |
-
-
 
 ### 6.5 DR — Dynamic RAM Refresh (bit 10)
 

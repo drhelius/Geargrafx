@@ -243,7 +243,7 @@ inline bool remove_directory_and_contents(const char* path)
 
     struct dirent* entry;
 
-    while ((entry = readdir(dir)) != nullptr)
+    while ((entry = readdir(dir)) != NULL)
     {
         const char* name = entry->d_name;
         if (strcmp(name, ".") && strcmp(name, ".."))

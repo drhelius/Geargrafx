@@ -1598,6 +1598,83 @@ void gui_debug_window_call_stack(void)
     ImGui::PopStyleVar();
 }
 
+void gui_debug_add_symbol(const char* symbol_str)
+{
+    add_symbol(symbol_str);
+}
+
+void gui_debug_remove_symbol(u8 bank, u16 address)
+{
+    Memory* memory = emu_get_core()->GetMemory();
+    GG_Disassembler_Record* record = memory->GetDisassemblerRecord(address);
+
+    if (IsValidPointer(record) && record->bank == bank)
+    {
+        DebugSymbol* symbol = fixed_symbols[bank][address];
+        if (IsValidPointer(symbol))
+        {
+            delete symbol;
+            fixed_symbols[bank][address] = NULL;
+        }
+    }
+}
+
+void gui_debug_add_disassembler_bookmark(u16 address, const char* name)
+{
+    DisassemblerBookmark bookmark;
+    bookmark.address = address;
+
+    if (name && strlen(name) > 0)
+    {
+        snprintf(bookmark.name, 32, "%s", name);
+    }
+    else
+    {
+        // Auto-generate name from instruction
+        Memory* memory = emu_get_core()->GetMemory();
+        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(address);
+
+        if (IsValidPointer(record) && (record->name[0] != 0))
+        {
+            std::string instr = record->name;
+            size_t pos = instr.find("{}");
+            if (pos != std::string::npos)
+                instr.replace(pos, 2, "");
+            snprintf(bookmark.name, 32, "%s", instr.c_str());
+        }
+        else
+        {
+            snprintf(bookmark.name, 32, "Bookmark_%04X", address);
+        }
+    }
+
+    bookmarks.push_back(bookmark);
+}
+
+void gui_debug_remove_disassembler_bookmark(u16 address)
+{
+    for (std::vector<DisassemblerBookmark>::iterator it = bookmarks.begin(); it != bookmarks.end(); ++it)
+    {
+        if (it->address == address)
+        {
+            bookmarks.erase(it);
+            break;
+        }
+    }
+}
+
+int gui_debug_get_disassembler_bookmarks(void** bookmarks_ptr)
+{
+    *bookmarks_ptr = (void*)&bookmarks;
+    return (int)bookmarks.size();
+}
+
+int gui_debug_get_symbols(void** symbols_ptr)
+{
+    *symbols_ptr = (void*)fixed_symbols;
+    return 0x100; // 256 banks
+}
+
 static void save_full_disassembler(FILE* file)
 {
     Memory* memory = emu_get_core()->GetMemory();
@@ -1694,81 +1771,4 @@ static void save_current_disassembler(FILE* file)
             fprintf(file, "\n\n");
         }
     }
-}
-
-void gui_debug_add_symbol(const char* symbol_str)
-{
-    add_symbol(symbol_str);
-}
-
-void gui_debug_remove_symbol(u8 bank, u16 address)
-{
-    Memory* memory = emu_get_core()->GetMemory();
-    GG_Disassembler_Record* record = memory->GetDisassemblerRecord(address);
-
-    if (IsValidPointer(record) && record->bank == bank)
-    {
-        DebugSymbol* symbol = fixed_symbols[bank][address];
-        if (IsValidPointer(symbol))
-        {
-            delete symbol;
-            fixed_symbols[bank][address] = nullptr;
-        }
-    }
-}
-
-void gui_debug_add_disassembler_bookmark(u16 address, const char* name)
-{
-    DisassemblerBookmark bookmark;
-    bookmark.address = address;
-
-    if (name && strlen(name) > 0)
-    {
-        snprintf(bookmark.name, 32, "%s", name);
-    }
-    else
-    {
-        // Auto-generate name from instruction
-        Memory* memory = emu_get_core()->GetMemory();
-        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(address);
-
-        if (IsValidPointer(record) && (record->name[0] != 0))
-        {
-            std::string instr = record->name;
-            size_t pos = instr.find("{}");
-            if (pos != std::string::npos)
-                instr.replace(pos, 2, "");
-            snprintf(bookmark.name, 32, "%s", instr.c_str());
-        }
-        else
-        {
-            snprintf(bookmark.name, 32, "Bookmark_%04X", address);
-        }
-    }
-
-    bookmarks.push_back(bookmark);
-}
-
-void gui_debug_remove_disassembler_bookmark(u16 address)
-{
-    for (std::vector<DisassemblerBookmark>::iterator it = bookmarks.begin(); it != bookmarks.end(); ++it)
-    {
-        if (it->address == address)
-        {
-            bookmarks.erase(it);
-            break;
-        }
-    }
-}
-
-int gui_debug_get_disassembler_bookmarks(void** bookmarks_ptr)
-{
-    *bookmarks_ptr = (void*)&bookmarks;
-    return (int)bookmarks.size();
-}
-
-int gui_debug_get_symbols(void** symbols_ptr)
-{
-    *symbols_ptr = (void*)fixed_symbols;
-    return 0x100; // 256 banks
 }

@@ -67,7 +67,7 @@ private:
 
 public:
     memory_stream(char* buffer, size_t size) 
-        : std::ostream(nullptr), buf(buffer, size) {
+        : std::ostream(NULL), buf(buffer, size) {
         rdbuf(&buf);
     }
 
@@ -125,7 +125,7 @@ private:
 
 public:
     memory_input_stream(const char* buffer, size_t size)
-        : std::istream(nullptr), buf(buffer, size)
+        : std::istream(NULL), buf(buffer, size)
     {
         rdbuf(&buf);
     }

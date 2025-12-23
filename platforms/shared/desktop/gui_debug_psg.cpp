@@ -272,8 +272,8 @@ void gui_debug_window_psg(void)
                     ImPlotAxisFlags flags_waveform = ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
                     ImPlot::SetupAxes("x", "y", flags_waveform, flags_waveform);
                     ImPlot::SetupAxesLimits(-1,32, -1,32);
-                    ImPlot::SetupAxisTicks(ImAxis_X1, 0, 32, 33, nullptr, false);
-                    ImPlot::SetupAxisTicks(ImAxis_Y1, 0, 32, 33, nullptr, false);
+                    ImPlot::SetupAxisTicks(ImAxis_X1, 0, 32, 33, NULL, false);
+                    ImPlot::SetupAxisTicks(ImAxis_Y1, 0, 32, 33, NULL, false);
                     ImPlot::SetNextLineStyle(orange, 3.0f);
                     ImPlot::PlotLine("waveform", plot_x, plot_y, 32);
                     ImPlot::EndPlot();

@@ -202,7 +202,7 @@ void McpServer::HandleInitialize(const json& request)
         }},
         {"serverInfo", {
             {"name", "geargrafx-mcp-server"},
-            {"version", "1.0.0"}
+            {"version", GG_VERSION}
         }}
     };
 

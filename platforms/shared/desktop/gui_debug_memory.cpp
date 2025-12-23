@@ -433,7 +433,7 @@ int gui_debug_memory_get_bookmarks(int editor, void** bookmarks_ptr)
 {
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        *bookmarks_ptr = nullptr;
+        *bookmarks_ptr = NULL;
         return 0;
     }
 
@@ -446,7 +446,7 @@ int gui_debug_memory_get_watches(int editor, void** watches_ptr)
 {
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        *watches_ptr = nullptr;
+        *watches_ptr = NULL;
         return 0;
     }
 
@@ -479,7 +479,7 @@ int gui_debug_memory_search(int editor, int op, int compare_type, int compare_va
 {
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        *results_ptr = nullptr;
+        *results_ptr = NULL;
         return 0;
     }
 

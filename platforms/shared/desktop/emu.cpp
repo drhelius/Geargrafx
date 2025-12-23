@@ -34,7 +34,7 @@ static GeargrafxCore* geargrafx;
 static SoundQueue* sound_queue;
 static s16* audio_buffer;
 static bool audio_enabled;
-static McpManager* mcp_manager = nullptr;
+static McpManager* mcp_manager;
 
 static void save_ram(void);
 static void load_ram(void);
