@@ -316,7 +316,7 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
             check_addr = (start_address & 0xE000) | (start_offset - lookback);
         }
 
-        GG_Disassembler_Record* record = nullptr;
+        GG_Disassembler_Record* record = NULL;
 
         if (use_explicit_bank)
         {
@@ -344,7 +344,7 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
 
     while (addr <= end_address)
     {
-        GG_Disassembler_Record* record = nullptr;
+        GG_Disassembler_Record* record = NULL;
 
         if (use_explicit_bank)
             record = memory->GetDisassemblerRecord(addr, (u8)bank);
@@ -1896,9 +1896,9 @@ json DebugAdapter::SelectMemoryRange(int editor, int start_address, int end_addr
         return result;
     }
 
-    if (editor < 0 || editor > 6)
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-6)";
+        result["error"] = "Invalid editor number (must be 0-13)";
         return result;
     }
 
@@ -1922,9 +1922,9 @@ json DebugAdapter::SetMemorySelectionValue(int editor, u8 value)
         return result;
     }
 
-    if (editor < 0 || editor > 6)
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-6)";
+        result["error"] = "Invalid editor number (must be 0-13)";
         return result;
     }
 
@@ -1947,9 +1947,9 @@ json DebugAdapter::AddMemoryBookmark(int editor, int address, const std::string&
         return result;
     }
 
-    if (editor < 0 || editor > 6)
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-6)";
+        result["error"] = "Invalid editor number (must be 0-13)";
         return result;
     }
 
@@ -1973,9 +1973,9 @@ json DebugAdapter::RemoveMemoryBookmark(int editor, int address)
         return result;
     }
 
-    if (editor < 0 || editor > 6)
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-6)";
+        result["error"] = "Invalid editor number (must be 0-13)";
         return result;
     }
 
@@ -1998,9 +1998,9 @@ json DebugAdapter::AddMemoryWatch(int editor, int address, const std::string& no
         return result;
     }
 
-    if (editor < 0 || editor > 6)
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-6)";
+        result["error"] = "Invalid editor number (must be 0-13)";
         return result;
     }
 
@@ -2024,9 +2024,9 @@ json DebugAdapter::RemoveMemoryWatch(int editor, int address)
         return result;
     }
 
-    if (editor < 0 || editor > 6)
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-6)";
+        result["error"] = "Invalid editor number (must be 0-13)";
         return result;
     }
 
@@ -2326,7 +2326,7 @@ json DebugAdapter::MemorySearchCapture(int area)
         return result;
     }
 
-    if (area < 0 || area >= 14)
+    if (area < 0 || area >= MEMORY_EDITOR_MAX)
     {
         result["error"] = "Invalid area number (must be 0-13)";
         return result;
@@ -2351,7 +2351,7 @@ json DebugAdapter::MemorySearch(int area, const std::string& op, const std::stri
         return result;
     }
 
-    if (area < 0 || area >= 14)
+    if (area < 0 || area >= MEMORY_EDITOR_MAX)
     {
         result["error"] = "Invalid area number (must be 0-13)";
         return result;
