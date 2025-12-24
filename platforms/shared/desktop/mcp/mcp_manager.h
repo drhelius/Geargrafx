@@ -37,7 +37,7 @@ struct DelayedButtonRelease
 {
     int player;
     std::string button;
-    int frames_remaining;
+    u64 release_at_cycle;
 };
 
 class McpManager
@@ -121,12 +121,13 @@ public:
         return (int)m_transport_mode;
     }
 
-    void PumpCommands()
+    void PumpCommands(GeargrafxCore* core)
     {
+        u64 current_cycles = core->GetMasterClockCycles();
+
         for (size_t i = 0; i < m_delayedReleases.size(); )
         {
-            m_delayedReleases[i].frames_remaining--;
-            if (m_delayedReleases[i].frames_remaining <= 0)
+            if (current_cycles >= m_delayedReleases[i].release_at_cycle)
             {
                 m_debugAdapter->ControllerButton(m_delayedReleases[i].player, m_delayedReleases[i].button, "release");
                 m_delayedReleases.erase(m_delayedReleases.begin() + i);
@@ -156,7 +157,7 @@ public:
                 DelayedButtonRelease release;
                 release.player = resp->result["player"];
                 release.button = resp->result["button"];
-                release.frames_remaining = 10;
+                release.release_at_cycle = core->GetMasterClockCycles() + 3000000; // around 10 frames
                 m_delayedReleases.push_back(release);
 
                 resp->result.erase("__delayed_release");

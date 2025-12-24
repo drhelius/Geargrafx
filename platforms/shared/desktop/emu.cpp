@@ -921,6 +921,6 @@ int emu_mcp_get_transport_mode(void)
 void emu_mcp_pump_commands(void)
 {
     if (mcp_manager && mcp_manager->IsRunning())
-        mcp_manager->PumpCommands();
+        mcp_manager->PumpCommands(geargrafx);
 }
 
