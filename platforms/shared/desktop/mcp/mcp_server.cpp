@@ -225,7 +225,7 @@ void McpServer::HandleToolsList(const json& request)
     // Execution control tools
     tools.push_back({
         {"name", "debug_pause"},
-        {"description", "Pause Geargrafx PC Engine / TurboGrafx-16 emulator execution (break at current instruction)"},
+        {"description", "Pause Geargrafx emulator execution (break at current instruction)"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()}
@@ -234,7 +234,7 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "debug_continue"},
-        {"description", "Resume Geargrafx emulator execution from current breakpoint"},
+        {"description", "Resume Geargrafx emulator execution"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()}
@@ -313,7 +313,7 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"type", {
                     {"type", "string"},
-                    {"description", "Breakpoint type: exec (default), read, write"},
+                    {"description", "Breakpoint type: exec (default), read, write. IMPORTANT: Read/write breakpoints stop with PC at the instruction after the memory access."},
                     {"enum", json::array({"exec", "read", "write"})}
                 }}
             }},
@@ -342,7 +342,7 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"type", {
                     {"type", "string"},
-                    {"description", "Breakpoint type: exec, read, write"},
+                    {"description", "Breakpoint type: exec (default), read, write. IMPORTANT: Read/write breakpoints stop with PC at the instruction after the memory access."},
                     {"enum", json::array({"exec", "read", "write"})}
                 }}
             }},
@@ -352,7 +352,7 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "remove_breakpoint"},
-        {"description", "Clear a breakpoint. Single address: provide 'address' only. Range: provide both 'address' and 'end_address' matching the exact range. Uses logical addresses."},
+        {"description", "Clear all breakpoints at specified address. For range breakpoints, provide both 'address' and 'end_address' matching the exact range."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -366,13 +366,8 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: rom_ram, vram, palette, huc6270_reg, huc6260_reg"},
+                    {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg"},
                     {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
-                }},
-                {"type", {
-                    {"type", "string"},
-                    {"description", "Breakpoint type: exec, read, write"},
-                    {"enum", json::array({"exec", "read", "write"})}
                 }}
             }},
             {"required", json::array({"address"})}

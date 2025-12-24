@@ -93,11 +93,7 @@ json DebugAdapter::GetDebugStatus()
         HuC6280* cpu = m_core->GetHuC6280();
         u16 pc = cpu->GetState()->PC->GetValue();
 
-        bool at_breakpoint = cpu->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, pc) ||
-                            cpu->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, pc) ||
-                            cpu->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM, pc) ||
-                            cpu->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, pc) ||
-                            cpu->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER, pc);
+        bool at_breakpoint = cpu->BreakpointHit();
 
         result["at_breakpoint"] = at_breakpoint;
 
@@ -146,23 +142,25 @@ void DebugAdapter::SetBreakpointRange(u16 start_address, u16 end_address, int ty
 void DebugAdapter::ClearBreakpointByAddress(u16 address, int type, u16 end_address)
 {
     HuC6280* cpu = m_core->GetHuC6280();
+    std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
 
-    if (end_address > 0 && end_address > address)
+    for (int i = (int)breakpoints->size() - 1; i >= 0; i--)
     {
-        std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
-        for (size_t i = 0; i < breakpoints->size(); i++)
+        HuC6280::GG_Breakpoint& bp = (*breakpoints)[i];
+
+        if (bp.type != type)
+            continue;
+
+        if (end_address > 0 && end_address > address)
         {
-            HuC6280::GG_Breakpoint& bp = (*breakpoints)[i];
-            if (bp.range && bp.type == type && bp.address1 == address && bp.address2 == end_address)
-            {
+            if (bp.range && bp.address1 == address && bp.address2 == end_address)
                 breakpoints->erase(breakpoints->begin() + i);
-                break;
-            }
         }
-    }
-    else
-    {
-        cpu->RemoveBreakpoint(type, address);
+        else
+        {
+            if (!bp.range && bp.address1 == address)
+                breakpoints->erase(breakpoints->begin() + i);
+        }
     }
 }
 

@@ -272,7 +272,7 @@ The server exposes tools organized in the following categories:
 
 In addition to tools, the MCP server provides documentation resources that AI assistants can access to better understand the PC Engine / TurboGrafx-16 hardware and programming.
 
-MCP clients usually offer reources in the "Add context..." section of the chat interface. You may need to manually add them when you think they are relevant.
+MCP clients usually offer resources in the "Add context..." section of the chat interface. You may need to manually add them when you think they are relevant.
 
 ### Hardware Documentation Resources
 
