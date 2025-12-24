@@ -230,7 +230,7 @@ public:
             "Connection: close\r\n"
             "\r\n"
             "404 Not Found";
-        ::send(client, not_found_response, strlen(not_found_response), 0);
+        ::send(client, not_found_response, (int)strlen(not_found_response), 0);
         SOCKET_CLOSE(client);
         {
             std::lock_guard<std::mutex> lock(m_mutex);
