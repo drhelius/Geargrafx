@@ -117,7 +117,16 @@ inline bool is_hex_digit(char c)
 template<typename T>
 inline bool parse_hex_string(const char* str, size_t len, T* result, size_t max_digits = sizeof(T) * 2)
 {
-    if (len == 0 || len > max_digits)
+    if (len == 0)
+        return false;
+
+    while (len > 1 && str[0] == '0')
+    {
+        str++;
+        len--;
+    }
+
+    if (len > max_digits)
         return false;
 
     *result = 0;
@@ -159,13 +168,10 @@ inline bool parse_hex_with_prefix(const std::string& hex_str, T* result)
     const char* str = hex_str.c_str();
     size_t len = hex_str.length();
 
-    if (len >= 2)
+    if (len >= 2 && str[0] == '0' && (str[1] == 'x' || str[1] == 'X'))
     {
-        if ((str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) || str[0] == '$')
-        {
-            str += (str[0] == '$') ? 1 : 2;
-            len -= (str[0] == '$') ? 1 : 2;
-        }
+        str += 2;
+        len -= 2;
     }
     else if (len >= 1 && str[0] == '$')
     {
