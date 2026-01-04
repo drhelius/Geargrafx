@@ -73,6 +73,7 @@ bool emu_init(GG_Input_Pump_Fn input_pump_fn)
     emu_debug_irq_breakpoints = false;
     emu_debug_command = Debug_Command_None;
     emu_debug_pc_changed = false;
+    emu_debug_step_frames_pending = 0;
 
     mcp_manager = new McpManager();
     mcp_manager->Init(geargrafx);
@@ -139,7 +140,15 @@ void emu_update(void)
         if (breakpoint_hit)
             emu_debug_command = Debug_Command_None;
 
-        if (emu_debug_command != Debug_Command_Continue)
+        if (emu_debug_command == Debug_Command_StepFrame && emu_debug_step_frames_pending > 0)
+        {
+            emu_debug_step_frames_pending--;
+            if (emu_debug_step_frames_pending > 0)
+                emu_debug_command = Debug_Command_StepFrame;
+            else
+                emu_debug_command = Debug_Command_None;
+        }
+        else if (emu_debug_command != Debug_Command_Continue)
             emu_debug_command = Debug_Command_None;
 
         update_debug();
@@ -393,6 +402,7 @@ void emu_debug_step_out(void)
 void emu_debug_step_frame(void)
 {
     geargrafx->Pause(false);
+    emu_debug_step_frames_pending++;
     emu_debug_command = Debug_Command_StepFrame;
 }
 
