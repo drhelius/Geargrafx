@@ -151,7 +151,7 @@ void DebugAdapter::ClearBreakpointByAddress(u16 address, int type, u16 end_addre
         if (bp.type != type)
             continue;
 
-        if (end_address > 0 && end_address > address)
+        if (end_address > 0 && end_address >= address)
         {
             if (bp.range && bp.address1 == address && bp.address2 == end_address)
                 breakpoints->erase(breakpoints->begin() + i);
