@@ -46,6 +46,7 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* medi
     m_mpr_reset_value = -1;
     m_wram_reset_value = 0;
     m_card_ram_reset_value = 0;
+    m_arcade_card_reset_value = 0;
     m_backup_ram_enabled = true;
     m_cdrom_ram_size = 0;
     m_card_ram_size = 0;

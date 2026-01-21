@@ -65,6 +65,7 @@ static float aspect_ratio = 0.0f;
 static bool allow_up_down = false;
 static bool allow_soft_reset = false;
 static int cdrom_bios = 0;
+static bool deterministic_netplay = false;
 
 static bool input_updated = false;
 static bool libretro_supports_bitmasks;
@@ -649,6 +650,7 @@ static void set_variabless(void)
         { "geargrafx_composite_colors", "Composite Colors; Disabled|Enabled" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
         { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
+        { "geargrafx_deterministic_netplay", "Deterministic Netplay; Disabled|Enabled" },
         { "geargrafx_cdrom_type", "CD-ROM (restart); Auto|Standard|Super CD-ROM|Arcade CD-ROM" },
         { "geargrafx_cdrom_bios", "CD-ROM Bios (restart); Auto|System Card 1|System Card 2|System Card 3|Game Express" },
         { "geargrafx_cdrom_preload", "Preload CD-ROM (restart); Disabled|Enabled" },
@@ -806,6 +808,27 @@ static void check_variables(void)
         bool enabled = (strcmp(var.value, "Enabled") == 0);
         core->GetMemory()->EnableBackupRam(enabled);
         core->GetInput()->EnableCDROM(enabled);
+    }
+
+    var.key = "geargrafx_deterministic_netplay";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        deterministic_netplay = (strcmp(var.value, "Enabled") == 0);
+
+        if (deterministic_netplay)
+        {
+            core->GetMemory()->SetResetValues(0, 0, 0, 0);
+            core->GetHuC6260()->SetResetValue(0);
+            core->GetHuC6280()->SetResetValue(0);
+        }
+        else
+        {
+            core->GetMemory()->SetResetValues(-1, 0, 0, 0);
+            core->GetHuC6260()->SetResetValue(-1);
+            core->GetHuC6280()->SetResetValue(-1);
+        }
     }
 
     var.key = "geargrafx_console_type";
