@@ -222,11 +222,13 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 
             memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, size);
 
+#ifdef GG_LITTLE_ENDIAN
             for (u32 i = 0; i < count; i++)
             {
                 u16 u = (u16)buffer[i];
                 buffer[i] = (s16)((u >> 8) | (u << 8));
             }
+#endif
 
             return true;
         }

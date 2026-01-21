@@ -239,7 +239,17 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 
             m_current_sector = lba;
 
-            return ReadFromImgFile(img_file, byte_offset, (u8*)buffer, size);
+            bool ret = ReadFromImgFile(img_file, byte_offset, (u8*)buffer, size);
+
+#ifdef GG_BIG_ENDIAN
+            for (u32 i = 0; i < count; i++)
+            {
+                u16 u = (u16)buffer[i];
+                buffer[i] = (s16)((u >> 8) | (u << 8));
+            }
+#endif
+
+            return ret;
         }
     }
 
@@ -468,9 +478,9 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
         return false;
     }
 
-    u16 channels = *(u16*)(header + 22);
-    u32 sample_rate = *(u32*)(header + 24);
-    u16 bits_per_sample = *(u16*)(header + 34);
+    u16 channels = read_u16_le((u8*)(header + 22));
+    u32 sample_rate = read_u32_le((u8*)(header + 24));
+    u16 bits_per_sample = read_u16_le((u8*)(header + 34));
 
     if (sample_rate != 44100 || bits_per_sample != 16 || channels != 2)
     {
