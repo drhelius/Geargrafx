@@ -70,8 +70,7 @@ void HuC6260::InitPalettes()
         red = ((i >> 3) & 0x07) * 31 / 7;
         blue = (i & 0x07) * 31 / 7;
         u16 rgb565 = (red << 11) | (green << 5) | blue;
-        m_rgb565_palette[0][i][0] = rgb565 & 0xFF;
-        m_rgb565_palette[0][i][1] = (rgb565 >> 8) & 0xFF;
+        m_rgb565_palette[0][i] = rgb565;
 
         m_rgba888_palette[1][i][0] = k_rgb888_palette_composite[i][0];
         m_rgba888_palette[1][i][1] = k_rgb888_palette_composite[i][1];
@@ -82,8 +81,7 @@ void HuC6260::InitPalettes()
         red = k_rgb888_palette_composite[i][0] * 31 / 255;
         blue = k_rgb888_palette_composite[i][2] * 31 / 255;
         rgb565 = (red << 11) | (green << 5) | blue;
-        m_rgb565_palette[1][i][0] = rgb565 & 0xFF;
-        m_rgb565_palette[1][i][1] = (rgb565 >> 8) & 0xFF;
+        m_rgb565_palette[1][i] = rgb565;
     }
 }
 

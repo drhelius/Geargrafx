@@ -121,7 +121,7 @@ private:
     int m_scanline_end;
     GG_Pixel_Format m_pixel_format;
     u8 m_rgba888_palette[2][512][4] = {};
-    u8 m_rgb565_palette[2][512][2] = {};
+    u16 m_rgb565_palette[2][512] = {};
     int m_reset_value;
     int m_palette;
     int m_screen_start_x;

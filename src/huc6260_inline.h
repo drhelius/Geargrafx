@@ -165,7 +165,8 @@ INLINE void HuC6260::RenderFrame()
 template <bool is_sgx, int bytes_per_pixel>
 void HuC6260::RenderFrameTemplate()
 {
-    u8* palette = (m_pixel_format == GG_PIXEL_RGB565) ? &m_rgb565_palette[m_palette][0][0] : &m_rgba888_palette[m_palette][0][0];
+    u8* palette888 = &m_rgba888_palette[m_palette][0][0];
+    u16* palette565 = &m_rgb565_palette[m_palette][0];
     int frame_buffer_index = 0;
 
     if (is_sgx)
@@ -220,44 +221,42 @@ void HuC6260::RenderFrameTemplate()
                 }
             }
 
-            u8* src = palette + ((final_pixel & 0x1FF) * bytes_per_pixel);
-            u8* dst = m_frame_buffer + frame_buffer_index;
-            frame_buffer_index += bytes_per_pixel;
-
             if (bytes_per_pixel == 2)
             {
-                dst[0] = src[0];
-                dst[1] = src[1];
+                u16* dst = reinterpret_cast<u16*>(m_frame_buffer + frame_buffer_index);
+                *dst = palette565[final_pixel & 0x1FF];
             }
             else
             {
+                u8* src = palette888 + ((final_pixel & 0x1FF) * 4);
+                u8* dst = m_frame_buffer + frame_buffer_index;
                 dst[0] = src[0];
                 dst[1] = src[1];
                 dst[2] = src[2];
                 dst[3] = src[3];
             }
+            frame_buffer_index += bytes_per_pixel;
         }
     }
     else
     {
         for (int i = 0; i < m_pixel_index; i++)
         {
-            u8* src = palette + (m_vce_buffer_1[i] * bytes_per_pixel);
-            u8* dst = m_frame_buffer + frame_buffer_index;
-            frame_buffer_index += bytes_per_pixel;
-
             if (bytes_per_pixel == 2)
             {
-                dst[0] = src[0];
-                dst[1] = src[1];
+                u16* dst = reinterpret_cast<u16*>(m_frame_buffer + frame_buffer_index);
+                *dst = palette565[m_vce_buffer_1[i]];
             }
             else
             {
+                u8* src = palette888 + (m_vce_buffer_1[i] * 4);
+                u8* dst = m_frame_buffer + frame_buffer_index;
                 dst[0] = src[0];
                 dst[1] = src[1];
                 dst[2] = src[2];
                 dst[3] = src[3];
             }
+            frame_buffer_index += bytes_per_pixel;
         }
     }
 }
