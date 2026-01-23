@@ -31,6 +31,7 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_memory_breakpoint_hit = false;
+    m_cpu_breakpoint_hit = false;
 #endif
 
     m_transfer_flag = IsSetFlag(FLAG_TRANSFER);
