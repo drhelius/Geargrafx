@@ -97,12 +97,9 @@ json DebugAdapter::GetDebugStatus()
 
         result["at_breakpoint"] = at_breakpoint;
 
-        if (at_breakpoint)
-        {
-            std::ostringstream pc_ss;
-            pc_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << pc;
-            result["pc"] = pc_ss.str();
-        }
+        std::ostringstream pc_ss;
+        pc_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << pc;
+        result["pc"] = pc_ss.str();
     }
     else
     {

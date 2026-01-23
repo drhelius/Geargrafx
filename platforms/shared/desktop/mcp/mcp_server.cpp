@@ -288,7 +288,7 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "debug_get_status"},
-        {"description", "Get current debugger status (paused: true/false, at_breakpoint: true/false, pc: logical address if at breakpoint)"},
+        {"description", "Get current debugger status (paused: idle state, at_breakpoint: stopped due to breakpoint hit, pc: address when paused)"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()}
@@ -352,7 +352,7 @@ void McpServer::HandleToolsList(const json& request)
 
     tools.push_back({
         {"name", "remove_breakpoint"},
-        {"description", "Clear all breakpoints at specified address. For range breakpoints, provide both 'address' and 'end_address' matching the exact range."},
+        {"description", "Clear a breakpoint. Must match how it was set: single address needs 'address' only, range needs both 'address' and 'end_address' with exact values."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
