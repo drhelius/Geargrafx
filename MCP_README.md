@@ -109,6 +109,22 @@ If you prefer to build from source or configure manually:
 
 2. **Restart Claude Desktop**
 
+### STDIO Mode with Claude Code
+
+1. **Add the Geargrafx MCP server** using the CLI:
+   ```bash
+   claude mcp add --transport stdio geargrafx -- /path/to/geargrafx --mcp-stdio
+   ```
+
+   **Important:** Update the path to match your build location.
+
+2. **Verify the server was added**:
+   ```bash
+   claude mcp list
+   ```
+
+3. **Start debugging**: Open Claude Code and start chatting about the game state. The emulator will auto-start when tools are invoked.
+
 ### HTTP Mode
 
 1. **Start the emulator manually** with HTTP transport:
@@ -148,7 +164,12 @@ If you prefer to build from source or configure manually:
    }
    ```
 
-4. **Restart your AI client** and start debugging
+4. **Or configure Claude Code**:
+   ```bash
+   claude mcp add --transport http geargrafx http://localhost:7777/mcp
+   ```
+
+5. **Restart your AI client** and start debugging
 
 > **Note:** The MCP HTTP Server must be running standalone before connecting the AI client.
 
