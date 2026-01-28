@@ -519,6 +519,7 @@ static void main_window(void)
         flags |= ImGuiWindowFlags_AlwaysAutoResize;
 
         ImGui::SetNextWindowPos(ImVec2(631, 26), ImGuiCond_FirstUseEver);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
         ImGui::Begin("Output###debug_output", &config_debug.show_screen, flags);
         gui_main_window_hovered = ImGui::IsWindowHovered();
@@ -550,11 +551,7 @@ static void main_window(void)
 
     ImGui::PopStyleVar();
     ImGui::PopStyleVar();
-
-    if (!config_debug.debug)
-    {
-        ImGui::PopStyleVar();
-    }
+    ImGui::PopStyleVar();
 }
 
 static void push_recent_rom(std::string path)
