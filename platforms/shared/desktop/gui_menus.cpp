@@ -1315,6 +1315,16 @@ static void menu_debug(void)
         ImGui::Separator();
 
         ImGui::MenuItem("Show Output Screen", "", &config_debug.show_screen, config_debug.debug);
+
+        if (ImGui::BeginMenu("Output Scale", config_debug.debug))
+        {
+            ImGui::PushItemWidth(200.0f);
+            ImGui::SliderInt("##debug_scale", &config_debug.scale, 1, 10);
+            ImGui::PopItemWidth();
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
         ImGui::MenuItem("Show Disassembler", "", &config_debug.show_disassembler, config_debug.debug);
         ImGui::MenuItem("Show Memory Editor", "", &config_debug.show_memory, config_debug.debug);
         ImGui::MenuItem("Show Trace Logger", "", &config_debug.show_trace_logger, config_debug.debug);

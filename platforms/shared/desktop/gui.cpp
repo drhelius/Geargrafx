@@ -457,11 +457,7 @@ static void main_window(void)
 
     if (config_debug.debug)
     {
-        if ((config_video.scale != 0))
-            scale_multiplier = config_video.scale_manual;
-        else
-            scale_multiplier = 1;
-
+        scale_multiplier = config_debug.scale;
         w_corrected = base_width;
         h_corrected = base_height;
     }

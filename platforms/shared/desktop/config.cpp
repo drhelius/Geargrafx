@@ -222,6 +222,7 @@ void config_read(void)
     config_debug.dis_replace_labels = read_bool("Debug", "DisReplaceLabels", true);
     config_debug.dis_look_ahead_count = read_int("Debug", "DisLookAheadCount", 20);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
+    config_debug.scale = read_int("Debug", "Scale", 1);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
     config_debug.reset_ram = read_int("Debug", "InitRam", 1);
     config_debug.reset_card_ram = read_int("Debug", "InitCardRam", 1);
@@ -496,6 +497,7 @@ void config_write(void)
     write_bool("Debug", "DisReplaceLabels", config_debug.dis_replace_labels);
     write_int("Debug", "DisLookAheadCount", config_debug.dis_look_ahead_count);
     write_int("Debug", "FontSize", config_debug.font_size);
+    write_int("Debug", "Scale", config_debug.scale);
     write_bool("Debug", "MultiViewport", config_debug.multi_viewport);
     write_int("Debug", "InitRam", config_debug.reset_ram);
     write_int("Debug", "InitCardRam", config_debug.reset_card_ram);

@@ -230,6 +230,7 @@ struct config_Debug
     bool dis_replace_labels = true;
     int dis_look_ahead_count = 20;
     int font_size = 0;
+    int scale = 1;
     bool multi_viewport = false;
     int reset_ram = 1;
     int reset_card_ram = 1;
