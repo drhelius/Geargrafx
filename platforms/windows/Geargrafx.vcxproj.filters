@@ -85,6 +85,9 @@
     <ClCompile Include="..\shared\desktop\mcp\mcp_server.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
+    <ClCompile Include="..\shared\desktop\single_instance.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\adpcm.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -322,6 +325,9 @@
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\mcp\mcp_manager.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\single_instance.h">
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\dependencies\json\json.hpp">

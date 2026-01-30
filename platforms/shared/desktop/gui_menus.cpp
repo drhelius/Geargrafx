@@ -595,6 +595,20 @@ static void menu_emulator(void)
             ImGui::EndMenu();
         }
 
+        ImGui::Separator();
+
+        ImGui::MenuItem("Single Instance", "", &config_debug.single_instance);
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("RESTART REQUIRED");
+            ImGui::NewLine();
+            ImGui::Text("When enabled, opening a ROM while another instance is running");
+            ImGui::Text("will send the ROM to the running instance instead of");
+            ImGui::Text("starting a new one.");
+            ImGui::EndTooltip();
+        }
+
         ImGui::EndMenu();
     }
 }
@@ -1366,7 +1380,15 @@ static void menu_debug(void)
 
 #if defined(__APPLE__) || defined(_WIN32)
         ImGui::Separator();
-        ImGui::MenuItem("Multi-Viewport (Restart required)", "", &config_debug.multi_viewport, config_debug.debug);
+        ImGui::MenuItem("Multi-Viewport", "", &config_debug.multi_viewport, config_debug.debug);
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("RESTART REQUIRED");
+            ImGui::NewLine();
+            ImGui::Text("Enables docking of debug windows outside of main window.");
+            ImGui::EndTooltip();
+        }
 #endif
 
         ImGui::Separator();

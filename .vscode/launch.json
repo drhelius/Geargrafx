@@ -32,6 +32,11 @@
                     "description": "Set Disassembly Flavor to Intel",
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
+                },
+                {
+                    "text": "process handle SIGUSR1 -n false -p true -s false",
+                    "description": "Ignore SIGUSR1 for single instance",
+                    "ignoreFailures": true
                 }
             ]
         },

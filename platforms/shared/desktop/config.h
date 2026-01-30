@@ -232,6 +232,7 @@ struct config_Debug
     int font_size = 0;
     int scale = 1;
     bool multi_viewport = false;
+    bool single_instance = false;
     int reset_ram = 1;
     int reset_card_ram = 1;
     int reset_registers = 0;

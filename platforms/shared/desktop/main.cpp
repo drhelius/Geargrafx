@@ -19,6 +19,7 @@
 
 #include "geargrafx.h"
 #include "application.h"
+#include "config.h"
 
 extern bool g_mcp_stdio_mode;
 
@@ -137,12 +138,24 @@ int main(int argc, char* argv[])
     if (force_fullscreen && force_windowed)
         force_fullscreen = false;
 
+    config_init();
+    config_read();
+
+    if (!application_check_single_instance(rom_file, symbol_file))
+    {
+        config_destroy();
+        return 0;
+    }
+
     ret = application_init(rom_file, symbol_file, force_fullscreen, force_windowed, mcp_mode, mcp_tcp_port);
 
     if (ret == 0)
         application_mainloop();
 
     application_destroy();
+
+    config_write();
+    config_destroy();
 
     return ret;
 }

@@ -80,6 +80,7 @@
     <ClCompile Include="..\shared\desktop\emu.cpp" />
     <ClCompile Include="..\shared\desktop\mcp\mcp_debug_adapter.cpp" />
     <ClCompile Include="..\shared\desktop\mcp\mcp_server.cpp" />
+    <ClCompile Include="..\shared\desktop\single_instance.cpp" />
     <ClCompile Include="..\shared\desktop\gui_actions.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_disassembler.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_huc6202.cpp" />
