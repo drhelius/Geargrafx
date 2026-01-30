@@ -501,6 +501,28 @@ INLINE void HuC6280::DisassembleNextOPCode()
         return;
     }
 
+    for (int back = 1; back < 7; ++back)
+    {
+        int prev_start = (int)address - back;
+        if (prev_start < 0)
+            continue;
+
+        GG_Disassembler_Record* prev = m_memory->GetDisassemblerRecord(prev_start);
+
+        if (!IsValidPointer(prev))
+            continue;
+        if (prev->size == 0)
+            continue;
+
+        int distance = address - prev_start;
+        if (prev->size <= distance)
+            continue;
+
+        prev->size = 0;
+        prev->name[0] = 0;
+        prev->bytes[0] = 0;
+    }
+
     PopulateDisassemblerRecord(record, opcode, address);
 #endif
 }
@@ -646,6 +668,93 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
     UNUSED(record);
     UNUSED(opcode);
     UNUSED(address);
+#endif
+}
+
+INLINE void HuC6280::DisassembleAhead(int count)
+{
+    DisassembleAhead(m_PC.GetValue(), count, 0);
+}
+
+inline void HuC6280::DisassembleAhead(u16 start_address, int count, int depth)
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (depth > 3)
+        return;
+
+    u16 address = start_address;
+    int disassembled = 0;
+
+    while (disassembled < count && address < 0xFFFF)
+    {
+        GG_Disassembler_Record* record = m_memory->GetOrCreateDisassemblerRecord(address);
+
+        if (!IsValidPointer(record))
+            break;
+
+        u8 opcode = m_memory->Read(address);
+        u8 opcode_size = k_huc6280_opcode_sizes[opcode];
+
+        if ((u32)address + opcode_size > 0xFFFF)
+            break;
+
+        bool changed = (record->opcodes[0] != opcode);
+        record->opcodes[0] = opcode;
+
+        for (int i = 1; i < opcode_size; i++)
+        {
+            u8 mem_byte = m_memory->Read(address + i);
+            if (record->opcodes[i] != mem_byte)
+            {
+                changed = true;
+                record->opcodes[i] = mem_byte;
+            }
+        }
+
+        if (changed || record->size == 0)
+        {
+            for (int back = 1; back < 7; ++back)
+            {
+                int prev_start = (int)address - back;
+                if (prev_start < 0)
+                    continue;
+
+                GG_Disassembler_Record* prev = m_memory->GetDisassemblerRecord(prev_start);
+                if (!IsValidPointer(prev) || prev->size == 0)
+                    continue;
+
+                int distance = address - prev_start;
+                if (prev->size > distance)
+                {
+                    prev->size = 0;
+                    prev->name[0] = 0;
+                    prev->bytes[0] = 0;
+                }
+            }
+
+            int saved_irq = m_debug_next_irq;
+            m_debug_next_irq = 0;
+            PopulateDisassemblerRecord(record, opcode, address);
+            m_debug_next_irq = saved_irq;
+        }
+
+        if (record->jump && record->jump_address != 0)
+        {
+            DisassembleAhead(record->jump_address, count / 2, depth + 1);
+        }
+
+        address += opcode_size;
+        disassembled++;
+
+        // Stop at unconditional control flow (end of block)
+        // 0x40=RTI, 0x4C=JMP abs, 0x60=RTS, 0x6C=JMP (ind), 0x7C=JMP (abs,X), 0x80=BRA
+        if (opcode == 0x40 || opcode == 0x4C || opcode == 0x60 || opcode == 0x6C || opcode == 0x7C || opcode == 0x80)
+            break;
+    }
+#else
+    UNUSED(start_address);
+    UNUSED(count);
+    UNUSED(depth);
 #endif
 }
 

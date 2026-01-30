@@ -111,6 +111,8 @@ public:
     void WriteTimerRegister(u16 address, u8 value);
     HuC6280_State* GetState();
     void DisassembleNextOPCode();
+    void DisassembleAhead(int count);
+    void DisassembleAhead(u16 start_address, int count, int depth);
     void SetResetValue(int value);
     void EnableBreakpoints(bool enable, bool irqs);
     bool BreakpointHit();

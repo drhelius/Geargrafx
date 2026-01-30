@@ -399,11 +399,8 @@ static void draw_controls(void)
 
     ImGui::PopFont();
 
-    if (emu_is_debug_idle())
-    {
-        ImGui::SameLine();
-        ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "   PAUSED");
-    }
+    ImGui::SameLine();
+    ImGui::TextColored(emu_is_debug_idle() ? red : green, emu_is_debug_idle() ? "   PAUSED" : "   RUNNING");
 }
 
 static const char* k_breakpoint_types[] = { "ROM/RAM ", "VRAM    ", "PALETTE ", "6270 REG", "6260 REG" };
@@ -1182,6 +1179,16 @@ static void disassembler_menu(void)
         ImGui::MenuItem("Symbols", NULL, &config_debug.dis_show_symbols);
         ImGui::MenuItem("Segment", NULL, &config_debug.dis_show_segment);
         ImGui::MenuItem("Bank", NULL, &config_debug.dis_show_bank);
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("Run Ahead"))
+        {
+            ImGui::PushItemWidth(200.0f);
+            ImGui::SliderInt("##lookahead", &config_debug.dis_look_ahead_count, 0, 100, "%d instructions");
+            ImGui::PopItemWidth();
+            ImGui::EndMenu();
+        }
 
         ImGui::EndMenu();
     }
