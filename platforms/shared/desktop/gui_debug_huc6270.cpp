@@ -203,12 +203,13 @@ void gui_debug_window_huc6270_registers(int vdc)
 
     ImGui::TextColored(magenta, "ADDRESS"); ImGui::SameLine();
     ImGui::TextColored(magenta, "  "); ImGui::SameLine();
-    ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6270_state->AR, BYTE_TO_BINARY(*huc6270_state->AR >> 8), BYTE_TO_BINARY(*huc6270_state->AR & 0xFF));
+    ImGui::TextColored(white, "$%04X ", *huc6270_state->AR); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*huc6270_state->AR >> 8), BYTE_TO_BINARY(*huc6270_state->AR & 0xFF));
 
     ImGui::TextColored(magenta, "STATUS"); ImGui::SameLine();
     ImGui::TextColored(magenta, "   "); ImGui::SameLine();
-    ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6270_state->SR, BYTE_TO_BINARY(*huc6270_state->SR >> 8), BYTE_TO_BINARY(*huc6270_state->SR & 0xFF));
-
+    ImGui::TextColored(white, "$%04X ", *huc6270_state->SR); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*huc6270_state->SR >> 8), BYTE_TO_BINARY(*huc6270_state->SR & 0xFF));
     ImGui::Separator();
 
     for (int i = 0; i < 20; i++)
@@ -218,13 +219,15 @@ void gui_debug_window_huc6270_registers(int vdc)
 
         ImGui::TextColored(cyan, "R%02X ", i); ImGui::SameLine();
         ImGui::TextColored(violet, "%s", k_register_names_aligned[i]); ImGui::SameLine();
-        ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", huc6270_state->R[i], BYTE_TO_BINARY(huc6270_state->R[i] >> 8), BYTE_TO_BINARY(huc6270_state->R[i] & 0xFF));
+        ImGui::TextColored(white, "$%04X ", huc6270_state->R[i]); ImGui::SameLine(0, 0);
+        ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(huc6270_state->R[i] >> 8), BYTE_TO_BINARY(huc6270_state->R[i] & 0xFF));
 
         if (i == 2)
         {
             ImGui::TextColored(cyan, "R%02X ", i); ImGui::SameLine();
             ImGui::TextColored(violet, "VRR  "); ImGui::SameLine();
-            ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6270_state->READ_BUFFER, BYTE_TO_BINARY(*huc6270_state->READ_BUFFER >> 8), BYTE_TO_BINARY(*huc6270_state->READ_BUFFER & 0xFF));
+            ImGui::TextColored(white, "$%04X ", *huc6270_state->READ_BUFFER); ImGui::SameLine(0, 0);
+            ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*huc6270_state->READ_BUFFER >> 8), BYTE_TO_BINARY(*huc6270_state->READ_BUFFER & 0xFF));
         }
     }
 

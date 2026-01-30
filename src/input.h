@@ -38,6 +38,7 @@ public:
     u8 ReadK();
     void WriteO(u8 value);
     u8 GetIORegister();
+    void SetIORegister(u8 value);
     bool GetSel();
     bool GetClr();
     void EndFrame();

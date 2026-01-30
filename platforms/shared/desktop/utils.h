@@ -162,37 +162,4 @@ static inline void strip_color_tags(std::string& str)
     }
 }
 
-static inline bool SliderFloatWithSteps(const char* label, float* v, float v_min, float v_max, float v_step, const char* display_format)
-{
-    if (!display_format)
-        display_format = "%.3f";
-
-    float v_f = *v;
-    bool value_changed = ImGui::SliderFloat(label, &v_f, v_min, v_max, display_format, ImGuiSliderFlags_AlwaysClamp);
-    float remain = fmodf((v_f-v_min), v_step);
-    *v = (v_f - remain);
-    return value_changed;
-}
-
-static inline bool SliderIntWithSteps(const char* label, int* v, int v_min, int v_max, int v_step, const char* display_format)
-{
-    if (!display_format)
-        display_format = "%d";
-
-    if (v_step <= 0)
-        v_step = 1;
-
-    int v_i = *v;
-    bool value_changed = ImGui::SliderInt(label, &v_i, v_min, v_max, display_format, ImGuiSliderFlags_AlwaysClamp);
-
-    int diff = v_i - v_min;
-    int remain = diff % v_step;
-
-    if (remain < 0)
-        remain += v_step;
-
-    *v = v_i - remain;
-    return value_changed;
-}
-
 #endif /* UTILS_H */

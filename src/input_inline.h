@@ -150,6 +150,11 @@ INLINE u8 Input::GetIORegister()
     return m_register;
 }
 
+INLINE void Input::SetIORegister(u8 value)
+{
+    m_register = value;
+}
+
 INLINE bool Input::GetSel()
 {
     return m_sel;

@@ -53,7 +53,8 @@ void gui_debug_window_cdrom(void)
     ImGui::NewLine(); ImGui::TextColored(cyan, "ENABLED IRQS"); ImGui::Separator();
 
     ImGui::TextColored(violet, "ENABLED"); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *cdrom_state->ENABLED_IRQS, BYTE_TO_BINARY(*cdrom_state->ENABLED_IRQS));
+    ImGui::TextColored(white, "$%02X ", *cdrom_state->ENABLED_IRQS); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*cdrom_state->ENABLED_IRQS));
 
     ImGui::TextColored((*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM_HALF) ? green : gray, "%s", (*cdrom_state->ENABLED_IRQS & CDROM_IRQ_ADPCM_HALF) ? "ADPCM H" : "ADPCM H"); ImGui::SameLine();
 
@@ -66,7 +67,8 @@ void gui_debug_window_cdrom(void)
     ImGui::NewLine(); ImGui::TextColored(cyan, "ACTIVE IRQS"); ImGui::Separator();
 
     ImGui::TextColored(violet, "ACTIVE "); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *cdrom_state->ACTIVE_IRQS, BYTE_TO_BINARY(*cdrom_state->ACTIVE_IRQS));
+    ImGui::TextColored(white, "$%02X ", *cdrom_state->ACTIVE_IRQS); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*cdrom_state->ACTIVE_IRQS));
 
     ImGui::TextColored((*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_ADPCM_HALF) ? green : gray, "%s", (*cdrom_state->ACTIVE_IRQS & CDROM_IRQ_ADPCM_HALF) ? "ADPCM H" : "ADPCM H"); ImGui::SameLine();
 
@@ -82,7 +84,8 @@ void gui_debug_window_cdrom(void)
     ImGui::TextColored(blue, "%s", k_scsi_phase_names[*scsi_state->PHASE]);
 
     ImGui::TextColored(violet, "DATA BUS"); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *scsi_state->DB, BYTE_TO_BINARY(*scsi_state->DB));
+    ImGui::TextColored(white, "$%02X ", *scsi_state->DB); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*scsi_state->DB));
 
     ImGui::TextColored(violet, "BSY"); ImGui::SameLine();
     ImGui::TextColored((*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_BSY) ? green : gray, "%s", (*scsi_state->SIGNALS & ScsiController::SCSI_SIGNAL_BSY) ? "ON " : "OFF"); ImGui::SameLine();
@@ -129,7 +132,8 @@ void gui_debug_window_cdrom(void)
     ImGui::TextColored((*scsi_state->NEXT_LOAD_CYCLES <= 0) ? gray : white, "%d", *scsi_state->LOAD_SECTOR_COUNT);
 
     ImGui::TextColored(violet, "FADER   "); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *cdrom_state->FADER, BYTE_TO_BINARY(*cdrom_state->FADER));
+    ImGui::TextColored(white, "$%02X ", *cdrom_state->FADER); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*cdrom_state->FADER));
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "MEDIA"); ImGui::Separator();
 
@@ -186,7 +190,8 @@ void gui_debug_window_arcade_card(void)
         ImGui::TextColored(violet, "INCREMENT   "); ImGui::SameLine();
         ImGui::Text("$%04X", port->increment);
         ImGui::TextColored(violet, "CONTROL     "); ImGui::SameLine();
-        ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", port->control, BYTE_TO_BINARY(port->control));
+        ImGui::TextColored(white, "$%02X ", port->control); ImGui::SameLine(0, 0);
+        ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(port->control));
 
         ImGui::TextColored(violet, "ADD OFFSET    "); ImGui::SameLine();
         ImGui::TextColored(port->add_offset ? green : gray, "%s", port->add_offset ? "ON" : "OFF");

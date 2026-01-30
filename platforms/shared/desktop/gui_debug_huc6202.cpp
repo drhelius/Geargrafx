@@ -50,9 +50,11 @@ void gui_debug_window_huc6202_info(void)
     ImGui::TextColored(white, "$%03X (%d)", *huc6202_state->WINDOW_2, *huc6202_state->WINDOW_2);
 
     ImGui::TextColored(violet, "PRIORITY 1   "); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6202_state->PRIORITY_1, BYTE_TO_BINARY(*huc6202_state->PRIORITY_1));
+    ImGui::TextColored(white, "$%02X ", *huc6202_state->PRIORITY_1); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*huc6202_state->PRIORITY_1));
     ImGui::TextColored(violet, "PRIORITY 2   "); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6202_state->PRIORITY_2, BYTE_TO_BINARY(*huc6202_state->PRIORITY_2));
+    ImGui::TextColored(white, "$%02X ", *huc6202_state->PRIORITY_2); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*huc6202_state->PRIORITY_2));
 
     ImGui::TextColored(violet, "IRQ VDC 1    "); ImGui::SameLine();
     ImGui::TextColored(*huc6202_state->IRQ1_1 ? green : gray, "%s", "ASSERTED");

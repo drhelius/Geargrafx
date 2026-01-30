@@ -136,13 +136,16 @@ void gui_debug_window_adpcm(void)
 
     u8 status = adpcm->Read(0x0C);
     ImGui::TextColored(violet, "STATUS " ); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", status, BYTE_TO_BINARY(status));
+    ImGui::TextColored(white, "$%02X ", status); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(status));
 
     ImGui::TextColored(violet, "CONTROL"); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *adpcm_state->CONTROL, BYTE_TO_BINARY(*adpcm_state->CONTROL));
+    ImGui::TextColored(white, "$%02X ", *adpcm_state->CONTROL); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*adpcm_state->CONTROL));
 
     ImGui::TextColored(violet, "DMA    "); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *adpcm_state->DMA, BYTE_TO_BINARY(*adpcm_state->DMA));
+    ImGui::TextColored(white, "$%02X ", *adpcm_state->DMA); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*adpcm_state->DMA));
     
     ImGui::TextColored(violet, "ADDR   "); ImGui::SameLine();
     ImGui::TextColored(white, "$%04X", *adpcm_state->ADDRESS);

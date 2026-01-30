@@ -60,10 +60,12 @@ void gui_debug_window_huc6260_info(void)
     ImGui::TextColored(*huc6260_state->VSYNC ? red : green, *huc6260_state->VSYNC ? "HIGH" : "LOW");
 
     ImGui::TextColored(violet, "CTRL REG"); ImGui::SameLine();
-    ImGui::Text("$%02X (" BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6260_state->CR, BYTE_TO_BINARY(*huc6260_state->CR));
+    ImGui::TextColored(white, "$%02X ", *huc6260_state->CR); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*huc6260_state->CR));
 
     ImGui::TextColored(violet, "CTA     "); ImGui::SameLine();
-    ImGui::Text("$%04X (" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", *huc6260_state->CTA, BYTE_TO_BINARY(*huc6260_state->CTA >> 8), BYTE_TO_BINARY(*huc6260_state->CTA & 0xFF));
+    ImGui::TextColored(white, "$%04X ", *huc6260_state->CTA); ImGui::SameLine(0, 0);
+    ImGui::TextColored(gray, "(" BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED ")", BYTE_TO_BINARY(*huc6260_state->CTA >> 8), BYTE_TO_BINARY(*huc6260_state->CTA & 0xFF));
 
     ImGui::TextColored(violet, "BLUR    "); ImGui::SameLine();
     ImGui::TextColored(IS_SET_BIT(*huc6260_state->CR, 2) ? green : gray, "%s", IS_SET_BIT(*huc6260_state->CR, 2) ? "ON" : "OFF");

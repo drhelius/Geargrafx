@@ -24,10 +24,94 @@
 #include "geargrafx.h"
 #include "gui_debug_constants.h"
 #include "gui_debug_memory.h"
+#include "gui_debug_widgets.h"
 #include "gui.h"
 #include "config.h"
 #include "emu.h"
 #include "utils.h"
+
+enum HuC6280RegId
+{
+    HuC6280RegId_A = 0,
+    HuC6280RegId_S = 1,
+    HuC6280RegId_X = 2,
+    HuC6280RegId_Y = 3,
+    HuC6280RegId_P = 4,
+    HuC6280RegId_PC = 5,
+    HuC6280RegId_IO = 6,
+    HuC6280RegId_TIM = 7,
+    HuC6280RegId_TIMC = 8,
+    HuC6280RegId_TIMR = 9,
+    HuC6280RegId_IDR = 10,
+    HuC6280RegId_IRR = 11,
+    HuC6280RegId_MPR0 = 12,
+    HuC6280RegId_MPR1 = 13,
+    HuC6280RegId_MPR2 = 14,
+    HuC6280RegId_MPR3 = 15,
+    HuC6280RegId_MPR4 = 16,
+    HuC6280RegId_MPR5 = 17,
+    HuC6280RegId_MPR6 = 18,
+    HuC6280RegId_MPR7 = 19
+};
+
+static void HuC6280WriteCallback8(u16 reg_id, u8 value, void* user_data)
+{
+    GeargrafxCore* core = (GeargrafxCore*)user_data;
+    HuC6280* processor = core->GetHuC6280();
+    HuC6280::HuC6280_State* proc_state = processor->GetState();
+    Memory* memory = core->GetMemory();
+    Input* input = core->GetInput();
+
+    switch (reg_id)
+    {
+        case HuC6280RegId_A: proc_state->A->SetValue(value); break;
+        case HuC6280RegId_S: proc_state->S->SetValue(value); break;
+        case HuC6280RegId_X: proc_state->X->SetValue(value); break;
+        case HuC6280RegId_Y: proc_state->Y->SetValue(value); break;
+        case HuC6280RegId_P: proc_state->P->SetValue(value); break;
+        case HuC6280RegId_IO: input->SetIORegister(value); break;
+        case HuC6280RegId_TIM: processor->WriteTimerRegister(0x0C01, value); break;
+        case HuC6280RegId_TIMC: *proc_state->TIMER_COUNTER = value & 0x7F; break;
+        case HuC6280RegId_TIMR: processor->WriteTimerRegister(0x0C00, value); break;
+        case HuC6280RegId_IDR: processor->WriteInterruptRegister(0x1402, value); break;
+        case HuC6280RegId_IRR: processor->WriteInterruptRegister(0x1403, value); break;
+        case HuC6280RegId_MPR0: memory->SetMpr(0, value); break;
+        case HuC6280RegId_MPR1: memory->SetMpr(1, value); break;
+        case HuC6280RegId_MPR2: memory->SetMpr(2, value); break;
+        case HuC6280RegId_MPR3: memory->SetMpr(3, value); break;
+        case HuC6280RegId_MPR4: memory->SetMpr(4, value); break;
+        case HuC6280RegId_MPR5: memory->SetMpr(5, value); break;
+        case HuC6280RegId_MPR6: memory->SetMpr(6, value); break;
+        case HuC6280RegId_MPR7: memory->SetMpr(7, value); break;
+    }
+}
+
+static void HuC6280WriteCallback1(u16 reg_id, u8 bit_index, bool value, void* user_data)
+{
+    GeargrafxCore* core = (GeargrafxCore*)user_data;
+    HuC6280::HuC6280_State* proc_state = core->GetHuC6280()->GetState();
+
+    if (reg_id == HuC6280RegId_P)
+    {
+        u8 p = proc_state->P->GetValue();
+        if (value)
+            p |= (1 << bit_index);
+        else
+            p &= ~(1 << bit_index);
+        proc_state->P->SetValue(p);
+    }
+}
+
+static void HuC6280WriteCallback16(u16 reg_id, u16 value, void* user_data)
+{
+    GeargrafxCore* core = (GeargrafxCore*)user_data;
+    HuC6280::HuC6280_State* proc_state = core->GetHuC6280()->GetState();
+
+    switch (reg_id)
+    {
+        case HuC6280RegId_PC: proc_state->PC->SetValue(value); break;
+    }
+}
 
 static char mpr_name[16] = { };
 static char mpr_tooltip[128] = { };
@@ -53,14 +137,32 @@ void gui_debug_window_huc6280(void)
     if (ImGui::BeginTable("huc6280", 1, ImGuiTableFlags_BordersInnerH))
     {
         ImGui::TableNextColumn();
-        ImGui::TextColored(cyan, "      STATUS");
-        ImGui::TextColored(magenta, "  N V T B D I Z C");
-        ImGui::Text("  " BYTE_TO_BINARY_PATTERN_ALL_SPACED, BYTE_TO_BINARY(proc_state->P->GetValue()));
+        u8 p = proc_state->P->GetValue();
+        ImGui::Text(" ");
+        ImGui::SameLine(0, 0); ImGui::TextColored(orange, "N");
+        ImGui::SameLine(); ImGui::TextColored(orange, "V");
+        ImGui::SameLine(); ImGui::TextColored(orange, "T");
+        ImGui::SameLine(); ImGui::TextColored(orange, "B");
+        ImGui::SameLine(); ImGui::TextColored(orange, "D");
+        ImGui::SameLine(); ImGui::TextColored(orange, "I");
+        ImGui::SameLine(); ImGui::TextColored(orange, "Z");
+        ImGui::SameLine(); ImGui::TextColored(orange, "C");
+        ImGui::Text(" ");
+        ImGui::SameLine(0, 0);
+        EditableRegister1(HuC6280RegId_P, 7, (p >> 7) & 1, HuC6280WriteCallback1, core);
+        ImGui::SameLine(); EditableRegister1(HuC6280RegId_P, 6, (p >> 6) & 1, HuC6280WriteCallback1, core);
+        ImGui::SameLine(); EditableRegister1(HuC6280RegId_P, 5, (p >> 5) & 1, HuC6280WriteCallback1, core);
+        ImGui::SameLine(); EditableRegister1(HuC6280RegId_P, 4, (p >> 4) & 1, HuC6280WriteCallback1, core);
+        ImGui::SameLine(); EditableRegister1(HuC6280RegId_P, 3, (p >> 3) & 1, HuC6280WriteCallback1, core);
+        ImGui::SameLine(); EditableRegister1(HuC6280RegId_P, 2, (p >> 2) & 1, HuC6280WriteCallback1, core);
+        ImGui::SameLine(); EditableRegister1(HuC6280RegId_P, 1, (p >> 1) & 1, HuC6280WriteCallback1, core);
+        ImGui::SameLine(); EditableRegister1(HuC6280RegId_P, 0, p & 1, HuC6280WriteCallback1, core);
 
         ImGui::TableNextColumn();
         ImGui::TextColored(yellow, "    PC"); ImGui::SameLine();
-        ImGui::Text("= $%04X", proc_state->PC->GetValue());
-        ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->PC->GetHigh()), BYTE_TO_BINARY(proc_state->PC->GetLow()));
+        ImGui::Text(" "); ImGui::SameLine(0, 0);
+        EditableRegister16(NULL, NULL, HuC6280RegId_PC, proc_state->PC->GetValue(), HuC6280WriteCallback16, core, EditableRegisterFlags_None);
+        ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->PC->GetHigh()), BYTE_TO_BINARY(proc_state->PC->GetLow()));
 
         ImGui::TableNextColumn();
         ImGui::TextColored(yellow, " PHYS PC"); ImGui::SameLine();
@@ -81,7 +183,7 @@ void gui_debug_window_huc6280(void)
         ImGui::Text("= $%04X", STACK_ADDR | proc_state->S->GetValue());
         if (ImGui::IsItemClicked())
             gui_debug_memory_goto(MEMORY_EDITOR_RAM, (STACK_ADDR - 0x2000) | proc_state->S->GetValue());
-        ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(0x21), BYTE_TO_BINARY(proc_state->S->GetValue()));
+        ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED " " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(0x21), BYTE_TO_BINARY(proc_state->S->GetValue()));
         if (ImGui::IsItemClicked())
             gui_debug_memory_goto(MEMORY_EDITOR_RAM, (STACK_ADDR - 0x2000) | proc_state->S->GetValue());
 
@@ -93,23 +195,27 @@ void gui_debug_window_huc6280(void)
         {
             ImGui::TableNextColumn();
             ImGui::TextColored(cyan, " A"); ImGui::SameLine();
-            ImGui::Text("   $%02X", proc_state->A->GetValue());
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+            ImGui::Text("  "); ImGui::SameLine(0, 0);
+            EditableRegister8(NULL, NULL, HuC6280RegId_A, proc_state->A->GetValue(), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
 
             ImGui::TableNextColumn();
             ImGui::TextColored(cyan, " S"); ImGui::SameLine();
-            ImGui::Text("   $%02X", proc_state->S->GetValue());
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->S->GetValue()));
+            ImGui::Text("  "); ImGui::SameLine(0, 0);
+            EditableRegister8(NULL, NULL, HuC6280RegId_S, proc_state->S->GetValue(), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->S->GetValue()));
 
             ImGui::TableNextColumn();
             ImGui::TextColored(cyan, " X"); ImGui::SameLine();
-            ImGui::Text("   $%02X", proc_state->X->GetValue());
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->X->GetValue()));
+            ImGui::Text("  "); ImGui::SameLine(0, 0);
+            EditableRegister8(NULL, NULL, HuC6280RegId_X, proc_state->X->GetValue(), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->X->GetValue()));
 
             ImGui::TableNextColumn();
             ImGui::TextColored(cyan, " Y"); ImGui::SameLine();
-            ImGui::Text("   $%02X", proc_state->Y->GetValue());
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->Y->GetValue()));
+            ImGui::Text("  "); ImGui::SameLine(0, 0);
+            EditableRegister8(NULL, NULL, HuC6280RegId_Y, proc_state->Y->GetValue(), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->Y->GetValue()));
 
             for (u8 i = 0; i < 8; i++)
             {
@@ -119,10 +225,11 @@ void gui_debug_window_huc6280(void)
                 ImGui::TextColored(violet, "%s", label); ImGui::SameLine();
                 if (ImGui::IsItemClicked())
                     goto_address(memory->GetMpr(i));
-                ImGui::Text(" $%02X", memory->GetMpr(i));
+                ImGui::Text(""); ImGui::SameLine(0, 0);
+                EditableRegister8(NULL, NULL, HuC6280RegId_MPR0 + i, memory->GetMpr(i), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
                 if (ImGui::IsItemClicked())
                     goto_address(memory->GetMpr(i));
-                ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(i)));
+                ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(i)));
                 get_bank_name(i, memory->GetMpr(i), mpr_name, mpr_tooltip);
                 if (ImGui::IsItemClicked())
                     goto_address(memory->GetMpr(i));
@@ -139,34 +246,35 @@ void gui_debug_window_huc6280(void)
 
             ImGui::TableNextColumn();
             ImGui::TextColored(red, "I/O "); ImGui::SameLine();
-            ImGui::Text(" $%02X", input->GetIORegister());
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(input->GetIORegister()));
+            EditableRegister8(NULL, NULL, HuC6280RegId_IO, input->GetIORegister(), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(input->GetIORegister()));
 
             ImGui::TableNextColumn();
             u8 tim = (*proc_state->TIMER) ? 0x01 : 0x00;
-            ImGui::TextColored(blue, "TIM  "); ImGui::SameLine();
-            ImGui::Text("$%02X", tim);
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(tim));
+            ImGui::TextColored(blue, "TIM "); ImGui::SameLine();
+            EditableRegister8(NULL, NULL, HuC6280RegId_TIM, tim, HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(tim));
 
             ImGui::TableNextColumn();
+            u8 timc = processor->ReadTimerRegister();
             ImGui::TextColored(blue, "TIMC"); ImGui::SameLine();
-            ImGui::Text(" $%02X", *proc_state->TIMER_COUNTER);
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->TIMER_COUNTER));
+            EditableRegister8(NULL, NULL, HuC6280RegId_TIMC, timc, HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(timc));
 
             ImGui::TableNextColumn();
             ImGui::TextColored(blue, "TIMR"); ImGui::SameLine();
-            ImGui::Text(" $%02X", *proc_state->TIMER_RELOAD);
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->TIMER_RELOAD));
+            EditableRegister8(NULL, NULL, HuC6280RegId_TIMR, *proc_state->TIMER_RELOAD, HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->TIMER_RELOAD));
 
             ImGui::TableNextColumn();
             ImGui::TextColored(magenta, "IDR "); ImGui::SameLine();
-            ImGui::Text(" $%02X", *proc_state->IDR);
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->IDR));
+            EditableRegister8(NULL, NULL, HuC6280RegId_IDR, *proc_state->IDR, HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->IDR));
 
             ImGui::TableNextColumn();
             ImGui::TextColored(magenta, "IRR "); ImGui::SameLine();
-            ImGui::Text(" $%02X", *proc_state->IRR);
-            ImGui::Text(BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->IRR));
+            EditableRegister8(NULL, NULL, HuC6280RegId_IRR, *proc_state->IRR, HuC6280WriteCallback8, core, EditableRegisterFlags_None);
+            ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(*proc_state->IRR));
 
             ImGui::EndTable();
         }
