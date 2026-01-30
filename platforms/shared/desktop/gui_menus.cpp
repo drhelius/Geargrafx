@@ -580,6 +580,7 @@ static void menu_emulator(void)
 
         if (ImGui::BeginMenu("Debug Hotkeys"))
         {
+            hotkey_configuration_item("Reload ROM:", &config_hotkeys[config_HotkeyIndex_ReloadROM]);
             hotkey_configuration_item("Step Into:", &config_hotkeys[config_HotkeyIndex_DebugStepInto]);
             hotkey_configuration_item("Step Over:", &config_hotkeys[config_HotkeyIndex_DebugStepOver]);
             hotkey_configuration_item("Step Out:", &config_hotkeys[config_HotkeyIndex_DebugStepOut]);
@@ -1190,6 +1191,13 @@ static void menu_debug(void)
             emu_set_scanline_start_end(
                 config_debug.debug ? 0 : config_video.scanline_start,
                 config_debug.debug ? 241 : config_video.scanline_end);
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Reload ROM", config_hotkeys[config_HotkeyIndex_ReloadROM].str, false, config_debug.debug && !emu_is_empty()))
+        {
+            gui_action_reload_rom();
         }
 
         ImGui::Separator();

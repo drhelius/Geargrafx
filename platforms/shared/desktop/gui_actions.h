@@ -27,6 +27,7 @@
 #endif
 
 EXTERN void gui_action_reset(void);
+EXTERN void gui_action_reload_rom(void);
 EXTERN void gui_action_pause(void);
 EXTERN void gui_action_ffwd(void);
 EXTERN void gui_action_save_screenshot(const char* path);

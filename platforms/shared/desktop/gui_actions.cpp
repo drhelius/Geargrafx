@@ -44,6 +44,16 @@ void gui_action_reset(void)
     }
 }
 
+void gui_action_reload_rom(void)
+{
+    if (!emu_is_empty())
+    {
+        char rom_path[4096];
+        strcpy(rom_path, emu_get_core()->GetMedia()->GetFilePath());
+        gui_load_rom(rom_path);
+    }
+}
+
 void gui_action_pause(void)
 {
     if (emu_is_paused())

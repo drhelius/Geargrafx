@@ -153,6 +153,7 @@ struct config_Input_Gamepad
 enum config_HotkeyIndex
 {
     config_HotkeyIndex_OpenROM = 0,
+    config_HotkeyIndex_ReloadROM,
     config_HotkeyIndex_Quit,
     config_HotkeyIndex_Reset,
     config_HotkeyIndex_Pause,

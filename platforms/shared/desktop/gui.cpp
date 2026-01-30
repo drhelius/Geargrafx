@@ -214,6 +214,10 @@ void gui_shortcut(gui_ShortCutEvent event)
     case gui_ShortcutOpenROM:
         gui_shortcut_open_rom = true;
         break;
+    case gui_ShortcutReloadROM:
+        if (config_debug.debug)
+            gui_action_reload_rom();
+        break;
     case gui_ShortcutReset:
         gui_action_reset();
         break;
