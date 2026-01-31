@@ -126,11 +126,6 @@ void HuC6280::EnableBreakpoints(bool enable, bool irqs)
     m_breakpoints_irq_enabled = irqs;
 }
 
-bool HuC6280::BreakpointHit()
-{
-    return (m_cpu_breakpoint_hit || m_memory_breakpoint_hit);
-}
-
 void HuC6280::ResetBreakpoints()
 {
     m_breakpoints.clear();

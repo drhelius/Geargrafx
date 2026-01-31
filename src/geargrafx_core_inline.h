@@ -24,6 +24,7 @@
 #include "media.h"
 #include "huc6260.h"
 #include "huc6280.h"
+#include "huc6280_inline.h"
 #include "audio.h"
 #include "cdrom.h"
 #include "cdrom_audio.h"
@@ -103,6 +104,9 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             {
                 if (debug->step_debugger)
                     stop = instruction_completed;
+
+                if (m_huc6280->MemoryBreakpointHit())
+                    stop = true;
 
                 if (instruction_completed)
                 {

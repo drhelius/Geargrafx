@@ -370,6 +370,16 @@ INLINE u16 HuC6280::AbsoluteIndexedIndirectAddressing()
     return Address16(h, l);
 }
 
+INLINE bool HuC6280::BreakpointHit()
+{
+    return (m_cpu_breakpoint_hit || m_memory_breakpoint_hit);
+}
+
+INLINE bool HuC6280::MemoryBreakpointHit()
+{
+    return m_memory_breakpoint_hit;
+}
+
 INLINE bool HuC6280::RunToBreakpointHit()
 {
     return m_run_to_breakpoint_hit;

@@ -116,6 +116,7 @@ public:
     void SetResetValue(int value);
     void EnableBreakpoints(bool enable, bool irqs);
     bool BreakpointHit();
+    bool MemoryBreakpointHit();
     bool RunToBreakpointHit();
     void ResetBreakpoints();
     bool AddBreakpoint(int type, char* text, bool read, bool write, bool execute);
