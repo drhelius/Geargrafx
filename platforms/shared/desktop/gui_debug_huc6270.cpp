@@ -589,6 +589,8 @@ static void draw_context_menu_sprites(int vdc, int index)
     {
         if (ImGui::Selectable("Save Sprite As..."))
             gui_file_dialog_save_sprite(vdc - 1, index);
+        if (ImGui::Selectable("Save All Sprites To Folder..."))
+            gui_file_dialog_save_all_sprites(vdc - 1);
 
         ImGui::EndPopup();
     }

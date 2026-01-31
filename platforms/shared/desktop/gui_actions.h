@@ -32,6 +32,7 @@ EXTERN void gui_action_pause(void);
 EXTERN void gui_action_ffwd(void);
 EXTERN void gui_action_save_screenshot(const char* path);
 EXTERN void gui_action_save_sprite(const char* path, int vdc, int index);
+EXTERN void gui_action_save_all_sprites(const char* folder_path, int vdc);
 EXTERN void gui_action_save_background(const char* path, int vdc);
 
 #undef GUI_ACTIONS_IMPORT

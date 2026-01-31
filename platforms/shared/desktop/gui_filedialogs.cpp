@@ -357,6 +357,25 @@ void gui_file_dialog_save_sprite(int vdc, int index)
     }
 }
 
+void gui_file_dialog_save_all_sprites(int vdc)
+{
+    nfdchar_t *outPath;
+    nfdpickfolderu8args_t args = { };
+    args.defaultPath = NULL;
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        gui_action_save_all_sprites(outPath, vdc);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        Error("Save All Sprites Error: %s", NFD_GetError());
+    }
+}
+
 void gui_file_dialog_save_background(int vdc)
 {
     char default_name[32];

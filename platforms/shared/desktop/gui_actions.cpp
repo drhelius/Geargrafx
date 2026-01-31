@@ -147,6 +147,24 @@ void gui_action_save_sprite(const char* path, int vdc, int index)
     gui_set_status_message(message.c_str(), 3000);
 }
 
+void gui_action_save_all_sprites(const char* folder_path, int vdc)
+{
+    using namespace std;
+
+    if (!emu_get_core()->GetMedia()->IsReady())
+        return;
+
+    for (int i = 0; i < 64; i++)
+    {
+        char file_path[512];
+        snprintf(file_path, sizeof(file_path), "%s/sprite_vdc%d_id%02d.png", folder_path, vdc, i);
+        emu_save_sprite(file_path, vdc, i);
+    }
+
+    string message = "All sprites saved to " + string(folder_path);
+    gui_set_status_message(message.c_str(), 3000);
+}
+
 void gui_action_save_background(const char* path, int vdc)
 {
     using namespace std;
