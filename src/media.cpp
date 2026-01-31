@@ -440,12 +440,6 @@ void Media::GatherMediaInfo()
         Log("ROM is bigger than 1MB. Forcing SF2 Mapper.");
     }
 
-    if (m_is_cdrom && (m_cdrom_type != GG_CDROM_STANDARD))
-    {
-        m_card_ram_size = 0x30000;
-        Log("Enabling Super CD-ROM Card RAM");
-    }
-
     switch (m_console_type)
     {
         case GG_CONSOLE_PCE:
@@ -462,25 +456,34 @@ void Media::GatherMediaInfo()
             break;
     }
 
-    switch (m_cdrom_type)
+    if (m_is_cdrom)
     {
-        case GG_CDROM_STANDARD:
-            Log("CD-ROM Type: Standard");
-            if (m_mapper == ARCADE_CARD_MAPPER)
-                m_mapper = STANDARD_MAPPER;
-            break;
-        case GG_CDROM_SUPER_CDROM:
-            Log("CD-ROM Type: Super CD-ROM");
-            if (m_mapper == ARCADE_CARD_MAPPER)
-                m_mapper = STANDARD_MAPPER;
-            break;
-        case GG_CDROM_ARCADE_CARD:
-            m_mapper = ARCADE_CARD_MAPPER;
-            Log("CD-ROM Type: Arcade Card");
-            break;
-        default:
-            Log("CD-ROM Type: Auto");
-            break;
+        switch (m_cdrom_type)
+        {
+            case GG_CDROM_STANDARD:
+                Log("CD-ROM Type: Standard");
+                if (m_mapper == ARCADE_CARD_MAPPER)
+                    m_mapper = STANDARD_MAPPER;
+                break;
+            case GG_CDROM_SUPER_CDROM:
+                Log("CD-ROM Type: Super CD-ROM");
+                if (m_mapper == ARCADE_CARD_MAPPER)
+                    m_mapper = STANDARD_MAPPER;
+                break;
+            case GG_CDROM_ARCADE_CARD:
+                m_mapper = ARCADE_CARD_MAPPER;
+                Log("CD-ROM Type: Arcade Card");
+                break;
+            default:
+                Log("CD-ROM Type: Auto");
+                break;
+        }
+
+        if (m_cdrom_type != GG_CDROM_STANDARD)
+        {
+            m_card_ram_size = 0x30000;
+            Log("Enabling Super CD-ROM Card RAM");
+        }
     }
 
     InitRomMAP();
