@@ -93,6 +93,10 @@ struct config_Video
     bool sync = true;
     float background_color[3] = {0.1f, 0.1f, 0.1f};
     float background_color_debugger[3] = {0.2f, 0.2f, 0.2f};
+    bool lowpass_filter = false;
+    float lowpass_intensity = 1.0f;
+    float lowpass_cutoff_mhz = 5.0f;
+    bool lowpass_speed[3] = { false, true, true };
 };
 
 struct config_Audio

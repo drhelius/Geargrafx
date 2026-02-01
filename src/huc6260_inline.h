@@ -118,12 +118,6 @@ INLINE bool HuC6260::Clock(u32 cycles)
                 m_vsync = true;
                 m_pixel_index = 0;
                 frame_ready = true;
-                m_scaled_width = m_multiple_speeds;
-                if (m_multiple_speeds)
-                {
-                    m_multiple_speeds = false;
-                    AdjustForMultipleDividers();
-                }
             }
 
             if(m_vpos >= 14 && m_vpos < 256)
@@ -159,6 +153,21 @@ INLINE void HuC6260::RenderFrame()
             RenderFrameTemplate<false, 2>();
         else
             RenderFrameTemplate<false, 4>();
+    }
+
+    m_scaled_width = m_multiple_speeds;
+    if (m_multiple_speeds)
+    {
+        m_multiple_speeds = false;
+        AdjustForMultipleDividers();
+    }
+
+    if (m_lowpass_enabled)
+    {
+        if (m_pixel_format == GG_PIXEL_RGB565)
+            ApplyLowPassFilter<2>();
+        else
+            ApplyLowPassFilter<4>();
     }
 }
 

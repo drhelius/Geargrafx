@@ -66,6 +66,12 @@ static bool allow_up_down = false;
 static bool allow_soft_reset = false;
 static int cdrom_bios = 0;
 static bool deterministic_netplay = false;
+static bool lowpass_filter = false;
+static float lowpass_intensity = 1.0f;
+static float lowpass_cutoff_mhz = 5.0f;
+static bool lowpass_speed_536 = false;
+static bool lowpass_speed_716 = true;
+static bool lowpass_speed_108 = true;
 
 static bool input_updated = false;
 static bool libretro_supports_bitmasks;
@@ -648,6 +654,12 @@ static void set_variabless(void)
         { "geargrafx_scanline_start", "Scanline Start (Manual); 3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|0|1|2" },
         { "geargrafx_scanline_end", "Scanline End (Manual); 241|220|221|222|223|224|225|226|227|228|229|230|231|232|233|234|235|236|237|238|239|240" },
         { "geargrafx_composite_colors", "Composite Colors; Disabled|Enabled" },
+        { "geargrafx_lowpass_filter", "Video LPF; Disabled|Enabled" },
+        { "geargrafx_lowpass_intensity", "Video LPF Intensity; 100|0|10|20|30|40|50|60|70|80|90|100" },
+        { "geargrafx_lowpass_cutoff", "Video LPF Cutoff; 5.0 MHz|3.0 MHz|3.5 MHz|4.0 MHz|4.5 MHz|5.0 MHz|5.5 MHz|6.0 MHz|6.5 MHz|7.0 MHz" },
+        { "geargrafx_lowpass_speed_536", "Video LPF HuC6270 5.36 MHz; Disabled|Enabled" },
+        { "geargrafx_lowpass_speed_716", "Video LPF HuC6270 7.16 MHz; Enabled|Disabled" },
+        { "geargrafx_lowpass_speed_108", "Video LPF HuC6270 10.8 MHz; Enabled|Disabled" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
         { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
         { "geargrafx_deterministic_netplay", "Deterministic Netplay; Disabled|Enabled" },
@@ -799,6 +811,62 @@ static void check_variables(void)
     {
         core->GetHuC6260()->SetPalette(strcmp(var.value, "Enabled") == 0 ? 1 : 0);
     }
+
+    var.key = "geargrafx_lowpass_filter";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        lowpass_filter = (strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_lowpass_intensity";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        int intensity = atoi(var.value);
+        if (intensity < 0 || intensity > 100)
+            intensity = 100;
+        lowpass_intensity = (float)intensity / 100.0f;
+    }
+
+    var.key = "geargrafx_lowpass_cutoff";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        lowpass_cutoff_mhz = (float)atof(var.value);
+        if (lowpass_cutoff_mhz < 3.0f || lowpass_cutoff_mhz > 7.0f)
+            lowpass_cutoff_mhz = 5.0f;
+    }
+
+    var.key = "geargrafx_lowpass_speed_536";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        lowpass_speed_536 = (strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_lowpass_speed_716";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        lowpass_speed_716 = (strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_lowpass_speed_108";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        lowpass_speed_108 = (strcmp(var.value, "Enabled") == 0);
+    }
+
+    core->GetHuC6260()->SetLowPassFilter(lowpass_filter, lowpass_intensity, lowpass_cutoff_mhz,
+        lowpass_speed_536, lowpass_speed_716, lowpass_speed_108);
 
     var.key = "geargrafx_backup_ram";
     var.value = NULL;

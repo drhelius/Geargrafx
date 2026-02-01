@@ -80,6 +80,7 @@ public:
     void SetResetValue(int value);
     void SetPalette(int palette);
     void SetCustomPalette(const u8* data);
+    void SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -91,6 +92,8 @@ private:
     template <bool SGX, int BPP>
     void RenderFrameTemplate();
     void CalculateScreenBounds();
+    template <int BPP>
+    void ApplyLowPassFilter();
 
 private:
     HuC6202* m_huc6202;
@@ -129,6 +132,10 @@ private:
     int m_screen_end_x;
     int m_screen_start_y;
     int m_screen_end_y;
+    bool m_lowpass_enabled;
+    float m_lowpass_intensity;
+    float m_lowpass_cutoff_mhz;
+    bool m_lowpass_speed[3];
 };
 
 static const HuC6260::HuC6260_Speed k_huc6260_speed[4] = {

@@ -459,6 +459,11 @@ void emu_set_scanline_start_end(int start, int end)
     geargrafx->GetHuC6260()->SetScanlineEnd(end);
 }
 
+void emu_set_lowpass_filter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8)
+{
+    geargrafx->GetHuC6260()->SetLowPassFilter(enabled, intensity, cutoff_mhz, speed_5_36, speed_7_16, speed_10_8);
+}
+
 void emu_set_memory_reset_values(int mpr, int wram, int card_ram, int arcade_card)
 {
     geargrafx->GetMemory()->SetResetValues(mpr, wram, card_ram, arcade_card);

@@ -809,6 +809,48 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("Low Pass Filter"))
+        {
+            if (ImGui::MenuItem("Enable Low Pass Filter", "", &config_video.lowpass_filter))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+            ImGui::Separator();
+            ImGui::PushItemWidth(180.0f);
+            if (ImGui::SliderFloat("##lpf_intensity", &config_video.lowpass_intensity, 0.0f, 1.0f, "Intensity = %.2f"))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+            ImGui::PushItemWidth(180.0f);
+            if (ImGui::SliderFloat("##lpf_cutoff", &config_video.lowpass_cutoff_mhz, 3.0f, 7.0f, "Cutoff = %.1f MHz"))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Apply to speeds:");
+            if (ImGui::Checkbox("5.36 MHz (256px)", &config_video.lowpass_speed[0]))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+            if (ImGui::Checkbox("7.16 MHz (341px)", &config_video.lowpass_speed[1]))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+            if (ImGui::Checkbox("10.8 MHz (512px)", &config_video.lowpass_speed[2]))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+
+            ImGui::EndMenu();
+        }
+
         ImGui::Separator();
 
         if (ImGui::BeginMenu("Background Color"))

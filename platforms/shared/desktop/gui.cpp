@@ -123,6 +123,8 @@ bool gui_init(void)
     emu_set_scanline_start_end(
                 config_debug.debug ? 0 : config_video.scanline_start,
                 config_debug.debug ? 241 : config_video.scanline_end);
+    emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
     emu_set_memory_reset_values(
                 get_reset_value(config_debug.reset_mpr),
                 get_reset_value(config_debug.reset_ram),

@@ -311,6 +311,12 @@ void config_read(void)
     config_video.scanlines = read_bool("Video", "Scanlines", true);
     config_video.scanlines_filter = read_bool("Video", "ScanlinesFilter", true);
     config_video.scanlines_intensity = read_float("Video", "ScanlinesIntensity", 0.10f);
+    config_video.lowpass_filter = read_bool("Video", "LowpassFilter", false);
+    config_video.lowpass_intensity = read_float("Video", "LowpassIntensity", 1.0f);
+    config_video.lowpass_cutoff_mhz = read_float("Video", "LowpassCutoffMhz", 5.0f);
+    config_video.lowpass_speed[0] = read_bool("Video", "LowpassSpeed536", false);
+    config_video.lowpass_speed[1] = read_bool("Video", "LowpassSpeed716", true);
+    config_video.lowpass_speed[2] = read_bool("Video", "LowpassSpeed108", true);
     config_video.sync = read_bool("Video", "Sync", true);
     config_video.background_color[0] = read_float("Video", "BackgroundColorR", 0.1f);
     config_video.background_color[1] = read_float("Video", "BackgroundColorG", 0.1f);
@@ -564,6 +570,12 @@ void config_write(void)
     write_bool("Video", "Scanlines", config_video.scanlines);
     write_bool("Video", "ScanlinesFilter", config_video.scanlines_filter);
     write_float("Video", "ScanlinesIntensity", config_video.scanlines_intensity);
+    write_bool("Video", "LowpassFilter", config_video.lowpass_filter);
+    write_float("Video", "LowpassIntensity", config_video.lowpass_intensity);
+    write_float("Video", "LowpassCutoffMhz", config_video.lowpass_cutoff_mhz);
+    write_bool("Video", "LowpassSpeed536", config_video.lowpass_speed[0]);
+    write_bool("Video", "LowpassSpeed716", config_video.lowpass_speed[1]);
+    write_bool("Video", "LowpassSpeed108", config_video.lowpass_speed[2]);
     write_bool("Video", "Sync", config_video.sync);
     write_float("Video", "BackgroundColorR", config_video.background_color[0]);
     write_float("Video", "BackgroundColorG", config_video.background_color[1]);

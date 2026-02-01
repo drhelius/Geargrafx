@@ -39,6 +39,12 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280)
     m_palette = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
     InitPointer(m_frame_buffer);
+    m_lowpass_enabled = false;
+    m_lowpass_intensity = 1.0f;
+    m_lowpass_cutoff_mhz = 5.0f;
+    m_lowpass_speed[0] = false;
+    m_lowpass_speed[1] = true;
+    m_lowpass_speed[2] = true;
 
     CalculateScreenBounds();
 }
@@ -315,6 +321,101 @@ void HuC6260::SetCustomPalette(const u8* data)
         m_rgb565_palette[2][i] = rgb565;
     }
 }
+
+void HuC6260::SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8)
+{
+    m_lowpass_enabled = enabled;
+    m_lowpass_intensity = intensity;
+    m_lowpass_cutoff_mhz = cutoff_mhz;
+    m_lowpass_speed[0] = speed_5_36;
+    m_lowpass_speed[1] = speed_7_16;
+    m_lowpass_speed[2] = speed_10_8;
+}
+
+template <int bytes_per_pixel>
+void HuC6260::ApplyLowPassFilter()
+{
+    static const float k_speed_mhz[4] = { 5.36f, 7.16f, 10.8f, 10.8f };
+
+    int speed_index = MIN(m_speed, 2);
+    if (!m_lowpass_speed[speed_index])
+        return;
+
+    float dot_clock = k_speed_mhz[m_speed];
+    float base_alpha = m_lowpass_cutoff_mhz / dot_clock;
+    base_alpha = CLAMP(base_alpha, 0.3f, 1.0f);
+    float alpha = base_alpha + (1.0f - base_alpha) * (1.0f - m_lowpass_intensity);
+
+    if (alpha >= 1.0f)
+        return;
+
+    int width = m_scaled_width ? k_huc6260_scaling_width[m_overscan] : k_huc6260_line_width[m_overscan][m_speed];
+    int height = GetCurrentHeight();
+
+    for (int y = 0; y < height; y++)
+    {
+        int line_offset = y * width * bytes_per_pixel;
+        float r_prev, g_prev, b_prev;
+
+        if (bytes_per_pixel == 2)
+        {
+            u16 first_pixel = *reinterpret_cast<u16*>(m_frame_buffer + line_offset);
+            r_prev = ((first_pixel >> 11) & 0x1F) * 255.0f / 31.0f;
+            g_prev = ((first_pixel >> 5) & 0x3F) * 255.0f / 63.0f;
+            b_prev = (first_pixel & 0x1F) * 255.0f / 31.0f;
+        }
+        else
+        {
+            r_prev = m_frame_buffer[line_offset + 0];
+            g_prev = m_frame_buffer[line_offset + 1];
+            b_prev = m_frame_buffer[line_offset + 2];
+        }
+
+        for (int x = 0; x < width; x++)
+        {
+            int idx = line_offset + x * bytes_per_pixel;
+            float r, g, b;
+
+            if (bytes_per_pixel == 2)
+            {
+                u16 pixel = *reinterpret_cast<u16*>(m_frame_buffer + idx);
+                r = ((pixel >> 11) & 0x1F) * 255.0f / 31.0f;
+                g = ((pixel >> 5) & 0x3F) * 255.0f / 63.0f;
+                b = (pixel & 0x1F) * 255.0f / 31.0f;
+            }
+            else
+            {
+                r = m_frame_buffer[idx + 0];
+                g = m_frame_buffer[idx + 1];
+                b = m_frame_buffer[idx + 2];
+            }
+
+            r = alpha * r + (1.0f - alpha) * r_prev;
+            g = alpha * g + (1.0f - alpha) * g_prev;
+            b = alpha * b + (1.0f - alpha) * b_prev;
+
+            if (bytes_per_pixel == 2)
+            {
+                u8 r8 = (u8)r;
+                u8 g8 = (u8)g;
+                u8 b8 = (u8)b;
+                u16 pixel = ((r8 * 31 / 255) << 11) | ((g8 * 63 / 255) << 5) | (b8 * 31 / 255);
+                *reinterpret_cast<u16*>(m_frame_buffer + idx) = pixel;
+            }
+            else
+            {
+                m_frame_buffer[idx + 0] = (u8)r;
+                m_frame_buffer[idx + 1] = (u8)g;
+                m_frame_buffer[idx + 2] = (u8)b;
+            }
+
+            r_prev = r; g_prev = g; b_prev = b;
+        }
+    }
+}
+
+template void HuC6260::ApplyLowPassFilter<2>();
+template void HuC6260::ApplyLowPassFilter<4>();
 
 void HuC6260::SaveState(std::ostream& stream)
 {
