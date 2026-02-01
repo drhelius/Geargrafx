@@ -101,6 +101,7 @@ EXTERN int* gui_configured_button;
 EXTERN config_Hotkey* gui_configured_hotkey;
 EXTERN bool gui_dialog_in_use;
 EXTERN bool gui_shortcut_open_rom;
+EXTERN bool gui_custom_palette_loaded;
 EXTERN bool gui_audio_mute_cdrom;
 EXTERN bool gui_audio_mute_psg;
 EXTERN bool gui_audio_mute_adpcm;
@@ -111,6 +112,7 @@ EXTERN void gui_render(void);
 EXTERN void gui_shortcut(gui_ShortCutEvent event);
 EXTERN void gui_load_rom(const char* path);
 EXTERN void gui_load_bios(const char* path, bool syscard);
+EXTERN void gui_load_palette(const char* path);
 EXTERN void gui_set_status_message(const char* message, u32 milliseconds);
 EXTERN void gui_set_error_message(const char* message);
 

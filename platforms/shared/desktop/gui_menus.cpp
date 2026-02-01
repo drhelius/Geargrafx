@@ -750,14 +750,46 @@ static void menu_video(void)
 
         ImGui::Separator();
 
+        if (ImGui::BeginMenu("Color Palette"))
+        {
+            ImGui::PushItemWidth(180.0f);
+            if (ImGui::Combo("##palette", &config_video.palette, "Standard RGB\0Composite RGB\0Custom\0\0"))
+            {
+                emu_set_palette(config_video.palette);
+            }
+            ImGui::PopItemWidth();
+
+            if (ImGui::MenuItem("Load Custom Palette..."))
+            {
+                gui_file_dialog_load_palette();
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Format: 512 RGB entries (R, G, B)");
+                ImGui::Text("Size: 1536 bytes (0x600)");
+                ImGui::Text("Extensions: .pal, .bin");
+                ImGui::EndTooltip();
+            }
+
+            ImGui::Separator();
+
+            if (gui_custom_palette_loaded)
+            {
+                ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "Custom palette loaded");
+            }
+            else
+            {
+                ImGui::TextColored(ImVec4(0.50f, 0.50f, 0.50f, 1.0f), "No custom palette loaded");
+            }
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
         if (ImGui::MenuItem("Disable Sprite Limit", "", &config_video.sprite_limit))
         {
             emu_video_no_sprite_limit(config_video.sprite_limit);
-        }
-
-        if (ImGui::MenuItem("Composite Colors", "", &config_video.composite_palette))
-        {
-            emu_set_composite_palette(config_video.composite_palette);
         }
 
         ImGui::MenuItem("Bilinear Filtering", "", &config_video.bilinear);

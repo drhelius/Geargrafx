@@ -432,9 +432,14 @@ void emu_debug_set_callback(GeargrafxCore::GG_Debug_Callback callback)
     geargrafx->SetDebugCallback(callback);
 }
 
-void emu_set_composite_palette(bool enabled)
+void emu_set_palette(int palette)
 {
-    geargrafx->GetHuC6260()->SetCompositePalette(enabled);
+    geargrafx->GetHuC6260()->SetPalette(palette);
+}
+
+void emu_set_custom_palette(const u8* data)
+{
+    geargrafx->GetHuC6260()->SetCustomPalette(data);
 }
 
 void emu_video_no_sprite_limit(bool enabled)

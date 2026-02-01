@@ -66,11 +66,18 @@ void HuC6260::InitPalettes()
         m_rgba888_palette[0][i][2] = blue;
         m_rgba888_palette[0][i][3] = 255;
 
+        // Custom palette defaults to standard RGB
+        m_rgba888_palette[2][i][0] = red;
+        m_rgba888_palette[2][i][1] = green;
+        m_rgba888_palette[2][i][2] = blue;
+        m_rgba888_palette[2][i][3] = 255;
+
         green = ((i >> 6) & 0x07) * 63 / 7;
         red = ((i >> 3) & 0x07) * 31 / 7;
         blue = (i & 0x07) * 31 / 7;
         u16 rgb565 = (red << 11) | (green << 5) | blue;
         m_rgb565_palette[0][i] = rgb565;
+        m_rgb565_palette[2][i] = rgb565;
 
         m_rgba888_palette[1][i][0] = k_rgb888_palette_composite[i][0];
         m_rgba888_palette[1][i][1] = k_rgb888_palette_composite[i][1];
@@ -286,6 +293,27 @@ void HuC6260::AdjustForMultipleDividers()
     }
 
     memcpy(m_frame_buffer, m_scale_buffer, dominant_width * 242 * bytes_per_pixel);
+}
+
+void HuC6260::SetCustomPalette(const u8* data)
+{
+    for (int i = 0; i < 512; i++)
+    {
+        u8 red = data[i * 3];
+        u8 green = data[i * 3 + 1];
+        u8 blue = data[i * 3 + 2];
+
+        m_rgba888_palette[2][i][0] = red;
+        m_rgba888_palette[2][i][1] = green;
+        m_rgba888_palette[2][i][2] = blue;
+        m_rgba888_palette[2][i][3] = 255;
+
+        u8 green565 = green * 63 / 255;
+        u8 red565 = red * 31 / 255;
+        u8 blue565 = blue * 31 / 255;
+        u16 rgb565 = (red565 << 11) | (green565 << 5) | blue565;
+        m_rgb565_palette[2][i] = rgb565;
+    }
 }
 
 void HuC6260::SaveState(std::ostream& stream)

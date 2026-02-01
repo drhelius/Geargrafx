@@ -78,7 +78,8 @@ public:
     void SetOverscan(bool overscan);
     GG_Pixel_Format GetPixelFormat();
     void SetResetValue(int value);
-    void SetCompositePalette(bool enable);
+    void SetPalette(int palette);
+    void SetCustomPalette(const u8* data);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -120,8 +121,8 @@ private:
     int m_scanline_start;
     int m_scanline_end;
     GG_Pixel_Format m_pixel_format;
-    u8 m_rgba888_palette[2][512][4] = {};
-    u16 m_rgb565_palette[2][512] = {};
+    u8 m_rgba888_palette[3][512][4] = {};
+    u16 m_rgb565_palette[3][512] = {};
     int m_reset_value;
     int m_palette;
     int m_screen_start_x;

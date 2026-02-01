@@ -54,6 +54,7 @@ static void push_recent_rom(std::string path);
 static void show_status_message(void);
 static void show_error_window(void);
 static void set_style(void);
+static void load_custom_palette_from_settings(void);
 static ImVec4 lerp(const ImVec4& a, const ImVec4& b, float t);
 
 bool gui_init(void)
@@ -109,13 +110,14 @@ bool gui_init(void)
     gui_audio_mute_cdrom = false;
     gui_audio_mute_psg = false;
     gui_audio_mute_adpcm = false;
+    gui_custom_palette_loaded = false;
 
     emu_audio_mute(!config_audio.enable);
     emu_audio_huc6280a(config_audio.huc6280a);
     emu_audio_psg_volume(config_audio.psg_volume);
     emu_audio_cdrom_volume(config_audio.cdrom_volume);
     emu_audio_adpcm_volume(config_audio.adpcm_volume);
-    emu_set_composite_palette(config_video.composite_palette);
+    emu_set_palette(config_video.palette);
     emu_video_no_sprite_limit(config_video.sprite_limit);
     emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
     emu_set_scanline_start_end(
@@ -133,7 +135,7 @@ bool gui_init(void)
     emu_set_preload_cdrom(config_emulator.preload_cdrom);
     emu_set_backup_ram(config_emulator.backup_ram);
     emu_set_mb128_mode((GG_MB128_Mode)config_emulator.mb128_mode);
-    emu_set_composite_palette(config_video.composite_palette);
+    emu_set_palette(config_video.palette);
     emu_set_turbo_tap(config_input.turbo_tap);
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -163,6 +165,8 @@ bool gui_init(void)
         gui_load_bios(gui_syscard_bios_path, true);
     if (strlen(gui_gameexpress_bios_path) > 0)
         gui_load_bios(gui_gameexpress_bios_path, false);
+
+    load_custom_palette_from_settings();
 
     gui_hes_init();
     gui_debug_init();
@@ -335,6 +339,75 @@ void gui_load_bios(const char* path, bool syscard)
     }
 
     gui_action_reset();
+}
+
+void gui_load_palette(const char* path)
+{
+    using namespace std;
+    string fullpath(path);
+    string filename;
+
+    size_t pos = fullpath.find_last_of("/\\");
+    if (pos != string::npos)
+        filename = fullpath.substr(pos + 1);
+    else
+        filename = fullpath;
+
+    ifstream file(path, ios::binary | ios::ate);
+    if (!file.is_open())
+    {
+        std::string message("Error opening palette file:\n");
+        message += filename;
+        gui_set_error_message(message.c_str());
+        return;
+    }
+
+    streamsize size = file.tellg();
+    if (size != 0x600)
+    {
+        file.close();
+        std::string message("Invalid palette file size:\n");
+        message += filename;
+        message += "\n\nPalette files must be exactly 1536 bytes (0x600).";
+        gui_set_error_message(message.c_str());
+        return;
+    }
+
+    file.seekg(0, ios::beg);
+    u8 palette_data[0x600];
+    if (!file.read(reinterpret_cast<char*>(palette_data), 0x600))
+    {
+        file.close();
+        std::string message("Error reading palette file:\n");
+        message += filename;
+        gui_set_error_message(message.c_str());
+        return;
+    }
+    file.close();
+
+    emu_set_custom_palette(palette_data);
+
+    std::string dest_path = config_root_path;
+    dest_path += "custom_palette.pal";
+
+    ofstream dest_file(dest_path, ios::binary);
+    if (dest_file.is_open())
+    {
+        dest_file.write(reinterpret_cast<const char*>(palette_data), 0x600);
+        dest_file.close();
+    }
+    else
+    {
+        Log("Warning: Could not save custom palette to %s", dest_path.c_str());
+    }
+
+    config_video.palette = 2;
+    emu_set_palette(config_video.palette);
+    gui_custom_palette_loaded = true;
+
+    std::string message("Custom palette loaded: ");
+    message += filename;
+    gui_set_status_message(message.c_str(), 3000);
 }
 
 void gui_load_rom(const char* path)
@@ -728,6 +801,41 @@ static void set_style(void)
     style.Colors[ImGuiCol_TabDimmed] = lerp(style.Colors[ImGuiCol_Tab], style.Colors[ImGuiCol_TitleBg], 0.60f);
     style.Colors[ImGuiCol_TabDimmedSelected] = lerp(style.Colors[ImGuiCol_TabSelected], style.Colors[ImGuiCol_TitleBg], 0.40f);
     style.Colors[ImGuiCol_TabDimmedSelectedOverline] = lerp(style.Colors[ImGuiCol_TabSelected], style.Colors[ImGuiCol_TitleBg], 0.20f);
+}
+
+static void load_custom_palette_from_settings(void)
+{
+    using namespace std;
+    string palette_path = config_root_path;
+    palette_path += "custom_palette.pal";
+
+    ifstream file(palette_path, ios::binary | ios::ate);
+    if (!file.is_open())
+    {
+        return;
+    }
+
+    streamsize size = file.tellg();
+    if (size != 0x600)
+    {
+        file.close();
+        Log("Invalid custom palette file size: %s", palette_path.c_str());
+        return;
+    }
+
+    file.seekg(0, ios::beg);
+    u8 palette_data[0x600];
+    if (!file.read(reinterpret_cast<char*>(palette_data), 0x600))
+    {
+        file.close();
+        Log("Error reading custom palette file: %s", palette_path.c_str());
+        return;
+    }
+    file.close();
+
+    emu_set_custom_palette(palette_data);
+    gui_custom_palette_loaded = true;
+    Log("Custom palette loaded from: %s", palette_path.c_str());
 }
 
 static ImVec4 lerp(const ImVec4& a, const ImVec4& b, float t)

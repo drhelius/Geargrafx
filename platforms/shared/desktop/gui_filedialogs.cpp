@@ -471,6 +471,28 @@ void gui_file_dialog_save_log(void)
     }
 }
 
+void gui_file_dialog_load_palette(void)
+{
+    nfdchar_t *outPath;
+    nfdfilteritem_t filterItem[1] = { { "Palette Files", "pal,bin" } };
+    nfdopendialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = config_emulator.last_open_path.c_str();
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        gui_load_palette(outPath);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        Error("Load Palette Error: %s", NFD_GetError());
+    }
+}
+
 static void file_dialog_set_native_window(SDL_Window* window, nfdwindowhandle_t* native_window)
 {
     if (!NFD_GetNativeWindowFromSDLWindow(window, native_window))

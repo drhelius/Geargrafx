@@ -81,7 +81,7 @@ struct config_Video
     int scanline_mode = 0;
     int scanline_start = 11;
     int scanline_end = 234;
-    bool composite_palette = false;
+    int palette = 0;
     bool fps = false;
     bool bilinear = false;
     bool sprite_limit = false;
