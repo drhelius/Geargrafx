@@ -170,9 +170,16 @@ static void init_ogl_emu(void)
 
     glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_object);
     glBindTexture(GL_TEXTURE_2D, renderer_emu_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+    int texture_size = FRAME_BUFFER_WIDTH * FRAME_BUFFER_HEIGHT * 3;
+    u8* black_pixels = new u8[texture_size]();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, black_pixels);
+    delete[] black_pixels;
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer_emu_texture, 0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -181,6 +188,8 @@ static void init_ogl_emu(void)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SYSTEM_TEXTURE_WIDTH, SYSTEM_TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_frame_buffer);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     init_scanlines_texture();
 }
@@ -240,6 +249,8 @@ static void render_emu_normal(void)
     glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_object);
 
     glDisable(GL_BLEND);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     update_system_texture();
 
@@ -353,22 +364,28 @@ static void update_emu_texture(void)
 
 static void render_quad(void)
 {
+    float tex_h = (float)current_runtime.screen_width / (float)SYSTEM_TEXTURE_WIDTH;
+    float tex_v = (float)current_runtime.screen_height / (float)SYSTEM_TEXTURE_HEIGHT;
+
+    int viewport_width = current_runtime.screen_width;
+    int viewport_height = current_runtime.screen_height * FRAME_BUFFER_SCALE;
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
     glOrtho(0, 1.0, 0, 1.0, -1, 1);
 
     glMatrixMode(GL_MODELVIEW);
-    glViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+    glViewport(0, 0, viewport_width, viewport_height);
 
     glBegin(GL_QUADS);
     glTexCoord2d(0.0, 0.0);
     glVertex2d(0.0, 0.0);
-    glTexCoord2d(1.0, 0.0);
+    glTexCoord2d(tex_h, 0.0);
     glVertex2d(1.0, 0.0);
-    glTexCoord2d(1.0, 1.0);
+    glTexCoord2d(tex_h, tex_v);
     glVertex2d(1.0, 1.0);
-    glTexCoord2d(0.0, 1.0);
+    glTexCoord2d(0.0, tex_v);
     glVertex2d(0.0, 1.0);
     glEnd();
 }
@@ -383,7 +400,7 @@ static void render_scanlines(void)
 
     glBindTexture(GL_TEXTURE_2D, scanlines_texture);
 
-    int viewportWidth = current_runtime.screen_width * FRAME_BUFFER_SCALE;
+    int viewportWidth = current_runtime.screen_width;
     int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
 
     glMatrixMode(GL_PROJECTION);
