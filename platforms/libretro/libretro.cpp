@@ -797,7 +797,7 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        core->GetHuC6260()->SetCompositePalette(strcmp(var.value, "Enabled") == 0);
+        core->GetHuC6260()->SetPalette(strcmp(var.value, "Enabled") == 0 ? 1 : 0);
     }
 
     var.key = "geargrafx_backup_ram";
