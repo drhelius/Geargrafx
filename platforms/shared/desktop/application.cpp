@@ -739,12 +739,14 @@ static void sdl_events_app(const SDL_Event* event)
             {
                 case SDL_WINDOWEVENT_FOCUS_GAINED:
                 {
+                    application_set_vsync(config_video.sync);
                     if (config_emulator.pause_when_inactive && !paused_when_focus_lost)
                         emu_resume();
                     break;
                 }
                 case SDL_WINDOWEVENT_FOCUS_LOST:
                 {
+                    application_set_vsync(false);
                     if (config_emulator.pause_when_inactive)
                     {
                         paused_when_focus_lost = emu_is_paused();
@@ -754,7 +756,7 @@ static void sdl_events_app(const SDL_Event* event)
                 }
                 case SDL_WINDOWEVENT_DISPLAY_CHANGED:
                 {
-                    update_frame_pacing();
+                    application_set_vsync(config_video.sync);
                     break;
                 }
             }
