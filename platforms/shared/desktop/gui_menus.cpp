@@ -737,7 +737,7 @@ static void menu_video(void)
 
         if (ImGui::MenuItem("Vertical Sync", "", &config_video.sync))
         {
-            SDL_GL_SetSwapInterval(config_video.sync ? 1 : 0);
+            application_set_vsync(config_video.sync);
 
             if (config_video.sync)
             {
@@ -1239,7 +1239,7 @@ static void menu_audio(void)
             if (!config_audio.sync)
             {
                 config_video.sync = false;
-                SDL_GL_SetSwapInterval(0);
+                application_set_vsync(false);
             }
         }
 
