@@ -237,6 +237,9 @@
     <ClInclude Include="..\shared\desktop\config.h">
       <Filter>desktop</Filter>
     </ClInclude>
+    <ClInclude Include="..\shared\desktop\console_utils.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
     <ClInclude Include="..\shared\desktop\emu.h">
       <Filter>desktop</Filter>
     </ClInclude>
@@ -301,6 +304,9 @@
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\gui_debug_trace_logger.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_widgets.h">
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\license.h">
@@ -418,9 +424,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\huc6280_inline.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\huc6280_opcodes.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\huc6280_opcodes_inline.h">

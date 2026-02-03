@@ -184,7 +184,6 @@
     <ClInclude Include="..\..\src\huc6270.h" />
     <ClInclude Include="..\..\src\huc6280_inline.h" />
     <ClInclude Include="..\..\src\huc6280_opcodes_inline.h" />
-    <ClInclude Include="..\..\src\huc6280_opcodes.h" />
     <ClInclude Include="..\..\src\huc6280_psg_inline.h" />
     <ClInclude Include="..\..\src\huc6280_psg.h" />
     <ClInclude Include="..\..\src\huc6280_registers.h" />
@@ -211,9 +210,11 @@
     <ClInclude Include="..\shared\desktop\keyboard.h" />
     <ClInclude Include="..\shared\dependencies\nfd\nfd_sdl2.h" />
     <ClInclude Include="..\shared\desktop\sound_queue.h" />
+    <ClInclude Include="..\shared\desktop\single_instance.h" />
     <ClInclude Include="..\shared\desktop\application.h" />
     <ClInclude Include="..\shared\desktop\backers.h" />
     <ClInclude Include="..\shared\desktop\config.h" />
+    <ClInclude Include="..\shared\desktop\console_utils.h" />
     <ClInclude Include="..\shared\desktop\emu.h" />
     <ClInclude Include="..\shared\dependencies\json\json.hpp" />
     <ClInclude Include="..\shared\desktop\mcp\mcp_debug_adapter.h" />
@@ -235,6 +236,7 @@
     <ClInclude Include="..\shared\desktop\gui_debug_adpcm.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_text.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_trace_logger.h" />
+    <ClInclude Include="..\shared\desktop\gui_debug_widgets.h" />
     <ClInclude Include="..\shared\desktop\gui_debug.h" />
     <ClInclude Include="..\shared\desktop\gui_filedialogs.h" />
     <ClInclude Include="..\shared\desktop\gui_hes.h" />
