@@ -24,7 +24,6 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <th>Platform</th>
       <th>Architecture</th>
       <th>Download Link</th>
-      <th>Notes</th>
     </tr>
   </thead>
   <tbody>
@@ -32,7 +31,6 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <td rowspan="4"><strong>Windows</strong></td>
       <td>Desktop x64</td>
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.12/Geargrafx-1.6.12-desktop-windows-x64.zip">Geargrafx-1.6.12-desktop-windows-x64.zip</a></td>
-      <td rowspan="4">May need <a href="https://go.microsoft.com/fwlink/?LinkId=746572">Visual C++ Redistributable</a> and <a href="https://apps.microsoft.com/detail/9nqpsl29bfff">OpenGL Compatibility Pack</a></td>
     </tr>
     <tr>
       <td>Desktop ARM64</td>
@@ -50,7 +48,6 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <td rowspan="4"><strong>macOS</strong></td>
       <td>Desktop Apple Silicon</td>
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.12/Geargrafx-1.6.12-desktop-macos-arm64.zip">Geargrafx-1.6.12-desktop-macos-arm64.zip</a></td>
-      <td rowspan="4"></td>
     </tr>
     <tr>
       <td>Desktop Intel</td>
@@ -68,7 +65,6 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <td rowspan="3"><strong>Linux</strong></td>
       <td>Desktop Ubuntu 24.04</td>
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.12/Geargrafx-1.6.12-desktop-ubuntu24.04-x64.zip">Geargrafx-1.6.12-desktop-ubuntu24.04-x64.zip</a></td>
-      <td rowspan="3">May need <code>libsdl2</code></td>
     </tr>
     <tr>
       <td>Desktop Ubuntu 22.04</td>
@@ -82,16 +78,18 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <td><strong>RetroArch</strong></td>
       <td>All platforms</td>
       <td><a href="https://docs.libretro.com/library/geargrafx/">Libretro core documentation</a></td>
-      <td></td>
     </tr>
     <tr>
       <td><strong>Dev Builds</strong></td>
       <td>All platforms</td>
       <td><a href="https://github.com/drhelius/Geargrafx/actions/workflows/geargrafx.yml">GitHub Actions</a></td>
-      <td>Latest development builds</td>
     </tr>
   </tbody>
 </table>
+
+**Notes:**
+- **Windows**: May need [Visual C++ Redistributable](https://go.microsoft.com/fwlink/?LinkId=746572) and [OpenGL Compatibility Pack](https://apps.microsoft.com/detail/9nqpsl29bfff)
+- **Linux**: May need `libsdl2`
 
 ## Features
 
