@@ -80,6 +80,8 @@ jobs:
 
             depends_on macos: ">= :monterey"
 
+            container nested: "${{ env.NAME_UPPER }}.app.zip"
+
             app "${{ env.NAME_UPPER }}.app"
 
             zap trash: [
