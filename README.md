@@ -45,7 +45,11 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.12/Geargrafx-1.6.12-mcpb-windows-arm64.mcpb">Geargrafx-1.6.12-mcpb-windows-arm64.mcpb</a></td>
     </tr>
     <tr>
-      <td rowspan="4"><strong>macOS</strong></td>
+      <td rowspan="5"><strong>macOS</strong></td>
+      <td>Homebrew</td>
+      <td><code>brew install --cask drhelius/geardome/geargrafx</code></td>
+    </tr>
+    <tr>
       <td>Desktop Apple Silicon</td>
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.12/Geargrafx-1.6.12-desktop-macos-arm64.zip">Geargrafx-1.6.12-desktop-macos-arm64.zip</a></td>
     </tr>
