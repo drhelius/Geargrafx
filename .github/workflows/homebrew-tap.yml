@@ -11,7 +11,7 @@ env:
   APP_DESC: "TurboGrafx-16 / PC Engine / SuperGrafx / PCE CD-ROM² emulator"
   GITHUB_OWNER: drhelius
   TAP_REPO: drhelius/homebrew-geardome
-  PLIST_ID: com.geardome.geargrafx
+  PLIST_ID: com.drhelius.geargrafx
 
 jobs:
   update-tap:
