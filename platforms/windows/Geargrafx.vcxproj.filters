@@ -426,9 +426,6 @@
     <ClInclude Include="..\..\src\huc6280_inline.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\huc6280_dispatch.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\huc6280_opcodes_inline.h">
       <Filter>src</Filter>
     </ClInclude>

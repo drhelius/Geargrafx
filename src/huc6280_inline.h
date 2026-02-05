@@ -24,7 +24,6 @@
 #include "huc6280.h"
 #include "huc6280_timing.h"
 #include "huc6280_names.h"
-#include "huc6280_dispatch.h"
 #include "huc6270.h"
 #include "memory.h"
 
@@ -44,7 +43,7 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
     u8 opcode = Fetch8();
     CheckIRQs();
 
-    HUC6280_DISPATCH(opcode);
+    (this->*m_opcodes[opcode])();
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     if (IsValidPointer(instruction_completed))
