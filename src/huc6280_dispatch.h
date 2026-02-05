@@ -24,7 +24,7 @@
 
 #define HUC6280_DISPATCH(opcode) \
     do { \
-        static const void* JUMPTABLE[256] = { \
+        const void* JUMPTABLE[256] = { \
             &&op00, &&op01, &&op02, &&op03, &&op04, &&op05, &&op06, &&op07, &&op08, &&op09, &&op0A, &&op0B, &&op0C, &&op0D, &&op0E, &&op0F, \
             &&op10, &&op11, &&op12, &&op13, &&op14, &&op15, &&op16, &&op17, &&op18, &&op19, &&op1A, &&op1B, &&op1C, &&op1D, &&op1E, &&op1F, \
             &&op20, &&op21, &&op22, &&op23, &&op24, &&op25, &&op26, &&op27, &&op28, &&op29, &&op2A, &&op2B, &&op2C, &&op2D, &&op2E, &&op2F, \
