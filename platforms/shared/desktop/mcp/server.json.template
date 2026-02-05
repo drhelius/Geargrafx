@@ -48,6 +48,14 @@
       "transport": {
         "type": "stdio"
       }
+    },
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/drhelius/{{NAME_LOWER}}/releases/download/{{VERSION}}/{{NAME_UPPER}}-{{VERSION}}-mcpb-linux-arm64.mcpb",
+      "fileSha256": "{{SHA256_LINUX_ARM64}}",
+      "transport": {
+        "type": "stdio"
+      }
     }
   ]
 }

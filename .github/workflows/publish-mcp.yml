@@ -47,6 +47,7 @@ jobs:
         echo "SHA256_WINDOWS_ARM64=$(shasum -a 256 ${{ env.NAME_UPPER }}-${TAG}-mcpb-windows-arm64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
         echo "SHA256_WINDOWS_X64=$(shasum -a 256 ${{ env.NAME_UPPER }}-${TAG}-mcpb-windows-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
         echo "SHA256_LINUX_X64=$(shasum -a 256 ${{ env.NAME_UPPER }}-${TAG}-mcpb-linux-x64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
+        echo "SHA256_LINUX_ARM64=$(shasum -a 256 ${{ env.NAME_UPPER }}-${TAG}-mcpb-linux-arm64.mcpb | cut -d' ' -f1)" >> $GITHUB_ENV
     - name: Generate MCP server.json
       run: |
         cp platforms/shared/desktop/mcp/server.json.template server.json
@@ -58,6 +59,7 @@ jobs:
         sed -i '' "s/{{SHA256_WINDOWS_ARM64}}/${{ env.SHA256_WINDOWS_ARM64 }}/g" server.json
         sed -i '' "s/{{SHA256_WINDOWS_X64}}/${{ env.SHA256_WINDOWS_X64 }}/g" server.json
         sed -i '' "s/{{SHA256_LINUX_X64}}/${{ env.SHA256_LINUX_X64 }}/g" server.json
+        sed -i '' "s/{{SHA256_LINUX_ARM64}}/${{ env.SHA256_LINUX_ARM64 }}/g" server.json
         
         echo "Generated server.json:"
         cat server.json

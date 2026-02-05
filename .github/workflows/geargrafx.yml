@@ -21,7 +21,14 @@ jobs:
     name: Linux
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-22.04]
+        os: [ubuntu-24.04, ubuntu-22.04, ubuntu-24.04-arm]
+        include:
+        - os: ubuntu-24.04
+          artifact_name: ubuntu24.04-x64
+        - os: ubuntu-22.04
+          artifact_name: ubuntu22.04-x64
+        - os: ubuntu-24.04-arm
+          artifact_name: ubuntu24.04-arm64
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -51,7 +58,7 @@ jobs:
     - name: Archive binary
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-desktop-${{ matrix.os == 'ubuntu-24.04' && 'ubuntu24.04' || matrix.os == 'ubuntu-22.04' && 'ubuntu22.04' || matrix.os }}-x64
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-desktop-${{ matrix.artifact_name }}
         path: artifact/*
   linux-clang:
     name: Linux (Clang/LLVM)
@@ -254,7 +261,8 @@ jobs:
           - { platform: darwin, arch: x64, os: macos-15-intel, architecture: intel }
           - { platform: win32, arch: arm64, os: windows-latest, architecture: arm64 }
           - { platform: win32, arch: x64, os: windows-latest, architecture: x64 }
-          - { platform: linux, arch: x64, os: ubuntu-24.04, architecture: '' }
+          - { platform: linux, arch: x64, os: ubuntu-24.04, artifact_name: ubuntu24.04-x64 }
+          - { platform: linux, arch: arm64, os: ubuntu-24.04-arm, artifact_name: ubuntu24.04-arm64 }
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -266,7 +274,7 @@ jobs:
     - name: Download artifact
       uses: actions/download-artifact@v4
       with:
-        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-desktop-${{ matrix.variant.platform == 'darwin' && format('macos-{0}', matrix.variant.architecture == 'arm' && 'arm64' || 'intel') || matrix.variant.platform == 'linux' && format('{0}-x64', matrix.variant.os == 'ubuntu-24.04' && 'ubuntu24.04' || 'ubuntu22.04') || format('windows-{0}', matrix.variant.architecture) }}
+        name: ${{ env.NAME_UPPER }}-${{ env.BUILD_NUMBER }}-desktop-${{ matrix.variant.platform == 'darwin' && format('macos-{0}', matrix.variant.architecture == 'arm' && 'arm64' || 'intel') || matrix.variant.platform == 'linux' && matrix.variant.artifact_name || format('windows-{0}', matrix.variant.architecture) }}
         path: download
     - name: Prepare MCPB structure
       run: |
