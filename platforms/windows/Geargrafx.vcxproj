@@ -183,6 +183,7 @@
     <ClInclude Include="..\..\src\huc6270_inline.h" />
     <ClInclude Include="..\..\src\huc6270.h" />
     <ClInclude Include="..\..\src\huc6280_inline.h" />
+    <ClInclude Include="..\..\src\huc6280_dispatch.h" />
     <ClInclude Include="..\..\src\huc6280_opcodes_inline.h" />
     <ClInclude Include="..\..\src\huc6280_psg_inline.h" />
     <ClInclude Include="..\..\src\huc6280_psg.h" />
