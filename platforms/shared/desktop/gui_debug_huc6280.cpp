@@ -194,46 +194,86 @@ void gui_debug_window_huc6280(void)
         if (ImGui::BeginTable("regs", 2, ImGuiTableFlags_BordersInnerH |ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_NoPadOuterX))
         {
             ImGui::TableNextColumn();
+            ImGui::BeginGroup();
             ImGui::TextColored(cyan, " A"); ImGui::SameLine();
             ImGui::Text("  "); ImGui::SameLine(0, 0);
             EditableRegister8(NULL, NULL, HuC6280RegId_A, proc_state->A->GetValue(), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
             ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+            ImGui::EndGroup();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::TextColored(cyan, "Hex: $%02X", proc_state->A->GetValue());
+                ImGui::TextColored(cyan, "Dec: %u (%d)", proc_state->A->GetValue(), (s8)proc_state->A->GetValue());
+                ImGui::TextColored(cyan, "Bin: " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->A->GetValue()));
+                ImGui::TextColored(cyan, "Ascii: %c", (proc_state->A->GetValue() >= 32 && proc_state->A->GetValue() < 127) ? proc_state->A->GetValue() : '.');
+                ImGui::EndTooltip();
+            }
 
             ImGui::TableNextColumn();
+            ImGui::BeginGroup();
             ImGui::TextColored(cyan, " S"); ImGui::SameLine();
             ImGui::Text("  "); ImGui::SameLine(0, 0);
             EditableRegister8(NULL, NULL, HuC6280RegId_S, proc_state->S->GetValue(), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
             ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->S->GetValue()));
+            ImGui::EndGroup();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::TextColored(cyan, "Hex: $%02X", proc_state->S->GetValue());
+                ImGui::TextColored(cyan, "Dec: %u (%d)", proc_state->S->GetValue(), (s8)proc_state->S->GetValue());
+                ImGui::TextColored(cyan, "Bin: " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->S->GetValue()));
+                ImGui::TextColored(cyan, "Ascii: %c", (proc_state->S->GetValue() >= 32 && proc_state->S->GetValue() < 127) ? proc_state->S->GetValue() : '.');
+                ImGui::EndTooltip();
+            }
 
             ImGui::TableNextColumn();
+            ImGui::BeginGroup();
             ImGui::TextColored(cyan, " X"); ImGui::SameLine();
             ImGui::Text("  "); ImGui::SameLine(0, 0);
             EditableRegister8(NULL, NULL, HuC6280RegId_X, proc_state->X->GetValue(), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
             ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->X->GetValue()));
+            ImGui::EndGroup();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::TextColored(cyan, "Hex: $%02X", proc_state->X->GetValue());
+                ImGui::TextColored(cyan, "Dec: %u (%d)", proc_state->X->GetValue(), (s8)proc_state->X->GetValue());
+                ImGui::TextColored(cyan, "Bin: " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->X->GetValue()));
+                ImGui::TextColored(cyan, "Ascii: %c", (proc_state->X->GetValue() >= 32 && proc_state->X->GetValue() < 127) ? proc_state->X->GetValue() : '.');
+                ImGui::EndTooltip();
+            }
 
             ImGui::TableNextColumn();
+            ImGui::BeginGroup();
             ImGui::TextColored(cyan, " Y"); ImGui::SameLine();
             ImGui::Text("  "); ImGui::SameLine(0, 0);
             EditableRegister8(NULL, NULL, HuC6280RegId_Y, proc_state->Y->GetValue(), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
             ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->Y->GetValue()));
+            ImGui::EndGroup();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::TextColored(cyan, "Hex: $%02X", proc_state->Y->GetValue());
+                ImGui::TextColored(cyan, "Dec: %u (%d)", proc_state->Y->GetValue(), (s8)proc_state->Y->GetValue());
+                ImGui::TextColored(cyan, "Bin: " BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(proc_state->Y->GetValue()));
+                ImGui::TextColored(cyan, "Ascii: %c", (proc_state->Y->GetValue() >= 32 && proc_state->Y->GetValue() < 127) ? proc_state->Y->GetValue() : '.');
+                ImGui::EndTooltip();
+            }
 
             for (u8 i = 0; i < 8; i++)
             {
                 char label[8];
                 snprintf(label, sizeof(label), "MPR%d", i);
                 ImGui::TableNextColumn();
+                ImGui::BeginGroup();
                 ImGui::TextColored(violet, "%s", label); ImGui::SameLine();
-                if (ImGui::IsItemClicked())
-                    goto_address(memory->GetMpr(i));
                 ImGui::Text(""); ImGui::SameLine(0, 0);
                 EditableRegister8(NULL, NULL, HuC6280RegId_MPR0 + i, memory->GetMpr(i), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
-                if (ImGui::IsItemClicked())
-                    goto_address(memory->GetMpr(i));
                 ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(i)));
                 get_bank_name(i, memory->GetMpr(i), mpr_name, mpr_tooltip);
-                if (ImGui::IsItemClicked())
-                    goto_address(memory->GetMpr(i));
                 ImGui::TextColored(brown, " %s", mpr_name);
+                ImGui::EndGroup();
                 if (ImGui::IsItemClicked())
                     goto_address(memory->GetMpr(i));
                 if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
