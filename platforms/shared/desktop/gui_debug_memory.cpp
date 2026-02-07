@@ -410,6 +410,7 @@ void gui_debug_memory_add_watch(int editor, int address, const char* notes)
     }
 
     watches->push_back(watch);
+    mem_edit[editor].OpenWatchWindow();
 }
 
 void gui_debug_memory_remove_watch(int editor, int address)

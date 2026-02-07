@@ -1635,6 +1635,25 @@ void gui_debug_window_call_stack(void)
             {
                 request_goto_address(entry.dest);
             }
+
+            ImGui::PopFont();
+            if (ImGui::BeginPopupContextItem())
+            {
+                if (ImGui::Selectable("Add Breakpoint"))
+                {
+                    if (!emu_get_core()->GetHuC6280()->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, entry.dest))
+                        emu_get_core()->GetHuC6280()->AddBreakpoint(entry.dest);
+                }
+
+                if (ImGui::Selectable("Add Watch"))
+                {
+                    gui_debug_memory_add_watch(0, entry.dest, symbol_text[0] ? symbol_text : NULL);
+                }
+
+                ImGui::EndPopup();
+            }
+            ImGui::PushFont(gui_default_font);
+
             ImGui::SameLine();
             ImGui::TextColored(cyan, "$%04X", entry.dest);
             ImGui::SameLine();
@@ -1810,6 +1829,25 @@ void gui_debug_window_symbols(void)
                 {
                     request_goto_address(symbol->address);
                 }
+
+                ImGui::PopFont();
+                if (ImGui::BeginPopupContextItem())
+                {
+                    if (ImGui::Selectable("Add Breakpoint"))
+                    {
+                        if (!emu_get_core()->GetHuC6280()->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, symbol->address))
+                            emu_get_core()->GetHuC6280()->AddBreakpoint(symbol->address);
+                    }
+
+                    if (ImGui::Selectable("Add Watch"))
+                    {
+                        gui_debug_memory_add_watch(0, symbol->address, symbol->text);
+                    }
+
+                    ImGui::EndPopup();
+                }
+                ImGui::PushFont(gui_default_font);
+
                 ImGui::SameLine();
                 ImGui::TextColored(cyan, "$%02X", b);
 
