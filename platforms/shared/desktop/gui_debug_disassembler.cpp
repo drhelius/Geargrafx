@@ -47,8 +47,19 @@ struct DisassemblerBookmark
     char name[32];
 };
 
+struct SymbolEntry
+{
+    DebugSymbol* symbol;
+    bool is_manual;
+    int bank;
+};
+
+static bool symbols_dirty = true;
+static bool show_auto_symbols = false;
 static DebugSymbol*** fixed_symbols = NULL;
 static DebugSymbol*** dynamic_symbols = NULL;
+static std::vector<SymbolEntry> fixed_symbol_list;
+static std::vector<SymbolEntry> dynamic_symbol_list;
 static std::vector<DisassemblerLine> disassembler_lines(0x10000);
 static std::vector<DisassemblerBookmark> bookmarks;
 static int selected_address = -1;
@@ -88,6 +99,12 @@ static void add_bookmark_popup(void);
 static void add_symbol_popup(void);
 static void save_full_disassembler(FILE* file);
 static void save_current_disassembler(FILE* file);
+static bool symbol_sort_address_asc(const SymbolEntry& a, const SymbolEntry& b);
+static bool symbol_sort_address_desc(const SymbolEntry& a, const SymbolEntry& b);
+static bool symbol_sort_addr_only_asc(const SymbolEntry& a, const SymbolEntry& b);
+static bool symbol_sort_addr_only_desc(const SymbolEntry& a, const SymbolEntry& b);
+static bool symbol_sort_name_asc(const SymbolEntry& a, const SymbolEntry& b);
+static bool symbol_sort_name_desc(const SymbolEntry& a, const SymbolEntry& b);
 
 void gui_debug_disassembler_init(void)
 {
@@ -144,6 +161,10 @@ void gui_debug_reset_symbols(void)
             SafeDelete(dynamic_symbols[i][j]);
         }
     }
+
+    fixed_symbol_list.clear();
+    dynamic_symbol_list.clear();
+    symbols_dirty = true;
 
     if (emu_get_core()->GetMedia()->IsCDROM())
     {
@@ -932,6 +953,13 @@ static void add_symbol(const char* line)
                 snprintf(new_symbol->text, 64, "%s", s.text);
 
                 fixed_symbols[s.bank][s.address] = new_symbol;
+
+                SymbolEntry entry;
+                entry.symbol = new_symbol;
+                entry.is_manual = true;
+                entry.bank = s.bank;
+                fixed_symbol_list.push_back(entry);
+                symbols_dirty = true;
             }
         }
     }
@@ -977,6 +1005,8 @@ static void add_auto_symbol(GG_Disassembler_Record* record, u16 address)
         {
            if (record->subroutine)
                snprintf(dynamic_symbols[s.bank][s.address]->text, 64, "SUB_%02X_%04X", record->jump_bank, record->jump_address);
+           if (show_auto_symbols)
+               symbols_dirty = true;
         }
         else
         {
@@ -986,6 +1016,15 @@ static void add_auto_symbol(GG_Disassembler_Record* record, u16 address)
             snprintf(new_symbol->text, 64, "%s", s.text);
 
             dynamic_symbols[s.bank][s.address] = new_symbol;
+
+            SymbolEntry entry;
+            entry.symbol = new_symbol;
+            entry.is_manual = false;
+            entry.bank = s.bank;
+            dynamic_symbol_list.push_back(entry);
+
+            if (show_auto_symbols)
+                symbols_dirty = true;
         }
     }
 }
@@ -1621,58 +1660,160 @@ void gui_debug_window_symbols(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(340, 400), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(356, 300), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(356, 370), ImGuiCond_FirstUseEver);
 
     ImGui::Begin("Symbols", &config_debug.show_symbols);
 
-    static bool show_auto_symbols = false;
-    ImGui::Checkbox("Show Automatic Symbols", &show_auto_symbols);
+    static char symbol_filter[64] = "";
+    static std::vector<SymbolEntry> sorted_symbols;
+    static int last_sort_column = -1;
+    static int last_sort_direction = -1;
+
+    bool prev_auto = show_auto_symbols;
+    ImGui::Checkbox("Automatic Symbols", &show_auto_symbols);
+    if (show_auto_symbols != prev_auto)
+        symbols_dirty = true;
+    ImGui::SameLine();
+    ImGui::PushItemWidth(-1);
+    if (ImGui::InputTextWithHint("##symbol_filter", "Filter...", symbol_filter, IM_ARRAYSIZE(symbol_filter)))
+        symbols_dirty = true;
+    ImGui::PopItemWidth();
 
     ImGui::Separator();
 
-    ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Resizable;
+    ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Resizable | ImGuiTableFlags_Sortable;
 
     if (ImGui::BeginTable("symbols_table", 4, flags))
     {
         ImGui::TableSetupScrollFreeze(0, 1);
-        ImGui::TableSetupColumn("Bank", ImGuiTableColumnFlags_WidthFixed, 36.0f);
+        ImGui::TableSetupColumn("Bank", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort, 36.0f);
         ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed, 58.0f);
         ImGui::TableSetupColumn("Symbol", ImGuiTableColumnFlags_WidthStretch, 2.0f);
-        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed, 44.0f);
+        ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, 44.0f);
         ImGui::TableHeadersRow();
+
+        if (ImGuiTableSortSpecs* sort_specs = ImGui::TableGetSortSpecs())
+        {
+            if (sort_specs->SpecsDirty || symbols_dirty)
+            {
+                sort_specs->SpecsDirty = false;
+                symbols_dirty = true;
+            }
+
+            if (sort_specs->SpecsCount > 0)
+            {
+                last_sort_column = sort_specs->Specs[0].ColumnIndex;
+                last_sort_direction = sort_specs->Specs[0].SortDirection;
+            }
+        }
+
+        if (symbols_dirty)
+        {
+            symbols_dirty = false;
+            sorted_symbols.clear();
+
+            for (size_t i = 0; i < fixed_symbol_list.size(); i++)
+            {
+                SymbolEntry& e = fixed_symbol_list[i];
+
+                if (symbol_filter[0] != 0)
+                {
+                    char addr_str[8];
+                    snprintf(addr_str, sizeof(addr_str), "%04X", e.symbol->address);
+
+                    char filter_upper[64];
+                    char text_upper[64];
+                    for (int j = 0; j < 63 && symbol_filter[j]; j++) { filter_upper[j] = toupper(symbol_filter[j]); filter_upper[j + 1] = 0; }
+                    for (int j = 0; j < 63 && e.symbol->text[j]; j++) { text_upper[j] = toupper(e.symbol->text[j]); text_upper[j + 1] = 0; }
+
+                    if (strstr(text_upper, filter_upper) == NULL && strstr(addr_str, filter_upper) == NULL)
+                        continue;
+                }
+
+                sorted_symbols.push_back(e);
+            }
+
+            if (show_auto_symbols)
+            {
+                for (size_t i = 0; i < dynamic_symbol_list.size(); i++)
+                {
+                    SymbolEntry& e = dynamic_symbol_list[i];
+
+                    if (IsValidPointer(fixed_symbols[e.bank][e.symbol->address]))
+                        continue;
+
+                    if (symbol_filter[0] != 0)
+                    {
+                        char addr_str[8];
+                        snprintf(addr_str, sizeof(addr_str), "%04X", e.symbol->address);
+
+                        char filter_upper[64];
+                        char text_upper[64];
+                        for (int j = 0; j < 63 && symbol_filter[j]; j++) { filter_upper[j] = toupper(symbol_filter[j]); filter_upper[j + 1] = 0; }
+                        for (int j = 0; j < 63 && e.symbol->text[j]; j++) { text_upper[j] = toupper(e.symbol->text[j]); text_upper[j + 1] = 0; }
+
+                        if (strstr(text_upper, filter_upper) == NULL && strstr(addr_str, filter_upper) == NULL)
+                            continue;
+                    }
+
+                    sorted_symbols.push_back(e);
+                }
+            }
+
+            if (last_sort_column >= 0)
+            {
+                bool ascending = (last_sort_direction == ImGuiSortDirection_Ascending);
+
+                if (last_sort_column == 0)
+                {
+                    std::sort(sorted_symbols.begin(), sorted_symbols.end(), ascending ? symbol_sort_address_asc : symbol_sort_address_desc);
+                }
+                else if (last_sort_column == 1)
+                {
+                    std::sort(sorted_symbols.begin(), sorted_symbols.end(), ascending ? symbol_sort_addr_only_asc : symbol_sort_addr_only_desc);
+                }
+                else if (last_sort_column == 2)
+                {
+                    std::sort(sorted_symbols.begin(), sorted_symbols.end(), ascending ? symbol_sort_name_asc : symbol_sort_name_desc);
+                }
+            }
+        }
 
         ImGui::PushFont(gui_default_font);
 
-        for (int b = 0; b < 0x100; b++)
+        ImGuiListClipper clipper;
+        clipper.Begin((int)sorted_symbols.size());
+        while (clipper.Step())
         {
-            for (int i = 0; i < 0x10000; i++)
+            for (int idx = clipper.DisplayStart; idx < clipper.DisplayEnd; idx++)
             {
-                DebugSymbol* fixed = fixed_symbols[b][i];
-                DebugSymbol* dynamic_sym = (!IsValidPointer(fixed) && show_auto_symbols) ? dynamic_symbols[b][i] : NULL;
+                DebugSymbol* symbol = sorted_symbols[idx].symbol;
+                bool is_manual = sorted_symbols[idx].is_manual;
+                int b = sorted_symbols[idx].bank;
 
-                DebugSymbol* symbol = IsValidPointer(fixed) ? fixed : dynamic_sym;
+                ImGui::TableNextRow();
 
-                if (IsValidPointer(symbol))
+                ImGui::TableNextColumn();
+                char selectable_id[16];
+                snprintf(selectable_id, sizeof(selectable_id), "##sym%d", (int)idx);
+                if (ImGui::Selectable(selectable_id, false, ImGuiSelectableFlags_SpanAllColumns))
                 {
-                    bool is_manual = IsValidPointer(fixed);
-
-                    ImGui::TableNextRow();
-
-                    ImGui::TableNextColumn();
-                    ImGui::TextColored(cyan, "$%02X", b);
-
-                    ImGui::TableNextColumn();
-                    ImGui::TextColored(cyan, "$%04X", symbol->address);
-
-                    ImGui::TableNextColumn();
-                    ImGui::TextColored(is_manual ? green : yellow, "%s", symbol->text);
-
-                    ImGui::TableNextColumn();
-                    if (is_manual)
-                        ImGui::TextColored(orange, "Manual");
-                    else
-                        ImGui::TextColored(brown, "Auto");
+                    request_goto_address(symbol->address);
                 }
+                ImGui::SameLine();
+                ImGui::TextColored(cyan, "$%02X", b);
+
+                ImGui::TableNextColumn();
+                ImGui::TextColored(cyan, "$%04X", symbol->address);
+
+                ImGui::TableNextColumn();
+                ImGui::TextColored(is_manual ? green : yellow, "%s", symbol->text);
+
+                ImGui::TableNextColumn();
+                if (is_manual)
+                    ImGui::TextColored(orange, "Manual");
+                else
+                    ImGui::TextColored(brown, "Auto");
             }
         }
 
@@ -1700,8 +1841,17 @@ void gui_debug_remove_symbol(u8 bank, u16 address)
         DebugSymbol* symbol = fixed_symbols[bank][address];
         if (IsValidPointer(symbol))
         {
+            for (size_t i = 0; i < fixed_symbol_list.size(); i++)
+            {
+                if (fixed_symbol_list[i].symbol == symbol)
+                {
+                    fixed_symbol_list.erase(fixed_symbol_list.begin() + i);
+                    break;
+                }
+            }
             delete symbol;
             fixed_symbols[bank][address] = NULL;
+            symbols_dirty = true;
         }
     }
 }
@@ -1858,4 +2008,42 @@ static void save_current_disassembler(FILE* file)
             fprintf(file, "\n\n");
         }
     }
+}
+
+static bool symbol_sort_address_asc(const SymbolEntry& a, const SymbolEntry& b)
+{
+    if (a.bank != b.bank)
+        return a.bank < b.bank;
+    return a.symbol->address < b.symbol->address;
+}
+
+static bool symbol_sort_address_desc(const SymbolEntry& a, const SymbolEntry& b)
+{
+    if (a.bank != b.bank)
+        return a.bank > b.bank;
+    return a.symbol->address > b.symbol->address;
+}
+
+static bool symbol_sort_addr_only_asc(const SymbolEntry& a, const SymbolEntry& b)
+{
+    if (a.symbol->address != b.symbol->address)
+        return a.symbol->address < b.symbol->address;
+    return a.bank < b.bank;
+}
+
+static bool symbol_sort_addr_only_desc(const SymbolEntry& a, const SymbolEntry& b)
+{
+    if (a.symbol->address != b.symbol->address)
+        return a.symbol->address > b.symbol->address;
+    return a.bank > b.bank;
+}
+
+static bool symbol_sort_name_asc(const SymbolEntry& a, const SymbolEntry& b)
+{
+    return strcmp(a.symbol->text, b.symbol->text) < 0;
+}
+
+static bool symbol_sort_name_desc(const SymbolEntry& a, const SymbolEntry& b)
+{
+    return strcmp(a.symbol->text, b.symbol->text) > 0;
 }
