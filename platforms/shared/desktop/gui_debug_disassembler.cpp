@@ -1669,11 +1669,6 @@ void gui_debug_window_call_stack(void)
                         emu_get_core()->GetHuC6280()->AddBreakpoint(entry.dest);
                 }
 
-                if (ImGui::Selectable("Add Watch..."))
-                {
-                    gui_debug_memory_open_watch_popup(0, entry.dest, symbol_text[0] ? symbol_text : NULL);
-                }
-
                 ImGui::EndPopup();
             }
             ImGui::PushFont(gui_default_font);
@@ -1861,11 +1856,6 @@ void gui_debug_window_symbols(void)
                     {
                         if (!emu_get_core()->GetHuC6280()->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, symbol->address))
                             emu_get_core()->GetHuC6280()->AddBreakpoint(symbol->address);
-                    }
-
-                    if (ImGui::Selectable("Add Watch..."))
-                    {
-                        gui_debug_memory_open_watch_popup(0, symbol->address, symbol->text);
                     }
 
                     ImGui::EndPopup();
