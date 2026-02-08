@@ -30,19 +30,19 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     <tr>
       <td rowspan="4"><strong>Windows</strong></td>
       <td>Desktop x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-desktop-windows-x64.zip">Geargrafx-1.6.14-desktop-windows-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-desktop-windows-x64.zip">Geargrafx-1.6.15-desktop-windows-x64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-desktop-windows-arm64.zip">Geargrafx-1.6.14-desktop-windows-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-desktop-windows-arm64.zip">Geargrafx-1.6.15-desktop-windows-arm64.zip</a></td>
     </tr>
     <tr>
       <td>MCPB x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-mcpb-windows-x64.mcpb">Geargrafx-1.6.14-mcpb-windows-x64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-mcpb-windows-x64.mcpb">Geargrafx-1.6.15-mcpb-windows-x64.mcpb</a></td>
     </tr>
     <tr>
       <td>MCPB ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-mcpb-windows-arm64.mcpb">Geargrafx-1.6.14-mcpb-windows-arm64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-mcpb-windows-arm64.mcpb">Geargrafx-1.6.15-mcpb-windows-arm64.mcpb</a></td>
     </tr>
     <tr>
       <td rowspan="5"><strong>macOS</strong></td>
@@ -51,40 +51,40 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     </tr>
     <tr>
       <td>Desktop Apple Silicon</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-desktop-macos-arm64.zip">Geargrafx-1.6.14-desktop-macos-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-desktop-macos-arm64.zip">Geargrafx-1.6.15-desktop-macos-arm64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop Intel</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-desktop-macos-intel.zip">Geargrafx-1.6.14-desktop-macos-intel.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-desktop-macos-intel.zip">Geargrafx-1.6.15-desktop-macos-intel.zip</a></td>
     </tr>
     <tr>
       <td>MCPB x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-mcpb-macos-x64.mcpb">Geargrafx-1.6.14-mcpb-macos-x64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-mcpb-macos-x64.mcpb">Geargrafx-1.6.15-mcpb-macos-x64.mcpb</a></td>
     </tr>
     <tr>
       <td>MCPB ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-mcpb-macos-arm64.mcpb">Geargrafx-1.6.14-mcpb-macos-arm64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-mcpb-macos-arm64.mcpb">Geargrafx-1.6.15-mcpb-macos-arm64.mcpb</a></td>
     </tr>
     <tr>
       <td rowspan="5"><strong>Linux</strong></td>
       <td>Desktop Ubuntu 24.04 x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-desktop-ubuntu24.04-x64.zip">Geargrafx-1.6.14-desktop-ubuntu24.04-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-desktop-ubuntu24.04-x64.zip">Geargrafx-1.6.15-desktop-ubuntu24.04-x64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop Ubuntu 22.04 x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-desktop-ubuntu22.04-x64.zip">Geargrafx-1.6.14-desktop-ubuntu22.04-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-desktop-ubuntu22.04-x64.zip">Geargrafx-1.6.15-desktop-ubuntu22.04-x64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop Ubuntu 24.04 ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-desktop-ubuntu24.04-arm64.zip">Geargrafx-1.6.14-desktop-ubuntu24.04-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-desktop-ubuntu24.04-arm64.zip">Geargrafx-1.6.15-desktop-ubuntu24.04-arm64.zip</a></td>
     </tr>
     <tr>
       <td>MCPB x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-mcpb-linux-x64.mcpb">Geargrafx-1.6.14-mcpb-linux-x64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-mcpb-linux-x64.mcpb">Geargrafx-1.6.15-mcpb-linux-x64.mcpb</a></td>
     </tr>
     <tr>
       <td>MCPB ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.14/Geargrafx-1.6.14-mcpb-linux-arm64.mcpb">Geargrafx-1.6.14-mcpb-linux-arm64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.6.15/Geargrafx-1.6.15-mcpb-linux-arm64.mcpb">Geargrafx-1.6.15-mcpb-linux-arm64.mcpb</a></td>
     </tr>
     <tr>
       <td><strong>RetroArch</strong></td>
