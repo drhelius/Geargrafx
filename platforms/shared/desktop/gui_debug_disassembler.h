@@ -56,6 +56,7 @@ EXTERN void gui_debug_go_back(void);
 EXTERN void gui_debug_window_disassembler(void);
 EXTERN void gui_debug_save_disassembler(const char* file_path, bool full);
 EXTERN void gui_debug_window_call_stack(void);
+EXTERN void gui_debug_window_breakpoints(void);
 EXTERN void gui_debug_window_symbols(void);
 
 #undef GUI_DEBUG_DISASSEMBLER_IMPORT

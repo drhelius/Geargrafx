@@ -1439,6 +1439,7 @@ static void menu_debug(void)
         ImGui::Separator();
         ImGui::MenuItem("Show HuC6280 Status", "", &config_debug.show_processor, config_debug.debug);
         ImGui::MenuItem("Show HuC6280 Call Stack", "", &config_debug.show_call_stack, config_debug.debug);
+        ImGui::MenuItem("Show HuC6280 Breakpoints", "", &config_debug.show_breakpoints, config_debug.debug);
         ImGui::MenuItem("Show HuC6280 Symbols", "", &config_debug.show_symbols, config_debug.debug);
         ImGui::Separator();
         ImGui::MenuItem("Show HuC6260 Info", "", &config_debug.show_huc6260_info, config_debug.debug);

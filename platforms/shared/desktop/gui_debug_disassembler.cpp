@@ -82,6 +82,7 @@ static bool add_symbol_open = false;
 
 static void draw_controls(void);
 static void draw_breakpoints(void);
+static void draw_breakpoints_content(void);
 static void prepare_drawable_lines(void);
 static void draw_disassembly(void);
 static void draw_context_menu(DisassemblerLine* line);
@@ -426,132 +427,151 @@ static void draw_controls(void)
 
 static const char* k_breakpoint_types[] = { "ROM/RAM ", "VRAM    ", "PALETTE ", "6270 REG", "6260 REG" };
 
+static void draw_breakpoints_content(void)
+{
+    ImGui::Checkbox("Break On IRQs##irq_break", &emu_debug_irq_breakpoints); ImGui::SameLine();
+    ImGui::Checkbox("Disable All##disable_mem", &emu_debug_disable_breakpoints); ImGui::SameLine();
+
+    if (ImGui::Button("Remove All##clear_all", ImVec2(85, 0)))
+    {
+        gui_debug_reset_breakpoints();
+    }
+
+    ImGui::Columns(2, "breakpoints");
+    ImGui::SetColumnOffset(1, 130);
+
+    ImGui::Separator();
+
+    ImGui::PushItemWidth(120);
+    ImGui::Combo("Type##type", &new_breakpoint_type, "ROM/RAM\0VRAM\0Palette RAM\0HuC6270 Reg\0HuC6260 Reg\0");
+
+    ImGui::PushItemWidth(85);
+    if (ImGui::InputTextWithHint("##add_breakpoint", "XXXX-XXXX", new_breakpoint_buffer, IM_ARRAYSIZE(new_breakpoint_buffer), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
+    {
+        add_breakpoint(new_breakpoint_type);
+    }
+    ImGui::PopItemWidth();
+
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Use hex XXXX format for single addresses or XXXX-XXXX for address ranges");
+
+    ImGui::Checkbox("Read", &new_breakpoint_read);
+    ImGui::Checkbox("Write", &new_breakpoint_write);
+
+    if (new_breakpoint_type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
+        ImGui::Checkbox("Execute", &new_breakpoint_execute);
+
+    if (ImGui::Button("Add##add", ImVec2(85, 0)))
+    {
+        add_breakpoint(new_breakpoint_type);
+    }
+
+    ImGui::NextColumn();
+
+    ImGui::BeginChild("breakpoints", ImVec2(0, 130), false);
+    ImGui::PushFont(gui_default_font);
+
+    int remove = -1;
+    std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
+
+    for (long unsigned int b = 0; b < breakpoints->size(); b++)
+    {
+        HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
+
+        ImGui::PushID(10000 + b);
+        if (ImGui::SmallButton("X"))
+        {
+           remove = b;
+           ImGui::PopID();
+           continue;
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("Remove breakpoint");
+            ImGui::EndTooltip();
+        }
+
+        ImGui::PopID();
+
+        ImGui::SameLine();
+
+        ImGui::PushID(20000 + b);
+        if (ImGui::SmallButton(brk->enabled ? "-" : "+"))
+        {
+            brk->enabled = !brk->enabled;
+        }
+        ImGui::PopID();
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text(brk->enabled ? "Disable breakpoint" : "Enable breakpoint");
+            ImGui::EndTooltip();
+        }
+
+        ImGui::SameLine(); ImGui::TextColored(brk->enabled ? red : gray, "%s", k_breakpoint_types[brk->type]); ImGui::SameLine();
+
+        if ((*breakpoints)[b].range)
+            ImGui::TextColored(brk->enabled ? cyan : gray, "%04X-%04X", brk->address1, brk->address2);
+        else
+            ImGui::TextColored(brk->enabled ? cyan : gray, "%04X", brk->address1);
+
+        ImGui::SameLine(); ImGui::TextColored(brk->enabled && brk->read ? orange : gray, " R");
+        ImGui::SameLine(0, 2); ImGui::TextColored(brk->enabled && brk->write ? orange : gray, "W");
+
+        if (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
+        {
+            ImGui::SameLine(0, 2); ImGui::TextColored(brk->enabled && brk->execute ? orange : gray, "X");
+        }
+
+        GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(brk->address1);
+
+        if (brk->execute && IsValidPointer(record))
+        {
+            ImGui::SameLine();
+            ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled ? white : gray);
+            TextColoredEx(" %s", record->name);
+            ImGui::PopStyleColor();
+        }
+        else if (!brk->range && (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER) && (brk->address1 < 20))
+        {
+            ImGui::SameLine();
+            ImGui::TextColored(brk->enabled ? violet : gray, " %s", k_register_names[brk->address1]);
+        }
+    }
+
+    ImGui::PopFont();
+
+    if (remove >= 0)
+    {
+        breakpoints->erase(breakpoints->begin() + remove);
+    }
+
+    ImGui::EndChild();
+    ImGui::Columns(1);
+    ImGui::Separator();
+}
+
 static void draw_breakpoints(void)
 {
     if (ImGui::CollapsingHeader("Breakpoints"))
     {
-        ImGui::Checkbox("Break On IRQs##irq_break", &emu_debug_irq_breakpoints); ImGui::SameLine();
-        ImGui::Checkbox("Disable All##disable_mem", &emu_debug_disable_breakpoints); ImGui::SameLine();
-
-        if (ImGui::Button("Remove All##clear_all", ImVec2(85, 0)))
-        {
-            gui_debug_reset_breakpoints();
-        }
-
-        ImGui::Columns(2, "breakpoints");
-        ImGui::SetColumnOffset(1, 130);
-
-        ImGui::Separator();
-
-        ImGui::PushItemWidth(120);
-        ImGui::Combo("Type##type", &new_breakpoint_type, "ROM/RAM\0VRAM\0Palette RAM\0HuC6270 Reg\0HuC6260 Reg\0");
-
-        ImGui::PushItemWidth(85);
-        if (ImGui::InputTextWithHint("##add_breakpoint", "XXXX-XXXX", new_breakpoint_buffer, IM_ARRAYSIZE(new_breakpoint_buffer), ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            add_breakpoint(new_breakpoint_type);
-        }
-        ImGui::PopItemWidth();
-
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Use hex XXXX format for single addresses or XXXX-XXXX for address ranges");
-
-        ImGui::Checkbox("Read", &new_breakpoint_read);
-        ImGui::Checkbox("Write", &new_breakpoint_write);
-
-        if (new_breakpoint_type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
-            ImGui::Checkbox("Execute", &new_breakpoint_execute);
-
-        if (ImGui::Button("Add##add", ImVec2(85, 0)))
-        {
-            add_breakpoint(new_breakpoint_type);
-        }
-
-        ImGui::NextColumn();
-
-        ImGui::BeginChild("breakpoints", ImVec2(0, 130), false);
-        ImGui::PushFont(gui_default_font);
-
-        int remove = -1;
-        std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
-
-        for (long unsigned int b = 0; b < breakpoints->size(); b++)
-        {
-            HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
-
-            ImGui::PushID(10000 + b);
-            if (ImGui::SmallButton("X"))
-            {
-               remove = b;
-               ImGui::PopID();
-               continue;
-            }
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text("Remove breakpoint");
-                ImGui::EndTooltip();
-            }
-
-            ImGui::PopID();
-
-            ImGui::SameLine();
-
-            ImGui::PushID(20000 + b);
-            if (ImGui::SmallButton(brk->enabled ? "-" : "+"))
-            {
-                brk->enabled = !brk->enabled;
-            }
-            ImGui::PopID();
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text(brk->enabled ? "Disable breakpoint" : "Enable breakpoint");
-                ImGui::EndTooltip();
-            }
-
-            ImGui::SameLine(); ImGui::TextColored(brk->enabled ? red : gray, "%s", k_breakpoint_types[brk->type]); ImGui::SameLine();
-
-            if ((*breakpoints)[b].range)
-                ImGui::TextColored(brk->enabled ? cyan : gray, "%04X-%04X", brk->address1, brk->address2);
-            else
-                ImGui::TextColored(brk->enabled ? cyan : gray, "%04X", brk->address1);
-
-            ImGui::SameLine(); ImGui::TextColored(brk->enabled && brk->read ? orange : gray, " R");
-            ImGui::SameLine(0, 2); ImGui::TextColored(brk->enabled && brk->write ? orange : gray, "W");
-
-            if (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
-            {
-                ImGui::SameLine(0, 2); ImGui::TextColored(brk->enabled && brk->execute ? orange : gray, "X");
-            }
-
-            GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(brk->address1);
-
-            if (brk->execute && IsValidPointer(record))
-            {
-                ImGui::SameLine();
-                ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled ? white : gray);
-                TextColoredEx(" %s", record->name);
-                ImGui::PopStyleColor();
-            }
-            else if (!brk->range && (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER) && (brk->address1 < 20))
-            {
-                ImGui::SameLine();
-                ImGui::TextColored(brk->enabled ? violet : gray, " %s", k_register_names[brk->address1]);
-            }
-        }
-
-        ImGui::PopFont();
-
-        if (remove >= 0)
-        {
-            breakpoints->erase(breakpoints->begin() + remove);
-        }
-
-        ImGui::EndChild();
-        ImGui::Columns(1);
-        ImGui::Separator();
+        draw_breakpoints_content();
     }
+}
+
+void gui_debug_window_breakpoints(void)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::SetNextWindowPos(ImVec2(340, 100), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(408, 264), ImGuiCond_FirstUseEver);
+
+    ImGui::Begin("Breakpoints", &config_debug.show_breakpoints);
+
+    draw_breakpoints_content();
+
+    ImGui::End();
+    ImGui::PopStyleVar();
 }
 
 static void prepare_drawable_lines(void)
@@ -1351,6 +1371,10 @@ static void disassembler_menu(void)
 
     if (ImGui::BeginMenu("Breakpoints"))
     {
+        ImGui::MenuItem("Breakpoints Window", NULL, &config_debug.show_breakpoints);
+
+        ImGui::Separator();
+
         if (ImGui::MenuItem("Toggle Selected Line", config_hotkeys[config_HotkeyIndex_DebugBreakpoint].str))
         {
             gui_debug_toggle_breakpoint();
