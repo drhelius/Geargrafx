@@ -53,7 +53,7 @@ SoundQueue::SoundQueue()
         if (IsRunningInWSL())
         {
             Debug("SoundQueue: Running in WSL");
-            SDL_SetHint(SDL_HINT_AUDIODRIVER, "pulseaudio");
+            SDL_SetHint("SDL_AUDIODRIVER", "pulseaudio");
         }
         else
         {
