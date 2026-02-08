@@ -265,10 +265,9 @@ void gui_file_dialog_load_bios(bool syscard)
 void gui_file_dialog_load_symbols(void)
 {
     nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Symbol Files", "sym" } };
     nfdopendialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
+    args.filterList = NULL;
+    args.filterCount = 0;
     args.defaultPath = NULL;
     file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
 
