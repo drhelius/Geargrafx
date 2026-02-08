@@ -26,6 +26,7 @@
 #include "gui_filedialogs.h"
 #include "config.h"
 #include "emu.h"
+#include "gui_debug.h"
 #include "utils.h"
 
 static bool trace_logger_enabled = false;
@@ -66,6 +67,7 @@ void gui_debug_window_trace_logger(void)
     if (ImGui::Button(trace_logger_enabled ? "Stop" : "Start"))
     {
         trace_logger_enabled = !trace_logger_enabled;
+        emu_debug_set_callback(trace_logger_enabled ? gui_debug_callback : NULL);
     }
 
     ImGui::SameLine();

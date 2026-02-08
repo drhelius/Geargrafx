@@ -735,8 +735,10 @@ static void destroy_debug(void)
 
 static void update_debug(void)
 {
-    update_debug_background();
-    update_debug_sprites();
+    if (config_debug.show_huc6270_1_background || config_debug.show_huc6270_2_background)
+        update_debug_background();
+    if (config_debug.show_huc6270_1_sprites || config_debug.show_huc6270_2_sprites)
+        update_debug_sprites();
 }
 
 static void update_debug_background(void)

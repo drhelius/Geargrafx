@@ -154,7 +154,6 @@ bool gui_init(void)
         emu_set_turbo((GG_Controllers)i, GG_KEY_II, config_input.turbo_enabled[i][1]);
         emu_set_turbo_speed((GG_Controllers)i, GG_KEY_II, config_input.turbo_speed[i][1]);
     }
-    emu_debug_set_callback(gui_debug_callback);
 
     strcpy(gui_savefiles_path, config_emulator.savefiles_path.c_str());
     strcpy(gui_savestates_path, config_emulator.savestates_path.c_str());
