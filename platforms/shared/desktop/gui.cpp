@@ -49,10 +49,14 @@ static u32 status_message_start_time = 0;
 static u32 status_message_duration = 0;
 static bool error_window_active = false;
 static char error_message[4096] = "";
+static bool loading_rom_active = false;
+static char loading_rom_path[4096] = "";
 static void main_window(void);
 static void push_recent_rom(std::string path);
 static void show_status_message(void);
 static void show_error_window(void);
+static void show_loading_popup(void);
+static void finish_loading_rom(void);
 static void set_style(void);
 static void load_custom_palette_from_settings(void);
 static ImVec4 lerp(const ImVec4& a, const ImVec4& b, float t);
@@ -207,6 +211,7 @@ void gui_render(void)
     if (config_emulator.show_info)
         gui_show_info();
 
+    show_loading_popup();
     show_status_message();
     show_error_window();
 
@@ -414,64 +419,18 @@ void gui_load_palette(const char* path)
 
 void gui_load_rom(const char* path)
 {
-    using namespace std;
+    if (loading_rom_active)
+        return;
 
-    string message("Loading ROM ");
-    message += path;
-    gui_set_status_message(message.c_str(), 3000);
     gui_debug_auto_save_settings();
-
     push_recent_rom(path);
     emu_resume();
 
-    if (!emu_load_media(path))
-    {
-        string message("Error loading ROM:\n");
-        message += path;
-        gui_set_error_message(message.c_str());
+    strncpy(loading_rom_path, path, sizeof(loading_rom_path) - 1);
+    loading_rom_path[sizeof(loading_rom_path) - 1] = '\0';
+    loading_rom_active = true;
 
-        emu_get_core()->GetMedia()->Reset();
-        gui_action_reset();
-        return;
-    }
-
-    if (emu_get_core()->GetMedia()->IsCDROM() && !emu_get_core()->GetMedia()->IsLoadedBios())
-    {
-        bool is_gameexpress = emu_get_core()->GetMedia()->IsGameExpress();
-        string bios_name = is_gameexpress ? "Game Express BIOS" : "System Card BIOS";
-
-        std::string message;
-        message += bios_name;
-        message += " is required to run this ROM!!\n";
-        message += "Make sure you have a valid BIOS file in 'Menu->Emulator->BIOS'.";
-        gui_set_error_message(message.c_str());
-
-        emu_get_core()->GetMedia()->Reset();
-        gui_action_reset();
-        return;
-    }
-
-    gui_debug_reset();
-
-    std::string str(path);
-    str = str.substr(0, str.find_last_of("."));
-    str += ".sym";
-    gui_debug_load_symbols_file(str.c_str());
-
-    gui_debug_auto_load_settings();
-
-    if (config_emulator.start_paused)
-    {
-        emu_pause();
-
-        for (int i=0; i < (HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT); i++)
-        {
-            emu_frame_buffer[i] = 0;
-        }
-    }
-
-    if (!emu_is_empty())
-        application_update_title_with_rom(emu_get_core()->GetMedia()->GetFileName());
+    emu_load_media_async(path);
 }
 
 void gui_set_status_message(const char* message, u32 milliseconds)
@@ -684,6 +643,105 @@ static void show_status_message(void)
 
         ImGui::PopStyleVar();
     }
+}
+
+static void show_loading_popup(void)
+{
+    if (!loading_rom_active)
+        return;
+
+    if (!emu_is_media_loading())
+    {
+        loading_rom_active = false;
+        gui_dialog_in_use = false;
+        bool success = emu_finish_media_loading();
+
+        if (success)
+        {
+            finish_loading_rom();
+        }
+        else
+        {
+            std::string message("Error loading ROM:\n");
+            message += loading_rom_path;
+            gui_set_error_message(message.c_str());
+
+            emu_get_core()->GetMedia()->Reset();
+            gui_action_reset();
+        }
+        return;
+    }
+
+    gui_dialog_in_use = true;
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(30.0f, 20.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 12.0f));
+    ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4(0.10f, 0.10f, 0.10f, 0.95f));
+    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.87f, 0.01f, 0.39f, 0.80f));
+    ImGui::OpenPopup("##loading");
+
+    if (ImGui::BeginPopupModal("##loading", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove))
+    {
+        ImGui::PushFont(gui_roboto_font);
+
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.87f, 0.01f, 0.39f, 1.0f));
+        ImGui::TextUnformatted(ICON_MD_HOURGLASS_EMPTY);
+        ImGui::PopStyleColor();
+
+        ImGui::SameLine();
+        ImGui::Text("LOADING...");
+
+        ImGui::PopFont();
+        ImGui::EndPopup();
+    }
+
+    ImGui::PopStyleColor(2);
+    ImGui::PopStyleVar(3);
+}
+
+static void finish_loading_rom(void)
+{
+    if (emu_get_core()->GetMedia()->IsCDROM() && !emu_get_core()->GetMedia()->IsLoadedBios())
+    {
+        bool is_gameexpress = emu_get_core()->GetMedia()->IsGameExpress();
+        std::string bios_name = is_gameexpress ? "Game Express BIOS" : "System Card BIOS";
+
+        std::string message;
+        message += bios_name;
+        message += " is required to run this ROM!!\n";
+        message += "Make sure you have a valid BIOS file in 'Menu->Emulator->BIOS'.";
+        gui_set_error_message(message.c_str());
+
+        emu_get_core()->GetMedia()->Reset();
+        gui_action_reset();
+        return;
+    }
+
+    gui_debug_reset();
+
+    std::string str(loading_rom_path);
+    str = str.substr(0, str.find_last_of("."));
+    str += ".sym";
+    gui_debug_load_symbols_file(str.c_str());
+
+    gui_debug_auto_load_settings();
+
+    if (config_emulator.start_paused)
+    {
+        emu_pause();
+
+        for (int i = 0; i < (HUC6270_MAX_RESOLUTION_WIDTH * HUC6270_MAX_RESOLUTION_HEIGHT); i++)
+        {
+            emu_frame_buffer[i] = 0;
+        }
+    }
+
+    if (!emu_is_empty())
+        application_update_title_with_rom(emu_get_core()->GetMedia()->GetFileName());
 }
 
 static void show_error_window(void)

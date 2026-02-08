@@ -19,6 +19,9 @@
 #define EMU_IMPORT
 #include "emu.h"
 
+#include <thread>
+#include <atomic>
+#include <string.h>
 #include "geargrafx.h"
 #include "sound_queue.h"
 #include "config.h"
@@ -35,6 +38,19 @@ static SoundQueue* sound_queue;
 static s16* audio_buffer;
 static bool audio_enabled;
 static McpManager* mcp_manager;
+
+enum Loading_State
+{
+    Loading_State_None = 0,
+    Loading_State_Loading,
+    Loading_State_Finished
+};
+
+static std::atomic<int> loading_state(Loading_State_None);
+static std::thread loading_thread;
+static bool loading_thread_active;
+static bool loading_result;
+static char loading_file_path[4096];
 
 static void save_ram(void);
 static void load_ram(void);
@@ -83,6 +99,13 @@ bool emu_init(GG_Input_Pump_Fn input_pump_fn)
 
 void emu_destroy(void)
 {
+    if (loading_thread_active)
+    {
+        loading_thread.join();
+        loading_thread_active = false;
+    }
+    loading_state.store(Loading_State_None);
+
     save_ram();
     save_mb128();
     SafeDelete(mcp_manager);
@@ -98,6 +121,9 @@ void emu_destroy(void)
 
 bool emu_load_media(const char* file_path)
 {
+    if (loading_state.load() != Loading_State_None)
+        return false;
+
     emu_debug_command = Debug_Command_None;
     reset_buffers();
 
@@ -116,9 +142,70 @@ bool emu_load_media(const char* file_path)
     return true;
 }
 
+static void load_media_thread_func(void)
+{
+    loading_result = geargrafx->LoadMedia(loading_file_path);
+    loading_state.store(Loading_State_Finished);
+}
+
+void emu_load_media_async(const char* file_path)
+{
+    if (loading_state.load() != Loading_State_None)
+        return;
+
+    emu_debug_command = Debug_Command_None;
+    reset_buffers();
+    save_ram();
+    save_mb128();
+
+    strncpy(loading_file_path, file_path, sizeof(loading_file_path) - 1);
+    loading_file_path[sizeof(loading_file_path) - 1] = '\0';
+    loading_result = false;
+    loading_state.store(Loading_State_Loading);
+    if (loading_thread_active)
+        loading_thread.join();
+    loading_thread = std::thread(load_media_thread_func);
+    loading_thread_active = true;
+}
+
+bool emu_is_media_loading(void)
+{
+    return loading_state.load() == Loading_State_Loading;
+}
+
+bool emu_finish_media_loading(void)
+{
+    if (loading_state.load() != Loading_State_Finished)
+        return false;
+
+    if (loading_thread_active)
+    {
+        loading_thread.join();
+        loading_thread_active = false;
+    }
+
+    loading_state.store(Loading_State_None);
+
+    if (!loading_result)
+        return false;
+
+    load_ram();
+    load_mb128();
+
+    if (config_debug.debug && (config_debug.dis_look_ahead_count > 0))
+        geargrafx->GetHuC6280()->DisassembleAhead(config_debug.dis_look_ahead_count);
+
+    update_savestates_data();
+
+    return true;
+}
+
 void emu_update(void)
 {
     emu_mcp_pump_commands();
+
+    if (loading_state.load() != Loading_State_None)
+        return;
 
     if (emu_is_empty())
         return;
@@ -202,6 +289,8 @@ bool emu_is_debug_idle(void)
 
 bool emu_is_empty(void)
 {
+    if (loading_state.load() != Loading_State_None)
+        return true;
     return !geargrafx->GetMedia()->IsReady();
 }
 

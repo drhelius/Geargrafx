@@ -1315,7 +1315,7 @@ json DebugAdapter::LoadMedia(const std::string& file_path)
         return result;
     }
 
-    gui_load_rom(file_path.c_str());
+    emu_load_media(file_path.c_str());
 
     if (!m_core || !m_core->GetMedia()->IsReady())
     {
