@@ -45,6 +45,8 @@ static bool choose_backup_ram_path = false;
 static bool choose_mb128_path = false;
 static bool open_syscard_bios = false;
 static bool open_gameexpress_bios = false;
+static bool save_debug_settings = false;
+static bool load_debug_settings = false;
 
 static void menu_geargrafx(void);
 static void menu_emulator(void);
@@ -82,6 +84,8 @@ void gui_main_menu(void)
     choose_mb128_path = false;
     open_syscard_bios = false;
     open_gameexpress_bios = false;
+    save_debug_settings = false;
+    load_debug_settings = false;
 
     if (application_show_menu && ImGui::BeginMainMenuBar())
     {
@@ -1281,6 +1285,18 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
+        if (ImGui::MenuItem("Save Current Debug Settings", "", false, config_debug.debug))
+        {
+            save_debug_settings = true;
+        }
+
+        if (ImGui::MenuItem("Load Debug Settings", "", false, config_debug.debug))
+        {
+            load_debug_settings = true;
+        }
+
+        ImGui::Separator();
+
         if (ImGui::MenuItem("Reload ROM", config_hotkeys[config_HotkeyIndex_ReloadROM].str, false, config_debug.debug && !emu_is_empty()))
         {
             gui_action_reload_rom();
@@ -1550,6 +1566,10 @@ static void file_dialogs(void)
         gui_file_dialog_load_bios(true);
     if (open_gameexpress_bios)
         gui_file_dialog_load_bios(false);
+    if (save_debug_settings)
+        gui_file_dialog_save_debug_settings();
+    if (load_debug_settings)
+        gui_file_dialog_load_debug_settings();
     if (open_about)
     {
         gui_dialog_in_use = true;

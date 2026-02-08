@@ -24,6 +24,7 @@
 #include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
 #include "gui_debug_trace_logger.h"
+#include "gui_debug.h"
 #include "gui_menus.h"
 #include "application.h"
 #include "config.h"
@@ -468,6 +469,65 @@ void gui_file_dialog_save_log(void)
     else if (result != NFD_CANCEL)
     {
         Error("Save Log Error: %s", NFD_GetError());
+    }
+}
+
+void gui_file_dialog_save_debug_settings(void)
+{
+    nfdchar_t *outPath;
+    nfdfilteritem_t filterItem[1] = { { "Debug Settings Files", "ggdebug" } };
+    nfdsavedialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = config_emulator.last_open_path.c_str();
+
+    std::string default_name;
+    GeargrafxCore* core = emu_get_core();
+    if (core && core->GetMedia() && strlen(core->GetMedia()->GetFileName()) > 0)
+    {
+        default_name = core->GetMedia()->GetFileName();
+        std::string::size_type dot = default_name.find_last_of('.');
+        if (dot != std::string::npos)
+            default_name = default_name.substr(0, dot);
+        default_name += ".ggdebug";
+    }
+
+    args.defaultName = default_name.empty() ? NULL : default_name.c_str();
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        gui_debug_save_settings(outPath);
+        gui_set_status_message("Debug settings saved", 3000);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        Error("Save Debug Settings Error: %s", NFD_GetError());
+    }
+}
+
+void gui_file_dialog_load_debug_settings(void)
+{
+    nfdchar_t *outPath;
+    nfdfilteritem_t filterItem[1] = { { "Debug Settings Files", "ggdebug" } };
+    nfdopendialogu8args_t args = { };
+    args.filterList = filterItem;
+    args.filterCount = 1;
+    args.defaultPath = config_emulator.last_open_path.c_str();
+    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+
+    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
+    if (result == NFD_OKAY)
+    {
+        gui_debug_load_settings(outPath);
+        gui_set_status_message("Debug settings loaded", 3000);
+        NFD_FreePath(outPath);
+    }
+    else if (result != NFD_CANCEL)
+    {
+        Error("Load Debug Settings Error: %s", NFD_GetError());
     }
 }
 

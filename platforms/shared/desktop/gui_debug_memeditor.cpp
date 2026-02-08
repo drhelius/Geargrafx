@@ -1861,3 +1861,68 @@ void MemEditor::SetGuiFont(ImFont* gui_font)
 {
     m_gui_font = gui_font;
 }
+
+void MemEditor::SaveSettings(std::ostream& stream)
+{
+    int bookmark_count = (int)m_bookmarks.size();
+    stream.write((const char*)&bookmark_count, sizeof(int));
+    for (int i = 0; i < bookmark_count; i++)
+    {
+        stream.write((const char*)&m_bookmarks[i].address, sizeof(int));
+        stream.write(m_bookmarks[i].name, sizeof(m_bookmarks[i].name));
+    }
+
+    int watch_count = (int)m_watches.size();
+    stream.write((const char*)&watch_count, sizeof(int));
+    for (int i = 0; i < watch_count; i++)
+    {
+        stream.write((const char*)&m_watches[i].address, sizeof(int));
+        stream.write(m_watches[i].notes, sizeof(m_watches[i].notes));
+        stream.write((const char*)&m_watches[i].size, sizeof(int));
+        stream.write((const char*)&m_watches[i].format, sizeof(int));
+    }
+
+    stream.write((const char*)&m_bytes_per_row, sizeof(int));
+    stream.write((const char*)&m_preview_data_type, sizeof(int));
+    stream.write((const char*)&m_preview_endianess, sizeof(int));
+    stream.write((const char*)&m_uppercase_hex, sizeof(bool));
+    stream.write((const char*)&m_gray_out_zeros, sizeof(bool));
+}
+
+void MemEditor::LoadSettings(std::istream& stream)
+{
+    m_bookmarks.clear();
+    int bookmark_count = 0;
+    stream.read((char*)&bookmark_count, sizeof(int));
+    for (int i = 0; i < bookmark_count; i++)
+    {
+        Bookmark bookmark;
+        stream.read((char*)&bookmark.address, sizeof(int));
+        stream.read(bookmark.name, sizeof(bookmark.name));
+        m_bookmarks.push_back(bookmark);
+    }
+
+    m_watches.clear();
+    int watch_count = 0;
+    stream.read((char*)&watch_count, sizeof(int));
+    for (int i = 0; i < watch_count; i++)
+    {
+        Watch watch;
+        stream.read((char*)&watch.address, sizeof(int));
+        stream.read(watch.notes, sizeof(watch.notes));
+        stream.read((char*)&watch.size, sizeof(int));
+        stream.read((char*)&watch.format, sizeof(int));
+        m_watches.push_back(watch);
+    }
+
+    stream.read((char*)&m_bytes_per_row, sizeof(int));
+    stream.read((char*)&m_preview_data_type, sizeof(int));
+    stream.read((char*)&m_preview_endianess, sizeof(int));
+    stream.read((char*)&m_uppercase_hex, sizeof(bool));
+    stream.read((char*)&m_gray_out_zeros, sizeof(bool));
+
+    if (m_bytes_per_row < 4) m_bytes_per_row = 4;
+    if (m_bytes_per_row > 32) m_bytes_per_row = 32;
+    if (m_preview_data_type < 0 || m_preview_data_type > 5) m_preview_data_type = 0;
+    if (m_preview_endianess < 0 || m_preview_endianess > 1) m_preview_endianess = 0;
+}

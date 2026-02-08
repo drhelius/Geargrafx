@@ -493,3 +493,19 @@ int gui_debug_memory_search(int editor, int op, int compare_type, int compare_va
     *results_ptr = (void*)results;
     return count;
 }
+
+void gui_debug_memory_save_settings(std::ostream& stream)
+{
+    for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
+    {
+        mem_edit[i].SaveSettings(stream);
+    }
+}
+
+void gui_debug_memory_load_settings(std::istream& stream)
+{
+    for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
+    {
+        mem_edit[i].LoadSettings(stream);
+    }
+}

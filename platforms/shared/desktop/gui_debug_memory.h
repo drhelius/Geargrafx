@@ -20,6 +20,7 @@
 #ifndef GUI_DEBUG_MEMORY_H
 #define GUI_DEBUG_MEMORY_H
 
+#include <iostream>
 #include "geargrafx.h"
 
 #ifdef GUI_DEBUG_MEMORY_IMPORT
@@ -69,6 +70,8 @@ EXTERN int gui_debug_memory_get_watches(int editor, void** watches_ptr);
 EXTERN void gui_debug_memory_get_selection(int editor, int* start, int* end);
 EXTERN void gui_debug_memory_search_capture(int editor);
 EXTERN int gui_debug_memory_search(int editor, int op, int compare_type, int compare_value, int data_type, void** results_ptr);
+EXTERN void gui_debug_memory_save_settings(std::ostream& stream);
+EXTERN void gui_debug_memory_load_settings(std::istream& stream);
 
 #undef GUI_DEBUG_MEMORY_IMPORT
 #undef EXTERN

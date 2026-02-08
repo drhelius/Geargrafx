@@ -1978,6 +1978,11 @@ int gui_debug_get_disassembler_bookmarks(void** bookmarks_ptr)
     return (int)bookmarks.size();
 }
 
+void gui_debug_reset_disassembler_bookmarks(void)
+{
+    bookmarks.clear();
+}
+
 int gui_debug_get_symbols(void** symbols_ptr)
 {
     *symbols_ptr = (void*)fixed_symbols;

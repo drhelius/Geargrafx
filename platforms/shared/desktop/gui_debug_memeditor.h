@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <vector>
+#include <iostream>
 #include "imgui.h"
 
 class MemEditor
@@ -79,6 +80,8 @@ public:
     void SetGuiFont(ImFont* gui_font);
     void BookMarkPopup();
     void WatchPopup();
+    void SaveSettings(std::ostream& stream);
+    void LoadSettings(std::istream& stream);
     void StepFrame();
     int GetWordBytes();
     char* GetTitle();

@@ -45,6 +45,8 @@ EXTERN void gui_file_dialog_save_background(int vdc);
 EXTERN void gui_file_dialog_save_memory_dump(bool binary);
 EXTERN void gui_file_dialog_save_disassembler(bool full);
 EXTERN void gui_file_dialog_save_log(void);
+EXTERN void gui_file_dialog_save_debug_settings(void);
+EXTERN void gui_file_dialog_load_debug_settings(void);
 EXTERN void gui_file_dialog_load_palette(void);
 
 #undef GUI_FILEDIALOGS_IMPORT

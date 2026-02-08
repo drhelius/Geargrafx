@@ -49,6 +49,7 @@ EXTERN void gui_debug_remove_symbol(u8 bank, u16 address);
 EXTERN void gui_debug_add_disassembler_bookmark(u16 address, const char* name);
 EXTERN void gui_debug_remove_disassembler_bookmark(u16 address);
 EXTERN int gui_debug_get_disassembler_bookmarks(void** bookmarks_ptr);
+EXTERN void gui_debug_reset_disassembler_bookmarks(void);
 EXTERN int gui_debug_get_symbols(void** symbols_ptr);
 EXTERN void gui_debug_runtocursor(void);
 EXTERN void gui_debug_runto_address(u16 address);

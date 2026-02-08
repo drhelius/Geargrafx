@@ -20,6 +20,7 @@
 #define GUI_DEBUG_IMPORT
 #include "gui_debug.h"
 
+#include <fstream>
 #include "geargrafx.h"
 #include "imgui.h"
 #include "gui_debug_disassembler.h"
@@ -124,4 +125,120 @@ void gui_debug_windows(void)
         gui_debug_memory_watches_window();
         gui_debug_memory_search_window();
     }
+}
+
+static const char* GGDEBUG_MAGIC = "GGDEBUG1";
+static const int GGDEBUG_MAGIC_LEN = 8;
+
+void gui_debug_save_settings(const char* file_path)
+{
+    std::ofstream file(file_path, std::ios::binary);
+    if (!file.is_open())
+    {
+        Log("Failed to open debug settings file for writing: %s", file_path);
+        return;
+    }
+
+    file.write(GGDEBUG_MAGIC, GGDEBUG_MAGIC_LEN);
+
+    GeargrafxCore* core = emu_get_core();
+    HuC6280* processor = core->GetHuC6280();
+
+    std::vector<HuC6280::GG_Breakpoint>* breakpoints = processor->GetBreakpoints();
+    int bp_count = (int)breakpoints->size();
+    file.write((const char*)&bp_count, sizeof(int));
+    for (int i = 0; i < bp_count; i++)
+    {
+        HuC6280::GG_Breakpoint& bp = (*breakpoints)[i];
+        file.write((const char*)&bp.enabled, sizeof(bool));
+        file.write((const char*)&bp.type, sizeof(int));
+        file.write((const char*)&bp.address1, sizeof(u16));
+        file.write((const char*)&bp.address2, sizeof(u16));
+        file.write((const char*)&bp.read, sizeof(bool));
+        file.write((const char*)&bp.write, sizeof(bool));
+        file.write((const char*)&bp.execute, sizeof(bool));
+        file.write((const char*)&bp.range, sizeof(bool));
+    }
+
+    file.write((const char*)&emu_debug_irq_breakpoints, sizeof(bool));
+
+    void* bookmarks_ptr = NULL;
+    int bookmark_count = gui_debug_get_disassembler_bookmarks(&bookmarks_ptr);
+    file.write((const char*)&bookmark_count, sizeof(int));
+    if (bookmark_count > 0 && bookmarks_ptr != NULL)
+    {
+        struct DasmBookmark { u16 address; char name[32]; };
+        std::vector<DasmBookmark>* bm_vec = (std::vector<DasmBookmark>*)bookmarks_ptr;
+        for (int i = 0; i < bookmark_count; i++)
+        {
+            file.write((const char*)&(*bm_vec)[i].address, sizeof(u16));
+            file.write((*bm_vec)[i].name, 32);
+        }
+    }
+
+    gui_debug_memory_save_settings(file);
+
+    file.close();
+
+    Log("Debug settings saved to: %s", file_path);
+}
+
+void gui_debug_load_settings(const char* file_path)
+{
+    std::ifstream file(file_path, std::ios::binary);
+    if (!file.is_open())
+    {
+        Log("Failed to open debug settings file for reading: %s", file_path);
+        return;
+    }
+
+    char magic[8];
+    file.read(magic, GGDEBUG_MAGIC_LEN);
+    if (memcmp(magic, GGDEBUG_MAGIC, GGDEBUG_MAGIC_LEN) != 0)
+    {
+        Log("Invalid debug settings file: %s", file_path);
+        file.close();
+        return;
+    }
+
+    GeargrafxCore* core = emu_get_core();
+    HuC6280* processor = core->GetHuC6280();
+
+    processor->ResetBreakpoints();
+    int bp_count = 0;
+    file.read((char*)&bp_count, sizeof(int));
+    std::vector<HuC6280::GG_Breakpoint>* breakpoints = processor->GetBreakpoints();
+    for (int i = 0; i < bp_count; i++)
+    {
+        HuC6280::GG_Breakpoint bp;
+        file.read((char*)&bp.enabled, sizeof(bool));
+        file.read((char*)&bp.type, sizeof(int));
+        file.read((char*)&bp.address1, sizeof(u16));
+        file.read((char*)&bp.address2, sizeof(u16));
+        file.read((char*)&bp.read, sizeof(bool));
+        file.read((char*)&bp.write, sizeof(bool));
+        file.read((char*)&bp.execute, sizeof(bool));
+        file.read((char*)&bp.range, sizeof(bool));
+        breakpoints->push_back(bp);
+    }
+
+    file.read((char*)&emu_debug_irq_breakpoints, sizeof(bool));
+
+    gui_debug_reset_disassembler_bookmarks();
+    int bookmark_count = 0;
+    file.read((char*)&bookmark_count, sizeof(int));
+    for (int i = 0; i < bookmark_count; i++)
+    {
+        u16 address;
+        char name[32];
+        file.read((char*)&address, sizeof(u16));
+        file.read(name, 32);
+        gui_debug_add_disassembler_bookmark(address, name);
+    }
+
+    gui_debug_memory_load_settings(file);
+
+    file.close();
+
+    Log("Debug settings loaded from: %s", file_path);
 }
