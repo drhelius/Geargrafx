@@ -1127,6 +1127,11 @@ void McpServer::HandleToolsList(const json& request)
                 {"notes", {
                     {"type", "string"},
                     {"description", "Watch notes (optional)"}
+                }},
+                {"size", {
+                    {"type", "integer"},
+                    {"description", "Watch size in bits: 8, 16, 24, or 32 (default: 8)"},
+                    {"enum", {8, 16, 24, 32}}
                 }}
             }},
             {"required", json::array({"area", "address"})}
@@ -1865,10 +1870,11 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         int editor = arguments["area"];
         std::string addrStr = arguments["address"];
         std::string notes = arguments.value("notes", "");
+        int size = arguments.value("size", 8);
         u32 address;
         if (!parse_hex_with_prefix(addrStr, &address))
             return {{"error", "Invalid address format"}};
-        return m_debugAdapter.AddMemoryWatch(editor, address, notes);
+        return m_debugAdapter.AddMemoryWatch(editor, address, notes, size);
     }
     else if (normalizedTool == "remove_memory_watch")
     {

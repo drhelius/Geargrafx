@@ -1983,7 +1983,7 @@ json DebugAdapter::RemoveMemoryBookmark(int editor, int address)
     return result;
 }
 
-json DebugAdapter::AddMemoryWatch(int editor, int address, const std::string& notes)
+json DebugAdapter::AddMemoryWatch(int editor, int address, const std::string& notes, int size)
 {
     json result;
 
@@ -1999,12 +1999,13 @@ json DebugAdapter::AddMemoryWatch(int editor, int address, const std::string& no
         return result;
     }
 
-    gui_debug_memory_add_watch(editor, address, notes.c_str());
+    gui_debug_memory_add_watch(editor, address, notes.c_str(), size);
 
     result["success"] = true;
     result["editor"] = editor;
     result["address"] = address;
     result["notes"] = notes;
+    result["size"] = size;
 
     return result;
 }
@@ -2248,6 +2249,9 @@ json DebugAdapter::ListMemoryWatches(int area)
 
     if (watches)
     {
+        const char* size_names[] = {"8", "16", "24", "32"};
+        const char* format_names[] = {"hex", "binary", "decimal_unsigned", "decimal_signed"};
+
         for (const MemEditor::Watch& watch : *watches)
         {
             json watch_obj;
@@ -2256,6 +2260,11 @@ json DebugAdapter::ListMemoryWatches(int area)
             addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << watch.address;
             watch_obj["address"] = addr_ss.str();
             watch_obj["notes"] = watch.notes;
+
+            int size_idx = (watch.size >= 0 && watch.size <= 3) ? watch.size : 0;
+            int fmt_idx = (watch.format >= 0 && watch.format <= 3) ? watch.format : 0;
+            watch_obj["size"] = size_names[size_idx];
+            watch_obj["format"] = format_names[fmt_idx];
 
             watches_array.push_back(watch_obj);
         }

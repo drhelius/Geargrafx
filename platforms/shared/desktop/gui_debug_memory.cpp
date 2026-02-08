@@ -391,26 +391,30 @@ void gui_debug_memory_remove_bookmark(int editor, int address)
     }
 }
 
-void gui_debug_memory_add_watch(int editor, int address, const char* notes)
+void gui_debug_memory_add_watch(int editor, int address, const char* notes, int size)
 {
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
         return;
 
-    std::vector<MemEditor::Watch>* watches = mem_edit[editor].GetWatches();
-    MemEditor::Watch watch;
-    watch.address = address;
-
-    if (notes && strlen(notes) > 0)
+    int size_index = 0;
+    switch (size)
     {
-        snprintf(watch.notes, sizeof(watch.notes), "%s", notes);
-    }
-    else
-    {
-        snprintf(watch.notes, sizeof(watch.notes), "Watch_%04X", address);
+        case 8: size_index = 0; break;
+        case 16: size_index = 1; break;
+        case 24: size_index = 2; break;
+        case 32: size_index = 3; break;
+        default: size_index = 0; break;
     }
 
-    watches->push_back(watch);
-    mem_edit[editor].OpenWatchWindow();
+    mem_edit[editor].AddWatchDirect(address, notes, size_index);
+}
+
+void gui_debug_memory_open_watch_popup(int editor, int address, const char* notes)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+        return;
+
+    mem_edit[editor].PrepareAddWatch(address, notes);
 }
 
 void gui_debug_memory_remove_watch(int editor, int address)

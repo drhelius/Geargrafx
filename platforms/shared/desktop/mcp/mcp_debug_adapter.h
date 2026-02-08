@@ -166,7 +166,7 @@ public:
     json AddMemoryBookmark(int area, int address, const std::string& name);
     json RemoveMemoryBookmark(int area, int address);
     json ListMemoryBookmarks(int area);
-    json AddMemoryWatch(int area, int address, const std::string& notes);
+    json AddMemoryWatch(int area, int address, const std::string& notes, int size);
     json RemoveMemoryWatch(int area, int address);
     json ListMemoryWatches(int area);
     json MemorySearchCapture(int area);

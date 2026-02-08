@@ -38,6 +38,8 @@ public:
     {
         int address;
         char notes[128];
+        int size;
+        int format;
     };
 
     struct Search
@@ -70,6 +72,8 @@ public:
     void OpenWatchWindow();
     void OpenSearchWindow();
     void AddWatch();
+    void PrepareAddWatch(int address, const char* notes);
+    void AddWatchDirect(int address, const char* notes, int size);
     void RemoveWatches();
     std::vector<Watch>* GetWatches();
     void SetGuiFont(ImFont* gui_font);
@@ -103,6 +107,9 @@ private:
     void SearchWindow();
     void CalculateSearchResults();
     void DrawSearchValue(int value, ImVec4 color);
+    uint32_t ReadWatchValue(const Watch& watch);
+    int WatchSizeBytes(int size);
+    void DrawWatchValue(uint32_t value, int size, int format);
     void PushGuiFont();
     void PopGuiFont();
 
@@ -134,6 +141,8 @@ private:
     std::vector<Bookmark> m_bookmarks;
     bool m_watch_window;
     bool m_add_watch;
+    int m_pending_watch_address;
+    char m_pending_watch_notes[128];
     std::vector<Watch> m_watches;
     ImFont* m_gui_font;
     ImDrawList* m_draw_list;

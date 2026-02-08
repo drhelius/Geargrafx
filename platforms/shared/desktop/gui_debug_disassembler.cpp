@@ -1669,9 +1669,9 @@ void gui_debug_window_call_stack(void)
                         emu_get_core()->GetHuC6280()->AddBreakpoint(entry.dest);
                 }
 
-                if (ImGui::Selectable("Add Watch"))
+                if (ImGui::Selectable("Add Watch..."))
                 {
-                    gui_debug_memory_add_watch(0, entry.dest, symbol_text[0] ? symbol_text : NULL);
+                    gui_debug_memory_open_watch_popup(0, entry.dest, symbol_text[0] ? symbol_text : NULL);
                 }
 
                 ImGui::EndPopup();
@@ -1863,9 +1863,9 @@ void gui_debug_window_symbols(void)
                             emu_get_core()->GetHuC6280()->AddBreakpoint(symbol->address);
                     }
 
-                    if (ImGui::Selectable("Add Watch"))
+                    if (ImGui::Selectable("Add Watch..."))
                     {
-                        gui_debug_memory_add_watch(0, symbol->address, symbol->text);
+                        gui_debug_memory_open_watch_popup(0, symbol->address, symbol->text);
                     }
 
                     ImGui::EndPopup();
