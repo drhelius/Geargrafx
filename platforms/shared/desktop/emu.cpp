@@ -126,6 +126,7 @@ bool emu_load_media(const char* file_path)
 
     emu_debug_command = Debug_Command_None;
     reset_buffers();
+    emu_audio_reset();
 
     save_ram();
     save_mb128();
@@ -155,6 +156,8 @@ void emu_load_media_async(const char* file_path)
 
     emu_debug_command = Debug_Command_None;
     reset_buffers();
+    emu_audio_reset();
+
     save_ram();
     save_mb128();
 
@@ -189,6 +192,7 @@ bool emu_finish_media_loading(void)
     if (!loading_result)
         return false;
 
+    emu_audio_reset();
     load_ram();
     load_mb128();
 
@@ -298,7 +302,7 @@ void emu_reset(void)
 {
     emu_debug_command = Debug_Command_None;
     reset_buffers();
-
+    emu_audio_reset();
     save_ram();
     save_mb128();
     geargrafx->ResetMedia(false);
