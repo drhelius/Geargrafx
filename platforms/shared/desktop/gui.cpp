@@ -179,6 +179,7 @@ bool gui_init(void)
 
 void gui_destroy(void)
 {
+    gui_debug_auto_save_settings();
     gui_hes_destroy();
     gui_debug_destroy();
     ImPlot::DestroyContext();
@@ -419,6 +420,7 @@ void gui_load_rom(const char* path)
     string message("Loading ROM ");
     message += path;
     gui_set_status_message(message.c_str(), 3000);
+    gui_debug_auto_save_settings();
 
     push_recent_rom(path);
     emu_resume();
@@ -456,6 +458,8 @@ void gui_load_rom(const char* path)
     str = str.substr(0, str.find_last_of("."));
     str += ".sym";
     gui_debug_load_symbols_file(str.c_str());
+
+    gui_debug_auto_load_settings();
 
     if (config_emulator.start_paused)
     {

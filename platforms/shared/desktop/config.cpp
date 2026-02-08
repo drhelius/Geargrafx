@@ -228,6 +228,7 @@ void config_read(void)
     config_debug.scale = read_int("Debug", "Scale", 1);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
     config_debug.single_instance = read_bool("Debug", "SingleInstance", false);
+    config_debug.auto_debug_settings = read_bool("Debug", "AutoDebugSettings", false);
     config_debug.reset_ram = read_int("Debug", "InitRam", 1);
     config_debug.reset_card_ram = read_int("Debug", "InitCardRam", 1);
     config_debug.reset_registers = read_int("Debug", "InitRegisters", 0);
@@ -514,6 +515,7 @@ void config_write(void)
     write_int("Debug", "Scale", config_debug.scale);
     write_bool("Debug", "MultiViewport", config_debug.multi_viewport);
     write_bool("Debug", "SingleInstance", config_debug.single_instance);
+    write_bool("Debug", "AutoDebugSettings", config_debug.auto_debug_settings);
     write_int("Debug", "InitRam", config_debug.reset_ram);
     write_int("Debug", "InitCardRam", config_debug.reset_card_ram);
     write_int("Debug", "InitRegisters", config_debug.reset_registers);

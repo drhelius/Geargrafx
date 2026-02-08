@@ -241,6 +241,7 @@ struct config_Debug
     int scale = 1;
     bool multi_viewport = false;
     bool single_instance = false;
+    bool auto_debug_settings = false;
     int reset_ram = 1;
     int reset_card_ram = 1;
     int reset_registers = 0;

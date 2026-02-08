@@ -242,3 +242,49 @@ void gui_debug_load_settings(const char* file_path)
 
     Log("Debug settings loaded from: %s", file_path);
 }
+
+static std::string get_auto_debug_settings_path(void)
+{
+    GeargrafxCore* core = emu_get_core();
+    if (!core || !core->GetMedia() || strlen(core->GetMedia()->GetFileName()) == 0)
+        return "";
+
+    std::string filename = core->GetMedia()->GetFileName();
+    std::string::size_type dot = filename.find_last_of('.');
+    if (dot != std::string::npos)
+        filename = filename.substr(0, dot);
+    filename += ".ggdebug";
+
+    std::string path = config_root_path;
+    path += filename;
+    return path;
+}
+
+void gui_debug_auto_save_settings(void)
+{
+    if (!config_debug.auto_debug_settings)
+        return;
+
+    std::string path = get_auto_debug_settings_path();
+    if (path.empty())
+        return;
+
+    gui_debug_save_settings(path.c_str());
+}
+
+void gui_debug_auto_load_settings(void)
+{
+    if (!config_debug.auto_debug_settings)
+        return;
+
+    std::string path = get_auto_debug_settings_path();
+    if (path.empty())
+        return;
+
+    std::ifstream test(path, std::ios::binary);
+    if (!test.is_open())
+        return;
+    test.close();
+
+    gui_debug_load_settings(path.c_str());
+}

@@ -1285,15 +1285,17 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Save Current Debug Settings", "", false, config_debug.debug))
+        if (ImGui::MenuItem("Save Debug Settings...", "", false, config_debug.debug))
         {
             save_debug_settings = true;
         }
 
-        if (ImGui::MenuItem("Load Debug Settings", "", false, config_debug.debug))
+        if (ImGui::MenuItem("Load Debug Settings...", "", false, config_debug.debug))
         {
             load_debug_settings = true;
         }
+
+        ImGui::MenuItem("Auto Save/Load Debug Settings", "", &config_debug.auto_debug_settings, config_debug.debug);
 
         ImGui::Separator();
 
