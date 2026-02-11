@@ -39,23 +39,15 @@ static void write_string(const char* group, const char* key, std::string value);
 static config_Hotkey read_hotkey(const char* group, const char* key, config_Hotkey default_value);
 static void write_hotkey(const char* group, const char* key, config_Hotkey hotkey);
 static config_Hotkey make_hotkey(SDL_Scancode key, SDL_Keymod mod);
+static void set_defaults(void);
 
-void config_init(void)
+static void set_defaults(void)
 {
-    if (check_portable())
-        config_root_path = SDL_GetBasePath();
-    else
-        config_root_path = SDL_GetPrefPath("Geardome", GG_TITLE);
-
-    strncpy_fit(config_temp_path, config_root_path, sizeof(config_temp_path));
-    strncat_fit(config_temp_path, "tmp/", sizeof(config_temp_path));
-    create_directory_if_not_exists(config_temp_path);
-
-    strncpy_fit(config_emu_file_path, config_root_path, sizeof(config_emu_file_path));
-    strncat_fit(config_emu_file_path, "config.ini", sizeof(config_emu_file_path));
-
-    strncpy_fit(config_imgui_file_path, config_root_path, sizeof(config_imgui_file_path));
-    strncat_fit(config_imgui_file_path, "imgui.ini", sizeof(config_imgui_file_path));
+    config_emulator = config_Emulator();
+    config_video = config_Video();
+    config_audio = config_Audio();
+    config_input = config_Input();
+    config_debug = config_Debug();
 
     config_input_keyboard[0].key_left = SDL_SCANCODE_LEFT;
     config_input_keyboard[0].key_right = SDL_SCANCODE_RIGHT;
@@ -162,6 +154,26 @@ void config_init(void)
     config_hotkeys[config_HotkeyIndex_SelectSlot3] = make_hotkey(SDL_SCANCODE_3, SDL_KMOD_CTRL);
     config_hotkeys[config_HotkeyIndex_SelectSlot4] = make_hotkey(SDL_SCANCODE_4, SDL_KMOD_CTRL);
     config_hotkeys[config_HotkeyIndex_SelectSlot5] = make_hotkey(SDL_SCANCODE_5, SDL_KMOD_CTRL);
+}
+
+void config_init(void)
+{
+    if (check_portable())
+        config_root_path = SDL_GetBasePath();
+    else
+        config_root_path = SDL_GetPrefPath("Geardome", GG_TITLE);
+
+    strncpy_fit(config_temp_path, config_root_path, sizeof(config_temp_path));
+    strncat_fit(config_temp_path, "tmp/", sizeof(config_temp_path));
+    create_directory_if_not_exists(config_temp_path);
+
+    strncpy_fit(config_emu_file_path, config_root_path, sizeof(config_emu_file_path));
+    strncat_fit(config_emu_file_path, "config.ini", sizeof(config_emu_file_path));
+
+    strncpy_fit(config_imgui_file_path, config_root_path, sizeof(config_imgui_file_path));
+    strncat_fit(config_imgui_file_path, "imgui.ini", sizeof(config_imgui_file_path));
+
+    set_defaults();
 
     config_ini_file = new mINI::INIFile(config_emu_file_path);
 }
@@ -175,13 +187,7 @@ void config_load_defaults(void)
 {
     Log("Loading default settings");
 
-    config_emulator = config_Emulator();
-    config_video = config_Video();
-    config_audio = config_Audio();
-    config_input = config_Input();
-    config_debug = config_Debug();
-
-    config_init();
+    set_defaults();
     config_write();
 }
 
