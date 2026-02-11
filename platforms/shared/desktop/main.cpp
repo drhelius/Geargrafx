@@ -17,6 +17,7 @@
  *
  */
 
+#include <SDL3/SDL_main.h>
 #include "geargrafx.h"
 #include "application.h"
 #include "config.h"

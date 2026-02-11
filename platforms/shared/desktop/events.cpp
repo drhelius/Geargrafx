@@ -17,7 +17,7 @@
  *
  */
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "geargrafx.h"
 #include "config.h"
 #include "gui.h"
@@ -38,7 +38,7 @@ static void input_apply_state(int controller, Uint16 before, Uint16 now);
 
 void events_shortcuts(const SDL_Event* event)
 {
-    if (event->type != SDL_KEYDOWN)
+    if (event->type != SDL_EVENT_KEY_DOWN)
         return;
 
     // Check special case hotkeys first
@@ -76,22 +76,22 @@ void events_shortcuts(const SDL_Event* event)
     }
 
     // Fixed hotkeys for debug copy/paste/select operations
-    int key = event->key.keysym.scancode;
-    SDL_Keymod mods = (SDL_Keymod)event->key.keysym.mod;
+    int key = event->key.scancode;
+    SDL_Keymod mods = event->key.mod;
 
-    if (event->key.repeat == 0 && key == SDL_SCANCODE_A && (mods & KMOD_CTRL))
+    if (event->key.repeat == 0 && key == SDL_SCANCODE_A && (mods & SDL_KMOD_CTRL))
     {
         gui_shortcut(gui_ShortcutDebugSelectAll);
         return;
     }
 
-    if (event->key.repeat == 0 && key == SDL_SCANCODE_C && (mods & KMOD_CTRL))
+    if (event->key.repeat == 0 && key == SDL_SCANCODE_C && (mods & SDL_KMOD_CTRL))
     {
         gui_shortcut(gui_ShortcutDebugCopy);
         return;
     }
 
-    if (event->key.repeat == 0 && key == SDL_SCANCODE_V && (mods & KMOD_CTRL))
+    if (event->key.repeat == 0 && key == SDL_SCANCODE_V && (mods & SDL_KMOD_CTRL))
     {
         gui_shortcut(gui_ShortcutDebugPaste);
         return;
@@ -145,10 +145,10 @@ bool events_input_updated(void)
 static Uint16 input_build_state(int controller)
 {
     SDL_Keymod mods = SDL_GetModState();
-    if (mods & (KMOD_CTRL | KMOD_SHIFT | KMOD_ALT | KMOD_GUI))
+    if (mods & (SDL_KMOD_CTRL | SDL_KMOD_SHIFT | SDL_KMOD_ALT | SDL_KMOD_GUI))
         return 0;
 
-    const Uint8* keyboard_state = SDL_GetKeyboardState(NULL);
+    const bool* keyboard_state = SDL_GetKeyboardState(NULL);
     Uint16 ret = 0;
 
     if (keyboard_state[config_input_keyboard[controller].key_left])
@@ -181,7 +181,7 @@ static Uint16 input_build_state(int controller)
     bool gp_turbo_I = false;
     bool gp_turbo_II = false;
 
-    SDL_GameController* sdl_controller = gamepad_controller[controller];
+    SDL_Gamepad* sdl_controller = gamepad_controller[controller];
 
     if (IsValidPointer(sdl_controller))
     {
@@ -208,21 +208,21 @@ static Uint16 input_build_state(int controller)
         // Use D-Pad
         if (config_input_gamepad[controller].gamepad_directional == 0)
         {
-            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
+            if (SDL_GetGamepadButton(sdl_controller, SDL_GAMEPAD_BUTTON_DPAD_LEFT))
                 ret |= GG_KEY_LEFT;
-            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
+            if (SDL_GetGamepadButton(sdl_controller, SDL_GAMEPAD_BUTTON_DPAD_RIGHT))
                 ret |= GG_KEY_RIGHT;
-            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_UP))
+            if (SDL_GetGamepadButton(sdl_controller, SDL_GAMEPAD_BUTTON_DPAD_UP))
                 ret |= GG_KEY_UP;
-            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN))
+            if (SDL_GetGamepadButton(sdl_controller, SDL_GAMEPAD_BUTTON_DPAD_DOWN))
                 ret |= GG_KEY_DOWN;
         }
         // Use analog sticks
         else
         {
             const Sint16 STICK_DEAD_ZONE = 8000;
-            const Sint16 rawx = SDL_GameControllerGetAxis(sdl_controller, (SDL_GameControllerAxis)config_input_gamepad[controller].gamepad_x_axis);
-            const Sint16 rawy = SDL_GameControllerGetAxis(sdl_controller, (SDL_GameControllerAxis)config_input_gamepad[controller].gamepad_y_axis);
+            const Sint16 rawx = SDL_GetGamepadAxis(sdl_controller, (SDL_GamepadAxis)config_input_gamepad[controller].gamepad_x_axis);
+            const Sint16 rawy = SDL_GetGamepadAxis(sdl_controller, (SDL_GamepadAxis)config_input_gamepad[controller].gamepad_y_axis);
 
             const Sint16 x = config_input_gamepad[controller].gamepad_invert_x_axis ? -rawx : rawx;
             const Sint16 y = config_input_gamepad[controller].gamepad_invert_y_axis ? -rawy : rawy;
@@ -283,29 +283,29 @@ static void input_apply_state(int controller, Uint16 before, Uint16 now)
 
 static bool events_check_hotkey(const SDL_Event* event, const config_Hotkey& hotkey, bool allow_repeat)
 {
-    if (event->type != SDL_KEYDOWN)
+    if (event->type != SDL_EVENT_KEY_DOWN)
         return false;
 
     if (!allow_repeat && event->key.repeat != 0)
         return false;
 
-    if (event->key.keysym.scancode != hotkey.key)
+    if (event->key.scancode != hotkey.key)
         return false;
 
-    SDL_Keymod mods = (SDL_Keymod)event->key.keysym.mod;
+    SDL_Keymod mods = event->key.mod;
     SDL_Keymod expected = hotkey.mod;
 
     SDL_Keymod mods_normalized = (SDL_Keymod)0;
-    if (mods & (KMOD_LCTRL | KMOD_RCTRL)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_CTRL);
-    if (mods & (KMOD_LSHIFT | KMOD_RSHIFT)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_SHIFT);
-    if (mods & (KMOD_LALT | KMOD_RALT)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_ALT);
-    if (mods & (KMOD_LGUI | KMOD_RGUI)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_GUI);
+    if (mods & (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL)) mods_normalized = (SDL_Keymod)(mods_normalized | SDL_KMOD_CTRL);
+    if (mods & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT)) mods_normalized = (SDL_Keymod)(mods_normalized | SDL_KMOD_SHIFT);
+    if (mods & (SDL_KMOD_LALT | SDL_KMOD_RALT)) mods_normalized = (SDL_Keymod)(mods_normalized | SDL_KMOD_ALT);
+    if (mods & (SDL_KMOD_LGUI | SDL_KMOD_RGUI)) mods_normalized = (SDL_Keymod)(mods_normalized | SDL_KMOD_GUI);
 
     SDL_Keymod expected_normalized = (SDL_Keymod)0;
-    if (expected & (KMOD_LCTRL | KMOD_RCTRL | KMOD_CTRL)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_CTRL);
-    if (expected & (KMOD_LSHIFT | KMOD_RSHIFT | KMOD_SHIFT)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_SHIFT);
-    if (expected & (KMOD_LALT | KMOD_RALT | KMOD_ALT)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_ALT);
-    if (expected & (KMOD_LGUI | KMOD_RGUI | KMOD_GUI)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_GUI);
+    if (expected & (SDL_KMOD_LCTRL | SDL_KMOD_RCTRL | SDL_KMOD_CTRL)) expected_normalized = (SDL_Keymod)(expected_normalized | SDL_KMOD_CTRL);
+    if (expected & (SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT | SDL_KMOD_SHIFT)) expected_normalized = (SDL_Keymod)(expected_normalized | SDL_KMOD_SHIFT);
+    if (expected & (SDL_KMOD_LALT | SDL_KMOD_RALT | SDL_KMOD_ALT)) expected_normalized = (SDL_Keymod)(expected_normalized | SDL_KMOD_ALT);
+    if (expected & (SDL_KMOD_LGUI | SDL_KMOD_RGUI | SDL_KMOD_GUI)) expected_normalized = (SDL_Keymod)(expected_normalized | SDL_KMOD_GUI);
 
     return mods_normalized == expected_normalized;
 }

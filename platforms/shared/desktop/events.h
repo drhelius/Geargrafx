@@ -20,7 +20,7 @@
 #ifndef EVENTS_H
 #define EVENTS_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #ifdef EVENTS_IMPORT
     #define EXTERN

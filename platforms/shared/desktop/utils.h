@@ -31,7 +31,21 @@
 #include <linux/limits.h>
 #endif
 #include <math.h>
+#include <SDL3/SDL.h>
 #include "imgui.h"
+#include "geargrafx.h"
+
+static inline void sdl_log_error(const char* action, const char* file, int line)
+{
+    const char* error = SDL_GetError();
+    if (error && error[0] != '\0')
+    {
+        Log("SDL Error: %s (%s:%d) - %s", action, file, line, error);
+        SDL_ClearError();
+    }
+}
+
+#define SDL_ERROR(action) sdl_log_error(action, __FILE__, __LINE__)
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY_PATTERN_SPACED "%c%c%c%c %c%c%c%c"

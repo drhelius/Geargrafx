@@ -211,10 +211,10 @@
     <ClCompile Include="..\shared\dependencies\imgui\imgui_draw.cpp">
       <Filter>dependencies\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\dependencies\imgui\imgui_impl_opengl2.cpp">
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_impl_opengl3.cpp">
       <Filter>dependencies\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\dependencies\imgui\imgui_impl_sdl2.cpp">
+    <ClCompile Include="..\shared\dependencies\imgui\imgui_impl_sdl3.cpp">
       <Filter>dependencies\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\dependencies\imgui\imgui_tables.cpp">
@@ -231,9 +231,6 @@
     </ClCompile>
     <ClCompile Include="..\shared\dependencies\imgui\implot_items.cpp">
       <Filter>dependencies\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\shared\dependencies\nfd\nfd_win.cpp">
-      <Filter>dependencies\nfd</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -583,13 +580,13 @@
     <ClInclude Include="..\shared\dependencies\imgui\imgui.h">
       <Filter>dependencies\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_opengl2.h">
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_opengl3.h">
       <Filter>dependencies\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl.h">
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_opengl3_loader.h">
       <Filter>dependencies\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl2.h">
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl3.h">
       <Filter>dependencies\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\dependencies\imgui\imgui_internal.h">
@@ -612,12 +609,6 @@
     </ClInclude>
     <ClInclude Include="..\shared\dependencies\mINI\ini.h">
       <Filter>dependencies\mINI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\dependencies\nfd\nfd.h">
-      <Filter>dependencies\nfd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\shared\dependencies\nfd\nfd_sdl2.h">
-      <Filter>dependencies\nfd</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\dependencies\stb\stb_image_write.h">
       <Filter>dependencies\stb</Filter>
@@ -665,9 +656,6 @@
     </Filter>
     <Filter Include="dependencies\mINI">
       <UniqueIdentifier>{b20161bf-e4e8-4d15-b5e1-74a0a7c0d526}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="dependencies\nfd">
-      <UniqueIdentifier>{14314ca2-0367-417c-8852-c55ff87bb46f}</UniqueIdentifier>
     </Filter>
     <Filter Include="dependencies\glad">
       <UniqueIdentifier>{eee9f957-716d-47d4-a4f4-3d987c06a27a}</UniqueIdentifier>

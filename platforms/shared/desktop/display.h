@@ -20,7 +20,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #ifdef DISPLAY_IMPORT
     #define EXTERN
@@ -34,6 +34,7 @@ EXTERN void display_begin_frame(void);
 EXTERN void display_render(void);
 EXTERN void display_frame_throttle(void);
 EXTERN bool display_should_run_emu_frame(void);
+EXTERN void display_set_vsync(bool enabled);
 EXTERN void display_update_frame_pacing(void);
 EXTERN void display_recreate_gl_context(void);
 

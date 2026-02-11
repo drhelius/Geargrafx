@@ -26,6 +26,7 @@
 #include "gui_debug_disassembler.h"
 #include "config.h"
 #include "application.h"
+#include "display.h"
 #include "gamepad.h"
 #include "emu.h"
 #include "ogl_renderer.h"
@@ -634,7 +635,7 @@ static void menu_video(void)
         if (ImGui::BeginMenu("Fullscreen Mode"))
         {
             ImGui::PushItemWidth(130.0f);
-            ImGui::Combo("##fullscreen_mode", &config_emulator.fullscreen_mode, "Exclusive\0Fake Exclusive\0Borderless\0\0");
+            ImGui::Combo("##fullscreen_mode", &config_emulator.fullscreen_mode, "Full Screen Desktop\0Full Screen\0\0");
             ImGui::PopItemWidth();
             ImGui::EndMenu();
         }
@@ -742,11 +743,12 @@ static void menu_video(void)
 
         if (ImGui::MenuItem("Vertical Sync", "", &config_video.sync))
         {
-            application_set_vsync(config_video.sync);
+            display_set_vsync(config_video.sync);
 
             if (config_video.sync)
             {
                 config_audio.sync = true;
+                config_emulator.ffwd = false;
                 emu_audio_reset();
             }
         }
@@ -1244,7 +1246,7 @@ static void menu_audio(void)
             if (!config_audio.sync)
             {
                 config_video.sync = false;
-                application_set_vsync(false);
+                display_set_vsync(false);
             }
         }
 
@@ -1540,6 +1542,8 @@ static void menu_about(void)
 
 static void file_dialogs(void)
 {
+    gui_file_dialog_process_results();
+
     if (open_rom || gui_shortcut_open_rom)
     {
         gui_shortcut_open_rom = false;
@@ -1588,7 +1592,7 @@ static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int
     ImGui::SameLine(120);
 
     char button_label[256];
-    snprintf(button_label, 256, "%s##%s%d", SDL_GetKeyName(SDL_GetKeyFromScancode(*key)), text, player);
+    snprintf(button_label, 256, "%s##%s%d", SDL_GetKeyName(SDL_GetKeyFromScancode(*key, SDL_KMOD_NONE, false)), text, player);
 
     if (ImGui::Button(button_label, ImVec2(90,0)))
     {
@@ -1614,11 +1618,11 @@ static void gamepad_configuration_item(const char* text, int* button, int player
 
     const char* button_name = "";
 
-    if (*button == SDL_CONTROLLER_BUTTON_INVALID)
+    if (*button == SDL_GAMEPAD_BUTTON_INVALID)
     {
         button_name = "";
     }
-    else if (*button >= 0 && *button < SDL_CONTROLLER_BUTTON_MAX)
+    else if (*button >= 0 && *button < SDL_GAMEPAD_BUTTON_COUNT)
     {
         static const char* gamepad_names[21] = {"A", "B", "X" ,"Y", "BACK", "GUIDE", "START", "L3", "R3", "L1", "R1", "UP", "DOWN", "LEFT", "RIGHT", "MISC", "PAD1", "PAD2", "PAD3", "PAD4", "TOUCH"};
         button_name = gamepad_names[*button];
@@ -1626,9 +1630,9 @@ static void gamepad_configuration_item(const char* text, int* button, int player
     else if (*button >= GAMEPAD_VBTN_AXIS_BASE)
     {
         int axis = *button - GAMEPAD_VBTN_AXIS_BASE;
-        if (axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+        if (axis == SDL_GAMEPAD_AXIS_LEFT_TRIGGER)
             button_name = "L2";
-        else if (axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+        else if (axis == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)
             button_name = "R2";
         else
             button_name = "??";
@@ -1650,7 +1654,7 @@ static void gamepad_configuration_item(const char* text, int* button, int player
 
     if (ImGui::Button(remove_label))
     {
-        *button = SDL_CONTROLLER_BUTTON_INVALID;
+        *button = SDL_GAMEPAD_BUTTON_INVALID;
     }
 }
 
@@ -1676,7 +1680,7 @@ static void hotkey_configuration_item(const char* text, config_Hotkey* hotkey)
     if (ImGui::Button(remove_label))
     {
         hotkey->key = SDL_SCANCODE_UNKNOWN;
-        hotkey->mod = KMOD_NONE;
+        hotkey->mod = SDL_KMOD_NONE;
         config_update_hotkey_string(hotkey);
     }
 }
@@ -1687,8 +1691,8 @@ static void gamepad_device_selector(int player)
         return;
 
     const int max_detected_gamepads = 32;
-    int index_map[max_detected_gamepads];
-    index_map[0] = -1;
+    SDL_JoystickID id_map[max_detected_gamepads];
+    id_map[0] = 0;
     int count = 1;
 
     std::string items;
@@ -1696,35 +1700,28 @@ static void gamepad_device_selector(int player)
     items.append("<None>");
     items.push_back('\0');
 
-    int num = SDL_NumJoysticks();
+    Gamepad_Detected_Info detected[max_detected_gamepads];
+    int num_detected = gamepad_get_detected(detected, max_detected_gamepads);
 
-    SDL_JoystickID current_id = -1;
+    SDL_JoystickID current_id = 0;
     if (IsValidPointer(gamepad_controller[player]))
-        current_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamepad_controller[player]));
+        current_id = SDL_GetJoystickID(SDL_GetGamepadJoystick(gamepad_controller[player]));
 
     int selected = 0;
 
-    for (int i = 0; i < num && count < max_detected_gamepads; i++)
+    for (int i = 0; i < num_detected && count < max_detected_gamepads; i++)
     {
-        if (!SDL_IsGameController(i))
-            continue;
-
-        const char* name = SDL_GameControllerNameForIndex(i);
+        const char* name = detected[i].name;
         if (!IsValidPointer(name))
             name = "Unknown Gamepad";
 
-        index_map[count] = i;
+        id_map[count] = detected[i].id;
 
-        SDL_JoystickID id = SDL_JoystickGetDeviceInstanceID(i);
-
-        if (current_id == id)
+        if (current_id == detected[i].id)
             selected = count;
 
-        char id_str[64];
-        SDL_JoystickGUID guid = SDL_JoystickGetDeviceGUID(i);
-        SDL_JoystickGetGUIDString(guid, id_str, sizeof(id_str));
-        size_t len = strlen(id_str);
-        const char* id_8 = id_str + (len > 8 ? len - 8 : 0);
+        size_t len = strlen(detected[i].guid_str);
+        const char* id_8 = detected[i].guid_str + (len > 8 ? len - 8 : 0);
 
         char label[192];
         snprintf(label, sizeof(label), "%s (ID: %s)", name, id_8);
@@ -1741,8 +1738,8 @@ static void gamepad_device_selector(int player)
 
     if (ImGui::Combo(label, &selected, items.c_str()))
     {
-        int device_index = index_map[selected];
-        gamepad_assign(player, device_index);
+        SDL_JoystickID instance_id = id_map[selected];
+        gamepad_assign(player, instance_id);
     }
 }
 

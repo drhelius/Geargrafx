@@ -17,7 +17,7 @@
  *
  */
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <iomanip>
 #include "geargrafx.h"
 
@@ -118,50 +118,50 @@ void config_init(void)
         config_input_gamepad[i].gamepad_directional = 0;
         config_input_gamepad[i].gamepad_invert_x_axis = false;
         config_input_gamepad[i].gamepad_invert_y_axis = false;
-        config_input_gamepad[i].gamepad_select = SDL_CONTROLLER_BUTTON_BACK;
-        config_input_gamepad[i].gamepad_run = SDL_CONTROLLER_BUTTON_START;
-        config_input_gamepad[i].gamepad_I = SDL_CONTROLLER_BUTTON_A;
-        config_input_gamepad[i].gamepad_II = SDL_CONTROLLER_BUTTON_B;
-        config_input_gamepad[i].gamepad_III = SDL_CONTROLLER_BUTTON_Y;
-        config_input_gamepad[i].gamepad_IV = SDL_CONTROLLER_BUTTON_X;
-        config_input_gamepad[i].gamepad_V = SDL_CONTROLLER_BUTTON_LEFTSHOULDER;
-        config_input_gamepad[i].gamepad_VI = SDL_CONTROLLER_BUTTON_RIGHTSHOULDER;
-        config_input_gamepad[i].gamepad_x_axis = SDL_CONTROLLER_AXIS_LEFTX;
-        config_input_gamepad[i].gamepad_y_axis = SDL_CONTROLLER_AXIS_LEFTY;
-        config_input_gamepad[i].gamepad_toggle_turbo_I = SDL_CONTROLLER_BUTTON_RIGHTSTICK;
-        config_input_gamepad[i].gamepad_toggle_turbo_II = SDL_CONTROLLER_BUTTON_LEFTSTICK;
+        config_input_gamepad[i].gamepad_select = SDL_GAMEPAD_BUTTON_BACK;
+        config_input_gamepad[i].gamepad_run = SDL_GAMEPAD_BUTTON_START;
+        config_input_gamepad[i].gamepad_I = SDL_GAMEPAD_BUTTON_SOUTH;
+        config_input_gamepad[i].gamepad_II = SDL_GAMEPAD_BUTTON_EAST;
+        config_input_gamepad[i].gamepad_III = SDL_GAMEPAD_BUTTON_WEST;
+        config_input_gamepad[i].gamepad_IV = SDL_GAMEPAD_BUTTON_NORTH;
+        config_input_gamepad[i].gamepad_V = SDL_GAMEPAD_BUTTON_LEFT_SHOULDER;
+        config_input_gamepad[i].gamepad_VI = SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER;
+        config_input_gamepad[i].gamepad_x_axis = SDL_GAMEPAD_AXIS_LEFTX;
+        config_input_gamepad[i].gamepad_y_axis = SDL_GAMEPAD_AXIS_LEFTY;
+        config_input_gamepad[i].gamepad_toggle_turbo_I = SDL_GAMEPAD_BUTTON_RIGHT_STICK;
+        config_input_gamepad[i].gamepad_toggle_turbo_II = SDL_GAMEPAD_BUTTON_LEFT_STICK;
 
         for (int j = 0; j < config_HotkeyIndex_COUNT; j++)
         {
-            config_input_gamepad_shortcuts[i].gamepad_shortcuts[j] = SDL_CONTROLLER_BUTTON_INVALID;
+            config_input_gamepad_shortcuts[i].gamepad_shortcuts[j] = SDL_GAMEPAD_BUTTON_INVALID;
         }
     }
 
-    config_hotkeys[config_HotkeyIndex_OpenROM] = make_hotkey(SDL_SCANCODE_O, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_ReloadROM] = make_hotkey(SDL_SCANCODE_D, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_Quit] = make_hotkey(SDL_SCANCODE_Q, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_Reset] = make_hotkey(SDL_SCANCODE_R, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_Pause] = make_hotkey(SDL_SCANCODE_P, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_FFWD] = make_hotkey(SDL_SCANCODE_F, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_SaveState] = make_hotkey(SDL_SCANCODE_S, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_LoadState] = make_hotkey(SDL_SCANCODE_L, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_Screenshot] = make_hotkey(SDL_SCANCODE_X, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_Fullscreen] = make_hotkey(SDL_SCANCODE_F12, KMOD_NONE);
-    config_hotkeys[config_HotkeyIndex_ShowMainMenu] = make_hotkey(SDL_SCANCODE_M, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_DebugStepInto] = make_hotkey(SDL_SCANCODE_F11, KMOD_NONE);
-    config_hotkeys[config_HotkeyIndex_DebugStepOver] = make_hotkey(SDL_SCANCODE_F10, KMOD_NONE);
-    config_hotkeys[config_HotkeyIndex_DebugStepOut] = make_hotkey(SDL_SCANCODE_F11, KMOD_SHIFT);
-    config_hotkeys[config_HotkeyIndex_DebugStepFrame] = make_hotkey(SDL_SCANCODE_F6, KMOD_NONE);
-    config_hotkeys[config_HotkeyIndex_DebugContinue] = make_hotkey(SDL_SCANCODE_F5, KMOD_NONE);
-    config_hotkeys[config_HotkeyIndex_DebugBreak] = make_hotkey(SDL_SCANCODE_F7, KMOD_NONE);
-    config_hotkeys[config_HotkeyIndex_DebugRunToCursor] = make_hotkey(SDL_SCANCODE_F8, KMOD_NONE);
-    config_hotkeys[config_HotkeyIndex_DebugBreakpoint] = make_hotkey(SDL_SCANCODE_F9, KMOD_NONE);
-    config_hotkeys[config_HotkeyIndex_DebugGoBack] = make_hotkey(SDL_SCANCODE_BACKSPACE, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_SelectSlot1] = make_hotkey(SDL_SCANCODE_1, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_SelectSlot2] = make_hotkey(SDL_SCANCODE_2, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_SelectSlot3] = make_hotkey(SDL_SCANCODE_3, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_SelectSlot4] = make_hotkey(SDL_SCANCODE_4, KMOD_CTRL);
-    config_hotkeys[config_HotkeyIndex_SelectSlot5] = make_hotkey(SDL_SCANCODE_5, KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_OpenROM] = make_hotkey(SDL_SCANCODE_O, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_ReloadROM] = make_hotkey(SDL_SCANCODE_D, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Quit] = make_hotkey(SDL_SCANCODE_Q, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Reset] = make_hotkey(SDL_SCANCODE_R, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Pause] = make_hotkey(SDL_SCANCODE_P, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_FFWD] = make_hotkey(SDL_SCANCODE_F, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SaveState] = make_hotkey(SDL_SCANCODE_S, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_LoadState] = make_hotkey(SDL_SCANCODE_L, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Screenshot] = make_hotkey(SDL_SCANCODE_X, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_Fullscreen] = make_hotkey(SDL_SCANCODE_F12, SDL_KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_ShowMainMenu] = make_hotkey(SDL_SCANCODE_M, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_DebugStepInto] = make_hotkey(SDL_SCANCODE_F11, SDL_KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugStepOver] = make_hotkey(SDL_SCANCODE_F10, SDL_KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugStepOut] = make_hotkey(SDL_SCANCODE_F11, SDL_KMOD_SHIFT);
+    config_hotkeys[config_HotkeyIndex_DebugStepFrame] = make_hotkey(SDL_SCANCODE_F6, SDL_KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugContinue] = make_hotkey(SDL_SCANCODE_F5, SDL_KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugBreak] = make_hotkey(SDL_SCANCODE_F7, SDL_KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugRunToCursor] = make_hotkey(SDL_SCANCODE_F8, SDL_KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugBreakpoint] = make_hotkey(SDL_SCANCODE_F9, SDL_KMOD_NONE);
+    config_hotkeys[config_HotkeyIndex_DebugGoBack] = make_hotkey(SDL_SCANCODE_BACKSPACE, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot1] = make_hotkey(SDL_SCANCODE_1, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot2] = make_hotkey(SDL_SCANCODE_2, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot3] = make_hotkey(SDL_SCANCODE_3, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot4] = make_hotkey(SDL_SCANCODE_4, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_SelectSlot5] = make_hotkey(SDL_SCANCODE_5, SDL_KMOD_CTRL);
 
     config_ini_file = new mINI::INIFile(config_emu_file_path);
 }
@@ -169,7 +169,6 @@ void config_init(void)
 void config_destroy(void)
 {
     SafeDelete(config_ini_file)
-    SDL_free(config_root_path);
 }
 
 void config_read(void)
@@ -180,7 +179,16 @@ void config_read(void)
         return;
     }
 
-    Log("Loading settings from %s", config_emu_file_path);
+    int file_version = read_int("General", "Version", 0);
+
+    if (file_version < config_version)
+    {
+        Log("Settings version %d is outdated (current: %d). Using defaults.", file_version, config_version);
+        config_write();
+        return;
+    }
+
+    Log("Loading settings from %s (version %d)", config_emu_file_path, file_version);
 
 #if defined(GG_DISABLE_DISASSEMBLER)
         config_debug.debug = false;
@@ -221,6 +229,7 @@ void config_read(void)
     config_debug.dis_show_segment = read_bool("Debug", "DisSegment", true);
     config_debug.dis_show_bank = read_bool("Debug", "DisBank", true);
     config_debug.dis_show_auto_symbols = read_bool("Debug", "DisAutoSymbols", true);
+    config_debug.dis_dim_auto_symbols = read_bool("Debug", "DisDimAutoSymbols", false);
     config_debug.dis_replace_symbols = read_bool("Debug", "DisReplaceSymbols", true);
     config_debug.dis_replace_labels = read_bool("Debug", "DisReplaceLabels", true);
     config_debug.dis_look_ahead_count = read_int("Debug", "DisLookAheadCount", 20);
@@ -310,11 +319,11 @@ void config_read(void)
     config_video.bilinear = read_bool("Video", "Bilinear", false);
     config_video.sprite_limit = read_bool("Video", "SpriteLimit", false);
     config_video.mix_frames = read_bool("Video", "MixFrames", true);
-    config_video.mix_frames_intensity = read_float("Video", "MixFramesIntensity", 0.60f);
+    config_video.mix_frames_intensity = read_float("Video", "MixFramesIntensity", 0.50f);
     config_video.scanlines = read_bool("Video", "Scanlines", true);
-    config_video.scanlines_filter = read_bool("Video", "ScanlinesFilter", true);
+    config_video.scanlines_filter = read_bool("Video", "ScanlinesFilter", false);
     config_video.scanlines_intensity = read_float("Video", "ScanlinesIntensity", 0.10f);
-    config_video.lowpass_filter = read_bool("Video", "LowpassFilter", false);
+    config_video.lowpass_filter = read_bool("Video", "LowpassFilter", true);
     config_video.lowpass_intensity = read_float("Video", "LowpassIntensity", 1.0f);
     config_video.lowpass_cutoff_mhz = read_float("Video", "LowpassCutoffMhz", 5.0f);
     config_video.lowpass_speed[0] = read_bool("Video", "LowpassSpeed536", false);
@@ -410,18 +419,18 @@ void config_read(void)
         config_input_gamepad[i].gamepad_directional = read_int(input_group, "GamepadDirectional", 0);
         config_input_gamepad[i].gamepad_invert_x_axis = read_bool(input_group, "GamepadInvertX", false);
         config_input_gamepad[i].gamepad_invert_y_axis = read_bool(input_group, "GamepadInvertY", false);
-        config_input_gamepad[i].gamepad_select = read_int(input_group, "GamepadSelect", SDL_CONTROLLER_BUTTON_BACK);
-        config_input_gamepad[i].gamepad_run = read_int(input_group, "GamepadRun", SDL_CONTROLLER_BUTTON_START);
-        config_input_gamepad[i].gamepad_x_axis = read_int(input_group, "GamepadX", SDL_CONTROLLER_AXIS_LEFTX);
-        config_input_gamepad[i].gamepad_y_axis = read_int(input_group, "GamepadY", SDL_CONTROLLER_AXIS_LEFTY);
-        config_input_gamepad[i].gamepad_I = read_int(input_group, "GamepadI", SDL_CONTROLLER_BUTTON_A);
-        config_input_gamepad[i].gamepad_II = read_int(input_group, "GamepadII", SDL_CONTROLLER_BUTTON_B);
-        config_input_gamepad[i].gamepad_III = read_int(input_group, "GamepadIII", SDL_CONTROLLER_BUTTON_Y);
-        config_input_gamepad[i].gamepad_IV = read_int(input_group, "GamepadIV", SDL_CONTROLLER_BUTTON_X);
-        config_input_gamepad[i].gamepad_V = read_int(input_group, "GamepadV", SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-        config_input_gamepad[i].gamepad_VI = read_int(input_group, "GamepadVI", SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-        config_input_gamepad[i].gamepad_toggle_turbo_I = read_int(input_group, "GamepadToogleTurboI", SDL_CONTROLLER_BUTTON_LEFTSTICK);
-        config_input_gamepad[i].gamepad_toggle_turbo_II = read_int(input_group, "GamepadToogleTurboII", SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+        config_input_gamepad[i].gamepad_select = read_int(input_group, "GamepadSelect", SDL_GAMEPAD_BUTTON_BACK);
+        config_input_gamepad[i].gamepad_run = read_int(input_group, "GamepadRun", SDL_GAMEPAD_BUTTON_START);
+        config_input_gamepad[i].gamepad_x_axis = read_int(input_group, "GamepadX", SDL_GAMEPAD_AXIS_LEFTX);
+        config_input_gamepad[i].gamepad_y_axis = read_int(input_group, "GamepadY", SDL_GAMEPAD_AXIS_LEFTY);
+        config_input_gamepad[i].gamepad_I = read_int(input_group, "GamepadI", SDL_GAMEPAD_BUTTON_SOUTH);
+        config_input_gamepad[i].gamepad_II = read_int(input_group, "GamepadII", SDL_GAMEPAD_BUTTON_EAST);
+        config_input_gamepad[i].gamepad_III = read_int(input_group, "GamepadIII", SDL_GAMEPAD_BUTTON_WEST);
+        config_input_gamepad[i].gamepad_IV = read_int(input_group, "GamepadIV", SDL_GAMEPAD_BUTTON_NORTH);
+        config_input_gamepad[i].gamepad_V = read_int(input_group, "GamepadV", SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
+        config_input_gamepad[i].gamepad_VI = read_int(input_group, "GamepadVI", SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
+        config_input_gamepad[i].gamepad_toggle_turbo_I = read_int(input_group, "GamepadToogleTurboI", SDL_GAMEPAD_BUTTON_LEFT_STICK);
+        config_input_gamepad[i].gamepad_toggle_turbo_II = read_int(input_group, "GamepadToogleTurboII", SDL_GAMEPAD_BUTTON_RIGHT_STICK);
     }
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
@@ -432,36 +441,36 @@ void config_read(void)
         {
             char key_name[32];
             snprintf(key_name, sizeof(key_name), "Shortcut%d", j);
-            config_input_gamepad_shortcuts[i].gamepad_shortcuts[j] = read_int(input_group, key_name, SDL_CONTROLLER_BUTTON_INVALID);
+            config_input_gamepad_shortcuts[i].gamepad_shortcuts[j] = read_int(input_group, key_name, SDL_GAMEPAD_BUTTON_INVALID);
         }
     }
 
     // Read hotkeys
-    config_hotkeys[config_HotkeyIndex_OpenROM] = read_hotkey("Hotkeys", "OpenROM", make_hotkey(SDL_SCANCODE_O, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_ReloadROM] = read_hotkey("Hotkeys", "ReloadROM", make_hotkey(SDL_SCANCODE_D, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_Quit] = read_hotkey("Hotkeys", "Quit", make_hotkey(SDL_SCANCODE_Q, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_Reset] = read_hotkey("Hotkeys", "Reset", make_hotkey(SDL_SCANCODE_R, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_Pause] = read_hotkey("Hotkeys", "Pause", make_hotkey(SDL_SCANCODE_P, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_FFWD] = read_hotkey("Hotkeys", "FFWD", make_hotkey(SDL_SCANCODE_F, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_SaveState] = read_hotkey("Hotkeys", "SaveState", make_hotkey(SDL_SCANCODE_S, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_LoadState] = read_hotkey("Hotkeys", "LoadState", make_hotkey(SDL_SCANCODE_L, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_Screenshot] = read_hotkey("Hotkeys", "Screenshot", make_hotkey(SDL_SCANCODE_X, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_Fullscreen] = read_hotkey("Hotkeys", "Fullscreen", make_hotkey(SDL_SCANCODE_F12, KMOD_NONE));
-    config_hotkeys[config_HotkeyIndex_ShowMainMenu] = read_hotkey("Hotkeys", "ShowMainMenu", make_hotkey(SDL_SCANCODE_M, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_DebugStepInto] = read_hotkey("Hotkeys", "DebugStepInto", make_hotkey(SDL_SCANCODE_F11, KMOD_NONE));
-    config_hotkeys[config_HotkeyIndex_DebugStepOver] = read_hotkey("Hotkeys", "DebugStepOver", make_hotkey(SDL_SCANCODE_F10, KMOD_NONE));
-    config_hotkeys[config_HotkeyIndex_DebugStepOut] = read_hotkey("Hotkeys", "DebugStepOut", make_hotkey(SDL_SCANCODE_F11, KMOD_SHIFT));
-    config_hotkeys[config_HotkeyIndex_DebugStepFrame] = read_hotkey("Hotkeys", "DebugStepFrame", make_hotkey(SDL_SCANCODE_F6, KMOD_NONE));
-    config_hotkeys[config_HotkeyIndex_DebugContinue] = read_hotkey("Hotkeys", "DebugContinue", make_hotkey(SDL_SCANCODE_F5, KMOD_NONE));
-    config_hotkeys[config_HotkeyIndex_DebugBreak] = read_hotkey("Hotkeys", "DebugBreak", make_hotkey(SDL_SCANCODE_F7, KMOD_NONE));
-    config_hotkeys[config_HotkeyIndex_DebugRunToCursor] = read_hotkey("Hotkeys", "DebugRunToCursor", make_hotkey(SDL_SCANCODE_F8, KMOD_NONE));
-    config_hotkeys[config_HotkeyIndex_DebugBreakpoint] = read_hotkey("Hotkeys", "DebugBreakpoint", make_hotkey(SDL_SCANCODE_F9, KMOD_NONE));
-    config_hotkeys[config_HotkeyIndex_DebugGoBack] = read_hotkey("Hotkeys", "DebugGoBack", make_hotkey(SDL_SCANCODE_BACKSPACE, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_SelectSlot1] = read_hotkey("Hotkeys", "SelectSlot1", make_hotkey(SDL_SCANCODE_1, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_SelectSlot2] = read_hotkey("Hotkeys", "SelectSlot2", make_hotkey(SDL_SCANCODE_2, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_SelectSlot3] = read_hotkey("Hotkeys", "SelectSlot3", make_hotkey(SDL_SCANCODE_3, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_SelectSlot4] = read_hotkey("Hotkeys", "SelectSlot4", make_hotkey(SDL_SCANCODE_4, KMOD_CTRL));
-    config_hotkeys[config_HotkeyIndex_SelectSlot5] = read_hotkey("Hotkeys", "SelectSlot5", make_hotkey(SDL_SCANCODE_5, KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_OpenROM] = read_hotkey("Hotkeys", "OpenROM", make_hotkey(SDL_SCANCODE_O, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_ReloadROM] = read_hotkey("Hotkeys", "ReloadROM", make_hotkey(SDL_SCANCODE_D, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Quit] = read_hotkey("Hotkeys", "Quit", make_hotkey(SDL_SCANCODE_Q, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Reset] = read_hotkey("Hotkeys", "Reset", make_hotkey(SDL_SCANCODE_R, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Pause] = read_hotkey("Hotkeys", "Pause", make_hotkey(SDL_SCANCODE_P, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_FFWD] = read_hotkey("Hotkeys", "FFWD", make_hotkey(SDL_SCANCODE_F, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SaveState] = read_hotkey("Hotkeys", "SaveState", make_hotkey(SDL_SCANCODE_S, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_LoadState] = read_hotkey("Hotkeys", "LoadState", make_hotkey(SDL_SCANCODE_L, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Screenshot] = read_hotkey("Hotkeys", "Screenshot", make_hotkey(SDL_SCANCODE_X, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_Fullscreen] = read_hotkey("Hotkeys", "Fullscreen", make_hotkey(SDL_SCANCODE_F12, SDL_KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_ShowMainMenu] = read_hotkey("Hotkeys", "ShowMainMenu", make_hotkey(SDL_SCANCODE_M, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_DebugStepInto] = read_hotkey("Hotkeys", "DebugStepInto", make_hotkey(SDL_SCANCODE_F11, SDL_KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugStepOver] = read_hotkey("Hotkeys", "DebugStepOver", make_hotkey(SDL_SCANCODE_F10, SDL_KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugStepOut] = read_hotkey("Hotkeys", "DebugStepOut", make_hotkey(SDL_SCANCODE_F11, SDL_KMOD_SHIFT));
+    config_hotkeys[config_HotkeyIndex_DebugStepFrame] = read_hotkey("Hotkeys", "DebugStepFrame", make_hotkey(SDL_SCANCODE_F6, SDL_KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugContinue] = read_hotkey("Hotkeys", "DebugContinue", make_hotkey(SDL_SCANCODE_F5, SDL_KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugBreak] = read_hotkey("Hotkeys", "DebugBreak", make_hotkey(SDL_SCANCODE_F7, SDL_KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugRunToCursor] = read_hotkey("Hotkeys", "DebugRunToCursor", make_hotkey(SDL_SCANCODE_F8, SDL_KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugBreakpoint] = read_hotkey("Hotkeys", "DebugBreakpoint", make_hotkey(SDL_SCANCODE_F9, SDL_KMOD_NONE));
+    config_hotkeys[config_HotkeyIndex_DebugGoBack] = read_hotkey("Hotkeys", "DebugGoBack", make_hotkey(SDL_SCANCODE_BACKSPACE, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot1] = read_hotkey("Hotkeys", "SelectSlot1", make_hotkey(SDL_SCANCODE_1, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot2] = read_hotkey("Hotkeys", "SelectSlot2", make_hotkey(SDL_SCANCODE_2, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot3] = read_hotkey("Hotkeys", "SelectSlot3", make_hotkey(SDL_SCANCODE_3, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot4] = read_hotkey("Hotkeys", "SelectSlot4", make_hotkey(SDL_SCANCODE_4, SDL_KMOD_CTRL));
+    config_hotkeys[config_HotkeyIndex_SelectSlot5] = read_hotkey("Hotkeys", "SelectSlot5", make_hotkey(SDL_SCANCODE_5, SDL_KMOD_CTRL));
 
     Debug("Settings loaded");
 }
@@ -472,6 +481,8 @@ void config_write(void)
 
     if (config_emulator.ffwd)
         config_audio.sync = true;
+
+    write_int("General", "Version", config_version);
 
     write_bool("Debug", "Debug", config_debug.debug);
     write_bool("Debug", "Disassembler", config_debug.show_disassembler);
@@ -508,6 +519,7 @@ void config_write(void)
     write_bool("Debug", "DisSegment", config_debug.dis_show_segment);
     write_bool("Debug", "DisBank", config_debug.dis_show_bank);
     write_bool("Debug", "DisAutoSymbols", config_debug.dis_show_auto_symbols);
+    write_bool("Debug", "DisDimAutoSymbols", config_debug.dis_dim_auto_symbols);
     write_bool("Debug", "DisReplaceSymbols", config_debug.dis_replace_symbols);
     write_bool("Debug", "DisReplaceLabels", config_debug.dis_replace_labels);
     write_int("Debug", "DisLookAheadCount", config_debug.dis_look_ahead_count);
@@ -725,7 +737,7 @@ void config_write(void)
 
 static bool check_portable(void)
 {
-    char* base_path;
+    const char* base_path;
     char portable_file_path[260];
     
     base_path = SDL_GetBasePath();
@@ -877,13 +889,13 @@ void config_update_hotkey_string(config_Hotkey* hotkey)
 
     std::string result = "";
 
-    if (hotkey->mod & (KMOD_CTRL | KMOD_LCTRL | KMOD_RCTRL))
+    if (hotkey->mod & (SDL_KMOD_CTRL | SDL_KMOD_LCTRL | SDL_KMOD_RCTRL))
         result += "Ctrl+";
-    if (hotkey->mod & (KMOD_SHIFT | KMOD_LSHIFT | KMOD_RSHIFT))
+    if (hotkey->mod & (SDL_KMOD_SHIFT | SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT))
         result += "Shift+";
-    if (hotkey->mod & (KMOD_ALT | KMOD_LALT | KMOD_RALT))
+    if (hotkey->mod & (SDL_KMOD_ALT | SDL_KMOD_LALT | SDL_KMOD_RALT))
         result += "Alt+";
-    if (hotkey->mod & (KMOD_GUI | KMOD_LGUI | KMOD_RGUI))
+    if (hotkey->mod & (SDL_KMOD_GUI | SDL_KMOD_LGUI | SDL_KMOD_RGUI))
         result += "Cmd+";
 
     const char* key_name = SDL_GetScancodeName(hotkey->key);

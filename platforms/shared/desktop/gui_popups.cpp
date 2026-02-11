@@ -17,7 +17,7 @@
  *
  */
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #define GUI_POPUPS_IMPORT
 #include "gui_popups.h"
@@ -52,7 +52,7 @@ void gui_popup_modal_keyboard()
             if (ImGui::IsKeyDown(i))
             {
                 SDL_Keycode key_code = ImGuiKeyToSDLKeycode(i);
-                SDL_Scancode key = SDL_GetScancodeFromKey(key_code);
+                SDL_Scancode key = SDL_GetScancodeFromKey(key_code, NULL);
 
                 if ((key != SDL_SCANCODE_LCTRL) && (key != SDL_SCANCODE_RCTRL) && (key != SDL_SCANCODE_CAPSLOCK))
                 {
@@ -78,9 +78,9 @@ void gui_popup_modal_gamepad(int pad)
         ImGui::Text("Press any button in your gamepad...\n\n");
         ImGui::Separator();
 
-        for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++)
+        for (int i = 0; i < SDL_GAMEPAD_BUTTON_COUNT; i++)
         {
-            if (SDL_GameControllerGetButton(gamepad_controller[pad], (SDL_GameControllerButton)i))
+            if (SDL_GetGamepadButton(gamepad_controller[pad], (SDL_GamepadButton)i))
             {
                 *gui_configured_button = i;
                 ImGui::CloseCurrentPopup();
@@ -88,12 +88,12 @@ void gui_popup_modal_gamepad(int pad)
             }
         }
 
-        for (int a = SDL_CONTROLLER_AXIS_LEFTX; a < SDL_CONTROLLER_AXIS_MAX; a++)
+        for (int a = SDL_GAMEPAD_AXIS_LEFTX; a < SDL_GAMEPAD_AXIS_COUNT; a++)
         {
-            if (a != SDL_CONTROLLER_AXIS_TRIGGERLEFT && a != SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+            if (a != SDL_GAMEPAD_AXIS_LEFT_TRIGGER && a != SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)
                 continue;
 
-            Sint16 value = SDL_GameControllerGetAxis(gamepad_controller[pad], (SDL_GameControllerAxis)a);
+            Sint16 value = SDL_GetGamepadAxis(gamepad_controller[pad], (SDL_GamepadAxis)a);
 
             if (value > GAMEPAD_VBTN_AXIS_THRESHOLD)
             {
@@ -134,7 +134,7 @@ void gui_popup_modal_hotkey()
             if (ImGui::IsKeyPressed(i, false))
             {
                 SDL_Keycode key_code = ImGuiKeyToSDLKeycode(i);
-                SDL_Scancode key = SDL_GetScancodeFromKey(key_code);
+                SDL_Scancode key = SDL_GetScancodeFromKey(key_code, NULL);
 
                 if (key != SDL_SCANCODE_UNKNOWN)
                 {
@@ -237,8 +237,8 @@ void gui_popup_modal_about(void)
                 #if defined(__clang_version__)
                 add_build_info("Clang %s\n", __clang_version__);
                 #endif
-                add_build_info("SDL %d.%d.%d (build)\n", application_sdl_build_version.major, application_sdl_build_version.minor, application_sdl_build_version.patch);
-                add_build_info("SDL %d.%d.%d (link)\n", application_sdl_link_version.major, application_sdl_link_version.minor, application_sdl_link_version.patch);
+                add_build_info("SDL %d.%d.%d (build)\n", SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_MICRO_VERSION);
+                add_build_info("SDL %d.%d.%d (link)\n", application_sdl_version_major, application_sdl_version_minor, application_sdl_version_patch);
                 add_build_info("OpenGL %s\n", ogl_renderer_opengl_version);
                 add_build_info("Dear ImGui %s (%d)\n", IMGUI_VERSION, IMGUI_VERSION_NUM);
                 add_build_info("ImPlot %s (%d)\n", IMPLOT_VERSION, IMPLOT_VERSION_NUM);
@@ -379,7 +379,7 @@ static void check_hotkey_duplicates_popup(config_Hotkey* current_hotkey)
             other->mod == current_hotkey->mod)
         {
             other->key = SDL_SCANCODE_UNKNOWN;
-            other->mod = KMOD_NONE;
+            other->mod = SDL_KMOD_NONE;
             config_update_hotkey_string(other);
         }
     }

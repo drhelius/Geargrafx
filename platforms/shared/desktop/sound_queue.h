@@ -20,7 +20,7 @@
 #ifndef SOUND_QUEUE_H
 #define SOUND_QUEUE_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <stdint.h>
 #include "geargrafx.h"
 

@@ -19,15 +19,14 @@
 
 #if defined(__APPLE__)
     #define GL_SILENCE_DEPRECATION
-    #include <OpenGL/gl.h>
+    #include <OpenGL/gl3.h>
 #else
     #define GLAD_GL_IMPLEMENTATION
     #include <glad.h>
-    #include <SDL_opengl.h>
 #endif
 
 #include "imgui.h"
-#include "imgui_impl_opengl2.h"
+#include "imgui_impl_opengl3.h"
 #include "emu.h"
 #include "config.h"
 #include "geargrafx.h"
@@ -40,22 +39,33 @@ static uint32_t scanlines_texture;
 static uint32_t frame_buffer_object;
 static GG_Runtime_Info current_runtime;
 static bool first_frame;
+static bool mix_round_error = false;
 static u32 scanlines[16] = {
     0x00000000, 0x00000000, 0x00000000, 0x00000000,
     0x00000000, 0x00000000, 0x00000000, 0x00000000,
     0x000000FF, 0x000000FF, 0x000000FF, 0x000000FF,
     0x000000FF, 0x000000FF, 0x000000FF, 0x000000FF};
 
+static uint32_t quad_shader_program = 0;
+static uint32_t quad_vao = 0;
+static uint32_t quad_vbo = 0;
+static int quad_uniform_texture = -1;
+static int quad_uniform_color = -1;
+static int quad_uniform_tex_scale = -1;
+
+
+
 static void init_ogl_gui(void);
 static void init_ogl_emu(void);
 static void init_ogl_debug(void);
 static void init_ogl_savestates(void);
 static void init_scanlines_texture(void);
+static void init_shaders(void);
 static void render_gui(void);
 static void render_emu_normal(void);
 static void render_emu_mix(void);
 static void update_emu_texture(void);
-static void render_quad(void);
+static void render_quad(float tex_h, float tex_v);
 static void update_system_texture(void);
 static void update_debug_textures(void);
 static void update_savestates_texture(void);
@@ -76,8 +86,9 @@ bool ogl_renderer_init(void)
 #endif
 
     ogl_renderer_opengl_version = (const char*)glGetString(GL_VERSION);
-    Log("Using OpenGL %s", ogl_renderer_opengl_version);
+    Log("Starting OpenGL %s", ogl_renderer_opengl_version);
 
+    init_shaders();
     init_ogl_gui();
     init_ogl_emu();
     init_ogl_debug();
@@ -93,6 +104,7 @@ void ogl_renderer_destroy(void)
     glDeleteTextures(1, &ogl_renderer_emu_texture);
     glDeleteTextures(1, &system_texture);
     glDeleteTextures(1, &scanlines_texture);
+
     glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_background[0]);
     glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_background[1]);
     for (int i = 0; i < 2; i++)
@@ -102,12 +114,23 @@ void ogl_renderer_destroy(void)
         }
     glDeleteTextures(1, &ogl_renderer_emu_savestates);
 
-    ImGui_ImplOpenGL2_Shutdown();
+    if (quad_shader_program)
+        glDeleteProgram(quad_shader_program);
+    if (quad_vao)
+        glDeleteVertexArrays(1, &quad_vao);
+    if (quad_vbo)
+        glDeleteBuffers(1, &quad_vbo);
+
+    quad_shader_program = 0;
+    quad_vao = 0;
+    quad_vbo = 0;
+
+    ImGui_ImplOpenGL3_Shutdown();
 }
 
 void ogl_renderer_begin_render(void)
 {
-    ImGui_ImplOpenGL2_NewFrame();
+    ImGui_ImplOpenGL3_NewFrame();
 }
 
 void ogl_renderer_render(void)
@@ -133,7 +156,11 @@ void ogl_renderer_render(void)
 
     ImVec4 clear_color = ImVec4(config_video.background_color[0], config_video.background_color[1], config_video.background_color[2], 1.00f);
 
-    glViewport(0, 0, (int)ImGui::GetIO().DisplaySize.x, (int)ImGui::GetIO().DisplaySize.y);
+    ImGuiIO& io = ImGui::GetIO();
+    int fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
+    int fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
+
+    glViewport(0, 0, fb_width, fb_height);
     glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -157,29 +184,24 @@ void ogl_renderer_end_render(void)
 
 static void init_ogl_gui(void)
 {
-    ImGui_ImplOpenGL2_Init();
+#if defined(__APPLE__)
+    ImGui_ImplOpenGL3_Init("#version 150");
+#else
+    ImGui_ImplOpenGL3_Init("#version 130");
+#endif
 }
 
 static void init_ogl_emu(void)
 {
-    glEnable(GL_TEXTURE_2D);
-
     glGenFramebuffers(1, &frame_buffer_object);
     glGenTextures(1, &ogl_renderer_emu_texture);
     glGenTextures(1, &system_texture);
 
     glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_object);
     glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_texture);
-
-    int texture_size = FRAME_BUFFER_WIDTH * FRAME_BUFFER_HEIGHT * 3;
-    u8* black_pixels = new u8[texture_size]();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, black_pixels);
-    delete[] black_pixels;
-
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ogl_renderer_emu_texture, 0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -188,8 +210,6 @@ static void init_ogl_emu(void)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SYSTEM_TEXTURE_WIDTH, SYSTEM_TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_frame_buffer);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     init_scanlines_texture();
 }
@@ -241,26 +261,30 @@ static void init_scanlines_texture(void)
 
 static void render_gui(void)
 {
-    ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 static void render_emu_normal(void)
 {
+    float tex_h = (float)current_runtime.screen_width / (float)SYSTEM_TEXTURE_WIDTH;
+    float tex_v = (float)current_runtime.screen_height / (float)SYSTEM_TEXTURE_HEIGHT;
+
     glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_object);
 
     glDisable(GL_BLEND);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     update_system_texture();
 
-    render_quad();
+    render_quad(tex_h, tex_v);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 static void render_emu_mix(void)
 {
+    float tex_h = (float)current_runtime.screen_width / (float)SYSTEM_TEXTURE_WIDTH;
+    float tex_v = (float)current_runtime.screen_height / (float)SYSTEM_TEXTURE_HEIGHT;
+
     glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_object);
 
     float alpha = 0.15f + (0.50f * (1.0f - config_video.mix_frames_intensity));
@@ -273,19 +297,28 @@ static void render_emu_mix(void)
         glClear(GL_COLOR_BUFFER_BIT);
     }
 
-    static bool round_error = false; 
-    float round_color = 1.0f - (round_error ? 0.03f : 0.0f);
-    round_error = !round_error;
+    float round_color = 1.0f - (mix_round_error ? 0.03f : 0.0f);
+    mix_round_error = !mix_round_error;
 
     glEnable(GL_BLEND);
-    glColor4f(round_color, round_color, round_color, alpha);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     update_system_texture();
 
-    render_quad();
+    int viewportWidth = current_runtime.screen_width;
+    int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
 
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glUseProgram(quad_shader_program);
+    glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
+    glUniform4f(quad_uniform_color, round_color, round_color, round_color, alpha);
+
+    glViewport(0, 0, viewportWidth, viewportHeight);
+
+    glBindVertexArray(quad_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+    glUseProgram(0);
+
     glDisable(GL_BLEND);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -362,40 +395,27 @@ static void update_emu_texture(void)
     }
 }
 
-static void render_quad(void)
+static void render_quad(float tex_h, float tex_v)
 {
-    float tex_h = (float)current_runtime.screen_width / (float)SYSTEM_TEXTURE_WIDTH;
-    float tex_v = (float)current_runtime.screen_height / (float)SYSTEM_TEXTURE_HEIGHT;
+    int viewportWidth = current_runtime.screen_width;
+    int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
 
-    int viewport_width = current_runtime.screen_width;
-    int viewport_height = current_runtime.screen_height * FRAME_BUFFER_SCALE;
+    glUseProgram(quad_shader_program);
+    glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
+    glUniform4f(quad_uniform_color, 1.0f, 1.0f, 1.0f, 1.0f);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+    glViewport(0, 0, viewportWidth, viewportHeight);
 
-    glOrtho(0, 1.0, 0, 1.0, -1, 1);
-
-    glMatrixMode(GL_MODELVIEW);
-    glViewport(0, 0, viewport_width, viewport_height);
-
-    glBegin(GL_QUADS);
-    glTexCoord2d(0.0, 0.0);
-    glVertex2d(0.0, 0.0);
-    glTexCoord2d(tex_h, 0.0);
-    glVertex2d(1.0, 0.0);
-    glTexCoord2d(tex_h, tex_v);
-    glVertex2d(1.0, 1.0);
-    glTexCoord2d(0.0, tex_v);
-    glVertex2d(0.0, 1.0);
-    glEnd();
+    glBindVertexArray(quad_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+    glUseProgram(0);
 }
 
 static void render_scanlines(void)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_object);
     glEnable(GL_BLEND);
-
-    glColor4f(1.0f, 1.0f, 1.0f, config_video.scanlines_intensity);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glBindTexture(GL_TEXTURE_2D, scanlines_texture);
@@ -403,29 +423,130 @@ static void render_scanlines(void)
     int viewportWidth = current_runtime.screen_width;
     int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    glOrtho(0, viewportWidth, 0, viewportHeight, -1, 1);
-
-    glMatrixMode(GL_MODELVIEW);
-    glViewport(0, 0, viewportWidth, viewportHeight);
-
+    float tex_h = (float)current_runtime.screen_width;
     float tex_v = (float)current_runtime.screen_height;
 
-    glBegin(GL_QUADS);
-    glTexCoord2d(0.0, 0.0);
-    glVertex2d(0.0, 0.0);
-    glTexCoord2d(1.0, 0.0);
-    glVertex2d(viewportWidth, 0.0);
-    glTexCoord2d(1.0, tex_v);
-    glVertex2d(viewportWidth, viewportHeight);
-    glTexCoord2d(0.0, tex_v);
-    glVertex2d(0.0, viewportHeight);
-    glEnd();
+    glUseProgram(quad_shader_program);
+    glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
+    glUniform4f(quad_uniform_color, 1.0f, 1.0f, 1.0f, config_video.scanlines_intensity);
 
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glViewport(0, 0, viewportWidth, viewportHeight);
+
+    glBindVertexArray(quad_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+
+    glUseProgram(0);
 
     glDisable(GL_BLEND);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+static void init_shaders(void)
+{
+#if defined(__APPLE__)
+    const char* version = "#version 150\n";
+#else
+    const char* version = "#version 130\n";
+#endif
+
+    const char* vs_body =
+        "in vec2 aPos;\n"
+        "in vec2 aTexCoord;\n"
+        "out vec2 vTexCoord;\n"
+        "uniform vec2 uTexScale;\n"
+        "void main() {\n"
+        "    gl_Position = vec4(aPos, 0.0, 1.0);\n"
+        "    vTexCoord = aTexCoord * uTexScale;\n"
+        "}\n";
+
+    const char* fs_body =
+        "in vec2 vTexCoord;\n"
+        "out vec4 FragColor;\n"
+        "uniform sampler2D uTexture;\n"
+        "uniform vec4 uColor;\n"
+        "void main() {\n"
+        "    FragColor = texture(uTexture, vTexCoord) * uColor;\n"
+        "}\n";
+
+    const char* vs_sources[2] = { version, vs_body };
+    const char* fs_sources[2] = { version, fs_body };
+
+    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vs, 2, vs_sources, NULL);
+    glCompileShader(vs);
+
+    GLint compiled = 0;
+    glGetShaderiv(vs, GL_COMPILE_STATUS, &compiled);
+    if (!compiled)
+    {
+        GLchar info[512];
+        glGetShaderInfoLog(vs, 512, NULL, info);
+        Error("Vertex shader compile error: %s", info);
+    }
+
+    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fs, 2, fs_sources, NULL);
+    glCompileShader(fs);
+
+    glGetShaderiv(fs, GL_COMPILE_STATUS, &compiled);
+    if (!compiled)
+    {
+        GLchar info[512];
+        glGetShaderInfoLog(fs, 512, NULL, info);
+        Error("Fragment shader compile error: %s", info);
+    }
+
+    quad_shader_program = glCreateProgram();
+    glAttachShader(quad_shader_program, vs);
+    glAttachShader(quad_shader_program, fs);
+    glLinkProgram(quad_shader_program);
+
+    GLint linked = 0;
+    glGetProgramiv(quad_shader_program, GL_LINK_STATUS, &linked);
+    if (!linked)
+    {
+        GLchar info[512];
+        glGetProgramInfoLog(quad_shader_program, 512, NULL, info);
+        Error("Shader program link error: %s", info);
+    }
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    quad_uniform_tex_scale = glGetUniformLocation(quad_shader_program, "uTexScale");
+    quad_uniform_texture = glGetUniformLocation(quad_shader_program, "uTexture");
+    quad_uniform_color = glGetUniformLocation(quad_shader_program, "uColor");
+
+    glUseProgram(quad_shader_program);
+    glUniform1i(quad_uniform_texture, 0);
+    glUseProgram(0);
+
+    float quad_vertices[] = {
+        -1.0f, -1.0f,  0.0f,  0.0f,
+         1.0f, -1.0f,  1.0f,  0.0f,
+        -1.0f,  1.0f,  0.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,  1.0f,
+    };
+
+    glGenVertexArrays(1, &quad_vao);
+    glGenBuffers(1, &quad_vbo);
+
+    glBindVertexArray(quad_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);
+
+    GLint pos_attrib = glGetAttribLocation(quad_shader_program, "aPos");
+    GLint tex_attrib = glGetAttribLocation(quad_shader_program, "aTexCoord");
+
+    glEnableVertexAttribArray(pos_attrib);
+    glVertexAttribPointer(pos_attrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+    glEnableVertexAttribArray(tex_attrib);
+    glVertexAttribPointer(tex_attrib, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    Debug("Quad shader initialized (program=%u, vao=%u, vbo=%u)", quad_shader_program, quad_vao, quad_vbo);
 }

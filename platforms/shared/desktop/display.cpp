@@ -17,9 +17,9 @@
  *
  */
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "imgui.h"
-#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdl3.h"
 #include "geargrafx.h"
 #include "config.h"
 #include "gui.h"
@@ -44,7 +44,7 @@ void display_begin_frame(void)
 void display_render(void)
 {
     ogl_renderer_begin_render();
-    ImGui_ImplSDL2_NewFrame();
+    ImGui_ImplSDL3_NewFrame();
     gui_render();
     ogl_renderer_render();
     ogl_renderer_end_render();
@@ -92,7 +92,8 @@ void display_frame_throttle(void)
 
 bool display_should_run_emu_frame(void)
 {
-    if (config_video.sync && vsync_frames_per_emu_frame > 1 && !config_emulator.ffwd)
+    if (config_video.sync && !emu_is_empty() && !emu_is_paused()
+        && !emu_is_debug_idle() && emu_is_audio_open() && !config_emulator.ffwd)
     {
         bool should_run = (vsync_frame_counter == 0);
         vsync_frame_counter++;
@@ -104,26 +105,26 @@ bool display_should_run_emu_frame(void)
     return true;
 }
 
+void display_set_vsync(bool enabled)
+{
+    SDL_GL_SetSwapInterval(0);
+    if (enabled)
+        SDL_GL_SetSwapInterval(1);
+    display_update_frame_pacing();
+}
+
 void display_update_frame_pacing(void)
 {
-    int display = SDL_GetWindowDisplayIndex(application_sdl_window);
+    SDL_DisplayID display = SDL_GetDisplayForWindow(application_sdl_window);
 
-    if (display < 0)
-    {
-        Log("SDL Error: SDL_GetWindowDisplayIndex - %s", SDL_GetError());
-        SDL_ClearError();
-        display = 0;
-    }
+    if (display == 0)
+        display = SDL_GetPrimaryDisplay();
 
-    SDL_DisplayMode mode;
-    if (SDL_GetCurrentDisplayMode(display, &mode) == 0 && mode.refresh_rate > 0)
-        monitor_refresh_rate = mode.refresh_rate;
+    const SDL_DisplayMode* mode = SDL_GetCurrentDisplayMode(display);
+    if (mode && mode->refresh_rate > 0)
+        monitor_refresh_rate = (int)mode->refresh_rate;
     else
-    {
-        Log("SDL Error: SDL_GetCurrentDisplayMode - %s", SDL_GetError());
-        SDL_ClearError();
         monitor_refresh_rate = 60;
-    }
 
     const int emu_fps = 60;
 
@@ -142,7 +143,7 @@ void display_update_frame_pacing(void)
 void display_recreate_gl_context(void)
 {
     ogl_renderer_destroy();
-    ImGui_ImplSDL2_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
 
     SDL_GLContext old_context = display_gl_context;
     display_gl_context = SDL_GL_CreateContext(application_sdl_window);
@@ -150,9 +151,14 @@ void display_recreate_gl_context(void)
     if (display_gl_context)
     {
         SDL_GL_MakeCurrent(application_sdl_window, display_gl_context);
-        SDL_GL_DeleteContext(old_context);
-        SDL_GL_SetSwapInterval(1);
-        ImGui_ImplSDL2_InitForOpenGL(application_sdl_window, display_gl_context);
+        SDL_GL_DestroyContext(old_context);
+
+        bool enable_vsync = config_video.sync;
+        SDL_GL_SetSwapInterval(0);
+        if (enable_vsync)
+            SDL_GL_SetSwapInterval(1);
+
+        ImGui_ImplSDL3_InitForOpenGL(application_sdl_window, display_gl_context);
         ogl_renderer_init();
         display_update_frame_pacing();
     }

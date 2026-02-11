@@ -20,7 +20,7 @@
 #ifndef GAMEPAD_H
 #define GAMEPAD_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "geargrafx.h"
 
 #ifdef GAMEPAD_IMPORT
@@ -31,10 +31,17 @@
 
 #define GAMEPAD_VBTN_AXIS_BASE 1000
 #define GAMEPAD_VBTN_AXIS_THRESHOLD 3000
-#define GAMEPAD_VBTN_L2 (GAMEPAD_VBTN_AXIS_BASE + SDL_CONTROLLER_AXIS_TRIGGERLEFT)
-#define GAMEPAD_VBTN_R2 (GAMEPAD_VBTN_AXIS_BASE + SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+#define GAMEPAD_VBTN_L2 (GAMEPAD_VBTN_AXIS_BASE + SDL_GAMEPAD_AXIS_LEFT_TRIGGER)
+#define GAMEPAD_VBTN_R2 (GAMEPAD_VBTN_AXIS_BASE + SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)
 
-EXTERN SDL_GameController* gamepad_controller[GG_MAX_GAMEPADS];
+struct Gamepad_Detected_Info
+{
+    SDL_JoystickID id;
+    const char* name;
+    char guid_str[64];
+};
+
+EXTERN SDL_Gamepad* gamepad_controller[GG_MAX_GAMEPADS];
 EXTERN int gamepad_added_mappings;
 EXTERN int gamepad_updated_mappings;
 
@@ -43,9 +50,10 @@ EXTERN void gamepad_destroy(void);
 EXTERN void gamepad_load_mappings(void);
 EXTERN void gamepad_add(void);
 EXTERN void gamepad_remove(SDL_JoystickID instance_id);
-EXTERN void gamepad_assign(int slot, int device_index);
+EXTERN void gamepad_assign(int slot, SDL_JoystickID instance_id);
 EXTERN void gamepad_check_shortcuts(int controller);
-EXTERN bool gamepad_get_button(SDL_GameController* controller, int mapping);
+EXTERN bool gamepad_get_button(SDL_Gamepad* controller, int mapping);
+EXTERN int gamepad_get_detected(Gamepad_Detected_Info* out_list, int max_count);
 
 #undef GAMEPAD_IMPORT
 #undef EXTERN

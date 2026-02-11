@@ -20,7 +20,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "geargrafx.h"
 #define MINI_CASE_SENSITIVE
 #include "ini.h"
@@ -32,6 +32,7 @@
     #define EXTERN extern
 #endif
 
+static const int config_version = 2;
 static const int config_max_recent_roms = 10;
 
 struct config_Emulator
@@ -86,14 +87,14 @@ struct config_Video
     bool bilinear = false;
     bool sprite_limit = false;
     bool mix_frames = true;
-    float mix_frames_intensity = 0.60f;
+    float mix_frames_intensity = 0.50f;
     bool scanlines = true;
-    bool scanlines_filter = true;
+    bool scanlines_filter = false;
     float scanlines_intensity = 0.10f;
     bool sync = true;
     float background_color[3] = {0.1f, 0.1f, 0.1f};
     float background_color_debugger[3] = {0.2f, 0.2f, 0.2f};
-    bool lowpass_filter = false;
+    bool lowpass_filter = true;
     float lowpass_intensity = 1.0f;
     float lowpass_cutoff_mhz = 5.0f;
     bool lowpass_speed[3] = { false, true, true };
@@ -234,6 +235,7 @@ struct config_Debug
     bool dis_show_segment = true;
     bool dis_show_bank = true;
     bool dis_show_auto_symbols = true;
+    bool dis_dim_auto_symbols = false;
     bool dis_replace_symbols = true;
     bool dis_replace_labels = true;
     int dis_look_ahead_count = 20;
@@ -252,7 +254,7 @@ struct config_Debug
 
 EXTERN mINI::INIFile* config_ini_file;
 EXTERN mINI::INIStructure config_ini_data;
-EXTERN char* config_root_path;
+EXTERN const char* config_root_path;
 EXTERN char config_temp_path[512];
 EXTERN char config_emu_file_path[512];
 EXTERN char config_imgui_file_path[512];

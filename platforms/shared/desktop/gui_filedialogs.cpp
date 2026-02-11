@@ -19,6 +19,10 @@
 
 #define GUI_FILEDIALOGS_IMPORT
 #include "gui_filedialogs.h"
+
+#include <SDL3/SDL.h>
+#include <string>
+#include <cstring>
 #include "gui.h"
 #include "gui_actions.h"
 #include "gui_debug_memory.h"
@@ -29,533 +33,459 @@
 #include "application.h"
 #include "config.h"
 #include "emu.h"
-#include "nfd.h"
-#include "nfd_sdl2.h"
+#include "utils.h"
 
-static void file_dialog_set_native_window(SDL_Window* window, nfdwindowhandle_t* native_window);
+enum FileDialogID
+{
+    FileDialog_None = 0,
+    FileDialog_OpenROM,
+    FileDialog_LoadRAM,
+    FileDialog_SaveRAM,
+    FileDialog_LoadState,
+    FileDialog_SaveState,
+    FileDialog_ChooseSavestatePath,
+    FileDialog_ChooseScreenshotPath,
+    FileDialog_ChooseBackupRamPath,
+    FileDialog_ChooseMB128Path,
+    FileDialog_LoadBIOSSyscard,
+    FileDialog_LoadBIOSGameExpress,
+    FileDialog_LoadSymbols,
+    FileDialog_SaveScreenshot,
+    FileDialog_SaveVGM,
+    FileDialog_SaveSprite,
+    FileDialog_SaveAllSprites,
+    FileDialog_SaveBackground,
+    FileDialog_SaveMemoryDumpBinary,
+    FileDialog_SaveMemoryDumpText,
+    FileDialog_SaveDisassemblerFull,
+    FileDialog_SaveDisassemblerVisible,
+    FileDialog_SaveLog,
+    FileDialog_SaveDebugSettings,
+    FileDialog_LoadDebugSettings,
+    FileDialog_LoadPalette
+};
+
+static FileDialogID pending_dialog_id = FileDialog_None;
+static std::string pending_dialog_path;
+static bool dialog_active = false;
+static int pending_dialog_int_param1 = 0;
+static int pending_dialog_int_param2 = 0;
+
+static void SDLCALL file_dialog_callback(void* userdata, const char* const* filelist, int filter);
+static void process_dialog_result(FileDialogID id, const char* path);
 
 void gui_file_dialog_open_rom(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "ROM/CD Files", "pce,sgx,hes,cue,chd,zip" } };
-    nfdopendialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        std::string path = outPath;
-        std::string::size_type pos = path.find_last_of("\\/");
-        config_emulator.last_open_path.assign(path.substr(0, pos));
-        gui_load_rom(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Open ROM Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "ROM/CD Files", "pce;sgx;hes;cue;chd;zip" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_OpenROM, application_sdl_window, filters, 1, default_path, false);
 }
 
 void gui_file_dialog_load_ram(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "BRAM Files", "sav,bram,ram,srm" } };
-    nfdopendialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        emu_load_ram(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Load BRAM Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "BRAM Files", "sav;bram;ram;srm" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_LoadRAM, application_sdl_window, filters, 1, default_path, false);
 }
 
 void gui_file_dialog_save_ram(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "BRAM Files", "sav,bram,srm" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
-    args.defaultName = NULL;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        emu_save_ram(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save BRAM Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "BRAM Files", "sav;bram;srm" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_SaveRAM, application_sdl_window, filters, 1, default_path);
 }
 
 void gui_file_dialog_load_state(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Save State Files", "state,state1,state2,state3,state4,state5" } };
-    nfdopendialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        std::string message("Loading state from ");
-        message += outPath;
-        gui_set_status_message(message.c_str(), 3000);
-        emu_load_state_file(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Load State Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "Save State Files", "state;state1;state2;state3;state4;state5" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_LoadState, application_sdl_window, filters, 1, default_path, false);
 }
 
 void gui_file_dialog_save_state(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Save State Files", "state" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
-    args.defaultName = NULL;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        std::string message("Saving state to ");
-        message += outPath;
-        gui_set_status_message(message.c_str(), 3000);
-        emu_save_state_file(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save State Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "Save State Files", "state" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_SaveState, application_sdl_window, filters, 1, default_path);
 }
 
 void gui_file_dialog_choose_savestate_path(void)
 {
-    nfdchar_t *outPath;
-    nfdpickfolderu8args_t args = { };
-    args.defaultPath = config_emulator.savestates_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        strncpy_fit(gui_savestates_path, outPath, sizeof(gui_savestates_path));
-        config_emulator.savestates_path.assign(outPath);
-        update_savestates_data();
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Savestate Path Error: %s", NFD_GetError());
-    }
+    const char* default_path = config_emulator.savestates_path.empty() ? NULL : config_emulator.savestates_path.c_str();
+    SDL_ShowOpenFolderDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_ChooseSavestatePath, application_sdl_window, default_path, false);
 }
 
 void gui_file_dialog_choose_screenshot_path(void)
 {
-    nfdchar_t *outPath;
-    nfdpickfolderu8args_t args = { };
-    args.defaultPath = config_emulator.screenshots_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        strncpy_fit(gui_screenshots_path, outPath, sizeof(gui_screenshots_path));
-        config_emulator.screenshots_path.assign(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Screenshot Path Error: %s", NFD_GetError());
-    }
+    const char* default_path = config_emulator.screenshots_path.empty() ? NULL : config_emulator.screenshots_path.c_str();
+    SDL_ShowOpenFolderDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_ChooseScreenshotPath, application_sdl_window, default_path, false);
 }
 
 void gui_file_dialog_choose_backup_ram_path(void)
 {
-    nfdchar_t *outPath;
-    nfdpickfolderu8args_t args = { };
-    args.defaultPath = config_emulator.backup_ram_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        strncpy_fit(gui_backup_ram_path, outPath, sizeof(gui_backup_ram_path));
-        config_emulator.backup_ram_path.assign(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Backup RAM Path Error: %s", NFD_GetError());
-    }
+    const char* default_path = config_emulator.backup_ram_path.empty() ? NULL : config_emulator.backup_ram_path.c_str();
+    SDL_ShowOpenFolderDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_ChooseBackupRamPath, application_sdl_window, default_path, false);
 }
 
 void gui_file_dialog_choose_mb128_path(void)
 {
-    nfdchar_t *outPath;
-    nfdpickfolderu8args_t args = { };
-    args.defaultPath = config_emulator.mb128_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        strncpy_fit(gui_mb128_path, outPath, sizeof(gui_mb128_path));
-        config_emulator.mb128_path.assign(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("MB128 Path Error: %s", NFD_GetError());
-    }
+    const char* default_path = config_emulator.mb128_path.empty() ? NULL : config_emulator.mb128_path.c_str();
+    SDL_ShowOpenFolderDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_ChooseMB128Path, application_sdl_window, default_path, false);
 }
 
 void gui_file_dialog_load_bios(bool syscard)
 {
-    char* bios_path = syscard ? gui_syscard_bios_path : gui_gameexpress_bios_path;
-    std::string* bios_config_path = syscard ? &config_emulator.syscard_bios_path : &config_emulator.gameexpress_bios_path;
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "BIOS Files", "pce,rom,bios" } };
-    nfdopendialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        bios_config_path->assign(outPath);
-        strcpy(bios_path, bios_config_path->c_str());
-        gui_load_bios(outPath, syscard);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Load Bios Error: %s", NFD_GetError());
-    }
+    FileDialogID id = syscard ? FileDialog_LoadBIOSSyscard : FileDialog_LoadBIOSGameExpress;
+    SDL_DialogFileFilter filters[] = { { "BIOS Files", "pce;rom;bios" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)id, application_sdl_window, filters, 1, default_path, false);
 }
 
 void gui_file_dialog_load_symbols(void)
 {
-    nfdchar_t *outPath;
-    nfdopendialogu8args_t args = { };
-    args.filterList = NULL;
-    args.filterCount = 0;
-    args.defaultPath = NULL;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_debug_reset_symbols();
-        gui_debug_load_symbols_file(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Load Symbols Error: %s", NFD_GetError());
-    }
+    SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_LoadSymbols, application_sdl_window, NULL, 0, NULL, false);
 }
 
 void gui_file_dialog_save_screenshot(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "PNG Files", "png" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = NULL;
-    args.defaultName = NULL;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_action_save_screenshot(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save Screenshot Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "PNG Files", "png" } };
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_SaveScreenshot, application_sdl_window, filters, 1, NULL);
 }
 
 void gui_file_dialog_save_vgm(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "VGM Files", "vgm" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = NULL;
-    args.defaultName = NULL;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        emu_start_vgm_recording(outPath);
-        gui_set_status_message("VGM recording started", 3000);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save VGM Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "VGM Files", "vgm" } };
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_SaveVGM, application_sdl_window, filters, 1, NULL);
 }
 
 void gui_file_dialog_save_sprite(int vdc, int index)
 {
-    char default_name[32];
-    snprintf(default_name, 32, "sprite_vdc%d_id%02d.png", vdc, index);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "PNG Files", "png" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = NULL;
-    args.defaultName = default_name;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
-
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_action_save_sprite(outPath, vdc, index);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save Sprite Error: %s", NFD_GetError());
-    }
+    pending_dialog_int_param1 = vdc;
+    pending_dialog_int_param2 = index;
+    SDL_DialogFileFilter filters[] = { { "PNG Files", "png" } };
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_SaveSprite, application_sdl_window, filters, 1, NULL);
 }
 
 void gui_file_dialog_save_all_sprites(int vdc)
 {
-    nfdchar_t *outPath;
-    nfdpickfolderu8args_t args = { };
-    args.defaultPath = NULL;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_PickFolderU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_action_save_all_sprites(outPath, vdc);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save All Sprites Error: %s", NFD_GetError());
-    }
+    pending_dialog_int_param1 = vdc;
+    SDL_ShowOpenFolderDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_SaveAllSprites, application_sdl_window, NULL, false);
 }
 
 void gui_file_dialog_save_background(int vdc)
 {
-    char default_name[32];
-    snprintf(default_name, 32, "background_vdc%d.png", vdc);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "PNG Files", "png" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = NULL;
-    args.defaultName = default_name;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
-
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_action_save_background(outPath, vdc);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save Background Error: %s", NFD_GetError());
-    }
+    pending_dialog_int_param1 = vdc;
+    SDL_DialogFileFilter filters[] = { { "PNG Files", "png" } };
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_SaveBackground, application_sdl_window, filters, 1, NULL);
 }
 
 void gui_file_dialog_save_memory_dump(bool binary)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Memory Dump Files", binary ? "bin" : "txt" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = NULL;
-    args.defaultName = NULL;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_debug_memory_save_dump(outPath, binary);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save Memory Dump Error: %s", NFD_GetError());
-    }
+    FileDialogID id = binary ? FileDialog_SaveMemoryDumpBinary : FileDialog_SaveMemoryDumpText;
+    SDL_DialogFileFilter filters[] = { { "Memory Dump Files", binary ? "bin" : "txt" } };
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)id, application_sdl_window, filters, 1, NULL);
 }
 
 void gui_file_dialog_save_disassembler(bool full)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Disassembler Files", "txt" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = NULL;
-    args.defaultName = NULL;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_debug_save_disassembler(outPath, full);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save Disassembler Error: %s", NFD_GetError());
-    }
+    FileDialogID id = full ? FileDialog_SaveDisassemblerFull : FileDialog_SaveDisassemblerVisible;
+    SDL_DialogFileFilter filters[] = { { "Disassembler Files", "txt" } };
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)id, application_sdl_window, filters, 1, NULL);
 }
 
 void gui_file_dialog_save_log(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Log Files", "txt" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = NULL;
-    args.defaultName = NULL;
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_debug_save_log(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save Log Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "Log Files", "txt" } };
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_SaveLog, application_sdl_window, filters, 1, NULL);
 }
 
 void gui_file_dialog_save_debug_settings(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Debug Settings Files", "ggdebug" } };
-    nfdsavedialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    std::string default_name;
-    GeargrafxCore* core = emu_get_core();
-    if (core && core->GetMedia() && strlen(core->GetMedia()->GetFileName()) > 0)
-    {
-        default_name = core->GetMedia()->GetFileName();
-        std::string::size_type dot = default_name.find_last_of('.');
-        if (dot != std::string::npos)
-            default_name = default_name.substr(0, dot);
-        default_name += ".ggdebug";
-    }
-
-    args.defaultName = default_name.empty() ? NULL : default_name.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
-
-    nfdresult_t result = NFD_SaveDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_debug_save_settings(outPath);
-        gui_set_status_message("Debug settings saved", 3000);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Save Debug Settings Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "Debug Settings Files", "ggdebug" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowSaveFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_SaveDebugSettings, application_sdl_window, filters, 1, default_path);
 }
 
 void gui_file_dialog_load_debug_settings(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Debug Settings Files", "ggdebug" } };
-    nfdopendialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
-    {
-        gui_debug_load_settings(outPath);
-        gui_set_status_message("Debug settings loaded", 3000);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Load Debug Settings Error: %s", NFD_GetError());
-    }
+    SDL_DialogFileFilter filters[] = { { "Debug Settings Files", "ggdebug" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_LoadDebugSettings, application_sdl_window, filters, 1, default_path, false);
 }
 
 void gui_file_dialog_load_palette(void)
 {
-    nfdchar_t *outPath;
-    nfdfilteritem_t filterItem[1] = { { "Palette Files", "pal,bin" } };
-    nfdopendialogu8args_t args = { };
-    args.filterList = filterItem;
-    args.filterCount = 1;
-    args.defaultPath = config_emulator.last_open_path.c_str();
-    file_dialog_set_native_window(application_sdl_window, &args.parentWindow);
+    if (dialog_active)
+        return;
+    dialog_active = true;
 
-    nfdresult_t result = NFD_OpenDialogU8_With(&outPath, &args);
-    if (result == NFD_OKAY)
+    SDL_DialogFileFilter filters[] = { { "Palette Files", "pal;bin" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_LoadPalette, application_sdl_window, filters, 1, default_path, false);
+}
+
+void gui_file_dialog_process_results(void)
+{
+    if (pending_dialog_id != FileDialog_None)
     {
-        gui_load_palette(outPath);
-        NFD_FreePath(outPath);
-    }
-    else if (result != NFD_CANCEL)
-    {
-        Error("Load Palette Error: %s", NFD_GetError());
+        FileDialogID id = pending_dialog_id;
+        std::string path = pending_dialog_path;
+        pending_dialog_id = FileDialog_None;
+        pending_dialog_path.clear();
+        process_dialog_result(id, path.c_str());
     }
 }
 
-static void file_dialog_set_native_window(SDL_Window* window, nfdwindowhandle_t* native_window)
+static void SDLCALL file_dialog_callback(void* userdata, const char* const* filelist, int filter)
 {
-    if (!NFD_GetNativeWindowFromSDLWindow(window, native_window))
+    (void)filter;
+    dialog_active = false;
+
+    FileDialogID id = (FileDialogID)(intptr_t)userdata;
+
+    if (!filelist || !filelist[0])
+        return;
+
+    pending_dialog_id = id;
+    pending_dialog_path = filelist[0];
+}
+
+static void process_dialog_result(FileDialogID id, const char* path)
+{
+    switch (id)
     {
-        Log("NFD_GetNativeWindowFromSDLWindow failed: %s\n", SDL_GetError());
+        case FileDialog_OpenROM:
+        {
+            std::string str_path = path;
+            std::string::size_type pos = str_path.find_last_of("\\/");
+            config_emulator.last_open_path.assign(str_path.substr(0, pos));
+            gui_load_rom(path);
+            break;
+        }
+        case FileDialog_LoadRAM:
+        {
+            emu_load_ram(path);
+            break;
+        }
+        case FileDialog_SaveRAM:
+        {
+            emu_save_ram(path);
+            break;
+        }
+        case FileDialog_LoadState:
+        {
+            std::string message("Loading state from ");
+            message += path;
+            gui_set_status_message(message.c_str(), 3000);
+            emu_load_state_file(path);
+            break;
+        }
+        case FileDialog_SaveState:
+        {
+            std::string message("Saving state to ");
+            message += path;
+            gui_set_status_message(message.c_str(), 3000);
+            emu_save_state_file(path);
+            break;
+        }
+        case FileDialog_ChooseSavestatePath:
+        {
+            strncpy_fit(gui_savestates_path, path, sizeof(gui_savestates_path));
+            config_emulator.savestates_path.assign(path);
+            update_savestates_data();
+            break;
+        }
+        case FileDialog_ChooseScreenshotPath:
+        {
+            strncpy_fit(gui_screenshots_path, path, sizeof(gui_screenshots_path));
+            config_emulator.screenshots_path.assign(path);
+            break;
+        }
+        case FileDialog_ChooseBackupRamPath:
+        {
+            strncpy_fit(gui_backup_ram_path, path, sizeof(gui_backup_ram_path));
+            config_emulator.backup_ram_path.assign(path);
+            break;
+        }
+        case FileDialog_ChooseMB128Path:
+        {
+            strncpy_fit(gui_mb128_path, path, sizeof(gui_mb128_path));
+            config_emulator.mb128_path.assign(path);
+            break;
+        }
+        case FileDialog_LoadBIOSSyscard:
+        {
+            config_emulator.syscard_bios_path.assign(path);
+            strcpy(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str());
+            gui_load_bios(path, true);
+            break;
+        }
+        case FileDialog_LoadBIOSGameExpress:
+        {
+            config_emulator.gameexpress_bios_path.assign(path);
+            strcpy(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str());
+            gui_load_bios(path, false);
+            break;
+        }
+        case FileDialog_LoadSymbols:
+        {
+            gui_debug_reset_symbols();
+            gui_debug_load_symbols_file(path);
+            break;
+        }
+        case FileDialog_SaveScreenshot:
+        {
+            gui_action_save_screenshot(path);
+            break;
+        }
+        case FileDialog_SaveVGM:
+        {
+            emu_start_vgm_recording(path);
+            gui_set_status_message("VGM recording started", 3000);
+            break;
+        }
+        case FileDialog_SaveSprite:
+        {
+            gui_action_save_sprite(path, pending_dialog_int_param1, pending_dialog_int_param2);
+            break;
+        }
+        case FileDialog_SaveAllSprites:
+        {
+            gui_action_save_all_sprites(path, pending_dialog_int_param1);
+            break;
+        }
+        case FileDialog_SaveBackground:
+        {
+            gui_action_save_background(path, pending_dialog_int_param1);
+            break;
+        }
+        case FileDialog_SaveMemoryDumpBinary:
+        {
+            gui_debug_memory_save_dump(path, true);
+            break;
+        }
+        case FileDialog_SaveMemoryDumpText:
+        {
+            gui_debug_memory_save_dump(path, false);
+            break;
+        }
+        case FileDialog_SaveDisassemblerFull:
+        {
+            gui_debug_save_disassembler(path, true);
+            break;
+        }
+        case FileDialog_SaveDisassemblerVisible:
+        {
+            gui_debug_save_disassembler(path, false);
+            break;
+        }
+        case FileDialog_SaveLog:
+        {
+            gui_debug_save_log(path);
+            break;
+        }
+        case FileDialog_SaveDebugSettings:
+        {
+            gui_debug_save_settings(path);
+            gui_set_status_message("Debug settings saved", 3000);
+            break;
+        }
+        case FileDialog_LoadDebugSettings:
+        {
+            gui_debug_load_settings(path);
+            gui_set_status_message("Debug settings loaded", 3000);
+            break;
+        }
+        case FileDialog_LoadPalette:
+        {
+            gui_load_palette(path);
+            break;
+        }
+        default:
+            break;
     }
 }

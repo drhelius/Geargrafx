@@ -20,7 +20,7 @@
 #include <string>
 #include <stdexcept>
 #include <algorithm>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "gui_debug_memeditor.h"
 #include "gui_debug_constants.h"
@@ -76,37 +76,38 @@ MemEditor::~MemEditor()
 
 void MemEditor::Reset(const char* title, uint8_t* mem_data, int mem_size, int base_display_addr, int word)
 {
+    SafeDeleteArray(m_search_data);
+
+    snprintf(m_title, sizeof(m_title), "%s", IsValidPointer(title) ? title : "");
+    m_mem_data = NULL;
+    m_mem_size = 0;
+    m_mem_base_addr = base_display_addr;
+    m_mem_word = CLAMP(word, 1, 2);
+    m_hex_addr_digits = 2;
+    m_hex_addr_format[0] = 0;
+
     if (!IsValidPointer(mem_data) || (mem_size <= 0))
         return;
 
-    snprintf(m_title, sizeof(m_title), "%s", title);
     m_mem_data = mem_data;
     m_mem_size = mem_size;
-    m_mem_base_addr = base_display_addr;
-    m_mem_word = word;
 
-    if (m_mem_word < 1)
-        m_mem_word = 1;
-    else if (m_mem_word > 2)
-        m_mem_word = 2;
-
-    m_hex_addr_digits = 1;
     int size = m_mem_base_addr + m_mem_size - 1;
-
+    m_hex_addr_digits = 1;
     while (size >>= 4)
-    {
         m_hex_addr_digits++;
-    }
 
     snprintf(m_hex_addr_format, 8, "%%0%dX", m_hex_addr_digits);
 
-    SafeDeleteArray(m_search_data);
     m_search_data = new uint8_t[m_mem_size * m_mem_word];
     memcpy(m_search_data, m_mem_data, m_mem_size * m_mem_word);
 }
 
 void MemEditor::Draw(bool ascii, bool preview, bool options, bool cursors)
 {
+    if (!IsValidPointer(m_mem_data) || m_mem_size <= 0)
+        return;
+
     if ((m_mem_word > 1) && ((m_preview_data_type < 2) || (m_preview_data_type > 3)))
         m_preview_data_type = 2;
 
@@ -992,6 +993,8 @@ void MemEditor::WatchPopup()
 
 void MemEditor::SearchCapture()
 {
+    if (!IsValidPointer(m_mem_data) || !IsValidPointer(m_search_data) || m_mem_size <= 0)
+        return;
     memcpy(m_search_data, m_mem_data, m_mem_size);
 }
 

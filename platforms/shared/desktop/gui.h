@@ -20,7 +20,7 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "geargrafx.h"
 #include "imgui.h"
 #include "config.h"
@@ -113,7 +113,7 @@ EXTERN void gui_shortcut(gui_ShortCutEvent event);
 EXTERN void gui_load_rom(const char* path);
 EXTERN void gui_load_bios(const char* path, bool syscard);
 EXTERN void gui_load_palette(const char* path);
-EXTERN void gui_set_status_message(const char* message, u32 milliseconds);
+EXTERN void gui_set_status_message(const char* message, Uint64 milliseconds);
 EXTERN void gui_set_error_message(const char* message);
 
 #undef GUI_IMPORT

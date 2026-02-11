@@ -29,7 +29,6 @@ INCLUDES += -I$(DEPS_DIR)/libchdr/include
 INCLUDES += -I$(DEPS_DIR)/lzma/include
 INCLUDES += -I$(DEPS_DIR)/mINI
 INCLUDES += -I$(DEPS_DIR)/miniz
-INCLUDES += -I$(DEPS_DIR)/nfd
 INCLUDES += -I$(DEPS_DIR)/stb
 INCLUDES += -I$(DEPS_DIR)/zstd
 
@@ -68,20 +67,20 @@ endif
 
 ifeq ($(UNAME_S), Linux)
     PLATFORM = "Linux"
-    LDFLAGS += -lGL -ldl `sdl2-config --libs`
-    CPPFLAGS += `sdl2-config --cflags`
+    LDFLAGS += -lGL -ldl `pkg-config --libs sdl3`
+    CPPFLAGS += `pkg-config --cflags sdl3`
     TARGET := $(TARGET_NAME)
 else ifeq ($(UNAME_S), Darwin)
     PLATFORM = "macOS"
-    LDFLAGS += -framework OpenGL `sdl2-config --static-libs`
-    CPPFLAGS += `sdl2-config --cflags`
+    LDFLAGS += -framework OpenGL `pkg-config --libs sdl3`
+    CPPFLAGS += `pkg-config --cflags sdl3`
     CPPFLAGS += -I/opt/local/include
     TARGET := $(TARGET_NAME)
 else
     PLATFORM = "Generic Unix-like/BSD"
-    LDFLAGS += -lGL `sdl2-config --libs`
+    LDFLAGS += -lGL `pkg-config --libs sdl3`
     CXXFLAGS += -std=gnu++11
-    CPPFLAGS += `sdl2-config --cflags`
+    CPPFLAGS += `pkg-config --cflags sdl3`
     TARGET := $(TARGET_NAME)
 endif
 

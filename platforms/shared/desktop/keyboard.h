@@ -20,7 +20,7 @@
 #ifndef KEYBOARD_H
 #define KEYBOARD_H
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "imgui.h"
 
 static SDL_Keycode ImGuiKeyToSDLKeycode(ImGuiKey imgui_key);
@@ -43,7 +43,7 @@ static SDL_Keycode ImGuiKeyToSDLKeycode(ImGuiKey imgui_key)
         case ImGuiKey_Space: return SDLK_SPACE;
         case ImGuiKey_Enter: return SDLK_RETURN;
         case ImGuiKey_Escape: return SDLK_ESCAPE;
-        case ImGuiKey_Apostrophe: return SDLK_QUOTE;
+        case ImGuiKey_Apostrophe: return SDLK_APOSTROPHE;
         case ImGuiKey_Comma: return SDLK_COMMA;
         case ImGuiKey_Minus: return SDLK_MINUS;
         case ImGuiKey_Period: return SDLK_PERIOD;
@@ -53,7 +53,7 @@ static SDL_Keycode ImGuiKeyToSDLKeycode(ImGuiKey imgui_key)
         case ImGuiKey_LeftBracket: return SDLK_LEFTBRACKET;
         case ImGuiKey_Backslash: return SDLK_BACKSLASH;
         case ImGuiKey_RightBracket: return SDLK_RIGHTBRACKET;
-        case ImGuiKey_GraveAccent: return SDLK_BACKQUOTE;
+        case ImGuiKey_GraveAccent: return SDLK_GRAVE;
         case ImGuiKey_CapsLock: return SDLK_CAPSLOCK;
         case ImGuiKey_ScrollLock: return SDLK_SCROLLLOCK;
         case ImGuiKey_NumLock: return SDLK_NUMLOCKCLEAR;
@@ -95,32 +95,32 @@ static SDL_Keycode ImGuiKeyToSDLKeycode(ImGuiKey imgui_key)
         case ImGuiKey_7: return SDLK_7;
         case ImGuiKey_8: return SDLK_8;
         case ImGuiKey_9: return SDLK_9;
-        case ImGuiKey_A: return SDLK_a;
-        case ImGuiKey_B: return SDLK_b;
-        case ImGuiKey_C: return SDLK_c;
-        case ImGuiKey_D: return SDLK_d;
-        case ImGuiKey_E: return SDLK_e;
-        case ImGuiKey_F: return SDLK_f;
-        case ImGuiKey_G: return SDLK_g;
-        case ImGuiKey_H: return SDLK_h;
-        case ImGuiKey_I: return SDLK_i;
-        case ImGuiKey_J: return SDLK_j;
-        case ImGuiKey_K: return SDLK_k;
-        case ImGuiKey_L: return SDLK_l;
-        case ImGuiKey_M: return SDLK_m;
-        case ImGuiKey_N: return SDLK_n;
-        case ImGuiKey_O: return SDLK_o;
-        case ImGuiKey_P: return SDLK_p;
-        case ImGuiKey_Q: return SDLK_q;
-        case ImGuiKey_R: return SDLK_r;
-        case ImGuiKey_S: return SDLK_s;
-        case ImGuiKey_T: return SDLK_t;
-        case ImGuiKey_U: return SDLK_u;
-        case ImGuiKey_V: return SDLK_v;
-        case ImGuiKey_W: return SDLK_w;
-        case ImGuiKey_X: return SDLK_x;
-        case ImGuiKey_Y: return SDLK_y;
-        case ImGuiKey_Z: return SDLK_z;
+        case ImGuiKey_A: return SDLK_A;
+        case ImGuiKey_B: return SDLK_B;
+        case ImGuiKey_C: return SDLK_C;
+        case ImGuiKey_D: return SDLK_D;
+        case ImGuiKey_E: return SDLK_E;
+        case ImGuiKey_F: return SDLK_F;
+        case ImGuiKey_G: return SDLK_G;
+        case ImGuiKey_H: return SDLK_H;
+        case ImGuiKey_I: return SDLK_I;
+        case ImGuiKey_J: return SDLK_J;
+        case ImGuiKey_K: return SDLK_K;
+        case ImGuiKey_L: return SDLK_L;
+        case ImGuiKey_M: return SDLK_M;
+        case ImGuiKey_N: return SDLK_N;
+        case ImGuiKey_O: return SDLK_O;
+        case ImGuiKey_P: return SDLK_P;
+        case ImGuiKey_Q: return SDLK_Q;
+        case ImGuiKey_R: return SDLK_R;
+        case ImGuiKey_S: return SDLK_S;
+        case ImGuiKey_T: return SDLK_T;
+        case ImGuiKey_U: return SDLK_U;
+        case ImGuiKey_V: return SDLK_V;
+        case ImGuiKey_W: return SDLK_W;
+        case ImGuiKey_X: return SDLK_X;
+        case ImGuiKey_Y: return SDLK_Y;
+        case ImGuiKey_Z: return SDLK_Z;
         case ImGuiKey_F1: return SDLK_F1;
         case ImGuiKey_F2: return SDLK_F2;
         case ImGuiKey_F3: return SDLK_F3;
