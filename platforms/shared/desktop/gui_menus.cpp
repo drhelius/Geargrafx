@@ -1457,43 +1457,76 @@ static void menu_debug(void)
         ImGui::MenuItem("Show Disassembler", "", &config_debug.show_disassembler, config_debug.debug);
         ImGui::MenuItem("Show Memory Editor", "", &config_debug.show_memory, config_debug.debug);
         ImGui::MenuItem("Show Trace Logger", "", &config_debug.show_trace_logger, config_debug.debug);
+
         ImGui::Separator();
-        ImGui::MenuItem("Show HuC6280 Status", "", &config_debug.show_processor, config_debug.debug);
-        ImGui::MenuItem("Show HuC6280 Call Stack", "", &config_debug.show_call_stack, config_debug.debug);
-        ImGui::MenuItem("Show HuC6280 Breakpoints", "", &config_debug.show_breakpoints, config_debug.debug);
-        ImGui::MenuItem("Show HuC6280 Symbols", "", &config_debug.show_symbols, config_debug.debug);
-        ImGui::Separator();
-        ImGui::MenuItem("Show HuC6260 Info", "", &config_debug.show_huc6260_info, config_debug.debug);
-        ImGui::MenuItem("Show HuC6260 Palettes", "", &config_debug.show_huc6260_palettes, config_debug.debug);
-        ImGui::Separator();
+
+        if (ImGui::BeginMenu("HuC6280", config_debug.debug))
+        {
+            ImGui::MenuItem("Show Status", "", &config_debug.show_processor);
+            ImGui::MenuItem("Show Call Stack", "", &config_debug.show_call_stack);
+            ImGui::MenuItem("Show Breakpoints", "", &config_debug.show_breakpoints);
+            ImGui::MenuItem("Show Symbols", "", &config_debug.show_symbols);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("HuC6260", config_debug.debug))
+        {
+            ImGui::MenuItem("Show Info", "", &config_debug.show_huc6260_info);
+            ImGui::MenuItem("Show Palettes", "", &config_debug.show_huc6260_palettes);
+            ImGui::EndMenu();
+        }
+
         if (emu_get_core()->GetMedia()->IsSGX())
         {
-            ImGui::MenuItem("Show HuC6202 Info", "", &config_debug.show_huc6202_info, config_debug.debug);
-            ImGui::Separator();
-            ImGui::MenuItem("Show HuC6270 (1) Info", "", &config_debug.show_huc6270_1_info, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 (2) Info", "", &config_debug.show_huc6270_2_info, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 (1) Registers", "", &config_debug.show_huc6270_1_registers, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 (2) Registers", "", &config_debug.show_huc6270_2_registers, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 (1) Background", "", &config_debug.show_huc6270_1_background, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 (2) Background", "", &config_debug.show_huc6270_2_background, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 (1) Sprites", "", &config_debug.show_huc6270_1_sprites, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 (2) Sprites", "", &config_debug.show_huc6270_2_sprites, config_debug.debug);
+            if (ImGui::BeginMenu("HuC6202", config_debug.debug))
+            {
+                ImGui::MenuItem("Show Info", "", &config_debug.show_huc6202_info);
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("HuC6270", config_debug.debug))
+            {
+                ImGui::MenuItem("Show Info (1)", "", &config_debug.show_huc6270_1_info);
+                ImGui::MenuItem("Show Info (2)", "", &config_debug.show_huc6270_2_info);
+                ImGui::Separator();
+                ImGui::MenuItem("Show Registers (1)", "", &config_debug.show_huc6270_1_registers);
+                ImGui::MenuItem("Show Registers (2)", "", &config_debug.show_huc6270_2_registers);
+                ImGui::Separator();
+                ImGui::MenuItem("Show Background (1)", "", &config_debug.show_huc6270_1_background);
+                ImGui::MenuItem("Show Background (2)", "", &config_debug.show_huc6270_2_background);
+                ImGui::Separator();
+                ImGui::MenuItem("Show Sprites (1)", "", &config_debug.show_huc6270_1_sprites);
+                ImGui::MenuItem("Show Sprites (2)", "", &config_debug.show_huc6270_2_sprites);
+                ImGui::EndMenu();
+            }
         }
         else
         {
-            ImGui::MenuItem("Show HuC6270 Info", "", &config_debug.show_huc6270_1_info, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 Registers", "", &config_debug.show_huc6270_1_registers, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 Background", "", &config_debug.show_huc6270_1_background, config_debug.debug);
-            ImGui::MenuItem("Show HuC6270 Sprites", "", &config_debug.show_huc6270_1_sprites, config_debug.debug);
+            if (ImGui::BeginMenu("HuC6270", config_debug.debug))
+            {
+                ImGui::MenuItem("Show Info", "", &config_debug.show_huc6270_1_info);
+                ImGui::MenuItem("Show Registers", "", &config_debug.show_huc6270_1_registers);
+                ImGui::MenuItem("Show Background", "", &config_debug.show_huc6270_1_background);
+                ImGui::MenuItem("Show Sprites", "", &config_debug.show_huc6270_1_sprites);
+                ImGui::EndMenu();
+            }
         }
 
-        ImGui::Separator();
-        ImGui::MenuItem("Show CD-ROM", "", &config_debug.show_cdrom, config_debug.debug && emu_get_core()->GetMedia()->IsCDROM());
-        ImGui::MenuItem("Show Arcade Card", "", &config_debug.show_arcade_card, config_debug.debug && emu_get_core()->GetMedia()->IsArcadeCard());
-        ImGui::Separator();
-        ImGui::MenuItem("Show PSG", "", &config_debug.show_psg, config_debug.debug);
-        ImGui::MenuItem("Show CD-ROM Audio", "", &config_debug.show_cdrom_audio, config_debug.debug && emu_get_core()->GetMedia()->IsCDROM());
-        ImGui::MenuItem("Show CD-ROM ADPCM", "", &config_debug.show_adpcm, config_debug.debug && emu_get_core()->GetMedia()->IsCDROM());
+        if (ImGui::BeginMenu("CD-ROM", config_debug.debug && emu_get_core()->GetMedia()->IsCDROM()))
+        {
+            ImGui::MenuItem("Show Status", "", &config_debug.show_cdrom);
+            ImGui::MenuItem("Show Arcade Card", "", &config_debug.show_arcade_card, emu_get_core()->GetMedia()->IsArcadeCard());
+            ImGui::Separator();
+            ImGui::MenuItem("Show CD-ROM Audio", "", &config_debug.show_cdrom_audio);
+            ImGui::MenuItem("Show ADPCM", "", &config_debug.show_adpcm);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Audio", config_debug.debug))
+        {
+            ImGui::MenuItem("Show PSG", "", &config_debug.show_psg);
+            ImGui::EndMenu();
+        }
 
 #if defined(__APPLE__) || defined(_WIN32)
         ImGui::Separator();
