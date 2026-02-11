@@ -171,6 +171,20 @@ void config_destroy(void)
     SafeDelete(config_ini_file)
 }
 
+void config_load_defaults(void)
+{
+    Log("Loading default settings");
+
+    config_emulator = config_Emulator();
+    config_video = config_Video();
+    config_audio = config_Audio();
+    config_input = config_Input();
+    config_debug = config_Debug();
+
+    config_init();
+    config_write();
+}
+
 void config_read(void)
 {
     if (!config_ini_file->read(config_ini_data))

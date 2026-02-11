@@ -39,6 +39,7 @@ static bool save_ram = false;
 static bool open_state = false;
 static bool save_state = false;
 static bool open_about = false;
+static bool open_load_defaults = false;
 static bool save_screenshot = false;
 static bool save_vgm = false;
 static bool choose_savestates_path = false;
@@ -77,6 +78,7 @@ void gui_main_menu(void)
     open_state = false;
     save_state = false;
     open_about = false;
+    open_load_defaults = false;
     save_screenshot = false;
     save_vgm = false;
     choose_savestates_path = false;
@@ -237,6 +239,13 @@ static void menu_geargrafx(void)
         if (ImGui::MenuItem("Save Screenshot", config_hotkeys[config_HotkeyIndex_Screenshot].str))
         {
             gui_action_save_screenshot(NULL);
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Load Default Settings"))
+        {
+            open_load_defaults = true;
         }
 
         ImGui::Separator();
@@ -1616,7 +1625,14 @@ static void file_dialogs(void)
         ImGui::OpenPopup("About " GG_TITLE);
     }
 
+    if (open_load_defaults)
+    {
+        gui_dialog_in_use = true;
+        ImGui::OpenPopup("Load Default Settings");
+    }
+
     gui_popup_modal_about();
+    gui_popup_modal_load_defaults();
 }
 
 static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int player)

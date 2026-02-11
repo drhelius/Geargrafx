@@ -320,6 +320,34 @@ void gui_popup_modal_about(void)
     }
 }
 
+void gui_popup_modal_load_defaults(void)
+{
+    if (ImGui::BeginPopupModal("Load Default Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Are you sure you want to load default settings?\n\n");
+        ImGui::Text("This action cannot be reverted.\n\n");
+        ImGui::Separator();
+
+        if (ImGui::Button("Yes", ImVec2(120, 0)))
+        {
+            config_load_defaults();
+            ImGui::CloseCurrentPopup();
+            gui_dialog_in_use = false;
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("No", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+            gui_dialog_in_use = false;
+        }
+
+        ImGui::SetItemDefaultFocus();
+        ImGui::EndPopup();
+    }
+}
+
 void gui_show_info(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
