@@ -26,8 +26,11 @@
 #include "gui_debug_disassembler.h"
 #include "ogl_renderer.h"
 #include "emu.h"
+#include "display.h"
 #include "utils.h"
 #include "single_instance.h"
+#include "gamepad.h"
+#include "events.h"
 
 #define APPLICATION_IMPORT
 #include "application.h"
@@ -38,18 +41,8 @@
 #define WINDOW_TITLE GG_TITLE " " GG_VERSION
 #endif
 
-static SDL_GLContext gl_context = NULL;
 static bool running = true;
 static bool paused_when_focus_lost = false;
-static Uint64 frame_time_start = 0;
-static Uint64 frame_time_end = 0;
-static bool input_updated = false;
-static int monitor_refresh_rate = 60;
-static int vsync_frames_per_emu_frame = 1;
-static int vsync_frame_counter = 0;
-static Uint16 input_last_state[GG_MAX_GAMEPADS] = { };
-static bool input_turbo_toggle_prev[GG_MAX_GAMEPADS][2] = { };
-static bool input_gamepad_shortcut_prev[GG_MAX_GAMEPADS][config_HotkeyIndex_COUNT] = { };
 static Uint32 mouse_last_motion_time = 0;
 static const Uint32 mouse_hide_timeout_ms = 1500;
 #if !defined(__APPLE__)
@@ -64,30 +57,15 @@ bool g_mcp_stdio_mode = false;
 
 static bool sdl_init(void);
 static void sdl_destroy(void);
-static void sdl_load_gamepad_mappings(void);
 static void sdl_events(void);
 static void sdl_events_quit(const SDL_Event* event);
 static void sdl_events_app(const SDL_Event* event);
-static void sdl_events_shortcuts_gui(const SDL_Event* event);
-static void sdl_events_emu(void);
-static void sdl_add_gamepads(void);
-static void sdl_remove_gamepad(SDL_JoystickID instance_id);
-static Uint16 input_build_state(int controller);
-static void input_apply_state(int controller, Uint16 before, Uint16 now);
-static void input_check_gamepad_shortcuts(int controller);
-static bool input_get_button(SDL_GameController* controller, int mapping);
 static void handle_mouse_cursor(void);
 static void handle_menu(void);
 static void handle_single_instance(void);
 static void run_emulator(void);
-static bool should_run_emu_frame(void);
-static void render(void);
-static void frame_throttle(void);
-static void update_frame_pacing(void);
-static void recreate_gl_context_for_display_change(void);
 static void save_window_size(void);
 static void log_sdl_error(const char* action, const char* file, int line);
-static bool check_hotkey(const SDL_Event* event, const config_Hotkey& hotkey, bool allow_repeat);
 
 #define SDL_ERROR(action) log_sdl_error(action, __FILE__, __LINE__)
 
@@ -122,28 +100,34 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
         return 1;
     }
 
+    if (!gamepad_init())
+    {
+        Error("Failed to initialize gamepad subsystem");
+        return 2;
+    }
+
     if (!emu_init(application_input_pump))
     {
         Error("Failed to initialize emulator");
-        return 2;
+        return 3;
     }
 
     if (!gui_init())
     {
         Error("Failed to initialize GUI");
-        return 3;
+        return 4;
     }
 
-    if (!ImGui_ImplSDL2_InitForOpenGL(application_sdl_window, gl_context))
+    if (!ImGui_ImplSDL2_InitForOpenGL(application_sdl_window, display_gl_context))
     {
         Error("Failed to initialize ImGui for SDL2");
-        return 4;
+        return 5;
     }
 
     if (!ogl_renderer_init())
     {
         Error("Failed to initialize renderer");
-        return 5;
+        return 6;
     }
 
     application_set_vsync(config_video.sync);
@@ -186,6 +170,7 @@ void application_destroy(void)
     ogl_renderer_destroy();
     ImGui_ImplSDL2_Shutdown();
     gui_destroy();
+    gamepad_destroy();
     sdl_destroy();
     single_instance_destroy();
 
@@ -200,15 +185,14 @@ void application_mainloop(void)
 
     while (running)
     {
-        frame_time_start = SDL_GetPerformanceCounter();
+        display_begin_frame();
         sdl_events();
         handle_mouse_cursor();
         handle_menu();
         handle_single_instance();
         run_emulator();
-        render();
-        frame_time_end = SDL_GetPerformanceCounter();
-        frame_throttle();
+        display_render();
+        display_frame_throttle();
     }
 }
 
@@ -333,7 +317,7 @@ void application_trigger_fullscreen(bool fullscreen)
 #endif
 
     mouse_last_motion_time = SDL_GetTicks();
-    update_frame_pacing();
+    display_update_frame_pacing();
 }
 
 void application_trigger_fit_to_content(int width, int height)
@@ -345,7 +329,7 @@ void application_trigger_fit_to_content(int width, int height)
 void application_set_vsync(bool enabled)
 {
     SDL_GL_SetSwapInterval(enabled ? 1 : 0);
-    update_frame_pacing();
+    display_update_frame_pacing();
 }
 
 void application_update_title_with_rom(const char* rom)
@@ -356,96 +340,9 @@ void application_update_title_with_rom(const char* rom)
     SDL_ERROR("SDL_SetWindowTitle");
 }
 
-void application_assign_gamepad(int slot, int device_index)
-{
-    if (slot < 0 || slot >= GG_MAX_GAMEPADS)
-        return;
-
-    if (device_index < 0)
-    {
-        if (IsValidPointer(application_gamepad[slot]))
-        {
-            SDL_GameControllerClose(application_gamepad[slot]);
-            application_gamepad[slot] = NULL;
-            Debug("Player %d controller set to None", slot + 1);
-        }
-        return;
-    }
-
-    if (device_index >= SDL_NumJoysticks())
-    {
-        Log("Warning: device_index %d out of range", device_index);
-        return;
-    }
-
-    if (!SDL_IsGameController(device_index))
-    {
-        Log("Warning: device_index %d is not a game controller", device_index);
-        return;
-    }
-
-    SDL_JoystickID wanted_id = SDL_JoystickGetDeviceInstanceID(device_index);
-
-    if (IsValidPointer(application_gamepad[slot]))
-    {
-        SDL_JoystickID current_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[slot]));
-        if (current_id == wanted_id)
-            return;
-    }
-
-    int other = -1;
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-    {
-        if (i == slot)
-            continue;
-
-        if (IsValidPointer(application_gamepad[i]))
-        {
-            SDL_JoystickID id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[i]));
-            if (id == wanted_id)
-            {
-                other = i;
-                break;
-            }
-        }
-    }
-
-    if (other != -1)
-    {
-        if (IsValidPointer(application_gamepad[slot]))
-        {
-            SDL_GameControllerClose(application_gamepad[slot]);
-            application_gamepad[slot] = NULL;
-        }
-
-        application_gamepad[slot] = application_gamepad[other];
-        application_gamepad[other] = NULL;
-
-        Debug("Moved controller from Player %d to Player %d", other + 1, slot + 1);
-        return;
-    }
-
-    if (IsValidPointer(application_gamepad[slot]))
-    {
-        SDL_GameControllerClose(application_gamepad[slot]);
-        application_gamepad[slot] = NULL;
-    }
-
-    SDL_GameController* controller = SDL_GameControllerOpen(device_index);
-    if (!IsValidPointer(controller))
-    {
-        Log("SDL_GameControllerOpen failed for device_index %d", device_index);
-        SDL_ERROR("SDL_GameControllerOpen");
-        return;
-    }
-
-    application_gamepad[slot] = controller;
-    Debug("Game controller %d assigned to Player %d", device_index, slot + 1);
-}
-
 void application_input_pump(void)
 {
-    sdl_events_emu();
+    events_emu();
 }
 
 bool application_check_single_instance(const char* rom_file, const char* symbol_file)
@@ -470,9 +367,6 @@ bool application_check_single_instance(const char* rom_file, const char* symbol_
 static bool sdl_init(void)
 {
     Debug("Initializing SDL...");
-
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-        InitPointer(application_gamepad[i]);
 
 #if defined(_WIN32)
     SDL_SetHint(SDL_HINT_WINDOWS_DPI_SCALING, "1");
@@ -509,15 +403,15 @@ static bool sdl_init(void)
         return false;
     }
 
-    gl_context = SDL_GL_CreateContext(application_sdl_window);
+    display_gl_context = SDL_GL_CreateContext(application_sdl_window);
 
-    if (!gl_context)
+    if (!display_gl_context)
     {
         SDL_ERROR("SDL_GL_CreateContext");
         return false;
     }
 
-    SDL_GL_MakeCurrent(application_sdl_window, gl_context);
+    SDL_GL_MakeCurrent(application_sdl_window, display_gl_context);
     SDL_ERROR("SDL_GL_MakeCurrent");
 
 #if defined(__APPLE__)
@@ -552,94 +446,14 @@ static bool sdl_init(void)
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
     SDL_ERROR("SDL_EventState SDL_DROPFILE");
 
-    sdl_load_gamepad_mappings();
-    sdl_add_gamepads();
-
     return true;
 }
 
 static void sdl_destroy(void)
 {
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-    {
-        if (IsValidPointer(application_gamepad[i]))
-        {
-            SDL_GameControllerClose(application_gamepad[i]);
-        }
-    }
-
-    SDL_GL_DeleteContext(gl_context);
+    SDL_GL_DeleteContext(display_gl_context);
     SDL_DestroyWindow(application_sdl_window);
     SDL_Quit();
-}
-
-static void sdl_load_gamepad_mappings(void)
-{
-    std::string db_path;
-    char exe_path[1024] = { };
-    get_executable_path(exe_path, sizeof(exe_path));
-
-    if (exe_path[0] != '\0')
-    {
-        db_path = std::string(exe_path) + "/gamecontrollerdb.txt";
-    }
-    else
-    {
-        db_path = "gamecontrollerdb.txt";
-    }
-
-    std::ifstream file;
-    open_ifstream_utf8(file, db_path.c_str(), std::ios::in);
-    if (!file.is_open())
-    {
-        open_ifstream_utf8(file, "gamecontrollerdb.txt", std::ios::in);
-    }
-
-    int added_mappings = 0;
-    int updated_mappings = 0;
-    int line_number = 0;
-    char platform_field[64] = { };
-    snprintf(platform_field, 64, "platform:%s", SDL_GetPlatform());
-    if (file.is_open())
-    {
-        Debug("Loading gamecontrollerdb.txt file");
-        std::string line;
-        while (std::getline(file, line))
-        {
-            size_t comment = line.find_first_of('#');
-            if (comment != std::string::npos)
-                line = line.substr(0, comment);
-            line = line.erase(0, line.find_first_not_of(" \t\r\n"));
-            line = line.erase(line.find_last_not_of(" \t\r\n") + 1);
-            while (line[0] == ' ')
-                line = line.substr(1);
-            if (line.empty())
-                continue;
-            if ((line.find("platform:") != std::string::npos) && (line.find(platform_field) == std::string::npos))
-                continue;
-            int result = SDL_GameControllerAddMapping(line.c_str());
-            if (result == 1)
-                added_mappings++;
-            else if (result == 0)
-                updated_mappings++;
-            else if (result == -1)
-            {
-                Error("Unable to load game controller mapping in line %d from gamecontrollerdb.txt", line_number);
-                SDL_ERROR("SDL_GameControllerAddMapping");
-            }
-            line_number++;
-        }
-        file.close();
-    }
-    else
-    {
-        Error("Game controller database not found (gamecontrollerdb.txt)!!");
-        return;
-    }
-    Log("Added %d new game controller mappings from gamecontrollerdb.txt", added_mappings);
-    Log("Updated %d game controller mappings from gamecontrollerdb.txt", updated_mappings);
-    application_added_gamepad_mappings = added_mappings;
-    application_updated_gamepad_mappings = updated_mappings;
 }
 
 static void handle_mouse_cursor(void)
@@ -707,7 +521,7 @@ static void sdl_events(void)
             ImGui_ImplSDL2_ProcessEvent(&event);
 
             if (!gui_in_use)
-                sdl_events_shortcuts_gui(&event);
+                events_shortcuts(&event);
         }
     }
 }
@@ -763,7 +577,7 @@ static void sdl_events_app(const SDL_Event* event)
                 case SDL_WINDOWEVENT_DISPLAY_CHANGED:
                 {
                     if (config_video.sync)
-                        recreate_gl_context_for_display_change();
+                        display_recreate_gl_context();
                     break;
                 }
             }
@@ -776,528 +590,29 @@ static void sdl_events_app(const SDL_Event* event)
         }
         case SDL_CONTROLLERDEVICEADDED:
         {
-            sdl_add_gamepads();
+            gamepad_add();
             break;
         }
         case SDL_CONTROLLERDEVICEREMOVED:
         {
-            sdl_remove_gamepad(event->cdevice.which);
+            gamepad_remove(event->cdevice.which);
             break;
         }
     }
-}
-
-static bool check_hotkey(const SDL_Event* event, const config_Hotkey& hotkey, bool allow_repeat)
-{
-    if (event->type != SDL_KEYDOWN)
-        return false;
-
-    if (!allow_repeat && event->key.repeat != 0)
-        return false;
-
-    if (event->key.keysym.scancode != hotkey.key)
-        return false;
-
-    SDL_Keymod mods = (SDL_Keymod)event->key.keysym.mod;
-    SDL_Keymod expected = hotkey.mod;
-
-    SDL_Keymod mods_normalized = (SDL_Keymod)0;
-    if (mods & (KMOD_LCTRL | KMOD_RCTRL)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_CTRL);
-    if (mods & (KMOD_LSHIFT | KMOD_RSHIFT)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_SHIFT);
-    if (mods & (KMOD_LALT | KMOD_RALT)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_ALT);
-    if (mods & (KMOD_LGUI | KMOD_RGUI)) mods_normalized = (SDL_Keymod)(mods_normalized | KMOD_GUI);
-
-    SDL_Keymod expected_normalized = (SDL_Keymod)0;
-    if (expected & (KMOD_LCTRL | KMOD_RCTRL | KMOD_CTRL)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_CTRL);
-    if (expected & (KMOD_LSHIFT | KMOD_RSHIFT | KMOD_SHIFT)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_SHIFT);
-    if (expected & (KMOD_LALT | KMOD_RALT | KMOD_ALT)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_ALT);
-    if (expected & (KMOD_LGUI | KMOD_RGUI | KMOD_GUI)) expected_normalized = (SDL_Keymod)(expected_normalized | KMOD_GUI);
-
-    return mods_normalized == expected_normalized;
-}
-
-static void sdl_events_shortcuts_gui(const SDL_Event* event)
-{
-    if (event->type != SDL_KEYDOWN)
-        return;
-
-    // Check special case hotkeys first
-    if (check_hotkey(event, config_hotkeys[config_HotkeyIndex_Quit], false))
-    {
-        application_trigger_quit();
-        return;
-    }
-
-    if (check_hotkey(event, config_hotkeys[config_HotkeyIndex_Fullscreen], false))
-    {
-        config_emulator.fullscreen = !config_emulator.fullscreen;
-        application_trigger_fullscreen(config_emulator.fullscreen);
-        return;
-    }
-
-    // Check slot selection hotkeys
-    for (int i = 0; i < 5; i++)
-    {
-        if (check_hotkey(event, config_hotkeys[config_HotkeyIndex_SelectSlot1 + i], false))
-        {
-            config_emulator.save_slot = i;
-            return;
-        }
-    }
-
-    // Check all hotkeys mapped to gui shortcuts
-    for (int i = 0; i < GUI_HOTKEY_MAP_COUNT; i++)
-    {
-        if (gui_hotkey_map[i].shortcut >= 0 && check_hotkey(event, config_hotkeys[gui_hotkey_map[i].config_index], gui_hotkey_map[i].allow_repeat))
-        {
-            gui_shortcut((gui_ShortCutEvent)gui_hotkey_map[i].shortcut);
-            return;
-        }
-    }
-
-    // Fixed hotkeys for debug copy/paste/select operations
-    int key = event->key.keysym.scancode;
-    SDL_Keymod mods = (SDL_Keymod)event->key.keysym.mod;
-
-    if (event->key.repeat == 0 && key == SDL_SCANCODE_A && (mods & KMOD_CTRL))
-    {
-        gui_shortcut(gui_ShortcutDebugSelectAll);
-        return;
-    }
-
-    if (event->key.repeat == 0 && key == SDL_SCANCODE_C && (mods & KMOD_CTRL))
-    {
-        gui_shortcut(gui_ShortcutDebugCopy);
-        return;
-    }
-
-    if (event->key.repeat == 0 && key == SDL_SCANCODE_V && (mods & KMOD_CTRL))
-    {
-        gui_shortcut(gui_ShortcutDebugPaste);
-        return;
-    }
-
-    // ESC to exit fullscreen
-    if (event->key.repeat == 0 && key == SDL_SCANCODE_ESCAPE)
-    {
-        if (config_emulator.fullscreen && !config_emulator.always_show_menu)
-        {
-            config_emulator.fullscreen = false;
-            application_trigger_fullscreen(false);
-        }
-    }
-}
-
-static void sdl_events_emu(void)
-{
-    if (input_updated || gui_in_use)
-        return;
-    input_updated = true;
-
-    SDL_PumpEvents();
-
-    int max_controller = config_input.turbo_tap ? GG_MAX_GAMEPADS : 1;
-
-    for (int controller = 0; controller < max_controller; controller++)
-    {
-        Uint16 now = input_build_state(controller);
-        Uint16 before = input_last_state[controller];
-
-        if (now != before)
-            input_apply_state(controller, before, now);
-
-        input_last_state[controller] = now;
-
-        input_check_gamepad_shortcuts(controller);
-    }
-}
-
-static void sdl_add_gamepads(void)
-{
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-    {
-        if (IsValidPointer(application_gamepad[i]))
-        {
-            SDL_Joystick* js = SDL_GameControllerGetJoystick(application_gamepad[i]);
-
-            if (!IsValidPointer(js) || SDL_JoystickGetAttached(js) == SDL_FALSE)
-            {
-                SDL_GameControllerClose(application_gamepad[i]);
-                application_gamepad[i] = NULL;
-                Debug("Game controller %d closed when adding a new gamepad", i);
-            }
-        }
-    }
-
-    bool player_connected[GG_MAX_GAMEPADS] = { };
-
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-    {
-        player_connected[i] = IsValidPointer(application_gamepad[i]);
-    }
-
-    bool all_slots_filled = true;
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-    {
-        if (!player_connected[i])
-        {
-            all_slots_filled = false;
-            break;
-        }
-    }
-    if (all_slots_filled)
-        return;
-
-    for (int i = 0; i < SDL_NumJoysticks(); i++)
-    {
-        if (!SDL_IsGameController(i))
-            continue;
-
-        SDL_JoystickID joystick_id = SDL_JoystickGetDeviceInstanceID(i);
-
-        bool already_assigned = false;
-        for (int p = 0; p < GG_MAX_GAMEPADS; p++)
-        {
-            if (player_connected[p])
-            {
-                SDL_JoystickID player_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[p]));
-                if (player_id == joystick_id)
-                {
-                    already_assigned = true;
-                    break;
-                }
-            }
-        }
-
-        if (already_assigned)
-            continue;
-
-        SDL_GameController* controller = SDL_GameControllerOpen(i);
-        if (!IsValidPointer(controller))
-        {
-            Log("Warning: Unable to open game controller %d!\n", i);
-            SDL_ERROR("SDL_GameControllerOpen");
-            continue;
-        }
-
-        bool assigned = false;
-        for (int p = 0; p < GG_MAX_GAMEPADS; p++)
-        {
-            if (!player_connected[p])
-            {
-                application_gamepad[p] = controller;
-                player_connected[p] = true;
-                Debug("Game controller %d assigned to Player %d", i, p+1);
-                assigned = true;
-                break;
-            }
-        }
-
-        if (!assigned)
-        {
-            SDL_GameControllerClose(controller);
-            Debug("Game controller %d detected but all player slots are full", i);
-        }
-
-        all_slots_filled = true;
-        for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-        {
-            if (!player_connected[i])
-            {
-                all_slots_filled = false;
-                break;
-            }
-        }
-        if (all_slots_filled)
-            break;
-    }
-}
-
-static void sdl_remove_gamepad(SDL_JoystickID instance_id)
-{
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-    {
-        if (application_gamepad[i] != NULL)
-        {
-            SDL_JoystickID current_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[i]));
-            if (current_id == instance_id)
-            {
-                SDL_GameControllerClose(application_gamepad[i]);
-                application_gamepad[i] = NULL;
-                Debug("Game controller %d disconnected from slot %d", instance_id, i);
-                break;
-            }
-        }
-    }
-}
-
-static Uint16 input_build_state(int controller)
-{
-    SDL_Keymod mods = SDL_GetModState();
-    if (mods & (KMOD_CTRL | KMOD_SHIFT | KMOD_ALT | KMOD_GUI))
-        return 0;
-
-    const Uint8* keyboard_state = SDL_GetKeyboardState(NULL);
-    Uint16 ret = 0;
-
-    if (keyboard_state[config_input_keyboard[controller].key_left])
-        ret |= GG_KEY_LEFT;
-    if (keyboard_state[config_input_keyboard[controller].key_right])
-        ret |= GG_KEY_RIGHT;
-    if (keyboard_state[config_input_keyboard[controller].key_up])
-        ret |= GG_KEY_UP;
-    if (keyboard_state[config_input_keyboard[controller].key_down])
-        ret |= GG_KEY_DOWN;
-    if (keyboard_state[config_input_keyboard[controller].key_I])
-        ret |= GG_KEY_I;
-    if (keyboard_state[config_input_keyboard[controller].key_II])
-        ret |= GG_KEY_II;
-    if (keyboard_state[config_input_keyboard[controller].key_III])
-        ret |= GG_KEY_III;
-    if (keyboard_state[config_input_keyboard[controller].key_IV])
-        ret |= GG_KEY_IV;
-    if (keyboard_state[config_input_keyboard[controller].key_V])
-        ret |= GG_KEY_V;
-    if (keyboard_state[config_input_keyboard[controller].key_VI])
-        ret |= GG_KEY_VI;
-    if (keyboard_state[config_input_keyboard[controller].key_run])
-        ret |= GG_KEY_RUN;
-    if (keyboard_state[config_input_keyboard[controller].key_select])
-        ret |= GG_KEY_SELECT;
-
-    bool kb_turbo_I  = keyboard_state[config_input_keyboard[controller].key_toggle_turbo_I] != 0;
-    bool kb_turbo_II = keyboard_state[config_input_keyboard[controller].key_toggle_turbo_II] != 0;
-    bool gp_turbo_I = false;
-    bool gp_turbo_II = false;
-
-    SDL_GameController* sdl_controller = application_gamepad[controller];
-
-    if (IsValidPointer(sdl_controller))
-    {
-        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_I))
-            ret |= GG_KEY_I;
-        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_II))
-            ret |= GG_KEY_II;
-        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_III))
-            ret |= GG_KEY_III;
-        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_IV))
-            ret |= GG_KEY_IV;
-        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_V))
-            ret |= GG_KEY_V;
-        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_VI))
-            ret |= GG_KEY_VI;
-        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_run))
-            ret |= GG_KEY_RUN;
-        if (input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_select))
-            ret |= GG_KEY_SELECT;
-
-        gp_turbo_I  = input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_toggle_turbo_I);
-        gp_turbo_II = input_get_button(sdl_controller, config_input_gamepad[controller].gamepad_toggle_turbo_II);
-
-        // Use D-Pad
-        if (config_input_gamepad[controller].gamepad_directional == 0)
-        {
-            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT))
-                ret |= GG_KEY_LEFT;
-            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT))
-                ret |= GG_KEY_RIGHT;
-            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_UP))
-                ret |= GG_KEY_UP;
-            if (SDL_GameControllerGetButton(sdl_controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN))
-                ret |= GG_KEY_DOWN;
-        }
-        // Use analog sticks
-        else
-        {
-            const Sint16 STICK_DEAD_ZONE = 8000;
-            const Sint16 rawx = SDL_GameControllerGetAxis(sdl_controller, (SDL_GameControllerAxis)config_input_gamepad[controller].gamepad_x_axis);
-            const Sint16 rawy = SDL_GameControllerGetAxis(sdl_controller, (SDL_GameControllerAxis)config_input_gamepad[controller].gamepad_y_axis);
-
-            const Sint16 x = config_input_gamepad[controller].gamepad_invert_x_axis ? -rawx : rawx;
-            const Sint16 y = config_input_gamepad[controller].gamepad_invert_y_axis ? -rawy : rawy;
-
-            if (x < -STICK_DEAD_ZONE)
-                ret |= GG_KEY_LEFT;
-            else if (x > STICK_DEAD_ZONE)
-                ret |= GG_KEY_RIGHT;
-
-            if (y < -STICK_DEAD_ZONE)
-                ret |= GG_KEY_UP;
-            else if (y > STICK_DEAD_ZONE)
-                ret |= GG_KEY_DOWN;
-        }
-    }
-
-    bool pressed_turbo_I  = kb_turbo_I || gp_turbo_I;
-    bool pressed_turbo_II = kb_turbo_II || gp_turbo_II;
-
-    if (pressed_turbo_I && !input_turbo_toggle_prev[controller][0])
-    {
-        config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
-        emu_set_turbo((GG_Controllers)controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
-    }
-    if (pressed_turbo_II && !input_turbo_toggle_prev[controller][1])
-    {
-        config_input.turbo_enabled[controller][1] = !config_input.turbo_enabled[controller][1];
-        emu_set_turbo((GG_Controllers)controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
-    }
-
-    input_turbo_toggle_prev[controller][0] = pressed_turbo_I;
-    input_turbo_toggle_prev[controller][1] = pressed_turbo_II;
-
-    return ret;
-}
-
-static void input_apply_state(int controller, Uint16 before, Uint16 now)
-{
-    Uint16 pressed  = now & (Uint16)(~before);
-    Uint16 released = before & (Uint16)(~now);
-
-    if ((pressed | released) == 0)
-        return;
-
-    static const Uint16 keys[12] = {
-        GG_KEY_LEFT, GG_KEY_RIGHT, GG_KEY_UP, GG_KEY_DOWN,
-        GG_KEY_I, GG_KEY_II, GG_KEY_III, GG_KEY_IV,
-        GG_KEY_V, GG_KEY_VI, GG_KEY_RUN, GG_KEY_SELECT
-    };
-
-    for (unsigned i = 0; i < 12; i++)
-    {
-        Uint16 key = keys[i];
-        if (pressed & key)  emu_key_pressed((GG_Controllers)controller, (GG_Keys)key);
-        if (released & key) emu_key_released((GG_Controllers)controller, (GG_Keys)key);
-    }
-}
-
-static void input_check_gamepad_shortcuts(int controller)
-{
-    SDL_GameController* sdl_controller = application_gamepad[controller];
-    if (!IsValidPointer(sdl_controller))
-        return;
-
-    for (int i = 0; i < config_HotkeyIndex_COUNT; i++)
-    {
-        int button_mapping = config_input_gamepad_shortcuts[controller].gamepad_shortcuts[i];
-        if (button_mapping == SDL_CONTROLLER_BUTTON_INVALID)
-            continue;
-
-        bool button_pressed = input_get_button(sdl_controller, button_mapping);
-
-        if (button_pressed && !input_gamepad_shortcut_prev[controller][i])
-        {
-            if (i >= config_HotkeyIndex_SelectSlot1 && i <= config_HotkeyIndex_SelectSlot5)
-            {
-                config_emulator.save_slot = i - config_HotkeyIndex_SelectSlot1;
-            }
-            else
-            {
-                for (int j = 0; j < GUI_HOTKEY_MAP_COUNT; j++)
-                {
-                    if (gui_hotkey_map[j].config_index == i)
-                    {
-                        gui_shortcut((gui_ShortCutEvent)gui_hotkey_map[j].shortcut);
-                        break;
-                    }
-                }
-            }
-        }
-
-        input_gamepad_shortcut_prev[controller][i] = button_pressed;
-    }
-}
-
-static bool input_get_button(SDL_GameController* controller, int mapping)
-{
-    if (!IsValidPointer(controller))
-        return false;
-
-    if (mapping >= 0 && mapping < SDL_CONTROLLER_BUTTON_MAX)
-        return SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)mapping) != 0;
-
-    if (mapping >= GAMEPAD_VBTN_AXIS_BASE)
-    {
-        int axis = mapping - GAMEPAD_VBTN_AXIS_BASE;
-        Sint16 value = SDL_GameControllerGetAxis(controller, (SDL_GameControllerAxis)axis);
-        return value > GAMEPAD_VBTN_AXIS_THRESHOLD;
-    }
-
-    return false;
 }
 
 static void run_emulator(void)
 {
-    if (!should_run_emu_frame())
+    if (!display_should_run_emu_frame())
         return;
 
     config_emulator.paused = emu_is_paused();
     emu_audio_sync = config_audio.sync;
     emu_update();
 
-    if (!input_updated)
-        sdl_events_emu();
-    input_updated = false;
-}
-
-static bool should_run_emu_frame(void)
-{
-    if (config_video.sync && vsync_frames_per_emu_frame > 1 && !config_emulator.ffwd)
-    {
-        bool should_run = (vsync_frame_counter == 0);
-        vsync_frame_counter++;
-        if (vsync_frame_counter >= vsync_frames_per_emu_frame)
-            vsync_frame_counter = 0;
-        return should_run;
-    }
-
-    return true;
-}
-
-static void render(void)
-{
-    ogl_renderer_begin_render();
-    ImGui_ImplSDL2_NewFrame();
-    gui_render();
-    ogl_renderer_render();
-    ogl_renderer_end_render();
-
-    SDL_GL_SwapWindow(application_sdl_window);
-}
-
-static void frame_throttle(void)
-{
-    if (emu_is_empty() || emu_is_paused() || emu_is_debug_idle() || !emu_is_audio_open() || config_emulator.ffwd)
-    {
-        Uint64 count_per_sec = SDL_GetPerformanceFrequency();
-        float elapsed = (float)(frame_time_end - frame_time_start) / (float)count_per_sec;
-        elapsed *= 1000.0f;
-
-        float min = 16.666f;
-
-        if (config_emulator.ffwd)
-        {
-            switch (config_emulator.ffwd_speed)
-            {
-                case 0:
-                    min = 16.666f / 1.5f;
-                    break;
-                case 1: 
-                    min = 16.666f / 2.0f;
-                    break;
-                case 2:
-                    min = 16.666f / 2.5f;
-                    break;
-                case 3:
-                    min = 16.666f / 3.0f;
-                    break;
-                default:
-                    min = 0.0f;
-            }
-        }
-
-        if (elapsed < min)
-            SDL_Delay((Uint32)(min - elapsed));
-    }
+    if (!events_input_updated())
+        events_emu();
+    events_reset_input();
 }
 
 static void save_window_size(void)
@@ -1312,37 +627,6 @@ static void save_window_size(void)
     }
 }
 
-static void update_frame_pacing(void)
-{
-    int display = SDL_GetWindowDisplayIndex(application_sdl_window);
-    SDL_ERROR("SDL_GetWindowDisplayIndex");
-
-    if (display < 0)
-        display = 0;
-
-    SDL_DisplayMode mode;
-    if (SDL_GetCurrentDisplayMode(display, &mode) == 0 && mode.refresh_rate > 0)
-        monitor_refresh_rate = mode.refresh_rate;
-    else
-    {
-        SDL_ERROR("SDL_GetCurrentDisplayMode");
-        monitor_refresh_rate = 60;
-    }
-
-    const int emu_fps = 60;
-
-    if (monitor_refresh_rate <= emu_fps + 5)
-        vsync_frames_per_emu_frame = 1;
-    else
-        vsync_frames_per_emu_frame = (monitor_refresh_rate + emu_fps / 2) / emu_fps;
-
-    vsync_frames_per_emu_frame = CLAMP(vsync_frames_per_emu_frame, 1, 8);
-
-    vsync_frame_counter = 0;
-
-    Debug("Monitor refresh rate: %d Hz, vsync frames per emu frame: %d", monitor_refresh_rate, vsync_frames_per_emu_frame);
-}
-
 static void log_sdl_error(const char* action, const char* file, int line)
 {
     const char* error = SDL_GetError();
@@ -1350,25 +634,5 @@ static void log_sdl_error(const char* action, const char* file, int line)
     {
         Log("SDL Error: %s (%s:%d) - %s", action, file, line, error);
         SDL_ClearError();
-    }
-}
-
-
-static void recreate_gl_context_for_display_change(void)
-{
-    ogl_renderer_destroy();
-    ImGui_ImplSDL2_Shutdown();
-
-    SDL_GLContext old_context = gl_context;
-    gl_context = SDL_GL_CreateContext(application_sdl_window);
-
-    if (gl_context)
-    {
-        SDL_GL_MakeCurrent(application_sdl_window, gl_context);
-        SDL_GL_DeleteContext(old_context);
-        SDL_GL_SetSwapInterval(1);
-        ImGui_ImplSDL2_InitForOpenGL(application_sdl_window, gl_context);
-        ogl_renderer_init();
-        update_frame_pacing();
     }
 }

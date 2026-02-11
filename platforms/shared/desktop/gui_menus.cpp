@@ -26,6 +26,7 @@
 #include "gui_debug_disassembler.h"
 #include "config.h"
 #include "application.h"
+#include "gamepad.h"
 #include "emu.h"
 #include "ogl_renderer.h"
 #include "utils.h"
@@ -1049,7 +1050,7 @@ static void menu_input(void)
 
                 if (ImGui::BeginMenu(gamepad_name))
                 {
-                    if (!application_gamepad[i])
+                    if (!gamepad_controller[i])
                     {
                         ImGui::TextDisabled("This gamepad is not detected");
                         ImGui::Separator();
@@ -1698,8 +1699,8 @@ static void gamepad_device_selector(int player)
     int num = SDL_NumJoysticks();
 
     SDL_JoystickID current_id = -1;
-    if (IsValidPointer(application_gamepad[player]))
-        current_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(application_gamepad[player]));
+    if (IsValidPointer(gamepad_controller[player]))
+        current_id = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamepad_controller[player]));
 
     int selected = 0;
 
@@ -1741,7 +1742,7 @@ static void gamepad_device_selector(int player)
     if (ImGui::Combo(label, &selected, items.c_str()))
     {
         int device_index = index_map[selected];
-        application_assign_gamepad(player, device_index);
+        gamepad_assign(player, device_index);
     }
 }
 

@@ -25,6 +25,7 @@
 #include "gui_debug_constants.h"
 #include "config.h"
 #include "application.h"
+#include "gamepad.h"
 #include "emu.h"
 #include "license.h"
 #include "backers.h"
@@ -79,7 +80,7 @@ void gui_popup_modal_gamepad(int pad)
 
         for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++)
         {
-            if (SDL_GameControllerGetButton(application_gamepad[pad], (SDL_GameControllerButton)i))
+            if (SDL_GameControllerGetButton(gamepad_controller[pad], (SDL_GameControllerButton)i))
             {
                 *gui_configured_button = i;
                 ImGui::CloseCurrentPopup();
@@ -92,7 +93,7 @@ void gui_popup_modal_gamepad(int pad)
             if (a != SDL_CONTROLLER_AXIS_TRIGGERLEFT && a != SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
                 continue;
 
-            Sint16 value = SDL_GameControllerGetAxis(application_gamepad[pad], (SDL_GameControllerAxis)a);
+            Sint16 value = SDL_GameControllerGetAxis(gamepad_controller[pad], (SDL_GameControllerAxis)a);
 
             if (value > GAMEPAD_VBTN_AXIS_THRESHOLD)
             {
@@ -297,10 +298,10 @@ void gui_popup_modal_about(void)
         ImGui::NewLine();
         ImGui::Separator();
 
-        if (application_added_gamepad_mappings || application_updated_gamepad_mappings)
+        if (gamepad_added_mappings || gamepad_updated_mappings)
         {
-            ImGui::Text("%d game controller mappings added from gamecontrollerdb.txt", application_added_gamepad_mappings);
-            ImGui::Text("%d game controller mappings updated from gamecontrollerdb.txt", application_updated_gamepad_mappings);
+            ImGui::Text("%d game controller mappings added from gamecontrollerdb.txt", gamepad_added_mappings);
+            ImGui::Text("%d game controller mappings updated from gamecontrollerdb.txt", gamepad_updated_mappings);
         }
         else
             ImGui::Text("ERROR: Game controller database not found (gamecontrollerdb.txt)!!");

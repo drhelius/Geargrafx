@@ -135,6 +135,9 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\ogl_renderer.cpp" />
+    <ClCompile Include="..\shared\desktop\display.cpp" />
+    <ClCompile Include="..\shared\desktop\events.cpp" />
+    <ClCompile Include="..\shared\desktop\gamepad.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\arcade_card_mapper_inline.h" />
@@ -261,6 +264,9 @@
     <ClInclude Include="..\shared\dependencies\nfd\nfd.h" />
     <ClInclude Include="..\shared\dependencies\stb\stb_image_write.h" />
     <ClInclude Include="..\shared\desktop\ogl_renderer.h" />
+    <ClInclude Include="..\shared\desktop\display.h" />
+    <ClInclude Include="..\shared\desktop\events.h" />
+    <ClInclude Include="..\shared\desktop\gamepad.h" />
     <ClInclude Include="..\shared\desktop\utils.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
