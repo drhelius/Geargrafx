@@ -32,8 +32,8 @@
 #include "config.h"
 #include "geargrafx.h"
 
-#define RENDERER_IMPORT
-#include "renderer.h"
+#define OGL_RENDERER_IMPORT
+#include "ogl_renderer.h"
 
 static uint32_t system_texture;
 static uint32_t scanlines_texture;
@@ -61,7 +61,7 @@ static void update_debug_textures(void);
 static void update_savestates_texture(void);
 static void render_scanlines(void);
 
-bool renderer_init(void)
+bool ogl_renderer_init(void)
 {
 #if !defined(__APPLE__)
     int version = gladLoadGL((GLADloadfunc) SDL_GL_GetProcAddress);
@@ -75,8 +75,8 @@ bool renderer_init(void)
     Log("GLAD: OpenGL %d.%d", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 #endif
 
-    renderer_opengl_version = (const char*)glGetString(GL_VERSION);
-    Log("Using OpenGL %s", renderer_opengl_version);
+    ogl_renderer_opengl_version = (const char*)glGetString(GL_VERSION);
+    Log("Using OpenGL %s", ogl_renderer_opengl_version);
 
     init_ogl_gui();
     init_ogl_emu();
@@ -87,30 +87,30 @@ bool renderer_init(void)
     return true;
 }
 
-void renderer_destroy(void)
+void ogl_renderer_destroy(void)
 {
     glDeleteFramebuffers(1, &frame_buffer_object); 
-    glDeleteTextures(1, &renderer_emu_texture);
+    glDeleteTextures(1, &ogl_renderer_emu_texture);
     glDeleteTextures(1, &system_texture);
     glDeleteTextures(1, &scanlines_texture);
-    glDeleteTextures(1, &renderer_emu_debug_huc6270_background[0]);
-    glDeleteTextures(1, &renderer_emu_debug_huc6270_background[1]);
+    glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_background[0]);
+    glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_background[1]);
     for (int i = 0; i < 2; i++)
         for (int s = 0; s < 64; s++)
         {
-            glDeleteTextures(1, &renderer_emu_debug_huc6270_sprites[i][s]);
+            glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_sprites[i][s]);
         }
-    glDeleteTextures(1, &renderer_emu_savestates);
+    glDeleteTextures(1, &ogl_renderer_emu_savestates);
 
     ImGui_ImplOpenGL2_Shutdown();
 }
 
-void renderer_begin_render(void)
+void ogl_renderer_begin_render(void)
 {
     ImGui_ImplOpenGL2_NewFrame();
 }
 
-void renderer_render(void)
+void ogl_renderer_render(void)
 {
     emu_get_runtime(current_runtime);
 
@@ -140,7 +140,7 @@ void renderer_render(void)
     render_gui();
 }
 
-void renderer_end_render(void)
+void ogl_renderer_end_render(void)
 {
 #if defined(__APPLE__) || defined(_WIN32)
     ImGuiIO& io = ImGui::GetIO();
@@ -165,11 +165,11 @@ static void init_ogl_emu(void)
     glEnable(GL_TEXTURE_2D);
 
     glGenFramebuffers(1, &frame_buffer_object);
-    glGenTextures(1, &renderer_emu_texture);
+    glGenTextures(1, &ogl_renderer_emu_texture);
     glGenTextures(1, &system_texture);
 
     glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_object);
-    glBindTexture(GL_TEXTURE_2D, renderer_emu_texture);
+    glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_texture);
 
     int texture_size = FRAME_BUFFER_WIDTH * FRAME_BUFFER_HEIGHT * 3;
     u8* black_pixels = new u8[texture_size]();
@@ -180,7 +180,7 @@ static void init_ogl_emu(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, renderer_emu_texture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ogl_renderer_emu_texture, 0);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -196,14 +196,14 @@ static void init_ogl_emu(void)
 
 static void init_ogl_debug(void)
 {
-    glGenTextures(1, &renderer_emu_debug_huc6270_background[0]);
-    glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_background[0]);
+    glGenTextures(1, &ogl_renderer_emu_debug_huc6270_background[0]);
+    glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_debug_huc6270_background[0]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, HUC6270_MAX_BACKGROUND_WIDTH, HUC6270_MAX_BACKGROUND_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_background_buffer[0]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-    glGenTextures(1, &renderer_emu_debug_huc6270_background[1]);
-    glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_background[1]);
+    glGenTextures(1, &ogl_renderer_emu_debug_huc6270_background[1]);
+    glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_debug_huc6270_background[1]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, HUC6270_MAX_BACKGROUND_WIDTH, HUC6270_MAX_BACKGROUND_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_background_buffer[1]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -211,8 +211,8 @@ static void init_ogl_debug(void)
     for (int i = 0; i < 2; i++)
         for (int s = 0; s < 64; s++)
         {
-            glGenTextures(1, &renderer_emu_debug_huc6270_sprites[i][s]);
-            glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_sprites[i][s]);
+            glGenTextures(1, &ogl_renderer_emu_debug_huc6270_sprites[i][s]);
+            glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_debug_huc6270_sprites[i][s]);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_sprite_buffers[i][s]);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -221,8 +221,8 @@ static void init_ogl_debug(void)
 
 static void init_ogl_savestates(void)
 {
-    glGenTextures(1, &renderer_emu_savestates);
-    glBindTexture(GL_TEXTURE_2D, renderer_emu_savestates);
+    glGenTextures(1, &ogl_renderer_emu_savestates);
+    glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_savestates);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2048, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -314,17 +314,17 @@ static void update_system_texture(void)
 
 static void update_debug_textures(void)
 {
-    glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_background[0]);
+    glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_debug_huc6270_background[0]);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emu_debug_background_buffer_width[0], emu_debug_background_buffer_height[0],
             GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_background_buffer[0]);
-    glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_background[1]);
+    glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_debug_huc6270_background[1]);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emu_debug_background_buffer_width[1], emu_debug_background_buffer_height[1],
             GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_background_buffer[1]);
 
     for (int i = 0; i < 2; i++)
         for (int s = 0; s < 64; s++)
         {
-            glBindTexture(GL_TEXTURE_2D, renderer_emu_debug_huc6270_sprites[i][s]);
+            glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_debug_huc6270_sprites[i][s]);
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emu_debug_sprite_widths[i][s], emu_debug_sprite_heights[i][s],
                     GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_sprite_buffers[i][s]);
         }
@@ -338,14 +338,14 @@ static void update_savestates_texture(void)
     {
         int width = emu_savestates_screenshots[i].width;
         int height = emu_savestates_screenshots[i].height;
-        glBindTexture(GL_TEXTURE_2D, renderer_emu_savestates);
+        glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_savestates);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_savestates_screenshots[i].data);
     }
 }
 
 static void update_emu_texture(void)
 {
-    glBindTexture(GL_TEXTURE_2D, renderer_emu_texture);
+    glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_texture);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

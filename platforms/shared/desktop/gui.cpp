@@ -27,7 +27,7 @@
 #include "config.h"
 #include "application.h"
 #include "emu.h"
-#include "renderer.h"
+#include "ogl_renderer.h"
 #include "utils.h"
 #include "geargrafx.h"
 
@@ -579,7 +579,7 @@ static void main_window(void)
     float tex_h = (float)runtime.screen_width / (float)(SYSTEM_TEXTURE_WIDTH);
     float tex_v = (float)runtime.screen_height / (float)(SYSTEM_TEXTURE_HEIGHT);
 
-    ImGui::Image((ImTextureID)(intptr_t)renderer_emu_texture, ImVec2((float)gui_main_window_width, (float)gui_main_window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
+    ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2((float)gui_main_window_width, (float)gui_main_window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
     if (config_video.fps)
         gui_show_fps();

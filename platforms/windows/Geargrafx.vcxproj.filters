@@ -73,7 +73,7 @@
     <ClCompile Include="..\shared\desktop\main.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
-    <ClCompile Include="..\shared\desktop\renderer.cpp">
+    <ClCompile Include="..\shared\desktop\ogl_renderer.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\sound_queue.cpp">
@@ -312,7 +312,7 @@
     <ClInclude Include="..\shared\desktop\license.h">
       <Filter>desktop</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\desktop\renderer.h">
+    <ClInclude Include="..\shared\desktop\ogl_renderer.h">
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\utils.h">

@@ -28,7 +28,7 @@
 #include "gui.h"
 #include "config.h"
 #include "emu.h"
-#include "renderer.h"
+#include "ogl_renderer.h"
 #include "utils.h"
 
 static void draw_context_menu_sprites(int vdc, int index);
@@ -325,7 +325,7 @@ void gui_debug_window_huc6270_background(int vdc)
         ImVec2 p = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-        ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_background[vdc - 1], ImVec2(size_h, size_v), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width[vdc - 1] / texture_size_h, emu_debug_background_buffer_height[vdc - 1] / texture_size_v));
+        ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_debug_huc6270_background[vdc - 1], ImVec2(size_h, size_v), ImVec2(0.0f, 0.0f), ImVec2(emu_debug_background_buffer_width[vdc - 1] / texture_size_h, emu_debug_background_buffer_height[vdc - 1] / texture_size_v));
 
         draw_context_menu_background(vdc);
 
@@ -371,7 +371,7 @@ void gui_debug_window_huc6270_background(int vdc)
                 float tile_uv_h = (i % screen_size_x) * 8.0f;
                 float tile_uv_v = (i / screen_size_x) * 8.0f;
 
-                ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_background[vdc - 1], ImVec2(tile_width, tile_height), ImVec2(tile_uv_h / texture_size_h, tile_uv_v / texture_size_v), ImVec2((tile_uv_h + 8) / texture_size_h, (tile_uv_v + 8) / texture_size_v));
+                ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_debug_huc6270_background[vdc - 1], ImVec2(tile_width, tile_height), ImVec2(tile_uv_h / texture_size_h, tile_uv_v / texture_size_v), ImVec2((tile_uv_h + 8) / texture_size_h, (tile_uv_v + 8) / texture_size_v));
 
                 ImGui::PushFont(gui_default_font);
 
@@ -452,7 +452,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
         float tex_h = fwidth / 32.0f / scale;
         float tex_v = fheight / 64.0f / scale;
 
-        ImGui::Image((ImTextureID)(intptr_t)renderer_emu_debug_huc6270_sprites[vdc - 1][s], ImVec2(fwidth, fheight), ImVec2(0.0f, 0.0f), ImVec2(tex_h, tex_v));
+        ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_debug_huc6270_sprites[vdc - 1][s], ImVec2(fwidth, fheight), ImVec2(0.0f, 0.0f), ImVec2(tex_h, tex_v));
 
         draw_context_menu_sprites(vdc, s);
 
@@ -476,7 +476,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
     float tex_h = (float)runtime.screen_width / (float)(SYSTEM_TEXTURE_WIDTH);
     float tex_v = (float)runtime.screen_height / (float)(SYSTEM_TEXTURE_HEIGHT);
 
-    ImGui::Image((ImTextureID)(intptr_t)renderer_emu_texture, ImVec2(runtime.screen_width * screen_scale, runtime.screen_height * screen_scale), ImVec2(0, 0), ImVec2(tex_h, tex_v));
+    ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2(runtime.screen_width * screen_scale, runtime.screen_height * screen_scale), ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
     for (int s = 0; s < 64; s++)
     {

@@ -28,7 +28,7 @@
 #include "emu.h"
 #include "license.h"
 #include "backers.h"
-#include "renderer.h"
+#include "ogl_renderer.h"
 #include "keyboard.h"
 #include "imgui.h"
 #include "implot.h"
@@ -238,7 +238,7 @@ void gui_popup_modal_about(void)
                 #endif
                 add_build_info("SDL %d.%d.%d (build)\n", application_sdl_build_version.major, application_sdl_build_version.minor, application_sdl_build_version.patch);
                 add_build_info("SDL %d.%d.%d (link)\n", application_sdl_link_version.major, application_sdl_link_version.minor, application_sdl_link_version.patch);
-                add_build_info("OpenGL %s\n", renderer_opengl_version);
+                add_build_info("OpenGL %s\n", ogl_renderer_opengl_version);
                 add_build_info("Dear ImGui %s (%d)\n", IMGUI_VERSION, IMGUI_VERSION_NUM);
                 add_build_info("ImPlot %s (%d)\n", IMPLOT_VERSION, IMPLOT_VERSION_NUM);
 

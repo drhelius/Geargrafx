@@ -134,7 +134,7 @@
     <ClCompile Include="..\shared\dependencies\nfd\nfd_win.cpp">
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
-    <ClCompile Include="..\shared\desktop\renderer.cpp" />
+    <ClCompile Include="..\shared\desktop\ogl_renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\arcade_card_mapper_inline.h" />
@@ -260,7 +260,7 @@
     <ClInclude Include="..\shared\dependencies\mINI\ini.h" />
     <ClInclude Include="..\shared\dependencies\nfd\nfd.h" />
     <ClInclude Include="..\shared\dependencies\stb\stb_image_write.h" />
-    <ClInclude Include="..\shared\desktop\renderer.h" />
+    <ClInclude Include="..\shared\desktop\ogl_renderer.h" />
     <ClInclude Include="..\shared\desktop\utils.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

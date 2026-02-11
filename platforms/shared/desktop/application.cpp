@@ -24,7 +24,7 @@
 #include "config.h"
 #include "gui.h"
 #include "gui_debug_disassembler.h"
-#include "renderer.h"
+#include "ogl_renderer.h"
 #include "emu.h"
 #include "utils.h"
 #include "single_instance.h"
@@ -140,7 +140,7 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
         return 4;
     }
 
-    if (!renderer_init())
+    if (!ogl_renderer_init())
     {
         Error("Failed to initialize renderer");
         return 5;
@@ -183,7 +183,7 @@ void application_destroy(void)
     remove_directory_and_contents(config_temp_path);
     save_window_size();
     emu_destroy();
-    renderer_destroy();
+    ogl_renderer_destroy();
     ImGui_ImplSDL2_Shutdown();
     gui_destroy();
     sdl_destroy();
@@ -1255,11 +1255,11 @@ static bool should_run_emu_frame(void)
 
 static void render(void)
 {
-    renderer_begin_render();
+    ogl_renderer_begin_render();
     ImGui_ImplSDL2_NewFrame();
     gui_render();
-    renderer_render();
-    renderer_end_render();
+    ogl_renderer_render();
+    ogl_renderer_end_render();
 
     SDL_GL_SwapWindow(application_sdl_window);
 }
@@ -1356,7 +1356,7 @@ static void log_sdl_error(const char* action, const char* file, int line)
 
 static void recreate_gl_context_for_display_change(void)
 {
-    renderer_destroy();
+    ogl_renderer_destroy();
     ImGui_ImplSDL2_Shutdown();
 
     SDL_GLContext old_context = gl_context;
@@ -1368,7 +1368,7 @@ static void recreate_gl_context_for_display_change(void)
         SDL_GL_DeleteContext(old_context);
         SDL_GL_SetSwapInterval(1);
         ImGui_ImplSDL2_InitForOpenGL(application_sdl_window, gl_context);
-        renderer_init();
+        ogl_renderer_init();
         update_frame_pacing();
     }
 }
