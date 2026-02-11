@@ -41,10 +41,16 @@ jobs:
     - name: Update OS
       run: sudo apt-get update -qq
     - name: Install dependencies
-      run: sudo apt-get install -y build-essential cmake libgtk-3-dev
-    - name: Build and install SDL3
       run: |
-        SDL3_TAG=$(curl -s https://api.github.com/repos/libsdl-org/SDL/releases/latest | jq -r '.tag_name')
+        sudo apt-get install -y build-essential cmake libgtk-3-dev \
+        libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+        libxi-dev libxss-dev libxkbcommon-dev libwayland-dev libdecor-0-dev \
+        libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libdbus-1-dev libudev-dev
+    - name: Build and install SDL3
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        SDL3_TAG=$(gh release view --repo libsdl-org/SDL --json tagName -q '.tagName')
         echo "Building SDL3 $SDL3_TAG"
         git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
         cmake -S /tmp/SDL3 -B /tmp/SDL3/build -DCMAKE_INSTALL_PREFIX=/usr -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF
@@ -81,10 +87,16 @@ jobs:
     - name: Update OS
       run: sudo apt-get update -qq
     - name: Install dependencies
-      run: sudo apt-get install -y build-essential cmake libgtk-3-dev
-    - name: Build and install SDL3
       run: |
-        SDL3_TAG=$(curl -s https://api.github.com/repos/libsdl-org/SDL/releases/latest | jq -r '.tag_name')
+        sudo apt-get install -y build-essential cmake libgtk-3-dev \
+        libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+        libxi-dev libxss-dev libxkbcommon-dev libwayland-dev libdecor-0-dev \
+        libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libdbus-1-dev libudev-dev
+    - name: Build and install SDL3
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        SDL3_TAG=$(gh release view --repo libsdl-org/SDL --json tagName -q '.tagName')
         echo "Building SDL3 $SDL3_TAG"
         git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
         cmake -S /tmp/SDL3 -B /tmp/SDL3/build -DCMAKE_INSTALL_PREFIX=/usr -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF
@@ -209,6 +221,17 @@ jobs:
         fetch-depth: 0
     - name: Setup msbuild
       uses: microsoft/setup-msbuild@v2
+    - name: Download SDL3 development libraries
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        SDL3_TAG=$(gh release view --repo libsdl-org/SDL --json tagName -q '.tagName')
+        SDL3_VERSION=${SDL3_TAG#release-}
+        echo "Downloading SDL3 $SDL3_VERSION"
+        curl -sL "https://github.com/libsdl-org/SDL/releases/download/${SDL3_TAG}/SDL3-devel-${SDL3_VERSION}-VC.zip" -o SDL3-devel.zip
+        7z x SDL3-devel.zip -oplatforms/windows/dependencies
+        mv platforms/windows/dependencies/SDL3-${SDL3_VERSION} platforms/windows/dependencies/SDL3
     - name: Get build number
       shell: bash
       run: |
@@ -221,7 +244,7 @@ jobs:
         mkdir -p artifact/mcp
         cp platforms/shared/README.txt artifact
         cp platforms/shared/gamecontrollerdb.txt artifact
-        cp platforms/windows/dependencies/SDL2-2.30.6/lib/${{ matrix.architecture }}/SDL2.dll artifact
+        cp platforms/windows/dependencies/SDL3/lib/${{ matrix.architecture }}/SDL3.dll artifact
         cp platforms/windows/release/${{ env.NAME_UPPER }}.exe artifact
         cp -r platforms/shared/desktop/mcp/resources artifact/mcp/
     - name: Archive binary
@@ -309,7 +332,7 @@ jobs:
           cp -r platforms/shared/desktop/mcp/resources/* mcpb/mcp/resources/
         elif [ "${{ matrix.variant.platform }}" = "win32" ]; then
           cp download/${{ env.NAME_UPPER }}.exe mcpb/server/
-          cp download/SDL2.dll mcpb/server/
+          cp download/SDL3.dll mcpb/server/
           cp download/gamecontrollerdb.txt mcpb/
           cp -r download/mcp/resources/* mcpb/mcp/resources/
         else
