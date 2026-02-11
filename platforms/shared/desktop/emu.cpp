@@ -34,7 +34,6 @@
 #include "stb_image_write.h"
 
 static GeargrafxCore* geargrafx;
-static SoundQueue* sound_queue;
 static s16* audio_buffer;
 static bool audio_enabled;
 static McpManager* mcp_manager;
@@ -76,9 +75,7 @@ bool emu_init(GG_Input_Pump_Fn input_pump_fn)
     geargrafx->Init(input_pump_fn);
     geargrafx->GetMedia()->SetTempPath(config_temp_path);
 
-    sound_queue = new SoundQueue();
-    if (!sound_queue->Start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT))
-        return false;
+    sound_queue_init();
 
     for (int i = 0; i < 5; i++)
         InitPointer(emu_savestates_screenshots[i].data);
@@ -110,7 +107,7 @@ void emu_destroy(void)
     save_mb128();
     SafeDelete(mcp_manager);
     SafeDeleteArray(audio_buffer);
-    SafeDelete(sound_queue);
+    sound_queue_destroy();
     SafeDelete(geargrafx);
     SafeDeleteArray(emu_frame_buffer);
     destroy_debug();
@@ -257,7 +254,7 @@ void emu_update(void)
 
     if ((sampleCount > 0) && !geargrafx->IsPaused())
     {
-        sound_queue->Write(audio_buffer, sampleCount, emu_audio_sync);
+        sound_queue_write(audio_buffer, sampleCount, emu_audio_sync);
     }
 }
 
@@ -338,8 +335,8 @@ void emu_audio_cdrom_volume(float volume)
 
 void emu_audio_reset(void)
 {
-    sound_queue->Stop();
-    sound_queue->Start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT);
+    sound_queue_stop();
+    sound_queue_start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT);
 }
 
 bool emu_is_audio_enabled(void)
@@ -349,7 +346,7 @@ bool emu_is_audio_enabled(void)
 
 bool emu_is_audio_open(void)
 {
-    return sound_queue->IsOpen();
+    return sound_queue_is_open();
 }
 
 void emu_save_ram(const char* file_path)

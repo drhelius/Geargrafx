@@ -22,43 +22,24 @@
 
 #include <SDL.h>
 #include <stdint.h>
-#include <assert.h>
+#include "geargrafx.h"
 
-class SoundQueue
-{
-public:
-    SoundQueue();
-    ~SoundQueue();
-    bool Start(int sample_rate, int channel_count, int buffer_size = 2048, int buffer_count = 3);
-    void Stop();
-    void Write(int16_t* samples, int count, bool sync);
-    int GetSampleCount();
-    int16_t* GetCurrentlyPlaying();
-    bool IsOpen();
+#ifdef SOUND_QUEUE_IMPORT
+    #define EXTERN
+#else
+    #define EXTERN extern
+#endif
 
-private:
-    int16_t* volatile m_buffers;
-    SDL_sem* volatile m_free_sem;
-    int16_t* volatile m_currently_playing;
-    int volatile m_read_buffer;
-    int volatile m_write_buffer;
-    int m_write_position;
-    bool m_sound_open;
-    bool m_sync_output;
-    int m_buffer_size;
-    int m_buffer_count;
+EXTERN void sound_queue_init(void);
+EXTERN void sound_queue_destroy(void);
+EXTERN bool sound_queue_start(int sample_rate, int channel_count, int buffer_size = 2048, int buffer_count = 3);
+EXTERN void sound_queue_stop(void);
+EXTERN void sound_queue_write(s16* samples, int count, bool sync);
+EXTERN int sound_queue_get_sample_count(void);
+EXTERN s16* sound_queue_get_currently_playing(void);
+EXTERN bool sound_queue_is_open(void);
 
-private:
-    int16_t* Buffer(int index);
-    void FillBuffer(uint8_t* buffer, int count);
-    bool IsRunningInWSL();
-    static void FillBufferCallback(void* user_data, uint8_t* buffer, int count);
-};
-
-inline int16_t* SoundQueue::Buffer(int index)
-{
-    assert(index < m_buffer_count);
-    return m_buffers + (index * m_buffer_size);
-}
+#undef SOUND_QUEUE_IMPORT
+#undef EXTERN
 
 #endif /* SOUND_QUEUE_H */
