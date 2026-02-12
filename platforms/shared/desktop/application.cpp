@@ -339,6 +339,7 @@ static bool sdl_init(void)
 #endif
 
     display_set_vsync(config_video.sync);
+    display_check_mixed_refresh_rates();
 
     SDL_SetWindowMinimumSize(application_sdl_window, (int)(500 * content_scale), (int)(300 * content_scale));
 
@@ -474,9 +475,21 @@ static void sdl_events_app(const SDL_Event* event)
             if (new_display != current_display_id)
             {
                 current_display_id = new_display;
-                if (config_video.sync)
+                display_check_mixed_refresh_rates();
+                if (config_video.sync && !display_is_vsync_forced_off())
                     display_recreate_gl_context();
+                else
+                {
+                    display_request_gl_context_recreate();
+                    display_update_frame_pacing();
+                }
             }
+            break;
+        }
+        case SDL_EVENT_DISPLAY_ADDED:
+        case SDL_EVENT_DISPLAY_REMOVED:
+        {
+            display_check_mixed_refresh_rates();
             break;
         }
         case (SDL_EVENT_MOUSE_MOTION):
