@@ -153,6 +153,9 @@ struct GG_Disassembler_Record
     u8 jump_bank;
     bool subroutine;
     int irq;
+    bool has_operand_address;
+    u16 operand_address;
+    bool operand_is_zp;
 };
 
 #endif /* TYPES_H */

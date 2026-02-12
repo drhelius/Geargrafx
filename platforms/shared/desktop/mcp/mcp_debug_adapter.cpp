@@ -288,7 +288,7 @@ void DebugAdapter::WriteMemoryArea(int area, u32 offset, const std::vector<u8>& 
     }
 }
 
-std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_address, int bank)
+std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_address, int bank, bool resolve_symbols)
 {
     std::vector<DisasmLine> result;
     Memory* memory = m_core->GetMemory();
@@ -359,8 +359,19 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
             line.jump = record->jump;
             line.jump_address = record->jump_address;
             line.jump_bank = record->jump_bank;
+            line.has_operand_address = record->has_operand_address;
+            line.operand_address = record->operand_address;
+            line.operand_is_zp = record->operand_is_zp;
             line.subroutine = record->subroutine;
             line.irq = record->irq;
+
+            if (resolve_symbols)
+            {
+                std::string instr = line.name;
+                if (!gui_debug_resolve_symbol(record, instr, "", ""))
+                    gui_debug_resolve_label(record, instr, "", "");
+                line.name = instr;
+            }
 
             result.push_back(line);
 

@@ -510,6 +510,10 @@ void McpServer::HandleToolsList(const json& request)
                     {"description", "Optional bank in hex (00-FF). When provided, overrides the current MPR mapping for address translation. "
                                     "The physical address is constructed as: (bank << 13) | (logical_address & 0x1FFF). "
                                     "Use this when you want to inspect a specific ROM/RAM bank regardless of current CPU memory mapping."}
+                }},
+                {"resolve_symbols", {
+                    {"type", "boolean"},
+                    {"description", "When true, replace addresses in instruction mnemonics with user-defined symbol names and hardware register labels (e.g. 'LDA MY_VAR,X' instead of 'LDA $2C00,X'). Symbol resolution for non-jump operands depends on the current MPR mapping. Default: false"}
                 }}
             }},
             {"required", json::array({"start_address", "end_address"})}
@@ -1584,7 +1588,11 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
             bank = bank_value;
         }
 
-        std::vector<DisasmLine> lines = m_debugAdapter.GetDisassembly(start_address, end_address, bank);
+        bool resolve_symbols = false;
+        if (arguments.contains("resolve_symbols") && arguments["resolve_symbols"].is_boolean())
+            resolve_symbols = arguments["resolve_symbols"].get<bool>();
+
+        std::vector<DisasmLine> lines = m_debugAdapter.GetDisassembly(start_address, end_address, bank, resolve_symbols);
 
         json result;
         json instructions = json::array();

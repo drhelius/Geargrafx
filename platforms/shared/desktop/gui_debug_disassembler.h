@@ -21,6 +21,7 @@
 #define GUI_DEBUG_DISASSEMBLER_H
 
 #include "geargrafx.h"
+#include <string>
 
 #ifdef GUI_DEBUG_DISASSEMBLER_IMPORT
     #define EXTERN
@@ -51,6 +52,8 @@ EXTERN void gui_debug_remove_disassembler_bookmark(u16 address);
 EXTERN int gui_debug_get_disassembler_bookmarks(void** bookmarks_ptr);
 EXTERN void gui_debug_reset_disassembler_bookmarks(void);
 EXTERN int gui_debug_get_symbols(void** symbols_ptr);
+EXTERN bool gui_debug_resolve_symbol(GG_Disassembler_Record* record, std::string& instr, const char* color, const char* original_color, const char** out_name = NULL, u16* out_address = NULL);
+EXTERN bool gui_debug_resolve_label(GG_Disassembler_Record* record, std::string& instr, const char* color, const char* original_color, const char** out_name = NULL, u16* out_address = NULL);
 EXTERN void gui_debug_runtocursor(void);
 EXTERN void gui_debug_runto_address(u16 address);
 EXTERN void gui_debug_go_back(void);

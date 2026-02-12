@@ -576,6 +576,9 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
     record->jump_bank = 0;
     record->subroutine = false;
     record->irq = 0;
+    record->has_operand_address = false;
+    record->operand_address = 0;
+    record->operand_is_zp = false;
 
     if (m_debug_next_irq > 0)
     {
@@ -606,6 +609,12 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
         }
         case GG_OPCode_Type_1b:
         {
+            if (!strstr(k_huc6280_opcode_names[opcode].name, "#$"))
+            {
+                record->has_operand_address = true;
+                record->operand_address = op1;
+                record->operand_is_zp = true;
+            }
             snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, op1);
             break;
         }
@@ -621,7 +630,10 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
         }
         case GG_OPCode_Type_2b:
         {
-            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, op1 | (op2 << 8));
+            u16 operand = op1 | (op2 << 8);
+            record->has_operand_address = true;
+            record->operand_address = operand;
+            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, operand);
             break;
         }
         case GG_OPCode_Type_2b_2b_2b:

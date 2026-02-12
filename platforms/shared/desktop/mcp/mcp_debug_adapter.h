@@ -76,6 +76,9 @@ struct DisasmLine
     bool jump;
     u16 jump_address;
     u8 jump_bank;
+    bool has_operand_address;
+    u16 operand_address;
+    bool operand_is_zp;
     bool subroutine;
     int irq;
 };
@@ -115,7 +118,7 @@ public:
     void WriteMemoryArea(int area, u32 offset, const std::vector<u8>& data);
 
     // Disassembly (using existing disassembler records)
-    std::vector<DisasmLine> GetDisassembly(u16 start_address, u16 end_address, int bank = -1);
+    std::vector<DisasmLine> GetDisassembly(u16 start_address, u16 end_address, int bank = -1, bool resolve_symbols = false);
 
     // Chip status info
     json GetHuC6280Status();
