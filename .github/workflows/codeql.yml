@@ -46,8 +46,10 @@ jobs:
         libdrm-dev libgbm-dev libgl1-mesa-dev libegl1-mesa-dev libdbus-1-dev libudev-dev
 
     - name: Build and install SDL3
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
-        SDL3_TAG=$(curl -s https://api.github.com/repos/libsdl-org/SDL/releases/latest | jq -r '.tag_name')
+        SDL3_TAG=$(gh release view --repo libsdl-org/SDL --json tagName -q '.tagName')
         echo "Building SDL3 $SDL3_TAG"
         git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
         cmake -S /tmp/SDL3 -B /tmp/SDL3/build -DCMAKE_INSTALL_PREFIX=/usr -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF
