@@ -228,10 +228,12 @@ void config_read(void)
     config_debug.show_huc6270_1_registers = read_bool("Debug", "HuC6270Registers1", false);
     config_debug.show_huc6270_1_background = read_bool("Debug", "HuC6270Background1", false);
     config_debug.show_huc6270_1_sprites = read_bool("Debug", "HuC6270Sprites1", false);
+    config_debug.show_huc6270_1_tiles = read_bool("Debug", "HuC6270Tiles1", false);
     config_debug.show_huc6270_1_info = read_bool("Debug", "HuC6270Info1", false);
     config_debug.show_huc6270_2_registers = read_bool("Debug", "HuC6270Registers2", false);
     config_debug.show_huc6270_2_background = read_bool("Debug", "HuC6270Background2", false);
     config_debug.show_huc6270_2_sprites = read_bool("Debug", "HuC6270Sprites2", false);
+    config_debug.show_huc6270_2_tiles = read_bool("Debug", "HuC6270Tiles2", false);
     config_debug.show_huc6270_2_info = read_bool("Debug", "HuC6270Info2", false);
     config_debug.show_psg = read_bool("Debug", "PSG", false);
     config_debug.show_cdrom = read_bool("Debug", "CDROM", false);
@@ -518,10 +520,12 @@ void config_write(void)
     write_bool("Debug", "HuC6270Registers1", config_debug.show_huc6270_1_registers);
     write_bool("Debug", "HuC6270Background1", config_debug.show_huc6270_1_background);
     write_bool("Debug", "HuC6270Sprites1", config_debug.show_huc6270_1_sprites);
+    write_bool("Debug", "HuC6270Tiles1", config_debug.show_huc6270_1_tiles);
     write_bool("Debug", "HuC6270Info1", config_debug.show_huc6270_1_info);
     write_bool("Debug", "HuC6270Registers2", config_debug.show_huc6270_2_registers);
     write_bool("Debug", "HuC6270Background2", config_debug.show_huc6270_2_background);
     write_bool("Debug", "HuC6270Sprites2", config_debug.show_huc6270_2_sprites);
+    write_bool("Debug", "HuC6270Tiles2", config_debug.show_huc6270_2_tiles);
     write_bool("Debug", "HuC6270Info2", config_debug.show_huc6270_2_info);
     write_bool("Debug", "PSG", config_debug.show_psg);
     write_bool("Debug", "CDROM", config_debug.show_cdrom);

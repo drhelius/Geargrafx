@@ -26,6 +26,7 @@
 #include "gui_debug_disassembler.h"
 #include "gui_debug_huc6280.h"
 #include "gui_debug_huc6270.h"
+#include "gui_debug_huc6270_tiles.h"
 #include "gui_debug_huc6260.h"
 #include "gui_debug_huc6202.h"
 #include "gui_debug_memory.h"
@@ -94,6 +95,8 @@ void gui_debug_windows(void)
             gui_debug_window_huc6270_background(1);
         if (config_debug.show_huc6270_1_sprites)
             gui_debug_window_huc6270_sprites(1);
+        if (config_debug.show_huc6270_1_tiles)
+            gui_debug_window_huc6270_tiles(1);
         if (config_debug.show_huc6270_1_info)
             gui_debug_window_huc6270_info(1);
         if (emu_get_core()->GetMedia()->IsSGX())
@@ -106,6 +109,8 @@ void gui_debug_windows(void)
                 gui_debug_window_huc6270_background(2);
             if (config_debug.show_huc6270_2_sprites)
                 gui_debug_window_huc6270_sprites(2);
+            if (config_debug.show_huc6270_2_tiles)
+                gui_debug_window_huc6270_tiles(2);
             if (config_debug.show_huc6270_2_info)
                 gui_debug_window_huc6270_info(2);
         }

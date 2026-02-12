@@ -214,10 +214,12 @@ struct config_Debug
     bool show_huc6270_1_registers = false;
     bool show_huc6270_1_background = false;
     bool show_huc6270_1_sprites = false;
+    bool show_huc6270_1_tiles = false;
     bool show_huc6270_1_info = false;
     bool show_huc6270_2_registers = false;
     bool show_huc6270_2_background = false;
     bool show_huc6270_2_sprites = false;
+    bool show_huc6270_2_tiles = false;
     bool show_huc6270_2_info = false;
     bool show_psg = false;
     bool show_cdrom = false;

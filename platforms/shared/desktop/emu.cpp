@@ -62,6 +62,7 @@ static void destroy_debug(void);
 static void update_debug(void);
 static void update_debug_background(void);
 static void update_debug_sprites(void);
+static void update_debug_tiles(void);
 
 bool emu_init(GG_Input_Pump_Fn input_pump_fn)
 {
@@ -778,6 +779,12 @@ static void reset_buffers(void)
             emu_debug_sprite_widths[i][s] = 16;
             emu_debug_sprite_heights[i][s] = 16;
         }
+
+    int tile_buf_size = 32 * 8 * 64 * 8 * 4;
+    for (int i = 0; i < tile_buf_size; i++)
+        emu_debug_tiles_buffer[0][i] = 0;
+    for (int i = 0; i < tile_buf_size; i++)
+        emu_debug_tiles_buffer[1][i] = 0;
 }
 
 static const char* get_configurated_dir(int location, const char* path)
@@ -811,6 +818,18 @@ static void init_debug(void)
             for (int j = 0; j < HUC6270_MAX_SPRITE_WIDTH * HUC6270_MAX_SPRITE_HEIGHT * 4; j++)
                 emu_debug_sprite_buffers[i][s][j] = 0;
         }
+
+    int tile_buf_size = 32 * 8 * 64 * 8 * 4;
+    emu_debug_tiles_buffer[0] = new u8[tile_buf_size];
+    for (int i = 0; i < tile_buf_size; i++)
+        emu_debug_tiles_buffer[0][i] = 0;
+
+    emu_debug_tiles_buffer[1] = new u8[tile_buf_size];
+    for (int i = 0; i < tile_buf_size; i++)
+        emu_debug_tiles_buffer[1][i] = 0;
+
+    emu_debug_tiles_palette[0] = 0;
+    emu_debug_tiles_palette[1] = 0;
 }
 
 static void destroy_debug(void) 
@@ -821,6 +840,9 @@ static void destroy_debug(void)
     for (int i = 0; i < 2; i++)
         for (int s = 0; s < 64; s++)
             SafeDeleteArray(emu_debug_sprite_buffers[i][s]);
+
+    SafeDeleteArray(emu_debug_tiles_buffer[0]);
+    SafeDeleteArray(emu_debug_tiles_buffer[1]);
 }
 
 static void update_debug(void)
@@ -829,6 +851,8 @@ static void update_debug(void)
         update_debug_background();
     if (config_debug.show_huc6270_1_sprites || config_debug.show_huc6270_2_sprites)
         update_debug_sprites();
+    if (config_debug.show_huc6270_1_tiles || config_debug.show_huc6270_2_tiles)
+        update_debug_tiles();
 }
 
 static void update_debug_background(void)
@@ -971,6 +995,69 @@ static void update_debug_sprites(void)
                     emu_debug_sprite_buffers[vdc][i][pixel_index + 1] = green;
                     emu_debug_sprite_buffers[vdc][i][pixel_index + 2] = blue;
                     emu_debug_sprite_buffers[vdc][i][pixel_index + 3] = 255;
+                }
+            }
+        }
+    }
+}
+
+static void update_debug_tiles(void)
+{
+    bool is_sgx = geargrafx->GetMedia()->IsSGX();
+    int vdc_min = 0;
+    int vdc_max = is_sgx ? 1 : 0;
+
+    int tiles_across = 32;
+    int tile_w = 8;
+    int total_tiles = 2048;
+    int row_stride = tiles_across * tile_w * 4;
+
+    for (int vdc = vdc_min; vdc <= vdc_max; vdc++)
+    {
+        HuC6260* huc6260 = geargrafx->GetHuC6260();
+        HuC6270* huc6270 = vdc == 0 ? geargrafx->GetHuC6270_1() : geargrafx->GetHuC6270_2();
+        u16* vram = huc6270->GetVRAM();
+        u16* color_table_data = huc6260->GetColorTable();
+        int palette = emu_debug_tiles_palette[vdc];
+
+        for (int tile = 0; tile < total_tiles; tile++)
+        {
+            int tile_data = tile * 16;
+            int grid_x = tile % tiles_across;
+            int grid_y = tile / tiles_across;
+
+            for (int py = 0; py < 8; py++)
+            {
+                int line_a = tile_data + py;
+                int line_b = tile_data + py + 8;
+
+                u8 byte1 = vram[line_a] & 0xFF;
+                u8 byte2 = vram[line_a] >> 8;
+                u8 byte3 = vram[line_b] & 0xFF;
+                u8 byte4 = vram[line_b] >> 8;
+
+                for (int px = 0; px < 8; px++)
+                {
+                    int color = ((byte1 >> (7 - px)) & 0x01) |
+                                (((byte2 >> (7 - px)) & 0x01) << 1) |
+                                (((byte3 >> (7 - px)) & 0x01) << 2) |
+                                (((byte4 >> (7 - px)) & 0x01) << 3);
+
+                    int color_table_index = (color == 0) ? 0 : palette;
+                    u16 color_value = color_table_data[(color_table_index * 16) + color];
+
+                    int blue = (color_value & 0x07) * 255 / 7;
+                    int red = ((color_value >> 3) & 0x07) * 255 / 7;
+                    int green = ((color_value >> 6) & 0x07) * 255 / 7;
+
+                    int pixel_x = grid_x * 8 + px;
+                    int pixel_y = grid_y * 8 + py;
+                    int idx = (pixel_y * row_stride) + (pixel_x * 4);
+
+                    emu_debug_tiles_buffer[vdc][idx + 0] = red;
+                    emu_debug_tiles_buffer[vdc][idx + 1] = green;
+                    emu_debug_tiles_buffer[vdc][idx + 2] = blue;
+                    emu_debug_tiles_buffer[vdc][idx + 3] = 255;
                 }
             }
         }

@@ -112,6 +112,8 @@ void ogl_renderer_destroy(void)
         {
             glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_sprites[i][s]);
         }
+    glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_tiles[0]);
+    glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_tiles[1]);
     glDeleteTextures(1, &ogl_renderer_emu_savestates);
 
     if (quad_shader_program)
@@ -237,6 +239,15 @@ static void init_ogl_debug(void)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         }
+
+    for (int i = 0; i < 2; i++)
+    {
+        glGenTextures(1, &ogl_renderer_emu_debug_huc6270_tiles[i]);
+        glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_debug_huc6270_tiles[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32 * 8, 64 * 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)emu_debug_tiles_buffer[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    }
 }
 
 static void init_ogl_savestates(void)
@@ -361,6 +372,13 @@ static void update_debug_textures(void)
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, emu_debug_sprite_widths[i][s], emu_debug_sprite_heights[i][s],
                     GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_sprite_buffers[i][s]);
         }
+
+    for (int i = 0; i < 2; i++)
+    {
+        glBindTexture(GL_TEXTURE_2D, ogl_renderer_emu_debug_huc6270_tiles[i]);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 32 * 8, 64 * 8,
+                GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_debug_tiles_buffer[i]);
+    }
 }
 
 static void update_savestates_texture(void)

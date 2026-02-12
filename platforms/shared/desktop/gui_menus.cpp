@@ -1506,6 +1506,9 @@ static void menu_debug(void)
                 ImGui::Separator();
                 ImGui::MenuItem("Show Sprites (1)", "", &config_debug.show_huc6270_1_sprites);
                 ImGui::MenuItem("Show Sprites (2)", "", &config_debug.show_huc6270_2_sprites);
+                ImGui::Separator();
+                ImGui::MenuItem("Show Tiles (1)", "", &config_debug.show_huc6270_1_tiles);
+                ImGui::MenuItem("Show Tiles (2)", "", &config_debug.show_huc6270_2_tiles);
                 ImGui::EndMenu();
             }
         }
@@ -1517,6 +1520,7 @@ static void menu_debug(void)
                 ImGui::MenuItem("Show Registers", "", &config_debug.show_huc6270_1_registers);
                 ImGui::MenuItem("Show Background", "", &config_debug.show_huc6270_1_background);
                 ImGui::MenuItem("Show Sprites", "", &config_debug.show_huc6270_1_sprites);
+                ImGui::MenuItem("Show Tiles", "", &config_debug.show_huc6270_1_tiles);
                 ImGui::EndMenu();
             }
         }

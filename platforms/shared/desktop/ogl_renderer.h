@@ -37,6 +37,7 @@
 EXTERN uint32_t ogl_renderer_emu_texture;
 EXTERN uint32_t ogl_renderer_emu_debug_huc6270_background[2];
 EXTERN uint32_t ogl_renderer_emu_debug_huc6270_sprites[2][64];
+EXTERN uint32_t ogl_renderer_emu_debug_huc6270_tiles[2];
 EXTERN uint32_t ogl_renderer_emu_savestates;
 EXTERN const char* ogl_renderer_opengl_version;
 

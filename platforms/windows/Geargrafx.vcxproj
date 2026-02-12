@@ -86,6 +86,7 @@
     <ClCompile Include="..\shared\desktop\gui_debug_huc6202.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_huc6260.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_huc6270.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_debug_huc6270_tiles.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_huc6280.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_memeditor.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_memory.cpp" />
@@ -226,6 +227,7 @@
     <ClInclude Include="..\shared\desktop\gui_debug_huc6202.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_huc6260.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_huc6270.h" />
+    <ClInclude Include="..\shared\desktop\gui_debug_huc6270_tiles.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_huc6280.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_memeditor.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_memory.h" />

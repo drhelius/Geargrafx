@@ -42,6 +42,7 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6202.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6260.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6270.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_huc6270_tiles.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6280.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_memeditor.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_memory.cpp \
