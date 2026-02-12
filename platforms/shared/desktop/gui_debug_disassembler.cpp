@@ -1207,7 +1207,7 @@ bool gui_debug_resolve_label(GG_Disassembler_Record* record, std::string& instr,
             {
                 char label_address[6];
                 snprintf(label_address, 6, "$%04X", lookup_address);
-                std::string replacement = std::string(color) + k_debug_labels[i].label + label_address + original_color;
+                std::string replacement = std::string(color) + k_debug_labels[i].label + "_" + label_address + original_color;
                 if (replace_address_in_string(instr, lookup_address, is_zp, replacement.c_str()))
                 {
                     if (out_name) *out_name = k_debug_labels[i].label;
@@ -1797,16 +1797,16 @@ void gui_debug_window_call_stack(void)
             }
             ImGui::PushFont(gui_default_font);
 
+            ImGui::SameLine(0, 0);
+            ImGui::TextColored(cyan, "%04X", entry.dest);
             ImGui::SameLine();
-            ImGui::TextColored(cyan, "$%04X", entry.dest);
-            ImGui::SameLine();
-            ImGui::TextColored(green, "%s", symbol_text);
+            ImGui::TextColored(green, " %s", symbol_text);
 
             ImGui::TableNextColumn();
-            ImGui::TextColored(cyan, "$%04X", entry.src);
+            ImGui::TextColored(cyan, "%04X", entry.src);
 
             ImGui::TableNextColumn();
-            ImGui::TextColored(cyan, "$%04X", entry.back);
+            ImGui::TextColored(cyan, "%04X", entry.back);
 
             row_index++;
         }
@@ -1858,8 +1858,8 @@ void gui_debug_window_symbols(void)
     if (ImGui::BeginTable("symbols_table", 4, flags))
     {
         ImGui::TableSetupScrollFreeze(0, 1);
-        ImGui::TableSetupColumn("Bank", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort, 36.0f);
-        ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed, 58.0f);
+        ImGui::TableSetupColumn("Bank", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_DefaultSort, 44.0f);
+        ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed, 66.0f);
         ImGui::TableSetupColumn("Symbol", ImGuiTableColumnFlags_WidthStretch, 2.0f);
         ImGui::TableSetupColumn("Type", ImGuiTableColumnFlags_WidthFixed | ImGuiTableColumnFlags_NoSort, 44.0f);
         ImGui::TableHeadersRow();
@@ -1994,11 +1994,11 @@ void gui_debug_window_symbols(void)
                 }
                 ImGui::PushFont(gui_default_font);
 
-                ImGui::SameLine();
-                ImGui::TextColored(cyan, "$%02X", b);
+                ImGui::SameLine(0, 0);
+                ImGui::TextColored(violet, " %02X", b);
 
                 ImGui::TableNextColumn();
-                ImGui::TextColored(cyan, "$%04X", symbol->address);
+                ImGui::TextColored(cyan, " %04X", symbol->address);
 
                 ImGui::TableNextColumn();
                 ImGui::TextColored(is_manual ? green : yellow, "%s", symbol->text);
