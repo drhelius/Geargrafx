@@ -26,6 +26,8 @@
 #include "gui_debug_disassembler.h"
 #include "gui_debug_huc6280.h"
 #include "gui_debug_huc6270.h"
+#include "gui_debug_huc6270_background.h"
+#include "gui_debug_huc6270_sprites.h"
 #include "gui_debug_huc6270_tiles.h"
 #include "gui_debug_huc6260.h"
 #include "gui_debug_huc6202.h"

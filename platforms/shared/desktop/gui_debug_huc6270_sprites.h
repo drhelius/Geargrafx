@@ -17,18 +17,17 @@
  *
  */
 
-#ifndef GUI_DEBUG_HUC6270_H
-#define GUI_DEBUG_HUC6270_H
+#ifndef GUI_DEBUG_HUC6270_SPRITES_H
+#define GUI_DEBUG_HUC6270_SPRITES_H
 
-#ifdef GUI_DEBUG_HUC6270_IMPORT
+#ifdef GUI_DEBUG_HUC6270_SPRITES_IMPORT
     #define EXTERN
 #else
     #define EXTERN extern
 #endif
 
-EXTERN void gui_debug_window_huc6270_info(int vdc);
-EXTERN void gui_debug_window_huc6270_registers(int vdc);
+EXTERN void gui_debug_window_huc6270_sprites(int vdc);
 
-#undef GUI_DEBUG_HUC6270_IMPORT
+#undef GUI_DEBUG_HUC6270_SPRITES_IMPORT
 #undef EXTERN
-#endif /* GUI_DEBUG_HUC6270_H */
+#endif /* GUI_DEBUG_HUC6270_SPRITES_H */

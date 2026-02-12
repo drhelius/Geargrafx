@@ -35,7 +35,7 @@
 #define TILE_TEXTURE_WIDTH (TILES_ACROSS * 8)
 #define TILE_TEXTURE_HEIGHT (TILES_DOWN * 8)
 
-static const float k_scale_levels[4] = { 1.0f, 1.5f, 2.0f, 3.0f };
+static const float k_scale_levels[4] = { 1.0f, 1.5f, 2.0f };
 
 void gui_debug_window_huc6270_tiles(int vdc)
 {
@@ -57,12 +57,12 @@ void gui_debug_window_huc6270_tiles(int vdc)
     ImGui::SetNextWindowSize(ImVec2(440, 510), ImGuiCond_FirstUseEver);
     ImGui::Begin(title, show);
 
-    static bool show_grid = true;
-    static int zoom = 1;
-    static int palette = 0;
+    static bool show_grid[2] = { true, true };
+    static int zoom[2] = { 1, 1 };
+    static int palette[2] = { 0, 0 };
     ImVec4 grid_color = dark_gray;
     grid_color.w = 0.3f;
-    float scale = k_scale_levels[zoom];
+    float scale = k_scale_levels[zoom[vdc - 1]];
     float size_h = (float)TILE_TEXTURE_WIDTH * scale;
     float size_v = (float)TILE_TEXTURE_HEIGHT * scale;
     float spacing = 8.0f * scale;
@@ -75,9 +75,9 @@ void gui_debug_window_huc6270_tiles(int vdc)
         ImGui::TableNextColumn();
 
         ImGui::PushItemWidth(60.0f);
-        ImGui::Combo("Zoom##zoom_tiles", &zoom, "1x\0""1.5x\0""2x\0""3x\0\0");
+        ImGui::Combo("Zoom##zoom_tiles", &zoom[vdc - 1], "1x\0""1.5x\0""2x\0\0");
         ImGui::PopItemWidth();
-        ImGui::Checkbox("Show Grid##grid_tiles", &show_grid);
+        ImGui::Checkbox("Show Grid##grid_tiles", &show_grid[vdc - 1]);
 
         ImGui::TableNextColumn();
 
@@ -86,10 +86,10 @@ void gui_debug_window_huc6270_tiles(int vdc)
         ImGui::TextColored(violet, "PALETTE  ");
         ImGui::SameLine();
         ImGui::PushItemWidth(120.0f);
-        ImGui::SliderInt("##tile_pal", &palette, 0, 15, "%d");
+        ImGui::SliderInt("##tile_pal", &palette[vdc - 1], 0, 15, "%d");
         ImGui::PopItemWidth();
 
-        emu_debug_tiles_palette[vdc - 1] = palette;
+        emu_debug_tiles_palette[vdc - 1] = palette[vdc - 1];
 
         ImGui::TextColored(violet, "TILES    ");
         ImGui::SameLine();
@@ -113,7 +113,7 @@ void gui_debug_window_huc6270_tiles(int vdc)
 
         ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_debug_huc6270_tiles[vdc - 1], ImVec2(size_h, size_v));
 
-        if (show_grid)
+        if (show_grid[vdc - 1])
         {
             float x = p.x;
             for (int n = 0; n <= TILES_ACROSS; n++)
@@ -173,7 +173,7 @@ void gui_debug_window_huc6270_tiles(int vdc)
 
                 ImGui::TextColored(magenta, "PALETTE      ");
                 ImGui::SameLine();
-                ImGui::TextColored(white, "%d", palette);
+                ImGui::TextColored(white, "%d", palette[vdc - 1]);
 
                 ImGui::Separator();
                 ImGui::TextColored(violet, "RAW DATA (16 words):");
