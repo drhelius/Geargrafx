@@ -427,7 +427,7 @@ static void draw_controls(void)
     ImGui::TextColored(emu_is_debug_idle() ? red : green, emu_is_debug_idle() ? "   PAUSED" : "   RUNNING");
 }
 
-static const char* k_breakpoint_types[] = { "ROM/RAM ", "VRAM    ", "PALETTE ", "6270   ", "6260   " };
+static const char* k_breakpoint_types[] = { "ROM/RAM ", "VRAM    ", "PALETTE ", "6270    ", "6260    " };
 
 static void draw_breakpoints_content(void)
 {
@@ -528,6 +528,8 @@ static void draw_breakpoints_content(void)
 
         GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(brk->address1);
 
+        bool symbol_shown = false;
+
         if (!brk->range && (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM) && IsValidPointer(record))
         {
             DebugSymbol* symbol = fixed_symbols[record->bank][brk->address1];
@@ -537,10 +539,11 @@ static void draw_breakpoints_content(void)
             {
                 ImGui::SameLine(0, 0);
                 ImGui::TextColored(brk->enabled ? green : gray, " %s", symbol->text);
+                symbol_shown = true;
             }
         }
 
-        if (brk->execute && IsValidPointer(record))
+        if (!symbol_shown && brk->execute && IsValidPointer(record))
         {
             ImGui::SameLine(0, 0);
             ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled ? white : gray);
