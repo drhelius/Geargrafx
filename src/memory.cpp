@@ -365,6 +365,9 @@ Memory::MemoryBankType Memory::GetBankType(u8 bank)
     if (bank < 0x80)
         return m_media->IsCDROM() ? MEMORY_BANK_TYPE_BIOS : MEMORY_BANK_TYPE_ROM;
 
+    if (bank == 0xFF)
+        return MEMORY_BANK_TYPE_HARDWARE;
+
     return MEMORY_BANK_TYPE_UNUSED;
 }
 

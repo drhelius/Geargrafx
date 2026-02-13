@@ -710,6 +710,9 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
         case Memory::MEMORY_BANK_TYPE_CDROM_RAM:
             strncpy_fit(record->segment, "CDRAM", sizeof(record->segment));
             break;
+        case Memory::MEMORY_BANK_TYPE_HARDWARE:
+            strncpy_fit(record->segment, "HW   ", sizeof(record->segment));
+            break;
         default:
             strncpy_fit(record->segment, "???? ", sizeof(record->segment));
             break;
@@ -773,7 +776,9 @@ inline void HuC6280::DisassembleAhead(u16 start_address, int count, int depth)
 
         if (record->jump && record->jump_address != 0)
         {
-            DisassembleAhead(record->jump_address, count / 2, depth + 1);
+            u8 jump_bank = m_memory->GetBank(record->jump_address);
+            if (jump_bank != 0xFF)
+                DisassembleAhead(record->jump_address, count / 2, depth + 1);
         }
 
         address += opcode_size;
