@@ -330,10 +330,17 @@ void McpServer::HandleToolsList(const json& request)
                     {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg"},
                     {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
                 }},
-                {"type", {
-                    {"type", "string"},
-                    {"description", "Breakpoint type: exec (default), read, write. IMPORTANT: Read/write breakpoints stop with PC at the instruction after the memory access."},
-                    {"enum", json::array({"exec", "read", "write"})}
+                {"read", {
+                    {"type", "boolean"},
+                    {"description", "Break on memory read (default: false). IMPORTANT: Read breakpoints stop with PC at the instruction after the memory access."}
+                }},
+                {"write", {
+                    {"type", "boolean"},
+                    {"description", "Break on memory write (default: false). IMPORTANT: Write breakpoints stop with PC at the instruction after the memory access."}
+                }},
+                {"execute", {
+                    {"type", "boolean"},
+                    {"description", "Break on execution (default: true). Only valid for rom_ram memory area."}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -360,10 +367,17 @@ void McpServer::HandleToolsList(const json& request)
                     {"description", "Memory area: rom_ram, vram, palette, huc6270_reg, huc6260_reg"},
                     {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
                 }},
-                {"type", {
-                    {"type", "string"},
-                    {"description", "Breakpoint type: exec (default), read, write. IMPORTANT: Read/write breakpoints stop with PC at the instruction after the memory access."},
-                    {"enum", json::array({"exec", "read", "write"})}
+                {"read", {
+                    {"type", "boolean"},
+                    {"description", "Break on memory read (default: false). IMPORTANT: Read breakpoints stop with PC at the instruction after the memory access."}
+                }},
+                {"write", {
+                    {"type", "boolean"},
+                    {"description", "Break on memory write (default: false). IMPORTANT: Write breakpoints stop with PC at the instruction after the memory access."}
+                }},
+                {"execute", {
+                    {"type", "boolean"},
+                    {"description", "Break on execution (default: true). Only valid for rom_ram memory area."}
                 }}
             }},
             {"required", json::array({"start_address", "end_address"})}
@@ -1402,10 +1416,15 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         std::string memory_area = arguments.value("memory_area", "rom_ram");
         int breakpoint_type = GetBreakpointTypeFromString(memory_area);
 
-        std::string type = arguments.value("type", "exec");
-        bool read = (type == "read");
-        bool write = (type == "write");
-        bool execute = (type == "exec");
+        bool read = arguments.value("read", false);
+        bool write = arguments.value("write", false);
+        bool execute = arguments.value("execute", true);
+
+        if (breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
+            execute = false;
+
+        if (!read && !write && !execute)
+            return {{"error", "At least one of read, write, or execute must be true"}};
 
         m_debugAdapter.SetBreakpoint(address, breakpoint_type, read, write, execute);
         return {{"success", true}, {"address", addrStr}, {"memory_area", memory_area}};
@@ -1426,10 +1445,15 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         std::string memory_area = arguments.value("memory_area", "rom_ram");
         int breakpoint_type = GetBreakpointTypeFromString(memory_area);
 
-        std::string type = arguments.value("type", "exec");
-        bool read = (type == "read");
-        bool write = (type == "write");
-        bool execute = (type == "exec");
+        bool read = arguments.value("read", false);
+        bool write = arguments.value("write", false);
+        bool execute = arguments.value("execute", true);
+
+        if (breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
+            execute = false;
+
+        if (!read && !write && !execute)
+            return {{"error", "At least one of read, write, or execute must be true"}};
 
         m_debugAdapter.SetBreakpointRange(start_address, end_address, breakpoint_type,
                                          read, write, execute);
