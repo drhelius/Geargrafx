@@ -427,7 +427,7 @@ static void draw_controls(void)
     ImGui::TextColored(emu_is_debug_idle() ? red : green, emu_is_debug_idle() ? "   PAUSED" : "   RUNNING");
 }
 
-static const char* k_breakpoint_types[] = { "ROM/RAM ", "VRAM    ", "PALETTE ", "6270 REG", "6260 REG" };
+static const char* k_breakpoint_types[] = { "ROM/RAM ", "VRAM    ", "PALETTE ", "6270   ", "6260   " };
 
 static void draw_breakpoints_content(void)
 {
@@ -511,14 +511,14 @@ static void draw_breakpoints_content(void)
             ImGui::EndTooltip();
         }
 
-        ImGui::SameLine(); ImGui::TextColored(brk->enabled ? red : gray, "%s", k_breakpoint_types[brk->type]); ImGui::SameLine();
+        ImGui::SameLine(); ImGui::TextColored(brk->enabled ? red : gray, "%s", k_breakpoint_types[brk->type]); ImGui::SameLine(0, 0);
 
         if ((*breakpoints)[b].range)
             ImGui::TextColored(brk->enabled ? cyan : gray, "%04X-%04X", brk->address1, brk->address2);
         else
             ImGui::TextColored(brk->enabled ? cyan : gray, "%04X", brk->address1);
 
-        ImGui::SameLine(); ImGui::TextColored(brk->enabled && brk->read ? orange : gray, " R");
+        ImGui::SameLine(0, 0); ImGui::TextColored(brk->enabled && brk->read ? orange : gray, " R");
         ImGui::SameLine(0, 2); ImGui::TextColored(brk->enabled && brk->write ? orange : gray, "W");
 
         if (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
@@ -528,16 +528,28 @@ static void draw_breakpoints_content(void)
 
         GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(brk->address1);
 
+        if (!brk->range && (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM) && IsValidPointer(record))
+        {
+            DebugSymbol* symbol = fixed_symbols[record->bank][brk->address1];
+            if (!IsValidPointer(symbol))
+                symbol = dynamic_symbols[record->bank][brk->address1];
+            if (IsValidPointer(symbol))
+            {
+                ImGui::SameLine(0, 0);
+                ImGui::TextColored(brk->enabled ? green : gray, " %s", symbol->text);
+            }
+        }
+
         if (brk->execute && IsValidPointer(record))
         {
-            ImGui::SameLine();
+            ImGui::SameLine(0, 0);
             ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled ? white : gray);
             TextColoredEx(" %s", record->name);
             ImGui::PopStyleColor();
         }
         else if (!brk->range && (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER) && (brk->address1 < 20))
         {
-            ImGui::SameLine();
+            ImGui::SameLine(0, 0);
             ImGui::TextColored(brk->enabled ? violet : gray, " %s", k_register_names[brk->address1]);
         }
     }
