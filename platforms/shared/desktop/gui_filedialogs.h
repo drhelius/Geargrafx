@@ -49,6 +49,7 @@ EXTERN void gui_file_dialog_save_debug_settings(void);
 EXTERN void gui_file_dialog_load_debug_settings(void);
 EXTERN void gui_file_dialog_load_palette(void);
 EXTERN void gui_file_dialog_process_results(void);
+EXTERN bool gui_file_dialog_is_active(void);
 
 #undef GUI_FILEDIALOGS_IMPORT
 #undef EXTERN

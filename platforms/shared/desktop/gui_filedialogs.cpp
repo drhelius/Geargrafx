@@ -68,6 +68,7 @@ enum FileDialogID
 static FileDialogID pending_dialog_id = FileDialog_None;
 static std::string pending_dialog_path;
 static bool dialog_active = false;
+static bool pending_refocus_window = false;
 static int pending_dialog_int_param1 = 0;
 static int pending_dialog_int_param2 = 0;
 #if !defined(__APPLE__)
@@ -316,6 +317,12 @@ void gui_file_dialog_process_results(void)
     }
 #endif
 
+    if (pending_refocus_window && !dialog_active)
+    {
+        pending_refocus_window = false;
+        SDL_RaiseWindow(application_sdl_window);
+    }
+
     if (pending_dialog_id != FileDialog_None)
     {
         FileDialogID id = pending_dialog_id;
@@ -326,6 +333,11 @@ void gui_file_dialog_process_results(void)
     }
 }
 
+bool gui_file_dialog_is_active(void)
+{
+    return dialog_active;
+}
+
 static void SDLCALL file_dialog_callback(void* userdata, const char* const* filelist, int filter)
 {
     (void)filter;
@@ -334,7 +346,10 @@ static void SDLCALL file_dialog_callback(void* userdata, const char* const* file
     FileDialogID id = (FileDialogID)(intptr_t)userdata;
 
     if (!filelist || !filelist[0])
+    {
+        pending_refocus_window = true;
         return;
+    }
 
     pending_dialog_id = id;
     pending_dialog_path = filelist[0];

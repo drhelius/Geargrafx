@@ -23,6 +23,7 @@
 #include "geargrafx.h"
 #include "config.h"
 #include "gui.h"
+#include "gui_filedialogs.h"
 #include "gui_debug_disassembler.h"
 #include "ogl_renderer.h"
 #include "emu.h"
@@ -164,7 +165,7 @@ void application_destroy(void)
 
 void application_mainloop(void)
 {
-    Log("Starting main loop...");
+    Log("Running main loop...");
 
     while (running)
     {
@@ -412,15 +413,18 @@ static void sdl_events(void)
 
     while (SDL_PollEvent(&event))
     {
+        bool file_dialog_active = gui_file_dialog_is_active();
+
         sdl_events_quit(&event);
 
         if (running)
         {
             sdl_events_app(&event);
 
-            ImGui_ImplSDL3_ProcessEvent(&event);
+            if (!file_dialog_active)
+                ImGui_ImplSDL3_ProcessEvent(&event);
 
-            if (!gui_in_use)
+            if (!gui_in_use && !file_dialog_active)
                 events_shortcuts(&event);
         }
     }
