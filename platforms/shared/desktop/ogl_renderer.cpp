@@ -88,6 +88,8 @@ bool ogl_renderer_init(void)
     ogl_renderer_opengl_version = (const char*)glGetString(GL_VERSION);
     Log("Starting OpenGL %s", ogl_renderer_opengl_version);
 
+    glDisable(GL_FRAMEBUFFER_SRGB);
+
     init_shaders();
     init_ogl_gui();
     init_ogl_emu();
