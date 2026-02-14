@@ -32,7 +32,7 @@
 
 EXTERN void sound_queue_init(void);
 EXTERN void sound_queue_destroy(void);
-EXTERN bool sound_queue_start(int sample_rate, int channel_count, int buffer_size = 2048, int buffer_count = 3);
+EXTERN bool sound_queue_start(int sample_rate, int channel_count, int buffer_size = GG_AUDIO_QUEUE_SIZE, int buffer_count = 3);
 EXTERN void sound_queue_stop(void);
 EXTERN void sound_queue_write(s16* samples, int count, bool sync);
 EXTERN int sound_queue_get_sample_count(void);

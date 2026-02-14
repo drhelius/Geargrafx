@@ -337,7 +337,7 @@ void emu_audio_cdrom_volume(float volume)
 void emu_audio_reset(void)
 {
     sound_queue_stop();
-    sound_queue_start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_BUFFER_SIZE, GG_AUDIO_BUFFER_COUNT);
+    sound_queue_start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_QUEUE_SIZE, config_audio.buffer_count);
 }
 
 bool emu_is_audio_enabled(void)

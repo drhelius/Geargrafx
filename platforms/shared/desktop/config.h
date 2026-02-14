@@ -108,6 +108,7 @@ struct config_Audio
     float psg_volume = 1.0f;
     float cdrom_volume = 1.0f;
     float adpcm_volume = 1.0f;
+    int buffer_count = 3;
 };
 
 struct config_Input

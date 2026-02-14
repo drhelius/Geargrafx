@@ -365,6 +365,7 @@ void config_read(void)
     config_audio.psg_volume = read_float("Audio", "PSGVolume", 1.0f);
     config_audio.cdrom_volume = read_float("Audio", "CDROMVolume", 1.0f);
     config_audio.adpcm_volume = read_float("Audio", "ADPCMVolume", 1.0f);
+    config_audio.buffer_count = read_int("Audio", "BufferCount", 3);
 
     config_input.turbo_tap = read_bool("Input", "TurboTap", false);
 
@@ -632,6 +633,7 @@ void config_write(void)
     write_float("Audio", "PSGVolume", config_audio.psg_volume);
     write_float("Audio", "CDROMVolume", config_audio.cdrom_volume);
     write_float("Audio", "ADPCMVolume", config_audio.adpcm_volume);
+    write_int("Audio", "BufferCount", config_audio.buffer_count);
 
     write_bool("Input", "TurboTap", config_input.turbo_tap);
 
