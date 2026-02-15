@@ -28,8 +28,7 @@
     #define EXTERN extern
 #endif
 
-#define FRAME_BUFFER_SCALE 10
-#define FRAME_BUFFER_SCALE_DEFAULT 4
+#define FRAME_BUFFER_SCALE 4
 #define SYSTEM_TEXTURE_WIDTH 2048
 #define SYSTEM_TEXTURE_HEIGHT 512
 #define FRAME_BUFFER_WIDTH (SYSTEM_TEXTURE_WIDTH * 1)
@@ -41,7 +40,6 @@ EXTERN uint32_t ogl_renderer_emu_debug_huc6270_sprites[2][64];
 EXTERN uint32_t ogl_renderer_emu_debug_huc6270_tiles[2];
 EXTERN uint32_t ogl_renderer_emu_savestates;
 EXTERN const char* ogl_renderer_opengl_version;
-EXTERN int ogl_renderer_output_scale;
 
 EXTERN bool ogl_renderer_init(void);
 EXTERN void ogl_renderer_destroy(void);

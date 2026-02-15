@@ -25,13 +25,10 @@
     #include <glad.h>
 #endif
 
-#include <math.h>
-
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "emu.h"
 #include "config.h"
-#include "gui.h"
 #include "geargrafx.h"
 
 #define OGL_RENDERER_IMPORT
@@ -51,7 +48,6 @@ static int quad_uniform_color = -1;
 static int quad_uniform_tex_scale = -1;
 static int quad_uniform_viewport_size = -1;
 static int quad_uniform_use_fragcoord = -1;
-static int quad_uniform_scanline_scale = -1;
 
 
 
@@ -69,40 +65,6 @@ static void update_system_texture(void);
 static void update_debug_textures(void);
 static void update_savestates_texture(void);
 static void render_scanlines(void);
-static int compute_output_scale(void);
-
-static int compute_output_scale(void)
-{
-    int scale = FRAME_BUFFER_SCALE_DEFAULT;
-
-    if (!config_video.scanlines || config_debug.debug)
-        return scale;
-
-    ImGuiIO& io = ImGui::GetIO();
-    float fb_scale_x = io.DisplayFramebufferScale.x > 0.0f ? io.DisplayFramebufferScale.x : 1.0f;
-    float fb_scale_y = io.DisplayFramebufferScale.y > 0.0f ? io.DisplayFramebufferScale.y : 1.0f;
-    bool fractional_fb_scale = (fabsf(fb_scale_x - roundf(fb_scale_x)) > 0.001f) || (fabsf(fb_scale_y - roundf(fb_scale_y)) > 0.001f);
-
-    if (!fractional_fb_scale)
-        return scale;
-
-    if (config_video.scale == 1)
-    {
-        scale = config_video.scale_manual;
-    }
-    else if ((config_video.scale == 0) && (current_runtime.screen_height > 0) && (gui_main_window_height > 0))
-    {
-        int physical_height = (int)roundf((float)gui_main_window_height * fb_scale_y);
-        scale = physical_height / current_runtime.screen_height;
-    }
-
-    if (scale < 1)
-        scale = 1;
-    if (scale > FRAME_BUFFER_SCALE)
-        scale = FRAME_BUFFER_SCALE;
-
-    return scale;
-}
 
 bool ogl_renderer_init(void)
 {
@@ -172,7 +134,6 @@ void ogl_renderer_begin_render(void)
 void ogl_renderer_render(void)
 {
     emu_get_runtime(current_runtime);
-    ogl_renderer_output_scale = compute_output_scale();
 
     if (config_debug.debug)
     {
@@ -341,7 +302,7 @@ static void render_emu_mix(void)
     update_system_texture();
 
     int viewportWidth = current_runtime.screen_width;
-    int viewportHeight = current_runtime.screen_height * ogl_renderer_output_scale;
+    int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
 
     glUseProgram(quad_shader_program);
     glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
@@ -442,7 +403,7 @@ static void update_emu_texture(void)
 static void render_quad(float tex_h, float tex_v)
 {
     int viewportWidth = current_runtime.screen_width;
-    int viewportHeight = current_runtime.screen_height * ogl_renderer_output_scale;
+    int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
 
     glUseProgram(quad_shader_program);
     glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
@@ -465,7 +426,7 @@ static void render_scanlines(void)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     int viewportWidth = current_runtime.screen_width;
-    int viewportHeight = current_runtime.screen_height * ogl_renderer_output_scale;
+    int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
 
     float tex_h = (float)current_runtime.screen_width;
     float tex_v = (float)current_runtime.screen_height;
@@ -474,7 +435,6 @@ static void render_scanlines(void)
     glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
     glUniform2f(quad_uniform_viewport_size, (float)viewportWidth, (float)viewportHeight);
     glUniform1i(quad_uniform_use_fragcoord, 2);
-    glUniform1i(quad_uniform_scanline_scale, ogl_renderer_output_scale);
     glUniform4f(quad_uniform_color, 1.0f, 1.0f, 1.0f, config_video.scanlines_intensity);
 
     glViewport(0, 0, viewportWidth, viewportHeight);
@@ -515,11 +475,10 @@ static void init_shaders(void)
         "uniform vec2 uTexScale;\n"
         "uniform vec2 uViewportSize;\n"
         "uniform int uUseFragCoord;\n"
-        "uniform int uScanlineScale;\n"
         "void main() {\n"
         "    if (uUseFragCoord == 2) {\n"
-        "        float row = mod(floor(gl_FragCoord.y), float(uScanlineScale));\n"
-        "        float mask = row >= (float(uScanlineScale) * 0.5) ? 1.0 : 0.0;\n"
+        "        float row = mod(floor(gl_FragCoord.y), 4.0);\n"
+        "        float mask = row >= 2.0 ? 1.0 : 0.0;\n"
         "        FragColor = vec4(0.0, 0.0, 0.0, uColor.a * mask);\n"
         "        return;\n"
         "    }\n"
@@ -579,12 +538,10 @@ static void init_shaders(void)
     quad_uniform_color = glGetUniformLocation(quad_shader_program, "uColor");
     quad_uniform_viewport_size = glGetUniformLocation(quad_shader_program, "uViewportSize");
     quad_uniform_use_fragcoord = glGetUniformLocation(quad_shader_program, "uUseFragCoord");
-    quad_uniform_scanline_scale = glGetUniformLocation(quad_shader_program, "uScanlineScale");
 
     glUseProgram(quad_shader_program);
     glUniform1i(quad_uniform_texture, 0);
     glUniform1i(quad_uniform_use_fragcoord, 0);
-    glUniform1i(quad_uniform_scanline_scale, FRAME_BUFFER_SCALE_DEFAULT);
     glUseProgram(0);
 
     float quad_vertices[] = {

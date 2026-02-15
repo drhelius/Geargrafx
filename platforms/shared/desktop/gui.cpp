@@ -454,10 +454,6 @@ static void main_window(void)
 
     int w = (int)ImGui::GetIO().DisplaySize.x;
     int h = (int)ImGui::GetIO().DisplaySize.y - (application_show_menu ? gui_main_menu_height : 0);
-    ImGuiIO& io = ImGui::GetIO();
-    float fb_scale_x = io.DisplayFramebufferScale.x > 0.0f ? io.DisplayFramebufferScale.x : 1.0f;
-    float fb_scale_y = io.DisplayFramebufferScale.y > 0.0f ? io.DisplayFramebufferScale.y : 1.0f;
-    bool fractional_fb_scale = (fabsf(fb_scale_x - roundf(fb_scale_x)) > 0.001f) || (fabsf(fb_scale_y - roundf(fb_scale_y)) > 0.001f);
 
     int selected_ratio = config_debug.debug ? 0 : config_video.ratio;
     float ratio = 0;
@@ -514,22 +510,8 @@ static void main_window(void)
         {
         case 0:
         {
-            int factor_w;
-            int factor_h;
-
-            if (fractional_fb_scale)
-            {
-                int available_w_fb = (int)floorf((float)w * fb_scale_x);
-                int available_h_fb = (int)floorf((float)h * fb_scale_y);
-                factor_w = available_w_fb / w_corrected;
-                factor_h = available_h_fb / h_corrected;
-            }
-            else
-            {
-                factor_w = w / w_corrected;
-                factor_h = h / h_corrected;
-            }
-
+            int factor_w = w / w_corrected;
+            int factor_h = h / h_corrected;
             scale_multiplier = (factor_w < factor_h) ? factor_w : factor_h;
             break;
         }
@@ -552,26 +534,8 @@ static void main_window(void)
         }
     }
 
-    float window_width = 0.0f;
-    float window_height = 0.0f;
-
-    if (!config_debug.debug && fractional_fb_scale && ((config_video.scale == 0) || (config_video.scale == 1)))
-    {
-        int window_width_fb = w_corrected * scale_multiplier;
-        int window_height_fb = h_corrected * scale_multiplier;
-        window_width = (float)window_width_fb / fb_scale_x;
-        window_height = (float)window_height_fb / fb_scale_y;
-    }
-    else
-    {
-        window_width = (float)(w_corrected * scale_multiplier);
-        window_height = (float)(h_corrected * scale_multiplier);
-        window_width = roundf(window_width * fb_scale_x) / fb_scale_x;
-        window_height = roundf(window_height * fb_scale_y) / fb_scale_y;
-    }
-
-    gui_main_window_width = (int)roundf(window_width);
-    gui_main_window_height = (int)roundf(window_height);
+    gui_main_window_width = w_corrected * scale_multiplier;
+    gui_main_window_height = h_corrected * scale_multiplier;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -590,14 +554,11 @@ static void main_window(void)
     }
     else
     {
-        float window_x = ((float)w - window_width) * 0.5f;
-        float window_y = (((float)h - window_height) * 0.5f) + (application_show_menu ? (float)gui_main_menu_height : 0.0f);
+        int window_x = (w - (w_corrected * scale_multiplier)) / 2;
+        int window_y = ((h - (h_corrected * scale_multiplier)) / 2) + (application_show_menu ? gui_main_menu_height : 0);
 
-        window_x = roundf(window_x * fb_scale_x) / fb_scale_x;
-        window_y = roundf(window_y * fb_scale_y) / fb_scale_y;
-
-        ImGui::SetNextWindowSize(ImVec2(window_width, window_height));
-        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos + ImVec2(window_x, window_y));
+        ImGui::SetNextWindowSize(ImVec2((float)gui_main_window_width, (float)gui_main_window_height));
+        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos + ImVec2((float)window_x, (float)window_y));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
         flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBringToFrontOnFocus;
@@ -607,20 +568,9 @@ static void main_window(void)
     }
 
     float tex_h = (float)runtime.screen_width / (float)(SYSTEM_TEXTURE_WIDTH);
-    float tex_v = ((float)runtime.screen_height * (float)ogl_renderer_output_scale) / (float)(FRAME_BUFFER_HEIGHT);
+    float tex_v = (float)runtime.screen_height / (float)(SYSTEM_TEXTURE_HEIGHT);
 
-    if (fractional_fb_scale)
-    {
-        float uv_x0 = 0.5f / (float)FRAME_BUFFER_WIDTH;
-        float uv_y0 = 0.5f / (float)FRAME_BUFFER_HEIGHT;
-        float uv_x1 = ((float)runtime.screen_width - 0.5f) / (float)FRAME_BUFFER_WIDTH;
-        float uv_y1 = (((float)runtime.screen_height * (float)ogl_renderer_output_scale) - 0.5f) / (float)FRAME_BUFFER_HEIGHT;
-        ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2(window_width, window_height), ImVec2(uv_x0, uv_y0), ImVec2(uv_x1, uv_y1));
-    }
-    else
-    {
-        ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2(window_width, window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
-    }
+    ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2((float)gui_main_window_width, (float)gui_main_window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
     if (config_video.fps)
         gui_show_fps();
