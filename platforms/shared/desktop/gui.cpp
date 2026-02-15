@@ -534,8 +534,18 @@ static void main_window(void)
         }
     }
 
-    gui_main_window_width = w_corrected * scale_multiplier;
-    gui_main_window_height = h_corrected * scale_multiplier;
+    float window_width = (float)(w_corrected * scale_multiplier);
+    float window_height = (float)(h_corrected * scale_multiplier);
+
+    ImGuiIO& io = ImGui::GetIO();
+    float fb_scale_x = io.DisplayFramebufferScale.x > 0.0f ? io.DisplayFramebufferScale.x : 1.0f;
+    float fb_scale_y = io.DisplayFramebufferScale.y > 0.0f ? io.DisplayFramebufferScale.y : 1.0f;
+
+    window_width = roundf(window_width * fb_scale_x) / fb_scale_x;
+    window_height = roundf(window_height * fb_scale_y) / fb_scale_y;
+
+    gui_main_window_width = (int)roundf(window_width);
+    gui_main_window_height = (int)roundf(window_height);
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
@@ -554,11 +564,14 @@ static void main_window(void)
     }
     else
     {
-        int window_x = (w - (w_corrected * scale_multiplier)) / 2;
-        int window_y = ((h - (h_corrected * scale_multiplier)) / 2) + (application_show_menu ? gui_main_menu_height : 0);
+        float window_x = ((float)w - window_width) * 0.5f;
+        float window_y = (((float)h - window_height) * 0.5f) + (application_show_menu ? (float)gui_main_menu_height : 0.0f);
 
-        ImGui::SetNextWindowSize(ImVec2((float)gui_main_window_width, (float)gui_main_window_height));
-        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos + ImVec2((float)window_x, (float)window_y));
+        window_x = roundf(window_x * fb_scale_x) / fb_scale_x;
+        window_y = roundf(window_y * fb_scale_y) / fb_scale_y;
+
+        ImGui::SetNextWindowSize(ImVec2(window_width, window_height));
+        ImGui::SetNextWindowPos(ImGui::GetMainViewport()->Pos + ImVec2(window_x, window_y));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 
         flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBringToFrontOnFocus;
@@ -570,7 +583,7 @@ static void main_window(void)
     float tex_h = (float)runtime.screen_width / (float)(SYSTEM_TEXTURE_WIDTH);
     float tex_v = (float)runtime.screen_height / (float)(SYSTEM_TEXTURE_HEIGHT);
 
-    ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2((float)gui_main_window_width, (float)gui_main_window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
+    ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2(window_width, window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
     if (config_video.fps)
         gui_show_fps();
