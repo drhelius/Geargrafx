@@ -161,7 +161,7 @@ void config_init(void)
     const char* root_path = NULL;
 
     if (check_portable())
-        root_path = SDL_GetBasePath();
+        root_path = SDL_strdup(SDL_GetBasePath());
     else
         root_path = SDL_GetPrefPath("Geardome", GG_TITLE);
 
@@ -780,16 +780,15 @@ static bool check_portable(void)
 {
     const char* base_path;
     char portable_file_path[260];
-    
+
     base_path = SDL_GetBasePath();
     if (base_path == NULL)
         return false;
-    
+
     snprintf(portable_file_path, sizeof(portable_file_path), "%sportable.ini", base_path);
-    SDL_free((void*)base_path);
 
     FILE* file = fopen_utf8(portable_file_path, "r");
-    
+
     if (IsValidPointer(file))
     {
         fclose(file);
