@@ -40,11 +40,11 @@ static uint32_t frame_buffer_object;
 static GG_Runtime_Info current_runtime;
 static bool first_frame;
 static bool mix_round_error = false;
-static u32 scanlines[16] = {
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000000, 0x00000000,
-    0x000000FF, 0x000000FF, 0x000000FF, 0x000000FF,
-    0x000000FF, 0x000000FF, 0x000000FF, 0x000000FF};
+static u8 scanlines[64] = {
+    0, 0, 0, 0,    0, 0, 0, 0,    0, 0, 0, 0,    0, 0, 0, 0,
+    0, 0, 0, 0,    0, 0, 0, 0,    0, 0, 0, 0,    0, 0, 0, 0,
+    0, 0, 0, 255,  0, 0, 0, 255,  0, 0, 0, 255,  0, 0, 0, 255,
+    0, 0, 0, 255,  0, 0, 0, 255,  0, 0, 0, 255,  0, 0, 0, 255};
 
 static uint32_t quad_shader_program = 0;
 static uint32_t quad_vao = 0;
@@ -267,7 +267,7 @@ static void init_scanlines_texture(void)
 {
     glGenTextures(1, &scanlines_texture);
     glBindTexture(GL_TEXTURE_2D, scanlines_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, (GLvoid*) scanlines);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) scanlines);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
