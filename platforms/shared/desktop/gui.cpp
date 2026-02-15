@@ -607,7 +607,7 @@ static void main_window(void)
     }
 
     float tex_h = (float)runtime.screen_width / (float)(SYSTEM_TEXTURE_WIDTH);
-    float tex_v = (float)runtime.screen_height / (float)(SYSTEM_TEXTURE_HEIGHT);
+    float tex_v = ((float)runtime.screen_height * (float)ogl_renderer_output_scale) / (float)(FRAME_BUFFER_HEIGHT);
 
     ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2(window_width, window_height), ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
