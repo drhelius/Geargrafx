@@ -35,16 +35,10 @@
 #include "ogl_renderer.h"
 
 static uint32_t system_texture;
-static uint32_t scanlines_texture;
 static uint32_t frame_buffer_object;
 static GG_Runtime_Info current_runtime;
 static bool first_frame;
 static bool mix_round_error = false;
-static u8 scanlines[64] = {
-    0, 0, 0, 0,    0, 0, 0, 0,    0, 0, 0, 0,    0, 0, 0, 0,
-    0, 0, 0, 0,    0, 0, 0, 0,    0, 0, 0, 0,    0, 0, 0, 0,
-    0, 0, 0, 255,  0, 0, 0, 255,  0, 0, 0, 255,  0, 0, 0, 255,
-    0, 0, 0, 255,  0, 0, 0, 255,  0, 0, 0, 255,  0, 0, 0, 255};
 
 static uint32_t quad_shader_program = 0;
 static uint32_t quad_vao = 0;
@@ -61,7 +55,6 @@ static void init_ogl_gui(void);
 static void init_ogl_emu(void);
 static void init_ogl_debug(void);
 static void init_ogl_savestates(void);
-static void init_scanlines_texture(void);
 static void init_shaders(void);
 static void render_gui(void);
 static void render_emu_normal(void);
@@ -107,7 +100,6 @@ void ogl_renderer_destroy(void)
     glDeleteFramebuffers(1, &frame_buffer_object); 
     glDeleteTextures(1, &ogl_renderer_emu_texture);
     glDeleteTextures(1, &system_texture);
-    glDeleteTextures(1, &scanlines_texture);
 
     glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_background[0]);
     glDeleteTextures(1, &ogl_renderer_emu_debug_huc6270_background[1]);
@@ -218,8 +210,6 @@ static void init_ogl_emu(void)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, SYSTEM_TEXTURE_WIDTH, SYSTEM_TEXTURE_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) emu_frame_buffer);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-    init_scanlines_texture();
 }
 
 static void init_ogl_debug(void)
@@ -263,17 +253,6 @@ static void init_ogl_savestates(void)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 2048, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*)NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-}
-
-static void init_scanlines_texture(void)
-{
-    glGenTextures(1, &scanlines_texture);
-    glBindTexture(GL_TEXTURE_2D, scanlines_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 4, 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) scanlines);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
 static void render_gui(void)
@@ -446,8 +425,6 @@ static void render_scanlines(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBindTexture(GL_TEXTURE_2D, scanlines_texture);
-
     int viewportWidth = current_runtime.screen_width;
     int viewportHeight = current_runtime.screen_height * FRAME_BUFFER_SCALE;
 
@@ -457,7 +434,7 @@ static void render_scanlines(void)
     glUseProgram(quad_shader_program);
     glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
     glUniform2f(quad_uniform_viewport_size, (float)viewportWidth, (float)viewportHeight);
-    glUniform1i(quad_uniform_use_fragcoord, 1);
+    glUniform1i(quad_uniform_use_fragcoord, 2);
     glUniform4f(quad_uniform_color, 1.0f, 1.0f, 1.0f, config_video.scanlines_intensity);
 
     glViewport(0, 0, viewportWidth, viewportHeight);
@@ -499,6 +476,12 @@ static void init_shaders(void)
         "uniform vec2 uViewportSize;\n"
         "uniform int uUseFragCoord;\n"
         "void main() {\n"
+        "    if (uUseFragCoord == 2) {\n"
+        "        float row = mod(floor(gl_FragCoord.y), 4.0);\n"
+        "        float mask = row >= 2.0 ? 1.0 : 0.0;\n"
+        "        FragColor = vec4(0.0, 0.0, 0.0, uColor.a * mask);\n"
+        "        return;\n"
+        "    }\n"
         "    vec2 texCoord = vTexCoord;\n"
         "    if (uUseFragCoord != 0)\n"
         "        texCoord = (gl_FragCoord.xy / uViewportSize) * uTexScale;\n"
