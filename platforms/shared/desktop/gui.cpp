@@ -454,6 +454,10 @@ static void main_window(void)
 
     int w = (int)ImGui::GetIO().DisplaySize.x;
     int h = (int)ImGui::GetIO().DisplaySize.y - (application_show_menu ? gui_main_menu_height : 0);
+    ImGuiIO& io = ImGui::GetIO();
+    float fb_scale_x = io.DisplayFramebufferScale.x > 0.0f ? io.DisplayFramebufferScale.x : 1.0f;
+    float fb_scale_y = io.DisplayFramebufferScale.y > 0.0f ? io.DisplayFramebufferScale.y : 1.0f;
+    bool fractional_fb_scale = (fabsf(fb_scale_x - roundf(fb_scale_x)) > 0.001f) || (fabsf(fb_scale_y - roundf(fb_scale_y)) > 0.001f);
 
     int selected_ratio = config_debug.debug ? 0 : config_video.ratio;
     float ratio = 0;
@@ -510,8 +514,22 @@ static void main_window(void)
         {
         case 0:
         {
-            int factor_w = w / w_corrected;
-            int factor_h = h / h_corrected;
+            int factor_w;
+            int factor_h;
+
+            if (fractional_fb_scale)
+            {
+                int available_w_fb = (int)floorf((float)w * fb_scale_x);
+                int available_h_fb = (int)floorf((float)h * fb_scale_y);
+                factor_w = available_w_fb / w_corrected;
+                factor_h = available_h_fb / h_corrected;
+            }
+            else
+            {
+                factor_w = w / w_corrected;
+                factor_h = h / h_corrected;
+            }
+
             scale_multiplier = (factor_w < factor_h) ? factor_w : factor_h;
             break;
         }
@@ -534,15 +552,23 @@ static void main_window(void)
         }
     }
 
-    float window_width = (float)(w_corrected * scale_multiplier);
-    float window_height = (float)(h_corrected * scale_multiplier);
+    float window_width = 0.0f;
+    float window_height = 0.0f;
 
-    ImGuiIO& io = ImGui::GetIO();
-    float fb_scale_x = io.DisplayFramebufferScale.x > 0.0f ? io.DisplayFramebufferScale.x : 1.0f;
-    float fb_scale_y = io.DisplayFramebufferScale.y > 0.0f ? io.DisplayFramebufferScale.y : 1.0f;
-
-    window_width = roundf(window_width * fb_scale_x) / fb_scale_x;
-    window_height = roundf(window_height * fb_scale_y) / fb_scale_y;
+    if (!config_debug.debug && fractional_fb_scale && ((config_video.scale == 0) || (config_video.scale == 1)))
+    {
+        int window_width_fb = w_corrected * scale_multiplier;
+        int window_height_fb = h_corrected * scale_multiplier;
+        window_width = (float)window_width_fb / fb_scale_x;
+        window_height = (float)window_height_fb / fb_scale_y;
+    }
+    else
+    {
+        window_width = (float)(w_corrected * scale_multiplier);
+        window_height = (float)(h_corrected * scale_multiplier);
+        window_width = roundf(window_width * fb_scale_x) / fb_scale_x;
+        window_height = roundf(window_height * fb_scale_y) / fb_scale_y;
+    }
 
     gui_main_window_width = (int)roundf(window_width);
     gui_main_window_height = (int)roundf(window_height);
