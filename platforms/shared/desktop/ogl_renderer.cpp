@@ -334,7 +334,7 @@ static void render_emu_mix(void)
     glViewport(0, 0, viewportWidth, viewportHeight);
 
     glBindVertexArray(quad_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
     glUseProgram(0);
 
@@ -435,7 +435,7 @@ static void render_quad(float tex_h, float tex_v)
     glViewport(0, 0, viewportWidth, viewportHeight);
 
     glBindVertexArray(quad_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
     glUseProgram(0);
 }
@@ -463,7 +463,7 @@ static void render_scanlines(void)
     glViewport(0, 0, viewportWidth, viewportHeight);
 
     glBindVertexArray(quad_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
 
     glUseProgram(0);
@@ -563,9 +563,8 @@ static void init_shaders(void)
 
     float quad_vertices[] = {
         -1.0f, -1.0f,  0.0f,  0.0f,
-         1.0f, -1.0f,  1.0f,  0.0f,
-        -1.0f,  1.0f,  0.0f,  1.0f,
-         1.0f,  1.0f,  1.0f,  1.0f,
+         3.0f, -1.0f,  2.0f,  0.0f,
+        -1.0f,  3.0f,  0.0f,  2.0f,
     };
 
     glGenVertexArrays(1, &quad_vao);
