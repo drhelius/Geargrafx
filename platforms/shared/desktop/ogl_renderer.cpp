@@ -52,6 +52,8 @@ static uint32_t quad_vbo = 0;
 static int quad_uniform_texture = -1;
 static int quad_uniform_color = -1;
 static int quad_uniform_tex_scale = -1;
+static int quad_uniform_viewport_size = -1;
+static int quad_uniform_use_fragcoord = -1;
 
 
 
@@ -325,6 +327,8 @@ static void render_emu_mix(void)
 
     glUseProgram(quad_shader_program);
     glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
+    glUniform2f(quad_uniform_viewport_size, (float)viewportWidth, (float)viewportHeight);
+    glUniform1i(quad_uniform_use_fragcoord, 0);
     glUniform4f(quad_uniform_color, round_color, round_color, round_color, alpha);
 
     glViewport(0, 0, viewportWidth, viewportHeight);
@@ -424,6 +428,8 @@ static void render_quad(float tex_h, float tex_v)
 
     glUseProgram(quad_shader_program);
     glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
+    glUniform2f(quad_uniform_viewport_size, (float)viewportWidth, (float)viewportHeight);
+    glUniform1i(quad_uniform_use_fragcoord, 0);
     glUniform4f(quad_uniform_color, 1.0f, 1.0f, 1.0f, 1.0f);
 
     glViewport(0, 0, viewportWidth, viewportHeight);
@@ -450,6 +456,8 @@ static void render_scanlines(void)
 
     glUseProgram(quad_shader_program);
     glUniform2f(quad_uniform_tex_scale, tex_h, tex_v);
+    glUniform2f(quad_uniform_viewport_size, (float)viewportWidth, (float)viewportHeight);
+    glUniform1i(quad_uniform_use_fragcoord, 1);
     glUniform4f(quad_uniform_color, 1.0f, 1.0f, 1.0f, config_video.scanlines_intensity);
 
     glViewport(0, 0, viewportWidth, viewportHeight);
@@ -487,8 +495,14 @@ static void init_shaders(void)
         "out vec4 FragColor;\n"
         "uniform sampler2D uTexture;\n"
         "uniform vec4 uColor;\n"
+        "uniform vec2 uTexScale;\n"
+        "uniform vec2 uViewportSize;\n"
+        "uniform int uUseFragCoord;\n"
         "void main() {\n"
-        "    FragColor = texture(uTexture, vTexCoord) * uColor;\n"
+        "    vec2 texCoord = vTexCoord;\n"
+        "    if (uUseFragCoord != 0)\n"
+        "        texCoord = (gl_FragCoord.xy / uViewportSize) * uTexScale;\n"
+        "    FragColor = texture(uTexture, texCoord) * uColor;\n"
         "}\n";
 
     const char* vs_sources[2] = { version, vs_body };
@@ -539,9 +553,12 @@ static void init_shaders(void)
     quad_uniform_tex_scale = glGetUniformLocation(quad_shader_program, "uTexScale");
     quad_uniform_texture = glGetUniformLocation(quad_shader_program, "uTexture");
     quad_uniform_color = glGetUniformLocation(quad_shader_program, "uColor");
+    quad_uniform_viewport_size = glGetUniformLocation(quad_shader_program, "uViewportSize");
+    quad_uniform_use_fragcoord = glGetUniformLocation(quad_shader_program, "uUseFragCoord");
 
     glUseProgram(quad_shader_program);
     glUniform1i(quad_uniform_texture, 0);
+    glUniform1i(quad_uniform_use_fragcoord, 0);
     glUseProgram(0);
 
     float quad_vertices[] = {
