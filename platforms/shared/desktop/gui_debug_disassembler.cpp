@@ -200,8 +200,6 @@ void gui_debug_load_symbols_file(const char* file_path)
                 line = line.substr(0, comment);
             line = line.erase(0, line.find_first_not_of(" \t\r\n"));
             line = line.erase(line.find_last_not_of(" \t\r\n") + 1);
-            while (line[0] == ' ')
-                line = line.substr(1);
 
             if (line.find("Bank") == 0)
                 continue;
