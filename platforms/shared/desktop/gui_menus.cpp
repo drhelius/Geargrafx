@@ -1262,7 +1262,7 @@ static void menu_audio(void)
                 ImGui::BeginTooltip();
                 ImGui::Text("Lower values reduce audio latency.");
                 ImGui::Text("Higher values prevent audio underruns.");
-                ImGui::Text("Enabling VSync will force higher buffer counts.");
+                ImGui::Text("Enabling VSync may force higher buffer counts.");
                 ImGui::Text("Current audio latency: %.0f ms", latency_ms);
                 ImGui::EndTooltip();
             }
