@@ -32,6 +32,8 @@
 #include <iomanip>
 #include <vector>
 #include <algorithm>
+#include <thread>
+#include <chrono>
 
 struct DisassemblerBookmark
 {
@@ -1326,7 +1328,24 @@ json DebugAdapter::LoadMedia(const std::string& file_path)
         return result;
     }
 
-    if (!emu_load_media(file_path.c_str()) || !m_core || !m_core->GetMedia()->IsReady())
+    emu_load_media_async(file_path.c_str());
+
+    int timeout_ms = 180000;
+    int elapsed_ms = 0;
+    while (emu_is_media_loading() && elapsed_ms < timeout_ms)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        elapsed_ms += 500;
+    }
+
+    if (emu_is_media_loading())
+    {
+        result["error"] = "Loading timed out";
+        Log("[MCP] LoadMedia timed out: %s", file_path.c_str());
+        return result;
+    }
+
+    if (!emu_finish_media_loading() || !m_core || !m_core->GetMedia()->IsReady())
     {
         result["error"] = "Failed to load media file";
         Log("[MCP] LoadMedia failed: %s", file_path.c_str());

@@ -117,36 +117,6 @@ void emu_destroy(void)
         SafeDeleteArray(emu_savestates_screenshots[i].data);
 }
 
-bool emu_load_media(const char* file_path)
-{
-    if (loading_state.load() != Loading_State_None)
-        return false;
-
-    emu_debug_command = Debug_Command_None;
-    reset_buffers();
-
-    save_ram();
-    save_mb128();
-
-    loading_state.store(Loading_State_Loading);
-    bool success = geargrafx->LoadMedia(file_path);
-    loading_state.store(Loading_State_None);
-
-    if (!success)
-        return false;
-
-    emu_audio_reset();
-    load_ram();
-    load_mb128();
-
-    if (config_debug.debug && (config_debug.dis_look_ahead_count > 0))
-        geargrafx->GetHuC6280()->DisassembleAhead(config_debug.dis_look_ahead_count);
-
-    update_savestates_data();
-
-    return true;
-}
-
 static void load_media_thread_func(void)
 {
     loading_result = geargrafx->LoadMedia(loading_file_path);
