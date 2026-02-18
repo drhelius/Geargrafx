@@ -1326,9 +1326,7 @@ json DebugAdapter::LoadMedia(const std::string& file_path)
         return result;
     }
 
-    emu_load_media(file_path.c_str());
-
-    if (!m_core || !m_core->GetMedia()->IsReady())
+    if (!emu_load_media(file_path.c_str()) || !m_core || !m_core->GetMedia()->IsReady())
     {
         result["error"] = "Failed to load media file";
         Log("[MCP] LoadMedia failed: %s", file_path.c_str());
