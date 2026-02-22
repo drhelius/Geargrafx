@@ -39,6 +39,9 @@ static const char slash = '/';
 #define MAX_PADS GG_MAX_GAMEPADS
 #define MAX_BUTTONS 14
 
+#define MAX_SCREEN_WIDTH 1120
+#define MAX_SCREEN_HEIGHT 242
+
 static retro_environment_t environ_cb;
 static retro_video_refresh_t video_cb;
 static retro_audio_sample_t audio_cb;
@@ -274,8 +277,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
     info->geometry.base_width   = runtime_info.screen_width;
     info->geometry.base_height  = runtime_info.screen_height;
-    info->geometry.max_width    = 2048;
-    info->geometry.max_height   = 512;
+    info->geometry.max_width    = MAX_SCREEN_WIDTH;
+    info->geometry.max_height   = MAX_SCREEN_HEIGHT;
     info->geometry.aspect_ratio = aspect_ratio == 0.0f ? (float)runtime_info.screen_width / (float)runtime_info.screen_height / (float)runtime_info.width_scale : aspect_ratio;
     info->timing.fps            = 59.82;
     info->timing.sample_rate    = 44100.0;
@@ -309,8 +312,8 @@ void retro_run(void)
         retro_system_av_info info;
         info.geometry.base_width   = runtime_info.screen_width;
         info.geometry.base_height  = runtime_info.screen_height;
-        info.geometry.max_width    = runtime_info.screen_width;
-        info.geometry.max_height   = runtime_info.screen_height;
+        info.geometry.max_width    = MAX_SCREEN_WIDTH;
+        info.geometry.max_height   = MAX_SCREEN_HEIGHT;
         info.geometry.aspect_ratio = (aspect_ratio == 0.0f ? ((float)runtime_info.screen_width / (float)runtime_info.width_scale) / (float)runtime_info.screen_height : aspect_ratio);
 
         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
@@ -360,6 +363,8 @@ bool retro_load_game(const struct retro_game_info *info)
     environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements);
 
     load_mb128();
+
+    core->GetRuntimeInfo(runtime_info);
 
     return true;
 }
