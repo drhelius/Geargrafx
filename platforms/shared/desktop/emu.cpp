@@ -66,7 +66,7 @@ static void update_debug_tiles(void);
 
 bool emu_init(GG_Input_Pump_Fn input_pump_fn)
 {
-    emu_frame_buffer = new u8[2048 * 512 * 4];
+    emu_frame_buffer = new u8[2048 * 256 * 4];
     audio_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
 
     init_debug();
@@ -733,7 +733,7 @@ static void reset_buffers(void)
     emu_debug_background_buffer_width[1] = 32;
     emu_debug_background_buffer_height[1] = 32;
 
-    for (int i = 0; i < 2048 * 512 * 4; i++)
+    for (int i = 0; i < 2048 * 256 * 4; i++)
         emu_frame_buffer[i] = 0;
 
     for (int i = 0; i < GG_AUDIO_BUFFER_SIZE; i++)
