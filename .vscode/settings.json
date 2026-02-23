@@ -4,10 +4,10 @@
         "**/*.so": true,
         "**/*.dylib": true,
         "**/*.tmp": true,
-        "**/geargrafx": true,
-        "**/geargrafx-tests": true,
-        "**/binary_to_compressed_c": true,
-        "tests/*.json": true,
+        "platforms/**/geargrafx": true,
+        "platforms/**/geargrafx-tests": true,
+        "platforms/**/binary_to_compressed_c": true,
+        "tests/*.json": true
     },
     "cmake.configureOnOpen": false,
     "files.associations": {
