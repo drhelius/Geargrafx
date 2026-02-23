@@ -808,6 +808,21 @@ static void menu_video(void)
             emu_video_no_sprite_limit(config_video.sprite_limit);
         }
 
+        if (ImGui::MenuItem("Safe VDC Defaults", "", &config_video.safe_vdc_defaults))
+        {
+            emu_set_safe_vdc_defaults(config_video.safe_vdc_defaults);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("Enable safe VDC register defaults on reset.");
+            ImGui::Text("Useful for homebrew games that don't initialize");
+            ImGui::Text("their own display timing registers.");
+            ImGui::EndTooltip();
+        }
+
+        ImGui::Separator();
+
         ImGui::MenuItem("Bilinear Filtering", "", &config_video.bilinear);
 
         if (ImGui::BeginMenu("Screen Ghosting"))

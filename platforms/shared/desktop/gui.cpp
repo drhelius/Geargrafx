@@ -115,6 +115,7 @@ bool gui_init(void)
     emu_audio_adpcm_volume(config_audio.adpcm_volume);
     emu_set_palette(config_video.palette);
     emu_video_no_sprite_limit(config_video.sprite_limit);
+    emu_set_safe_vdc_defaults(config_video.safe_vdc_defaults);
     emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
     emu_set_scanline_start_end(
                 config_debug.debug ? 0 : config_video.scanline_start,

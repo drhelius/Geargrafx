@@ -514,6 +514,12 @@ void emu_video_no_sprite_limit(bool enabled)
     geargrafx->GetHuC6270_2()->SetNoSpriteLimit(enabled);
 }
 
+void emu_set_safe_vdc_defaults(bool enabled)
+{
+    geargrafx->GetHuC6270_1()->SetSafeDefaults(enabled);
+    geargrafx->GetHuC6270_2()->SetSafeDefaults(enabled);
+}
+
 void emu_set_overscan(int overscan)
 {
     geargrafx->GetHuC6260()->SetOverscan(overscan == 0 ? false : true);

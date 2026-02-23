@@ -34,6 +34,8 @@ HuC6270::HuC6270(HuC6280* huC6280)
     m_state.VPOS = &m_vpos;
     m_state.V_STATE = &m_v_state;
     m_state.H_STATE = &m_h_state;
+    m_no_sprite_limit = false;
+    m_safe_defaults = false;
 }
 
 HuC6270::~HuC6270()
@@ -51,8 +53,19 @@ void HuC6270::Init(HuC6260* huC6260, HuC6202* huC6202, GG_Input_Pump_Fn input_pu
 void HuC6270::Reset()
 {
     memset(m_register, 0, sizeof(m_register));
-    m_register[HUC6270_REG_HDR] = 0x1F;
-    m_register[HUC6270_REG_VDR] = 239;
+    if (m_safe_defaults)
+    {
+        m_register[HUC6270_REG_HSR] = 0x0202;
+        m_register[HUC6270_REG_HDR] = 0x041F;
+        m_register[HUC6270_REG_VSR] = 0x0F02;
+        m_register[HUC6270_REG_VDR] = 0x00EF;
+        m_register[HUC6270_REG_VCR] = 0x0004;
+    }
+    else
+    {
+        m_register[HUC6270_REG_HDR] = 0x1F;
+        m_register[HUC6270_REG_VDR] = 239;
+    }
 
     m_address_register = 0;
     m_status_register = 0;

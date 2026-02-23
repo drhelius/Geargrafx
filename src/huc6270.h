@@ -85,6 +85,7 @@ public:
     u16* GetVRAM();
     u16* GetSAT();
     void SetNoSpriteLimit(bool no_sprite_limit);
+    void SetSafeDefaults(bool safe_defaults);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -146,6 +147,7 @@ private:
     u16 m_line_buffer_sprites[HUC6270_MAX_BACKGROUND_WIDTH] = {};
     s32 m_line_buffer_index;
     bool m_no_sprite_limit;
+    bool m_safe_defaults;
     s32 m_sprite_count;
     bool m_sprite_overflow;
     HuC6270_Sprite_Data m_sprites[HUC6270_SPRITES * 2] = {};

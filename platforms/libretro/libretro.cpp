@@ -666,6 +666,7 @@ static void set_variabless(void)
         { "geargrafx_lowpass_speed_716", "Video LPF HuC6270 7.16 MHz; Enabled|Disabled" },
         { "geargrafx_lowpass_speed_108", "Video LPF HuC6270 10.8 MHz; Enabled|Disabled" },
         { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
+        { "geargrafx_safe_vdc_defaults", "Safe VDC Defaults (Homebrew); Disabled|Enabled" },
         { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
         { "geargrafx_deterministic_netplay", "Deterministic Netplay; Disabled|Enabled" },
         { "geargrafx_cdrom_type", "CD-ROM (restart); Auto|Standard|Super CD-ROM|Arcade CD-ROM" },
@@ -988,6 +989,15 @@ static void check_variables(void)
     {
         core->GetHuC6270_1()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
         core->GetHuC6270_2()->SetNoSpriteLimit(strcmp(var.value, "Enabled") == 0);
+    }
+
+    var.key = "geargrafx_safe_vdc_defaults";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetHuC6270_1()->SetSafeDefaults(strcmp(var.value, "Enabled") == 0);
+        core->GetHuC6270_2()->SetSafeDefaults(strcmp(var.value, "Enabled") == 0);
     }
 
     var.key = "geargrafx_avenue_pad_3_switch";

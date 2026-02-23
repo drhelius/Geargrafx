@@ -104,6 +104,7 @@ EXTERN void emu_debug_set_callback(GeargrafxCore::GG_Debug_Callback callback);
 EXTERN void emu_set_palette(int palette);
 EXTERN void emu_set_custom_palette(const u8* data);
 EXTERN void emu_video_no_sprite_limit(bool enabled);
+EXTERN void emu_set_safe_vdc_defaults(bool enabled);
 EXTERN void emu_set_overscan(int overscan);
 EXTERN void emu_set_scanline_start_end(int start, int end);
 EXTERN void emu_set_lowpass_filter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8);

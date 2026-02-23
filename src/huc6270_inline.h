@@ -75,6 +75,11 @@ INLINE void HuC6270::SetNoSpriteLimit(bool no_sprite_limit)
     m_no_sprite_limit = no_sprite_limit;
 }
 
+INLINE void HuC6270::SetSafeDefaults(bool safe_defaults)
+{
+    m_safe_defaults = safe_defaults;
+}
+
 INLINE u16 HuC6270::ReadVRAM(u16 address)
 {
     if (address < HUC6270_VRAM_SIZE)
