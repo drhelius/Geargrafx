@@ -527,8 +527,7 @@ void HuC6270::NextHorizontalState()
             break;
         case HuC6270_HORIZONTAL_STATE_HSW:
             HUC6270_DEBUG("  HSW start\t");
-            m_clocks_to_next_h_state = (m_latched_hsw + 1) << 3;
-            HSyncStart();
+            m_clocks_to_next_h_state = HUC6260_LINE_LENGTH;
             break;
     }
 }
