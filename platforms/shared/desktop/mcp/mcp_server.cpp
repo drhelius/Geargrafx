@@ -529,6 +529,10 @@ void McpServer::HandleToolsList(const json& request)
                 {"resolve_symbols", {
                     {"type", "boolean"},
                     {"description", "When true, replace addresses in instruction mnemonics with user-defined symbol names and hardware register labels (e.g. 'LDA MY_VAR,X' instead of 'LDA $2C00,X'). Symbol resolution for non-jump operands depends on the current MPR mapping. Default: false"}
+                }},
+                {"detailed", {
+                    {"type", "boolean"},
+                    {"description", "Default false. Do NOT set to true unless you specifically need opcode bytes, jump targets, or IRQ metadata. The compact format is sufficient for analyzing code."}
                 }}
             }},
             {"required", json::array({"start_address", "end_address"})}
@@ -1621,42 +1625,66 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         if (arguments.contains("resolve_symbols") && arguments["resolve_symbols"].is_boolean())
             resolve_symbols = arguments["resolve_symbols"].get<bool>();
 
+        bool detailed = false;
+        if (arguments.contains("detailed") && arguments["detailed"].is_boolean())
+            detailed = arguments["detailed"].get<bool>();
+
         std::vector<DisasmLine> lines = m_debugAdapter.GetDisassembly(start_address, end_address, bank, resolve_symbols);
 
         json result;
-        json instructions = json::array();
 
-        for (const DisasmLine& line : lines)
+        if (detailed)
         {
-            json instr;
-            std::ostringstream addr_ss, bank_ss, jump_ss;
+            json instructions = json::array();
 
-            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << line.address;
-            bank_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << (int)line.bank;
-
-            instr["address"] = addr_ss.str();
-            instr["bank"] = bank_ss.str();
-            instr["segment"] = line.segment;
-            instr["instruction"] = line.name;
-            instr["bytes"] = line.bytes;
-            instr["size"] = line.size;
-
-            if (line.jump)
+            for (const DisasmLine& line : lines)
             {
-                jump_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << line.jump_address;
-                instr["jump_target"] = jump_ss.str();
-                instr["is_subroutine"] = line.subroutine;
+                json instr;
+                std::ostringstream addr_ss, bank_ss, jump_ss;
+
+                addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << line.address;
+                bank_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << (int)line.bank;
+
+                instr["address"] = addr_ss.str();
+                instr["bank"] = bank_ss.str();
+                instr["segment"] = line.segment;
+                instr["instruction"] = line.name;
+                instr["bytes"] = line.bytes;
+                instr["size"] = line.size;
+
+                if (line.jump)
+                {
+                    jump_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << line.jump_address;
+                    instr["jump_target"] = jump_ss.str();
+                    instr["is_subroutine"] = line.subroutine;
+                }
+
+                if (line.irq > 0)
+                {
+                    instr["irq"] = line.irq;
+                }
+
+                instructions.push_back(instr);
             }
 
-            if (line.irq > 0)
+            result["instructions"] = instructions;
+        }
+        else
+        {
+            json instructions = json::array();
+
+            for (const DisasmLine& line : lines)
             {
-                instr["irq"] = line.irq;
+                std::ostringstream ss;
+                ss << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << (int)line.bank;
+                ss << ":" << std::setw(4) << line.address;
+                ss << "  " << line.name;
+                instructions.push_back(ss.str());
             }
 
-            instructions.push_back(instr);
+            result["instructions"] = instructions;
         }
 
-        result["instructions"] = instructions;
         result["count"] = lines.size();
         result["start_address"] = startAddrStr;
         result["end_address"] = endAddrStr;
