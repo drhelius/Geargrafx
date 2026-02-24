@@ -47,7 +47,7 @@ void gui_debug_init(void)
     gui_debug_psg_init();
     gui_debug_cdrom_audio_init();
     gui_debug_adpcm_init();
-    gui_debug_memory_reset();
+    gui_debug_memory_init();
 }
 
 void gui_debug_destroy(void)
@@ -56,6 +56,7 @@ void gui_debug_destroy(void)
     gui_debug_psg_destroy();
     gui_debug_cdrom_audio_destroy();
     gui_debug_adpcm_destroy();
+    gui_debug_memory_destroy();
 }
 
 void gui_debug_reset(void)
@@ -134,7 +135,7 @@ void gui_debug_windows(void)
     }
 }
 
-static const char* GGDEBUG_MAGIC = "GGDEBUG1";
+static const char* GGDEBUG_MAGIC = "GGDEBUG2";
 static const int GGDEBUG_MAGIC_LEN = 8;
 
 void gui_debug_save_settings(const char* file_path)
