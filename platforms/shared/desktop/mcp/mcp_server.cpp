@@ -507,7 +507,8 @@ void McpServer::HandleToolsList(const json& request)
         {"title", "Get Disassembly"},
         {"description", "Get disassembled HuC6280 assembly code for a logical address range. "
                         "Returns: logical address, bank, segment, mnemonic, and raw bytes. "
-                        "NOTE: Disassembled records only exist for code that has been executed during emulation."},
+                        "NOTE: Disassembled records only exist for code that has been executed during emulation. "
+                        "Recommended max range is 0x2000 (one bank). Use multiple calls for larger areas."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -1600,6 +1601,10 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
             return {{"error", "Invalid end_address format"}};
         if (start_address > end_address)
             return {{"error", "start_address must be <= end_address"}};
+
+        u32 range_size = (u32)end_address - (u32)start_address + 1;
+        if (range_size > 0x2000)
+            return {{"error", "Address range too large. Maximum range is 0x2000 (8KB). Use smaller ranges for disassembly."}};
 
         // Optional bank parameter (-1 means use current MPR mappings)
         int bank = -1;

@@ -337,21 +337,21 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
         }
     }
 
-    u16 addr = scan_start;
+    u32 addr = scan_start;
 
-    while (addr <= end_address)
+    while (addr <= (u32)end_address)
     {
         GG_Disassembler_Record* record = NULL;
 
         if (use_explicit_bank)
-            record = memory->GetDisassemblerRecord(addr, (u8)bank);
+            record = memory->GetDisassemblerRecord((u16)addr, (u8)bank);
         else
-            record = memory->GetDisassemblerRecord(addr);
+            record = memory->GetDisassemblerRecord((u16)addr);
 
         if (IsValidPointer(record) && record->name[0] != 0)
         {
             DisasmLine line;
-            line.address = addr;
+            line.address = (u16)addr;
             line.bank = record->bank;
             line.name = record->name;
             strip_color_tags(line.name);
@@ -381,7 +381,7 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
             // Handle wrap-around within the bank when explicit bank is used
             if (use_explicit_bank)
             {
-                u16 offset_in_bank = addr & 0x1FFF;
+                u16 offset_in_bank = (u16)addr & 0x1FFF;
                 offset_in_bank += (u16)record->size;
                 if (offset_in_bank >= 0x2000)
                 {
@@ -392,7 +392,7 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
             }
             else
             {
-                addr = addr + (u16)record->size;
+                addr = addr + (u32)record->size;
             }
 
             if (record->size == 0)
@@ -403,9 +403,6 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
             // No record at this address, try next byte
             addr++;
         }
-
-        if (addr < start_address && !use_explicit_bank)
-            break;
     }
 
     return result;
