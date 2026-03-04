@@ -897,10 +897,28 @@ static void add_cdrom_symbols()
 {
     for (int i = 0; i < k_cdrom_bios_symbol_count; i++)
     {
-        char line[64];
-        snprintf(line, sizeof(line), "%04X %s", k_cdrom_bios_symbols[i].address, k_cdrom_bios_symbols[i].label);
-        add_symbol(line);
+        u16 address = k_cdrom_bios_symbols[i].address;
+        u8 bank = 0;
+
+        DebugSymbol* existing = dynamic_symbols[bank][address];
+        if (IsValidPointer(existing))
+            continue;
+
+        DebugSymbol* new_symbol = new DebugSymbol;
+        new_symbol->address = address;
+        new_symbol->bank = bank;
+        snprintf(new_symbol->text, 64, "%s", k_cdrom_bios_symbols[i].label);
+
+        dynamic_symbols[bank][address] = new_symbol;
+
+        SymbolEntry entry;
+        entry.symbol = new_symbol;
+        entry.is_manual = false;
+        entry.bank = bank;
+        dynamic_symbol_list.push_back(entry);
     }
+
+    symbols_dirty = true;
 }
 
 static void add_symbol(const char* line)
@@ -1063,7 +1081,7 @@ static void add_auto_symbol(GG_Disassembler_Record* record, u16 address)
 
         if (IsValidPointer(new_symbol))
         {
-           if (record->subroutine)
+           if (record->subroutine && strncmp(dynamic_symbols[s.bank][s.address]->text, "TAG_", 4) == 0)
                snprintf(dynamic_symbols[s.bank][s.address]->text, 64, "SUB_%02X_%04X", record->jump_bank, record->jump_address);
            if (show_auto_symbols)
                symbols_dirty = true;
