@@ -25,6 +25,7 @@
 #include <math.h>
 #include "libretro.h"
 #include "geargrafx.h"
+#include "libretro_core_options.h"
 
 #ifdef _WIN32
 static const char slash = '\\';
@@ -106,7 +107,7 @@ static void save_mb128(void);
 static void load_mb128(void);
 static void set_controller_info(void);
 static void update_input(void);
-static void set_variabless(void);
+static bool categories_supported = false;
 static void check_variables(void);
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
@@ -169,7 +170,7 @@ void retro_set_environment(retro_environment_t cb)
     environ_cb(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)content_overrides);
 
     set_controller_info();
-    set_variabless();
+    libretro_set_core_options(environ_cb, &categories_supported);
 }
 
 void retro_init(void)
@@ -647,64 +648,6 @@ static void update_input(void)
             else
                 core->KeyReleased((GG_Controllers)j, keymap[i]);
         }
-}
-
-static void set_variabless(void)
-{
-    struct retro_variable vars[] = {
-        { "geargrafx_console_type", "System (restart); Auto|PC Engine (JAP)|SuperGrafx (JAP)|TurboGrafx-16 (USA)" },
-        { "geargrafx_aspect_ratio", "Aspect Ratio; 1:1 PAR|4:3 DAR|6:5 DAR|16:9 DAR|16:10 DAR" },
-        { "geargrafx_overscan", "Overscan; Disabled|Enabled" },
-        { "geargrafx_scanline_count", "Scanline Count; 224p|240p|Manual" },
-        { "geargrafx_scanline_start", "Scanline Start (Manual); 3|4|5|6|7|8|9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|0|1|2" },
-        { "geargrafx_scanline_end", "Scanline End (Manual); 241|220|221|222|223|224|225|226|227|228|229|230|231|232|233|234|235|236|237|238|239|240" },
-        { "geargrafx_composite_colors", "Composite Colors; Disabled|Enabled" },
-        { "geargrafx_lowpass_filter", "Video LPF; Disabled|Enabled" },
-        { "geargrafx_lowpass_intensity", "Video LPF Intensity; 100|0|10|20|30|40|50|60|70|80|90|100" },
-        { "geargrafx_lowpass_cutoff", "Video LPF Cutoff; 5.0 MHz|3.0 MHz|3.5 MHz|4.0 MHz|4.5 MHz|5.0 MHz|5.5 MHz|6.0 MHz|6.5 MHz|7.0 MHz" },
-        { "geargrafx_lowpass_speed_536", "Video LPF HuC6270 5.36 MHz; Disabled|Enabled" },
-        { "geargrafx_lowpass_speed_716", "Video LPF HuC6270 7.16 MHz; Enabled|Disabled" },
-        { "geargrafx_lowpass_speed_108", "Video LPF HuC6270 10.8 MHz; Enabled|Disabled" },
-        { "geargrafx_no_sprite_limit", "No Sprite Limit; Disabled|Enabled" },
-        { "geargrafx_safe_vdc_defaults", "Safe VDC Defaults (Homebrew); Disabled|Enabled" },
-        { "geargrafx_backup_ram", "Backup RAM (restart); Enabled|Disabled" },
-        { "geargrafx_deterministic_netplay", "Deterministic Netplay; Disabled|Enabled" },
-        { "geargrafx_cdrom_type", "CD-ROM (restart); Auto|Standard|Super CD-ROM|Arcade CD-ROM" },
-        { "geargrafx_cdrom_bios", "CD-ROM Bios (restart); Auto|System Card 1|System Card 2|System Card 3|Game Express" },
-        { "geargrafx_cdrom_preload", "Preload CD-ROM (restart); Disabled|Enabled" },
-        { "geargrafx_psg_huc6280a", "HuC6280A Audio Chip; Enabled|Disabled" },
-        { "geargrafx_psg_volume", "PSG Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
-        { "geargrafx_cdrom_volume", "CD-ROM Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
-        { "geargrafx_adpcm_volume", "ADPCM Volume; 100|0|10|20|30|40|50|60|70|80|90|100|110|120|130|140|150|160|170|180|190|200" },
-        { "geargrafx_up_down_allowed", "Allow Up+Down / Left+Right; Disabled|Enabled" },
-        { "geargrafx_soft_reset", "Allow Soft Reset; Enabled|Disabled" },
-        { "geargrafx_turbotap", "TurboTap; Disabled|Enabled" },
-        { "geargrafx_mb128", "MB128 Backup Memory; Auto|Enabled|Disabled" },
-        { "geargrafx_avenue_pad_3_switch", "Avenue Pad 3 Switch; Auto|SELECT|RUN" },
-        { "geargrafx_turbo_p1_i", "P1 Turbo I; Disabled|Enabled" },
-        { "geargrafx_turbo_p1_ii", "P1 Turbo II; Disabled|Enabled" },
-        { "geargrafx_turbo_p2_i", "P2 Turbo I; Disabled|Enabled" },
-        { "geargrafx_turbo_p2_ii", "P2 Turbo II; Disabled|Enabled" },
-        { "geargrafx_turbo_p3_i", "P3 Turbo I; Disabled|Enabled" },
-        { "geargrafx_turbo_p3_ii", "P3 Turbo II; Disabled|Enabled" },
-        { "geargrafx_turbo_p4_i", "P4 Turbo I; Disabled|Enabled" },
-        { "geargrafx_turbo_p4_ii", "P4 Turbo II; Disabled|Enabled" },
-        { "geargrafx_turbo_p5_i", "P5 Turbo I; Disabled|Enabled" },
-        { "geargrafx_turbo_p5_ii", "P5 Turbo II; Disabled|Enabled" },
-        { "geargrafx_turbo_speed_p1_i", "P1 Turbo I Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { "geargrafx_turbo_speed_p1_ii", "P1 Turbo II Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { "geargrafx_turbo_speed_p2_i", "P2 Turbo I Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { "geargrafx_turbo_speed_p2_ii", "P2 Turbo II Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { "geargrafx_turbo_speed_p3_i", "P3 Turbo I Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { "geargrafx_turbo_speed_p3_ii", "P3 Turbo II Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { "geargrafx_turbo_speed_p4_i", "P4 Turbo I Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { "geargrafx_turbo_speed_p4_ii", "P4 Turbo II Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { "geargrafx_turbo_speed_p5_i", "P5 Turbo I Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { "geargrafx_turbo_speed_p5_ii", "P5 Turbo II Speed; 4|1|2|3|4|5|6|7|8|9|10|11|12|13|14|15" },
-        { NULL }
-    };
-
-    environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void *)vars);
 }
 
 static void check_variables(void)
