@@ -55,64 +55,65 @@ void gui_debug_window_adpcm(void)
     Adpcm* adpcm = core->GetAdpcm();
     Adpcm::Adpcm_State* adpcm_state = adpcm->GetState();
 
-    ImGui::BeginTable("##table", 2, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoPadOuterX);
-
-    ImGui::TableNextColumn();
-
-    ImGui::PushStyleColor(ImGuiCol_Text, gui_audio_mute_adpcm ? mid_gray : white);
-    ImGui::PushFont(gui_material_icons_font);
-
-    char label[32];
-    snprintf(label, 32, "%s##adpcmmute", gui_audio_mute_adpcm ? ICON_MD_MUSIC_OFF : ICON_MD_MUSIC_NOTE);
-    if (ImGui::Button(label))
+    if (ImGui::BeginTable("##table", 2, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoPadOuterX))
     {
-        gui_audio_mute_adpcm = !gui_audio_mute_adpcm;
-        emu_audio_adpcm_volume(gui_audio_mute_adpcm ? 0.0f : config_audio.adpcm_volume);
-    }
-    ImGui::PopStyleColor();
-    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-        ImGui::SetTooltip("Mute ADPCM");
-    ImGui::PopFont();
+        ImGui::TableNextColumn();
 
-    ImGui::TableNextColumn();
+        ImGui::PushStyleColor(ImGuiCol_Text, gui_audio_mute_adpcm ? mid_gray : white);
+        ImGui::PushFont(gui_material_icons_font);
 
-    ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(1, 1));
-
-    int data_size = (*adpcm_state->FRAME_SAMPLES) / 2;
-    int trigger_left = 0;
-
-    for (int i = 0; i < data_size; i++)
-    {
-        adpcm_wave_buffer[i] = (float)(adpcm_state->BUFFER[i * 2]) / 32768.0f * 3.0f;
-    }
-
-    for (int i = 100; i < data_size; ++i)
-    {
-        if (adpcm_wave_buffer[i - 1] < 0.0f && adpcm_wave_buffer[i] >= 0.0f)
+        char label[32];
+        snprintf(label, 32, "%s##adpcmmute", gui_audio_mute_adpcm ? ICON_MD_MUSIC_OFF : ICON_MD_MUSIC_NOTE);
+        if (ImGui::Button(label))
         {
-            trigger_left = i;
-            break;
+            gui_audio_mute_adpcm = !gui_audio_mute_adpcm;
+            emu_audio_adpcm_volume(gui_audio_mute_adpcm ? 0.0f : config_audio.adpcm_volume);
         }
+        ImGui::PopStyleColor();
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            ImGui::SetTooltip("Mute ADPCM");
+        ImGui::PopFont();
+
+        ImGui::TableNextColumn();
+
+        ImPlot::PushStyleVar(ImPlotStyleVar_PlotPadding, ImVec2(1, 1));
+
+        int data_size = (*adpcm_state->FRAME_SAMPLES) / 2;
+        int trigger_left = 0;
+
+        for (int i = 0; i < data_size; i++)
+        {
+            adpcm_wave_buffer[i] = (float)(adpcm_state->BUFFER[i * 2]) / 32768.0f * 3.0f;
+        }
+
+        for (int i = 100; i < data_size; ++i)
+        {
+            if (adpcm_wave_buffer[i - 1] < 0.0f && adpcm_wave_buffer[i] >= 0.0f)
+            {
+                trigger_left = i;
+                break;
+            }
+        }
+
+        int half_window_size = 100;
+        int x_min_left = MAX(0, trigger_left - half_window_size);
+        int x_max_left = MIN(data_size, trigger_left + half_window_size);
+
+        ImPlotAxisFlags flags = ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
+
+        if (ImPlot::BeginPlot("Left Channel", ImVec2(160, 80), ImPlotFlags_CanvasOnly))
+        {
+            ImPlot::SetupAxes("x", "y", flags, flags);
+            ImPlot::SetupAxesLimits(x_min_left, x_max_left, -1.0f, 1.0f, ImPlotCond_Always);
+            ImPlot::SetNextLineStyle(white, 1.0f);
+            ImPlot::PlotLine("L", adpcm_wave_buffer, data_size);
+            ImPlot::EndPlot();
+        }
+
+        ImPlot::PopStyleVar();
+
+        ImGui::EndTable();
     }
-
-    int half_window_size = 100;
-    int x_min_left = MAX(0, trigger_left - half_window_size);
-    int x_max_left = MIN(data_size, trigger_left + half_window_size);
-
-    ImPlotAxisFlags flags = ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
-
-    if (ImPlot::BeginPlot("Left Channel", ImVec2(160, 80), ImPlotFlags_CanvasOnly))
-    {
-        ImPlot::SetupAxes("x", "y", flags, flags);
-        ImPlot::SetupAxesLimits(x_min_left, x_max_left, -1.0f, 1.0f, ImPlotCond_Always);
-        ImPlot::SetNextLineStyle(white, 1.0f);
-        ImPlot::PlotLine("L", adpcm_wave_buffer, data_size);
-        ImPlot::EndPlot();
-    }
-
-    ImPlot::PopStyleVar();
-
-    ImGui::EndTable();
 
     ImGui::NewLine(); ImGui::TextColored(cyan, "STATE"); ImGui::Separator();
 
