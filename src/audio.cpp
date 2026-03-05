@@ -62,10 +62,10 @@ void Audio::Reset(bool cdrom)
 
 void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 {
-    *sample_count = 0;
-
     if (!IsValidPointer(sample_buffer) || !IsValidPointer(sample_count))
         return;
+
+    *sample_count = 0;
 
     if (m_is_cdrom)
     {
