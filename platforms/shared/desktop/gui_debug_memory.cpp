@@ -129,6 +129,16 @@ void gui_debug_memory_search_window(void)
     }
 }
 
+void gui_debug_memory_find_bytes_window(void)
+{
+    for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
+    {
+        ImGui::PushFont(gui_default_font);
+        mem_edit[i].DrawFindBytesWindow();
+        ImGui::PopFont();
+    }
+}
+
 void gui_debug_memory_watches_window(void)
 {
     for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
@@ -358,6 +368,12 @@ static void memory_editor_menu(void)
             mem_edit[current_mem_edit].OpenSearchWindow();
         }
 
+        snprintf(label, 64, "Find Bytes in %s...", mem_edit[current_mem_edit].GetTitle());
+        if (ImGui::MenuItem(label))
+        {
+            mem_edit[current_mem_edit].OpenFindBytes();
+        }
+
         ImGui::EndMenu();
     }
 
@@ -521,6 +537,14 @@ int gui_debug_memory_search(int editor, int op, int compare_type, int compare_va
     std::vector<MemEditor::Search>* results = mem_edit[editor].GetSearchResults();
     *results_ptr = (void*)results;
     return count;
+}
+
+int gui_debug_memory_find_bytes(int editor, const char* hex_str, int* out_addresses, int max_results)
+{
+    if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
+        return 0;
+
+    return mem_edit[editor].FindBytesSequence(hex_str, out_addresses, max_results);
 }
 
 void gui_debug_memory_save_settings(std::ostream& stream)

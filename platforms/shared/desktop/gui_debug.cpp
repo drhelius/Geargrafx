@@ -132,6 +132,7 @@ void gui_debug_windows(void)
 
         gui_debug_memory_watches_window();
         gui_debug_memory_search_window();
+        gui_debug_memory_find_bytes_window();
     }
 }
 
