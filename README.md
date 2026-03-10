@@ -169,6 +169,7 @@ For complete setup instructions and tool documentation, see [MCP_README.md](MCP_
 ### Windows
 
 - Install Microsoft Visual Studio Community 2022 or later.
+- Download the SDL3 development package for Visual C++ (`SDL3-devel-x.x.x-VC.zip`) from the [SDL3 releases](https://github.com/libsdl-org/SDL/releases) page and extract its contents into `platforms/windows/dependencies/SDL3/`.
 - Open the Geargrafx Visual Studio solution `platforms/windows/Geargrafx.sln` and build.
 
 ### macOS
