@@ -382,7 +382,7 @@ bool Memory::LoadRam(std::istream &file, s32 file_size)
 {
     Debug("Loading BRAM from file");
 
-    if (file_size > 0x2000)
+    if (file_size <= 0 || file_size > static_cast<s32>(sizeof(m_backup_ram)))
     {
         Log("Invalid BRAM size: %d", file_size);
         return false;
