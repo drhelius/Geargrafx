@@ -520,4 +520,10 @@ void HuC6280PSG::LoadState(std::istream& stream)
         stream.read(reinterpret_cast<char*> (&m_channels[i].left_sample), sizeof(m_channels[i].left_sample));
         stream.read(reinterpret_cast<char*> (&m_channels[i].right_sample), sizeof(m_channels[i].right_sample));
     }
+
+    m_channel_select &= 0x07;
+    if (m_channel_select < 6)
+        m_ch = &m_channels[m_channel_select];
+    else
+        m_ch = &m_channels[0];
 }
