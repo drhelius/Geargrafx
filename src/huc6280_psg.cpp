@@ -123,7 +123,8 @@ void HuC6280PSG::Write(u16 address, u8 value)
     // Channel select
     case 0:
         m_channel_select = value & 0x07;
-        m_ch = &m_channels[m_channel_select];
+        if (m_channel_select < 6)
+            m_ch = &m_channels[m_channel_select];
         break;
     // Main amplitude
     case 1:
