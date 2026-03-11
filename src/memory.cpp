@@ -418,8 +418,12 @@ void Memory::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (m_mpr), sizeof(m_mpr));
     stream.read(reinterpret_cast<char*> (m_wram), sizeof(u8) * 0x8000);
     stream.read(reinterpret_cast<char*> (&m_cdrom_ram_size), sizeof(m_cdrom_ram_size));
+    if (m_cdrom_ram_size > sizeof(m_cdrom_ram))
+        m_cdrom_ram_size = sizeof(m_cdrom_ram);
     stream.read(reinterpret_cast<char*> (m_cdrom_ram), sizeof(u8) * m_cdrom_ram_size);
     stream.read(reinterpret_cast<char*> (&m_card_ram_size), sizeof(m_card_ram_size));
+    if (m_card_ram_size > sizeof(m_card_ram))
+        m_card_ram_size = sizeof(m_card_ram);
     stream.read(reinterpret_cast<char*> (m_card_ram), sizeof(u8) * m_card_ram_size);
     stream.read(reinterpret_cast<char*> (&m_card_ram_start), sizeof(m_card_ram_start));
     stream.read(reinterpret_cast<char*> (&m_card_ram_end), sizeof(m_card_ram_end));
