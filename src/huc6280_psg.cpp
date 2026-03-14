@@ -483,9 +483,12 @@ void HuC6280PSG::SaveState(std::ostream& stream)
         stream.write(reinterpret_cast<const char*> (&m_channels[i].left_sample), sizeof(m_channels[i].left_sample));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].right_sample), sizeof(m_channels[i].right_sample));
     }
+
+    stream.write(reinterpret_cast<const char*> (&m_hpf_prev_input), sizeof(m_hpf_prev_input));
+    stream.write(reinterpret_cast<const char*> (&m_hpf_prev_output), sizeof(m_hpf_prev_output));
 }
 
-void HuC6280PSG::LoadState(std::istream& stream)
+void HuC6280PSG::LoadState(std::istream& stream, int version)
 {
     stream.read(reinterpret_cast<char*> (&m_channel_select), sizeof(m_channel_select));
     stream.read(reinterpret_cast<char*> (&m_main_vol), sizeof(m_main_vol));
@@ -519,6 +522,17 @@ void HuC6280PSG::LoadState(std::istream& stream)
         stream.read(reinterpret_cast<char*> (&m_channels[i].dda_enabled), sizeof(m_channels[i].dda_enabled));
         stream.read(reinterpret_cast<char*> (&m_channels[i].left_sample), sizeof(m_channels[i].left_sample));
         stream.read(reinterpret_cast<char*> (&m_channels[i].right_sample), sizeof(m_channels[i].right_sample));
+    }
+
+    if (version >= 24)
+    {
+        stream.read(reinterpret_cast<char*> (&m_hpf_prev_input), sizeof(m_hpf_prev_input));
+        stream.read(reinterpret_cast<char*> (&m_hpf_prev_output), sizeof(m_hpf_prev_output));
+    }
+    else
+    {
+        m_hpf_prev_input = 0.0f;
+        m_hpf_prev_output = 0.0f;
     }
 
     m_channel_select &= 0x07;

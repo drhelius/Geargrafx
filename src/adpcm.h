@@ -60,7 +60,7 @@ public:
     u8* GetRAM();
     Adpcm_State* GetState();
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
 private:
     void ComputeDeltaLUT();

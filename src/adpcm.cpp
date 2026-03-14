@@ -184,9 +184,12 @@ void Adpcm::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_adpcm_cycle_counter), sizeof(m_adpcm_cycle_counter));
     stream.write(reinterpret_cast<const char*> (&m_audio_cycle_counter), sizeof(m_audio_cycle_counter));
     stream.write(reinterpret_cast<const char*> (&m_filter_state), sizeof(m_filter_state));
+    stream.write(reinterpret_cast<const char*> (&m_dc_prev_x), sizeof(m_dc_prev_x));
+    stream.write(reinterpret_cast<const char*> (&m_dc_prev_y), sizeof(m_dc_prev_y));
+    stream.write(reinterpret_cast<const char*> (&m_gain_smooth), sizeof(m_gain_smooth));
 }
 
-void Adpcm::LoadState(std::istream& stream)
+void Adpcm::LoadState(std::istream& stream, int version)
 {
     using namespace std;
 
@@ -215,4 +218,17 @@ void Adpcm::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_adpcm_cycle_counter), sizeof(m_adpcm_cycle_counter));
     stream.read(reinterpret_cast<char*> (&m_audio_cycle_counter), sizeof(m_audio_cycle_counter));
     stream.read(reinterpret_cast<char*> (&m_filter_state), sizeof(m_filter_state));
+
+    if (version >= 24)
+    {
+        stream.read(reinterpret_cast<char*> (&m_dc_prev_x), sizeof(m_dc_prev_x));
+        stream.read(reinterpret_cast<char*> (&m_dc_prev_y), sizeof(m_dc_prev_y));
+        stream.read(reinterpret_cast<char*> (&m_gain_smooth), sizeof(m_gain_smooth));
+    }
+    else
+    {
+        m_dc_prev_x = 0.0f;
+        m_dc_prev_y = 0.0f;
+        m_gain_smooth = 1.0f;
+    }
 }

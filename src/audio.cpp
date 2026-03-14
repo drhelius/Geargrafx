@@ -167,11 +167,11 @@ void Audio::SaveState(std::ostream& stream)
     m_psg->SaveState(stream);
 }
 
-void Audio::LoadState(std::istream& stream)
+void Audio::LoadState(std::istream& stream, int version)
 {
     using namespace std;
     stream.read(reinterpret_cast<char*> (&m_cycle_counter), sizeof(m_cycle_counter));
-    m_psg->LoadState(stream);
+    m_psg->LoadState(stream, version);
 }
 
 bool Audio::StartVgmRecording(const char* file_path, int clock_rate)

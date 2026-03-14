@@ -75,7 +75,7 @@ public:
     void EnableHuC6280A(bool enabled);
     HuC6280PSG_State* GetState();
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
 private:
     void Sync();

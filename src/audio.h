@@ -45,7 +45,7 @@ public:
     void EndFrame(s16* sample_buffer, int* sample_count);
     HuC6280PSG* GetPSG();
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
     bool StartVgmRecording(const char* file_path, int clock_rate);
     void StopVgmRecording();
     bool IsVgmRecording() const;

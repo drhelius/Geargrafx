@@ -655,7 +655,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         return false;
     }
 
-    if (header.version != GG_SAVESTATE_VERSION)
+    if (header.version < GG_SAVESTATE_MIN_VERSION || header.version > GG_SAVESTATE_VERSION)
     {
         Error("Invalid save state version: %d", header.version);
         return false;
@@ -678,7 +678,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         return false;
     }
 
-    if (header.version != GG_SAVESTATE_VERSION)
+    if (header.version < GG_SAVESTATE_MIN_VERSION || header.version > GG_SAVESTATE_VERSION)
     {
         Error("Invalid save state version: %d", header.version);
         return false;
@@ -705,14 +705,14 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     m_huc6270_1->LoadState(stream);
     m_huc6270_2->LoadState(stream);
     m_huc6280->LoadState(stream);
-    m_audio->LoadState(stream);
+    m_audio->LoadState(stream, header.version);
     m_input->LoadState(stream);
     if (m_media->IsCDROM())
     {
         m_cdrom->LoadState(stream);
         m_scsi_controller->LoadState(stream);
         m_cdrom_audio->LoadState(stream);
-        m_adpcm->LoadState(stream);
+        m_adpcm->LoadState(stream, header.version);
     }
 
     return true;
