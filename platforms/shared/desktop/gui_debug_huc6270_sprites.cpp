@@ -30,6 +30,7 @@
 #include "emu.h"
 #include "ogl_renderer.h"
 #include "utils.h"
+#include <cmath>
 
 static void draw_context_menu_sprites(int vdc, int index);
 
@@ -69,6 +70,9 @@ void gui_debug_window_huc6270_sprites(int vdc)
     ImGui::BeginChild("sprites", ImVec2(0, 0.0f), ImGuiChildFlags_Borders);
     bool window_hovered = ImGui::IsWindowHovered();
 
+    static int selected_sprite[2] = {-1, -1};
+    int hovered_sprite = -1;
+
     ImVec2 p[64];
 
     for (int s = 0; s < 64; s++)
@@ -88,7 +92,16 @@ void gui_debug_window_huc6270_sprites(int vdc)
         float mouse_x = io.MousePos.x - p[s].x;
         float mouse_y = io.MousePos.y - p[s].y;
 
-        if (window_hovered && (mouse_x >= 0.0f) && (mouse_x < fwidth) && (mouse_y >= 0.0f) && (mouse_y < fheight))
+        bool is_hovered = window_hovered && (mouse_x >= 0.0f) && (mouse_x < fwidth) && (mouse_y >= 0.0f) && (mouse_y < fheight);
+
+        if (is_hovered)
+        {
+            hovered_sprite = s;
+            if (ImGui::IsMouseClicked(0))
+                selected_sprite[vdc - 1] = (selected_sprite[vdc - 1] == s) ? -1 : s;
+        }
+
+        if (is_hovered || selected_sprite[vdc - 1] == s)
         {
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             draw_list->AddRect(ImVec2(p[s].x, p[s].y), ImVec2(p[s].x + fwidth, p[s].y + fheight), ImColor(cyan), 2.0f, ImDrawFlags_RoundCornersAll, 3.0f);
@@ -107,96 +120,91 @@ void gui_debug_window_huc6270_sprites(int vdc)
 
     ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2(runtime.screen_width * screen_scale, runtime.screen_height * screen_scale), ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
-    for (int s = 0; s < 64; s++)
+    int display_sprite = (hovered_sprite >= 0) ? hovered_sprite : selected_sprite[vdc - 1];
+
+    if (display_sprite >= 0)
     {
-        float mouse_x = io.MousePos.x - p[s].x;
-        float mouse_y = io.MousePos.y - p[s].y;
+        int s = display_sprite;
         u16 sprite_flags = sat[(s * 4) + 3] & 0xB98F;
         int width = k_huc6270_sprite_width[(sprite_flags >> 8) & 0x01];
         int height = k_huc6270_sprite_height[(sprite_flags >> 12) & 0x03];
-        float fwidth = width * scale;
-        float fheight = height * scale;
 
-        if (window_hovered && (mouse_x >= 0.0f) && (mouse_x < fwidth) && (mouse_y >= 0.0f) && (mouse_y < fheight))
-        {
-            int sprite_y = (sat[s * 4] & 0x03FF) + 3;
-            int sprite_x = sat[(s * 4) + 1] & 0x03FF;
-            u16 pattern = (sat[(s * 4) + 2] >> 1) & 0x03FF;
+        int sprite_y = (sat[s * 4] & 0x03FF) + 3;
+        int sprite_x = sat[(s * 4) + 1] & 0x03FF;
+        u16 pattern = (sat[(s * 4) + 2] >> 1) & 0x03FF;
 
-            bool h_flip = (sprite_flags & 0x0800) != 0;
-            bool v_flip = (sprite_flags & 0x8000) != 0;
+        bool h_flip = (sprite_flags & 0x0800) != 0;
+        bool v_flip = (sprite_flags & 0x8000) != 0;
 
-            int palette = sprite_flags & 0x0F;
-            bool priority = (sprite_flags & 0x0080) != 0;
+        int palette = sprite_flags & 0x0F;
+        bool priority = (sprite_flags & 0x0080) != 0;
 
-            const float hds_scale = (runtime.screen_width == 512) ? 2.0f : 8.0f;
-            const int base_x_offset = (runtime.screen_width == 512) ? 64 : 32;
-            int per_res_x_offset = 0;
-            int hds = (int)((huc6270_state->R[HUC6270_REG_HSR] >> 8) & 0x7F);
-            int base_hds = 4;
-            int hds_delta = hds - base_hds;
-            if (runtime.screen_width != 256)
-            {
-                per_res_x_offset = (int)roundf(hds_delta * hds_scale);
-            }
+        const float hds_scale = (runtime.screen_width == 512) ? 2.0f : 8.0f;
+        const int base_x_offset = (runtime.screen_width == 512) ? 64 : 32;
+        int per_res_x_offset = 0;
+        int hds = (int)((huc6270_state->R[HUC6270_REG_HSR] >> 8) & 0x7F);
+        int base_hds = 4;
+        int hds_delta = hds - base_hds;
+        if (runtime.screen_width != 256)
+            per_res_x_offset = (int)roundf(hds_delta * hds_scale);
 
-            float real_x = (float)(sprite_x - base_x_offset + per_res_x_offset);
-            float real_y = (float)(sprite_y - 64);
-            float width_f = (float)width;
-            float height_f = (float)height;
+        float real_x = (float)(sprite_x - base_x_offset + per_res_x_offset);
+        float real_y = (float)(sprite_y - 64);
+        float width_f = (float)width;
+        float height_f = (float)height;
 
-            float rectx_min = p_screen.x + (real_x * screen_scale);
-            float rectx_max = p_screen.x + ((real_x + width_f) * screen_scale);
-            float recty_min = p_screen.y + (real_y * screen_scale);
-            float recty_max = p_screen.y + ((real_y + height_f) * screen_scale);
+        float rectx_min = p_screen.x + (real_x * screen_scale);
+        float rectx_max = p_screen.x + ((real_x + width_f) * screen_scale);
+        float recty_min = p_screen.y + (real_y * screen_scale);
+        float recty_max = p_screen.y + ((real_y + height_f) * screen_scale);
 
-            rectx_min = fminf(fmaxf(rectx_min, p_screen.x), p_screen.x + (runtime.screen_width * screen_scale));
-            rectx_max = fminf(fmaxf(rectx_max, p_screen.x), p_screen.x + (runtime.screen_width * screen_scale));
-            recty_min = fminf(fmaxf(recty_min, p_screen.y), p_screen.y + (runtime.screen_height * screen_scale));
-            recty_max = fminf(fmaxf(recty_max, p_screen.y), p_screen.y + (runtime.screen_height * screen_scale));
+        rectx_min = fminf(fmaxf(rectx_min, p_screen.x), p_screen.x + (runtime.screen_width * screen_scale));
+        rectx_max = fminf(fmaxf(rectx_max, p_screen.x), p_screen.x + (runtime.screen_width * screen_scale));
+        recty_min = fminf(fmaxf(recty_min, p_screen.y), p_screen.y + (runtime.screen_height * screen_scale));
+        recty_max = fminf(fmaxf(recty_max, p_screen.y), p_screen.y + (runtime.screen_height * screen_scale));
 
-            ImDrawList* draw_list = ImGui::GetWindowDrawList();
-            draw_list->AddRect(ImVec2(rectx_min, recty_min), ImVec2(rectx_max, recty_max), ImColor(cyan), 2.0f, ImDrawFlags_RoundCornersAll, 2.0f);
+        float t = (float)(0.5 + 0.5 * sin(ImGui::GetTime() * 4.0));
+        ImVec4 pulse_color = ImVec4(
+            red.x + (white.x - red.x) * t,
+            red.y + (white.y - red.y) * t,
+            red.z + (white.z - red.z) * t,
+            1.0f);
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        draw_list->AddRect(ImVec2(rectx_min, recty_min), ImVec2(rectx_max, recty_max), ImColor(pulse_color), 2.0f, ImDrawFlags_RoundCornersAll, 2.0f);
 
-            ImGui::NewLine();
+        ImGui::NewLine();
 
-            ImGui::TextColored(cyan, "DETAILS:");
-            ImGui::Separator();
-            ImGui::TextColored(violet, " SAT ENTRY:"); ImGui::SameLine();
-            ImGui::Text("%d", s);
+        ImGui::TextColored(cyan, "DETAILS:");
+        ImGui::Separator();
+        ImGui::TextColored(violet, " SAT ENTRY:"); ImGui::SameLine();
+        ImGui::Text("%d", s);
 
-            ImGui::TextColored(violet, " SPRITE X: "); ImGui::SameLine();
-            ImGui::Text("%03X (%d)", sprite_x, sprite_x);
+        ImGui::TextColored(violet, " SPRITE X: "); ImGui::SameLine();
+        ImGui::Text("%03X (%d)", sprite_x, sprite_x);
 
-            ImGui::TextColored(violet, " SPRITE Y: "); ImGui::SameLine();
-            ImGui::Text("%03X (%d)", sprite_y, sprite_y);
+        ImGui::TextColored(violet, " SPRITE Y: "); ImGui::SameLine();
+        ImGui::Text("%03X (%d)", sprite_y, sprite_y);
 
-            ImGui::TextColored(violet, " SIZE:     "); ImGui::SameLine();
-            ImGui::Text("%dx%d", width, height);
+        ImGui::TextColored(violet, " SIZE:     "); ImGui::SameLine();
+        ImGui::Text("%dx%d", width, height);
 
-            ImGui::TextColored(violet, " PATTERN:  "); ImGui::SameLine();
-            ImGui::Text("%03X (%d)", pattern, pattern);
+        ImGui::TextColored(violet, " PATTERN:  "); ImGui::SameLine();
+        ImGui::Text("%03X (%d)", pattern, pattern);
 
-            ImGui::TextColored(violet, " VRAM ADDR:"); ImGui::SameLine();
-            ImGui::Text("$%04X", pattern << 6);
+        ImGui::TextColored(violet, " VRAM ADDR:"); ImGui::SameLine();
+        ImGui::Text("$%04X", pattern << 6);
 
-            ImGui::TextColored(violet, " PALETTE:  "); ImGui::SameLine();
-            ImGui::Text("%01X (%d)", palette, palette);
+        ImGui::TextColored(violet, " PALETTE:  "); ImGui::SameLine();
+        ImGui::Text("%01X (%d)", palette, palette);
 
-            ImGui::TextColored(violet, " H FLIP:   "); ImGui::SameLine();
-            ImGui::TextColored(h_flip ? green : gray, "%s", h_flip ? "YES" : "NO ");
+        ImGui::TextColored(violet, " H FLIP:   "); ImGui::SameLine();
+        ImGui::TextColored(h_flip ? green : gray, "%s", h_flip ? "YES" : "NO ");
 
-            ImGui::TextColored(violet, " V FLIP:   "); ImGui::SameLine();
-            ImGui::TextColored(v_flip ? green : gray, "%s", v_flip ? "YES" : "NO ");
+        ImGui::TextColored(violet, " V FLIP:   "); ImGui::SameLine();
+        ImGui::TextColored(v_flip ? green : gray, "%s", v_flip ? "YES" : "NO ");
 
-            ImGui::TextColored(violet, " PRIORITY: "); ImGui::SameLine();
-            ImGui::TextColored(priority ? green : gray, "%s", priority ? "YES" : "NO ");
-
-            if (ImGui::IsMouseClicked(0))
-            {
-                gui_debug_memory_goto((vdc == 1) ? MEMORY_EDITOR_VRAM_1 : MEMORY_EDITOR_VRAM_2, pattern << 6);
-            }
-        }
+        ImGui::TextColored(violet, " PRIORITY: "); ImGui::SameLine();
+        ImGui::TextColored(priority ? green : gray, "%s", priority ? "YES" : "NO ");
     }
 
     ImGui::Columns(1);
