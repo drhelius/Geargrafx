@@ -174,6 +174,10 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
 
             memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, 2048);
 
+            m_current_sector = lba + 1;
+            if (m_current_sector >= m_toc.sector_count)
+                m_current_sector = m_toc.sector_count - 1;
+
             return true;
         }
     }
@@ -221,6 +225,8 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
             assert(final_offset + size <= m_hunk_bytes);
 
             memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, size);
+
+            m_current_sector = lba;
 
 #ifdef GG_LITTLE_ENDIAN
             for (u32 i = 0; i < count; i++)
