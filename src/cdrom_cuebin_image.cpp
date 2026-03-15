@@ -1009,6 +1009,7 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
         {
             Error("Failed to read chunk %d from %s. Read %d bytes, expected %d bytes",
                 chunk_index, img_file->file_path, file.gcount(), to_read);
+            SafeDeleteArray(img_file->chunks[chunk_index]);
             file.close();
             return false;
         }
