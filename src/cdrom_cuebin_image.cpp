@@ -946,6 +946,12 @@ bool CdRomCueBinImage::ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer
         //Debug("Reading %d bytes from chunk %d (crossing), offset %d", first_part, chunk_index, chunk_offset);
         memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, first_part);
 
+        if (chunk_index + 1 >= img_file->chunk_count)
+        {
+            Error("ReadFromImgFile failed - chunk boundary crossing exceeds chunk count (chunk %u, count %u)", chunk_index + 1, img_file->chunk_count);
+            return false;
+        }
+
         if (img_file->chunks[chunk_index + 1] == NULL)
         {
             if (!LoadChunk(img_file, chunk_index + 1))
