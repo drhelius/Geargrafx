@@ -378,6 +378,12 @@ bool CdRomChdImage::ReadTOC()
         new_track.start_lba = current_lba;
         LbaToMsf(new_track.start_lba, &new_track.start_msf);
 
+        if (pregap_real > 0 || pregap_dv > 0)
+        {
+            new_track.has_lead_in = true;
+            new_track.lead_in_lba = current_lba - pregap_real - pregap_dv;
+        }
+
         u32 data_frames = frames - pregap_dv;
         new_track.sector_count = data_frames;
 
