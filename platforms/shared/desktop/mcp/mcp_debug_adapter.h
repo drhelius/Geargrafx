@@ -129,6 +129,7 @@ public:
     json GetHuC6202Status();
     json GetPSGStatus();
     json GetCDROMStatus();
+    json ListCDROMTracks();
     json GetArcadeCardStatus();
     json GetCDROMAudioStatus();
     json GetADPCMStatus();

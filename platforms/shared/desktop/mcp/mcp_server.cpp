@@ -664,6 +664,17 @@ void McpServer::HandleToolsList(const json& request)
     });
 
     tools.push_back({
+        {"name", "list_cdrom_tracks"},
+        {"title", "List CD-ROM Tracks"},
+        {"description", "List all CD-ROM tracks with type, LBA range, sector count, lead-in info, and file offset (only for CD-ROM games)"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", json::object()},
+            {"additionalProperties", false}
+        }}
+    });
+
+    tools.push_back({
         {"name", "get_arcade_card_status"},
         {"title", "Get Arcade Card Status"},
         {"description", "Get Arcade Card status (only for Arcade Card games)"},
@@ -1769,6 +1780,10 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     else if (normalizedTool == "get_cdrom_status")
     {
         return m_debugAdapter.GetCDROMStatus();
+    }
+    else if (normalizedTool == "list_cdrom_tracks")
+    {
+        return m_debugAdapter.ListCDROMTracks();
     }
     else if (normalizedTool == "get_arcade_card_status")
     {

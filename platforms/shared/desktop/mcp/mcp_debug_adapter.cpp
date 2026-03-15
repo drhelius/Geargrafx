@@ -1095,6 +1095,56 @@ json DebugAdapter::GetCDROMStatus()
     return status;
 }
 
+json DebugAdapter::ListCDROMTracks()
+{
+    if (!m_core->GetMedia()->IsCDROM())
+    {
+        json err;
+        err["error"] = "No CD-ROM media loaded";
+        return err;
+    }
+
+    CdRomMedia* cdrom_media = m_core->GetCDROMMedia();
+    const std::vector<CdRomImage::Track>& tracks = cdrom_media->GetTracks();
+
+    json result;
+    json track_list = json::array();
+
+    for (size_t i = 0; i < tracks.size(); i++)
+    {
+        const CdRomImage::Track& t = tracks[i];
+        json track;
+
+        track["number"] = (int)(i + 1);
+        track["type"] = TrackTypeName(t.type);
+        track["sector_size"] = t.sector_size;
+        track["start_lba"] = t.start_lba;
+        track["end_lba"] = t.end_lba;
+        track["sector_count"] = t.sector_count;
+
+        char start_msf[16];
+        snprintf(start_msf, sizeof(start_msf), "%02d:%02d:%02d", t.start_msf.minutes, t.start_msf.seconds, t.start_msf.frames);
+        track["start_msf"] = start_msf;
+
+        char end_msf[16];
+        snprintf(end_msf, sizeof(end_msf), "%02d:%02d:%02d", t.end_msf.minutes, t.end_msf.seconds, t.end_msf.frames);
+        track["end_msf"] = end_msf;
+
+        track["has_lead_in"] = t.has_lead_in;
+        if (t.has_lead_in)
+            track["lead_in_lba"] = t.lead_in_lba;
+
+        track["file_offset"] = t.file_offset;
+
+        track_list.push_back(track);
+    }
+
+    result["track_count"] = (int)tracks.size();
+    result["tracks"] = track_list;
+
+    return result;
+}
+
 json DebugAdapter::GetArcadeCardStatus()
 {
     if (!m_core->GetMedia()->IsArcadeCard())
