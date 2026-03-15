@@ -96,6 +96,12 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
                 chd_close(m_chd_file);
                 m_ready = false;
             }
+            else if (m_hunk_count > 500000)
+            {
+                Error("Invalid CHD header - hunk count %u exceeds maximum", m_hunk_count);
+                chd_close(m_chd_file);
+                m_ready = false;
+            }
             else if (m_hunk_bytes % (2352 + 96) != 0)
             {
                 Error("Invalid CHD hunk size %d, must be a multiple of 2448 (2352 + 96)", m_hunk_bytes);
@@ -167,7 +173,12 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
                 sector_offset = 16;
 
             u32 final_offset = byte_offset_in_hunk + sector_offset;
-            assert(final_offset + 2048 <= m_hunk_bytes);
+
+            if (final_offset + 2048 > m_hunk_bytes)
+            {
+                Error("ReadSector failed - offset %u + 2048 exceeds hunk size %u", final_offset, m_hunk_bytes);
+                return false;
+            }
 
             Debug("Reading LBA %d, sector_index %u, hunk_index %u, hunk_offset %u, byte_offset_in_hunk %d, sector_offset %d",
                 lba, sector_index, hunk_index, hunk_offset, byte_offset_in_hunk, sector_offset);
@@ -222,7 +233,12 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 
             u32 size = count * 2;
             u32 final_offset = byte_offset_in_hunk + offset;
-            assert(final_offset + size <= m_hunk_bytes);
+
+            if (final_offset + size > m_hunk_bytes)
+            {
+                Error("ReadSamples failed - offset %u + size %u exceeds hunk size %u", final_offset, size, m_hunk_bytes);
+                return false;
+            }
 
             memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, size);
 
