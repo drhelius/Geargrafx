@@ -664,15 +664,13 @@ void HuC6270::RenderSprites(int width)
             {
                 int x_in_screen = pos + x;
 
-                if (!priority && (m_line_buffer[x_in_screen] & 0x0F))
-                    pixel = 0;
-                else
-                    pixel |= m_sprites[i].palette;
-
-                pixel |= 0x100;
-
                 if ((m_sprites[i].index == 0) && (m_line_buffer_sprites[x_in_screen] & 0x0F))
                     SpriteCollisionIRQ();
+
+                if (!priority && (m_line_buffer[x_in_screen] & 0x0F))
+                    pixel |= 0x100;
+                else
+                    pixel |= m_sprites[i].palette | 0x100 | 0x200;
 
                 m_line_buffer_sprites[x_in_screen] = pixel;
             }
@@ -681,8 +679,8 @@ void HuC6270::RenderSprites(int width)
 
     for (int i = 0; i < width; i++)
     {
-        if(m_line_buffer_sprites[i] & 0x0F)
-            m_line_buffer[i] = m_line_buffer_sprites[i];
+        if(m_line_buffer_sprites[i] & 0x200)
+            m_line_buffer[i] = m_line_buffer_sprites[i] & ~0x200;
     }
 }
 
