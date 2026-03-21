@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Geargrafx
+GenericName=PC Engine / TurboGrafx-16 emulator
+Comment=Play PC Engine, TurboGrafx-16, SuperGrafx, and CD-ROM² games
+Exec=/usr/games/geargrafx %f
+TryExec=/usr/games/geargrafx
+Icon=geargrafx
+Terminal=false
+Categories=Game;Emulator;
+Keywords=PC Engine;TurboGrafx-16;SuperGrafx;CD-ROM2;PCE;HuCard;
+StartupNotify=true

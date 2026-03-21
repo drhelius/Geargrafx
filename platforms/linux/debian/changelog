@@ -1,0 +1,11 @@
+geargrafx (1.7.2-1~ppa1~noble1) noble; urgency=medium
+
+  * Initial PPA build for Noble.
+  * Add Debian packaging for Geargrafx 1.7.2.
+  * Build against libsdl3-dev from the ubuntu-goodies PPA.
+  * Install the binary under /usr/games.
+  * Add a desktop entry and application icon.
+  * Add a minimal manual page.
+  * Clean up packaging metadata for lintian.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Thu, 19 Mar 2026 18:11:06 +0000
