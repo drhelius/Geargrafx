@@ -232,6 +232,12 @@ void emu_update(void)
     {
         sound_queue_write(audio_buffer, sampleCount, emu_audio_sync);
     }
+    else if (geargrafx->IsPaused())
+    {
+        int silence_count = GG_AUDIO_QUEUE_SIZE;
+        memset(audio_buffer, 0, silence_count * sizeof(s16));
+        sound_queue_write(audio_buffer, silence_count, false);
+    }
 }
 
 void emu_key_pressed(GG_Controllers controller, GG_Keys key)
