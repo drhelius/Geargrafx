@@ -177,7 +177,7 @@ INLINE void HuC6280::OPCodes_BRK()
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     u16 dest = m_PC.GetValue();
-    PushCallStack(pc - 1, dest, pc + 1);
+    PushCallStack(pc - 1, dest, pc + 1, m_memory->GetBank(dest));
 #endif
 }
 
@@ -191,7 +191,7 @@ INLINE void HuC6280::OPCodes_Subroutine()
     m_PC.SetValue(dest);
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    PushCallStack(pc - 1, dest, pc);
+    PushCallStack(pc - 1, dest, pc, m_memory->GetBank(dest));
 #endif
 
 }

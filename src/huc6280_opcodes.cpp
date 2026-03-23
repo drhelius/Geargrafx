@@ -219,7 +219,7 @@ void HuC6280::OPCode0x20()
     m_PC.SetValue(dest);
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    PushCallStack(pc - 3, dest, pc);
+    PushCallStack(pc - 3, dest, pc, m_memory->GetBank(dest));
 #endif
 }
 

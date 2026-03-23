@@ -92,7 +92,7 @@ inline void HuC6280::HandleIRQ()
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_debug_next_irq =((0xFFFA - vector) >> 1) + 3;
     u16 dest = m_PC.GetValue();
-    PushCallStack(pc, dest, pc);
+    PushCallStack(pc, dest, pc, m_memory->GetBank(dest));
 #endif
 }
 
@@ -399,19 +399,21 @@ INLINE std::stack<HuC6280::GG_CallStackEntry>* HuC6280::GetDisassemblerCallStack
     return &m_disassembler_call_stack;
 }
 
-INLINE void HuC6280::PushCallStack(u16 src, u16 dest, u16 back)
+INLINE void HuC6280::PushCallStack(u16 src, u16 dest, u16 back, u8 bank)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
     GG_CallStackEntry entry;
     entry.src = src;
     entry.dest = dest;
     entry.back = back;
+    entry.bank = bank;
     if (m_disassembler_call_stack.size() < 256)
         m_disassembler_call_stack.push(entry);
 #else
     UNUSED(src);
     UNUSED(dest);
     UNUSED(back);
+    UNUSED(bank);
 #endif
 }
 
@@ -689,6 +691,31 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
     if (opcode == 0x44 || opcode == 0x20)
     {
         record->subroutine = true;
+    }
+
+    if (record->irq > 0 && record->irq < 6)
+    {
+        static const char* k_irq_auto_symbol_format[6] = {
+            "????_%02X_%04X", "RESET_%02X_%04X", "NMI_%02X_%04X",
+            "TIMER_IRQ_%02X_%04X", "IRQ1_%02X_%04X", "IRQ2_BRK_%02X_%04X"
+        };
+        snprintf(record->auto_symbol, 64, k_irq_auto_symbol_format[record->irq], record->bank, address);
+    }
+
+    if (record->jump && record->jump_address != 0)
+    {
+        GG_Disassembler_Record* target = m_memory->GetOrCreateDisassemblerRecord(record->jump_address);
+        if (IsValidPointer(target))
+        {
+            if (record->subroutine)
+            {
+                snprintf(target->auto_symbol, 64, "SUB_%02X_%04X", record->jump_bank, record->jump_address);
+            }
+            else if (strncmp(target->auto_symbol, "SUB_", 4) != 0)
+            {
+                snprintf(target->auto_symbol, 64, "TAG_%02X_%04X", record->jump_bank, record->jump_address);
+            }
+        }
     }
 
     Memory::MemoryBankType bank_type = m_memory->GetBankType(record->bank);

@@ -93,6 +93,7 @@ public:
         u16 src;
         u16 dest;
         u16 back;
+        u8 bank;
     };
 
 public:
@@ -177,7 +178,7 @@ private:
     void CheckIRQs();
 
     void CheckBreakpoints();
-    void PushCallStack(u16 src, u16 dest, u16 back);
+    void PushCallStack(u16 src, u16 dest, u16 back, u8 bank);
     void PopCallStack();
 
     u8 Fetch8();
