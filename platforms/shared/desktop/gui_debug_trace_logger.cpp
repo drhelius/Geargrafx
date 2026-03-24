@@ -500,7 +500,7 @@ static void render_cpu_entry_colored(const GG_Trace_Entry& entry)
         if (config_debug.trace_bytes)
         {
             float char_width = ImGui::CalcTextSize("A").x;
-            float bytes_column = char_width * 30;
+            float bytes_column = char_width * 31;
             if (config_debug.trace_bank)         bytes_column += char_width * 3;
             if (config_debug.trace_registers)    bytes_column += char_width * 24;
             if (config_debug.trace_flags)        bytes_column += char_width * 10;

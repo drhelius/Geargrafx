@@ -14,6 +14,7 @@ This server provides tools for game development, rom hacking, reverse engineerin
 - **Symbol Support**: Add, remove, and list debug symbols
 - **Bookmarks**: Memory and disassembler bookmarks for navigation
 - **Call Stack**: View function call hierarchy
+- **Trace Logger**: CPU instruction trace with interleaved hardware events (VDC, VCE, PSG, timer, CD-ROM, SCSI, ADPCM, input)
 - **Screenshot Capture**: Get current frame as PNG image
 - **Documentation Resources**: Built-in hardware and programming documentation for AI context
 - **GUI Integration**: MCP server runs alongside the emulator GUI, sharing the same state
@@ -246,6 +247,7 @@ The server exposes tools organized in the following categories:
 - `remove_disassembler_bookmark` - Remove disassembler bookmark
 - `list_disassembler_bookmarks` - List all disassembler bookmarks
 - `get_call_stack` - View function call hierarchy
+- `get_trace_log` - Read trace logger entries (CPU + hardware events). Start the trace logger from the debugger window first
 
 ### Breakpoints
 - `set_breakpoint` - Set execution, read, or write breakpoint (supports 5 memory areas: rom_ram, vram, palette, huc6270_reg, huc6260_reg)

@@ -2555,3 +2555,263 @@ json DebugAdapter::MemoryFindBytes(int area, const std::string& hex_bytes)
 
     return result;
 }
+
+json DebugAdapter::GetTraceLog(int start, int count)
+{
+    json result;
+
+    TraceLogger* tl = m_core->GetTraceLogger();
+    if (!tl)
+    {
+        result["error"] = "Trace logger not available";
+        return result;
+    }
+
+    u32 total = tl->GetCount();
+
+    if (count < 1) count = 100;
+    if (count > 1000) count = 1000;
+
+    u32 actual_start;
+    if (start < 0)
+        actual_start = (total > (u32)count) ? (total - (u32)count) : 0;
+    else
+        actual_start = (u32)start;
+
+    if (actual_start >= total)
+    {
+        result["total_entries"] = total;
+        result["start"] = actual_start;
+        result["count"] = 0;
+        result["lines"] = json::array();
+        return result;
+    }
+
+    u32 actual_count = (u32)count;
+    if (actual_start + actual_count > total)
+        actual_count = total - actual_start;
+
+    Memory* memory = m_core->GetMemory();
+
+    json lines = json::array();
+    for (u32 i = 0; i < actual_count; i++)
+    {
+        const GG_Trace_Entry& entry = tl->GetEntry(actual_start + i);
+        char buf[256];
+
+        switch (entry.type)
+        {
+            case TRACE_CPU:
+            {
+                GG_Disassembler_Record* record = memory->GetDisassemblerRecord(entry.cpu.pc, entry.cpu.bank);
+                char instr[64] = "???";
+                char bytes[25] = "";
+                if (IsValidPointer(record))
+                {
+                    strncpy(instr, record->name, sizeof(instr) - 1);
+                    instr[sizeof(instr) - 1] = '\0';
+                    char* p = instr;
+                    while (*p)
+                    {
+                        if (*p == '{')
+                        {
+                            char* end = strchr(p, '}');
+                            if (end)
+                                memmove(p, end + 1, strlen(end + 1) + 1);
+                            else
+                                break;
+                        }
+                        else
+                            p++;
+                    }
+                    strncpy(bytes, record->bytes, sizeof(bytes) - 1);
+                    bytes[sizeof(bytes) - 1] = '\0';
+                }
+                u8 p = entry.cpu.p;
+                snprintf(buf, sizeof(buf), "%02X:%04X  A:%02X X:%02X Y:%02X S:%02X  %c%c%c%c%c%c%c%c  %-26s %s",
+                         entry.cpu.bank, entry.cpu.pc, entry.cpu.a, entry.cpu.x, entry.cpu.y, entry.cpu.s,
+                         (p & FLAG_NEGATIVE) ? 'N' : 'n', (p & FLAG_OVERFLOW) ? 'V' : 'v',
+                         (p & FLAG_TRANSFER) ? 'T' : 't', (p & FLAG_BREAK) ? 'B' : 'b',
+                         (p & FLAG_DECIMAL) ? 'D' : 'd', (p & FLAG_INTERRUPT) ? 'I' : 'i',
+                         (p & FLAG_ZERO) ? 'Z' : 'z', (p & FLAG_CARRY) ? 'C' : 'c',
+                         instr, bytes);
+                break;
+            }
+            case TRACE_CPU_IRQ:
+            {
+                const char* irq_name = "???";
+                if (entry.irq.vector == 0xFFFA) irq_name = "TIQ";
+                else if (entry.irq.vector == 0xFFF8) irq_name = "IRQ1";
+                else if (entry.irq.vector == 0xFFF6) irq_name = "IRQ2";
+                snprintf(buf, sizeof(buf), "  [CPU]  IRQ       %s  PC:$%04X  Vector:$%04X  Mask:%02X",
+                         irq_name, entry.irq.pc, entry.irq.vector, entry.irq.irq_mask);
+                break;
+            }
+            case TRACE_VDC:
+            {
+                static const char* k_vdc_reg_names[] = {
+                    "MAWR", "MARR", "VWR", "???", "???", "CR", "RCR", "BXR",
+                    "BYR", "MWR", "HSR", "HDR", "VSR", "VDR", "VCR", "DCR",
+                    "SOUR", "DESR", "LENR", "DVSSR"
+                };
+                const char* chip_name = entry.vdc.chip == 0 ? "VDC1" : "VDC2";
+                switch (entry.vdc.event)
+                {
+                    case TRACE_VDC_REG_WRITE:
+                    {
+                        const char* reg_name = entry.vdc.reg < 20 ? k_vdc_reg_names[entry.vdc.reg] : "???";
+                        snprintf(buf, sizeof(buf), "  [%s]  REG       %s($%02X)=$%04X",
+                                 chip_name, reg_name, entry.vdc.reg, entry.vdc.value);
+                        break;
+                    }
+                    case TRACE_VDC_VBLANK_IRQ:
+                        snprintf(buf, sizeof(buf), "  [%s]  VBLANK    IRQ", chip_name);
+                        break;
+                    case TRACE_VDC_SCANLINE_IRQ:
+                        snprintf(buf, sizeof(buf), "  [%s]  SCANLINE  IRQ  RCR=%d", chip_name, entry.vdc.value);
+                        break;
+                    case TRACE_VDC_OVERFLOW_IRQ:
+                        snprintf(buf, sizeof(buf), "  [%s]  OVERFLOW  IRQ", chip_name);
+                        break;
+                    case TRACE_VDC_SPRITE_COLLISION_IRQ:
+                        snprintf(buf, sizeof(buf), "  [%s]  SPRITE    COLLISION IRQ", chip_name);
+                        break;
+                    case TRACE_VDC_SATB_DMA_END_IRQ:
+                        snprintf(buf, sizeof(buf), "  [%s]  SATB DMA  END IRQ", chip_name);
+                        break;
+                    case TRACE_VDC_VRAM_DMA_END_IRQ:
+                        snprintf(buf, sizeof(buf), "  [%s]  VRAM DMA  END IRQ", chip_name);
+                        break;
+                    case TRACE_VDC_VRAM_DMA_START:
+                        snprintf(buf, sizeof(buf), "  [%s]  VRAM DMA  START", chip_name);
+                        break;
+                    case TRACE_VDC_SATB_DMA_START:
+                        snprintf(buf, sizeof(buf), "  [%s]  SATB DMA  START  DVSSR=$%04X", chip_name, entry.vdc.value);
+                        break;
+                    default:
+                        snprintf(buf, sizeof(buf), "  [%s]  ???", chip_name);
+                        break;
+                }
+                break;
+            }
+            case TRACE_INPUT:
+                snprintf(buf, sizeof(buf), "  [INPUT] PORT %d  Data:$%02X",
+                         entry.input.port, entry.input.value);
+                break;
+            case TRACE_TIMER:
+                snprintf(buf, sizeof(buf), "  [TIMER] IRQ     Counter:%02X  Reload:%02X",
+                         entry.timer.counter, entry.timer.reload);
+                break;
+            case TRACE_CDROM:
+            {
+                switch (entry.cdrom.event)
+                {
+                    case TRACE_CDROM_IRQ:
+                        snprintf(buf, sizeof(buf), "  [CDROM] IRQ     Type:%02X  Active:%02X  Enabled:%02X",
+                                 entry.cdrom.irq_type, entry.cdrom.active, entry.cdrom.enabled);
+                        break;
+                    case TRACE_CDROM_FADER:
+                    {
+                        u8 v = entry.cdrom.irq_type;
+                        snprintf(buf, sizeof(buf), "  [CDROM] FADER    %s  %s  %s",
+                                 IS_SET_BIT(v, 3) ? "ON" : "OFF",
+                                 IS_SET_BIT(v, 1) ? "ADPCM" : "CD",
+                                 IS_SET_BIT(v, 2) ? "FAST" : "SLOW");
+                        break;
+                    }
+                    case TRACE_CDROM_RESET:
+                        snprintf(buf, sizeof(buf), "  [CDROM] RESET    $%02X", entry.cdrom.irq_type);
+                        break;
+                    default:
+                        snprintf(buf, sizeof(buf), "  [CDROM] ???");
+                        break;
+                }
+                break;
+            }
+            case TRACE_PSG:
+                snprintf(buf, sizeof(buf), "  [PSG]   CH %d    Reg:$%02X=$%02X",
+                         entry.psg.channel, entry.psg.reg, entry.psg.value);
+                break;
+            case TRACE_ADPCM:
+                snprintf(buf, sizeof(buf), "  [ADPCM] REG     $%02X=$%02X",
+                         entry.adpcm.reg, entry.adpcm.value);
+                break;
+            case TRACE_VCE:
+            {
+                switch (entry.vce.event)
+                {
+                    case TRACE_VCE_CONTROL_WRITE:
+                    {
+                        static const char* k_speed_names[] = { "5.36MHz", "7.16MHz", "10.8MHz", "10.8MHz" };
+                        u8 speed = entry.vce.value & 0x03;
+                        snprintf(buf, sizeof(buf), "  [VCE]  CONTROL   Speed:%s  Blur:%d  B&W:%d",
+                                 k_speed_names[speed],
+                                 (entry.vce.value >> 2) & 1,
+                                 (entry.vce.value >> 7) & 1);
+                        break;
+                    }
+                    case TRACE_VCE_COLOR_WRITE:
+                        snprintf(buf, sizeof(buf), "  [VCE]  COLOR     Addr:$%03X=$%03X",
+                                 entry.vce.reg, entry.vce.value & 0x1FF);
+                        break;
+                    case TRACE_VCE_VSYNC_START:
+                        snprintf(buf, sizeof(buf), "  [VCE]  VSYNC     START  Line:%d", entry.vce.value);
+                        break;
+                    case TRACE_VCE_VSYNC_END:
+                        snprintf(buf, sizeof(buf), "  [VCE]  VSYNC     END    Line:%d", entry.vce.value);
+                        break;
+                    default:
+                        snprintf(buf, sizeof(buf), "  [VCE]  ???");
+                        break;
+                }
+                break;
+            }
+            case TRACE_SCSI:
+            {
+                static const char* k_scsi_cmd_names[] = {
+                    "TEST_UNIT_READY", NULL, NULL, "REQUEST_SENSE",
+                    NULL, NULL, NULL, NULL, "READ"
+                };
+                switch (entry.scsi.event)
+                {
+                    case TRACE_SCSI_COMMAND:
+                    {
+                        const char* cmd_name = NULL;
+                        if (entry.scsi.command < 9)
+                            cmd_name = k_scsi_cmd_names[entry.scsi.command];
+                        else if (entry.scsi.command == 0xD8) cmd_name = "AUDIO_START";
+                        else if (entry.scsi.command == 0xD9) cmd_name = "AUDIO_STOP";
+                        else if (entry.scsi.command == 0xDA) cmd_name = "AUDIO_PAUSE";
+                        else if (entry.scsi.command == 0xDD) cmd_name = "READ_SUBCODE_Q";
+                        else if (entry.scsi.command == 0xDE) cmd_name = "READ_TOC";
+                        if (cmd_name)
+                        {
+                            if (entry.scsi.command == 0x08)
+                                snprintf(buf, sizeof(buf), "  [SCSI] CMD      %s  LBA:%u", cmd_name, entry.scsi.param);
+                            else
+                                snprintf(buf, sizeof(buf), "  [SCSI] CMD      %s", cmd_name);
+                        }
+                        else
+                            snprintf(buf, sizeof(buf), "  [SCSI] CMD      $%02X", entry.scsi.command);
+                        break;
+                    }
+                    default:
+                        snprintf(buf, sizeof(buf), "  [SCSI] ???");
+                        break;
+                }
+                break;
+            }
+            default:
+                snprintf(buf, sizeof(buf), "  [???]");
+                break;
+        }
+
+        lines.push_back(buf);
+    }
+
+    result["total_entries"] = total;
+    result["start"] = actual_start;
+    result["count"] = actual_count;
+    result["lines"] = lines;
+    return result;
+}
