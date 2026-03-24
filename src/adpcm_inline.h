@@ -24,6 +24,7 @@
 #include "geargrafx_core.h"
 #include "cdrom.h"
 #include "scsi_controller.h"
+#include "trace_logger.h"
 
 INLINE void Adpcm::Clock(u32 cycles)
 {
@@ -87,6 +88,17 @@ INLINE u8 Adpcm::Read(u16 address)
 
 INLINE void Adpcm::Write(u16 address, u8 value)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_trace_logger->IsEnabled(TRACE_ADPCM))
+    {
+        GG_Trace_Entry e = {};
+        e.type = TRACE_ADPCM;
+        e.adpcm.reg = (u8)(address & 0xFF);
+        e.adpcm.value = value;
+        m_trace_logger->TraceLog(e);
+    }
+#endif
+
     switch (address)
     {
         case 0x08:

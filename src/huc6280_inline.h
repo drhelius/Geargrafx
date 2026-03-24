@@ -26,12 +26,14 @@
 #include "huc6280_names.h"
 #include "huc6270.h"
 #include "memory.h"
+#include "trace_logger.h"
 
 INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_memory_breakpoint_hit = false;
     m_cpu_breakpoint_hit = false;
+    u16 trace_pc = m_PC.GetValue();
 #endif
 
     m_transfer_flag = IsSetFlag(FLAG_TRANSFER);
@@ -50,6 +52,22 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
         *instruction_completed = (m_transfer_state == 0);
 #else
     UNUSED(instruction_completed);
+#endif
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_trace_logger->IsEnabled(TRACE_CPU) && (m_transfer_state == 0))
+    {
+        GG_Trace_Entry e = {};
+        e.type = TRACE_CPU;
+        e.cpu.pc = trace_pc;
+        e.cpu.bank = m_memory->GetBank(trace_pc);
+        e.cpu.a = m_A.GetValue();
+        e.cpu.x = m_X.GetValue();
+        e.cpu.y = m_Y.GetValue();
+        e.cpu.s = m_S.GetValue();
+        e.cpu.p = m_P.GetValue();
+        m_trace_logger->TraceLog(e);
+    }
 #endif
 
     if((m_irq_pending || IS_SET_BIT(m_interrupt_request_register, 2)) && (m_transfer_state == 0))
@@ -90,6 +108,16 @@ inline void HuC6280::HandleIRQ()
     m_cycles += 8;
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_trace_logger->IsEnabled(TRACE_CPU_IRQ))
+    {
+        GG_Trace_Entry e = {};
+        e.type = TRACE_CPU_IRQ;
+        e.irq.pc = pc;
+        e.irq.vector = vector;
+        e.irq.irq_mask = m_interrupt_disable_register;
+        m_trace_logger->TraceLog(e);
+    }
+
     m_debug_next_irq =((0xFFFA - vector) >> 1) + 3;
     u16 dest = m_PC.GetValue();
     PushCallStack(pc, dest, pc, m_memory->GetBank(dest));
@@ -157,6 +185,17 @@ INLINE void HuC6280::ClockTimer(u32 cycles)
         {
             m_timer_counter = m_timer_reload;
             m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 2);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            if (m_trace_logger->IsEnabled(TRACE_TIMER))
+            {
+                GG_Trace_Entry e = {};
+                e.type = TRACE_TIMER;
+                e.timer.counter = m_timer_counter;
+                e.timer.reload = m_timer_reload;
+                m_trace_logger->TraceLog(e);
+            }
+#endif
         }
         else
             m_timer_counter--;

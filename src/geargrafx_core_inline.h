@@ -85,9 +85,6 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
 
         do
         {
-            if (debug_enable && (IsValidPointer(m_debug_callback)))
-                m_debug_callback();
-
             u32 cycles = m_huc6280->RunInstruction(&instruction_completed);
             m_master_clock_cycles += cycles;
             m_huc6280->ClockTimer(cycles);

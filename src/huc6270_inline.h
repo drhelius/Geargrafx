@@ -24,6 +24,7 @@
 #include "huc6270.h"
 #include "huc6260.h"
 #include "huc6280.h"
+#include "trace_logger.h"
 
 INLINE u16 HuC6270::Clock()
 {
@@ -103,6 +104,18 @@ INLINE void HuC6270::RCRIRQ()
         {
             m_status_register |= HUC6270_STATUS_SCANLINE;
             m_huc6202->AssertIRQ1(this, true);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            if (m_trace_logger->IsEnabled(TRACE_VDC))
+            {
+                GG_Trace_Entry e = {};
+                e.type = TRACE_VDC;
+                e.vdc.event = TRACE_VDC_SCANLINE_IRQ;
+                e.vdc.value = m_register[HUC6270_REG_RCR];
+                e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+                m_trace_logger->TraceLog(e);
+            }
+#endif
         }
     }
 }
@@ -113,6 +126,17 @@ INLINE void HuC6270::OverflowIRQ()
     {
         m_status_register |= HUC6270_STATUS_OVERFLOW;
         m_huc6202->AssertIRQ1(this, true);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+        if (m_trace_logger->IsEnabled(TRACE_VDC))
+        {
+            GG_Trace_Entry e = {};
+            e.type = TRACE_VDC;
+            e.vdc.event = TRACE_VDC_OVERFLOW_IRQ;
+            e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+            m_trace_logger->TraceLog(e);
+        }
+#endif
     }
 }
 
@@ -123,6 +147,17 @@ INLINE void HuC6270::SpriteCollisionIRQ()
     {
         m_status_register |= HUC6270_STATUS_COLLISION;
         m_huc6202->AssertIRQ1(this, true);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+        if (m_trace_logger->IsEnabled(TRACE_VDC))
+        {
+            GG_Trace_Entry e = {};
+            e.type = TRACE_VDC;
+            e.vdc.event = TRACE_VDC_SPRITE_COLLISION_IRQ;
+            e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+            m_trace_logger->TraceLog(e);
+        }
+#endif
     }
 }
 

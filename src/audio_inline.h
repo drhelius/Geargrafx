@@ -22,6 +22,7 @@
 #include "audio.h"
 #include "huc6280_psg.h"
 #include "adpcm.h"
+#include "trace_logger.h"
 
 INLINE void Audio::Clock(u32 cycles)
 {
@@ -33,6 +34,17 @@ INLINE void Audio::Clock(u32 cycles)
 
 INLINE void Audio::WritePSG(u32 address, u8 value)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_trace_logger->IsEnabled(TRACE_PSG))
+    {
+        GG_Trace_Entry e = {};
+        e.type = TRACE_PSG;
+        e.psg.channel = *m_psg->GetState()->CHANNEL_SELECT;
+        e.psg.reg = (u8)(address & 0x0F);
+        e.psg.value = value;
+        m_trace_logger->TraceLog(e);
+    }
+#endif
     m_psg->Write(address, value);
 #ifndef GG_DISABLE_VGMRECORDER
     if (m_vgm_recording_enabled)

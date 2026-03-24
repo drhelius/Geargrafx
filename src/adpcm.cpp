@@ -28,6 +28,7 @@ Adpcm::Adpcm()
 {
     InitPointer(m_core);
     InitPointer(m_scsi_controller);
+    InitPointer(m_trace_logger);
     Reset();
 
     m_state.CONTROL = &m_control;
@@ -57,6 +58,11 @@ void Adpcm::Init(GeargrafxCore* core, CdRom* cdrom, ScsiController* scsi_control
     ComputeDeltaLUT();
     ComputeLatencyLUTs();
     Reset();
+}
+
+void Adpcm::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
 }
 
 void Adpcm::Reset()

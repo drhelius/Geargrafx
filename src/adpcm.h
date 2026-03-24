@@ -27,6 +27,7 @@
 class GeargrafxCore;
 class CdRom;
 class ScsiController;
+class TraceLogger;
 
 class Adpcm
 {
@@ -61,6 +62,7 @@ public:
     Adpcm_State* GetState();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
+    void SetTraceLogger(TraceLogger* trace_logger);
 
 private:
     void ComputeDeltaLUT();
@@ -80,6 +82,7 @@ private:
 
 private:
     GeargrafxCore* m_core;
+    TraceLogger* m_trace_logger;
     CdRom* m_cdrom;
     ScsiController* m_scsi_controller;
     Adpcm_State m_state;

@@ -28,6 +28,7 @@
 class Adpcm;
 class HuC6280PSG;
 class CdRomAudio;
+class TraceLogger;
 
 class Audio
 {
@@ -49,10 +50,12 @@ public:
     bool StartVgmRecording(const char* file_path, int clock_rate);
     void StopVgmRecording();
     bool IsVgmRecording() const;
+    void SetTraceLogger(TraceLogger* trace_logger);
 
 private:
     bool m_mute;
     bool m_is_cdrom;
+    TraceLogger* m_trace_logger;
     HuC6280PSG* m_psg;
     Adpcm* m_adpcm;
     CdRomAudio* m_cdrom_audio;

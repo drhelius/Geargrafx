@@ -499,11 +499,6 @@ void emu_debug_continue(void)
     emu_debug_command = Debug_Command_Continue;
 }
 
-void emu_debug_set_callback(GeargrafxCore::GG_Debug_Callback callback)
-{
-    geargrafx->SetDebugCallback(callback);
-}
-
 void emu_set_palette(int palette)
 {
     geargrafx->GetHuC6260()->SetPalette(palette);

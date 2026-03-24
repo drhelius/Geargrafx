@@ -166,6 +166,9 @@
     <ClCompile Include="..\..\src\vgm_recorder.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\trace_logger.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\huc6202.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -502,6 +505,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\vgm_recorder.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\trace_logger.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\types.h">

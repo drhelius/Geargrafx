@@ -28,6 +28,7 @@
 class HuC6202;
 class HuC6260;
 class HuC6280;
+class TraceLogger;
 
 class HuC6270
 {
@@ -86,6 +87,7 @@ public:
     u16* GetSAT();
     void SetNoSpriteLimit(bool no_sprite_limit);
     void SetSafeDefaults(bool safe_defaults);
+    void SetTraceLogger(TraceLogger* trace_logger);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -103,6 +105,7 @@ private:
     HuC6202* m_huc6202;
     HuC6260* m_huc6260;
     HuC6280* m_huc6280;
+    TraceLogger* m_trace_logger;
     HuC6270_State m_state;
     u16 m_vram[HUC6270_VRAM_SIZE] = {};
     u16 m_address_register;

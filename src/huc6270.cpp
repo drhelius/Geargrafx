@@ -20,12 +20,14 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "huc6270.h"
+#include "trace_logger.h"
 
 HuC6270::HuC6270(HuC6280* huC6280)
 {
     m_huc6280 = huC6280;
     InitPointer(m_huc6260);
     InitPointer(m_input_pump_fn);
+    InitPointer(m_trace_logger);
     m_state.AR = &m_address_register;
     m_state.SR = &m_status_register;
     m_state.R = m_register;
@@ -48,6 +50,11 @@ void HuC6270::Init(HuC6260* huC6260, HuC6202* huC6202, GG_Input_Pump_Fn input_pu
     m_huc6202 = huC6202;
     m_input_pump_fn = input_pump_fn;
     Reset();
+}
+
+void HuC6270::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
 }
 
 void HuC6270::Reset()
@@ -440,6 +447,17 @@ void HuC6270::SATTransfer()
             {
                 m_status_register |= HUC6270_STATUS_SAT_END;
                 m_huc6202->AssertIRQ1(this, true);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+                if (m_trace_logger->IsEnabled(TRACE_VDC))
+                {
+                    GG_Trace_Entry e = {};
+                    e.type = TRACE_VDC;
+                    e.vdc.event = TRACE_VDC_SATB_DMA_END_IRQ;
+                    e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+                    m_trace_logger->TraceLog(e);
+                }
+#endif
             }
         }
     }
@@ -473,6 +491,17 @@ void HuC6270::VRAMTransfer()
             {
                 m_status_register |= HUC6270_STATUS_VRAM_END;
                 m_huc6202->AssertIRQ1(this, true);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+                if (m_trace_logger->IsEnabled(TRACE_VDC))
+                {
+                    GG_Trace_Entry e = {};
+                    e.type = TRACE_VDC;
+                    e.vdc.event = TRACE_VDC_VRAM_DMA_END_IRQ;
+                    e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+                    m_trace_logger->TraceLog(e);
+                }
+#endif
             }
         }
     }
@@ -555,13 +584,35 @@ void HuC6270::VBlankIRQ()
         m_huc6202->AssertIRQ1(this, true);
         if(IsValidPointer(m_input_pump_fn))
             m_input_pump_fn();
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+        if (m_trace_logger->IsEnabled(TRACE_VDC))
+        {
+            GG_Trace_Entry e = {};
+            e.type = TRACE_VDC;
+            e.vdc.event = TRACE_VDC_VBLANK_IRQ;
+            e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+            m_trace_logger->TraceLog(e);
+        }
+#endif
     }
 
     if (m_trigger_sat_transfer || (m_register[HUC6270_REG_DCR] & 0x10))
     {
         m_trigger_sat_transfer = false;
         m_sat_transfer_pending = 1024;
-        //m_status_register |= HUC6270_STATUS_BUSY;
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+        if (m_trace_logger->IsEnabled(TRACE_VDC))
+        {
+            GG_Trace_Entry e = {};
+            e.type = TRACE_VDC;
+            e.vdc.event = TRACE_VDC_SATB_DMA_START;
+            e.vdc.value = m_register[HUC6270_REG_DVSSR];
+            e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+            m_trace_logger->TraceLog(e);
+        }
+#endif
     }
 }
 

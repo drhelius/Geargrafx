@@ -24,6 +24,7 @@
 Input::Input(Media* media)
 {
     m_media = media;
+    InitPointer(m_trace_logger);
     m_turbo_tap = false;
     m_pce_jap = false;
     m_cdrom = true;
@@ -51,6 +52,11 @@ Input::Input(Media* media)
 
     m_mb128.Connect(false);
     m_mb128.Reset();
+}
+
+void Input::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
 }
 
 void Input::Init()

@@ -28,6 +28,7 @@
 HuC6280::HuC6280()
 {
     InitOPCodeFunctors();
+    InitPointer(m_trace_logger);
     m_breakpoints_enabled = false;
     m_breakpoints_irq_enabled = false;
     m_reset_value = -1;
@@ -54,6 +55,11 @@ void HuC6280::Init(Memory* memory, HuC6202* huc6202)
     m_memory = memory;
     m_huc6202 = huc6202;
     CreateZNFlagsTable();
+}
+
+void HuC6280::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
 }
 
 void HuC6280::Reset()

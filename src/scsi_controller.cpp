@@ -23,11 +23,13 @@
 #include "cdrom_media.h"
 #include "cdrom_audio.h"
 #include "huc6280.h"
+#include "trace_logger.h"
 
 ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio)
 {
     m_cdrom_media = cdrom_media;
     m_cdrom_audio = cdrom_audio;
+    InitPointer(m_trace_logger);
     m_bus.db = 0;
     m_bus.signals = 0;
     m_phase = SCSI_PHASE_BUS_FREE;
@@ -69,6 +71,11 @@ void ScsiController::Init(HuC6280* huc6280, CdRom* cdrom)
     m_huc6280 = huc6280;
     m_cdrom = cdrom;
     Reset();
+}
+
+void ScsiController::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
 }
 
 void ScsiController::Reset(bool keep_rst_signal)
@@ -299,6 +306,19 @@ void ScsiController::UpdateMessageInPhase()
 void ScsiController::ExecuteCommand()
 {
     ScsiCommand command = (ScsiCommand)m_command_buffer[0];
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_trace_logger->IsEnabled(TRACE_SCSI))
+    {
+        GG_Trace_Entry e = {};
+        e.type = TRACE_SCSI;
+        e.scsi.event = TRACE_SCSI_COMMAND;
+        e.scsi.command = m_command_buffer[0];
+        if (command == SCSI_CMD_READ && m_command_buffer.size() >= 5)
+            e.scsi.param = ((m_command_buffer[1] & 0x1F) << 16) | (m_command_buffer[2] << 8) | m_command_buffer[3];
+        m_trace_logger->TraceLog(e);
+    }
+#endif
 
     switch(command)
     {

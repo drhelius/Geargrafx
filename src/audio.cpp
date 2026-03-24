@@ -30,6 +30,7 @@ Audio::Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio)
     m_adpcm = adpcm;
     m_cdrom_audio = cdrom_audio;
     InitPointer(m_psg);
+    InitPointer(m_trace_logger);
     m_mute = false;
     m_is_cdrom = false;
     m_psg_volume = 1.0f;
@@ -47,6 +48,11 @@ void Audio::Init()
 {
     m_psg = new HuC6280PSG();
     m_psg->Init();
+}
+
+void Audio::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
 }
 
 void Audio::Reset(bool cdrom)

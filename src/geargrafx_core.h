@@ -37,6 +37,7 @@ class CdRomMedia;
 class CdRomAudio;
 class Adpcm;
 class ScsiController;
+class TraceLogger;
 
 class GeargrafxCore
 {
@@ -49,8 +50,6 @@ public:
         bool stop_on_run_to_breakpoint;
         bool stop_on_irq;
     };
-
-    typedef void (*GG_Debug_Callback)(void);
 
 public:
     GeargrafxCore();
@@ -95,7 +94,7 @@ public:
     Audio* GetAudio();
     Input* GetInput();
     u64 GetMasterClockCycles();
-    void SetDebugCallback(GG_Debug_Callback callback);
+    TraceLogger* GetTraceLogger();
 
 private:
     void Reset();
@@ -121,7 +120,7 @@ private:
     Adpcm* m_adpcm;
     ScsiController* m_scsi_controller;
     bool m_paused;
-    GG_Debug_Callback m_debug_callback;
+    TraceLogger* m_trace_logger;
     u64 m_master_clock_cycles;
     GG_MB128_Mode m_mb128_mode;
 };

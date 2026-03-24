@@ -31,6 +31,7 @@
 #include "huc6260.h"
 #include "huc6270.h"
 #include "huc6280.h"
+#include "trace_logger.h"
 #include "scsi_controller.h"
 #include "cdrom.h"
 #include "cdrom_media.h"
@@ -56,7 +57,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_audio);
     InitPointer(m_input);
     InitPointer(m_media);
-    InitPointer(m_debug_callback);
+    InitPointer(m_trace_logger);
     m_paused = true;
     m_master_clock_cycles = 0;
     m_mb128_mode = GG_MB128_AUTO;
@@ -64,6 +65,7 @@ GeargrafxCore::GeargrafxCore()
 
 GeargrafxCore::~GeargrafxCore()
 {
+    SafeDelete(m_trace_logger);
     SafeDelete(m_media);
     SafeDelete(m_input);
     SafeDelete(m_audio);
@@ -115,6 +117,17 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_huc6280->Init(m_memory, m_huc6202);
     m_adpcm->Init(this, m_cdrom, m_scsi_controller);
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);
+
+    m_trace_logger = new TraceLogger();
+    m_huc6280->SetTraceLogger(m_trace_logger);
+    m_huc6270_1->SetTraceLogger(m_trace_logger);
+    m_huc6270_2->SetTraceLogger(m_trace_logger);
+    m_huc6260->SetTraceLogger(m_trace_logger);
+    m_audio->SetTraceLogger(m_trace_logger);
+    m_input->SetTraceLogger(m_trace_logger);
+    m_cdrom->SetTraceLogger(m_trace_logger);
+    m_adpcm->SetTraceLogger(m_trace_logger);
+    m_scsi_controller->SetTraceLogger(m_trace_logger);
 }
 
 bool GeargrafxCore::LoadMedia(const char* file_path)
@@ -155,9 +168,9 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
     return m_media->IsReady();
 }
 
-void GeargrafxCore::SetDebugCallback(GG_Debug_Callback callback)
+TraceLogger* GeargrafxCore::GetTraceLogger()
 {
-    m_debug_callback = callback;
+    return m_trace_logger;
 }
 
 void GeargrafxCore::KeyPressed(GG_Controllers controller, GG_Keys key)

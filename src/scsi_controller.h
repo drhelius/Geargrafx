@@ -27,6 +27,7 @@ class CdRom;
 class CdRomMedia;
 class CdRomAudio;
 class HuC6280;
+class TraceLogger;
 
 class ScsiController
 {
@@ -131,6 +132,7 @@ public:
     void StartStatus(ScsiStatus status, u8 length = 1);
     bool IsDataReady();
     Scsi_State* GetState();
+    void SetTraceLogger(TraceLogger* trace_logger);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -166,6 +168,7 @@ private:
     CdRom* m_cdrom;
     CdRomMedia* m_cdrom_media;
     CdRomAudio* m_cdrom_audio;
+    TraceLogger* m_trace_logger;
     ScsiBus m_bus;
     ScsiPhase m_phase;
     ScsiEvent m_next_event;

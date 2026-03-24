@@ -33,6 +33,7 @@
 
 class HuC6202;
 class HuC6280;
+class TraceLogger;
 
 class HuC6260
 {
@@ -78,6 +79,7 @@ public:
     void SetOverscan(bool overscan);
     GG_Pixel_Format GetPixelFormat();
     void SetResetValue(int value);
+    void SetTraceLogger(TraceLogger* trace_logger);
     void SetPalette(int palette);
     void SetCustomPalette(const u8* data);
     void SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8);
@@ -98,6 +100,7 @@ private:
 private:
     HuC6202* m_huc6202;
     HuC6280* m_huc6280;
+    TraceLogger* m_trace_logger;
     HuC6260_State m_state;
     u8 m_control_register;
     u16 m_color_table_address;

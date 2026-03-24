@@ -26,6 +26,7 @@
 #include "mb128.h"
 
 class Media;
+class TraceLogger;
 
 class Input
 {
@@ -52,12 +53,14 @@ public:
     GG_Controller_Type GetControllerType(GG_Controllers controller);
     void SetAvenuePad3Button(GG_Controllers controller, GG_Keys button);
     void EnableMB128(bool enable);
+    void SetTraceLogger(TraceLogger* trace_logger);
     MB128* GetMB128();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
 private:
     Media* m_media;
+    TraceLogger* m_trace_logger;
     bool m_clr;
     bool m_sel;
     u16 m_gamepads[GG_MAX_GAMEPADS];

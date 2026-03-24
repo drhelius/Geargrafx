@@ -235,6 +235,15 @@ struct config_Debug
     bool trace_registers = true;
     bool trace_flags = true;
     bool trace_bytes = true;
+    bool trace_cpu_irq = true;
+    bool trace_vdc = true;
+    bool trace_input = true;
+    bool trace_timer = true;
+    bool trace_cdrom = true;
+    bool trace_psg = true;
+    bool trace_adpcm = true;
+    bool trace_vce = true;
+    bool trace_scsi = true;
     bool dis_show_mem = true;
     bool dis_show_symbols = true;
     bool dis_show_segment = true;

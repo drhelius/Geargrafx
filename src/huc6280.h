@@ -46,6 +46,7 @@
 
 class Memory;
 class HuC6202;
+class TraceLogger;
 
 class HuC6280
 {
@@ -129,6 +130,7 @@ public:
     void ClearDisassemblerCallStack();
     std::stack<GG_CallStackEntry>* GetDisassemblerCallStack();
     void CheckMemoryBreakpoints(int type, u16 address, bool read);
+    void SetTraceLogger(TraceLogger* trace_logger);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -152,6 +154,7 @@ private:
     u16 m_transfer_dest;
     Memory* m_memory;
     HuC6202* m_huc6202;
+    TraceLogger* m_trace_logger;
     HuC6280_State m_processor_state;
     bool m_timer_enabled;
     s32 m_timer_cycles;

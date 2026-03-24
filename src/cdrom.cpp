@@ -22,6 +22,7 @@
 #include "huc6280.h"
 #include "memory.h"
 #include "audio.h"
+#include "trace_logger.h"
 
 CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* audio, GeargrafxCore* core)
 {
@@ -29,6 +30,7 @@ CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* au
     m_cdrom_audio = cdrom_audio;
     m_scsi_controller = scsi_controller;
     m_audio = audio;
+    InitPointer(m_trace_logger);
     InitPointer(m_adpcm);
     InitPointer(m_huc6280);
     InitPointer(m_memory);
@@ -63,6 +65,11 @@ void CdRom::Init(HuC6280* huc6280, Memory* memory, Adpcm* adpcm)
     m_memory = memory;
     m_adpcm = adpcm;
     Reset();
+}
+
+void CdRom::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
 }
 
 void CdRom::Reset()

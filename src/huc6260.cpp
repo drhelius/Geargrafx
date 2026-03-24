@@ -20,11 +20,13 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "huc6260.h"
+#include "trace_logger.h"
 
 HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280)
 {
     m_huc6280 = huc6280;
     m_huc6202 = huc6202;
+    InitPointer(m_trace_logger);
     m_pixel_format = GG_PIXEL_RGBA8888;
     m_state.CR = &m_control_register;
     m_state.CTA = &m_color_table_address;
@@ -58,6 +60,11 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
     m_pixel_format = pixel_format;
     InitPalettes();
     Reset();
+}
+
+void HuC6260::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
 }
 
 void HuC6260::InitPalettes()
@@ -201,6 +208,17 @@ void HuC6260::WriteRegister(u16 address, u8 value)
                     m_clock_divider = 2;
                     break;
             }
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            if (m_trace_logger->IsEnabled(TRACE_VCE))
+            {
+                GG_Trace_Entry e = {};
+                e.type = TRACE_VCE;
+                e.vce.event = TRACE_VCE_CONTROL_WRITE;
+                e.vce.value = m_control_register;
+                m_trace_logger->TraceLog(e);
+            }
+#endif
             break;
         }
         case 2:
@@ -221,6 +239,18 @@ void HuC6260::WriteRegister(u16 address, u8 value)
             m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM, m_color_table_address, false);
 #endif
             m_color_table[m_color_table_address] = (m_color_table[m_color_table_address] & 0x00FF) | ((value & 0x01) << 8);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            if (m_trace_logger->IsEnabled(TRACE_VCE))
+            {
+                GG_Trace_Entry e = {};
+                e.type = TRACE_VCE;
+                e.vce.event = TRACE_VCE_COLOR_WRITE;
+                e.vce.reg = (u8)(m_color_table_address & 0xFF);
+                e.vce.value = m_color_table[m_color_table_address];
+                m_trace_logger->TraceLog(e);
+            }
+#endif
             m_color_table_address = (m_color_table_address + 1) & 0x01FF;
             break;
         default:

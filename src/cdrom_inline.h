@@ -24,6 +24,7 @@
 #include "scsi_controller.h"
 #include "huc6280.h"
 #include "cdrom_audio.h"
+#include "trace_logger.h"
 
 INLINE void CdRom::Clock(u32 cycles)
 {
@@ -36,6 +37,20 @@ INLINE void CdRom::SetIRQ(u8 value)
         return;
 
     m_active_irqs |= value;
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_trace_logger->IsEnabled(TRACE_CDROM))
+    {
+        GG_Trace_Entry e = {};
+        e.type = TRACE_CDROM;
+        e.cdrom.event = TRACE_CDROM_IRQ;
+        e.cdrom.irq_type = value;
+        e.cdrom.active = m_active_irqs;
+        e.cdrom.enabled = m_enabled_irqs;
+        m_trace_logger->TraceLog(e);
+    }
+#endif
+
     AssertIRQ2();
 }
 
@@ -101,6 +116,17 @@ inline void CdRom::WriteFader(u8 value)
 
     double fader_seconds = m_fader_fast ? CDROM_FAST_FADE : CDROM_SLOW_FADE;
     m_fader_cycles = (u64)(fader_seconds * GG_MASTER_CLOCK_RATE);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_trace_logger->IsEnabled(TRACE_CDROM))
+    {
+        GG_Trace_Entry e = {};
+        e.type = TRACE_CDROM;
+        e.cdrom.event = TRACE_CDROM_FADER;
+        e.cdrom.irq_type = value;
+        m_trace_logger->TraceLog(e);
+    }
+#endif
 
     Debug("CDROM Fader: %02X, enabled: %d, adpcm: %d, fast: %d, cycles: %llu",
           value, m_fader_enabled, m_fader_adpcm, m_fader_fast, m_fader_cycles);

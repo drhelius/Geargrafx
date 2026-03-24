@@ -22,6 +22,7 @@
 
 #include "input.h"
 #include "media.h"
+#include "trace_logger.h"
 
 INLINE void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
 {
@@ -64,14 +65,31 @@ INLINE void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
 
 INLINE u8 Input::ReadK()
 {
+    u8 result;
+
     if (m_mb128.IsConnected() && m_mb128.IsActive())
     {
-        u8 low  = m_mb128.Read() & 0x0F;   // MB128 drives only low nibble
+        u8 low  = m_mb128.Read() & 0x0F;
         u8 high = m_register & 0xF0;
-        return high | low;
+        result = high | low;
+    }
+    else
+    {
+        result = m_register;
     }
 
-    return m_register;
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_trace_logger->IsEnabled(TRACE_INPUT))
+    {
+        GG_Trace_Entry e = {};
+        e.type = TRACE_INPUT;
+        e.input.value = result;
+        e.input.port = (u8)m_selected_pad;
+        m_trace_logger->TraceLog(e);
+    }
+#endif
+
+    return result;
 }
 
 INLINE void Input::WriteO(u8 value)
