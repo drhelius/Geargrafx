@@ -268,7 +268,6 @@ void gui_debug_window_huc6280(void)
                 ImGui::TableNextColumn();
                 ImGui::BeginGroup();
                 ImGui::TextColored(violet, "%s", label); ImGui::SameLine();
-                ImGui::Text(""); ImGui::SameLine(0, 0);
                 EditableRegister8(NULL, NULL, HuC6280RegId_MPR0 + i, memory->GetMpr(i), HuC6280WriteCallback8, core, EditableRegisterFlags_None);
                 ImGui::TextColored(gray, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(memory->GetMpr(i)));
                 get_bank_name(i, memory->GetMpr(i), mpr_name, mpr_tooltip);
