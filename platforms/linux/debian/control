@@ -1,7 +1,7 @@
 Source: geargrafx
 Section: games
 Priority: optional
-Maintainer: Reaper <JohnGrimmReaper@disroot.org>
+Maintainer: Nacho Sanchez <863613+drhelius@users.noreply.github.com>
 Rules-Requires-Root: no
 Build-Depends:
  debhelper-compat (= 13),
