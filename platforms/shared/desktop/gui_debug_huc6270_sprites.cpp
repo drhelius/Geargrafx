@@ -60,6 +60,11 @@ void gui_debug_window_huc6270_sprites(int vdc)
     ImGui::SetNextWindowSize(ImVec2(546, 500), ImGuiCond_FirstUseEver);
     ImGui::Begin(title, show);
 
+    static int selected_sprite[2] = {-1, -1};
+
+    if (ImGui::IsWindowAppearing())
+        selected_sprite[vdc - 1] = -1;
+
     ImGui::PushFont(gui_default_font);
 
     ImGuiIO& io = ImGui::GetIO();
@@ -69,8 +74,6 @@ void gui_debug_window_huc6270_sprites(int vdc)
 
     ImGui::BeginChild("sprites", ImVec2(0, 0.0f), ImGuiChildFlags_Borders);
     bool window_hovered = ImGui::IsWindowHovered();
-
-    static int selected_sprite[2] = {-1, -1};
     int hovered_sprite = -1;
 
     ImVec2 p[64];
@@ -101,10 +104,18 @@ void gui_debug_window_huc6270_sprites(int vdc)
                 selected_sprite[vdc - 1] = (selected_sprite[vdc - 1] == s) ? -1 : s;
         }
 
-        if (is_hovered || selected_sprite[vdc - 1] == s)
+        if (is_hovered && selected_sprite[vdc - 1] != s)
         {
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             draw_list->AddRect(ImVec2(p[s].x, p[s].y), ImVec2(p[s].x + fwidth, p[s].y + fheight), ImColor(cyan), 2.0f, ImDrawFlags_RoundCornersAll, 3.0f);
+        }
+
+        if (selected_sprite[vdc - 1] == s)
+        {
+            float t = (float)(0.5 + 0.5 * sin(ImGui::GetTime() * 4.0));
+            ImVec4 pulse_color = ImVec4(red.x + (white.x - red.x) * t, red.y + (white.y - red.y) * t, red.z + (white.z - red.z) * t, 1.0f);
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            draw_list->AddRect(ImVec2(p[s].x, p[s].y), ImVec2(p[s].x + fwidth, p[s].y + fheight), ImColor(pulse_color), 2.0f, ImDrawFlags_RoundCornersAll, 3.0f);
         }
     }
 
