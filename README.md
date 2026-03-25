@@ -66,7 +66,15 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.2/Geargrafx-1.7.2-mcpb-macos-arm64.mcpb">Geargrafx-1.7.2-mcpb-macos-arm64.mcpb</a></td>
     </tr>
     <tr>
-      <td rowspan="5"><strong>Linux</strong></td>
+      <td rowspan="6"><strong>Linux</strong></td>
+      <td>PPA</td>
+      <td>
+        <code>curl -fsSL https://drhelius.github.io/ppa-geardome/geardome-ppa.gpg | sudo tee /usr/share/keyrings/geardome-archive-keyring.gpg > /dev/null</code><br>
+        <code>echo "deb [arch=amd64,arm64 signed-by=/usr/share/keyrings/geardome-archive-keyring.gpg] https://drhelius.github.io/ppa-geardome noble main" | sudo tee /etc/apt/sources.list.d/geardome.list</code><br>
+        <code>sudo apt update && sudo apt install geargrafx</code>
+      </td>
+    </tr>
+    <tr>
       <td>Desktop Ubuntu 24.04 x64</td>
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.2/Geargrafx-1.7.2-desktop-ubuntu24.04-x64.zip">Geargrafx-1.7.2-desktop-ubuntu24.04-x64.zip</a></td>
     </tr>
