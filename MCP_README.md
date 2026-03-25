@@ -247,7 +247,8 @@ The server exposes tools organized in the following categories:
 - `remove_disassembler_bookmark` - Remove disassembler bookmark
 - `list_disassembler_bookmarks` - List all disassembler bookmarks
 - `get_call_stack` - View function call hierarchy
-- `get_trace_log` - Read trace logger entries (CPU + hardware events). Start the trace logger from the debugger window first
+- `get_trace_log` - Read trace logger entries (CPU + hardware events). Use set_trace_log to start/stop the logger
+- `set_trace_log` - Start or stop the trace logger. Records CPU instructions and hardware events into a ring buffer. Filter event types with optional booleans
 
 ### Breakpoints
 - `set_breakpoint` - Set execution, read, or write breakpoint (supports 5 memory areas: rom_ram, vram, palette, huc6270_reg, huc6260_reg)

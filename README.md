@@ -168,6 +168,15 @@ Geargrafx includes a [Model Context Protocol](https://modelcontextprotocol.io/in
 
 For complete setup instructions and tool documentation, see [MCP_README.md](MCP_README.md).
 
+### Agent Skills
+
+Geargrafx provides [Agent Skills](https://agentskills.io/) that teach AI assistants how to effectively use the emulator for specific tasks:
+
+- **[geargrafx-debugging](skills/geargrafx-debugging/SKILL.md)** — Game debugging, code tracing, breakpoint management, hardware inspection, and reverse engineering.
+- **[geargrafx-romhacking](skills/geargrafx-romhacking/SKILL.md)** — Cheat creation, memory searching, ROM data modification, text translation, and game patching.
+
+Install with `npx skills add drhelius/geargrafx`. See the [skills README](skills/README.md) for details.
+
 ## Build Instructions
 
 ### Windows
