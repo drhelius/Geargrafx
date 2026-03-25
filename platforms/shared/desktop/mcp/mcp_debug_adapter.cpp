@@ -1408,6 +1408,38 @@ json DebugAdapter::LoadMedia(const std::string& file_path)
     return result;
 }
 
+json DebugAdapter::LoadBios(const std::string& file_path, bool syscard)
+{
+    json result;
+
+    if (file_path.empty())
+    {
+        result["error"] = "File path is required";
+        Log("[MCP] LoadBios failed: File path is required");
+        return result;
+    }
+
+    bool success = emu_load_bios(file_path.c_str(), syscard);
+
+    if (!success)
+    {
+        result["error"] = "Failed to load BIOS file";
+        Log("[MCP] LoadBios failed: %s", file_path.c_str());
+        return result;
+    }
+
+    result["success"] = true;
+    result["file_path"] = file_path;
+    result["type"] = syscard ? "syscard" : "gameexpress";
+    result["valid_crc"] = m_core->GetMedia()->IsValidBios(syscard);
+    result["bios_name"] = m_core->GetMedia()->GetBiosName(syscard);
+
+    if (!m_core->GetMedia()->IsValidBios(syscard))
+        result["warning"] = "CRC does not match any known BIOS";
+
+    return result;
+}
+
 json DebugAdapter::LoadSymbols(const std::string& file_path)
 {
     json result;

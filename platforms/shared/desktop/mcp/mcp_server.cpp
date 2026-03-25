@@ -736,6 +736,27 @@ void McpServer::HandleToolsList(const json& request)
     });
 
     tools.push_back({
+        {"name", "load_bios"},
+        {"title", "Load BIOS"},
+        {"description", "Load a BIOS file for CD-ROM emulation. Two types are supported: 'syscard' (System Card, 256KB) and 'gameexpress' (Game Express, 32KB)"},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"file_path", {
+                    {"type", "string"},
+                    {"description", "Absolute path to BIOS file"}
+                }},
+                {"type", {
+                    {"type", "string"},
+                    {"enum", json::array({"syscard", "gameexpress"})},
+                    {"description", "BIOS type: 'syscard' for System Card (256KB) or 'gameexpress' for Game Express (32KB)"}
+                }}
+            }},
+            {"required", json::array({"file_path", "type"})}
+        }}
+    });
+
+    tools.push_back({
         {"name", "load_symbols"},
         {"title", "Load Symbols"},
         {"description", "Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries). Adds to existing symbols"},
@@ -1882,6 +1903,13 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     {
         std::string file_path = arguments["file_path"];
         return m_debugAdapter.LoadMedia(file_path);
+    }
+    else if (normalizedTool == "load_bios")
+    {
+        std::string file_path = arguments["file_path"];
+        std::string type = arguments["type"];
+        bool syscard = (type == "syscard");
+        return m_debugAdapter.LoadBios(file_path, syscard);
     }
     else if (normalizedTool == "load_symbols")
     {

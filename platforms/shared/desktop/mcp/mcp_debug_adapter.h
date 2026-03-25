@@ -140,6 +140,7 @@ public:
     // Media and state management
     json GetMediaInfo();
     json LoadMedia(const std::string& file_path);
+    json LoadBios(const std::string& file_path, bool syscard);
     json ListSaveStateSlots();
     json SelectSaveStateSlot(int slot);
     json SaveState();

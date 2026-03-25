@@ -278,6 +278,7 @@ The server exposes tools organized in the following categories:
 ### Media & State Management
 - `get_media_info` - Get loaded ROM/CD info
 - `load_media` - Load ROM file or CD-ROM image (.pce, .sgx, .hes, .cue, .zip). Automatically loads .sym symbol file if present
+- `load_bios` - Load a BIOS file for CD-ROM emulation. Two types: 'syscard' (System Card, 256KB) and 'gameexpress' (Game Express, 32KB)
 - `load_symbols` - Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries)
 - `list_save_state_slots` - List all 5 save state slots with information (rom name, timestamp, validity)
 - `select_save_state_slot` - Select active save state slot (1-5) for save/load operations
