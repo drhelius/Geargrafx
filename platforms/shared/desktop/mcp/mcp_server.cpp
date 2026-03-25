@@ -1347,7 +1347,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_trace_log"},
         {"title", "Get Trace Log"},
-        {"description", "Read trace logger entries (CPU + hardware events). Must be started from the Trace Logger window first."},
+        {"description", "Read trace logger entries (CPU + hardware events). Use set_trace_log to start/stop the trace logger."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -1363,6 +1363,59 @@ void McpServer::HandleToolsList(const json& request)
                     {"maximum", 1000}
                 }}
             }},
+            {"additionalProperties", false}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "set_trace_log"},
+        {"title", "Set Trace Logger"},
+        {"description", "Start or stop the trace logger. Records CPU instructions and hardware events into a ring buffer readable with get_trace_log. CPU tracing is always on. Filter event types with optional booleans."},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {
+                {"enabled", {
+                    {"type", "boolean"},
+                    {"description", "true to start logging, false to stop. Existing entries are preserved when stopped."}
+                }},
+                {"cpu_irq", {
+                    {"type", "boolean"},
+                    {"description", "Trace IRQ events (default true)"}
+                }},
+                {"vdc", {
+                    {"type", "boolean"},
+                    {"description", "Trace VDC events (default true)"}
+                }},
+                {"input", {
+                    {"type", "boolean"},
+                    {"description", "Trace input reads (default true)"}
+                }},
+                {"timer", {
+                    {"type", "boolean"},
+                    {"description", "Trace timer IRQ events (default true)"}
+                }},
+                {"cdrom", {
+                    {"type", "boolean"},
+                    {"description", "Trace CD-ROM events (default true)"}
+                }},
+                {"psg", {
+                    {"type", "boolean"},
+                    {"description", "Trace PSG audio register writes (default true)"}
+                }},
+                {"adpcm", {
+                    {"type", "boolean"},
+                    {"description", "Trace ADPCM events (default true)"}
+                }},
+                {"vce", {
+                    {"type", "boolean"},
+                    {"description", "Trace VCE events (default true)"}
+                }},
+                {"scsi", {
+                    {"type", "boolean"},
+                    {"description", "Trace SCSI events (default true)"}
+                }}
+            }},
+            {"required", json::array({"enabled"})},
             {"additionalProperties", false}
         }}
     });
@@ -2060,6 +2113,24 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         int start = arguments.value("start", -1);
         int count = arguments.value("count", 100);
         return m_debugAdapter.GetTraceLog(start, count);
+    }
+    else if (normalizedTool == "set_trace_log")
+    {
+        bool enabled = arguments["enabled"];
+        u32 flags = TRACE_FLAG_CPU;
+        if (enabled)
+        {
+            if (arguments.value("cpu_irq", true)) flags |= TRACE_FLAG_CPU_IRQ;
+            if (arguments.value("vdc", true)) flags |= TRACE_FLAG_VDC;
+            if (arguments.value("input", true)) flags |= TRACE_FLAG_INPUT;
+            if (arguments.value("timer", true)) flags |= TRACE_FLAG_TIMER;
+            if (arguments.value("cdrom", true)) flags |= TRACE_FLAG_CDROM;
+            if (arguments.value("psg", true)) flags |= TRACE_FLAG_PSG;
+            if (arguments.value("adpcm", true)) flags |= TRACE_FLAG_ADPCM;
+            if (arguments.value("vce", true)) flags |= TRACE_FLAG_VCE;
+            if (arguments.value("scsi", true)) flags |= TRACE_FLAG_SCSI;
+        }
+        return m_debugAdapter.SetTraceLog(enabled, flags);
     }
     else
     {
