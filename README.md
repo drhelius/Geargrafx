@@ -28,7 +28,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
   </thead>
   <tbody>
     <tr>
-      <td rowspan="4"><strong>Windows</strong></td>
+      <td rowspan="2"><strong>Windows</strong></td>
       <td>Desktop x64</td>
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-desktop-windows-x64.zip">Geargrafx-1.7.3-desktop-windows-x64.zip</a></td>
     </tr>
@@ -37,15 +37,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-desktop-windows-arm64.zip">Geargrafx-1.7.3-desktop-windows-arm64.zip</a></td>
     </tr>
     <tr>
-      <td>MCPB x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-mcpb-windows-x64.mcpb">Geargrafx-1.7.3-mcpb-windows-x64.mcpb</a></td>
-    </tr>
-    <tr>
-      <td>MCPB ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-mcpb-windows-arm64.mcpb">Geargrafx-1.7.3-mcpb-windows-arm64.mcpb</a></td>
-    </tr>
-    <tr>
-      <td rowspan="5"><strong>macOS</strong></td>
+      <td rowspan="3"><strong>macOS</strong></td>
       <td>Homebrew</td>
       <td><code>brew install --cask drhelius/geardome/geargrafx</code></td>
     </tr>
@@ -58,15 +50,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-desktop-macos-intel.zip">Geargrafx-1.7.3-desktop-macos-intel.zip</a></td>
     </tr>
     <tr>
-      <td>MCPB x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-mcpb-macos-x64.mcpb">Geargrafx-1.7.3-mcpb-macos-x64.mcpb</a></td>
-    </tr>
-    <tr>
-      <td>MCPB ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-mcpb-macos-arm64.mcpb">Geargrafx-1.7.3-mcpb-macos-arm64.mcpb</a></td>
-    </tr>
-    <tr>
-      <td rowspan="6"><strong>Linux</strong></td>
+      <td rowspan="4"><strong>Linux</strong></td>
       <td>Ubuntu PPA</td>
       <td><a href="https://github.com/drhelius/ppa-geardome">drhelius/ppa-geardome</a></td>
     </tr>
@@ -81,14 +65,6 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     <tr>
       <td>Desktop Ubuntu 24.04 ARM64</td>
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-desktop-ubuntu24.04-arm64.zip">Geargrafx-1.7.3-desktop-ubuntu24.04-arm64.zip</a></td>
-    </tr>
-    <tr>
-      <td>MCPB x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-mcpb-linux-x64.mcpb">Geargrafx-1.7.3-mcpb-linux-x64.mcpb</a></td>
-    </tr>
-    <tr>
-      <td>MCPB ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-mcpb-linux-arm64.mcpb">Geargrafx-1.7.3-mcpb-linux-arm64.mcpb</a></td>
     </tr>
     <tr>
       <td><strong>RetroArch</strong></td>
