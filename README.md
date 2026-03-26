@@ -67,6 +67,11 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
       <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.3/Geargrafx-1.7.3-desktop-ubuntu24.04-arm64.zip">Geargrafx-1.7.3-desktop-ubuntu24.04-arm64.zip</a></td>
     </tr>
     <tr>
+      <td><strong>MCPB</strong></td>
+      <td>All platforms</td>
+      <td><a href="MCP_README.md">MCP Readme</a></td>
+    </tr>
+    <tr>
       <td><strong>RetroArch</strong></td>
       <td>All platforms</td>
       <td><a href="https://docs.libretro.com/library/geargrafx/">Libretro core documentation</a></td>
