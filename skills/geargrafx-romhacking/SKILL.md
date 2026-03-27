@@ -12,9 +12,9 @@ description: >-
   or PC Engine games. Also use for any ROM hacking, memory poking, or game
   modification task involving Geargrafx.
 compatibility: >-
-  Requires the Geargrafx emulator running as an MCP server (stdio or HTTP
-  transport). Configure your AI client to connect to Geargrafx via MCP before
-  using this skill.
+  Requires the Geargrafx MCP server. Before installing or configuring, call
+  debug_get_status to check if the server is already connected. If it responds,
+  the server is ready — skip setup entirely.
 metadata:
   author: drhelius
   version: "1.0"
@@ -26,9 +26,11 @@ metadata:
 
 Hack, modify, and translate TurboGrafx-16, PC Engine, and SuperGrafx ROMs using the Geargrafx emulator as an MCP server. Search memory for game variables, create cheats, find text strings for translation, locate sprite data, and reverse engineer data structures — all through MCP tool calls. Use save states as checkpoints and fast forward to reach specific game states.
 
-## MCP Server Requirement
+## MCP Server Prerequisite
 
-This skill requires the **Geargrafx MCP server** to be installed and connected. All ROM hacking operations are performed through Geargrafx MCP tools. Verify connectivity by calling `debug_get_status` — if it returns a response, the server is active.
+**IMPORTANT — Check before installing:** Before attempting any installation or configuration, you MUST first verify if the Geargrafx MCP server is already connected in your current session. Call `debug_get_status` — if it returns a valid response, the server is active and ready.
+
+Only if the tool is not available or the call fails, you need to help install and configure the Geargrafx MCP server:
 
 ### Installing Geargrafx
 
@@ -44,26 +46,7 @@ Alternatively, download from [GitHub Releases](https://github.com/drhelius/Gearg
 
 ### Connecting as MCP Server
 
-Geargrafx runs as an MCP server using STDIO transport (recommended). Add `--headless` on headless machines (no display required).
-
-**VS Code** — create `.vscode/mcp.json`:
-```json
-{
-  "servers": {
-    "geargrafx": {
-      "command": "/path/to/geargrafx",
-      "args": ["--mcp-stdio"]
-    }
-  }
-}
-```
-
-**Claude Code:**
-```bash
-claude mcp add --transport stdio geargrafx -- /path/to/geargrafx --mcp-stdio
-```
-
-**Claude Desktop** — edit config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
+Configure your AI client to run Geargrafx as an MCP server via STDIO transport. Example for Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
@@ -74,13 +57,7 @@ claude mcp add --transport stdio geargrafx -- /path/to/geargrafx --mcp-stdio
   }
 }
 ```
-
-**Headless (no display)** — add `--headless` for servers or CI environments:
-```json
-"args": ["--headless", "--mcp-stdio"]
-```
-
-Replace `/path/to/geargrafx` with the actual binary path from the install script.
+Replace `/path/to/geargrafx` with the actual binary path from the install script. Add `--headless` before `--mcp-stdio` on headless machines.
 
 ### Hardware Documentation (MCP Resources)
 
