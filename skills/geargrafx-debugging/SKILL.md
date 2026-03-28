@@ -24,7 +24,7 @@ metadata:
 
 ## Overview
 
-Debug TurboGrafx-16, PC Engine, and SuperGrafx games using the Geargrafx emulator as an MCP server. Control execution (pause, step, breakpoints), inspect the HuC6280 CPU and hardware (HuC6270 VDC, HuC6260 VCE, HuC6202 VPC, PSG), read/write memory, disassemble code, trace instructions, and capture screenshots — all through MCP tool calls. The emulator also serves hardware documentation as MCP resources.
+Debug TurboGrafx-16, PC Engine, and SuperGrafx games using the Geargrafx emulator as an MCP server. Control execution (pause, step, breakpoints), inspect the HuC6280 CPU and hardware (HuC6270 VDC, HuC6260 VCE, HuC6202 VPC, PSG), read/write memory, disassemble code, trace instructions, and capture screenshots — all through MCP tool calls. Hardware documentation is available in the [references/](references/) directory.
 
 ## MCP Server Prerequisite
 
@@ -59,19 +59,19 @@ Configure your AI client to run Geargrafx as an MCP server via STDIO transport. 
 ```
 Replace `/path/to/geargrafx` with the actual binary path from the install script. Add `--headless` before `--mcp-stdio` on headless machines.
 
-### Hardware Documentation (MCP Resources)
+### Hardware Documentation (References)
 
-The Geargrafx MCP server provides built-in PC Engine hardware documentation as MCP resources. Load them into your context when investigating specific hardware.
+PC Engine hardware documentation is available in the [references/](references/) directory. Load them into your context when investigating specific hardware.
 
-| Resource | URI | Load when... |
+| Reference | File | Load when... |
 |---|---|---|
-| HuC6280 CPU | `geargrafx://hardware/huc6280_cpu` | CPU registers, MPR mapping, timer, interrupts, I/O, speed modes |
-| Instruction Set | `geargrafx://hardware/huc6280_instructions` | Opcode reference, addressing modes, cycle counts |
-| PSG | `geargrafx://hardware/huc6280_psg` | 6-channel sound: waveform, noise, LFO, volume, DDA |
-| HuC6270 VDC | `geargrafx://hardware/huc6270_vdc` | Video Display Controller: BAT, sprites, scroll, DMA, interrupts |
-| HuC6260 VCE | `geargrafx://hardware/huc6260_vce` | Video Color Encoder: palette, dot clock, color format |
-| HuC6202 VPC | `geargrafx://hardware/huc6202_vpc` | Video Priority Controller (SuperGrafx): window, priority |
-| Memory Map | `geargrafx://hardware/memory_map` | Full memory map: MPR pages, I/O, WRAM, VRAM, ROM banking |
+| HuC6280 CPU | [references/huc6280_cpu.md](references/huc6280_cpu.md) | CPU registers, MPR mapping, timer, interrupts, I/O, speed modes |
+| Instruction Set | [references/huc6280_instructions.md](references/huc6280_instructions.md) | Opcode reference, addressing modes, cycle counts |
+| PSG | [references/huc6280_psg.md](references/huc6280_psg.md) | 6-channel sound: waveform, noise, LFO, volume, DDA |
+| HuC6270 VDC | [references/huc6270_vdc.md](references/huc6270_vdc.md) | Video Display Controller: BAT, sprites, scroll, DMA, interrupts |
+| HuC6260 VCE | [references/huc6260_vce.md](references/huc6260_vce.md) | Video Color Encoder: palette, dot clock, color format |
+| HuC6202 VPC | [references/huc6202_vpc.md](references/huc6202_vpc.md) | Video Priority Controller (SuperGrafx): window, priority |
+| Memory Map | [references/memory_map.md](references/memory_map.md) | Full memory map: MPR pages, I/O, WRAM, VRAM, ROM banking |
 
 ---
 

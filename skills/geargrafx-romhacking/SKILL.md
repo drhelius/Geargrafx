@@ -59,18 +59,19 @@ Configure your AI client to run Geargrafx as an MCP server via STDIO transport. 
 ```
 Replace `/path/to/geargrafx` with the actual binary path from the install script. Add `--headless` before `--mcp-stdio` on headless machines.
 
-### Hardware Documentation (MCP Resources)
+### Hardware Documentation (References)
 
-The Geargrafx MCP server provides built-in PC Engine hardware documentation as MCP resources. Load them into your context when you need data formats, memory layout, or hardware details.
+PC Engine hardware documentation is available in the [references/](references/) directory. Load them into your context when you need data formats, memory layout, or hardware details.
 
-| Resource | URI | Load when... |
+| Reference | File | Load when... |
 |---|---|---|
-| HuC6280 CPU | `geargrafx://hardware/huc6280_cpu` | CPU registers, MPR mapping, timer, I/O |
-| Instruction Set | `geargrafx://hardware/huc6280_instructions` | Opcode reference, addressing modes |
-| PSG | `geargrafx://hardware/huc6280_psg` | 6-channel sound: waveform, noise, LFO, DDA |
-| HuC6270 VDC | `geargrafx://hardware/huc6270_vdc` | BAT, sprites, scroll, DMA, VRAM layout |
-| HuC6260 VCE | `geargrafx://hardware/huc6260_vce` | Palette, dot clock, color format |
-| Memory Map | `geargrafx://hardware/memory_map` | Full memory map: MPR pages, I/O, WRAM, VRAM, ROM banking |
+| HuC6280 CPU | [references/huc6280_cpu.md](references/huc6280_cpu.md) | CPU registers, MPR mapping, timer, I/O, opcode reference |
+| Instruction Set | [references/huc6280_instructions.md](references/huc6280_instructions.md) | Opcode reference, addressing modes, cycle counts |
+| PSG | [references/huc6280_psg.md](references/huc6280_psg.md) | 6-channel sound: waveform, noise, LFO, DDA |
+| HuC6270 VDC | [references/huc6270_vdc.md](references/huc6270_vdc.md) | BAT, sprites, scroll, DMA, VRAM layout |
+| HuC6260 VCE | [references/huc6260_vce.md](references/huc6260_vce.md) | Palette, dot clock, color format |
+| HuC6202 VPC | [references/huc6202_vpc.md](references/huc6202_vpc.md) | Video Priority Controller (SuperGrafx): window, priority |
+| Memory Map | [references/memory_map.md](references/memory_map.md) | Full memory map: MPR pages, I/O, WRAM, VRAM, ROM banking |
 
 ---
 
@@ -186,7 +187,7 @@ To find text strings for translation or modification:
 5. Set read breakpoints on sprite data addresses to find the rendering code
 6. `get_screenshot` before/after modifications to see visual changes
 
-Reference the VDC hardware docs (`geargrafx://hardware/huc6270_vdc`) for BAT and sprite format details.
+Reference the VDC hardware docs ([references/huc6270_vdc.md](references/huc6270_vdc.md)) for BAT and sprite format details.
 
 ### Data Tables and Structures
 
