@@ -483,8 +483,8 @@ void config_read(void)
         config_input_gamepad[i].gamepad_IV = read_int(input_group, "GamepadIV", SDL_GAMEPAD_BUTTON_NORTH);
         config_input_gamepad[i].gamepad_V = read_int(input_group, "GamepadV", SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
         config_input_gamepad[i].gamepad_VI = read_int(input_group, "GamepadVI", SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
-        config_input_gamepad[i].gamepad_toggle_turbo_I = read_int(input_group, "GamepadToogleTurboI", SDL_GAMEPAD_BUTTON_LEFT_STICK);
-        config_input_gamepad[i].gamepad_toggle_turbo_II = read_int(input_group, "GamepadToogleTurboII", SDL_GAMEPAD_BUTTON_RIGHT_STICK);
+        config_input_gamepad[i].gamepad_toggle_turbo_I = read_int(input_group, "GamepadToogleTurboI", SDL_GAMEPAD_BUTTON_RIGHT_STICK);
+        config_input_gamepad[i].gamepad_toggle_turbo_II = read_int(input_group, "GamepadToogleTurboII", SDL_GAMEPAD_BUTTON_LEFT_STICK);
     }
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
