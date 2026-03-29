@@ -48,7 +48,7 @@ INLINE u16 HuC6270::Clock()
     {
         assert(m_line_buffer_index < HUC6270_MAX_BACKGROUND_WIDTH);
         pixel = m_line_buffer[m_line_buffer_index];
-        if ((pixel & 0x10F) == 0)
+        if ((pixel & 0x0F) == 0)
             pixel = 0;
         m_line_buffer_index++;
     }
