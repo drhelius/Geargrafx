@@ -40,7 +40,7 @@ Run the bundled install script (macOS/Linux):
 bash scripts/install.sh
 ```
 
-This installs Geargrafx via Homebrew on macOS or downloads the latest release on Linux. It prints the binary path on completion. You can also set `GEARGRAFX_INSTALL_DIR` to control where the binary goes (default: `~/.local/bin`).
+This installs Geargrafx via Homebrew on macOS or downloads the latest release on Linux. It prints the binary path on completion. You can also set `INSTALL_DIR` to control where the binary goes (default: `~/.local/bin`).
 
 Alternatively, download from [GitHub Releases](https://github.com/drhelius/Geargrafx/releases/latest) or install with `brew install --cask drhelius/geardome/geargrafx` on macOS.
 
