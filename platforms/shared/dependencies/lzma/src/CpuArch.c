@@ -835,8 +835,13 @@ static unsigned long MY_getauxval(int aux)
 #endif
 // MY_HWCAP_CHECK_FUNC (ASIMD)
 #elif defined(MY_CPU_ARM)
+  #if defined(AT_HWCAP2)
   #define MY_HWCAP_CHECK_FUNC(name) \
   BoolInt CPU_IsSupported_ ## name(void) { return (MY_getauxval(AT_HWCAP2) & (HWCAP2_ ## name)); }
+  #else
+  #define MY_HWCAP_CHECK_FUNC(name) \
+  BoolInt CPU_IsSupported_ ## name(void) { return 0; }
+  #endif
   MY_HWCAP_CHECK_FUNC_2(NEON, NEON)
 #endif
 
