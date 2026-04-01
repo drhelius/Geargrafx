@@ -149,7 +149,7 @@ private:
     uint8_t* m_mem_data;
     int m_mem_size;
     int m_mem_base_addr;
-    char m_hex_addr_format[8];
+    char m_hex_addr_format[16];
     int m_hex_addr_digits;
     int m_mem_word;
     char m_goto_address[7];

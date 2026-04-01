@@ -96,7 +96,7 @@ void MemEditor::Reset(const char* title, uint8_t* mem_data, int mem_size, int ba
     while (size >>= 4)
         m_hex_addr_digits++;
 
-    snprintf(m_hex_addr_format, 8, "%%0%dX", m_hex_addr_digits);
+    snprintf(m_hex_addr_format, sizeof(m_hex_addr_format), "%%0%dX", m_hex_addr_digits);
 
     m_search_data = new uint8_t[m_mem_size * m_mem_word];
     memcpy(m_search_data, m_mem_data, m_mem_size * m_mem_word);
@@ -994,7 +994,7 @@ void MemEditor::SearchCapture()
 {
     if (!IsValidPointer(m_mem_data) || !IsValidPointer(m_search_data) || m_mem_size <= 0)
         return;
-    memcpy(m_search_data, m_mem_data, m_mem_size);
+    memcpy(m_search_data, m_mem_data, m_mem_size * m_mem_word);
 }
 
 int MemEditor::PerformSearch(int op, int compare_type, int compare_value, int data_type)
@@ -1837,7 +1837,6 @@ void MemEditor::FindBytesWindow()
     ImGui::SetNextWindowSize(ImVec2(300, 300), ImGuiCond_FirstUseEver);
     char window_title[64];
     snprintf(window_title, 64, "%s Find Bytes", m_title);
-
     ImGui::Begin(window_title, &m_find_bytes_window);
 
     ImGui::Text("Hex Bytes:");
