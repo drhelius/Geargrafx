@@ -78,6 +78,7 @@ static bool lowpass_speed_716 = true;
 static bool lowpass_speed_108 = true;
 
 static bool input_updated = false;
+static bool turbo_toggle_hotkey = false;
 static bool libretro_supports_bitmasks;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
 static int joypad_old[MAX_PADS][MAX_BUTTONS];
@@ -632,12 +633,18 @@ static void update_input(void)
         {
             if (i > 11)
             {
-                GG_Keys key = (i == 12) ? GG_KEY_II : GG_KEY_I;
-                if (joypad_current[j][i] && !joypad_old[j][i])
+                if (turbo_toggle_hotkey && joypad_current[j][i] && !joypad_old[j][i])
                 {
+                    GG_Keys key = (i == 12) ? GG_KEY_II : GG_KEY_I;
                     bool turbo = core->GetInput()->IsTurboEnabled((GG_Controllers)j, key);
-                    core->GetInput()->EnableTurbo((GG_Controllers)j, key, !turbo);
-                    log_cb(RETRO_LOG_DEBUG, "Toggling Turbo %d for controller %d: %d\n", key, j, !turbo);
+
+                    char option_key[64];
+                    snprintf(option_key, sizeof(option_key), "geargrafx_turbo_p%d_%s", j + 1, (key == GG_KEY_I) ? "i" : "ii");
+
+                    struct retro_variable var = {};
+                    var.key = option_key;
+                    var.value = turbo ? "Disabled" : "Enabled";
+                    environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
                 }
 
                 continue;
@@ -1012,6 +1019,14 @@ static void check_variables(void)
             volume = 100;
         float volume_f = (float)volume / 100.0f;
         core->GetAudio()->SetADPCMVolume(volume_f);
+    }
+
+    var.key = "geargrafx_turbo_toggle_hotkey";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        turbo_toggle_hotkey = (strcmp(var.value, "Enabled") == 0);
     }
 
     for (int i = 0; i < 5; i++)
