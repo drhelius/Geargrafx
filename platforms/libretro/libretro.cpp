@@ -477,7 +477,16 @@ static void load_bios(void)
     log_cb(RETRO_LOG_INFO, "Loading BIOS: %s\n", selected_bios);
 
     snprintf(bios_path, 4113, "%s%c%s", retro_system_directory, slash, selected_bios);
-    core->LoadBios(bios_path, true);
+    if (!core->LoadBios(bios_path, true))
+    {
+        struct retro_message msg = {};
+        char msg_buf[128];
+        snprintf(msg_buf, sizeof(msg_buf), "CD-ROM BIOS not found: %s", selected_bios);
+        msg.msg = msg_buf;
+        msg.frames = 360;
+        environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+        log_cb(RETRO_LOG_ERROR, "%s\n", msg_buf);
+    }
 
     snprintf(bios_path, 4113, "%s%c%s", retro_system_directory, slash, gameexpress);
     core->LoadBios(bios_path, false);
@@ -645,6 +654,14 @@ static void update_input(void)
                     var.key = option_key;
                     var.value = turbo ? "Disabled" : "Enabled";
                     environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
+
+                    struct retro_message msg = {};
+                    char msg_buf[64];
+                    snprintf(msg_buf, sizeof(msg_buf), "P%d Turbo %s %s", j + 1,
+                        (key == GG_KEY_I) ? "I" : "II", turbo ? "OFF" : "ON");
+                    msg.msg = msg_buf;
+                    msg.frames = 180;
+                    environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
                 }
 
                 continue;
