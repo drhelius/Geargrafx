@@ -77,7 +77,6 @@ static bool lowpass_speed_536 = false;
 static bool lowpass_speed_716 = true;
 static bool lowpass_speed_108 = true;
 
-static bool input_updated = false;
 static bool turbo_toggle_hotkey = false;
 static bool libretro_supports_bitmasks;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
@@ -107,7 +106,8 @@ static void load_bios(void);
 static void save_mb128(void);
 static void load_mb128(void);
 static void set_controller_info(void);
-static void update_input(void);
+static void poll_input(void);
+static void apply_input(void);
 static bool categories_supported = false;
 static void check_variables(void);
 
@@ -196,7 +196,7 @@ void retro_init(void)
     log_cb(RETRO_LOG_INFO, "%s (%s) libretro\n", GG_TITLE, GG_VERSION);
 
     core = new GeargrafxCore();
-    core->Init(update_input, GG_PIXEL_RGB565);
+    core->Init(apply_input, GG_PIXEL_RGB565);
     core->GetRuntimeInfo(runtime_info);
 
     frame_buffer = new u8[2048 * 512 * 2];
@@ -292,12 +292,10 @@ void retro_run(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &core_options_updated) && core_options_updated)
         check_variables();
 
+    poll_input();
+
     audio_sample_count = 0;
     core->RunToVBlank(frame_buffer, audio_buf, &audio_sample_count);
-
-    if (!input_updated)
-        update_input();
-    input_updated = false;
 
     core->GetRuntimeInfo(runtime_info);
 
@@ -558,12 +556,8 @@ static void set_controller_info(void)
     environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, joypad);
 }
 
-static void update_input(void)
+static void poll_input(void)
 {
-    if (input_updated)
-        return;
-    input_updated = true;
-
     int16_t joypad_bits[MAX_PADS];
 
     input_poll_cb();
@@ -637,36 +631,39 @@ static void update_input(void)
         joypad_current[j][13] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_R2);
     }
 
+    // Handle turbo toggle hotkeys
     for (int j = 0; j < MAX_PADS; j++)
-        for (int i = 0; i < MAX_BUTTONS; i++)
+        for (int i = 12; i < MAX_BUTTONS; i++)
         {
-            if (i > 11)
+            if (turbo_toggle_hotkey && joypad_current[j][i] && !joypad_old[j][i])
             {
-                if (turbo_toggle_hotkey && joypad_current[j][i] && !joypad_old[j][i])
-                {
-                    GG_Keys key = (i == 12) ? GG_KEY_II : GG_KEY_I;
-                    bool turbo = core->GetInput()->IsTurboEnabled((GG_Controllers)j, key);
+                GG_Keys key = (i == 12) ? GG_KEY_II : GG_KEY_I;
+                bool turbo = core->GetInput()->IsTurboEnabled((GG_Controllers)j, key);
 
-                    char option_key[64];
-                    snprintf(option_key, sizeof(option_key), "geargrafx_turbo_p%d_%s", j + 1, (key == GG_KEY_I) ? "i" : "ii");
+                char option_key[64];
+                snprintf(option_key, sizeof(option_key), "geargrafx_turbo_p%d_%s", j + 1, (key == GG_KEY_I) ? "i" : "ii");
 
-                    struct retro_variable var = {};
-                    var.key = option_key;
-                    var.value = turbo ? "Disabled" : "Enabled";
-                    environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
+                struct retro_variable var = {};
+                var.key = option_key;
+                var.value = turbo ? "Disabled" : "Enabled";
+                environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
 
-                    struct retro_message msg = {};
-                    char msg_buf[64];
-                    snprintf(msg_buf, sizeof(msg_buf), "P%d Turbo %s %s", j + 1,
-                        (key == GG_KEY_I) ? "I" : "II", turbo ? "OFF" : "ON");
-                    msg.msg = msg_buf;
-                    msg.frames = 180;
-                    environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
-                }
-
-                continue;
+                struct retro_message msg = {};
+                char msg_buf[64];
+                snprintf(msg_buf, sizeof(msg_buf), "P%d Turbo %s %s", j + 1,
+                    (key == GG_KEY_I) ? "I" : "II", turbo ? "OFF" : "ON");
+                msg.msg = msg_buf;
+                msg.frames = 180;
+                environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
             }
+        }
+}
 
+static void apply_input(void)
+{
+    for (int j = 0; j < MAX_PADS; j++)
+        for (int i = 0; i < 12; i++)
+        {
             if (joypad_current[j][i])
                 core->KeyPressed((GG_Controllers)j, keymap[i]);
             else

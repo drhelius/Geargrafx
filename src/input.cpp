@@ -121,6 +121,7 @@ void Input::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_register), sizeof(m_register));
     stream.write(reinterpret_cast<const char*> (&m_selected_pad), sizeof(m_selected_pad));
     stream.write(reinterpret_cast<const char*> (&m_selected_extra_buttons), sizeof(m_selected_extra_buttons));
+    stream.write(reinterpret_cast<const char*> (m_gamepads), sizeof(m_gamepads));
 
     bool mb128_included = m_mb128.IsConnected();
     stream.write(reinterpret_cast<const char*> (&mb128_included), sizeof(mb128_included));
@@ -129,7 +130,7 @@ void Input::SaveState(std::ostream& stream)
         m_mb128.SaveState(stream);
 }
 
-void Input::LoadState(std::istream& stream)
+void Input::LoadState(std::istream& stream, int version)
 {
     using namespace std;
     stream.read(reinterpret_cast<char*> (&m_clr), sizeof(m_clr));
@@ -138,8 +139,13 @@ void Input::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_selected_pad), sizeof(m_selected_pad));
     stream.read(reinterpret_cast<char*> (&m_selected_extra_buttons), sizeof(m_selected_extra_buttons));
 
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-        m_gamepads[i] = 0xFFFF;
+    if (version >= 25)
+        stream.read(reinterpret_cast<char*> (m_gamepads), sizeof(m_gamepads));
+    else
+    {
+        for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+            m_gamepads[i] = 0xFFFF;
+    }
 
     bool mb128_included = false;
     stream.read(reinterpret_cast<char*> (&mb128_included), sizeof(mb128_included));
