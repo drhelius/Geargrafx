@@ -112,7 +112,7 @@ INLINE void HuC6270::RCRIRQ()
                 e.type = TRACE_VDC;
                 e.vdc.event = TRACE_VDC_SCANLINE_IRQ;
                 e.vdc.value = m_register[HUC6270_REG_RCR];
-                e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+                e.vdc.chip = m_chip_id;
                 m_trace_logger->TraceLog(e);
             }
 #endif
@@ -133,7 +133,7 @@ INLINE void HuC6270::OverflowIRQ()
             GG_Trace_Entry e = {};
             e.type = TRACE_VDC;
             e.vdc.event = TRACE_VDC_OVERFLOW_IRQ;
-            e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+            e.vdc.chip = m_chip_id;
             m_trace_logger->TraceLog(e);
         }
 #endif
@@ -154,7 +154,7 @@ INLINE void HuC6270::SpriteCollisionIRQ()
             GG_Trace_Entry e = {};
             e.type = TRACE_VDC;
             e.vdc.event = TRACE_VDC_SPRITE_COLLISION_IRQ;
-            e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+            e.vdc.chip = m_chip_id;
             m_trace_logger->TraceLog(e);
         }
 #endif

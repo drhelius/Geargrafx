@@ -27,6 +27,7 @@ HuC6270::HuC6270(HuC6280* huC6280)
     m_huc6280 = huC6280;
     InitPointer(m_huc6260);
     InitPointer(m_input_pump_fn);
+    m_chip_id = 0;
     InitPointer(m_trace_logger);
     m_state.AR = &m_address_register;
     m_state.SR = &m_status_register;
@@ -44,11 +45,12 @@ HuC6270::~HuC6270()
 {
 }
 
-void HuC6270::Init(HuC6260* huC6260, HuC6202* huC6202, GG_Input_Pump_Fn input_pump_fn)
+void HuC6270::Init(HuC6260* huC6260, HuC6202* huC6202, GG_Input_Pump_Fn input_pump_fn, int chip_id)
 {
     m_huc6260 = huC6260;
     m_huc6202 = huC6202;
     m_input_pump_fn = input_pump_fn;
+    m_chip_id = chip_id;
     Reset();
 }
 
@@ -454,7 +456,7 @@ void HuC6270::SATTransfer()
                     GG_Trace_Entry e = {};
                     e.type = TRACE_VDC;
                     e.vdc.event = TRACE_VDC_SATB_DMA_END_IRQ;
-                    e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+                    e.vdc.chip = m_chip_id;
                     m_trace_logger->TraceLog(e);
                 }
 #endif
@@ -498,7 +500,7 @@ void HuC6270::VRAMTransfer()
                     GG_Trace_Entry e = {};
                     e.type = TRACE_VDC;
                     e.vdc.event = TRACE_VDC_VRAM_DMA_END_IRQ;
-                    e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+                    e.vdc.chip = m_chip_id;
                     m_trace_logger->TraceLog(e);
                 }
 #endif
@@ -591,7 +593,7 @@ void HuC6270::VBlankIRQ()
             GG_Trace_Entry e = {};
             e.type = TRACE_VDC;
             e.vdc.event = TRACE_VDC_VBLANK_IRQ;
-            e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+            e.vdc.chip = m_chip_id;
             m_trace_logger->TraceLog(e);
         }
 #endif
@@ -609,7 +611,7 @@ void HuC6270::VBlankIRQ()
             e.type = TRACE_VDC;
             e.vdc.event = TRACE_VDC_SATB_DMA_START;
             e.vdc.value = m_register[HUC6270_REG_DVSSR];
-            e.vdc.chip = (m_input_pump_fn != NULL) ? 0 : 1;
+            e.vdc.chip = m_chip_id;
             m_trace_logger->TraceLog(e);
         }
 #endif
