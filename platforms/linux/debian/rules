@@ -22,6 +22,12 @@ override_dh_install:
 	dh_install
 	install -Dm644 platforms/shared/desktop/mcp/icon.png \
 		debian/geargrafx/usr/share/icons/hicolor/128x128/apps/geargrafx.png
+	install -dm755 debian/geargrafx/usr/lib/geargrafx/mcp/resources/hardware
+	install -m644 platforms/shared/desktop/mcp/resources/hardware/*.md \
+		debian/geargrafx/usr/lib/geargrafx/mcp/resources/hardware/
+	install -m644 platforms/shared/desktop/mcp/resources/hardware/toc.json \
+		debian/geargrafx/usr/lib/geargrafx/mcp/resources/hardware/toc.json
+	ln -s /usr/lib/geargrafx/geargrafx debian/geargrafx/usr/games/geargrafx
 
 override_dh_shlibdeps:
 	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info

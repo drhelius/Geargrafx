@@ -1,2 +1,3 @@
-platforms/linux/geargrafx usr/games/
+platforms/linux/geargrafx usr/lib/geargrafx/
+platforms/shared/gamecontrollerdb.txt usr/lib/geargrafx/
 debian/geargrafx.desktop usr/share/applications/
