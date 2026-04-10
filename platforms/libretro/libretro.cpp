@@ -297,6 +297,8 @@ void retro_run(void)
     audio_sample_count = 0;
     core->RunToVBlank(frame_buffer, audio_buf, &audio_sample_count);
 
+    apply_input();
+
     core->GetRuntimeInfo(runtime_info);
 
     if ((runtime_info.screen_width != current_screen_width) ||
