@@ -645,7 +645,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         return false;
     }
 
-    GG_SaveState_Header_Libretro header;
+    GG_SaveState_Header_Libretro header = {};
     bool is_desktop_savestate = false;
 
     stream.seekg(0, ios::end);
