@@ -605,6 +605,11 @@ void emu_set_avenue_pad_3_button(GG_Controllers controller, GG_Keys button)
     geargrafx->GetInput()->SetAvenuePad3Button(controller, button);
 }
 
+void emu_set_mouse_delta(int x, int y)
+{
+    geargrafx->GetInput()->SetMouseDelta(x, y);
+}
+
 void emu_set_turbo(GG_Controllers controller, GG_Keys button, bool enabled)
 {
     geargrafx->GetInput()->EnableTurbo(controller, button, enabled);

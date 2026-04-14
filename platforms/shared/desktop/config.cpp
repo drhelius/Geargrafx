@@ -154,6 +154,7 @@ static void set_defaults(void)
     config_hotkeys[config_HotkeyIndex_SelectSlot3] = make_hotkey(SDL_SCANCODE_3, SDL_KMOD_CTRL);
     config_hotkeys[config_HotkeyIndex_SelectSlot4] = make_hotkey(SDL_SCANCODE_4, SDL_KMOD_CTRL);
     config_hotkeys[config_HotkeyIndex_SelectSlot5] = make_hotkey(SDL_SCANCODE_5, SDL_KMOD_CTRL);
+    config_hotkeys[config_HotkeyIndex_CaptureMouse] = make_hotkey(SDL_SCANCODE_F1, SDL_KMOD_NONE);
 }
 
 void config_init(void)
@@ -399,6 +400,8 @@ void config_read(void)
     config_audio.buffer_count = read_int("Audio", "BufferCount", 3);
 
     config_input.turbo_tap = read_bool("Input", "TurboTap", false);
+    config_emulator.capture_mouse = read_bool("Input", "CaptureMouse", false);
+    config_emulator.mouse_sensitivity = CLAMP(read_int("Input", "MouseSensitivity", 5), 1, 15);
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -687,6 +690,8 @@ void config_write(void)
     write_int("Audio", "BufferCount", config_audio.buffer_count);
 
     write_bool("Input", "TurboTap", config_input.turbo_tap);
+    write_bool("Input", "CaptureMouse", config_emulator.capture_mouse);
+    write_int("Input", "MouseSensitivity", config_emulator.mouse_sensitivity);
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {

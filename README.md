@@ -192,7 +192,7 @@ cd platforms/linux
 make
 ```
 
-For older Ubuntu versions (22.04, 24.04), you need to build SDL3 from source first. Use the following commands to build both SDL3 and Gearlynx:
+For older Ubuntu versions (22.04, 24.04), you need to build SDL3 from source first. Use the following commands to build both SDL3 and Geargrafx:
 
 ``` shell
 sudo apt install build-essential cmake \

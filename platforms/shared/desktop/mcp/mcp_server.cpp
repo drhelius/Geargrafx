@@ -861,7 +861,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "controller_button"},
         {"title", "Controller Button"},
-        {"description", "Control a button on a controller (player 1-5). Use action 'press' to hold the button down, 'release' to let it go, or 'press_and_release' to simulate a quick button tap (presses and automatically releases after a few frames). Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI"},
+        {"description", "Control input on a controller (player 1-5). Use action 'press' to hold the input down, 'release' to let it go, or 'press_and_release' to simulate a quick tap. For pads, buttons are: up, down, left, right, select, run, I, II, III, IV, V, VI. For mouse controllers, up/down/left/right actuate relative mouse movement, press keeps moving until release, press_and_release performs a short step, and select/run/I/II actuate the mouse's four buttons."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -889,7 +889,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "controller_set_type"},
         {"title", "Controller Set Type"},
-        {"description", "Set controller type for a player (1-5). Types: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)"},
+        {"description", "Set controller type for a player (1-5). Types: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons), mouse"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -902,7 +902,7 @@ void McpServer::HandleToolsList(const json& request)
                 {"type", {
                     {"type", "string"},
                     {"description", "Controller type"},
-                    {"enum", json::array({"standard", "avenue_pad_3", "avenue_pad_6"})}
+                    {"enum", json::array({"standard", "avenue_pad_3", "avenue_pad_6", "mouse"})}
                 }}
             }},
             {"required", json::array({"player", "type"})}
@@ -928,7 +928,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "controller_get_type"},
         {"title", "Controller Get Type"},
-        {"description", "Get the current controller type for a player (1-5). Returns: standard, avenue_pad_3, or avenue_pad_6"},
+        {"description", "Get the current controller type for a player (1-5). Returns: standard, avenue_pad_3, avenue_pad_6, or mouse"},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {

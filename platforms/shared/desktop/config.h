@@ -72,6 +72,8 @@ struct config_Emulator
     int cdrom_type = 0;
     bool preload_cdrom = false;
     int mcp_tcp_port = 7777;
+    bool capture_mouse = false;
+    int mouse_sensitivity = 5;
 };
 
 struct config_Video
@@ -186,6 +188,7 @@ enum config_HotkeyIndex
     config_HotkeyIndex_SelectSlot3,
     config_HotkeyIndex_SelectSlot4,
     config_HotkeyIndex_SelectSlot5,
+    config_HotkeyIndex_CaptureMouse,
     config_HotkeyIndex_COUNT
 };
 

@@ -384,6 +384,8 @@ static void handle_mouse_cursor(void)
     }
     else
         ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+
+    SDL_SetWindowRelativeMouseMode(application_sdl_window, config_emulator.capture_mouse);
 }
 
 static void handle_menu(void)
@@ -438,6 +440,9 @@ static void sdl_events(void)
 
             if (!gui_in_use && !file_dialog_active)
                 events_shortcuts(&event);
+
+            if (!file_dialog_active)
+                events_handle_emu_event(&event);
         }
     }
 }

@@ -40,6 +40,17 @@ struct DelayedButtonRelease
     u64 release_at_cycle;
 };
 
+enum McpMouseMotionDirection
+{
+    MCP_MOUSE_MOTION_UP = 0,
+    MCP_MOUSE_MOTION_DOWN,
+    MCP_MOUSE_MOTION_LEFT,
+    MCP_MOUSE_MOTION_RIGHT,
+    MCP_MOUSE_MOTION_COUNT
+};
+
+static const int k_mcp_mouse_motion_step = 4;
+
 class McpManager
 {
 public:
@@ -49,6 +60,10 @@ public:
         m_server = NULL;
         m_transport_mode = MCP_TRANSPORT_STDIO;
         m_tcp_port = 7777;
+
+        for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+            for (int j = 0; j < MCP_MOUSE_MOTION_COUNT; j++)
+                m_mouseMotionHeld[i][j] = false;
     }
 
     ~McpManager()
@@ -75,6 +90,11 @@ public:
 
         m_commandQueue.Clear();
         m_responseQueue.Reset();
+        m_delayedReleases.clear();
+
+        for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+            for (int j = 0; j < MCP_MOUSE_MOTION_COUNT; j++)
+                m_mouseMotionHeld[i][j] = false;
 
         McpTransportInterface* transport = NULL;
         if (m_transport_mode == MCP_TRANSPORT_TCP)
@@ -163,8 +183,57 @@ public:
                 resp->result.erase("__delayed_release");
             }
 
+            if (resp->result.contains("__mouse_motion") && resp->result["__mouse_motion"] == true)
+            {
+                int player = resp->result["player"];
+                std::string button = resp->result["button"];
+                std::string action = resp->result["action"];
+                int direction = -1;
+
+                if (button == "up")
+                    direction = MCP_MOUSE_MOTION_UP;
+                else if (button == "down")
+                    direction = MCP_MOUSE_MOTION_DOWN;
+                else if (button == "left")
+                    direction = MCP_MOUSE_MOTION_LEFT;
+                else if (button == "right")
+                    direction = MCP_MOUSE_MOTION_RIGHT;
+
+                if ((direction >= 0) && (player >= 1) && (player <= GG_MAX_GAMEPADS))
+                    m_mouseMotionHeld[player - 1][direction] = (action == "press");
+
+                resp->result.erase("__mouse_motion");
+            }
+
             m_responseQueue.Push(resp);
             SafeDelete(cmd);
+        }
+
+        for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+        {
+            int player = i + 1;
+
+            if (!m_debugAdapter->IsMouseController(player))
+            {
+                for (int j = 0; j < MCP_MOUSE_MOTION_COUNT; j++)
+                    m_mouseMotionHeld[i][j] = false;
+                continue;
+            }
+
+            int delta_x = 0;
+            int delta_y = 0;
+
+            if (m_mouseMotionHeld[i][MCP_MOUSE_MOTION_UP])
+                delta_y -= k_mcp_mouse_motion_step;
+            if (m_mouseMotionHeld[i][MCP_MOUSE_MOTION_DOWN])
+                delta_y += k_mcp_mouse_motion_step;
+            if (m_mouseMotionHeld[i][MCP_MOUSE_MOTION_LEFT])
+                delta_x -= k_mcp_mouse_motion_step;
+            if (m_mouseMotionHeld[i][MCP_MOUSE_MOTION_RIGHT])
+                delta_x += k_mcp_mouse_motion_step;
+
+            if ((delta_x != 0) || (delta_y != 0))
+                m_debugAdapter->ApplyMouseMotion(player, delta_x, delta_y);
         }
     }
 
@@ -176,6 +245,7 @@ private:
     McpTransportMode m_transport_mode;
     int m_tcp_port;
     std::vector<DelayedButtonRelease> m_delayedReleases;
+    bool m_mouseMotionHeld[GG_MAX_GAMEPADS][MCP_MOUSE_MOTION_COUNT];
 };
 
 #endif /* MCP_MANAGER_H */

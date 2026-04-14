@@ -19,11 +19,13 @@
 
 #include "input.h"
 #include "media.h"
+#include "geargrafx_core.h"
 #include "common.h"
 
-Input::Input(Media* media)
+Input::Input(Media* media, GeargrafxCore* core)
 {
     m_media = media;
+    m_core = core;
     InitPointer(m_trace_logger);
     m_turbo_tap = false;
     m_pce_jap = false;
@@ -33,6 +35,11 @@ Input::Input(Media* media)
     m_register = 0;
     m_selected_pad = 0;
     m_selected_extra_buttons = false;
+    m_mouse_x = 0;
+    m_mouse_y = 0;
+    m_mouse_shifter = 0;
+    m_mouse_latched = false;
+    m_mouse_last_latch_cycles = 0;
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -71,6 +78,11 @@ void Input::Reset()
     m_register = 0;
     m_selected_pad = 0;
     m_selected_extra_buttons = false;
+    m_mouse_x = 0;
+    m_mouse_y = 0;
+    m_mouse_shifter = 0;
+    m_mouse_latched = false;
+    m_mouse_last_latch_cycles = 0;
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -122,6 +134,10 @@ void Input::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_selected_pad), sizeof(m_selected_pad));
     stream.write(reinterpret_cast<const char*> (&m_selected_extra_buttons), sizeof(m_selected_extra_buttons));
     stream.write(reinterpret_cast<const char*> (m_gamepads), sizeof(m_gamepads));
+    stream.write(reinterpret_cast<const char*> (&m_mouse_x), sizeof(m_mouse_x));
+    stream.write(reinterpret_cast<const char*> (&m_mouse_y), sizeof(m_mouse_y));
+    stream.write(reinterpret_cast<const char*> (&m_mouse_shifter), sizeof(m_mouse_shifter));
+    stream.write(reinterpret_cast<const char*> (&m_mouse_latched), sizeof(m_mouse_latched));
 
     bool mb128_included = m_mb128.IsConnected();
     stream.write(reinterpret_cast<const char*> (&mb128_included), sizeof(mb128_included));
@@ -147,9 +163,31 @@ void Input::LoadState(std::istream& stream, int version)
             m_gamepads[i] = 0xFFFF;
     }
 
+    if (version >= 26)
+    {
+        stream.read(reinterpret_cast<char*> (&m_mouse_x), sizeof(m_mouse_x));
+        stream.read(reinterpret_cast<char*> (&m_mouse_y), sizeof(m_mouse_y));
+        stream.read(reinterpret_cast<char*> (&m_mouse_shifter), sizeof(m_mouse_shifter));
+        stream.read(reinterpret_cast<char*> (&m_mouse_latched), sizeof(m_mouse_latched));
+    }
+    else
+    {
+        m_mouse_x = 0;
+        m_mouse_y = 0;
+        m_mouse_shifter = 0;
+        m_mouse_latched = false;
+    }
+
+    m_mouse_last_latch_cycles = 0;
+
     bool mb128_included = false;
     stream.read(reinterpret_cast<char*> (&mb128_included), sizeof(mb128_included));
 
     if (mb128_included)
         m_mb128.LoadState(stream);
+}
+
+u64 Input::GetMasterClockCycles()
+{
+    return m_core->GetMasterClockCycles();
 }

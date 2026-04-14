@@ -35,6 +35,28 @@
 #include <thread>
 #include <chrono>
 
+static const int k_mcp_mouse_motion_step = 4;
+
+static bool is_mouse_motion_button(const std::string& button)
+{
+    return button == "up" || button == "down" || button == "left" || button == "right";
+}
+
+static void get_mouse_motion_delta(const std::string& button, int* delta_x, int* delta_y)
+{
+    *delta_x = 0;
+    *delta_y = 0;
+
+    if (button == "up")
+        *delta_y = -k_mcp_mouse_motion_step;
+    else if (button == "down")
+        *delta_y = k_mcp_mouse_motion_step;
+    else if (button == "left")
+        *delta_x = -k_mcp_mouse_motion_step;
+    else if (button == "right")
+        *delta_x = k_mcp_mouse_motion_step;
+}
+
 struct DisassemblerBookmark
 {
     u16 address;
@@ -1617,6 +1639,7 @@ json DebugAdapter::ControllerButton(int player, const std::string& button, const
         return result;
     }
     GG_Controllers controller = static_cast<GG_Controllers>(player - 1);
+    bool is_mouse = IsMouseController(player);
 
     std::string button_lower = button;
     std::transform(button_lower.begin(), button_lower.end(), button_lower.begin(), ::tolower);
@@ -1637,6 +1660,35 @@ json DebugAdapter::ControllerButton(int player, const std::string& button, const
     else
     {
         result["error"] = "Invalid button name";
+        return result;
+    }
+
+    if (is_mouse && is_mouse_motion_button(button_lower))
+    {
+        if (action == "press_and_release")
+        {
+            int delta_x = 0;
+            int delta_y = 0;
+            get_mouse_motion_delta(button_lower, &delta_x, &delta_y);
+            ApplyMouseMotion(player, delta_x, delta_y);
+            result["mouse_delta_x"] = delta_x;
+            result["mouse_delta_y"] = delta_y;
+        }
+        else
+        {
+            result["__mouse_motion"] = true;
+        }
+
+        result["success"] = true;
+        result["player"] = player;
+        result["button"] = button;
+        result["action"] = action;
+        return result;
+    }
+
+    if (is_mouse && key != GG_KEY_I && key != GG_KEY_II && key != GG_KEY_SELECT && key != GG_KEY_RUN)
+    {
+        result["error"] = "Mouse controller only supports up, down, left, right, select, run, I, and II";
         return result;
     }
 
@@ -1663,6 +1715,26 @@ json DebugAdapter::ControllerButton(int player, const std::string& button, const
     return result;
 }
 
+bool DebugAdapter::IsMouseController(int player) const
+{
+    if (player < 1 || player > 5)
+        return false;
+
+    GG_Controllers controller = static_cast<GG_Controllers>(player - 1);
+    return emu_get_pad_type(controller) == GG_CONTROLLER_MOUSE;
+}
+
+bool DebugAdapter::ApplyMouseMotion(int player, int delta_x, int delta_y)
+{
+    if (!IsMouseController(player))
+        return false;
+
+    if ((delta_x != 0) || (delta_y != 0))
+        emu_set_mouse_delta(delta_x, delta_y);
+
+    return true;
+}
+
 json DebugAdapter::ControllerSetType(int player, const std::string& type)
 {
     json result;
@@ -1683,9 +1755,11 @@ json DebugAdapter::ControllerSetType(int player, const std::string& type)
         controller_type = GG_CONTROLLER_AVENUE_PAD_3;
     else if (type == "avenue_pad_6")
         controller_type = GG_CONTROLLER_AVENUE_PAD_6;
+    else if (type == "mouse")
+        controller_type = GG_CONTROLLER_MOUSE;
     else
     {
-        result["error"] = "Invalid controller type (must be: standard, avenue_pad_3, avenue_pad_6)";
+        result["error"] = "Invalid controller type (must be: standard, avenue_pad_3, avenue_pad_6, mouse)";
         return result;
     }
 
@@ -1735,6 +1809,9 @@ json DebugAdapter::ControllerGetType(int player)
             break;
         case GG_CONTROLLER_AVENUE_PAD_6:
             type_name = "avenue_pad_6";
+            break;
+        case GG_CONTROLLER_MOUSE:
+            type_name = "mouse";
             break;
         default:
             type_name = "unknown";

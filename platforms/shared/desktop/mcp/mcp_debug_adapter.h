@@ -153,6 +153,8 @@ public:
     json ControllerSetType(int player, const std::string& type);
     json ControllerSetTurboTap(bool enabled);
     json ControllerGetType(int player);
+    bool IsMouseController(int player) const;
+    bool ApplyMouseMotion(int player, int delta_x, int delta_y);
 
     // Disassembler operations
     json AddDisassemblerBookmark(u16 address, const std::string& name);

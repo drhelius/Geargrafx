@@ -613,6 +613,21 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         "Auto"
     },
     {
+        "geargrafx_mouse_sensitivity",
+        "Mouse Sensitivity",
+        NULL,
+        "Adjust the sensitivity of the PC Engine Mouse. Higher values result in faster cursor movement.",
+        NULL,
+        "input",
+        {
+            { "1",  NULL }, { "2",  NULL }, { "3",  NULL }, { "4",  NULL },
+            { "5",  NULL }, { "6",  NULL }, { "7",  NULL }, { "8",  NULL },
+            { "9",  NULL }, { "10", NULL }, { "11", NULL }, { "12", NULL },
+            { "13", NULL }, { "14", NULL }, { "15", NULL }, { NULL, NULL }
+        },
+        "5"
+    },
+    {
         "geargrafx_avenue_pad_3_switch",
         "Avenue Pad 3 Switch",
         NULL,

@@ -36,6 +36,7 @@ static const char slash = '/';
 #define RETRO_DEVICE_PCE_PAD            RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
 #define RETRO_DEVICE_PCE_AVENUE_PAD_3   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
 #define RETRO_DEVICE_PCE_AVENUE_PAD_6   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
+#define RETRO_DEVICE_PCE_MOUSE          RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE, 0)
 
 #define MAX_PADS GG_MAX_GAMEPADS
 #define MAX_BUTTONS 14
@@ -78,6 +79,7 @@ static bool lowpass_speed_716 = true;
 static bool lowpass_speed_108 = true;
 
 static bool turbo_toggle_hotkey = false;
+static int mouse_sensitivity = 5;
 static bool libretro_supports_bitmasks;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
 static int joypad_old[MAX_PADS][MAX_BUTTONS];
@@ -106,6 +108,7 @@ static void load_bios(void);
 static void save_mb128(void);
 static void load_mb128(void);
 static void set_controller_info(void);
+static int get_mouse_port(void);
 static void poll_input(void);
 static void apply_input(void);
 static bool categories_supported = false;
@@ -258,6 +261,10 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
         case RETRO_DEVICE_PCE_AVENUE_PAD_6:
             log_cb(RETRO_LOG_INFO, "Controller %u: Avenue Pad 6\n", port);
             core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_AVENUE_PAD_6);
+            break;
+        case RETRO_DEVICE_PCE_MOUSE:
+            log_cb(RETRO_LOG_INFO, "Controller %u: Mouse\n", port);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_MOUSE);
             break;
         default:
             log_cb(RETRO_LOG_DEBUG, "Setting descriptors for unsupported device.\n");
@@ -517,15 +524,16 @@ static void set_controller_info(void)
     static const struct retro_controller_description port[] = {
         { "PC Engine Pad", RETRO_DEVICE_PCE_PAD },
         { "Avenue Pad 3", RETRO_DEVICE_PCE_AVENUE_PAD_3 },
-        { "Avenue Pad 6", RETRO_DEVICE_PCE_AVENUE_PAD_6 }
+        { "Avenue Pad 6", RETRO_DEVICE_PCE_AVENUE_PAD_6 },
+        { "Mouse", RETRO_DEVICE_PCE_MOUSE }
     };
 
     static const struct retro_controller_info ports[] = {
-        { port, 3 },
-        { port, 3 },
-        { port, 3 },
-        { port, 3 },
-        { port, 3 },
+        { port, 4 },
+        { port, 4 },
+        { port, 4 },
+        { port, 4 },
+        { port, 4 },
         { NULL, 0 }
     };
 
@@ -547,15 +555,37 @@ static void set_controller_info(void)
         { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "VI" },\
         { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "Toggle Turbo II" },\
         { INDEX, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "Toggle Turbo I" },
+        #define mouse_ids(INDEX) \
+        { INDEX, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT,     "Mouse Left (II)" },\
+        { INDEX, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT,    "Mouse Right (I)" },\
+        { INDEX, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE,   "Mouse Middle (Run)" },\
+        { INDEX, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_BUTTON_4, "Mouse Button 4 (Select)" },\
+        { INDEX, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_BUTTON_5, "Mouse Button 5 (Run)" },
         button_ids(0)
+        mouse_ids(0)
         button_ids(1)
+        mouse_ids(1)
         button_ids(2)
+        mouse_ids(2)
         button_ids(3)
+        mouse_ids(3)
         button_ids(4)
+        mouse_ids(4)
         { 0, 0, 0, 0, NULL }
     };
 
     environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, joypad);
+}
+
+static int get_mouse_port(void)
+{
+    for (int i = 0; i < MAX_PADS; i++)
+    {
+        if (input_device[i] == RETRO_DEVICE_PCE_MOUSE)
+            return i;
+    }
+
+    return -1;
 }
 
 static void poll_input(void)
@@ -663,14 +693,52 @@ static void poll_input(void)
 
 static void apply_input(void)
 {
+    int mouse_port = get_mouse_port();
+
     for (int j = 0; j < MAX_PADS; j++)
-        for (int i = 0; i < 12; i++)
+    {
+        if (j == mouse_port)
         {
-            if (joypad_current[j][i])
-                core->KeyPressed((GG_Controllers)j, keymap[i]);
+            int mouse_x = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+            int mouse_y = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+
+            int sen = MAX(mouse_sensitivity, 1);
+            int relx = (int)((float)mouse_x * ((float)sen / 6.0f));
+            int rely = (int)((float)mouse_y * ((float)sen / 6.0f));
+
+            core->GetInput()->SetMouseDelta(relx, rely);
+
+            if (input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+                core->KeyPressed((GG_Controllers)j, GG_KEY_I);
             else
-                core->KeyReleased((GG_Controllers)j, keymap[i]);
+                core->KeyReleased((GG_Controllers)j, GG_KEY_I);
+
+            if (input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+                core->KeyPressed((GG_Controllers)j, GG_KEY_II);
+            else
+                core->KeyReleased((GG_Controllers)j, GG_KEY_II);
+
+            if (joypad_current[j][6] || input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_BUTTON_4))
+                core->KeyPressed((GG_Controllers)j, GG_KEY_SELECT);
+            else
+                core->KeyReleased((GG_Controllers)j, GG_KEY_SELECT);
+
+            if (joypad_current[j][7] || input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE) || input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_BUTTON_5))
+                core->KeyPressed((GG_Controllers)j, GG_KEY_RUN);
+            else
+                core->KeyReleased((GG_Controllers)j, GG_KEY_RUN);
         }
+        else
+        {
+            for (int i = 0; i < 12; i++)
+            {
+                if (joypad_current[j][i])
+                    core->KeyPressed((GG_Controllers)j, keymap[i]);
+                else
+                    core->KeyReleased((GG_Controllers)j, keymap[i]);
+            }
+        }
+    }
 }
 
 static void check_variables(void)
@@ -705,6 +773,14 @@ static void check_variables(void)
             load_mb128();
         else if (!is_connected && was_connected)
             save_mb128();
+    }
+
+    var.key = "geargrafx_mouse_sensitivity";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        mouse_sensitivity = CLAMP(atoi(var.value), 1, 15);
     }
 
     var.key = "geargrafx_aspect_ratio";

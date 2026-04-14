@@ -25,13 +25,14 @@
 #include "common.h"
 #include "mb128.h"
 
+class GeargrafxCore;
 class Media;
 class TraceLogger;
 
 class Input
 {
 public:
-    Input(Media* media);
+    Input(Media* media, GeargrafxCore* core);
     void Init();
     void Reset();
     void KeyPressed(GG_Controllers controller, GG_Keys key);
@@ -52,6 +53,7 @@ public:
     void SetControllerType(GG_Controllers controller, GG_Controller_Type type);
     GG_Controller_Type GetControllerType(GG_Controllers controller);
     void SetAvenuePad3Button(GG_Controllers controller, GG_Keys button);
+    void SetMouseDelta(s32 x, s32 y);
     void EnableMB128(bool enable);
     void SetTraceLogger(TraceLogger* trace_logger);
     MB128* GetMB128();
@@ -59,7 +61,11 @@ public:
     void LoadState(std::istream& stream, int version);
 
 private:
+    u64 GetMasterClockCycles();
+
+private:
     Media* m_media;
+    GeargrafxCore* m_core;
     TraceLogger* m_trace_logger;
     bool m_clr;
     bool m_sel;
@@ -77,6 +83,11 @@ private:
     bool m_turbo_state[GG_MAX_GAMEPADS][2];
     u8 m_turbo_counter[GG_MAX_GAMEPADS][2];
     u8 m_turbo_speed[GG_MAX_GAMEPADS][2];
+    s32 m_mouse_x;
+    s32 m_mouse_y;
+    u16 m_mouse_shifter;
+    bool m_mouse_latched;
+    u64 m_mouse_last_latch_cycles;
     MB128 m_mb128;
 };
 

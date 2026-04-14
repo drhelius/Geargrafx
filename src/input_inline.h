@@ -94,6 +94,8 @@ INLINE u8 Input::ReadK()
 
 INLINE void Input::WriteO(u8 value)
 {
+    static const u64 mouse_latch_delay_cycles = 10000 * 3;
+
     if (m_mb128.IsConnected())
         m_mb128.Write(value);
 
@@ -124,6 +126,40 @@ INLINE void Input::WriteO(u8 value)
     }
     else
         m_selected_pad = 0;
+
+    if (m_controller_type[m_selected_pad] == GG_CONTROLLER_MOUSE)
+    {
+        if (!prev_clr && m_clr)
+        {
+            u64 current_cycles = GetMasterClockCycles();
+
+            if (!m_mouse_latched || ((current_cycles - m_mouse_last_latch_cycles) > mouse_latch_delay_cycles))
+            {
+                m_mouse_latched = true;
+                m_mouse_last_latch_cycles = current_cycles;
+
+                s32 rel_x = CLAMP(-m_mouse_x, -127, 127);
+                s32 rel_y = CLAMP(-m_mouse_y, -127, 127);
+
+                m_mouse_shifter = ((rel_x & 0xF0) >> 4) | ((rel_x & 0x0F) << 4);
+                m_mouse_shifter |= (((rel_y & 0xF0) >> 4) | ((rel_y & 0x0F) << 4)) << 8;
+
+                m_mouse_x += rel_x;
+                m_mouse_y += rel_y;
+            }
+            else
+            {
+                m_mouse_shifter >>= 4;
+            }
+        }
+
+        if (m_sel)
+            m_register |= (m_mouse_shifter & 0x0F);
+        else
+            m_register |= (m_gamepads[m_selected_pad] & 0x0F);
+
+        return;
+    }
 
     if (prev_clr && !m_clr)
         m_selected_extra_buttons = !m_selected_extra_buttons;
@@ -241,6 +277,12 @@ INLINE GG_Controller_Type Input::GetControllerType(GG_Controllers controller)
 INLINE void Input::SetAvenuePad3Button(GG_Controllers controller, GG_Keys button)
 {
     m_avenue_pad_3_button[controller] = button;
+}
+
+INLINE void Input::SetMouseDelta(s32 x, s32 y)
+{
+    m_mouse_x += x;
+    m_mouse_y += y;
 }
 
 INLINE void Input::EnableMB128(bool enable)

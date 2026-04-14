@@ -587,6 +587,7 @@ static void menu_emulator(void)
             hotkey_configuration_item("Screenshot:", &config_hotkeys[config_HotkeyIndex_Screenshot]);
             hotkey_configuration_item("Fullscreen:", &config_hotkeys[config_HotkeyIndex_Fullscreen]);
             hotkey_configuration_item("Show Main Menu:", &config_hotkeys[config_HotkeyIndex_ShowMainMenu]);
+            hotkey_configuration_item("Capture Mouse:", &config_hotkeys[config_HotkeyIndex_CaptureMouse]);
 
             gui_popup_modal_hotkey();
 
@@ -935,7 +936,7 @@ static void menu_input(void)
                 if (ImGui::BeginMenu(player_name))
                 {
                     ImGui::PushItemWidth(200.0f);
-                    if (ImGui::Combo("##controller", &config_input.controller_type[i], "Standard Pad (2 buttons)\0Avenue Pad 3 (3 buttons)\0Avenue Pad 6 (6 buttons)\0\0"))
+                    if (ImGui::Combo("##controller", &config_input.controller_type[i], "Standard Pad (2 buttons)\0Avenue Pad 3 (3 buttons)\0Avenue Pad 6 (6 buttons)\0Mouse\0\0"))
                     {
                         emu_set_pad_type((GG_Controllers)i, (GG_Controller_Type)config_input.controller_type[i]);
                     }
@@ -1020,6 +1021,23 @@ static void menu_input(void)
                     ImGui::EndMenu();
                 }
             }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Mouse"))
+        {
+            ImGui::MenuItem("Capture Mouse", config_hotkeys[config_HotkeyIndex_CaptureMouse].str, &config_emulator.capture_mouse);
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("When enabled, the mouse will be captured inside");
+                ImGui::Text("the emulator window to use the mouse freely.");
+                ImGui::Text("Press %s to release the mouse.", config_hotkeys[config_HotkeyIndex_CaptureMouse].str);
+                ImGui::EndTooltip();
+            }
+
+            ImGui::SliderInt("##mouse_sensitivity", &config_emulator.mouse_sensitivity, 1, 15, "Sensitivity = %d");
 
             ImGui::EndMenu();
         }
