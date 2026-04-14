@@ -138,6 +138,7 @@ void Input::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_mouse_y), sizeof(m_mouse_y));
     stream.write(reinterpret_cast<const char*> (&m_mouse_shifter), sizeof(m_mouse_shifter));
     stream.write(reinterpret_cast<const char*> (&m_mouse_latched), sizeof(m_mouse_latched));
+    stream.write(reinterpret_cast<const char*> (&m_mouse_last_latch_cycles), sizeof(m_mouse_last_latch_cycles));
 
     bool mb128_included = m_mb128.IsConnected();
     stream.write(reinterpret_cast<const char*> (&mb128_included), sizeof(mb128_included));
@@ -169,6 +170,11 @@ void Input::LoadState(std::istream& stream, int version)
         stream.read(reinterpret_cast<char*> (&m_mouse_y), sizeof(m_mouse_y));
         stream.read(reinterpret_cast<char*> (&m_mouse_shifter), sizeof(m_mouse_shifter));
         stream.read(reinterpret_cast<char*> (&m_mouse_latched), sizeof(m_mouse_latched));
+
+        if (version >= 27)
+            stream.read(reinterpret_cast<char*> (&m_mouse_last_latch_cycles), sizeof(m_mouse_last_latch_cycles));
+        else
+            m_mouse_last_latch_cycles = 0;
     }
     else
     {
@@ -176,9 +182,8 @@ void Input::LoadState(std::istream& stream, int version)
         m_mouse_y = 0;
         m_mouse_shifter = 0;
         m_mouse_latched = false;
+        m_mouse_last_latch_cycles = 0;
     }
-
-    m_mouse_last_latch_cycles = 0;
 
     bool mb128_included = false;
     stream.read(reinterpret_cast<char*> (&mb128_included), sizeof(mb128_included));

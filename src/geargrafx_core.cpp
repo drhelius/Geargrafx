@@ -505,6 +505,8 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
 
     Debug("Serializing save state...");
 
+    stream.write(reinterpret_cast<const char*> (&m_master_clock_cycles), sizeof(m_master_clock_cycles));
+
     m_memory->SaveState(stream);
     m_huc6202->SaveState(stream);
     m_huc6260->SaveState(stream);
@@ -519,6 +521,12 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
         m_scsi_controller->SaveState(stream);
         m_cdrom_audio->SaveState(stream);
         m_adpcm->SaveState(stream);
+    }
+
+    if (stream.fail())
+    {
+        Error("Failed to serialize save state");
+        return false;
     }
 
 #if defined(__LIBRETRO__)
@@ -572,7 +580,14 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     Debug("Save state header screenshot height: %d", header.screenshot_height);
 #endif
 
-    size = static_cast<size_t>(stream.tellp());
+    std::streampos position = stream.tellp();
+    if (position == std::streampos(-1))
+    {
+        Error("Failed to calculate save state size");
+        return false;
+    }
+
+    size = static_cast<size_t>(position);
     size += sizeof(header);
 
 #if !defined(__LIBRETRO__)
@@ -581,6 +596,13 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
 #endif
 
     stream.write(reinterpret_cast<const char*>(&header), sizeof(header));
+
+    if (stream.fail())
+    {
+        Error("Failed to write save state header");
+        return false;
+    }
+
     return true;
 }
 
@@ -724,6 +746,11 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     Debug("Unserializing save state...");
 
+    if (header.version >= 27)
+        stream.read(reinterpret_cast<char*> (&m_master_clock_cycles), sizeof(m_master_clock_cycles));
+    else
+        m_master_clock_cycles = 0;
+
     m_memory->LoadState(stream);
     m_huc6202->LoadState(stream);
     m_huc6260->LoadState(stream);
@@ -734,10 +761,16 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     m_input->LoadState(stream, header.version);
     if (m_media->IsCDROM())
     {
-        m_cdrom->LoadState(stream);
-        m_scsi_controller->LoadState(stream);
-        m_cdrom_audio->LoadState(stream);
+        m_cdrom->LoadState(stream, header.version);
+        m_scsi_controller->LoadState(stream, header.version);
+        m_cdrom_audio->LoadState(stream, header.version);
         m_adpcm->LoadState(stream, header.version);
+    }
+
+    if (stream.fail())
+    {
+        Error("Failed to unserialize save state");
+        return false;
     }
 
     return true;

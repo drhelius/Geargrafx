@@ -134,7 +134,7 @@ public:
     Scsi_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
 private:
     void SetPhase(ScsiPhase phase);
@@ -161,6 +161,8 @@ private:
     u8 CommandLength(ScsiCommand command);
     void LoadSector();
     u32 AudioLBA();
+    void TraceEvent(u8 event, u8 command = 0, u8 phase = 0, u8 status = 0, u32 param = 0);
+    void TraceProblem(u8 event, u8 problem, u8 command = 0, u32 param = 0);
 
 private:
     Scsi_State m_state;

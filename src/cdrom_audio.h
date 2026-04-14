@@ -75,10 +75,11 @@ public:
     s16 GetLeftSample();
     s16 GetRightSample();
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
 private:
     void GenerateSamples();
+    void SyncMediaCurrentSector();
 
 private:
     CdRom* m_cdrom;

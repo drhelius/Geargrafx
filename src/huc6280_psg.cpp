@@ -459,6 +459,8 @@ void HuC6280PSG::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_lfo_control), sizeof(m_lfo_control));
     stream.write(reinterpret_cast<const char*> (&m_elapsed_cycles), sizeof(m_elapsed_cycles));
     stream.write(reinterpret_cast<const char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+    stream.write(reinterpret_cast<const char*> (&m_frame_samples), sizeof(m_frame_samples));
+    stream.write(reinterpret_cast<const char*> (&m_buffer_index), sizeof(m_buffer_index));
 
     for (int i = 0; i < 6; i++)
     {
@@ -482,6 +484,7 @@ void HuC6280PSG::SaveState(std::ostream& stream)
         stream.write(reinterpret_cast<const char*> (&m_channels[i].dda_enabled), sizeof(m_channels[i].dda_enabled));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].left_sample), sizeof(m_channels[i].left_sample));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].right_sample), sizeof(m_channels[i].right_sample));
+        stream.write(reinterpret_cast<const char*> (m_channels[i].output), sizeof(m_channels[i].output));
     }
 
     stream.write(reinterpret_cast<const char*> (&m_hpf_prev_input), sizeof(m_hpf_prev_input));
@@ -499,6 +502,17 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_lfo_control), sizeof(m_lfo_control));
     stream.read(reinterpret_cast<char*> (&m_elapsed_cycles), sizeof(m_elapsed_cycles));
     stream.read(reinterpret_cast<char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+
+    if (version >= 27)
+    {
+        stream.read(reinterpret_cast<char*> (&m_frame_samples), sizeof(m_frame_samples));
+        stream.read(reinterpret_cast<char*> (&m_buffer_index), sizeof(m_buffer_index));
+    }
+    else
+    {
+        m_frame_samples = 0;
+        m_buffer_index = 0;
+    }
 
     for (int i = 0; i < 6; i++)
     {
@@ -522,6 +536,11 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
         stream.read(reinterpret_cast<char*> (&m_channels[i].dda_enabled), sizeof(m_channels[i].dda_enabled));
         stream.read(reinterpret_cast<char*> (&m_channels[i].left_sample), sizeof(m_channels[i].left_sample));
         stream.read(reinterpret_cast<char*> (&m_channels[i].right_sample), sizeof(m_channels[i].right_sample));
+
+        if (version >= 27)
+            stream.read(reinterpret_cast<char*> (m_channels[i].output), sizeof(m_channels[i].output));
+        else
+            memset(m_channels[i].output, 0, sizeof(m_channels[i].output));
     }
 
     if (version >= 24)

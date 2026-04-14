@@ -68,7 +68,7 @@ public:
     CdRom_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
 private:
     void AssertIRQ2();

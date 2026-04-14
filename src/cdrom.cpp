@@ -262,7 +262,7 @@ void CdRom::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_fader_cycles), sizeof(m_fader_cycles));
 }
 
-void CdRom::LoadState(std::istream& stream)
+void CdRom::LoadState(std::istream& stream, int version)
 {
     using namespace std;
 
@@ -279,6 +279,12 @@ void CdRom::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_fader_fast), sizeof(m_fader_fast));
     stream.read(reinterpret_cast<char*> (&m_fader_start_cycles), sizeof(m_fader_start_cycles));
     stream.read(reinterpret_cast<char*> (&m_fader_cycles), sizeof(m_fader_cycles));
+
+    if (version < 27)
+    {
+        m_cdaudio_sample_last_clock = 0;
+        m_fader_start_cycles = 0;
+    }
 
     m_memory->UpdateBackupRam(m_bram_enabled);
 }

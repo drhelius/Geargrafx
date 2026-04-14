@@ -97,6 +97,9 @@ void CdRomAudio::SaveState(std::ostream& stream)
     using namespace std;
 
     stream.write(reinterpret_cast<const char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+    stream.write(reinterpret_cast<const char*> (&m_buffer_index), sizeof(m_buffer_index));
+    stream.write(reinterpret_cast<const char*> (&m_frame_samples), sizeof(m_frame_samples));
+    stream.write(reinterpret_cast<const char*> (m_buffer), sizeof(m_buffer));
     stream.write(reinterpret_cast<const char*> (&m_current_state), sizeof(m_current_state));
     stream.write(reinterpret_cast<const char*> (&m_start_lba), sizeof(m_start_lba));
     stream.write(reinterpret_cast<const char*> (&m_stop_lba), sizeof(m_stop_lba));
@@ -108,11 +111,25 @@ void CdRomAudio::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_right_sample), sizeof(m_right_sample));
 }
 
-void CdRomAudio::LoadState(std::istream& stream)
+void CdRomAudio::LoadState(std::istream& stream, int version)
 {
     using namespace std;
 
     stream.read(reinterpret_cast<char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+
+    if (version >= 27)
+    {
+        stream.read(reinterpret_cast<char*> (&m_buffer_index), sizeof(m_buffer_index));
+        stream.read(reinterpret_cast<char*> (&m_frame_samples), sizeof(m_frame_samples));
+        stream.read(reinterpret_cast<char*> (m_buffer), sizeof(m_buffer));
+    }
+    else
+    {
+        m_buffer_index = 0;
+        m_frame_samples = 0;
+        memset(m_buffer, 0, sizeof(m_buffer));
+    }
+
     stream.read(reinterpret_cast<char*> (&m_current_state), sizeof(m_current_state));
     stream.read(reinterpret_cast<char*> (&m_start_lba), sizeof(m_start_lba));
     stream.read(reinterpret_cast<char*> (&m_stop_lba), sizeof(m_stop_lba));
@@ -122,4 +139,25 @@ void CdRomAudio::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_seek_cycles), sizeof(m_seek_cycles));
     stream.read(reinterpret_cast<char*> (&m_left_sample), sizeof(m_left_sample));
     stream.read(reinterpret_cast<char*> (&m_right_sample), sizeof(m_right_sample));
+
+    SyncMediaCurrentSector();
+}
+
+void CdRomAudio::SyncMediaCurrentSector()
+{
+    if ((m_current_state == CD_AUDIO_STATE_PLAYING) ||
+        (m_current_state == CD_AUDIO_STATE_PAUSED) ||
+        (m_seek_cycles > 0))
+    {
+        u32 sector_count = m_cdrom_media->GetSectorCount();
+        if (sector_count == 0)
+            return;
+
+        u32 current_sector = MIN(m_current_lba, sector_count - 1);
+        m_cdrom_media->SetCurrentSector(current_sector);
+
+        s32 track = m_cdrom_media->GetTrackFromLBA(current_sector);
+        if (track >= 0)
+            m_cdrom_media->PreloadTrack((u32)track);
+    }
 }
