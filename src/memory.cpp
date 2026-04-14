@@ -434,4 +434,5 @@ void Memory::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_mpr_buffer), sizeof(m_mpr_buffer));
     if (IsValidPointer(m_current_mapper))
         m_current_mapper->LoadState(stream);
+    ReloadMemoryMap();
 }
