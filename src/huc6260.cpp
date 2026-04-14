@@ -309,7 +309,7 @@ void HuC6260::AdjustForMultipleDividers()
                 }
             }
             memcpy(dest_line + ((original_line_width * 3) * bytes_per_pixel),
-                   src_ptr + (original_line_width * bytes_per_pixel),
+                   src_ptr + ((original_line_width - 1) * bytes_per_pixel),
                    bytes_per_pixel);
             break;
         default:
