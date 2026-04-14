@@ -397,6 +397,28 @@ static void format_entry_text(const GG_Trace_Entry& entry, char* buf, int buf_si
                 "TEST_UNIT_READY", NULL, NULL, "REQUEST_SENSE",
                 NULL, NULL, NULL, NULL, "READ"
             };
+            static const char* k_scsi_phase_names[] = {
+                "BUS FREE", "SELECTION", "MESSAGE OUT", "COMMAND", "DATA IN",
+                "DATA OUT", "MESSAGE IN", "STATUS", "BUSY"
+            };
+            static const char* k_scsi_status_names[] = {
+                "GOOD", "???", "CHECK_CONDITION", "???", "CONDITION_MET", "???", "???", "???",
+                "BUSY"
+            };
+            static const char* k_scsi_problem_names[] = {
+                "UNKNOWN_COMMAND",
+                "COMMAND_OVERFLOW",
+                "SELECTION_DURING_DATA_IN",
+                "INVALID_READ_REQUEST",
+                "INVALID_AUDIO_START_LBA",
+                "UNKNOWN_AUDIO_STOP_MODE",
+                "UNKNOWN_TOC_MODE",
+                "LOAD_SECTOR_BUFFER_BUSY",
+                "UNKNOWN_AUDIO_LBA_MODE",
+                "CLAMPED_COMMAND_SIZE",
+                "CLAMPED_DATA_SIZE",
+                "CLAMPED_DATA_OFFSET"
+            };
             switch (entry.scsi.event)
             {
                 case TRACE_SCSI_COMMAND:
@@ -418,6 +440,52 @@ static void format_entry_text(const GG_Trace_Entry& entry, char* buf, int buf_si
                     }
                     else
                         snprintf(buf, buf_size, "  [SCSI] CMD      $%02X", entry.scsi.command);
+                    break;
+                }
+                case TRACE_SCSI_PHASE_CHANGE:
+                {
+                    const char* phase_name = entry.scsi.phase < 9 ? k_scsi_phase_names[entry.scsi.phase] : "???";
+                    snprintf(buf, buf_size, "  [SCSI] PHASE    %s", phase_name);
+                    break;
+                }
+                case TRACE_SCSI_STATUS:
+                {
+                    const char* status_name = entry.scsi.status < 9 ? k_scsi_status_names[entry.scsi.status] : NULL;
+                    if (status_name != NULL)
+                        snprintf(buf, buf_size, "  [SCSI] STATUS   %s  Len:%u", status_name, entry.scsi.param);
+                    else
+                        snprintf(buf, buf_size, "  [SCSI] STATUS   $%02X  Len:%u", entry.scsi.status, entry.scsi.param);
+                    break;
+                }
+                case TRACE_SCSI_WARNING:
+                case TRACE_SCSI_ERROR:
+                {
+                    const char* severity = entry.scsi.event == TRACE_SCSI_ERROR ? "ERROR" : "WARN";
+                    const char* problem = entry.scsi.status < 12 ? k_scsi_problem_names[entry.scsi.status] : "UNKNOWN";
+
+                    switch (entry.scsi.status)
+                    {
+                        case TRACE_SCSI_PROBLEM_COMMAND_OVERFLOW:
+                            snprintf(buf, buf_size, "  [SCSI] %s    %s  CMD:$%02X  Size:%u  Byte:$%02X",
+                                     severity, problem, entry.scsi.command,
+                                     entry.scsi.param >> 8, entry.scsi.param & 0xFF);
+                            break;
+                        case TRACE_SCSI_PROBLEM_INVALID_READ_REQUEST:
+                            snprintf(buf, buf_size, "  [SCSI] %s    %s  LBA:%u  Count:%u",
+                                     severity, problem, entry.scsi.param & 0xFFFFFF,
+                                     entry.scsi.param >> 24);
+                            break;
+                        case TRACE_SCSI_PROBLEM_LOAD_SECTOR_BUFFER_BUSY:
+                        case TRACE_SCSI_PROBLEM_CLAMPED_DATA_OFFSET:
+                            snprintf(buf, buf_size, "  [SCSI] %s    %s  Size:%u  Offset:%u",
+                                     severity, problem, entry.scsi.param >> 16,
+                                     entry.scsi.param & 0xFFFF);
+                            break;
+                        default:
+                            snprintf(buf, buf_size, "  [SCSI] %s    %s  CMD:$%02X  Param:%u",
+                                     severity, problem, entry.scsi.command, entry.scsi.param);
+                            break;
+                    }
                     break;
                 }
                 default:
