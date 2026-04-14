@@ -258,6 +258,7 @@ void config_read(void)
     config_debug.trace_registers = read_bool("Debug", "TraceRegisters", true);
     config_debug.trace_flags = read_bool("Debug", "TraceFlags", true);
     config_debug.trace_bytes = read_bool("Debug", "TraceBytes", true);
+    config_debug.trace_cpu = read_bool("Debug", "TraceCpu", true);
     config_debug.trace_cpu_irq = read_bool("Debug", "TraceCpuIrq", true);
     config_debug.trace_vdc = read_bool("Debug", "TraceVdc", true);
     config_debug.trace_input = read_bool("Debug", "TraceInput", true);
@@ -573,6 +574,7 @@ void config_write(void)
     write_bool("Debug", "TraceRegisters", config_debug.trace_registers);
     write_bool("Debug", "TraceFlags", config_debug.trace_flags);
     write_bool("Debug", "TraceBytes", config_debug.trace_bytes);
+    write_bool("Debug", "TraceCpu", config_debug.trace_cpu);
     write_bool("Debug", "TraceCpuIrq", config_debug.trace_cpu_irq);
     write_bool("Debug", "TraceVdc", config_debug.trace_vdc);
     write_bool("Debug", "TraceInput", config_debug.trace_input);
