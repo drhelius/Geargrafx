@@ -97,10 +97,9 @@ void HuC6260::InitPalettes()
         m_rgba888_palette[1][i][2] = k_rgb888_palette_composite[i][2];
         m_rgba888_palette[1][i][3] = 255;
 
-        green = k_rgb888_palette_composite[i][1] * 63 / 255;
-        red = k_rgb888_palette_composite[i][0] * 31 / 255;
-        blue = k_rgb888_palette_composite[i][2] * 31 / 255;
-        rgb565 = (red << 11) | (green << 5) | blue;
+        rgb565 = PackRGB565(k_rgb888_palette_composite[i][0],
+                            k_rgb888_palette_composite[i][1],
+                            k_rgb888_palette_composite[i][2]);
         m_rgb565_palette[1][i] = rgb565;
     }
 }
@@ -344,10 +343,7 @@ void HuC6260::SetCustomPalette(const u8* data)
         m_rgba888_palette[2][i][2] = blue;
         m_rgba888_palette[2][i][3] = 255;
 
-        u8 green565 = green * 63 / 255;
-        u8 red565 = red * 31 / 255;
-        u8 blue565 = blue * 31 / 255;
-        u16 rgb565 = (red565 << 11) | (green565 << 5) | blue565;
+        u16 rgb565 = PackRGB565(red, green, blue);
         m_rgb565_palette[2][i] = rgb565;
     }
 }
@@ -426,10 +422,10 @@ void HuC6260::ApplyLowPassFilter()
 
             if (bytes_per_pixel == 2)
             {
-                u8 r8 = (u8)r;
-                u8 g8 = (u8)g;
-                u8 b8 = (u8)b;
-                u16 pixel = ((r8 * 31 / 255) << 11) | ((g8 * 63 / 255) << 5) | (b8 * 31 / 255);
+                u8 r8 = RoundToByte(r);
+                u8 g8 = RoundToByte(g);
+                u8 b8 = RoundToByte(b);
+                u16 pixel = PackRGB565(r8, g8, b8);
                 *reinterpret_cast<u16*>(m_frame_buffer + idx) = pixel;
             }
             else

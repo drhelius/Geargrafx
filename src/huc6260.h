@@ -96,6 +96,9 @@ private:
     void CalculateScreenBounds();
     template <int BPP>
     void ApplyLowPassFilter();
+    u8 RGB565Component(u8 value, u16 max);
+    u16 PackRGB565(u8 red, u8 green, u8 blue);
+    u8 RoundToByte(float value);
 
 private:
     HuC6202* m_huc6202;

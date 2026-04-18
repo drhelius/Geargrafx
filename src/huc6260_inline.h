@@ -381,4 +381,25 @@ INLINE void HuC6260::SetPalette(int palette)
         m_palette = palette;
 }
 
+INLINE u8 HuC6260::RGB565Component(u8 value, u16 max)
+{
+    return (u8)((value * max + 127) / 255);
+}
+
+INLINE u16 HuC6260::PackRGB565(u8 red, u8 green, u8 blue)
+{
+    return (RGB565Component(red, 31) << 11) | (RGB565Component(green, 63) << 5) | RGB565Component(blue, 31);
+}
+
+INLINE u8 HuC6260::RoundToByte(float value)
+{
+    if (value <= 0.0f)
+        return 0;
+
+    if (value >= 255.0f)
+        return 255;
+
+    return (u8)(value + 0.5f);
+}
+
 #endif /* HUC6260_INLINE_H */
