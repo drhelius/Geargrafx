@@ -276,7 +276,7 @@ void HuC6260::AdjustForMultipleDividers()
 
     int dominant_width = k_huc6260_scaling_width[m_overscan];
     u8* src_ptr = m_frame_buffer;
-    int end_line = 242 - m_scanline_start;
+    int end_line = GetCurrentHeight();
 
     for (int line = 0; line < end_line; line++)
     {
