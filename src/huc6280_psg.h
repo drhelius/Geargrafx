@@ -101,8 +101,8 @@ private:
     u16 m_volume_lut[32];
     bool m_huc6280a;
     u8 m_dc_offset;
-    float m_hpf_prev_input;
-    float m_hpf_prev_output;
+    float m_hpf_prev_input[2];
+    float m_hpf_prev_output[2];
 };
 
 #include "huc6280_psg_inline.h"

@@ -28,8 +28,10 @@ HuC6280PSG::HuC6280PSG()
     InitPointer(m_ch);
     m_huc6280a = true;
     m_dc_offset = 16;
-    m_hpf_prev_input = 0.0f;
-    m_hpf_prev_output = 0.0f;
+    m_hpf_prev_input[0] = 0.0f;
+    m_hpf_prev_input[1] = 0.0f;
+    m_hpf_prev_output[0] = 0.0f;
+    m_hpf_prev_output[1] = 0.0f;
 }
 
 HuC6280PSG::~HuC6280PSG()
@@ -67,8 +69,10 @@ void HuC6280PSG::Reset()
     m_sample_cycle_counter = 0;
     m_frame_samples = 0;
 
-    m_hpf_prev_input = 0.0f;
-    m_hpf_prev_output = 0.0f;
+    m_hpf_prev_input[0] = 0.0f;
+    m_hpf_prev_input[1] = 0.0f;
+    m_hpf_prev_output[0] = 0.0f;
+    m_hpf_prev_output[1] = 0.0f;
 
     m_channel_select = 0;
     m_main_vol = 0;
@@ -413,15 +417,16 @@ int HuC6280PSG::EndFrame(s16* sample_buffer)
             }
             else
             {
+                int channel = s & 0x01;
                 float raw = 0.0f;
                 for (int i = 0; i < 6; i++)
                     raw += m_channels[i].output[s];
 
                 const float hpf_r = 0.9985f;
-                float outSample = raw - m_hpf_prev_input + hpf_r * m_hpf_prev_output;
+                float outSample = raw - m_hpf_prev_input[channel] + hpf_r * m_hpf_prev_output[channel];
 
-                m_hpf_prev_input = raw;
-                m_hpf_prev_output = outSample;
+                m_hpf_prev_input[channel] = raw;
+                m_hpf_prev_output[channel] = outSample;
 
                 sample_buffer[s] = (s16)outSample;
             }
@@ -487,8 +492,8 @@ void HuC6280PSG::SaveState(std::ostream& stream)
         stream.write(reinterpret_cast<const char*> (m_channels[i].output), sizeof(m_channels[i].output));
     }
 
-    stream.write(reinterpret_cast<const char*> (&m_hpf_prev_input), sizeof(m_hpf_prev_input));
-    stream.write(reinterpret_cast<const char*> (&m_hpf_prev_output), sizeof(m_hpf_prev_output));
+    stream.write(reinterpret_cast<const char*> (m_hpf_prev_input), sizeof(m_hpf_prev_input));
+    stream.write(reinterpret_cast<const char*> (m_hpf_prev_output), sizeof(m_hpf_prev_output));
 }
 
 void HuC6280PSG::LoadState(std::istream& stream, int version)
@@ -543,15 +548,29 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
             memset(m_channels[i].output, 0, sizeof(m_channels[i].output));
     }
 
-    if (version >= 24)
+    if (version >= 28)
     {
-        stream.read(reinterpret_cast<char*> (&m_hpf_prev_input), sizeof(m_hpf_prev_input));
-        stream.read(reinterpret_cast<char*> (&m_hpf_prev_output), sizeof(m_hpf_prev_output));
+        stream.read(reinterpret_cast<char*> (m_hpf_prev_input), sizeof(m_hpf_prev_input));
+        stream.read(reinterpret_cast<char*> (m_hpf_prev_output), sizeof(m_hpf_prev_output));
+    }
+    else if (version >= 24)
+    {
+        float hpf_prev_input = 0.0f;
+        float hpf_prev_output = 0.0f;
+        stream.read(reinterpret_cast<char*> (&hpf_prev_input), sizeof(hpf_prev_input));
+        stream.read(reinterpret_cast<char*> (&hpf_prev_output), sizeof(hpf_prev_output));
+
+        m_hpf_prev_input[0] = hpf_prev_input;
+        m_hpf_prev_input[1] = hpf_prev_input;
+        m_hpf_prev_output[0] = hpf_prev_output;
+        m_hpf_prev_output[1] = hpf_prev_output;
     }
     else
     {
-        m_hpf_prev_input = 0.0f;
-        m_hpf_prev_output = 0.0f;
+        m_hpf_prev_input[0] = 0.0f;
+        m_hpf_prev_input[1] = 0.0f;
+        m_hpf_prev_output[0] = 0.0f;
+        m_hpf_prev_output[1] = 0.0f;
     }
 
     m_channel_select &= 0x07;
