@@ -575,33 +575,31 @@ void Media::GatherMediaInfoFromDB()
 
 void Media::GatherBIOSInfoFromDB(bool syscard)
 {
-    int i = 0;
     bool found = false;
 
     u32* bios_crc = syscard ? &m_bios_crc_syscard : &m_bios_crc_gameexpress;
     char* bios_name = syscard ? m_bios_name_syscard : m_bios_name_gameexpress;
     bool* is_valid_bios = syscard ? &m_is_valid_bios_syscard : &m_is_valid_bios_gameexpress;
 
-    while(!found && (k_game_database[i].title != 0))
+    for (int i = 0; !found && (k_game_database[i].title != 0); i++)
     {
-        u32 db_crc = k_game_database[i].crc;
+        const GG_DB_Entry& db_entry = k_game_database[i];
+        u32 db_crc = db_entry.crc;
 
         if (db_crc == *bios_crc)
         {
-            if (syscard && !(k_game_database[i].flags & GG_GAMEDB_BIOS_SYSCARD))
+            if (syscard && !(db_entry.flags & GG_GAMEDB_BIOS_SYSCARD))
                 continue;
 
-            if (!syscard && !(k_game_database[i].flags & GG_GAMEDB_BIOS_GAME_EXPRESS))
+            if (!syscard && !(db_entry.flags & GG_GAMEDB_BIOS_GAME_EXPRESS))
                 continue;
 
             found = true;
             *is_valid_bios = true;
-            strncpy_fit(bios_name, k_game_database[i].title, 64);
+            strncpy_fit(bios_name, db_entry.title, 64);
 
-            Log("BIOS found in database: %s. CRC: %08X", k_game_database[i].title, db_crc);
+            Log("BIOS found in database: %s. CRC: %08X", db_entry.title, db_crc);
         }
-        else
-            i++;
     }
 
     if (!found)
