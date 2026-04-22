@@ -112,7 +112,6 @@ void HuC6270::Reset()
     m_active_line = false;
     m_burst_mode = false;
     m_line_buffer_index = 0;
-    m_no_sprite_limit = false;
     m_sprite_count = 0;
     m_sprite_overflow = false;
 
