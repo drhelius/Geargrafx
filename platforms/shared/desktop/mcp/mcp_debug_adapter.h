@@ -182,6 +182,10 @@ public:
     json GetTraceLog(int start, int count);
     json SetTraceLog(bool enabled, u32 flags);
 
+    // Rewind
+    json GetRewindStatus();
+    json RewindSeek(int snapshot);
+
     // Core access
     GeargrafxCore* GetCore() { return m_core; }
 

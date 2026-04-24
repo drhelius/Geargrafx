@@ -21,6 +21,7 @@
 #include "geargrafx.h"
 #include "config.h"
 #include "gui.h"
+#include "gui_actions.h"
 #include "emu.h"
 #include "application.h"
 #include "gamepad.h"
@@ -33,15 +34,29 @@ static Uint16 input_last_state[GG_MAX_GAMEPADS] = { };
 static bool input_turbo_toggle_prev[GG_MAX_GAMEPADS][2] = { };
 
 static bool events_check_hotkey(const SDL_Event* event, const config_Hotkey& hotkey, bool allow_repeat);
+static bool events_match_hotkey_scancode(const SDL_Event* event, const config_Hotkey& hotkey);
 static bool events_is_mouse_controller(int controller);
 static int events_get_mouse_controller(void);
-static Uint16 input_build_state(int controller);
+static Uint16 input_build_state(int controller, bool update_turbo = true);
 static void input_apply_state(int controller, Uint16 before, Uint16 now);
 
 void events_shortcuts(const SDL_Event* event)
 {
+    if (event->type == SDL_EVENT_KEY_UP)
+    {
+        if (events_match_hotkey_scancode(event, config_hotkeys[config_HotkeyIndex_Rewind]))
+            gui_action_rewind_released();
+        return;
+    }
+
     if (event->type != SDL_EVENT_KEY_DOWN)
         return;
+
+    if (events_check_hotkey(event, config_hotkeys[config_HotkeyIndex_Rewind], false))
+    {
+        gui_action_rewind_pressed();
+        return;
+    }
 
     // Check special case hotkeys first
     if (events_check_hotkey(event, config_hotkeys[config_HotkeyIndex_Quit], false))
@@ -207,6 +222,23 @@ void events_emu(void)
     }
 }
 
+void events_sync_input(void)
+{
+    SDL_PumpEvents();
+
+    int max_controller = config_input.turbo_tap ? GG_MAX_GAMEPADS : 1;
+    static const Uint16 all_keys = GG_KEY_LEFT | GG_KEY_RIGHT | GG_KEY_UP | GG_KEY_DOWN |
+        GG_KEY_I | GG_KEY_II | GG_KEY_III | GG_KEY_IV | GG_KEY_V | GG_KEY_VI | GG_KEY_RUN | GG_KEY_SELECT;
+
+    for (int controller = 0; controller < GG_MAX_GAMEPADS; controller++)
+    {
+        Uint16 now = (controller < max_controller) ? input_build_state(controller, false) : 0;
+        input_apply_state(controller, all_keys, 0);
+        input_apply_state(controller, 0, now);
+        input_last_state[controller] = now;
+    }
+}
+
 void events_reset_input(void)
 {
     input_updated = false;
@@ -217,7 +249,7 @@ bool events_input_updated(void)
     return input_updated;
 }
 
-static Uint16 input_build_state(int controller)
+static Uint16 input_build_state(int controller, bool update_turbo)
 {
     const bool is_mouse_controller = events_is_mouse_controller(controller);
     const Uint16 mouse_button_mask = GG_KEY_I | GG_KEY_II | GG_KEY_RUN | GG_KEY_SELECT;
@@ -319,27 +351,33 @@ static Uint16 input_build_state(int controller)
 
     if (is_mouse_controller)
     {
-        input_turbo_toggle_prev[controller][0] = false;
-        input_turbo_toggle_prev[controller][1] = false;
+        if (update_turbo)
+        {
+            input_turbo_toggle_prev[controller][0] = false;
+            input_turbo_toggle_prev[controller][1] = false;
+        }
         return ret & mouse_button_mask;
     }
 
     bool pressed_turbo_I  = kb_turbo_I || gp_turbo_I;
     bool pressed_turbo_II = kb_turbo_II || gp_turbo_II;
 
-    if (pressed_turbo_I && !input_turbo_toggle_prev[controller][0])
+    if (update_turbo && pressed_turbo_I && !input_turbo_toggle_prev[controller][0])
     {
         config_input.turbo_enabled[controller][0] = !config_input.turbo_enabled[controller][0];
         emu_set_turbo((GG_Controllers)controller, GG_KEY_I, config_input.turbo_enabled[controller][0]);
     }
-    if (pressed_turbo_II && !input_turbo_toggle_prev[controller][1])
+    if (update_turbo && pressed_turbo_II && !input_turbo_toggle_prev[controller][1])
     {
         config_input.turbo_enabled[controller][1] = !config_input.turbo_enabled[controller][1];
         emu_set_turbo((GG_Controllers)controller, GG_KEY_II, config_input.turbo_enabled[controller][1]);
     }
 
-    input_turbo_toggle_prev[controller][0] = pressed_turbo_I;
-    input_turbo_toggle_prev[controller][1] = pressed_turbo_II;
+    if (update_turbo)
+    {
+        input_turbo_toggle_prev[controller][0] = pressed_turbo_I;
+        input_turbo_toggle_prev[controller][1] = pressed_turbo_II;
+    }
 
     return ret;
 }
@@ -393,4 +431,13 @@ static bool events_check_hotkey(const SDL_Event* event, const config_Hotkey& hot
     if (expected & (SDL_KMOD_LGUI | SDL_KMOD_RGUI | SDL_KMOD_GUI)) expected_normalized = (SDL_Keymod)(expected_normalized | SDL_KMOD_GUI);
 
     return mods_normalized == expected_normalized;
+}
+
+static bool events_match_hotkey_scancode(const SDL_Event* event, const config_Hotkey& hotkey)
+{
+    if (event->type != SDL_EVENT_KEY_UP && event->type != SDL_EVENT_KEY_DOWN)
+        return false;
+    if (hotkey.key == SDL_SCANCODE_UNKNOWN)
+        return false;
+    return event->key.scancode == hotkey.key;
 }

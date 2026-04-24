@@ -266,4 +266,42 @@ Use `list_memory_areas` to get the full list with IDs and sizes. Common areas:
 - **Bookmarks**: Use `add_disassembler_bookmark` for code locations and `add_memory_bookmark` for data regions
 - **Watches**: Use `add_memory_watch` for variables you're tracking across steps
 - **Save states**: Use `save_state` / `load_state` to snapshot and restore emulator state at interesting points
+- **Rewind**: Use `get_rewind_status` + `rewind_seek` to scrub back through recent execution history without manual save states
 - **Screenshots**: Capture visual state with `get_screenshot` after significant changes
+
+---
+
+## Rewind (Time Travel Debugging)
+
+The emulator continuously records snapshots into a ring buffer during gameplay. You can seek to any recorded snapshot to restore full emulator state at that point in time — like time travel debugging.
+
+### Workflow
+
+1. **Check availability**: `get_rewind_status` — returns snapshot count, capacity, buffered seconds
+2. **Pause**: `debug_pause` — the emulator must be paused before seeking
+3. **Seek**: `rewind_seek` with a snapshot number (1 = oldest, snapshot_count = newest)
+4. **Inspect**: `get_huc6280_status`, `get_disassembly`, `get_screenshot`, `read_memory`, etc.
+5. **Iterate**: Seek to different snapshots to narrow down when a bug first appeared
+6. **Resume or continue debugging**: `debug_continue` to resume from the seeked state
+
+### Tools
+
+| Tool | Description |
+|---|---|
+| `get_rewind_status` | Snapshot count, capacity, buffered seconds, configuration |
+| `rewind_seek` | Jump to snapshot N (1=oldest, count=newest). Non-destructive — can seek repeatedly |
+
+### Key Details
+
+- **Non-destructive seeking**: `rewind_seek` loads a snapshot without removing it. You can seek to the same snapshot multiple times, or jump between different snapshots freely.
+- **Snapshot numbering**: Snapshot 1 is the oldest available, snapshot_count is the newest (most recent).
+- **Buffer size**: Configured by the user (default: 10 seconds). When full, oldest snapshots are overwritten.
+- **Granularity**: Snapshots are taken every N frames (configurable). Default is every frame for maximum precision.
+
+### Bug Reproduction with Rewind
+
+1. Let the game run past the bug occurrence
+2. `debug_pause` → `get_rewind_status` to see how far back you can go
+3. Binary search with `rewind_seek`: try the midpoint, check if the bug is visible (`get_screenshot`), then narrow the range
+4. Once you find the exact snapshot where the bug appears, inspect CPU/memory state
+5. Set breakpoints at the relevant code, then `rewind_seek` to a snapshot just before the bug and `debug_continue`

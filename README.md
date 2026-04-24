@@ -92,7 +92,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 
 - Accurate emulation supporting the entire HuCard PCE / SGX catalog.
 - Support for CD-ROM², Super CD-ROM² and Arcade CD-ROM² systems.
-- Save states with preview.
+- Save states with preview and rewind support.
 - Backup RAM and Memory Base 128 support.
 - Multi Tap (up to 5 players).
 - Standard Gamepad (2 buttons), Avenue Pad 3 (3 buttons, auto-configured based on game), Avenue Pad 6 (6 buttons) and Mouse.
@@ -105,7 +105,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 - Supported platforms (standalone): Windows, Linux, BSD and macOS.
 - Supported platforms (libretro): Windows, Linux, macOS, Raspberry Pi, Android, iOS, tvOS, webOS, PlayStation Vita, PlayStation 3, Nintendo 3DS, Nintendo GameCube, Nintendo Wii, Nintendo WiiU, Nintendo Switch, Emscripten, Classic Mini systems (NES, SNES, C64, ...), OpenDingux, RetroFW and QNX.
 - Full debugger with just-in-time disassembler, CPU breakpoints, memory access breakpoints, code navigation (goto address, JP JR and JSR double clicking), debug symbols, automatic labels, memory editor, PSG inspector and video viewer including registers, tiles, sprites, backgrounds, CD-ROM sub-systems and both VDCs in SuperGrafx mode.
-- MCP server for AI-assisted debugging with GitHub Copilot, Claude, ChatGPT and similar, exposing tools for execution control, memory inspection, hardware status, and more.
+- MCP server for AI-assisted debugging with GitHub Copilot, Claude, ChatGPT and similar, exposing tools for execution control, memory inspection, hardware status, rewind and more.
 - Windows and Linux *Portable Mode*.
 - ROM loading from the command line by adding the ROM path as an argument.
 - ROM loading using drag & drop.

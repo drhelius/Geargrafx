@@ -438,7 +438,7 @@ static void sdl_events(void)
             if (!file_dialog_active)
                 ImGui_ImplSDL3_ProcessEvent(&event);
 
-            if (!gui_in_use && !file_dialog_active)
+            if (!file_dialog_active && !ImGui::GetIO().WantCaptureKeyboard)
                 events_shortcuts(&event);
 
             if (!file_dialog_active)

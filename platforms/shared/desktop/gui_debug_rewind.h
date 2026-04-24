@@ -17,26 +17,17 @@
  *
  */
 
-#ifndef GUI_ACTIONS_H
-#define GUI_ACTIONS_H
+#ifndef GUI_DEBUG_REWIND_H
+#define GUI_DEBUG_REWIND_H
 
-#ifdef GUI_ACTIONS_IMPORT
+#ifdef GUI_DEBUG_REWIND_IMPORT
     #define EXTERN
 #else
     #define EXTERN extern
 #endif
 
-EXTERN void gui_action_reset(void);
-EXTERN void gui_action_reload_rom(void);
-EXTERN void gui_action_pause(void);
-EXTERN void gui_action_ffwd(void);
-EXTERN void gui_action_rewind_pressed(void);
-EXTERN void gui_action_rewind_released(void);
-EXTERN void gui_action_save_screenshot(const char* path);
-EXTERN void gui_action_save_sprite(const char* path, int vdc, int index);
-EXTERN void gui_action_save_all_sprites(const char* folder_path, int vdc);
-EXTERN void gui_action_save_background(const char* path, int vdc);
+EXTERN void gui_debug_window_rewind(void);
 
-#undef GUI_ACTIONS_IMPORT
+#undef GUI_DEBUG_REWIND_IMPORT
 #undef EXTERN
-#endif /* GUI_ACTIONS_H */
+#endif /* GUI_DEBUG_REWIND_H */

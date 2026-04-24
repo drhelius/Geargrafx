@@ -32,6 +32,7 @@
 #include "ogl_renderer.h"
 #include "utils.h"
 #include "geargrafx.h"
+#include "rewind.h"
 
 static bool open_rom = false;
 static bool open_ram = false;
@@ -164,6 +165,17 @@ static void menu_geargrafx(void)
             ImGui::PushItemWidth(100.0f);
             ImGui::Combo("##fwd", &config_emulator.ffwd_speed, "X 1.5\0X 2\0X 2.5\0X 3\0Unlimited\0\0");
             ImGui::PopItemWidth();
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Rewind"))
+        {
+            ImGui::MenuItem("Enabled", config_hotkeys[config_HotkeyIndex_Rewind].str, &config_rewind.enabled);
+
+            ImGui::PushItemWidth(140.0f);
+            ImGui::SliderFloat("Speed", &config_rewind.speed, 1.0f, 8.0f, "%.0fx");
+            ImGui::PopItemWidth();
+
             ImGui::EndMenu();
         }
 
@@ -577,6 +589,7 @@ static void menu_emulator(void)
             hotkey_configuration_item("Reset:", &config_hotkeys[config_HotkeyIndex_Reset]);
             hotkey_configuration_item("Pause:", &config_hotkeys[config_HotkeyIndex_Pause]);
             hotkey_configuration_item("Fast Forward:", &config_hotkeys[config_HotkeyIndex_FFWD]);
+            hotkey_configuration_item("Rewind:", &config_hotkeys[config_HotkeyIndex_Rewind]);
             hotkey_configuration_item("Save State:", &config_hotkeys[config_HotkeyIndex_SaveState]);
             hotkey_configuration_item("Load State:", &config_hotkeys[config_HotkeyIndex_LoadState]);
             hotkey_configuration_item("Save State Slot 1:", &config_hotkeys[config_HotkeyIndex_SelectSlot1]);
@@ -1168,6 +1181,7 @@ static void menu_input(void)
                         gamepad_configuration_item("Reset:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_Reset], i);
                         gamepad_configuration_item("Pause:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_Pause], i);
                         gamepad_configuration_item("Fast Forward:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_FFWD], i);
+                        gamepad_configuration_item("Rewind:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_Rewind], i);
                         gamepad_configuration_item("Screenshot:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_Screenshot], i);
 
                         gui_popup_modal_gamepad(i);
@@ -1594,6 +1608,10 @@ static void menu_debug(void)
             ImGui::MenuItem("Show PSG", "", &config_debug.show_psg);
             ImGui::EndMenu();
         }
+
+        ImGui::Separator();
+
+        ImGui::MenuItem("Show Rewind", "", &config_debug.show_rewind, config_debug.debug);
 
 #if defined(__APPLE__) || defined(_WIN32)
         ImGui::Separator();

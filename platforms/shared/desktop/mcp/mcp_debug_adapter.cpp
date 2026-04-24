@@ -27,6 +27,7 @@
 #include "../gui_debug_memory.h"
 #include "../gui_debug_memeditor.h"
 #include "../config.h"
+#include "../rewind.h"
 #include <cstring>
 #include <sstream>
 #include <iomanip>
@@ -2966,5 +2967,57 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags)
     }
 
     result["total_entries"] = tl->GetCount();
+    return result;
+}
+
+json DebugAdapter::GetRewindStatus()
+{
+    json result;
+    result["enabled"] = config_rewind.enabled;
+    result["snapshot_count"] = rewind_get_snapshot_count();
+    result["capacity"] = rewind_get_capacity();
+    result["frames_per_snapshot"] = rewind_get_frames_per_snapshot();
+    result["buffer_seconds"] = config_rewind.buffer_seconds;
+
+    int fps = rewind_get_frames_per_snapshot();
+    if (fps < 1) fps = 1;
+    result["buffered_seconds"] = (double)(rewind_get_snapshot_count() * fps) / 60.0;
+
+    return result;
+}
+
+json DebugAdapter::RewindSeek(int snapshot)
+{
+    bool paused = emu_is_paused() || emu_is_debug_idle();
+
+    if (!paused)
+        return {{"error", "Pause the emulator before seeking the rewind buffer"}};
+
+    int count = rewind_get_snapshot_count();
+
+    if (count == 0)
+        return {{"error", "No rewind snapshots available"}};
+
+    if (snapshot < 1 || snapshot > count)
+        return {{"error", "Snapshot out of range (1-" + std::to_string(count) + ")"}};
+
+    int age = count - snapshot;
+
+    if (!rewind_seek(age))
+        return {{"error", "Failed to load snapshot"}};
+
+    HuC6280::HuC6280_State* cpu = m_core->GetHuC6280()->GetState();
+    std::ostringstream ss;
+    ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << cpu->PC->GetValue();
+
+    int fps = rewind_get_frames_per_snapshot();
+    if (fps < 1) fps = 1;
+
+    json result;
+    result["success"] = true;
+    result["snapshot"] = snapshot;
+    result["total"] = count;
+    result["age_seconds"] = (double)(age * fps) / 60.0;
+    result["pc"] = ss.str();
     return result;
 }

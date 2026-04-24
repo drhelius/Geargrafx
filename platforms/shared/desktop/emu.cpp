@@ -25,6 +25,8 @@
 #include "geargrafx.h"
 #include "sound_queue.h"
 #include "config.h"
+#include "rewind.h"
+#include "events.h"
 #include "mcp/mcp_manager.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -37,6 +39,8 @@ static GeargrafxCore* geargrafx;
 static s16* audio_buffer;
 static bool audio_enabled;
 static McpManager* mcp_manager;
+static Uint64 rewind_last_counter = 0;
+static double rewind_pop_accumulator = 0.0;
 
 enum Loading_State
 {
@@ -63,6 +67,8 @@ static void update_debug(void);
 static void update_debug_background(void);
 static void update_debug_sprites(void);
 static void update_debug_tiles(void);
+static void reset_rewind_timing(void);
+static int get_rewind_pop_budget(void);
 
 bool emu_init(GG_Input_Pump_Fn input_pump_fn)
 {
@@ -92,6 +98,8 @@ bool emu_init(GG_Input_Pump_Fn input_pump_fn)
     mcp_manager = new McpManager();
     mcp_manager->Init(geargrafx);
 
+    rewind_init();
+
     return true;
 }
 
@@ -106,6 +114,7 @@ void emu_destroy(void)
 
     save_ram();
     save_mb128();
+    rewind_destroy();
     SafeDelete(mcp_manager);
     SafeDeleteArray(audio_buffer);
     sound_queue_destroy();
@@ -174,7 +183,14 @@ bool emu_finish_media_loading(void)
 
     update_savestates_data();
 
+    rewind_reset();
+
     return true;
+}
+
+void emu_reset_rewind_timing(void)
+{
+    reset_rewind_timing();
 }
 
 void emu_update(void)
@@ -188,6 +204,25 @@ void emu_update(void)
         return;
 
     int sampleCount = 0;
+    bool frame_executed = false;
+
+    if (rewind_is_active())
+    {
+        int to_pop = get_rewind_pop_budget();
+
+        for (int i = 0; i < to_pop; i++)
+        {
+            if (!rewind_pop())
+                break;
+        }
+
+        int silence_count = GG_AUDIO_QUEUE_SIZE;
+        memset(audio_buffer, 0, silence_count * sizeof(s16));
+        sound_queue_write(audio_buffer, silence_count, false);
+        return;
+    }
+
+    reset_rewind_timing();
 
     if (config_debug.debug)
     {
@@ -199,7 +234,11 @@ void emu_update(void)
         debug_run.stop_on_irq = emu_debug_irq_breakpoints;
 
         if (emu_debug_command != Debug_Command_None)
+        {
+            rewind_commit_seek();
             breakpoint_hit = geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount, &debug_run);
+            frame_executed = true;
+        }
 
         if (breakpoint_hit || emu_debug_command == Debug_Command_StepFrame || emu_debug_command == Debug_Command_Step)
         {
@@ -226,7 +265,14 @@ void emu_update(void)
         update_debug();
     }
     else
+    {
+        rewind_commit_seek();
         geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
+        frame_executed = true;
+    }
+
+    if (frame_executed)
+        rewind_push();
 
     if ((sampleCount > 0) && !geargrafx->IsPaused())
     {
@@ -238,6 +284,44 @@ void emu_update(void)
         memset(audio_buffer, 0, silence_count * sizeof(s16));
         sound_queue_write(audio_buffer, silence_count, false);
     }
+}
+
+static void reset_rewind_timing(void)
+{
+    rewind_last_counter = 0;
+    rewind_pop_accumulator = 0.0;
+}
+
+static int get_rewind_pop_budget(void)
+{
+    Uint64 now = SDL_GetPerformanceCounter();
+
+    if (rewind_last_counter == 0)
+    {
+        rewind_last_counter = now;
+        return 0;
+    }
+
+    double elapsed = (double)(now - rewind_last_counter) / (double)SDL_GetPerformanceFrequency();
+    rewind_last_counter = now;
+
+    if (elapsed < 0.0)
+        elapsed = 0.0;
+    else if (elapsed > 0.25)
+        elapsed = 0.25;
+
+    int frames_per_snapshot = rewind_get_frames_per_snapshot();
+    if (frames_per_snapshot < 1)
+        frames_per_snapshot = 1;
+
+    double snapshots_per_second = (60.0 * (double)config_rewind.speed) / (double)frames_per_snapshot;
+    rewind_pop_accumulator += elapsed * snapshots_per_second;
+
+    int to_pop = (int)rewind_pop_accumulator;
+    if (to_pop > 0)
+        rewind_pop_accumulator -= (double)to_pop;
+
+    return to_pop;
 }
 
 void emu_key_pressed(GG_Controllers controller, GG_Keys key)
@@ -287,6 +371,8 @@ void emu_reset(void)
     geargrafx->ResetMedia(false);
     load_ram();
     load_mb128();
+
+    rewind_reset();
 }
 
 void emu_audio_huc6280a(bool enabled)
@@ -344,6 +430,7 @@ void emu_load_ram(const char* file_path)
         save_ram();
         geargrafx->ResetMedia(false);
         geargrafx->LoadRam(file_path, true);
+        rewind_reset();
     }
 }
 
@@ -362,7 +449,11 @@ void emu_load_state_slot(int index)
     if (!emu_is_empty())
     {
         const char* dir = get_configurated_dir(config_emulator.savestates_dir_option, config_emulator.savestates_path.c_str());
-        geargrafx->LoadState(dir, index);
+        if (geargrafx->LoadState(dir, index))
+        {
+            events_sync_input();
+            rewind_reset();
+        }
     }
 }
 
@@ -375,7 +466,13 @@ void emu_save_state_file(const char* file_path)
 void emu_load_state_file(const char* file_path)
 {
     if (!emu_is_empty())
-        geargrafx->LoadState(file_path);
+    {
+        if (geargrafx->LoadState(file_path))
+        {
+            events_sync_input();
+            rewind_reset();
+        }
+    }
 }
 
 void update_savestates_data(void)

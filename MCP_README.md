@@ -57,6 +57,7 @@ This server provides tools for game development, rom hacking, reverse engineerin
 - **Call Stack**: View function call hierarchy
 - **Trace Logger**: CPU instruction trace with interleaved hardware events (VDC, VCE, PSG, timer, CD-ROM, SCSI, ADPCM, input)
 - **Screenshot Capture**: Get current frame as PNG image
+- **Rewind**: Time-travel debugging with snapshot status and seek tools
 - **Documentation Resources**: Built-in hardware and programming documentation for AI context
 - **GUI Integration**: MCP server runs alongside the emulator GUI, sharing the same state
 
@@ -331,6 +332,8 @@ The server exposes tools organized in the following categories:
 - `load_state` - Load emulator state from currently selected slot
 - `set_fast_forward_speed` - Set fast forward speed multiplier (0: 1.5x, 1: 2x, 2: 2.5x, 3: 3x, 4: Unlimited)
 - `toggle_fast_forward` - Toggle fast forward mode on/off
+- `get_rewind_status` - Get rewind buffer status (enabled, snapshots, capacity, buffered seconds)
+- `rewind_seek` - Seek to a specific rewind snapshot while paused
 
 ### Controller Input
 - `controller_button` - Control a button on a controller (player 1-5). Use action 'press' to hold the button, 'release' to let it go, or 'press_and_release' to simulate a quick tap. Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI

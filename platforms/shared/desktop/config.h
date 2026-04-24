@@ -115,6 +115,14 @@ struct config_Audio
     int buffer_count = 3;
 };
 
+struct config_Rewind
+{
+    bool enabled = true;
+    int buffer_seconds = 10;
+    int frames_per_snapshot = 1;
+    float speed = 2.0f;
+};
+
 struct config_Input
 {
     bool turbo_tap = false;
@@ -169,6 +177,7 @@ enum config_HotkeyIndex
     config_HotkeyIndex_Reset,
     config_HotkeyIndex_Pause,
     config_HotkeyIndex_FFWD,
+    config_HotkeyIndex_Rewind,
     config_HotkeyIndex_SaveState,
     config_HotkeyIndex_LoadState,
     config_HotkeyIndex_Screenshot,
@@ -233,6 +242,7 @@ struct config_Debug
     bool show_adpcm = false;
     bool show_arcade_card = false;
     bool show_trace_logger = false;
+    bool show_rewind = false;
     bool trace_counter = true;
     bool trace_bank = true;
     bool trace_registers = true;
@@ -284,6 +294,7 @@ EXTERN char config_imgui_file_path[512];
 EXTERN config_Emulator config_emulator;
 EXTERN config_Video config_video;
 EXTERN config_Audio config_audio;
+EXTERN config_Rewind config_rewind;
 EXTERN config_Input config_input;
 EXTERN config_Input_Keyboard config_input_keyboard[GG_MAX_GAMEPADS];
 EXTERN config_Input_Gamepad config_input_gamepad[GG_MAX_GAMEPADS];

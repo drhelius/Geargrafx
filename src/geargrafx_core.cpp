@@ -689,7 +689,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 #if !defined(__LIBRETRO__)
             is_desktop_savestate = true;
 #endif
-            Log("Loading desktop save state");
+            Debug("Loading desktop save state");
         }
     }
 
