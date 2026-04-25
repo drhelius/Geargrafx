@@ -152,13 +152,13 @@ bool gui_init(void)
         emu_set_turbo_speed((GG_Controllers)i, GG_KEY_II, config_input.turbo_speed[i][1]);
     }
 
-    strcpy(gui_savefiles_path, config_emulator.savefiles_path.c_str());
-    strcpy(gui_savestates_path, config_emulator.savestates_path.c_str());
-    strcpy(gui_screenshots_path, config_emulator.screenshots_path.c_str());
-    strcpy(gui_backup_ram_path, config_emulator.backup_ram_path.c_str());
-    strcpy(gui_mb128_path, config_emulator.mb128_path.c_str());
-    strcpy(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str());
-    strcpy(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str());
+    strncpy_fit(gui_savefiles_path, config_emulator.savefiles_path.c_str(), sizeof(gui_savefiles_path));
+    strncpy_fit(gui_savestates_path, config_emulator.savestates_path.c_str(), sizeof(gui_savestates_path));
+    strncpy_fit(gui_screenshots_path, config_emulator.screenshots_path.c_str(), sizeof(gui_screenshots_path));
+    strncpy_fit(gui_backup_ram_path, config_emulator.backup_ram_path.c_str(), sizeof(gui_backup_ram_path));
+    strncpy_fit(gui_mb128_path, config_emulator.mb128_path.c_str(), sizeof(gui_mb128_path));
+    strncpy_fit(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str(), sizeof(gui_syscard_bios_path));
+    strncpy_fit(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str(), sizeof(gui_gameexpress_bios_path));
     if (strlen(gui_syscard_bios_path) > 0)
         gui_load_bios(gui_syscard_bios_path, true);
     if (strlen(gui_gameexpress_bios_path) > 0)
@@ -429,7 +429,7 @@ void gui_set_status_message(const char* message, Uint64 milliseconds)
 {
     if (config_emulator.status_messages)
     {
-        strcpy(status_message, message);
+        strncpy_fit(status_message, message, sizeof(status_message));
         status_message_active = true;
         status_message_start_time = SDL_GetTicks();
         status_message_duration = milliseconds;
@@ -438,7 +438,7 @@ void gui_set_status_message(const char* message, Uint64 milliseconds)
 
 void gui_set_error_message(const char* message)
 {
-    strcpy(error_message, message);
+    strncpy_fit(error_message, message, sizeof(error_message));
     error_window_active = true;
 }
 
