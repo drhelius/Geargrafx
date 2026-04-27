@@ -30,11 +30,11 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     <tr>
       <td rowspan="2"><strong>Windows</strong></td>
       <td>Desktop x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.4/Geargrafx-1.7.4-desktop-windows-x64.zip">Geargrafx-1.7.4-desktop-windows-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.5/Geargrafx-1.7.5-desktop-windows-x64.zip">Geargrafx-1.7.5-desktop-windows-x64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.4/Geargrafx-1.7.4-desktop-windows-arm64.zip">Geargrafx-1.7.4-desktop-windows-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.5/Geargrafx-1.7.5-desktop-windows-arm64.zip">Geargrafx-1.7.5-desktop-windows-arm64.zip</a></td>
     </tr>
     <tr>
       <td rowspan="3"><strong>macOS</strong></td>
@@ -43,28 +43,32 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     </tr>
     <tr>
       <td>Desktop Apple Silicon</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.4/Geargrafx-1.7.4-desktop-macos-arm64.zip">Geargrafx-1.7.4-desktop-macos-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.5/Geargrafx-1.7.5-desktop-macos-arm64.zip">Geargrafx-1.7.5-desktop-macos-arm64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop Intel</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.4/Geargrafx-1.7.4-desktop-macos-intel.zip">Geargrafx-1.7.4-desktop-macos-intel.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.5/Geargrafx-1.7.5-desktop-macos-intel.zip">Geargrafx-1.7.5-desktop-macos-intel.zip</a></td>
     </tr>
     <tr>
-      <td rowspan="4"><strong>Linux</strong></td>
+      <td rowspan="5"><strong>Linux</strong></td>
       <td>Ubuntu PPA</td>
       <td><a href="https://github.com/drhelius/ppa-geardome">drhelius/ppa-geardome</a></td>
     </tr>
     <tr>
+      <td>Fedora RPM</td>
+      <td><a href="https://github.com/drhelius/rpm-geardome">drhelius/rpm-geardome</a></td>
+    </tr>
+    <tr>
       <td>Desktop Ubuntu 24.04 x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.4/Geargrafx-1.7.4-desktop-ubuntu24.04-x64.zip">Geargrafx-1.7.4-desktop-ubuntu24.04-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.5/Geargrafx-1.7.5-desktop-ubuntu24.04-x64.zip">Geargrafx-1.7.5-desktop-ubuntu24.04-x64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop Ubuntu 22.04 x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.4/Geargrafx-1.7.4-desktop-ubuntu22.04-x64.zip">Geargrafx-1.7.4-desktop-ubuntu22.04-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.5/Geargrafx-1.7.5-desktop-ubuntu22.04-x64.zip">Geargrafx-1.7.5-desktop-ubuntu22.04-x64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop Ubuntu 24.04 ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.4/Geargrafx-1.7.4-desktop-ubuntu24.04-arm64.zip">Geargrafx-1.7.4-desktop-ubuntu24.04-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.5/Geargrafx-1.7.5-desktop-ubuntu24.04-arm64.zip">Geargrafx-1.7.5-desktop-ubuntu24.04-arm64.zip</a></td>
     </tr>
     <tr>
       <td><strong>MCPB</strong></td>
