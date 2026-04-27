@@ -25,6 +25,8 @@ SuperGrafx and CD-ROM² software.
 %autosetup -n Geargrafx-%{version}
 
 %build
+export CXXFLAGS="$CXXFLAGS -fno-var-tracking-assignments"
+
 %make_build -C platforms/linux \
     GIT_VERSION="%{version}" \
     USE_CLANG=0 \
@@ -33,7 +35,8 @@ SuperGrafx and CD-ROM² software.
 %install
 # Binary and data in /usr/lib/geargrafx (readlink resolves symlinks, so resources are found)
 install -Dm755 platforms/linux/%{name} %{buildroot}%{_prefix}/lib/%{name}/%{name}
-ln -s %{_prefix}/lib/%{name}/%{name} %{buildroot}%{_bindir}/%{name}
+install -dm755 %{buildroot}%{_bindir}
+ln -s ../lib/%{name}/%{name} %{buildroot}%{_bindir}/%{name}
 
 # Game controller database
 install -Dm644 platforms/shared/gamecontrollerdb.txt %{buildroot}%{_prefix}/lib/%{name}/gamecontrollerdb.txt
