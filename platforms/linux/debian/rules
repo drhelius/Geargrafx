@@ -27,7 +27,8 @@ override_dh_install:
 		debian/geargrafx/usr/lib/geargrafx/mcp/resources/hardware/
 	install -m644 platforms/shared/desktop/mcp/resources/hardware/toc.json \
 		debian/geargrafx/usr/lib/geargrafx/mcp/resources/hardware/toc.json
-	ln -s /usr/lib/geargrafx/geargrafx debian/geargrafx/usr/games/geargrafx
+	install -dm755 debian/geargrafx/usr/games
+	ln -s ../lib/geargrafx/geargrafx debian/geargrafx/usr/games/geargrafx
 
 override_dh_shlibdeps:
 	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
