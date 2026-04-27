@@ -30,7 +30,7 @@ Features:
 - VGM recorder.
 - Internal database for automatic rom detection and hardware selection if Auto options are selected.
 - Full debugger with just-in-time disassembler, CPU breakpoints, memory access breakpoints, code navigation, debug symbols, automatic labels, memory editor, PSG inspector and video viewer.
-- MCP server for AI-assisted debugging with GitHub Copilot, Claude, ChatGPT and similar, exposing tools for execution control, memory inspection, hardware status, and more.
+- MCP server for AI-assisted debugging with GitHub Copilot, Claude, Codex and similar, exposing tools for execution control, memory inspection, hardware status, and more.
 - Windows and Linux Portable Mode.
 - ROM loading from the command line by adding the ROM path as an argument.
 - ROM loading using drag & drop.
@@ -67,7 +67,7 @@ Options:
   -h, --help               Display this help message
 
 MCP Server:
-Geargrafx includes a Model Context Protocol (MCP) server that enables AI-assisted debugging through AI agents like GitHub Copilot, Claude, ChatGPT and similar. The server provides tools for execution control, memory inspection, breakpoints, disassembly, hardware status, sprite viewing, and more.
+Geargrafx includes a Model Context Protocol (MCP) server that enables AI-assisted debugging through AI agents like GitHub Copilot, Claude, Codex and similar. The server provides tools for execution control, memory inspection, breakpoints, disassembly, hardware status, sprite viewing, and more.
 For complete setup instructions and tool documentation, see MCP_README.md at https://github.com/drhelius/Geargrafx
 
 -----------------------------------------------------
