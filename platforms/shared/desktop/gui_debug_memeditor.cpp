@@ -1851,6 +1851,16 @@ void MemEditor::SaveToBinaryFile(const char* file_path)
     }
 }
 
+void MemEditor::LoadFromBinaryFile(const char* file_path)
+{
+    FILE* file = fopen_utf8(file_path, "rb");
+    if (file)
+    {
+        fread(m_mem_data, m_mem_word, m_mem_size, file);
+        fclose(file);
+    }
+}
+
 void MemEditor::AddBookmark()
 {
     m_add_bookmark = true;

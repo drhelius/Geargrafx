@@ -186,6 +186,11 @@ void gui_debug_memory_save_dump(const char* file_path, bool binary)
         mem_edit[current_mem_edit].SaveToTextFile(file_path);
 }
 
+void gui_debug_memory_load_dump(const char* file_path)
+{
+    mem_edit[current_mem_edit].LoadFromBinaryFile(file_path);
+}
+
 static void draw_tabs(void)
 {
     GeargrafxCore* core = emu_get_core();
@@ -240,6 +245,11 @@ static void memory_editor_menu(void)
         if (ImGui::MenuItem("Save Memory As Binary..."))
         {
             gui_file_dialog_save_memory_dump(true);
+        }
+
+        if (ImGui::MenuItem("Load Memory From Binary..."))
+        {
+            gui_file_dialog_load_memory_dump();
         }
 
         ImGui::EndMenu();
