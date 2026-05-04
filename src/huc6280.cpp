@@ -29,6 +29,8 @@ HuC6280::HuC6280()
 {
     InitOPCodeFunctors();
     InitPointer(m_trace_logger);
+    InitPointer(m_clock_hardware_fn);
+    InitPointer(m_clock_hardware_context);
     m_breakpoints_enabled = false;
     m_breakpoints_irq_enabled = false;
     m_reset_value = -1;
@@ -109,6 +111,8 @@ void HuC6280::Reset()
     m_interrupt_disable_register = 0;
     m_interrupt_request_register = 0;
     m_transfer_flag = false;
+    m_clocked_master_cycles = 0;
+    m_extra_master_cycles = 0;
     m_cpu_breakpoint_hit = false;
     m_memory_breakpoint_hit = false;
     m_run_to_breakpoint_hit = false;

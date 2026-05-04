@@ -98,6 +98,10 @@ public:
 
 private:
     void Reset();
+    template<bool is_cdrom, bool is_sgx>
+    bool ClockHardware(u32 cycles);
+    template<bool is_cdrom, bool is_sgx>
+    static void ClockHardwareCallback(void* context, u32 cycles);
     template<bool debugger, bool is_cdrom, bool is_sgx>
     bool RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug);
     bool SaveState(std::ostream& stream, size_t& size, bool screenshot);
@@ -122,6 +126,7 @@ private:
     bool m_paused;
     TraceLogger* m_trace_logger;
     u64 m_master_clock_cycles;
+    bool m_frame_ready;
     GG_MB128_Mode m_mb128_mode;
 };
 

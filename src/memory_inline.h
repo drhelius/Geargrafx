@@ -232,13 +232,13 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
         {
             case 0x0000:
                 // HuC6270
-                m_huc6280->InjectCycles(block_transfer ? 2 : 1);
                 m_huc6202->WriteRegister(offset, value);
+                m_huc6280->InjectCycles(block_transfer ? 2 : 1);
                 break;
             case 0x0400:
                 // HuC6260
-                m_huc6280->InjectCycles(1);
                 m_huc6260->WriteRegister(offset, value);
+                m_huc6280->InjectCycles(1);
                 break;
             case 0x0800:
                 // PSG

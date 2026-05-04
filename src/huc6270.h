@@ -88,8 +88,10 @@ public:
     void SetNoSpriteLimit(bool no_sprite_limit);
     void SetSafeDefaults(bool safe_defaults);
     void SetTraceLogger(TraceLogger* trace_logger);
+    void ProcessCpuVramAccesses(u32 cycles);
+    bool HasPendingCpuVramAccess();
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
 private:
     struct HuC6270_Sprite_Data
@@ -114,6 +116,13 @@ private:
     u16 m_sat[HUC6270_SAT_SIZE] = {};
     u16 m_read_buffer;
     u16 m_vram_openbus;
+    bool m_pending_memory_read;
+    bool m_pending_memory_write;
+    s32 m_transfer_delay;
+    s32 m_load_bg_start_clock;
+    s32 m_load_bg_end_clock;
+    s32 m_hsync_start_clock;
+    bool m_allow_vram_access;
     bool m_trigger_sat_transfer;
     u16 m_sat_transfer_pending;
     u32 m_vram_transfer_pending;
@@ -164,6 +173,20 @@ private:
     void IncrementRasterLine();
     void SATTransfer();
     void VRAMTransfer();
+    void QueueMemoryRead();
+    void QueueMemoryWrite();
+    void WaitForVramAccess();
+    void ProcessVramRead();
+    void ProcessVramWrite();
+    void UpdateCpuVramBusyStatus();
+    int GetCpuVramReadDelay();
+    int GetCpuVramWriteDelay();
+    s32 CurrentHClock();
+    s32 DotsToClocks(s32 dots);
+    s32 ClocksSinceHSyncStart(s32 elapsed_cycles);
+    bool IsInBgFetchWindow(s32 hclock);
+    bool IsCpuVramBgSlotAllowed(s32 hclock);
+    bool IsCpuVramSlotAvailable(s32 elapsed_cycles);
     void NextVerticalState();
     void NextHorizontalState();
     u16 ReadVRAM(u16 address);
@@ -200,6 +223,13 @@ static const int k_huc6270_screen_size_y_pixels_mask[8] = {
     k_huc6270_screen_size_y_pixels[6] - 1, k_huc6270_screen_size_y_pixels[7] - 1 };
 
 static const int k_huc6270_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
+
+static const int k_huc6270_vram_read_delay_div2 = 15;
+static const int k_huc6270_vram_read_delay_div3 = 24;
+static const int k_huc6270_vram_read_delay_div4 = 24;
+static const int k_huc6270_vram_write_delay_div2 = 12;
+static const int k_huc6270_vram_write_delay_div3 = 18;
+static const int k_huc6270_vram_write_delay_div4 = 21;
 
 static const int k_huc6270_sprite_width[2] = { 16, 32 };
 static const int k_huc6270_sprite_height[4] = { 16, 32, 64, 64 };

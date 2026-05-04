@@ -48,6 +48,8 @@ class Memory;
 class HuC6202;
 class TraceLogger;
 
+typedef void (*GG_Clock_Hardware_Fn)(void* context, u32 master_cycles);
+
 class HuC6280
 {
 public:
@@ -103,6 +105,10 @@ public:
     void Init(Memory* memory, HuC6202* huc6202);
     void Reset();
     u32 RunInstruction(bool* completed = NULL);
+    void SetHardwareClock(GG_Clock_Hardware_Fn clock_fn, void* context);
+    u32 ConsumeClockedMasterCycles();
+    void ClockCountedCycles(unsigned int cycles);
+    void StallFastCycle();
     void ClockTimer(u32 cycles);
     void AssertIRQ1(bool asserted);
     void AssertIRQ2(bool asserted);
@@ -163,6 +169,10 @@ private:
     u8 m_interrupt_disable_register;
     u8 m_interrupt_request_register;
     bool m_transfer_flag;
+    GG_Clock_Hardware_Fn m_clock_hardware_fn;
+    void* m_clock_hardware_context;
+    u32 m_clocked_master_cycles;
+    u32 m_extra_master_cycles;
     s32 m_debug_next_irq;
     bool m_breakpoints_enabled;
     bool m_breakpoints_irq_enabled;
@@ -179,6 +189,7 @@ private:
 
     void HandleIRQ();
     void CheckIRQs();
+    void ClockHardwareCycles(u32 master_cycles);
 
     void CheckBreakpoints();
     void PushCallStack(u16 src, u16 dest, u16 back, u8 bank);

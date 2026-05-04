@@ -41,6 +41,8 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
     ClearFlag(FLAG_TRANSFER);
 #endif
     m_cycles = 0;
+    m_clocked_master_cycles = 0;
+    m_extra_master_cycles = 0;
 
     u8 opcode = Fetch8();
     CheckIRQs();
@@ -77,7 +79,7 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
 
     m_cycles += k_huc6280_opcode_cycles[opcode];
 
-    return m_cycles * k_huc6280_speed_divisor[m_speed];
+    return (m_cycles * k_huc6280_speed_divisor[m_speed]) + m_extra_master_cycles;
 }
 
 inline void HuC6280::HandleIRQ()
@@ -129,6 +131,67 @@ INLINE void HuC6280::CheckIRQs()
     m_irq_pending = IsSetFlag(FLAG_INTERRUPT) ? 0 : m_interrupt_request_register & ~m_interrupt_disable_register;
 }
 
+INLINE void HuC6270::QueueMemoryRead()
+{
+    m_pending_memory_read = true;
+    m_transfer_delay = GetCpuVramReadDelay();
+    UpdateCpuVramBusyStatus();
+}
+
+INLINE void HuC6270::QueueMemoryWrite()
+{
+    m_pending_memory_write = true;
+    m_transfer_delay = GetCpuVramWriteDelay();
+    UpdateCpuVramBusyStatus();
+}
+
+INLINE s32 HuC6270::CurrentHClock()
+{
+    return *m_huc6260->GetState()->HPOS;
+}
+
+INLINE s32 HuC6270::DotsToClocks(s32 dots)
+{
+    return dots * m_huc6260->GetClockDivider();
+}
+
+INLINE void HuC6280::SetHardwareClock(GG_Clock_Hardware_Fn clock_fn, void* context)
+{
+    m_clock_hardware_fn = clock_fn;
+    m_clock_hardware_context = context;
+}
+
+INLINE u32 HuC6280::ConsumeClockedMasterCycles()
+{
+    u32 cycles = m_clocked_master_cycles;
+    m_clocked_master_cycles = 0;
+    return cycles;
+}
+
+INLINE void HuC6280::ClockHardwareCycles(u32 master_cycles)
+{
+    if (master_cycles == 0)
+        return;
+
+    assert(IsValidPointer(m_clock_hardware_fn));
+
+    m_clock_hardware_fn(m_clock_hardware_context, master_cycles);
+    m_clocked_master_cycles += master_cycles;
+
+    CheckIRQs();
+}
+
+INLINE void HuC6280::ClockCountedCycles(unsigned int cycles)
+{
+    ClockHardwareCycles(cycles * k_huc6280_speed_divisor[m_speed]);
+}
+
+INLINE void HuC6280::StallFastCycle()
+{
+    m_extra_master_cycles += 3;
+    ClockHardwareCycles(3);
+}
+
 INLINE void HuC6280::AssertIRQ1(bool asserted)
 {
     if (asserted)
@@ -150,6 +213,7 @@ INLINE void HuC6280::AssertIRQ2(bool asserted)
 INLINE void HuC6280::InjectCycles(unsigned int cycles)
 {
     m_cycles += cycles;
+    ClockHardwareCycles(cycles * k_huc6280_speed_divisor[m_speed]);
 }
 
 INLINE u8 HuC6280:: ReadInterruptRegister(u16 address)

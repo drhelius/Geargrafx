@@ -70,6 +70,8 @@ INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int
 template<bool debugger, bool is_cdrom, bool is_sgx>
 bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
 {
+    m_huc6280->SetHardwareClock(&GeargrafxCore::ClockHardwareCallback<is_cdrom, is_sgx>, this);
+
     if (debugger)
     {
         bool debug_enable = false;
@@ -85,17 +87,14 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
 
         do
         {
+            m_frame_ready = false;
             u32 cycles = m_huc6280->RunInstruction(&instruction_completed);
-            m_master_clock_cycles += cycles;
-            m_huc6280->ClockTimer(cycles);
-            stop = m_huc6260->Clock<is_sgx>(cycles);
-            if (is_cdrom)
-            {
-                m_cdrom->Clock(cycles);
-                m_adpcm->Clock(cycles);
-                m_cdrom_audio->Clock(cycles);
-            }
-            m_audio->Clock(cycles);
+            u32 clocked_cycles = m_huc6280->ConsumeClockedMasterCycles();
+            u32 remaining_cycles = (cycles > clocked_cycles) ? cycles - clocked_cycles : 0;
+
+            stop = m_frame_ready;
+            if (ClockHardware<is_cdrom, is_sgx>(remaining_cycles))
+                stop = true;
 
             if (debug_enable)
             {
@@ -130,17 +129,14 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
 
         do
         {
+            m_frame_ready = false;
             u32 cycles = m_huc6280->RunInstruction();
-            m_master_clock_cycles += cycles;
-            m_huc6280->ClockTimer(cycles);
-            stop = m_huc6260->Clock<is_sgx>(cycles);
-            if (is_cdrom)
-            {
-                m_cdrom->Clock(cycles);
-                m_adpcm->Clock(cycles);
-                m_cdrom_audio->Clock(cycles);
-            }
-            m_audio->Clock(cycles);
+            u32 clocked_cycles = m_huc6280->ConsumeClockedMasterCycles();
+            u32 remaining_cycles = (cycles > clocked_cycles) ? cycles - clocked_cycles : 0;
+
+            stop = m_frame_ready;
+            if (ClockHardware<is_cdrom, is_sgx>(remaining_cycles))
+                stop = true;
         }
         while (!stop);
 
@@ -149,6 +145,58 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
 
         return false;
     }
+}
+
+template<bool is_cdrom, bool is_sgx>
+INLINE bool GeargrafxCore::ClockHardware(u32 cycles)
+{
+    bool frame_ready = false;
+
+    while (cycles > 0)
+    {
+        if (!m_huc6202->HasPendingCpuVramAccess())
+        {
+            m_master_clock_cycles += cycles;
+            m_huc6280->ClockTimer(cycles);
+            if (m_huc6260->Clock<is_sgx>(cycles))
+                frame_ready = true;
+            if (is_cdrom)
+            {
+                m_cdrom->Clock(cycles);
+                m_adpcm->Clock(cycles);
+                m_cdrom_audio->Clock(cycles);
+            }
+            m_audio->Clock(cycles);
+            break;
+        }
+
+        u32 step = (cycles > 3) ? 3 : cycles;
+        m_master_clock_cycles += step;
+        m_huc6280->ClockTimer(step);
+        m_huc6202->ProcessCpuVramAccesses(step);
+        if (m_huc6260->Clock<is_sgx>(step))
+            frame_ready = true;
+        if (is_cdrom)
+        {
+            m_cdrom->Clock(step);
+            m_adpcm->Clock(step);
+            m_cdrom_audio->Clock(step);
+        }
+        m_audio->Clock(step);
+        cycles -= step;
+    }
+
+    return frame_ready;
+}
+
+template<bool is_cdrom, bool is_sgx>
+INLINE void GeargrafxCore::ClockHardwareCallback(void* context, u32 cycles)
+{
+    GeargrafxCore* core = static_cast<GeargrafxCore*>(context);
+    assert(IsValidPointer(core));
+
+    if (core->ClockHardware<is_cdrom, is_sgx>(cycles))
+        core->m_frame_ready = true;
 }
 
 INLINE Memory* GeargrafxCore::GetMemory()

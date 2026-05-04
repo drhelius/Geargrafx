@@ -76,6 +76,8 @@ public:
     u8 ReadRegister(u16 address);
     void WriteRegister(u16 address, u8 value);
     void WriteFromCPU(u16 address, u8 value);
+    void ProcessCpuVramAccesses(u32 cycles);
+    bool HasPendingCpuVramAccess();
     void AssertIRQ1(HuC6270* vdc, bool assert);
     u16 GetWindow1Width();
     u16 GetWindow2Width();

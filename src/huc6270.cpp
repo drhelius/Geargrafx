@@ -80,6 +80,13 @@ void HuC6270::Reset()
     m_status_register = 0;
     m_read_buffer = 0xFFFF;
     m_vram_openbus = 0;
+    m_pending_memory_read = false;
+    m_pending_memory_write = false;
+    m_transfer_delay = 0;
+    m_load_bg_start_clock = HUC6260_LINE_LENGTH;
+    m_load_bg_end_clock = 0;
+    m_hsync_start_clock = 0;
+    m_allow_vram_access = false;
     m_trigger_sat_transfer = false;
     m_sat_transfer_pending = 0;
     m_vram_transfer_pending = 0;
@@ -102,6 +109,7 @@ void HuC6270::Reset()
     m_latched_vcr = HUC6270_VAR_VCR;
     m_latched_vsw = HUC6270_VAR_VSW;
     m_latched_mwr = 0;
+    m_latched_cr = HUC6270_VAR_CR;
     m_v_state = HuC6270_VERTICAL_STATE_VDS;
     m_h_state = HuC6270_HORIZONTAL_STATE_HDS;
     m_next_event = HuC6270_EVENT_NONE;
@@ -157,40 +165,38 @@ u8 HuC6270::ReadRegister(u16 address)
         // Status register
         case 0:
         {
-            u8 ret = m_status_register & 0x7F;
+            u8 ret = m_status_register & 0x3F;
+            if (HasPendingCpuVramAccess())
+                ret |= HUC6270_STATUS_BUSY;
             m_huc6202->AssertIRQ1(this, false);
-            m_status_register &= 0x40;
+            m_status_register = 0;
+            UpdateCpuVramBusyStatus();
             return ret;
         }
+        // Unused register
+        case 1:
+            return 0x00;
         // Data register (LSB)
         case 2:
         {
-            if (m_address_register != HUC6270_REG_VRR)
-            {
-                Debug("[PC=%04X] HuC6270 invalid data register (LSB) read: %02X", m_huc6280->GetState()->PC->GetValue(), m_address_register);
-            }
+            if (m_pending_memory_read)
+                WaitForVramAccess();
+
             return m_read_buffer & 0xFF;
         }
         // Data register (MSB)
         case 3:
         {
+            if (m_pending_memory_read)
+                WaitForVramAccess();
+
 #if !defined(GG_DISABLE_DISASSEMBLER)
             m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, m_address_register, true);
 #endif
             u8 ret = m_read_buffer >> 8;
 
             if (m_address_register == HUC6270_REG_VRR)
-            {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-                m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, m_register[HUC6270_REG_MARR], true);
-#endif
-                m_read_buffer = ReadVRAM(m_register[HUC6270_REG_MARR]);
-                m_register[HUC6270_REG_MARR] += k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
-            }
-            else
-            {
-                Debug("[PC=%04X] HuC6270 invalid data register (MSB) read: %02X", m_huc6280->GetState()->PC->GetValue(), m_address_register);
-            }
+                QueueMemoryRead();
 
             return ret;
         }
@@ -227,6 +233,9 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                 return;
             }
 
+            if ((m_address_register == HUC6270_REG_MAWR) || (m_address_register == HUC6270_REG_MARR) || (m_address_register == HUC6270_REG_VWR))
+                WaitForVramAccess();
+
             if (msb)
                 m_register[m_address_register] = (m_register[m_address_register] & 0x00FF) | (value << 8);
             else
@@ -239,29 +248,12 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                 // 0x01
                 case HUC6270_REG_MARR:
                     if (msb)
-                    {
-                        m_read_buffer = ReadVRAM(m_register[HUC6270_REG_MARR]);
-                        m_register[HUC6270_REG_MARR] += k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
-                    }
+                        QueueMemoryRead();
                     break;
                 // 0x02
                 case HUC6270_REG_VWR:
                     if (msb)
-                    {
-                        if (m_register[HUC6270_REG_MAWR] >= 0x8000)
-                        {
-                            Debug("[PC=%04X] HuC6270 ignoring write VWR out of bounds (%s) %04X: %02X", m_huc6280->GetState()->PC->GetValue(), msb ? "MSB" : "LSB", m_register[HUC6270_REG_MAWR], value);
-                        }
-                        else
-                        {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-                            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, m_register[HUC6270_REG_MAWR], false);
-#endif
-                            m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
-                        }
-
-                        m_register[HUC6270_REG_MAWR] += k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
-                    }
+                        QueueMemoryWrite();
                     break;
                 // 0x07
                 case HUC6270_REG_BXR:
@@ -279,7 +271,6 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                         m_vram_transfer_pending = 4 * (m_register[HUC6270_REG_LENR] + 1);
                         m_vram_transfer_src = m_register[HUC6270_REG_SOUR];
                         m_vram_transfer_dest = m_register[HUC6270_REG_DESR];
-                        //m_status_register |= HUC6270_STATUS_BUSY;
                     }
                     break;
                 // 0x13
@@ -295,6 +286,7 @@ void HuC6270::WriteRegister(u16 address, u8 value)
             break;
     }
 }
+
 void HuC6270::EndOfLine()
 {
     m_hpos = 0;
@@ -385,6 +377,11 @@ void HuC6270::HSyncStart()
 {
     HUC6270_DEBUG("--- HorizSyncStart");
 
+    m_hsync_start_clock = CurrentHClock();
+    m_load_bg_start_clock = HUC6260_LINE_LENGTH;
+    m_load_bg_end_clock = 0;
+    m_allow_vram_access = false;
+
     m_latched_hds = HUC6270_VAR_HDS;
     m_latched_hdw = HUC6270_VAR_HDW;
     m_latched_hde = HUC6270_VAR_HDE;
@@ -395,6 +392,15 @@ void HuC6270::HSyncStart()
     m_clocks_to_next_event = -1;
 
     s32 display_start = m_hpos + m_clocks_to_next_h_state + ((m_latched_hds + 1) << 3);
+
+    if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
+    {
+        s32 display_width = (m_latched_hdw + 1) << 3;
+        m_load_bg_start_clock = DotsToClocks(display_start - 16);
+        m_load_bg_end_clock = m_load_bg_start_clock + DotsToClocks(display_width + 16);
+        if (m_load_bg_end_clock > HUC6260_LINE_LENGTH)
+            m_load_bg_end_clock = HUC6260_LINE_LENGTH;
+    }
 
     s32 event_clocks;
     if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
@@ -442,8 +448,6 @@ void HuC6270::SATTransfer()
 
         if (m_sat_transfer_pending == 0)
         {
-            m_status_register &= ~HUC6270_STATUS_BUSY;
-
             if (m_register[HUC6270_REG_DCR] & 0x01)
             {
                 m_status_register |= HUC6270_STATUS_SAT_END;
@@ -483,11 +487,12 @@ void HuC6270::VRAMTransfer()
         s8 dest_increment = IS_SET_BIT(m_register[HUC6270_REG_DCR], 3) ? -1 : 1;
         m_vram_transfer_src += src_increment;
         m_vram_transfer_dest += dest_increment;
+        m_register[HUC6270_REG_SOUR] = m_vram_transfer_src;
+        m_register[HUC6270_REG_DESR] = m_vram_transfer_dest;
+        m_register[HUC6270_REG_LENR] = static_cast<u16>((m_vram_transfer_pending >> 2) - 1);
 
         if (m_vram_transfer_pending == 0)
         {
-            m_status_register &= ~HUC6270_STATUS_BUSY;
-
             if (m_register[HUC6270_REG_DCR] & 0x02)
             {
                 m_status_register |= HUC6270_STATUS_VRAM_END;
@@ -837,6 +842,7 @@ void HuC6270::FetchSprites()
 void HuC6270::SaveState(std::ostream& stream)
 {
     using namespace std;
+    UpdateCpuVramBusyStatus();
     stream.write(reinterpret_cast<const char*> (m_vram), sizeof(u16) * HUC6270_VRAM_SIZE);
     stream.write(reinterpret_cast<const char*> (&m_address_register), sizeof(m_address_register));
     stream.write(reinterpret_cast<const char*> (&m_status_register), sizeof(m_status_register));
@@ -844,6 +850,9 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (m_sat), sizeof(u16) * HUC6270_SAT_SIZE);
     stream.write(reinterpret_cast<const char*> (&m_read_buffer), sizeof(m_read_buffer));
     stream.write(reinterpret_cast<const char*> (&m_vram_openbus), sizeof(m_vram_openbus));
+    stream.write(reinterpret_cast<const char*> (&m_pending_memory_read), sizeof(m_pending_memory_read));
+    stream.write(reinterpret_cast<const char*> (&m_pending_memory_write), sizeof(m_pending_memory_write));
+    stream.write(reinterpret_cast<const char*> (&m_transfer_delay), sizeof(m_transfer_delay));
     stream.write(reinterpret_cast<const char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
     stream.write(reinterpret_cast<const char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
     stream.write(reinterpret_cast<const char*> (&m_vram_transfer_pending), sizeof(m_vram_transfer_pending));
@@ -889,9 +898,14 @@ void HuC6270::SaveState(std::ostream& stream)
         stream.write(reinterpret_cast<const char*> (&m_sprites[i].palette), sizeof(m_sprites[i].palette));
         stream.write(reinterpret_cast<const char*> (m_sprites[i].data), sizeof(m_sprites[i].data));
     }
+
+    stream.write(reinterpret_cast<const char*> (&m_load_bg_start_clock), sizeof(m_load_bg_start_clock));
+    stream.write(reinterpret_cast<const char*> (&m_load_bg_end_clock), sizeof(m_load_bg_end_clock));
+    stream.write(reinterpret_cast<const char*> (&m_hsync_start_clock), sizeof(m_hsync_start_clock));
+    stream.write(reinterpret_cast<const char*> (&m_allow_vram_access), sizeof(m_allow_vram_access));
 }
 
-void HuC6270::LoadState(std::istream& stream)
+void HuC6270::LoadState(std::istream& stream, int version)
 {
     using namespace std;
     stream.read(reinterpret_cast<char*> (m_vram), sizeof(u16) * HUC6270_VRAM_SIZE);
@@ -901,6 +915,19 @@ void HuC6270::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (m_sat), sizeof(u16) * HUC6270_SAT_SIZE);
     stream.read(reinterpret_cast<char*> (&m_read_buffer), sizeof(m_read_buffer));
     stream.read(reinterpret_cast<char*> (&m_vram_openbus), sizeof(m_vram_openbus));
+    if (version >= 29)
+    {
+        stream.read(reinterpret_cast<char*> (&m_pending_memory_read), sizeof(m_pending_memory_read));
+        stream.read(reinterpret_cast<char*> (&m_pending_memory_write), sizeof(m_pending_memory_write));
+        stream.read(reinterpret_cast<char*> (&m_transfer_delay), sizeof(m_transfer_delay));
+    }
+    else
+    {
+        m_pending_memory_read = false;
+        m_pending_memory_write = false;
+        m_transfer_delay = 0;
+    }
+    UpdateCpuVramBusyStatus();
     stream.read(reinterpret_cast<char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
     stream.read(reinterpret_cast<char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
     stream.read(reinterpret_cast<char*> (&m_vram_transfer_pending), sizeof(m_vram_transfer_pending));
@@ -945,5 +972,20 @@ void HuC6270::LoadState(std::istream& stream)
         stream.read(reinterpret_cast<char*> (&m_sprites[i].flags), sizeof(m_sprites[i].flags));
         stream.read(reinterpret_cast<char*> (&m_sprites[i].palette), sizeof(m_sprites[i].palette));
         stream.read(reinterpret_cast<char*> (m_sprites[i].data), sizeof(m_sprites[i].data));
+    }
+
+    if (version >= 29)
+    {
+        stream.read(reinterpret_cast<char*> (&m_load_bg_start_clock), sizeof(m_load_bg_start_clock));
+        stream.read(reinterpret_cast<char*> (&m_load_bg_end_clock), sizeof(m_load_bg_end_clock));
+        stream.read(reinterpret_cast<char*> (&m_hsync_start_clock), sizeof(m_hsync_start_clock));
+        stream.read(reinterpret_cast<char*> (&m_allow_vram_access), sizeof(m_allow_vram_access));
+    }
+    else
+    {
+        m_load_bg_start_clock = HUC6260_LINE_LENGTH;
+        m_load_bg_end_clock = 0;
+        m_hsync_start_clock = CurrentHClock();
+        m_allow_vram_access = false;
     }
 }

@@ -60,6 +60,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_trace_logger);
     m_paused = true;
     m_master_clock_cycles = 0;
+    m_frame_ready = false;
     m_mb128_mode = GG_MB128_AUTO;
 }
 
@@ -754,8 +755,8 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     m_memory->LoadState(stream);
     m_huc6202->LoadState(stream);
     m_huc6260->LoadState(stream);
-    m_huc6270_1->LoadState(stream);
-    m_huc6270_2->LoadState(stream);
+    m_huc6270_1->LoadState(stream, header.version);
+    m_huc6270_2->LoadState(stream, header.version);
     m_huc6280->LoadState(stream);
     m_audio->LoadState(stream, header.version);
     m_input->LoadState(stream, header.version);

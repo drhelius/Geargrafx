@@ -146,6 +146,21 @@ INLINE void HuC6202::WriteFromCPU(u16 address, u8 value)
         m_huc6270_1->WriteRegister(address, value);
 }
 
+INLINE void HuC6202::ProcessCpuVramAccesses(u32 cycles)
+{
+    m_huc6270_1->ProcessCpuVramAccesses(cycles);
+    if (m_is_sgx)
+        m_huc6270_2->ProcessCpuVramAccesses(cycles);
+}
+
+INLINE bool HuC6202::HasPendingCpuVramAccess()
+{
+    if (m_huc6270_1->HasPendingCpuVramAccess())
+        return true;
+
+    return m_is_sgx && m_huc6270_2->HasPendingCpuVramAccess();
+}
+
 INLINE void HuC6202::AssertIRQ1(HuC6270* vdc, bool assert)
 {
     if (vdc == m_huc6270_1)
