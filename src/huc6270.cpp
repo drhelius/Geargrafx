@@ -393,6 +393,9 @@ void HuC6270::HSyncStart()
 
     s32 display_start = m_hpos + m_clocks_to_next_h_state + ((m_latched_hds + 1) << 3);
 
+    if (DotsToClocks(display_start - 24) >= HUC6260_LINE_LENGTH)
+        return;
+
     if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
     {
         s32 display_width = (m_latched_hdw + 1) << 3;
