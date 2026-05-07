@@ -73,7 +73,7 @@ const GG_DB_Entry k_game_database[] =
     { 0x6B0C982E, "Madouou Granzort (J) (SGX) [Alt]", GG_GAMEDB_SGX_REQUIRED },
 
     // SGX-CD
-    { 0xBB22DAB5, "Space Ava 201 - Release v1.01", GG_GAMEDB_SGX_REQUIRED },
+    { 0xBB22DAB5, "Space Ava 201 - Release v1.01", GG_GAMEDB_SGX_REQUIRED | GG_GAMEDB_ARCADE_CARD },
 
     // OPTIONAL SGX
     { 0xBEBFE042, "Darius Plus (J) (SGX)", GG_GAMEDB_SGX_OPTIONAL },
