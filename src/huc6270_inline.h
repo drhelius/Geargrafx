@@ -107,6 +107,50 @@ INLINE bool HuC6270::HasPendingCpuVramAccess()
     return m_pending_memory_read || m_pending_memory_write;
 }
 
+INLINE void HuC6270::LatchScrollY()
+{
+    if (m_raster_line == 0)
+    {
+        m_bg_counter_y = m_register[HUC6270_REG_BYR];
+    }
+    else
+    {
+        if (m_bg_scroll_y_update_pending)
+        {
+            m_bg_counter_y = m_register[HUC6270_REG_BYR];
+            m_bg_scroll_y_update_pending = false;
+        }
+
+        m_bg_counter_y++;
+    }
+
+    m_bg_offset_y = m_bg_counter_y;
+    m_increment_bg_counter_y = false;
+}
+
+INLINE bool HuC6270::CheckUpdateLatchTiming(s32 clock)
+{
+    if (clock < 0)
+        return false;
+
+    s32 divider = m_huc6260->GetClockDivider();
+    s32 start = (clock / divider) * divider;
+    s32 end = start + ((divider + 1) / 2);
+    s32 hclock = CurrentHClock();
+    return (hclock > start) && (hclock < end);
+}
+
+INLINE bool HuC6270::CheckUpdateScrollYTiming(bool msb)
+{
+    if (CheckUpdateLatchTiming(m_latch_clock_y))
+        return true;
+
+    if (!msb || (m_latch_clock_y < 0))
+        return false;
+
+    return (m_next_event == HuC6270_EVENT_BXR) || (m_next_event == HuC6270_EVENT_HDS);
+}
+
 INLINE s32 HuC6270::ClocksSinceHSyncStart(s32 elapsed_cycles)
 {
     s32 hclock = CurrentHClock() + elapsed_cycles;
@@ -204,28 +248,16 @@ INLINE void HuC6270::SetSafeDefaults(bool safe_defaults)
 
 INLINE int HuC6270::GetCpuVramReadDelay()
 {
-    switch (m_huc6260->GetClockDivider())
-    {
-        case 2:
-            return k_huc6270_vram_read_delay_div2;
-        case 3:
-            return k_huc6270_vram_read_delay_div3;
-        default:
-            return k_huc6270_vram_read_delay_div4;
-    }
+    int speed = m_huc6260->GetSpeed();
+    assert((speed >= HuC6260::HuC6260_SPEED_5_36_MHZ) && (speed <= HuC6260::HuC6260_SPEED_10_8_MHZ));
+    return k_huc6270_vram_read_delay[speed];
 }
 
 INLINE int HuC6270::GetCpuVramWriteDelay()
 {
-    switch (m_huc6260->GetClockDivider())
-    {
-        case 2:
-            return k_huc6270_vram_write_delay_div2;
-        case 3:
-            return k_huc6270_vram_write_delay_div3;
-        default:
-            return k_huc6270_vram_write_delay_div4;
-    }
+    int speed = m_huc6260->GetSpeed();
+    assert((speed >= HuC6260::HuC6260_SPEED_5_36_MHZ) && (speed <= HuC6260::HuC6260_SPEED_10_8_MHZ));
+    return k_huc6270_vram_write_delay[speed];
 }
 
 inline bool HuC6270::IsCpuVramSlotAvailable(s32 elapsed_cycles)

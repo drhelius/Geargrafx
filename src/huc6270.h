@@ -132,8 +132,11 @@ private:
     s32 m_vpos;
     s32 m_bg_offset_y;
     s32 m_bg_counter_y;
+    bool m_bg_scroll_y_update_pending;
     bool m_increment_bg_counter_y;
     bool m_need_to_increment_raster_line;
+    s32 m_latch_clock_y;
+    s32 m_latch_clock_x;
     s32 m_raster_line;
     u16 m_latched_bxr;
     u16 m_latched_hds;
@@ -170,6 +173,9 @@ private:
     void EndOfLine();
     void LineEvents();
     void HSyncStart();
+    void LatchScrollY();
+    bool CheckUpdateLatchTiming(s32 clock);
+    bool CheckUpdateScrollYTiming(bool msb);
     void IncrementRasterLine();
     void SATTransfer();
     void VRAMTransfer();
@@ -224,12 +230,8 @@ static const int k_huc6270_screen_size_y_pixels_mask[8] = {
 
 static const int k_huc6270_read_write_increment[4] = { 0x01, 0x20, 0x40, 0x80 };
 
-static const int k_huc6270_vram_read_delay_div2 = 15;
-static const int k_huc6270_vram_read_delay_div3 = 24;
-static const int k_huc6270_vram_read_delay_div4 = 24;
-static const int k_huc6270_vram_write_delay_div2 = 12;
-static const int k_huc6270_vram_write_delay_div3 = 18;
-static const int k_huc6270_vram_write_delay_div4 = 21;
+static const int k_huc6270_vram_read_delay[3] = { 24, 24, 15 };
+static const int k_huc6270_vram_write_delay[3] = { 21, 18, 12 };
 
 static const int k_huc6270_sprite_width[2] = { 16, 32 };
 static const int k_huc6270_sprite_height[4] = { 16, 32, 64, 64 };

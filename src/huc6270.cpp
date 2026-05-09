@@ -96,8 +96,11 @@ void HuC6270::Reset()
     m_vpos = 0;
     m_bg_offset_y = 0;
     m_bg_counter_y = 0;
+    m_bg_scroll_y_update_pending = false;
     m_increment_bg_counter_y = false;
     m_need_to_increment_raster_line = false;
+    m_latch_clock_y = -1;
+    m_latch_clock_x = -1;
     m_raster_line = 0;
     m_latched_bxr = 0;
     m_latched_hds = HUC6270_VAR_HDS;
@@ -257,13 +260,19 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                     break;
                 // 0x07
                 case HUC6270_REG_BXR:
+                    if (CheckUpdateLatchTiming(m_latch_clock_x))
+                        m_latched_bxr = m_register[HUC6270_REG_BXR];
                     //HUC6270_DEBUG("*** BXR Set");
                     break;
                 // 0x08
                 case HUC6270_REG_BYR:
-                    m_bg_counter_y = m_register[HUC6270_REG_BYR];
+                {
+                    m_bg_scroll_y_update_pending = true;
+                    if (CheckUpdateScrollYTiming(msb))
+                        LatchScrollY();
                     //HUC6270_DEBUG("*** BYR Set");
                     break;
+                }
                 // 0x12
                 case HUC6270_REG_LENR:
                     if (msb)
@@ -291,6 +300,8 @@ void HuC6270::EndOfLine()
 {
     m_hpos = 0;
     m_vpos++;
+    m_latch_clock_y = -1;
+    m_latch_clock_x = -1;
 
     if(m_need_to_increment_raster_line)
         IncrementRasterLine();
@@ -313,27 +324,23 @@ void HuC6270::LineEvents()
         switch (m_next_event)
         {
             case HuC6270_EVENT_BYR:
+            {
                 HUC6270_DEBUG("  [+] Event BYR\t");
                 m_next_event = HuC6270_EVENT_BXR;
                 m_clocks_to_next_event = 2;
 
-                if (m_increment_bg_counter_y)
-                {
-                    m_increment_bg_counter_y = false;
-                    if(m_raster_line == 0)
-                        m_bg_counter_y = m_register[HUC6270_REG_BYR];
-                    else
-                        m_bg_counter_y++;
-                }
-                m_bg_offset_y = m_bg_counter_y;
+                m_latch_clock_y = CurrentHClock();
+                LatchScrollY();
 
                 break;
+            }
             case HuC6270_EVENT_BXR:
                 HUC6270_DEBUG("  [+] Event BXR\t");
                 m_next_event = HuC6270_EVENT_HDS;
                 m_clocks_to_next_event = 6;
 
                 m_latched_bxr = m_register[HUC6270_REG_BXR];
+                m_latch_clock_x = CurrentHClock();
 
                 break;
             case HuC6270_EVENT_HDS:
@@ -409,7 +416,7 @@ void HuC6270::HSyncStart()
     if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
     {
         m_next_event = HuC6270_EVENT_BYR;
-        event_clocks = 37;
+        event_clocks = 36;
     }
     else
     {
@@ -569,6 +576,11 @@ void HuC6270::NextHorizontalState()
             m_next_event = HuC6270_EVENT_RCR;
             m_clocks_to_next_event = ((m_latched_hdw - 1) << 3) + 2;
             m_need_to_increment_raster_line = true;
+            if (m_clocks_to_next_event <= 0)
+            {
+                m_clocks_to_next_event = 1;
+                LineEvents();
+            }
             if (m_active_line)
                 RenderLine();
             break;
@@ -906,6 +918,9 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_load_bg_end_clock), sizeof(m_load_bg_end_clock));
     stream.write(reinterpret_cast<const char*> (&m_hsync_start_clock), sizeof(m_hsync_start_clock));
     stream.write(reinterpret_cast<const char*> (&m_allow_vram_access), sizeof(m_allow_vram_access));
+    stream.write(reinterpret_cast<const char*> (&m_bg_scroll_y_update_pending), sizeof(m_bg_scroll_y_update_pending));
+    stream.write(reinterpret_cast<const char*> (&m_latch_clock_y), sizeof(m_latch_clock_y));
+    stream.write(reinterpret_cast<const char*> (&m_latch_clock_x), sizeof(m_latch_clock_x));
 }
 
 void HuC6270::LoadState(std::istream& stream, int version)
@@ -990,5 +1005,18 @@ void HuC6270::LoadState(std::istream& stream, int version)
         m_load_bg_end_clock = 0;
         m_hsync_start_clock = CurrentHClock();
         m_allow_vram_access = false;
+    }
+
+    if (version >= 30)
+    {
+        stream.read(reinterpret_cast<char*> (&m_bg_scroll_y_update_pending), sizeof(m_bg_scroll_y_update_pending));
+        stream.read(reinterpret_cast<char*> (&m_latch_clock_y), sizeof(m_latch_clock_y));
+        stream.read(reinterpret_cast<char*> (&m_latch_clock_x), sizeof(m_latch_clock_x));
+    }
+    else
+    {
+        m_bg_scroll_y_update_pending = false;
+        m_latch_clock_y = -1;
+        m_latch_clock_x = -1;
     }
 }
