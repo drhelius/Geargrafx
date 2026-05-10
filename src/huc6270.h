@@ -103,6 +103,13 @@ private:
         u16 data[4];
     };
 
+    enum HuC6270_Scroll_Y_Update
+    {
+        HuC6270_SCROLL_Y_UPDATE_NONE,
+        HuC6270_SCROLL_Y_UPDATE_LATCH,
+        HuC6270_SCROLL_Y_UPDATE_POST_LATCH
+    };
+
 private:
     HuC6202* m_huc6202;
     HuC6260* m_huc6260;
@@ -133,6 +140,7 @@ private:
     s32 m_bg_offset_y;
     s32 m_bg_counter_y;
     bool m_bg_scroll_y_update_pending;
+    bool m_bg_scroll_y_post_latch_update;
     bool m_increment_bg_counter_y;
     bool m_need_to_increment_raster_line;
     s32 m_latch_clock_y;
@@ -175,7 +183,7 @@ private:
     void HSyncStart();
     void LatchScrollY();
     bool CheckUpdateLatchTiming(s32 clock);
-    bool CheckUpdateScrollYTiming(bool msb);
+    HuC6270_Scroll_Y_Update CheckUpdateScrollYTiming(bool msb);
     void IncrementRasterLine();
     void SATTransfer();
     void VRAMTransfer();

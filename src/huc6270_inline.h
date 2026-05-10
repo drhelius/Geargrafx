@@ -140,15 +140,18 @@ INLINE bool HuC6270::CheckUpdateLatchTiming(s32 clock)
     return (hclock > start) && (hclock < end);
 }
 
-INLINE bool HuC6270::CheckUpdateScrollYTiming(bool msb)
+INLINE HuC6270::HuC6270_Scroll_Y_Update HuC6270::CheckUpdateScrollYTiming(bool msb)
 {
     if (CheckUpdateLatchTiming(m_latch_clock_y))
-        return true;
+        return HuC6270_SCROLL_Y_UPDATE_LATCH;
 
     if (!msb || (m_latch_clock_y < 0))
-        return false;
+        return HuC6270_SCROLL_Y_UPDATE_NONE;
 
-    return (m_next_event == HuC6270_EVENT_BXR) || (m_next_event == HuC6270_EVENT_HDS);
+    if ((m_next_event == HuC6270_EVENT_BXR) || (m_next_event == HuC6270_EVENT_HDS))
+        return HuC6270_SCROLL_Y_UPDATE_POST_LATCH;
+
+    return HuC6270_SCROLL_Y_UPDATE_NONE;
 }
 
 INLINE s32 HuC6270::ClocksSinceHSyncStart(s32 elapsed_cycles)
