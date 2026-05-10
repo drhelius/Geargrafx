@@ -1355,16 +1355,16 @@ static void menu_audio(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::MenuItem("Sync With Emulator", "", &config_audio.sync))
-        {
-            config_emulator.ffwd = false;
+        // if (ImGui::MenuItem("Sync With Emulator", "", &config_audio.sync))
+        // {
+        //     config_emulator.ffwd = false;
 
-            if (!config_audio.sync)
-            {
-                config_video.sync = false;
-                display_set_vsync(false);
-            }
-        }
+        //     if (!config_audio.sync)
+        //     {
+        //         config_video.sync = false;
+        //         display_set_vsync(false);
+        //     }
+        // }
 
 #ifndef GG_DISABLE_VGMRECORDER
         ImGui::Separator();
