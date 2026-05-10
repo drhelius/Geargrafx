@@ -432,7 +432,7 @@ void HuC6270::HSyncStart()
     if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
     {
         m_next_event = HuC6270_EVENT_BYR;
-        event_clocks = (m_bg_scroll_y_update_pending || scroll_y_post_latch_update) ? 35 : 36;
+        event_clocks = (m_bg_scroll_y_update_pending || scroll_y_post_latch_update) ? 33 : 36;
     }
     else
     {
