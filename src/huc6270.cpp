@@ -259,6 +259,11 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                     if (msb)
                         QueueMemoryWrite();
                     break;
+                // 0x05
+                case HUC6270_REG_CR:
+                    if (!m_burst_mode && CheckUpdateLatchTiming(m_latch_clock_y))
+                        m_latched_cr = HUC6270_VAR_CR;
+                    break;
                 // 0x07
                 case HUC6270_REG_BXR:
                     if (CheckUpdateLatchTiming(m_latch_clock_x))
@@ -338,6 +343,8 @@ void HuC6270::LineEvents()
 
                 m_latch_clock_y = CurrentHClock();
                 LatchScrollY();
+                if (!m_burst_mode)
+                    m_latched_cr = HUC6270_VAR_CR;
 
                 break;
             }
