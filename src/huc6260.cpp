@@ -122,7 +122,7 @@ void HuC6260::Reset()
     m_black_and_white = 0;
     m_active_line = false;
 
-    for (int i = 0; i < 512; i++)
+    for (int i = 0; i < 256; i++)
     {
         if (m_reset_value < 0)
         {
@@ -135,6 +135,8 @@ void HuC6260::Reset()
         else
             m_color_table[i] = m_reset_value & 0x1FF;
     }
+
+    memcpy(m_color_table + 256, m_color_table, 256 * sizeof(u16));
 
     CalculateScreenBounds();
 }
