@@ -56,14 +56,14 @@ void ArcadeCardMapper::Write(u8 bank, u16 address, u8 value)
 
 u8 ArcadeCardMapper::ReadHardware(u16 address)
 {
-    if (address < 0x1A40)
+    if ((address >= 0x1A00) && (address < 0x1A80))
     {
         u8 port = (address >> 4) & 0x03;
         u8 reg = address & 0x0F;
         return ReadPortRegister(port, reg);
     }
-    else if (address < 0x1B00)
-        return ReadRegister(address & 0xFF);
+    else if ((address >= 0x1AE0) && (address < 0x1B00))
+        return ReadRegister(address & 0x1F);
     else
     {
         Debug("Invalid Arcade Card hardware read at %04X", address);
@@ -73,14 +73,14 @@ u8 ArcadeCardMapper::ReadHardware(u16 address)
 
 void ArcadeCardMapper::WriteHardware(u16 address, u8 value)
 {
-    if (address < 0x1A40)
+    if ((address >= 0x1A00) && (address < 0x1A80))
     {
         u8 port = (address >> 4) & 0x03;
         u8 reg = address & 0x0F;
         WritePortRegister(port, reg, value);
     }
-    else if (address < 0x1B00)
-        WriteRegister(address & 0xFF, value);
+    else if ((address >= 0x1AE0) && (address < 0x1B00))
+        WriteRegister(address & 0x1F, value);
     else
     {
         Debug("Invalid Arcade Card hardware write at %04X, value=%02X", address, value);
@@ -188,24 +188,24 @@ u8 ArcadeCardMapper::ReadRegister(u8 reg)
 {
     switch (reg)
     {
-        case 0xE0:
-        case 0xE1:
-        case 0xE2:
-        case 0xE3:
+        case 0x00:
+        case 0x01:
+        case 0x02:
+        case 0x03:
         {
             int dis = (reg & 0x03) << 3;
             return (m_register >> dis) & 0xFF;
         }
-        case 0xE4:
+        case 0x04:
             return m_shift_amount;
-        case 0xE5:
+        case 0x05:
             return m_rotate_amount;
-        case 0xEC:
-        case 0xED:
+        case 0x1C:
+        case 0x1D:
             return 0x00;
-        case 0xFE:
+        case 0x1E:
             return 0x10;
-        case 0xFF:
+        case 0x1F:
             return 0x51;
         default:
             Debug("Invalid Arcade Card register read at %02X", reg);
@@ -217,48 +217,42 @@ void ArcadeCardMapper::WriteRegister(u8 reg, u8 value)
 {
     switch (reg)
     {
-        case 0xE0:
-        case 0xE1:
-        case 0xE2:
-        case 0xE3:
+        case 0x00:
+        case 0x01:
+        case 0x02:
+        case 0x03:
         {
             int dis = (reg & 0x03) << 3;
             m_register = (m_register & ~(0xFF << dis)) | (value << dis);
             break;
         }
-        case 0xE4:
-            m_shift_amount = value;
-            if(value != 0)
+        case 0x04:
+            m_shift_amount = value & 0x0F;
+            if (m_shift_amount != 0)
             {
-                s8 signed_amount = (s8)(value << 4) >> 4;
-
-                if (signed_amount > 0)
+                if (IS_SET_BIT(m_shift_amount, 3))
                 {
-                    u8 n = (u8)(signed_amount);
-                    m_register <<= n;
+                    u8 shift = 16 - m_shift_amount;
+                    m_register >>= shift;
                 }
-                else if (signed_amount < 0)
+                else
                 {
-                    u8 n = (u8)(-signed_amount);
-                    m_register >>= n;
+                    m_register <<= m_shift_amount;
                 }
             }
             break;
-        case 0xE5:
-            m_rotate_amount = value;
-            if (value != 0)
+        case 0x05:
+            m_rotate_amount = value & 0x0F;
+            if (m_rotate_amount != 0)
             {
-                s8 signed_amount = (s8)(value << 4) >> 4;
-
-                if (signed_amount > 0)
+                if (IS_SET_BIT(m_rotate_amount, 3))
                 {
-                    u8 n = (u8)(signed_amount);
-                    m_register = (m_register << n) | (m_register >> (32 - n));
+                    u8 shift = 16 - m_rotate_amount;
+                    m_register = (m_register >> shift) | (m_register << (32 - shift));
                 }
-                else if (signed_amount < 0)
+                else
                 {
-                    u8 n = (u8)(-signed_amount);
-                    m_register = (m_register >> n) | (m_register << (32 - n));
+                    m_register = (m_register << m_rotate_amount) | (m_register >> (32 - m_rotate_amount));
                 }
             }
             break;
