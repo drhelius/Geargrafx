@@ -422,8 +422,10 @@ void ScsiController::CommandRead()
 
     u32 lba = ((m_command_buffer[1] & 0x1F) << 16) | (m_command_buffer[2] << 8) | m_command_buffer[3];
     u16 count = m_command_buffer[4];
+    if (count == 0)
+        count = 256;
 
-    if ((count == 0) || (lba >= m_cdrom_media->GetSectorCount()))
+    if (lba >= m_cdrom_media->GetSectorCount())
     {
         Debug("SCSI CMD Read: Invalid sector");
         TraceProblem(TRACE_SCSI_WARNING, TRACE_SCSI_PROBLEM_INVALID_READ_REQUEST,
