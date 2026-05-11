@@ -183,6 +183,18 @@ void gui_debug_window_huc6270_background(int vdc)
                 ImGui::SameLine();
                 ImGui::TextColored(white, "%01X", color_table);
 
+                ImGui::TextColored(magenta, "BAT ADDRESS  ");
+                ImGui::SameLine();
+                ImGui::TextColored(white, "%03X", i);
+
+                ImGui::TextColored(magenta, "ROW");
+                ImGui::SameLine();
+                ImGui::TextColored(white, "%d", y);
+                ImGui::SameLine();
+                ImGui::TextColored(magenta, "COL");
+                ImGui::SameLine();
+                ImGui::TextColored(white, "%d", x);
+
                 ImGui::PopFont();
 
                 ImGui::EndTooltip();
