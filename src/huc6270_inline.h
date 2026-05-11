@@ -42,14 +42,19 @@ INLINE u16 HuC6270::Clock()
     if (m_clocks_to_next_event > 0)
         LineEvents();
 
-    u16 pixel = 0x100;
+    u16 pixel = m_burst_mode ? HUC6270_PIXEL_BLACK : 0x100;
 
     if (m_active_line && (m_h_state == HuC6270_HORIZONTAL_STATE_HDW))
     {
         assert(m_line_buffer_index < HUC6270_MAX_BACKGROUND_WIDTH);
-        pixel = m_line_buffer[m_line_buffer_index];
-        if ((pixel & 0x0F) == 0)
-            pixel = 0;
+        if (m_burst_mode)
+            pixel = HUC6270_PIXEL_BLACK;
+        else
+        {
+            pixel = m_line_buffer[m_line_buffer_index];
+            if ((pixel & 0x0F) == 0)
+                pixel = 0;
+        }
         m_line_buffer_index++;
     }
 

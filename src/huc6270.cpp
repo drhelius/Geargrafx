@@ -321,7 +321,8 @@ void HuC6270::EndOfLine()
     if (m_vpos == m_huc6260->GetTotalLines())
     {
         m_vpos = 0;
-        m_burst_mode = ((m_latched_cr & 0x00C0) == 0);
+        m_latched_cr = (m_latched_cr & ~0x00C0) | (HUC6270_VAR_CR & 0x00C0);
+        m_burst_mode = ((HUC6270_VAR_CR & 0x00C0) == 0);
     }
 
     m_active_line = (m_v_state == HuC6270_VERTICAL_STATE_VDW) && (m_vpos >= 14) && (m_vpos < 256);

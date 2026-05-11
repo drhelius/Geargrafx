@@ -72,13 +72,15 @@ INLINE bool HuC6260::Clock(u32 cycles)
                     int in_win_1 = (win_1_width >= 0x40) && (m_pixel_x < win_1_width);
                     int in_win_2 = ((win_2_width >= 0x40) && (m_pixel_x < win_2_width)) << 1;
                     u16 win_mode = (in_win_1 | in_win_2) << 14;
-                    u16 is_pixel_1_transparent = (pixel_1 & 0x0F) ? 0 : 0x2000;
-                    u16 is_pixel_2_transparent = (pixel_2 & 0x0F) ? 0 : 0x2000;
+                    bool pixel_1_black = (pixel_1 & HUC6270_PIXEL_BLACK) != 0;
+                    bool pixel_2_black = (pixel_2 & HUC6270_PIXEL_BLACK) != 0;
+                    u16 is_pixel_1_transparent = (!pixel_1_black && ((pixel_1 & 0x0F) == 0)) ? 0x2000 : 0;
+                    u16 is_pixel_2_transparent = (!pixel_2_black && ((pixel_2 & 0x0F) == 0)) ? 0x2000 : 0;
                     u16 is_vdc_1_sprite = (pixel_1 & 0x100) << 4;
                     u16 is_vdc_2_sprite = (pixel_2 & 0x100) << 4;
 
-                    m_vce_buffer_1[m_pixel_index] = m_color_table[pixel_1] | is_pixel_1_transparent | is_vdc_1_sprite | win_mode;
-                    m_vce_buffer_2[m_pixel_index] = m_color_table[pixel_2] | is_pixel_2_transparent | is_vdc_2_sprite;
+                    m_vce_buffer_1[m_pixel_index] = (pixel_1_black ? HUC6270_PIXEL_BLACK : m_color_table[pixel_1]) | is_pixel_1_transparent | is_vdc_1_sprite | win_mode;
+                    m_vce_buffer_2[m_pixel_index] = (pixel_2_black ? HUC6270_PIXEL_BLACK : m_color_table[pixel_2]) | is_pixel_2_transparent | is_vdc_2_sprite;
 
                     m_pixel_index++;
                 }
@@ -88,7 +90,10 @@ INLINE bool HuC6260::Clock(u32 cycles)
                 u16 pixel = m_huc6202->Clock();
                 if (m_active_line && (m_pixel_x >= m_screen_start_x) && (m_pixel_x < m_screen_end_x))
                 {
-                    m_vce_buffer_1[m_pixel_index] = m_color_table[pixel];
+                    if (pixel & HUC6270_PIXEL_BLACK)
+                        m_vce_buffer_1[m_pixel_index] = HUC6270_PIXEL_BLACK;
+                    else
+                        m_vce_buffer_1[m_pixel_index] = m_color_table[pixel];
                     m_pixel_index++;
                 }
             }
@@ -253,7 +258,23 @@ void HuC6260::RenderFrameTemplate()
                 }
             }
 
-            if (bytes_per_pixel == 2)
+            if (final_pixel & HUC6270_PIXEL_BLACK)
+            {
+                if (bytes_per_pixel == 2)
+                {
+                    u16* dst = reinterpret_cast<u16*>(m_frame_buffer + frame_buffer_index);
+                    *dst = 0;
+                }
+                else
+                {
+                    u8* dst = m_frame_buffer + frame_buffer_index;
+                    dst[0] = 0;
+                    dst[1] = 0;
+                    dst[2] = 0;
+                    dst[3] = 255;
+                }
+            }
+            else if (bytes_per_pixel == 2)
             {
                 u16* dst = reinterpret_cast<u16*>(m_frame_buffer + frame_buffer_index);
                 *dst = palette565[final_pixel & 0x1FF];
@@ -274,14 +295,31 @@ void HuC6260::RenderFrameTemplate()
     {
         for (int i = 0; i < m_pixel_index; i++)
         {
-            if (bytes_per_pixel == 2)
+            u16 final_pixel = m_vce_buffer_1[i];
+            if (final_pixel & HUC6270_PIXEL_BLACK)
+            {
+                if (bytes_per_pixel == 2)
+                {
+                    u16* dst = reinterpret_cast<u16*>(m_frame_buffer + frame_buffer_index);
+                    *dst = 0;
+                }
+                else
+                {
+                    u8* dst = m_frame_buffer + frame_buffer_index;
+                    dst[0] = 0;
+                    dst[1] = 0;
+                    dst[2] = 0;
+                    dst[3] = 255;
+                }
+            }
+            else if (bytes_per_pixel == 2)
             {
                 u16* dst = reinterpret_cast<u16*>(m_frame_buffer + frame_buffer_index);
-                *dst = palette565[m_vce_buffer_1[i]];
+                *dst = palette565[final_pixel];
             }
             else
             {
-                u8* src = palette888 + (m_vce_buffer_1[i] * 4);
+                u8* src = palette888 + (final_pixel * 4);
                 u8* dst = m_frame_buffer + frame_buffer_index;
                 dst[0] = src[0];
                 dst[1] = src[1];
