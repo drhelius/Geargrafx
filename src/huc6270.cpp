@@ -97,7 +97,6 @@ void HuC6270::Reset()
     m_bg_offset_y = 0;
     m_bg_counter_y = 0;
     m_bg_scroll_y_update_pending = false;
-    m_bg_scroll_y_post_latch_update = false;
     m_increment_bg_counter_y = false;
     m_need_to_increment_raster_line = false;
     m_latch_clock_y = -1;
@@ -259,11 +258,6 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                     if (msb)
                         QueueMemoryWrite();
                     break;
-                // 0x05
-                case HUC6270_REG_CR:
-                    if (!m_burst_mode && CheckUpdateLatchTiming(m_latch_clock_y))
-                        m_latched_cr = HUC6270_VAR_CR;
-                    break;
                 // 0x07
                 case HUC6270_REG_BXR:
                     if (CheckUpdateLatchTiming(m_latch_clock_x))
@@ -274,14 +268,8 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                 case HUC6270_REG_BYR:
                 {
                     m_bg_scroll_y_update_pending = true;
-                    HuC6270_Scroll_Y_Update scroll_y_update = CheckUpdateScrollYTiming(msb);
-
-                    if (scroll_y_update != HuC6270_SCROLL_Y_UPDATE_NONE)
-                    {
+                    if (CheckUpdateLatchTiming(m_latch_clock_y))
                         LatchScrollY();
-                        if (scroll_y_update == HuC6270_SCROLL_Y_UPDATE_POST_LATCH)
-                            m_bg_scroll_y_post_latch_update = true;
-                    }
                     //HUC6270_DEBUG("*** BYR Set");
                     break;
                 }
@@ -344,8 +332,6 @@ void HuC6270::LineEvents()
 
                 m_latch_clock_y = CurrentHClock();
                 LatchScrollY();
-                if (!m_burst_mode)
-                    m_latched_cr = HUC6270_VAR_CR;
 
                 break;
             }
@@ -408,12 +394,9 @@ void HuC6270::HSyncStart()
     m_latched_hdw = HUC6270_VAR_HDW;
     m_latched_hde = HUC6270_VAR_HDE;
     m_latched_hsw = HUC6270_VAR_HSW;
-    m_latched_cr = HUC6270_VAR_CR;
 
     m_next_event = HuC6270_EVENT_NONE;
     m_clocks_to_next_event = -1;
-    bool scroll_y_post_latch_update = m_bg_scroll_y_post_latch_update;
-    m_bg_scroll_y_post_latch_update = false;
 
     s32 display_start = m_hpos + m_clocks_to_next_h_state + ((m_latched_hds + 1) << 3);
 
@@ -433,7 +416,7 @@ void HuC6270::HSyncStart()
     if (m_v_state == HuC6270_VERTICAL_STATE_VDW)
     {
         m_next_event = HuC6270_EVENT_BYR;
-        event_clocks = (m_bg_scroll_y_update_pending || scroll_y_post_latch_update) ? 33 : 36;
+        event_clocks = k_huc6270_byr_latch_clocks;
     }
     else
     {
@@ -586,6 +569,8 @@ void HuC6270::NextHorizontalState()
             HUC6270_DEBUG("  HDS start\t");
             m_clocks_to_next_h_state = (m_latched_hds + 1) << 3;
             m_line_buffer_index = 0;
+            if (!m_burst_mode)
+                m_latched_cr = HUC6270_VAR_CR;
             break;
         case HuC6270_HORIZONTAL_STATE_HDW:
             HUC6270_DEBUG("  HDW start\t");
@@ -936,7 +921,6 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_hsync_start_clock), sizeof(m_hsync_start_clock));
     stream.write(reinterpret_cast<const char*> (&m_allow_vram_access), sizeof(m_allow_vram_access));
     stream.write(reinterpret_cast<const char*> (&m_bg_scroll_y_update_pending), sizeof(m_bg_scroll_y_update_pending));
-    stream.write(reinterpret_cast<const char*> (&m_bg_scroll_y_post_latch_update), sizeof(m_bg_scroll_y_post_latch_update));
     stream.write(reinterpret_cast<const char*> (&m_latch_clock_y), sizeof(m_latch_clock_y));
     stream.write(reinterpret_cast<const char*> (&m_latch_clock_x), sizeof(m_latch_clock_x));
 }
@@ -1028,17 +1012,17 @@ void HuC6270::LoadState(std::istream& stream, int version)
     if (version >= 30)
     {
         stream.read(reinterpret_cast<char*> (&m_bg_scroll_y_update_pending), sizeof(m_bg_scroll_y_update_pending));
-        if (version >= 31)
-            stream.read(reinterpret_cast<char*> (&m_bg_scroll_y_post_latch_update), sizeof(m_bg_scroll_y_post_latch_update));
-        else
-            m_bg_scroll_y_post_latch_update = false;
+        if ((version >= 31) && (version < 32))
+        {
+            bool old_post_latch_update;
+            stream.read(reinterpret_cast<char*> (&old_post_latch_update), sizeof(old_post_latch_update));
+        }
         stream.read(reinterpret_cast<char*> (&m_latch_clock_y), sizeof(m_latch_clock_y));
         stream.read(reinterpret_cast<char*> (&m_latch_clock_x), sizeof(m_latch_clock_x));
     }
     else
     {
         m_bg_scroll_y_update_pending = false;
-        m_bg_scroll_y_post_latch_update = false;
         m_latch_clock_y = -1;
         m_latch_clock_x = -1;
     }
