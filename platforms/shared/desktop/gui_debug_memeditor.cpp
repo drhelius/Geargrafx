@@ -1853,10 +1853,15 @@ void MemEditor::SaveToBinaryFile(const char* file_path)
 
 void MemEditor::LoadFromBinaryFile(const char* file_path)
 {
+    if (!IsValidPointer(m_mem_data) || m_mem_size <= 0 || m_mem_word <= 0)
+        return;
+
+    int size = m_mem_size * m_mem_word;
+
     FILE* file = fopen_utf8(file_path, "rb");
     if (file)
     {
-        fread(m_mem_data, m_mem_word, m_mem_size, file);
+        fread(m_mem_data, 1, size, file);
         fclose(file);
     }
 }
