@@ -132,6 +132,8 @@ private:
     s32 m_bg_offset_y;
     s32 m_bg_counter_y;
     bool m_bg_scroll_y_update_pending;
+    bool m_bxr_written_before_latch;
+    s32 m_byr_lsb_write_clock;
     bool m_increment_bg_counter_y;
     bool m_need_to_increment_raster_line;
     s32 m_latch_clock_y;
@@ -173,6 +175,7 @@ private:
     void LineEvents();
     void HSyncStart();
     void LatchScrollY();
+    void RefreshScrollYCurrentLine();
     bool CheckUpdateLatchTiming(s32 clock);
     void IncrementRasterLine();
     void SATTransfer();

@@ -133,6 +133,14 @@ INLINE void HuC6270::LatchScrollY()
     m_increment_bg_counter_y = false;
 }
 
+INLINE void HuC6270::RefreshScrollYCurrentLine()
+{
+    if (m_raster_line == 0)
+        m_bg_offset_y = m_register[HUC6270_REG_BYR];
+    else
+        m_bg_offset_y = m_register[HUC6270_REG_BYR] + 1;
+}
+
 INLINE bool HuC6270::CheckUpdateLatchTiming(s32 clock)
 {
     if (clock < 0)

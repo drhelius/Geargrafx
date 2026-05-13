@@ -97,6 +97,8 @@ void HuC6270::Reset()
     m_bg_offset_y = 0;
     m_bg_counter_y = 0;
     m_bg_scroll_y_update_pending = false;
+    m_bxr_written_before_latch = false;
+    m_byr_lsb_write_clock = -1;
     m_increment_bg_counter_y = false;
     m_need_to_increment_raster_line = false;
     m_latch_clock_y = -1;
@@ -260,6 +262,8 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                     break;
                 // 0x07
                 case HUC6270_REG_BXR:
+                    if (m_latch_clock_x < 0)
+                        m_bxr_written_before_latch = true;
                     if (CheckUpdateLatchTiming(m_latch_clock_x))
                         m_latched_bxr = m_register[HUC6270_REG_BXR];
                     //HUC6270_DEBUG("*** BXR Set");
@@ -269,7 +273,32 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                 {
                     m_bg_scroll_y_update_pending = true;
                     if (CheckUpdateLatchTiming(m_latch_clock_y))
+                    {
                         LatchScrollY();
+                        m_byr_lsb_write_clock = -1;
+                    }
+                    else if (!msb && (m_latch_clock_y >= 0))
+                    {
+                        s32 elapsed = CurrentHClock() - m_latch_clock_y;
+                        if (elapsed < 0)
+                            elapsed += HUC6260_LINE_LENGTH;
+
+                        m_byr_lsb_write_clock = (elapsed <= (m_huc6260->GetClockDivider() << 2)) ? CurrentHClock() : -1;
+                    }
+                    else if (msb && (m_byr_lsb_write_clock >= 0))
+                    {
+                        if (!m_bxr_written_before_latch && (m_h_state == HuC6270_HORIZONTAL_STATE_HSW))
+                        {
+                            s32 elapsed = CurrentHClock() - m_byr_lsb_write_clock;
+                            if (elapsed < 0)
+                                elapsed += HUC6260_LINE_LENGTH;
+
+                            if (elapsed <= (m_huc6260->GetClockDivider() * 6))
+                                RefreshScrollYCurrentLine();
+                        }
+
+                        m_byr_lsb_write_clock = -1;
+                    }
                     //HUC6270_DEBUG("*** BYR Set");
                     break;
                 }
@@ -302,6 +331,8 @@ void HuC6270::EndOfLine()
     m_vpos++;
     m_latch_clock_y = -1;
     m_latch_clock_x = -1;
+    m_bxr_written_before_latch = false;
+    m_byr_lsb_write_clock = -1;
 
     if(m_need_to_increment_raster_line)
         IncrementRasterLine();
@@ -923,6 +954,8 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_bg_scroll_y_update_pending), sizeof(m_bg_scroll_y_update_pending));
     stream.write(reinterpret_cast<const char*> (&m_latch_clock_y), sizeof(m_latch_clock_y));
     stream.write(reinterpret_cast<const char*> (&m_latch_clock_x), sizeof(m_latch_clock_x));
+    stream.write(reinterpret_cast<const char*> (&m_bxr_written_before_latch), sizeof(m_bxr_written_before_latch));
+    stream.write(reinterpret_cast<const char*> (&m_byr_lsb_write_clock), sizeof(m_byr_lsb_write_clock));
 }
 
 void HuC6270::LoadState(std::istream& stream, int version)
@@ -1012,18 +1045,25 @@ void HuC6270::LoadState(std::istream& stream, int version)
     if (version >= 30)
     {
         stream.read(reinterpret_cast<char*> (&m_bg_scroll_y_update_pending), sizeof(m_bg_scroll_y_update_pending));
-        if ((version >= 31) && (version < 32))
-        {
-            bool old_post_latch_update;
-            stream.read(reinterpret_cast<char*> (&old_post_latch_update), sizeof(old_post_latch_update));
-        }
         stream.read(reinterpret_cast<char*> (&m_latch_clock_y), sizeof(m_latch_clock_y));
         stream.read(reinterpret_cast<char*> (&m_latch_clock_x), sizeof(m_latch_clock_x));
+        if (version >= 31)
+        {
+            stream.read(reinterpret_cast<char*> (&m_bxr_written_before_latch), sizeof(m_bxr_written_before_latch));
+            stream.read(reinterpret_cast<char*> (&m_byr_lsb_write_clock), sizeof(m_byr_lsb_write_clock));
+        }
+        else
+        {
+            m_bxr_written_before_latch = false;
+            m_byr_lsb_write_clock = -1;
+        }
     }
     else
     {
         m_bg_scroll_y_update_pending = false;
         m_latch_clock_y = -1;
         m_latch_clock_x = -1;
+        m_bxr_written_before_latch = false;
+        m_byr_lsb_write_clock = -1;
     }
 }
