@@ -187,13 +187,9 @@ void gui_debug_window_huc6270_background(int vdc)
                 ImGui::SameLine();
                 ImGui::TextColored(white, "%03X", i);
 
-                ImGui::TextColored(magenta, "ROW");
+                ImGui::TextColored(magenta, "X,Y          ");
                 ImGui::SameLine();
-                ImGui::TextColored(white, "%d", y);
-                ImGui::SameLine();
-                ImGui::TextColored(magenta, "COL");
-                ImGui::SameLine();
-                ImGui::TextColored(white, "%d", x);
+                ImGui::TextColored(white, "%02d,%02d", x, y);
 
                 ImGui::PopFont();
 
