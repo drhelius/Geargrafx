@@ -30,6 +30,7 @@
 #include <IOKit/storage/IOCDTypes.h>
 #include <IOKit/storage/IOMedia.h>
 #include <algorithm>
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -48,8 +49,24 @@ static bool drive_track_compare(const CdRomDriveTrackInfo& a, const CdRomDriveTr
     return a.start_lba < b.start_lba;
 }
 
-static bool read_cd_ioctl(int file, u32 lba, u32 sector_count, u8 sector_area, u8 sector_type, u8* buffer)
+static bool errno_is_media_unavailable(int error)
 {
+    if ((error == ENODEV) || (error == ENXIO))
+        return true;
+
+#if defined(ENOMEDIUM)
+    if (error == ENOMEDIUM)
+        return true;
+#endif
+
+    return false;
+}
+
+static bool read_cd_ioctl(int file, u32 lba, u32 sector_count, u8 sector_area, u8 sector_type, u8* buffer, bool* media_unavailable)
+{
+    if (IsValidPointer(media_unavailable))
+        *media_unavailable = false;
+
     dk_cd_read_t request = {};
     request.offset = (uint64_t)lba * CDROM_DRIVE_RAW_SECTOR_SIZE;
     request.sectorArea = sector_area;
@@ -58,7 +75,11 @@ static bool read_cd_ioctl(int file, u32 lba, u32 sector_count, u8 sector_area, u
     request.buffer = buffer;
 
     if (ioctl(file, DKIOCCDREAD, &request) < 0)
+    {
+        if (IsValidPointer(media_unavailable))
+            *media_unavailable = errno_is_media_unavailable(errno);
         return false;
+    }
 
     return request.bufferLength == (sector_count * CDROM_DRIVE_RAW_SECTOR_SIZE);
 }
@@ -290,12 +311,24 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
         return false;
 
     u8 raw_area = kCDSectorAreaSync | kCDSectorAreaHeader | kCDSectorAreaSubHeader | kCDSectorAreaUser | kCDSectorAreaAuxiliary;
+    bool media_unavailable = false;
 
-    if (audio && read_cd_ioctl(m_file, lba, sector_count, kCDSectorAreaUser, kCDSectorTypeCDDA, buffer))
-        return true;
+    if (audio)
+    {
+        if (read_cd_ioctl(m_file, lba, sector_count, kCDSectorAreaUser, kCDSectorTypeCDDA, buffer, &media_unavailable))
+            return true;
+    }
+    else
+    {
+        if (read_cd_ioctl(m_file, lba, sector_count, raw_area, kCDSectorTypeUnknown, buffer, &media_unavailable))
+            return true;
+    }
 
-    if (!audio && read_cd_ioctl(m_file, lba, sector_count, raw_area, kCDSectorTypeUnknown, buffer))
-        return true;
+    if (media_unavailable)
+    {
+        Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
+        return false;
+    }
 
     Debug("Physical CD-ROM block read fallback for %s at LBA %u (%u sectors)", m_device_id, lba, sector_count);
 
@@ -304,16 +337,37 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
         u32 sector_lba = lba + i;
         u8* sector_buffer = buffer + (i * CDROM_DRIVE_RAW_SECTOR_SIZE);
 
-        if (audio && read_cd_ioctl(m_file, sector_lba, 1, kCDSectorAreaUser, kCDSectorTypeCDDA, sector_buffer))
-            continue;
+        if (audio)
+        {
+            if (read_cd_ioctl(m_file, sector_lba, 1, kCDSectorAreaUser, kCDSectorTypeCDDA, sector_buffer, &media_unavailable))
+                continue;
+
+            if (media_unavailable)
+            {
+                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+                return false;
+            }
+        }
 
         if (!audio)
         {
-            if (read_cd_ioctl(m_file, sector_lba, 1, raw_area, kCDSectorTypeMode1, sector_buffer))
+            if (read_cd_ioctl(m_file, sector_lba, 1, raw_area, kCDSectorTypeMode1, sector_buffer, &media_unavailable))
                 continue;
 
-            if (read_cd_ioctl(m_file, sector_lba, 1, raw_area, kCDSectorTypeUnknown, sector_buffer))
+            if (media_unavailable)
+            {
+                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+                return false;
+            }
+
+            if (read_cd_ioctl(m_file, sector_lba, 1, raw_area, kCDSectorTypeUnknown, sector_buffer, &media_unavailable))
                 continue;
+
+            if (media_unavailable)
+            {
+                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+                return false;
+            }
         }
 
         Error("DKIOCCDREAD failed for %s at LBA %u", m_device_id, sector_lba);

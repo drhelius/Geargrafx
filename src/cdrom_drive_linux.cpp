@@ -22,6 +22,7 @@
 #if defined(GG_ENABLE_PHYSICAL_CDROM) && defined(__linux__)
 
 #include <algorithm>
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <linux/cdrom.h>
@@ -43,6 +44,33 @@ static void init_drive_info(CdRomDriveInfo& info)
 static bool drive_track_compare(const CdRomDriveTrackInfo& a, const CdRomDriveTrackInfo& b)
 {
     return a.start_lba < b.start_lba;
+}
+
+static bool errno_is_media_unavailable(int error)
+{
+    if ((error == ENODEV) || (error == ENXIO))
+        return true;
+
+#if defined(ENOMEDIUM)
+    if (error == ENOMEDIUM)
+        return true;
+#endif
+
+    return false;
+}
+
+static bool drive_status_is_media_unavailable(int status)
+{
+    return (status == CDS_NO_DISC) || (status == CDS_TRAY_OPEN);
+}
+
+static bool drive_has_unavailable_media(int file, int io_error)
+{
+    if (errno_is_media_unavailable(io_error))
+        return true;
+
+    int status = ioctl(file, CDROM_DRIVE_STATUS, CDSL_CURRENT);
+    return drive_status_is_media_unavailable(status);
 }
 
 static void lba_to_msf(u32 lba, cdrom_msf* msf)
@@ -315,6 +343,13 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
     if (!IsOpen() || !IsValidPointer(buffer) || (sector_count == 0))
         return false;
 
+    int status = ioctl(m_file, CDROM_DRIVE_STATUS, CDSL_CURRENT);
+    if (drive_status_is_media_unavailable(status))
+    {
+        Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
+        return false;
+    }
+
     for (u32 i = 0; i < sector_count; i++)
     {
         u32 sector_lba = lba + i;
@@ -324,7 +359,11 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
 
         if (ioctl(m_file, CDROMREADRAW, sector_buffer) < 0)
         {
-            Error("CDROMREADRAW failed for %s at LBA %u: %s", m_device_id, sector_lba, strerror(errno));
+            int error = errno;
+            if (drive_has_unavailable_media(m_file, error))
+                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+            else
+                Error("CDROMREADRAW failed for %s at LBA %u: %s", m_device_id, sector_lba, strerror(error));
             return false;
         }
     }

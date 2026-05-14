@@ -56,6 +56,7 @@ public:
     bool LoadChdFromFile(const char* path, bool preload);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool LoadPhysicalDrive(const char* device_id, bool preload);
+    bool HasPhysicalDriveError();
 #endif
     bool ReadSector(u32 lba, u8* buffer);
     bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count);

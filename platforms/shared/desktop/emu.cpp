@@ -79,6 +79,10 @@ static void update_debug_sprites(void);
 static void update_debug_tiles(void);
 static void reset_rewind_timing(void);
 static int get_rewind_pop_budget(void);
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+static bool unload_physical_cdrom(char* device_id, size_t device_id_size);
+static void stop_physical_cdrom_after_error(void);
+#endif
 
 bool emu_init(GG_Input_Pump_Fn input_pump_fn)
 {
@@ -258,6 +262,14 @@ void emu_update(void)
     if (loading_state.load() != Loading_State_None)
         return;
 
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    if (geargrafx->GetMedia()->HasPhysicalCdRomError())
+    {
+        stop_physical_cdrom_after_error();
+        return;
+    }
+#endif
+
     if (emu_is_empty())
         return;
 
@@ -332,6 +344,14 @@ void emu_update(void)
         }
     }
 
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    if (geargrafx->GetMedia()->HasPhysicalCdRomError())
+    {
+        stop_physical_cdrom_after_error();
+        return;
+    }
+#endif
+
     if (frame_executed)
         rewind_push();
 
@@ -384,6 +404,47 @@ static int get_rewind_pop_budget(void)
 
     return to_pop;
 }
+
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+static bool unload_physical_cdrom(char* device_id, size_t device_id_size)
+{
+    if (loading_state.load() != Loading_State_None)
+        return false;
+
+    if (emu_is_empty() || !geargrafx->GetMedia()->IsPhysicalCdRom())
+        return false;
+
+    if (IsValidPointer(device_id) && (device_id_size > 0))
+        strncpy_fit(device_id, geargrafx->GetMedia()->GetPhysicalCdRomDeviceId(), device_id_size);
+
+    emu_debug_command = Debug_Command_None;
+    reset_buffers();
+    emu_audio_reset();
+    save_ram();
+    save_mb128();
+
+    geargrafx->GetMedia()->Reset();
+
+    rewind_reset();
+    update_savestates_data();
+
+    return true;
+}
+
+static void stop_physical_cdrom_after_error(void)
+{
+    if (!geargrafx->GetMedia()->HasPhysicalCdRomError())
+        return;
+
+    char device_id[256];
+    device_id[0] = 0;
+
+    if (!unload_physical_cdrom(device_id, sizeof(device_id)))
+        return;
+
+    Error("Physical CD-ROM media error on %s, stopping emulation", device_id);
+}
+#endif
 
 void emu_key_pressed(GG_Controllers controller, GG_Keys key)
 {
@@ -452,19 +513,13 @@ bool emu_eject_physical_cdrom(void)
     }
 
     char device_id[256];
-    strncpy_fit(device_id, geargrafx->GetMedia()->GetPhysicalCdRomDeviceId(), sizeof(device_id));
+    device_id[0] = 0;
 
+    strncpy_fit(device_id, geargrafx->GetMedia()->GetPhysicalCdRomDeviceId(), sizeof(device_id));
     Log("Ejecting physical CD-ROM: %s", device_id);
 
-    emu_debug_command = Debug_Command_None;
-    reset_buffers();
-    emu_audio_reset();
-    save_ram();
-    save_mb128();
-
-    geargrafx->GetMedia()->Reset();
-    rewind_reset();
-    update_savestates_data();
+    if (!unload_physical_cdrom(NULL, 0))
+        return false;
 
     bool ejected = CdRomDrive::Eject(device_id);
     Debug("Physical CD-ROM eject finished: %s (%s)", device_id, ejected ? "success" : "failure");

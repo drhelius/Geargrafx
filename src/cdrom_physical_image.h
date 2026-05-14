@@ -51,6 +51,7 @@ public:
     virtual bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count) override;
     virtual bool PreloadDisc() override;
     virtual bool PreloadTrack(u32 track_number) override;
+    bool HasDiscError() const;
 
 private:
     struct CacheEntry
@@ -74,6 +75,7 @@ private:
     void StartWorker();
     void StopWorker();
     void WorkerThread();
+    void SetDiscError();
     void ResetCache();
     void ResetQueue();
     u32 CacheIndex(u32 block_lba) const;

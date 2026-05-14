@@ -163,8 +163,33 @@ static bool read_toc_ioctl(HANDLE file, const char* device_id, CDROM_TOC* toc, b
     return false;
 }
 
-static bool read_cd_spti(HANDLE file, u32 lba, u32 sector_count, u8* buffer, bool audio)
+static bool windows_error_is_media_unavailable(DWORD error)
 {
+    return (error == ERROR_NOT_READY) || (error == ERROR_MEDIA_CHANGED) || (error == ERROR_NO_MEDIA_IN_DRIVE) ||
+        (error == ERROR_DEVICE_NOT_CONNECTED) || (error == ERROR_DEV_NOT_EXIST) || (error == ERROR_INVALID_DRIVE);
+}
+
+static bool scsi_sense_is_media_unavailable(const UCHAR* sense)
+{
+    if (!IsValidPointer(sense))
+        return false;
+
+    UCHAR response = sense[0] & 0x7F;
+    if ((response != 0x70) && (response != 0x71))
+        return false;
+
+    UCHAR sense_key = sense[2] & 0x0F;
+    UCHAR asc = sense[12];
+
+    return ((sense_key == 0x02) && ((asc == 0x04) || (asc == 0x3A))) ||
+        ((sense_key == 0x06) && ((asc == 0x28) || (asc == 0x29)));
+}
+
+static bool read_cd_spti(HANDLE file, u32 lba, u32 sector_count, u8* buffer, bool audio, bool* media_unavailable)
+{
+    if (IsValidPointer(media_unavailable))
+        *media_unavailable = false;
+
     if (!IsValidPointer(buffer) || (sector_count == 0))
         return false;
 
@@ -189,9 +214,20 @@ static bool read_cd_spti(HANDLE file, u32 lba, u32 sector_count, u8* buffer, boo
 
     DWORD bytes_returned = 0;
     if (!DeviceIoControl(file, IOCTL_SCSI_PASS_THROUGH_DIRECT, &request, sizeof(request), &request, sizeof(request), &bytes_returned, NULL))
+    {
+        if (IsValidPointer(media_unavailable))
+            *media_unavailable = windows_error_is_media_unavailable(GetLastError());
         return false;
+    }
 
-    return request.pass_through.ScsiStatus == 0;
+    if (request.pass_through.ScsiStatus != 0)
+    {
+        if (IsValidPointer(media_unavailable))
+            *media_unavailable = scsi_sense_is_media_unavailable(request.sense);
+        return false;
+    }
+
+    return true;
 }
 
 static HANDLE open_device_handle(const char* device_id, bool read_write)
@@ -407,8 +443,15 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
     if (!IsOpen() || !IsValidPointer(buffer) || (sector_count == 0))
         return false;
 
-    if (read_cd_spti(m_file, lba, sector_count, buffer, audio))
+    bool media_unavailable = false;
+    if (read_cd_spti(m_file, lba, sector_count, buffer, audio, &media_unavailable))
         return true;
+
+    if (media_unavailable)
+    {
+        Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
+        return false;
+    }
 
     if (sector_count == 1)
     {
@@ -422,9 +465,12 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
     {
         u32 sector_lba = lba + i;
         u8* sector_buffer = buffer + (i * CDROM_DRIVE_RAW_SECTOR_SIZE);
-        if (!read_cd_spti(m_file, sector_lba, 1, sector_buffer, audio))
+        if (!read_cd_spti(m_file, sector_lba, 1, sector_buffer, audio, &media_unavailable))
         {
-            Error("SCSI READ CD failed for %s at LBA %u", m_device_id, sector_lba);
+            if (media_unavailable)
+                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+            else
+                Error("SCSI READ CD failed for %s at LBA %u", m_device_id, sector_lba);
             return false;
         }
     }

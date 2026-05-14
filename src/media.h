@@ -78,6 +78,7 @@ public:
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool LoadPhysicalCdRom(const char* device_id);
     const char* GetPhysicalCdRomDeviceId();
+    bool HasPhysicalCdRomError();
 #endif
     bool LoadBios(const char* file_path, bool syscard);
     void SetTempPath(const char* path);

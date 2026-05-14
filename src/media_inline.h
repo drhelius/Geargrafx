@@ -53,6 +53,11 @@ inline bool Media::IsPhysicalCdRom()
 {
     return m_is_physical_cdrom;
 }
+
+inline bool Media::HasPhysicalCdRomError()
+{
+    return m_is_physical_cdrom && m_cdrom_media->HasPhysicalDriveError();
+}
 #endif
 
 inline bool Media::IsGameExpress()

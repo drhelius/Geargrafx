@@ -102,6 +102,14 @@ bool CdRomPhysicalImage::LoadFromDevice(const char* device_id, bool preload)
 
     m_ready = true;
     CalculateCRC();
+
+    if (HasDiscError())
+    {
+        Error("Physical CD-ROM read failed while loading %s", device_id);
+        Reset();
+        return false;
+    }
+
     StartWorker();
 
     if (preload)
@@ -117,7 +125,7 @@ bool CdRomPhysicalImage::LoadFromDevice(const char* device_id, bool preload)
 
 bool CdRomPhysicalImage::ReadSector(u32 lba, u8* buffer)
 {
-    if (!m_ready || !IsValidPointer(buffer))
+    if (!m_ready || m_disc_error.load() || !IsValidPointer(buffer))
         return false;
 
     s32 track_index = GetTrackFromLBA(lba);
@@ -141,7 +149,7 @@ bool CdRomPhysicalImage::ReadSector(u32 lba, u8* buffer)
 
 bool CdRomPhysicalImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 {
-    if (!m_ready || !IsValidPointer(buffer))
+    if (!m_ready || m_disc_error.load() || !IsValidPointer(buffer))
         return false;
 
     if ((offset >= CDROM_PHYSICAL_SECTOR_SIZE) || ((count * sizeof(s16)) > CDROM_PHYSICAL_SECTOR_SIZE) || ((offset + (count * sizeof(s16))) > CDROM_PHYSICAL_SECTOR_SIZE))
@@ -172,7 +180,7 @@ bool CdRomPhysicalImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count
 
 bool CdRomPhysicalImage::PreloadDisc()
 {
-    if (!m_ready)
+    if (!m_ready || m_disc_error.load())
         return false;
 
     Debug("Physical CD-ROM queueing disc preload from LBA 0");
@@ -182,6 +190,9 @@ bool CdRomPhysicalImage::PreloadDisc()
 
 bool CdRomPhysicalImage::PreloadTrack(u32 track_number)
 {
+    if (!m_ready || m_disc_error.load())
+        return false;
+
     if (track_number >= m_toc.tracks.size())
     {
         Error("PreloadTrack failed - Track number %u out of bounds (max: %u)", track_number, (u32)m_toc.tracks.size() - 1);
@@ -349,6 +360,9 @@ u32 CdRomPhysicalImage::CalculateTOCFingerprint()
 
 bool CdRomPhysicalImage::ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 size)
 {
+    if (m_disc_error.load())
+        return false;
+
     if (!IsValidPointer(buffer) || (offset >= CDROM_PHYSICAL_SECTOR_SIZE) || (size > CDROM_PHYSICAL_SECTOR_SIZE) || ((offset + size) > CDROM_PHYSICAL_SECTOR_SIZE))
         return false;
 
@@ -367,7 +381,7 @@ bool CdRomPhysicalImage::ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 si
     {
         if (!ReadRawBlock(block_lba, block))
         {
-            m_disc_error.store(true);
+            SetDiscError();
             return false;
         }
 
@@ -440,6 +454,9 @@ void CdRomPhysicalImage::StoreCacheBlock(u32 block_lba, const u8* buffer)
 
 void CdRomPhysicalImage::QueueReadAhead(u32 block_lba)
 {
+    if (m_disc_error.load())
+        return;
+
     for (u32 i = 0; i < CDROM_PHYSICAL_PREFETCH_BLOCKS; i++)
     {
         u32 next_lba = block_lba + (i * CDROM_PHYSICAL_SECTORS_PER_BLOCK);
@@ -452,7 +469,7 @@ void CdRomPhysicalImage::QueueReadAhead(u32 block_lba)
 
 void CdRomPhysicalImage::QueueBlock(u32 block_lba)
 {
-    if (!m_worker_running.load())
+    if (!m_worker_running.load() || m_disc_error.load())
         return;
 
     if (block_lba >= m_toc.sector_count)
@@ -500,7 +517,7 @@ void CdRomPhysicalImage::StartWorker()
 
 void CdRomPhysicalImage::StopWorker()
 {
-    if (!m_worker_running.load())
+    if (!m_worker_running.load() && !m_worker_thread.joinable())
         return;
 
     m_worker_running.store(false);
@@ -516,7 +533,7 @@ void CdRomPhysicalImage::WorkerThread()
 {
     std::chrono::steady_clock::time_point last_keep_alive = std::chrono::steady_clock::now();
 
-    while (m_worker_running.load())
+    while (m_worker_running.load() && !m_disc_error.load())
     {
         u32 block_lba = 0;
         bool has_request = false;
@@ -527,6 +544,9 @@ void CdRomPhysicalImage::WorkerThread()
                 m_queue_condition.wait_for(lock, std::chrono::milliseconds(250));
 
             if (!m_worker_running.load())
+                break;
+
+            if (m_disc_error.load())
                 break;
 
             if (m_request_count != 0)
@@ -544,7 +564,7 @@ void CdRomPhysicalImage::WorkerThread()
             if (ReadRawBlock(block_lba, block))
                 StoreCacheBlock(block_lba, block);
             else
-                m_disc_error.store(true);
+                SetDiscError();
 
             last_keep_alive = std::chrono::steady_clock::now();
             continue;
@@ -555,11 +575,26 @@ void CdRomPhysicalImage::WorkerThread()
         {
             u8 block[CDROM_PHYSICAL_SECTOR_SIZE * CDROM_PHYSICAL_SECTORS_PER_BLOCK];
             if (!ReadRawBlock(m_last_block_lba.load(), block))
-                m_disc_error.store(true);
+                SetDiscError();
 
             last_keep_alive = now;
         }
     }
+}
+
+bool CdRomPhysicalImage::HasDiscError() const
+{
+    return m_disc_error.load();
+}
+
+void CdRomPhysicalImage::SetDiscError()
+{
+    if (!m_disc_error.exchange(true))
+        Error("Physical CD-ROM media read failed, stopping physical CD-ROM emulation");
+
+    m_worker_running.store(false);
+    ResetQueue();
+    m_queue_condition.notify_all();
 }
 
 void CdRomPhysicalImage::ResetCache()

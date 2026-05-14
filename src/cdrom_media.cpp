@@ -113,6 +113,11 @@ bool CdRomMedia::LoadPhysicalDrive(const char* device_id, bool preload)
         return false;
     }
 }
+
+bool CdRomMedia::HasPhysicalDriveError()
+{
+    return IsValidPointer(m_physical_image) && m_physical_image->HasDiscError();
+}
 #endif
 
 bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
