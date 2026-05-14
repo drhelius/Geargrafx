@@ -323,6 +323,7 @@ The server exposes tools organized in the following categories:
 
 ### Media & State Management
 - `get_media_info` - Get loaded ROM/CD info
+- `list_recent_media` - List the 10 most recent ROM files or CD-ROM images opened by Geargrafx
 - `load_media` - Load ROM file or CD-ROM image (.pce, .sgx, .hes, .cue, .zip). Automatically loads .sym symbol file if present
 - `load_bios` - Load a BIOS file for CD-ROM emulation. Two types: 'syscard' (System Card, 256KB) and 'gameexpress' (Game Express, 32KB)
 - `load_symbols` - Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries)
