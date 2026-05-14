@@ -22,6 +22,7 @@
 #include <algorithm>
 #include "cdrom_cuebin_image.h"
 #include "cdrom_common.h"
+#include "cdrom_file.h"
 #include "crc.h"
 
 CdRomCueBinImage::CdRomCueBinImage() : CdRomImage()
@@ -69,33 +70,50 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
         return m_ready;
     }
 
-    ifstream file;
-    open_ifstream_utf8(file, path, ios::in | ios::binary | ios::ate);
+    CdRomFile file;
 
-    if (file.is_open())
+    if (file.Open(path))
     {
-        int size = (int)(file.tellg());
+        s64 file_size = file.GetSize();
 
-        if (size <= 0)
+        if ((file_size <= 0) || (file_size > 0x7FFFFFFF))
         {
-            Error("Unable to open file %s. Size: %d", path, size);
-            file.close();
+            Error("Unable to open file %s. Size: %lld", path, (long long)file_size);
+            file.Close();
             m_ready = false;
             return m_ready;
         }
 
-        if (file.bad() || file.fail() || !file.good() || file.eof())
+        if (!file.IsValid())
         {
             Error("Unable to open file %s. Bad file!", path);
-            file.close();
+            file.Close();
             m_ready = false;
             return m_ready;
         }
 
+        int size = (int)file_size;
         char* buffer = new char[size + 1];
-        file.seekg(0, ios::beg);
-        file.read(buffer, size);
-        file.close();
+        if (!file.Seek(0))
+        {
+            Error("Unable to seek to beginning of file %s", path);
+            SafeDeleteArray(buffer);
+            file.Close();
+            m_ready = false;
+            return m_ready;
+        }
+
+        s64 read = file.Read(buffer, size);
+        file.Close();
+
+        if (read != size)
+        {
+            Error("Unable to read file %s. Read %lld bytes, expected %d bytes", path, (long long)read, size);
+            SafeDeleteArray(buffer);
+            m_ready = false;
+            return m_ready;
+        }
+
         buffer[size] = 0;
 
         for (int i = 0; i < size; i++)
@@ -398,30 +416,34 @@ bool CdRomCueBinImage::GatherImgInfo(ImgFile* img_file)
 
 bool CdRomCueBinImage::ValidateFile(const char* file_path)
 {
-    using namespace std;
+    CdRomFile file;
 
-    ifstream file;
-    open_ifstream_utf8(file, file_path, ios::in | ios::binary | ios::ate);
-
-    if (file.is_open())
+    if (file.Open(file_path))
     {
-        int size = (int)(file.tellg());
+        s64 size = file.GetSize();
 
         if (size <= 0)
         {
-            Error("Unable to open file %s. Size: %d", file_path, size);
-            file.close();
+            Error("Unable to open file %s. Size: %lld", file_path, (long long)size);
+            file.Close();
             return false;
         }
 
-        if (file.bad() || file.fail() || !file.good() || file.eof())
+        if (size > 0xFFFFFFFFLL)
+        {
+            Error("Unable to open file %s. Size too large: %lld", file_path, (long long)size);
+            file.Close();
+            return false;
+        }
+
+        if (!file.IsValid())
         {
             Error("Unable to open file %s. Bad file!", file_path);
-            file.close();
+            file.Close();
             return false;
         }
 
-        file.close();
+        file.Close();
         return true;
     }
 
@@ -437,10 +459,21 @@ bool CdRomCueBinImage::ProcessFileFormat(ImgFile* img_file)
     string extension = file_path.substr(file_path.find_last_of(".") + 1);
     transform(extension.begin(), extension.end(), extension.begin(), (int(*)(int)) tolower);
 
-    ifstream file;
-    open_ifstream_utf8(file, img_file->file_path, ios::in | ios::binary | ios::ate);
-    int size = (int)(file.tellg());
-    file.close();
+    CdRomFile file;
+    if (!file.Open(img_file->file_path))
+    {
+        Error("Unable to open file %s", img_file->file_path);
+        return false;
+    }
+
+    s64 size = file.GetSize();
+    file.Close();
+
+    if ((size <= 0) || (size > 0xFFFFFFFFLL))
+    {
+        Error("Invalid file size %lld for %s", (long long)size, img_file->file_path);
+        return false;
+    }
 
     img_file->file_size = (u32)size;
 
@@ -452,29 +485,25 @@ bool CdRomCueBinImage::ProcessFileFormat(ImgFile* img_file)
 
 bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
 {
-    using namespace std;
-
     Debug("WAV file detected: %s", img_file->file_path);
 
-    ifstream file;
-    open_ifstream_utf8(file, img_file->file_path, ios::in | ios::binary);
-    if (!file.is_open())
+    CdRomFile file;
+    if (!file.Open(img_file->file_path))
         return false;
 
     char header[44];
-    file.read(header, 44);
 
-    if (file.gcount() != 44)
+    if (file.Read(header, 44) != 44)
     {
         Error("Failed to read WAV header from %s", img_file->file_path);
-        file.close();
+        file.Close();
         return false;
     }
 
     if (strncmp(header, "RIFF", 4) != 0 || strncmp(header + 8, "WAVE", 4) != 0)
     {
         Error("Invalid WAV format in %s", img_file->file_path);
-        file.close();
+        file.Close();
         return false;
     }
 
@@ -485,47 +514,51 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
     if (sample_rate != 44100 || bits_per_sample != 16 || channels != 2)
     {
         Error("WAV file %s has incorrect format. Required: 44100Hz, 16-bit, stereo. Found: %dHz, %d-bit, %d channel(s)", img_file->file_path, sample_rate, bits_per_sample, channels);
-        file.close();
+        file.Close();
         return false;
     }
 
     Debug("WAV format verified: %dHz, %d-bit, %d channels", sample_rate, bits_per_sample, channels);
 
     bool ret = FindWavDataChunk(img_file, file);
-    file.close();
+    file.Close();
 
     return ret;
 }
 
-bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, std::ifstream& file)
+bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, CdRomFile& file)
 {
-    // Reset to beginning of file + RIFF/WAVE headers
-    file.seekg(12, std::ios::beg);
+    if (!file.Seek(12))
+    {
+        Error("Failed to seek to WAV chunks in %s", img_file->file_path);
+        return false;
+    }
 
     uint32_t data_size = 0;
     uint32_t data_offset = 0;
     bool found_data = false;
 
-    while (!file.eof() && !found_data)
+    while (!found_data)
     {
         char chunk_id[4];
-        u32 chunk_size;
+        u8 chunk_size_bytes[4];
 
-        file.read(chunk_id, 4);
-        file.read((char*)(&chunk_size), 4);
-
-        if (file.eof())
+        if ((file.Read(chunk_id, 4) != 4) || (file.Read(chunk_size_bytes, 4) != 4))
             break;
+
+        u32 chunk_size = read_u32_le(chunk_size_bytes);
 
         if (strncmp(chunk_id, "data", 4) == 0)
         {
             data_size = chunk_size;
-            data_offset = (u32)file.tellg();
+            data_offset = (u32)file.Tell();
             found_data = true;
             break;
         }
 
-        file.seekg(chunk_size, std::ios::cur);
+        s64 position = file.Tell();
+        if ((position < 0) || !file.Seek(position + chunk_size))
+            break;
     }
     
     if (!found_data)
@@ -579,6 +612,11 @@ u32 CdRomCueBinImage::CalculateReadSize(ImgFile* img_file, u32 file_offset)
         to_read = img_file->file_size - effective_offset;
 
     return to_read;
+}
+
+bool CdRomCueBinImage::IsUriPath(const char* path)
+{
+    return IsValidPointer(path) && (strstr(path, "://") != NULL);
 }
 
 bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
@@ -641,7 +679,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
                 file_name = current_file_path;
             }
 
-            if (!current_file_path.empty() && current_file_path[0] != '/' && current_file_path[0] != '\\' &&
+            if (!current_file_path.empty() && !IsUriPath(current_file_path.c_str()) && current_file_path[0] != '/' && current_file_path[0] != '\\' &&
                 (current_file_path.size() < 2 || current_file_path[1] != ':'))
             {
                 current_file_path = string(m_file_directory) + "/" + current_file_path;
@@ -970,8 +1008,6 @@ bool CdRomCueBinImage::ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer
 
 bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 {
-    using namespace std;
-
     if (!IsValidPointer(img_file))
     {
         Error("Cannot load chunk - Invalid ImgFile pointer");
@@ -980,21 +1016,20 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
     if (!img_file->chunks[chunk_index])
     {
-        ifstream file;
-        open_ifstream_utf8(file, img_file->file_path, ios::in | ios::binary);
+        CdRomFile file;
 
-        if (!file.is_open())
+        if (!file.Open(img_file->file_path))
         {
             Error("Cannot load chunk - Unable to open file %s", img_file->file_path);
             return false;
         }
 
         u32 file_offset = CalculateFileOffset(img_file, chunk_index);
-        file.seekg(file_offset, ios::beg);
 
-        if (file.fail())
+        if (!file.Seek(file_offset))
         {
             Error("Cannot load chunk - Failed to seek to offset %u in file %s", file_offset, img_file->file_path);
+            file.Close();
             return false;
         }
 
@@ -1003,18 +1038,18 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
         u32 to_read = CalculateReadSize(img_file, file_offset);
 
         Debug("Loading chunk %d from %s", chunk_index, img_file->file_path);
-        file.read(reinterpret_cast<char*>(img_file->chunks[chunk_index]), to_read);
+        s64 read = file.Read(img_file->chunks[chunk_index], to_read);
 
-        if (file.gcount() != to_read)
+        if (read != to_read)
         {
-            Error("Failed to read chunk %d from %s. Read %d bytes, expected %d bytes",
-                chunk_index, img_file->file_path, file.gcount(), to_read);
+            Error("Failed to read chunk %d from %s. Read %lld bytes, expected %d bytes",
+                chunk_index, img_file->file_path, (long long)read, to_read);
             SafeDeleteArray(img_file->chunks[chunk_index]);
-            file.close();
+            file.Close();
             return false;
         }
 
-        file.close();
+        file.Close();
     }
 
     return true;
@@ -1060,7 +1095,6 @@ bool CdRomCueBinImage::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 cou
 
 void CdRomCueBinImage::CalculateCRC()
 {
-    using namespace std;
     m_crc = 0;
 
     if (m_toc.tracks.empty())
@@ -1107,9 +1141,8 @@ void CdRomCueBinImage::CalculateCRC()
         return;
     }
 
-    ifstream file;
-    open_ifstream_utf8(file, img_file->file_path, ios::in | ios::binary);
-    if (!file.is_open())
+    CdRomFile file;
+    if (!file.Open(img_file->file_path))
     {
         Error("Failed to open file %s for CRC calculation",
             img_file->file_path);
@@ -1131,27 +1164,25 @@ void CdRomCueBinImage::CalculateCRC()
         if (first_data_track->sector_size == 2352)
             file_offset += 16;
 
-        file.seekg(file_offset, ios::beg);
-        if (file.fail())
+        if (!file.Seek(file_offset))
         {
             Error("Seek failed for sector %u in file %s",
                 sec, img_file->file_path);
             break;
         }
 
-        file.read((char*)(buffer), sector_data_size);
-        u32 bytes_read = (u32)(file.gcount());
+        s64 bytes_read = file.Read(buffer, sector_data_size);
 
         if (bytes_read != sector_data_size)
         {
-            Error("Incomplete read for sector %u: %u bytes read, expected %u",
-                sec, bytes_read, sector_data_size);
+            Error("Incomplete read for sector %u: %lld bytes read, expected %u",
+                sec, (long long)bytes_read, sector_data_size);
             break;
         }
 
         m_crc = CalculateCRC32(m_crc, buffer, sector_data_size);
     }
 
-    file.close();
+    file.Close();
     SafeDeleteArray(buffer);
 }

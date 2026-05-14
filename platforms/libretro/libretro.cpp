@@ -22,9 +22,11 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 #include <math.h>
 #include "libretro.h"
 #include "geargrafx.h"
+#include "cdrom_file.h"
 #include "libretro_core_options.h"
 
 #ifdef _WIN32
@@ -113,6 +115,9 @@ static void poll_input(void);
 static void apply_input(void);
 static bool categories_supported = false;
 static void check_variables(void);
+static bool path_has_extension(const char* path, const char* extension);
+static bool path_is_cdrom_uri(const char* path);
+static bool path_is_cd_content(const char* path);
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 {
@@ -161,6 +166,15 @@ void retro_set_video_refresh(retro_video_refresh_t cb)
 void retro_set_environment(retro_environment_t cb)
 {
     environ_cb = cb;
+
+    struct retro_vfs_interface_info vfs_interface_info = { };
+    vfs_interface_info.required_interface_version = 2;
+    vfs_interface_info.iface = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_interface_info) && vfs_interface_info.iface)
+        CdRomFile::SetVfsInterface(vfs_interface_info.iface);
+    else
+        CdRomFile::SetVfsInterface(NULL);
 
     static const struct retro_system_content_info_override content_overrides[] = {
         {
@@ -336,13 +350,33 @@ void retro_run(void)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
+    if (!info)
+    {
+        log_cb(RETRO_LOG_ERROR, "retro_load_game received NULL info.\n");
+        return false;
+    }
+
     check_variables();
     load_bios();
 
-    snprintf(retro_game_path, sizeof(retro_game_path), "%s", info->path);
+    const char* load_path = info->path;
+    const struct retro_game_info_ext* info_ext = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_GAME_INFO_EXT, &info_ext) && info_ext && info_ext->full_path && info_ext->full_path[0])
+        load_path = info_ext->full_path;
+
+    if (!load_path)
+        load_path = "";
+
+    snprintf(retro_game_path, sizeof(retro_game_path), "%s", load_path);
     log_cb(RETRO_LOG_INFO, "retro_load_game: %s\n", retro_game_path);
 
-    if (IsValidPointer(info->data))
+    bool is_cd_content = path_is_cd_content(retro_game_path);
+
+    if (path_is_cdrom_uri(retro_game_path))
+        log_cb(RETRO_LOG_INFO, "Loading CD-ROM through libretro VFS: %s\n", retro_game_path);
+
+    if (IsValidPointer(info->data) && !is_cd_content)
     {
         log_cb(RETRO_LOG_INFO, "retro_load_game HuCard from buffer.\n");
         if (!core->LoadHuCardFromBuffer((const u8*)(info->data), info->size, retro_game_path))
@@ -1168,4 +1202,37 @@ static void check_variables(void)
             core->GetInput()->SetTurboSpeed((GG_Controllers)i, GG_KEY_II, speed);
         }
     }
+}
+
+static bool path_has_extension(const char* path, const char* extension)
+{
+    if (!path || !extension)
+        return false;
+
+    const char* dot = strrchr(path, '.');
+    if (!dot || !dot[1])
+        return false;
+
+    dot++;
+
+    while (*dot && *extension)
+    {
+        if (tolower((unsigned char)*dot) != tolower((unsigned char)*extension))
+            return false;
+
+        dot++;
+        extension++;
+    }
+
+    return (*dot == 0) && (*extension == 0);
+}
+
+static bool path_is_cdrom_uri(const char* path)
+{
+    return path && (strncmp(path, "cdrom://", 8) == 0);
+}
+
+static bool path_is_cd_content(const char* path)
+{
+    return path_is_cdrom_uri(path) || path_has_extension(path, "cue") || path_has_extension(path, "chd");
 }

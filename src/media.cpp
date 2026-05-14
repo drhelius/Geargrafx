@@ -24,6 +24,7 @@
 #include "media.h"
 #include "game_db.h"
 #include "crc.h"
+#include "cdrom_file.h"
 #include "cdrom_media.h"
 
 Media::Media(CdRomMedia* cdrom_media)
@@ -782,36 +783,33 @@ void Media::InitRomMAP()
 
 bool Media::IsValidFile(const char* path)
 {
-    using namespace std;
-
     if (!IsValidPointer(path))
     {
         Error("Invalid path %s", path);
         return false;
     }
 
-    ifstream file;
-    open_ifstream_utf8(file, path, ios::in | ios::binary | ios::ate);
+    CdRomFile file;
 
-    if (file.is_open())
+    if (file.Open(path))
     {
-        int size = static_cast<int> (file.tellg());
+        s64 size = file.GetSize();
 
         if (size <= 0)
         {
-            Error("Unable to open file %s. Size: %d", path, size);
-            file.close();
+            Error("Unable to open file %s. Size: %lld", path, (long long)size);
+            file.Close();
             return false;
         }
 
-        if (file.bad() || file.fail() || !file.good() || file.eof())
+        if (!file.IsValid())
         {
             Error("Unable to open file %s. Bad file!", path);
-            file.close();
+            file.Close();
             return false;
         }
 
-        file.close();
+        file.Close();
         return true;
     }
     else

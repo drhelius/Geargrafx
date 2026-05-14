@@ -23,6 +23,8 @@
 #include <vector>
 #include "cdrom_image.h"
 
+class CdRomFile;
+
 #define CDROM_MEDIA_CHUNK_SIZE 2352 * 128 // 128 sectors per chunk (294 KB)
 
 class CdRomCueBinImage : public CdRomImage
@@ -84,10 +86,11 @@ private:
     bool ValidateFile(const char* file_path);
     bool ProcessFileFormat(ImgFile* img_file);
     bool ProcessWavFormat(ImgFile* img_file);
-    bool FindWavDataChunk(ImgFile* img_file, std::ifstream& file);
+    bool FindWavDataChunk(ImgFile* img_file, CdRomFile& file);
     void SetupFileChunks(ImgFile* img_file);
     u32 CalculateFileOffset(ImgFile* img_file, u32 chunk_index);
     u32 CalculateReadSize(ImgFile* img_file, u32 file_offset);
+    bool IsUriPath(const char* path);
     bool ParseCueFile(const char* cue_content);
     bool ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer, u32 size);
     bool LoadChunk(ImgFile* img_file, u32 chunk_index);
