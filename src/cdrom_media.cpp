@@ -20,16 +20,25 @@
 #include "cdrom_media.h"
 #include "cdrom_cuebin_image.h"
 #include "cdrom_chd_image.h"
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+#include "cdrom_physical_image.h"
+#endif
 
 CdRomMedia::CdRomMedia()
 {
     InitPointer(m_current_image);
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    InitPointer(m_physical_image);
+#endif
 }
 
 CdRomMedia::~CdRomMedia()
 {
     SafeDelete(m_cue_bin_image);
     SafeDelete(m_chd_image);
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    SafeDelete(m_physical_image);
+#endif
 }
 
 void CdRomMedia::Init()
@@ -40,6 +49,11 @@ void CdRomMedia::Init()
     m_chd_image = new CdRomChdImage();
     m_chd_image->Init();
 
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    m_physical_image = new CdRomPhysicalImage();
+    m_physical_image->Init();
+#endif
+
     Reset();
 }
 
@@ -49,6 +63,9 @@ void CdRomMedia::Reset()
 
     m_cue_bin_image->Reset();
     m_chd_image->Reset();
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    m_physical_image->Reset();
+#endif
 }
 
 bool CdRomMedia::LoadCueFromFile(const char* path, bool preload)
@@ -80,6 +97,23 @@ bool CdRomMedia::LoadChdFromFile(const char* path, bool preload)
         return false;
     }
 }
+
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+bool CdRomMedia::LoadPhysicalDrive(const char* device_id, bool preload)
+{
+    if (m_physical_image->LoadFromDevice(device_id, preload))
+    {
+        m_current_image = m_physical_image;
+        return true;
+    }
+    else
+    {
+        Error("Failed to load physical CD-ROM from %s", device_id);
+        Reset();
+        return false;
+    }
+}
+#endif
 
 bool CdRomMedia::ReadSector(u32 lba, u8* buffer)
 {

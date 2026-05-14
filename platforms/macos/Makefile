@@ -1,8 +1,13 @@
 include ../shared/makefiles/Makefile.sources
 
+SOURCES_CXX += $(SRC_DIR)/cdrom_drive.cpp
+SOURCES_CXX += $(SRC_DIR)/cdrom_physical_image.cpp
+SOURCES_CXX += $(SRC_DIR)/cdrom_drive_macos.cpp
 SOURCES_MM += macos.mm
 OBJECTS += $(SOURCES_MM:.mm=.o)
+CPPFLAGS += -DGG_ENABLE_PHYSICAL_CDROM
 LDFLAGS += -framework AppKit
+LDFLAGS += -framework IOKit -framework CoreFoundation -framework DiscRecording
 
 include ../shared/makefiles/Makefile.common
 

@@ -28,6 +28,9 @@
 
 EXTERN void gui_action_reset(void);
 EXTERN void gui_action_reload_rom(void);
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+EXTERN void gui_action_eject_physical_cdrom(void);
+#endif
 EXTERN void gui_action_pause(void);
 EXTERN void gui_action_ffwd(void);
 EXTERN void gui_action_rewind_pressed(void);

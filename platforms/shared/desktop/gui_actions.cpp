@@ -53,10 +53,40 @@ void gui_action_reload_rom(void)
 {
     if (!emu_is_empty())
     {
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+        if (emu_get_core()->GetMedia()->IsPhysicalCdRom())
+        {
+            gui_load_physical_cdrom(emu_get_core()->GetMedia()->GetPhysicalCdRomDeviceId());
+            return;
+        }
+#endif
+
         char rom_path[4096];
         strcpy(rom_path, emu_get_core()->GetMedia()->GetFilePath());
         gui_load_rom(rom_path);
     }
+}
+
+void gui_action_eject_physical_cdrom(void)
+{
+    #if defined(GG_ENABLE_PHYSICAL_CDROM)
+    if (emu_is_empty() || !emu_get_core()->GetMedia()->IsPhysicalCdRom())
+    {
+        Debug("Physical CD-ROM eject requested but no physical CD-ROM is loaded");
+        gui_set_status_message("No physical CD-ROM loaded", 3000);
+        return;
+    }
+
+    char device_id[256];
+    strncpy_fit(device_id, emu_get_core()->GetMedia()->GetPhysicalCdRomDeviceId(), sizeof(device_id));
+
+    Log("Physical CD-ROM eject requested from GUI: %s", device_id);
+
+    if (emu_eject_physical_cdrom())
+        gui_set_status_message("Physical CD-ROM ejected", 3000);
+    else
+        gui_set_error_message("Unable to eject physical CD-ROM");
+    #endif
 }
 
 void gui_action_pause(void)
@@ -153,6 +183,11 @@ void gui_action_save_screenshot(const char* path)
             }
             case Directory_Location_ROM:
             {
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+                if (emu_get_core()->GetMedia()->IsPhysicalCdRom())
+                    file_path = file_path.assign(config_root_path) + "/" + string(emu_get_core()->GetMedia()->GetFileName()) + " - " + date_time + ".png";
+                else
+#endif
                 file_path = file_path.assign(emu_get_core()->GetMedia()->GetFilePath()) + " - " + date_time + ".png";
                 break;
             }

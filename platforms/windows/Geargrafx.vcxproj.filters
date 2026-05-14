@@ -133,6 +133,15 @@
     <ClCompile Include="..\..\src\cdrom.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cdrom_drive.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cdrom_physical_image.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cdrom_drive_win32.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\scsi_controller.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -421,6 +430,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cdrom.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_drive.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_physical_image.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cdrom_audio_inline.h">

@@ -17,25 +17,42 @@
  *
  */
 
-#ifndef GUI_POPUPS_H
-#define GUI_POPUPS_H
+ #include "cdrom_drive.h"
 
-#ifdef GUI_POPUPS_IMPORT
-    #define EXTERN
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+
+CdRomDrive::CdRomDrive()
+{
+#if defined(_WIN32)
+    m_file = INVALID_HANDLE_VALUE;
 #else
-    #define EXTERN extern
+    m_file = -1;
 #endif
+    m_device_id[0] = 0;
+}
 
-EXTERN void gui_popup_modal_keyboard();
-EXTERN void gui_popup_modal_gamepad(int pad);
-EXTERN void gui_popup_modal_hotkey();
-EXTERN void gui_popup_modal_about(void);
-EXTERN void gui_popup_modal_load_defaults(void);
-EXTERN void gui_popup_open_physical_cdrom(void);
-EXTERN void gui_popup_modal_physical_cdrom(void);
-EXTERN void gui_show_info(void);
-EXTERN void gui_show_fps(void);
+CdRomDrive::~CdRomDrive()
+{
+    Close();
+}
 
-#undef GUI_POPUPS_IMPORT
-#undef EXTERN
-#endif /* GUI_POPUPS_H */
+bool CdRomDrive::IsOpen() const
+{
+#if defined(_WIN32)
+    return m_file != INVALID_HANDLE_VALUE;
+#else
+    return m_file >= 0;
+#endif
+}
+
+bool CdRomDrive::ReadRawSector2352(u32 lba, u8* buffer, bool audio)
+{
+    return ReadRawSectors2352(lba, 1, buffer, audio);
+}
+
+const char* CdRomDrive::GetDeviceId() const
+{
+    return m_device_id;
+}
+
+#endif /* GG_ENABLE_PHYSICAL_CDROM */

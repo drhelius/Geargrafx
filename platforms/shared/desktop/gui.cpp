@@ -50,6 +50,7 @@ static bool error_window_active = false;
 static char error_message[4096] = "";
 static bool loading_rom_active = false;
 static char loading_rom_path[4096] = "";
+static bool loading_physical_cdrom = false;
 static void main_window(void);
 static void push_recent_rom(std::string path);
 static void show_status_message(void);
@@ -441,6 +442,8 @@ void gui_load_rom(const char* path)
     if (loading_rom_active)
         return;
 
+    loading_physical_cdrom = false;
+
     gui_debug_auto_save_settings();
     push_recent_rom(path);
     emu_resume();
@@ -450,6 +453,31 @@ void gui_load_rom(const char* path)
     loading_rom_active = true;
 
     emu_load_media_async(path);
+}
+
+void gui_load_physical_cdrom(const char* device_id)
+{
+    #if defined(GG_ENABLE_PHYSICAL_CDROM)
+    if (loading_rom_active)
+    {
+        Debug("Ignoring physical CD-ROM load request while another media load is active: %s", device_id);
+        return;
+    }
+
+    Log("Starting physical CD-ROM load from %s", device_id);
+    loading_physical_cdrom = true;
+    gui_debug_auto_save_settings();
+    emu_resume();
+
+    strncpy(loading_rom_path, device_id, sizeof(loading_rom_path) - 1);
+    loading_rom_path[sizeof(loading_rom_path) - 1] = '\0';
+    loading_rom_active = true;
+
+    emu_load_physical_cdrom_async(device_id);
+
+    #else
+    UNUSED(device_id);
+    #endif
 }
 
 void gui_set_status_message(const char* message, Uint64 milliseconds)
@@ -681,12 +709,13 @@ static void show_loading_popup(void)
         }
         else
         {
-            std::string message("Error loading ROM:\n");
+            std::string message("Error loading media:\n");
             message += loading_rom_path;
             gui_set_error_message(message.c_str());
 
             emu_get_core()->GetMedia()->Reset();
             gui_action_reset();
+            loading_physical_cdrom = false;
         }
         return;
     }
@@ -742,11 +771,16 @@ static void finish_loading_rom(void)
 
     gui_debug_reset();
 
-    std::string str(loading_rom_path);
-    str = str.substr(0, str.find_last_of("."));
-    if (!gui_debug_load_symbols_file((str + ".sym").c_str()))
-        if (!gui_debug_load_symbols_file((str + ".lbl").c_str()))
-            gui_debug_load_symbols_file((str + ".noi").c_str());
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    if (!loading_physical_cdrom)
+#endif
+    {
+        std::string str(loading_rom_path);
+        str = str.substr(0, str.find_last_of("."));
+        if (!gui_debug_load_symbols_file((str + ".sym").c_str()))
+            if (!gui_debug_load_symbols_file((str + ".lbl").c_str()))
+                gui_debug_load_symbols_file((str + ".noi").c_str());
+    }
 
     gui_debug_auto_load_settings();
 

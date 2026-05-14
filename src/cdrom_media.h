@@ -28,6 +28,9 @@
 
 class CdRomCueBinImage;
 class CdRomChdImage;
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+class CdRomPhysicalImage;
+#endif
 
 class CdRomMedia
 {
@@ -51,6 +54,9 @@ public:
     void SetCurrentSector(u32 sector);
     bool LoadCueFromFile(const char* path, bool preload);
     bool LoadChdFromFile(const char* path, bool preload);
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    bool LoadPhysicalDrive(const char* device_id, bool preload);
+#endif
     bool ReadSector(u32 lba, u8* buffer);
     bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count);
     u32 SeekTime(u32 start_lba, u32 end_lba);
@@ -67,6 +73,9 @@ private:
     CdRomImage* m_current_image;
     CdRomCueBinImage* m_cue_bin_image;
     CdRomChdImage* m_chd_image;
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    CdRomPhysicalImage* m_physical_image;
+#endif
 };
 
 

@@ -143,6 +143,20 @@ bool GeargrafxCore::LoadMedia(const char* file_path)
         return false;
 }
 
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+bool GeargrafxCore::LoadPhysicalCdRom(const char* device_id)
+{
+    if (m_media->LoadPhysicalCdRom(device_id))
+    {
+        m_memory->ResetDisassemblerRecords();
+        Reset();
+        return true;
+    }
+    else
+        return false;
+}
+#endif
+
 bool GeargrafxCore::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
 {
     if (m_media->LoadHuCardFromBuffer(buffer, size, path))

@@ -29,6 +29,9 @@
     <ClCompile Include="..\..\src\cdrom_audio.cpp" />
     <ClCompile Include="..\..\src\cdrom_media.cpp" />
     <ClCompile Include="..\..\src\cdrom.cpp" />
+    <ClCompile Include="..\..\src\cdrom_drive.cpp" />
+    <ClCompile Include="..\..\src\cdrom_physical_image.cpp" />
+    <ClCompile Include="..\..\src\cdrom_drive_win32.cpp" />
     <ClCompile Include="..\..\src\scsi_controller.cpp" />
     <ClCompile Include="..\..\src\geargrafx_core.cpp" />
     <ClCompile Include="..\..\src\huc6202.cpp" />
@@ -163,6 +166,8 @@
     <ClInclude Include="..\..\src\cdrom_media_inline.h" />
     <ClInclude Include="..\..\src\cdrom.h" />
     <ClInclude Include="..\..\src\cdrom_inline.h" />
+    <ClInclude Include="..\..\src\cdrom_drive.h" />
+    <ClInclude Include="..\..\src\cdrom_physical_image.h" />
     <ClInclude Include="..\..\src\cdrom_audio_inline.h" />
     <ClInclude Include="..\..\src\cdrom_audio.h" />
     <ClInclude Include="..\..\src\cdrom_common.h" />
@@ -378,7 +383,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;Z7_ST;UNICODE;WIN32;WIN64;NDEBUG;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;Z7_ST;GG_ENABLE_PHYSICAL_CDROM;UNICODE;WIN32;WIN64;NDEBUG;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -419,7 +424,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;Z7_ST;UNICODE;WIN32;WIN64;NDEBUG;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;Z7_ST;GG_ENABLE_PHYSICAL_CDROM;UNICODE;WIN32;WIN64;NDEBUG;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -460,7 +465,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;Z7_ST;DEBUG;UNICODE;WIN32;WIN64;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;Z7_ST;DEBUG;GG_ENABLE_PHYSICAL_CDROM;UNICODE;WIN32;WIN64;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -500,7 +505,7 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;Z7_ST;DEBUG;UNICODE;WIN32;WIN64;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;Z7_ST;DEBUG;GG_ENABLE_PHYSICAL_CDROM;UNICODE;WIN32;WIN64;EMULATOR_BUILD="$(EmulatorBuild)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessToFile>false</PreprocessToFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>

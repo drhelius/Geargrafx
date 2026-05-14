@@ -51,6 +51,9 @@ static bool open_syscard_bios = false;
 static bool open_gameexpress_bios = false;
 static bool save_debug_settings = false;
 static bool load_debug_settings = false;
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+static bool open_physical_cdrom = false;
+#endif
 
 static void menu_geargrafx(void);
 static void menu_emulator(void);
@@ -61,6 +64,7 @@ static void menu_debug(void);
 static void menu_about(void);
 static void draw_mcp_status(void);
 static void file_dialogs(void);
+static const char* get_current_media_directory_text(void);
 static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int player);
 static void gamepad_configuration_item(const char* text, int* button, int player);
 static void hotkey_configuration_item(const char* text, config_Hotkey* hotkey);
@@ -92,6 +96,9 @@ void gui_main_menu(void)
     open_gameexpress_bios = false;
     save_debug_settings = false;
     load_debug_settings = false;
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    open_physical_cdrom = false;
+#endif
 
     if (application_show_menu && ImGui::BeginMainMenuBar())
     {
@@ -124,6 +131,21 @@ static void menu_geargrafx(void)
         {
             open_rom = true;
         }
+
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+        bool physical_cdrom_loaded = !emu_is_empty() && emu_get_core()->GetMedia()->IsPhysicalCdRom();
+        if (ImGui::MenuItem("Open Physical CD-ROM...", "", false, !physical_cdrom_loaded))
+        {
+            Debug("Open Physical CD-ROM menu item selected");
+            open_physical_cdrom = true;
+        }
+
+        if (ImGui::MenuItem("Eject Physical CD-ROM", "", false, physical_cdrom_loaded))
+        {
+            Debug("Eject Physical CD-ROM menu item selected");
+            gui_action_eject_physical_cdrom();
+        }
+#endif
 
         if (ImGui::BeginMenu("Open Recent"))
         {
@@ -297,7 +319,7 @@ static void menu_emulator(void)
                 case Directory_Location_ROM:
                 {
                     if (!emu_is_empty())
-                        ImGui::Text("%s", emu_get_core()->GetMedia()->GetFileDirectory());
+                        ImGui::Text("%s", get_current_media_directory_text());
                     break;
                 }
                 case Directory_Location_Custom:
@@ -336,7 +358,7 @@ static void menu_emulator(void)
                 case Directory_Location_ROM:
                 {
                     if (!emu_is_empty())
-                        ImGui::Text("%s", emu_get_core()->GetMedia()->GetFileDirectory());
+                        ImGui::Text("%s", get_current_media_directory_text());
                     break;
                 }
                 case Directory_Location_Custom:
@@ -408,7 +430,7 @@ static void menu_emulator(void)
                 case Directory_Location_ROM:
                 {
                     if (!emu_is_empty())
-                        ImGui::Text("%s", emu_get_core()->GetMedia()->GetFileDirectory());
+                        ImGui::Text("%s", get_current_media_directory_text());
                     break;
                 }
                 case Directory_Location_Custom:
@@ -1770,6 +1792,13 @@ static void file_dialogs(void)
         gui_file_dialog_save_debug_settings();
     if (load_debug_settings)
         gui_file_dialog_load_debug_settings();
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    if (open_physical_cdrom)
+    {
+        Debug("Opening physical CD-ROM popup from menu request");
+        gui_popup_open_physical_cdrom();
+    }
+#endif
     if (open_about)
     {
         gui_dialog_in_use = true;
@@ -1784,6 +1813,19 @@ static void file_dialogs(void)
 
     gui_popup_modal_about();
     gui_popup_modal_load_defaults();
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    gui_popup_modal_physical_cdrom();
+#endif
+}
+
+static const char* get_current_media_directory_text(void)
+{
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    if (!emu_is_empty() && emu_get_core()->GetMedia()->IsPhysicalCdRom())
+        return config_root_path;
+#endif
+
+    return emu_get_core()->GetMedia()->GetFileDirectory();
 }
 
 static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int player)

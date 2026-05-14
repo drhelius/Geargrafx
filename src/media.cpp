@@ -34,6 +34,7 @@ Media::Media(CdRomMedia* cdrom_media)
     m_card_ram_size = 0;
     m_ready = false;
     m_file_path[0] = 0;
+    m_file_directory[0] = 0;
     m_file_name[0] = 0;
     m_file_extension[0] = 0;
     m_temp_path[0] = 0;
@@ -46,6 +47,11 @@ Media::Media(CdRomMedia* cdrom_media)
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    m_is_physical_cdrom = false;
+    m_physical_cdrom_device_id[0] = 0;
+#endif
+    m_is_mb128 = false;
     m_is_valid_bios_syscard = false;
     m_is_valid_bios_gameexpress = false;
     m_is_loaded_bios_syscard = false;
@@ -80,6 +86,7 @@ void Media::Reset()
     m_card_ram_size = 0;
     m_ready = false;
     m_file_path[0] = 0;
+    m_file_directory[0] = 0;
     m_file_name[0] = 0;
     m_file_extension[0] = 0;
     m_crc = 0;
@@ -87,6 +94,10 @@ void Media::Reset()
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    m_is_physical_cdrom = false;
+    m_physical_cdrom_device_id[0] = 0;
+#endif
     m_is_mb128 = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
@@ -237,6 +248,61 @@ bool Media::LoadChdFromFile(const char* path)
     m_ready = m_cdrom_media->LoadChdFromFile(path, m_preload_cdrom);
     return m_ready;
 }
+
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+bool Media::LoadPhysicalCdRom(const char* device_id)
+{
+    if (!IsValidPointer(device_id) || (device_id[0] == 0))
+    {
+        Error("Invalid physical CD-ROM device id");
+        return false;
+    }
+
+    Log("Loading physical CD-ROM %s...", device_id);
+
+    Reset();
+
+    m_is_cdrom = true;
+    m_is_physical_cdrom = true;
+    strncpy_fit(m_physical_cdrom_device_id, device_id, sizeof(m_physical_cdrom_device_id));
+
+    m_ready = m_cdrom_media->LoadPhysicalDrive(device_id, m_preload_cdrom);
+    if (!m_ready)
+    {
+        Reset();
+        return false;
+    }
+
+    m_crc = m_cdrom_media->GetCRC();
+
+    if (m_crc != 0)
+    {
+        snprintf(m_file_name, sizeof(m_file_name), "physical_cdrom_%08X.physicalcd", m_crc);
+    }
+    else
+    {
+        char sanitized[128] = {};
+        int pos = 0;
+        for (int i = 0; (device_id[i] != 0) && (pos < ((int)sizeof(sanitized) - 1)); i++)
+        {
+            char c = device_id[i];
+            bool valid = ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9'));
+            sanitized[pos++] = valid ? c : '_';
+        }
+
+        if (pos == 0)
+            strncpy_fit(sanitized, "unknown", sizeof(sanitized));
+
+        snprintf(m_file_name, sizeof(m_file_name), "physical_cdrom_%s.physicalcd", sanitized);
+    }
+
+    strncpy_fit(m_file_path, m_file_name, sizeof(m_file_path));
+    m_file_directory[0] = 0;
+    strncpy_fit(m_file_extension, "physicalcd", sizeof(m_file_extension));
+
+    return true;
+}
+#endif
 
 bool Media::LoadBios(const char* file_path, bool syscard)
 {

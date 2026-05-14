@@ -57,6 +57,9 @@ public:
     void Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     bool RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug = NULL);
     bool LoadMedia(const char* file_path);
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    bool LoadPhysicalCdRom(const char* device_id);
+#endif
     bool LoadHuCardFromBuffer(const u8* buffer, int size, const char* path = NULL);
     bool LoadBios(const char* file_path, bool syscard);
     void ResetMedia(bool preserve_ram);

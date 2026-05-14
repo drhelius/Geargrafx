@@ -18,6 +18,7 @@
  */
 
 #include <SDL3/SDL.h>
+#include <vector>
 
 #define GUI_POPUPS_IMPORT
 #include "gui_popups.h"
@@ -33,12 +34,133 @@
 #include "keyboard.h"
 #include "imgui.h"
 #include "implot.h"
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+#include "cdrom_drive.h"
+#endif
 
 static char build_info[4096] = "";
 static int info_pos = 0;
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+static std::vector<CdRomDriveInfo> physical_cdrom_drives;
+static int physical_cdrom_selected = -1;
+static bool physical_cdrom_refresh = false;
+#endif
 
 static void add_build_info(const char* fmt, ...);
 static void check_hotkey_duplicates_popup(config_Hotkey* current_hotkey);
+static void refresh_physical_cdrom_drives(void);
+
+void gui_popup_open_physical_cdrom(void)
+{
+    #if defined(GG_ENABLE_PHYSICAL_CDROM)
+    Debug("Opening physical CD-ROM popup");
+    physical_cdrom_refresh = true;
+    physical_cdrom_selected = -1;
+    gui_dialog_in_use = true;
+    ImGui::OpenPopup("Open Physical CD-ROM");
+    #endif
+}
+
+void gui_popup_modal_physical_cdrom(void)
+{
+    #if defined(GG_ENABLE_PHYSICAL_CDROM)
+    if (physical_cdrom_refresh)
+    {
+        Debug("Physical CD-ROM popup refreshing drive list");
+        refresh_physical_cdrom_drives();
+        physical_cdrom_refresh = false;
+    }
+
+    if (ImGui::BeginPopupModal("Open Physical CD-ROM", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        gui_dialog_in_use = true;
+
+        if (physical_cdrom_drives.empty())
+        {
+            ImGui::Text("No physical CD-ROM drives found.");
+        }
+        else
+        {
+            ImGui::BeginChild("##physical_cdrom_drives", ImVec2(520.0f, 160.0f), true);
+            for (int i = 0; i < (int)physical_cdrom_drives.size(); i++)
+            {
+                CdRomDriveInfo& drive = physical_cdrom_drives[i];
+                char label[640];
+                snprintf(label, sizeof(label), "%s  %s##physical_cdrom_%d", drive.name, drive.has_disc ? "Ready" : "No Disc", i);
+
+                if (ImGui::Selectable(label, physical_cdrom_selected == i))
+                {
+                    Debug("Physical CD-ROM drive selected: %s (%s)", drive.id, drive.has_disc ? "disc ready" : "no disc");
+                    physical_cdrom_selected = i;
+                }
+            }
+            ImGui::EndChild();
+        }
+
+        bool can_open = (physical_cdrom_selected >= 0) && (physical_cdrom_selected < (int)physical_cdrom_drives.size()) && physical_cdrom_drives[physical_cdrom_selected].has_disc;
+
+        if (ImGui::Button("Refresh", ImVec2(110.0f, 0.0f)))
+        {
+            Debug("Physical CD-ROM popup refresh button pressed");
+            refresh_physical_cdrom_drives();
+        }
+
+        ImGui::SameLine();
+        if (!can_open)
+            ImGui::BeginDisabled();
+
+        if (ImGui::Button("Open", ImVec2(110.0f, 0.0f)) && can_open)
+        {
+            Log("Opening physical CD-ROM drive %s", physical_cdrom_drives[physical_cdrom_selected].id);
+            gui_load_physical_cdrom(physical_cdrom_drives[physical_cdrom_selected].id);
+            gui_dialog_in_use = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        if (!can_open)
+            ImGui::EndDisabled();
+
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(110.0f, 0.0f)))
+        {
+            Debug("Physical CD-ROM popup canceled");
+            gui_dialog_in_use = false;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+    #endif
+}
+
+static void refresh_physical_cdrom_drives(void)
+{
+    #if defined(GG_ENABLE_PHYSICAL_CDROM)
+    Debug("Enumerating physical CD-ROM drives");
+    bool listed = CdRomDrive::ListDrives(physical_cdrom_drives);
+    physical_cdrom_selected = -1;
+
+    if (!listed)
+    {
+        Error("Physical CD-ROM drive enumeration failed");
+        return;
+    }
+
+    Debug("Physical CD-ROM drives found: %d", (int)physical_cdrom_drives.size());
+
+    for (int i = 0; i < (int)physical_cdrom_drives.size(); i++)
+    {
+        Debug("Physical CD-ROM drive %d: id=%s name=%s has_disc=%s", i, physical_cdrom_drives[i].id, physical_cdrom_drives[i].name, physical_cdrom_drives[i].has_disc ? "true" : "false");
+
+        if (physical_cdrom_drives[i].has_disc)
+        {
+            physical_cdrom_selected = i;
+            Debug("Physical CD-ROM default selection: %s", physical_cdrom_drives[i].id);
+            break;
+        }
+    }
+    #endif
+}
 
 void gui_popup_modal_keyboard()
 {

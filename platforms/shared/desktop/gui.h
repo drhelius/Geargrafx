@@ -127,6 +127,7 @@ EXTERN void gui_destroy(void);
 EXTERN void gui_render(void);
 EXTERN void gui_shortcut(gui_ShortCutEvent event);
 EXTERN void gui_load_rom(const char* path);
+EXTERN void gui_load_physical_cdrom(const char* device_id);
 EXTERN void gui_load_bios(const char* path, bool syscard);
 EXTERN void gui_load_palette(const char* path);
 EXTERN void gui_set_status_message(const char* message, Uint64 milliseconds);
