@@ -133,17 +133,20 @@ static void menu_geargrafx(void)
         }
 
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
-        bool physical_cdrom_loaded = !emu_is_empty() && emu_get_core()->GetMedia()->IsPhysicalCdRom();
-        if (ImGui::MenuItem("Open Physical CD-ROM...", "", false, !physical_cdrom_loaded))
+        if (ImGui::BeginMenu("Physical CD-ROM"))
         {
-            Debug("Open Physical CD-ROM menu item selected");
-            open_physical_cdrom = true;
-        }
+            bool physical_cdrom_loaded = !emu_is_empty() && emu_get_core()->GetMedia()->IsPhysicalCdRom();
+            if (ImGui::MenuItem("Open...", "", false, !physical_cdrom_loaded))
+            {
+                open_physical_cdrom = true;
+            }
 
-        if (ImGui::MenuItem("Eject Physical CD-ROM", "", false, physical_cdrom_loaded))
-        {
-            Debug("Eject Physical CD-ROM menu item selected");
-            gui_action_eject_physical_cdrom();
+            if (ImGui::MenuItem("Eject", "", false, physical_cdrom_loaded))
+            {
+                gui_action_eject_physical_cdrom();
+            }
+
+            ImGui::EndMenu();
         }
 #endif
 
