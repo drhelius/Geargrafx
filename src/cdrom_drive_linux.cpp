@@ -334,6 +334,7 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
 
 bool CdRomDrive::SetSpeed(u16 speed)
 {
+    UNUSED(speed);
     Debug("Physical CD-ROM set speed %u for %s: no-op on Linux", speed, m_device_id);
     return IsOpen();
 }
