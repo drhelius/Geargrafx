@@ -23,9 +23,9 @@
 
 #include <algorithm>
 #include <stddef.h>
+#include <winioctl.h>
 #include <ntddcdrm.h>
 #include <ntddscsi.h>
-#include <winioctl.h>
 
 #define CDROM_DRIVE_RAW_SECTOR_SIZE 2352
 #define CDROM_DRIVE_SENSE_SIZE 32
