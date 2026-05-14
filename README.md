@@ -103,6 +103,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 - Adjustable scanline count (224p, 240p or manual).
 - RGB or Composite color output with optional LPF filter.
 - Compressed ROM and CD image support (pce, sgx, cue, zip and chd).
+- Support for playing physical CD-ROM discs.
 - Music ROM support: HES.
 - VGM recorder.
 - Internal database for automatic ROM detection and hardware selection if `Auto` options are selected.
