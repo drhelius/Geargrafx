@@ -35,7 +35,7 @@
 #define TILE_TEXTURE_WIDTH (TILES_ACROSS * 8)
 #define TILE_TEXTURE_HEIGHT (TILES_DOWN * 8)
 
-static const float k_scale_levels[4] = { 1.0f, 1.5f, 2.0f };
+static const float k_scale_levels[3] = { 1.0f, 1.5f, 2.0f };
 
 void gui_debug_window_huc6270_tiles(int vdc)
 {
