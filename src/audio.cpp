@@ -224,6 +224,9 @@ bool Audio::StartVgmRecording(const char* file_path, int clock_rate)
             }
         }
 
+        // Restore channel select after dumping per-channel state.
+        m_vgm_recorder.WriteHuC6280(0x0800, *psg_state->CHANNEL_SELECT);
+
         // 0x0808 - LFO frequency
         m_vgm_recorder.WriteHuC6280(0x0808, *psg_state->LFO_FREQUENCY & 0xFF);
 
