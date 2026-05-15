@@ -432,14 +432,14 @@ static void process_dialog_result(FileDialogID id, const char* path)
         case FileDialog_LoadBIOSSyscard:
         {
             config_emulator.syscard_bios_path.assign(path);
-            strcpy(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str());
+            strncpy_fit(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str(), sizeof(gui_syscard_bios_path));
             gui_load_bios(path, true);
             break;
         }
         case FileDialog_LoadBIOSGameExpress:
         {
             config_emulator.gameexpress_bios_path.assign(path);
-            strcpy(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str());
+            strncpy_fit(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str(), sizeof(gui_gameexpress_bios_path));
             gui_load_bios(path, false);
             break;
         }
