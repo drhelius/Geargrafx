@@ -718,7 +718,7 @@ static void menu_video(void)
             ImGui::PushItemWidth(250.0f);
             ImGui::Combo("##scale", &config_video.scale, "Integer Scale (Auto)\0Integer Scale (Manual)\0Scale to Window Height\0Scale to Window Width & Height\0\0");
             if (config_video.scale == 1)
-                ImGui::SliderInt("##scale_manual", &config_video.scale_manual, 1, 10);
+                ImGui::SliderInt("##scale_manual", &config_video.scale_manual, 1, 16);
             ImGui::PopItemWidth();
             ImGui::EndMenu();
         }
@@ -877,6 +877,14 @@ static void menu_video(void)
         if (ImGui::BeginMenu("Scanlines"))
         {
             ImGui::MenuItem("Enable Scanlines", "", &config_video.scanlines);
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("In Integer Scale modes, odd scale factors are adjusted");
+                ImGui::Text("when scanlines are enabled without the scanlines filter.");
+                ImGui::Text("Enable Scanlines Filter to allow odd scale factors.");
+                ImGui::EndTooltip();
+            }
             ImGui::MenuItem("Enable Scanlines Filter", "", &config_video.scanlines_filter);
             ImGui::SliderFloat("##scanlines", &config_video.scanlines_intensity, 0.0f, 1.0f, "Intensity = %.2f");
             ImGui::EndMenu();
