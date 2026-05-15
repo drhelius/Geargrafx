@@ -37,6 +37,7 @@
 #define CDROM_PHYSICAL_CACHE_BLOCKS (1 << CDROM_PHYSICAL_CACHE_BITS)
 #define CDROM_PHYSICAL_REQUEST_QUEUE_SIZE 64
 #define CDROM_PHYSICAL_PREFETCH_BLOCKS 16
+#define CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS 150
 
 class CdRomPhysicalImage : public CdRomImage
 {
@@ -64,6 +65,8 @@ private:
 private:
     bool ReadTOC();
     bool DetectDataTrackType(Track& track);
+    void NormalizeTrackBoundaries();
+    bool IsMode1DataSector(u32 lba);
     void CalculateCRC();
     u32 CalculateTOCFingerprint();
     bool ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 size);

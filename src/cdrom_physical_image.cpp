@@ -40,6 +40,20 @@ static void crc_append_u32(u32* crc, u32 value)
     *crc = CalculateCRC32(*crc, data, sizeof(data));
 }
 
+static bool raw_sector_has_mode1_sync(const u8* raw)
+{
+    static const u8 sync[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 };
+
+    for (int i = 0; i < 12; i++)
+    {
+        if (raw[i] != sync[i])
+            return false;
+    }
+
+    return raw[15] == 1;
+}
+
 CdRomPhysicalImage::CdRomPhysicalImage()
 {
     m_worker_running.store(false);
@@ -253,6 +267,8 @@ bool CdRomPhysicalImage::ReadTOC()
     }
 
     m_toc.sector_count = lead_out_lba;
+    NormalizeTrackBoundaries();
+
     LbaToMsf(m_toc.sector_count + 150, &m_toc.total_length);
 
     for (size_t i = 0; i < m_toc.tracks.size(); i++)
@@ -267,6 +283,58 @@ bool CdRomPhysicalImage::ReadTOC()
         m_toc.sector_count);
 
     return true;
+}
+
+void CdRomPhysicalImage::NormalizeTrackBoundaries()
+{
+    if (m_toc.tracks.size() < 2)
+        return;
+
+    for (size_t i = 0; (i + 1) < m_toc.tracks.size(); i++)
+    {
+        Track& track = m_toc.tracks[i];
+        Track& next_track = m_toc.tracks[i + 1];
+
+        if ((track.type == GG_CDROM_AUDIO_TRACK) || (next_track.type != GG_CDROM_AUDIO_TRACK))
+            continue;
+
+        if (next_track.start_lba < CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS)
+            continue;
+
+        u32 pregap_lba = next_track.start_lba - CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS;
+        if ((pregap_lba <= track.start_lba) || (pregap_lba > track.end_lba))
+            continue;
+
+        if (IsMode1DataSector(pregap_lba))
+            continue;
+
+        if (!IsMode1DataSector(pregap_lba - 1))
+            continue;
+
+        Debug("Physical CD-ROM trimming %u-sector pregap before audio track %u at LBA %u",
+            (u32)CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS, (u32)(i + 2), pregap_lba);
+
+        track.end_lba = pregap_lba - 1;
+        track.sector_count = track.end_lba - track.start_lba + 1;
+        LbaToMsf(track.end_lba, &track.end_msf);
+        next_track.has_lead_in = true;
+        next_track.lead_in_lba = pregap_lba;
+    }
+}
+
+bool CdRomPhysicalImage::IsMode1DataSector(u32 lba)
+{
+    if (lba >= m_toc.sector_count)
+        return false;
+
+    u8 raw[CDROM_PHYSICAL_SECTOR_SIZE];
+    memset(raw, 0, sizeof(raw));
+
+    std::lock_guard<std::mutex> lock(m_drive_mutex);
+    if (!m_drive.ReadRawSector2352(lba, raw, false))
+        return false;
+
+    return raw_sector_has_mode1_sync(raw);
 }
 
 bool CdRomPhysicalImage::DetectDataTrackType(Track& track)
