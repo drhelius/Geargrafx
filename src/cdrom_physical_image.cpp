@@ -367,6 +367,7 @@ bool CdRomPhysicalImage::DetectDataTrackType(Track& track)
 void CdRomPhysicalImage::CalculateCRC()
 {
     m_crc = 0;
+    u32 current_sector = m_current_sector;
 
     for (size_t track_index = 0; track_index < m_toc.tracks.size(); track_index++)
     {
@@ -375,7 +376,10 @@ void CdRomPhysicalImage::CalculateCRC()
             continue;
 
         if (track.sector_count <= 1)
+        {
+            m_current_sector = current_sector;
             return;
+        }
 
         u8 buffer[2048];
         u32 sectors = MIN((u32)64, track.sector_count - 1);
@@ -388,6 +392,7 @@ void CdRomPhysicalImage::CalculateCRC()
                 Error("Physical CD-ROM CRC read failed at LBA %u", lba);
                 m_crc = CalculateTOCFingerprint();
                 Debug("Physical CD-ROM fallback TOC fingerprint: %08X", m_crc);
+                m_current_sector = current_sector;
                 return;
             }
 
@@ -395,11 +400,13 @@ void CdRomPhysicalImage::CalculateCRC()
         }
 
         Debug("Physical CD-ROM CRC: %08X", m_crc);
+        m_current_sector = current_sector;
         return;
     }
 
     m_crc = CalculateTOCFingerprint();
     Debug("Physical CD-ROM CRC unavailable, fallback TOC fingerprint: %08X", m_crc);
+    m_current_sector = current_sector;
 }
 
 u32 CdRomPhysicalImage::CalculateTOCFingerprint()
