@@ -166,7 +166,7 @@ void DebugAdapter::SetBreakpoint(u16 address, int type, bool read, bool write, b
     char buffer[16];
     snprintf(buffer, sizeof(buffer), "%04X", address);
 
-    if (type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM && execute && !read && !write)
+    if (type == HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS && execute && !read && !write)
     {
         cpu->AddBreakpoint(address);
     }
@@ -464,8 +464,8 @@ const char* DebugAdapter::GetBreakpointTypeName(int type)
 {
     switch (type)
     {
-        case HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM:
-            return "ROM/RAM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS:
+            return "CPU ADDRESS";
         case HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM:
             return "VRAM";
         case HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM:
@@ -474,6 +474,18 @@ const char* DebugAdapter::GetBreakpointTypeName(int type)
             return "6270 REG";
         case HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER:
             return "6260 REG";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM:
+            return "WRAM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE:
+            return "ZERO PAGE";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ROM:
+            return "ROM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM:
+            return "CARD RAM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM:
+            return "CDROM RAM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM:
+            return "BACKUP RAM";
         default:
             return "UNKNOWN";
     }

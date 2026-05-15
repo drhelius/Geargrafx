@@ -40,12 +40,17 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
 #endif
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, address, true);
+    m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS, address, true);
 #endif
 
     u8 mpr_index = address >> 13;
     u8 bank = m_mpr[mpr_index];
     u16 offset = address & 0x1FFF;
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_huc6280->HasPhysicalMemoryBreakpoints(true))
+        CheckPhysicalMemoryBreakpoints(bank, offset, true);
+#endif
 
     if (bank != 0xFF)
     {
@@ -204,12 +209,17 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
 #endif
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM, address, false);
+    m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS, address, false);
 #endif
 
     u8 mpr_index = address >> 13;
     u8 bank = m_mpr[mpr_index];
     u16 offset = address & 0x1FFF;
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_huc6280->HasPhysicalMemoryBreakpoints(false))
+        CheckPhysicalMemoryBreakpoints(bank, offset, false);
+#endif
 
     if (IsValidPointer(m_current_mapper) && bank < 0x80)
     {
@@ -313,6 +323,44 @@ INLINE u32 Memory::GetPhysicalAddress(u16 address)
     return (GetBank(address) << 13) | (address & 0x1FFF);
 }
 
+INLINE bool Memory::GetROMPhysicalAddress(u16 cpu_address, u32& rom_address)
+{
+    u8 bank = GetBank(cpu_address);
+    u16 bank_offset = cpu_address & 0x1FFF;
+
+    return GetROMPhysicalAddress(bank, bank_offset, rom_address);
+}
+
+INLINE bool Memory::GetROMPhysicalAddress(u8 bank, u16 bank_offset, u32& rom_address)
+{
+    if (GetBankType(bank) != MEMORY_BANK_TYPE_ROM)
+        return false;
+
+    if (bank >= 128)
+        return false;
+
+    if (IsValidPointer(m_current_mapper) && (m_current_mapper == m_sf2_mapper))
+        return m_sf2_mapper->GetROMPhysicalAddress(bank, bank_offset, rom_address);
+
+    u32* rom_bank_offset = m_media->GetROMBankOffset();
+
+    if (!IsValidPointer(rom_bank_offset))
+        return false;
+
+    int rom_size = m_media->GetROMSize();
+
+    if (rom_size <= 0)
+        return false;
+
+    u32 phys = rom_bank_offset[bank] + bank_offset;
+
+    if (phys >= (u32)rom_size)
+        return false;
+
+    rom_address = phys;
+    return true;
+}
+
 INLINE u8 Memory::GetBank(u16 address)
 {
     return m_mpr[(address >> 13) & 0x07];
@@ -362,6 +410,11 @@ INLINE u8* Memory::GetArcadeRAM()
 INLINE int Memory::GetWorkingRAMSize()
 {
     return m_media->IsSGX() ? 0x8000 : 0x2000;
+}
+
+INLINE int Memory::GetROMSize()
+{
+    return m_media->GetROMSize();
 }
 
 INLINE int Memory::GetCardRAMSize()
@@ -454,5 +507,99 @@ INLINE void Memory::UpdateBackupRam(bool enable)
         m_memory_map[0xF7] = m_unused_memory;
     }
 }
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+INLINE void Memory::CheckPhysicalMemoryBreakpoints(u8 bank, u32 offset, bool read)
+{
+    switch (GetBankType(bank)) {
+        case MEMORY_BANK_TYPE_WRAM:
+        {
+            if (m_huc6280->HasPhysicalMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE, read))
+            {
+                if (bank == 0xF8 && offset < 0x100)
+                {
+                    m_huc6280->CheckMemoryBreakpoints(
+                        HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE,
+                        offset,
+                        read);
+                }
+            }
+
+            if (!m_huc6280->HasPhysicalMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM, read))
+                return;
+
+            u32 addr = 0;
+            if (m_media->IsSGX())
+                addr = ((bank - 0xF8) * 0x2000) + offset;
+            else
+                addr = offset;
+
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM, addr, read);
+
+            break;
+        }
+
+        case MEMORY_BANK_TYPE_ROM:
+        {
+            if (!read)
+                return;
+
+            if (!m_huc6280->HasPhysicalMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_ROM, read))
+                return;
+
+            u32 rom_addr = 0;
+            if (GetROMPhysicalAddress(bank, offset, rom_addr))
+                m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_ROM, rom_addr, true);
+
+            break;
+        }
+
+        case MEMORY_BANK_TYPE_CDROM_RAM:
+        {
+            if (!m_huc6280->HasPhysicalMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM, read))
+                return;
+
+            u32 addr = ((bank - 0x80) * 0x2000) + offset;
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM, addr, read);
+
+            break;
+        }
+
+
+        case MEMORY_BANK_TYPE_CARD_RAM:
+        {
+            if (!m_huc6280->HasPhysicalMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM, read))
+                return;
+
+            if (m_card_ram_size == 0)
+                return;
+
+            u32 addr = ((bank - m_card_ram_start) * 0x2000) + offset;
+            addr %= m_card_ram_size;
+
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM, addr, read);
+
+            break;
+        }
+
+
+        case MEMORY_BANK_TYPE_BACKUP_RAM:
+        {
+            if (!m_huc6280->HasPhysicalMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM, read))
+                return;
+
+            if (offset >= 0x800)
+                return;
+
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM, offset, read);
+
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+#endif
 
 #endif /* MEMORY_INLINE_H */

@@ -183,6 +183,37 @@ inline bool parse_hex_with_prefix(const std::string& hex_str, T* result)
     return parse_hex_string(str, len, result);
 }
 
+inline bool parse_hex_address(const char* text, u32& value)
+{
+    if (!IsValidPointer(text))
+        return false;
+
+    size_t len = strlen(text);
+    if (len == 0 || len > 8)
+        return false;
+
+    u32 result = 0;
+    for (size_t i = 0; i < len; i++)
+    {
+        char c = text[i];
+        u32 digit = 0;
+
+        if (c >= '0' && c <= '9')
+            digit = c - '0';
+        else if (c >= 'a' && c <= 'f')
+            digit = 0xA + c - 'a';
+        else if (c >= 'A' && c <= 'F')
+            digit = 0xA + c - 'A';
+        else
+            return false;
+
+        result = (result << 4) | digit;
+    }
+
+    value = result;
+    return true;
+}
+
 inline char* strncpy_fit(char* dest, const char* src, size_t dest_size)
 {
     if (dest_size == 0)

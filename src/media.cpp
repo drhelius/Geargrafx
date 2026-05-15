@@ -65,14 +65,19 @@ Media::Media(CdRomMedia* cdrom_media)
     m_preload_cdrom = false;
 
     m_rom_map = new u8*[128];
+    m_rom_bank_offset = new u32[128];
     for (int i = 0; i < 128; i++)
+    {
         InitPointer(m_rom_map[i]);
+        m_rom_bank_offset[i] = 0;
+    }
 }
 
 Media::~Media()
 {
     SafeDeleteArray(m_rom);
     SafeDeleteArray(m_rom_map);
+    SafeDeleteArray(m_rom_bank_offset);
 }
 
 void Media::Init()
@@ -104,7 +109,10 @@ void Media::Reset()
     m_avenue_pad_3_button = GG_KEY_SELECT;
 
     for (int i = 0; i < 128; i++)
+    {
         InitPointer(m_rom_map[i]);
+        m_rom_bank_offset[i] = 0;
+    }
 
     m_cdrom_media->Reset();
 }
@@ -723,6 +731,7 @@ void Media::InitRomMAP()
             int bank = x & 0x1F;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &rom_ptr[bank_address];
+            m_rom_bank_offset[x] = bank_address;
         }
 
         for(int x = 64; x < 128; x++)
@@ -730,6 +739,7 @@ void Media::InitRomMAP()
             int bank = (x & 0x0F) + 0x20;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &rom_ptr[bank_address];
+            m_rom_bank_offset[x] = bank_address;
         }
     }
     else if (rom_bank_count == 0x40)
@@ -741,6 +751,7 @@ void Media::InitRomMAP()
             int bank = x & 0x3F;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &rom_ptr[bank_address];
+            m_rom_bank_offset[x] = bank_address;
         }
 
         for(int x = 64; x < 128; x++)
@@ -748,6 +759,7 @@ void Media::InitRomMAP()
             int bank = (x & 0x1F) + 0x20;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &rom_ptr[bank_address];
+            m_rom_bank_offset[x] = bank_address;
         }
     }
     else if (rom_bank_count == 0x60)
@@ -759,6 +771,7 @@ void Media::InitRomMAP()
             int bank = x & 0x3F;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &rom_ptr[bank_address];
+            m_rom_bank_offset[x] = bank_address;
         }
 
         for(int x = 64; x < 128; x++)
@@ -766,6 +779,7 @@ void Media::InitRomMAP()
             int bank = (x & 0x1F) + 0x40;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &rom_ptr[bank_address];
+            m_rom_bank_offset[x] = bank_address;
         }
     }
     else
@@ -777,6 +791,7 @@ void Media::InitRomMAP()
             int bank = x % rom_bank_count;
             int bank_address = bank * 0x2000;
             m_rom_map[x] = &rom_ptr[bank_address];
+            m_rom_bank_offset[x] = bank_address;
         }
     }
 }

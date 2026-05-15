@@ -33,6 +33,7 @@ public:
     virtual ~SF2Mapper();
     virtual u8 Read(u8 bank, u16 address);
     u8 Peek(u8 bank, u16 address);
+    bool GetROMPhysicalAddress(u8 bank, u16 address, u32& rom_address);
     virtual void Write(u8 bank, u16 address, u8 value);
     virtual void Reset();
     virtual void SaveState(std::ostream& stream);
