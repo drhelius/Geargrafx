@@ -322,10 +322,16 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     u32 sector_size = track.sector_size;
     u32 start_offset = track.file_offset;
     u32 total_bytes = track.sector_count * sector_size;
-    u32 start_chunk = start_offset / track_file.img_file->chunk_size;
-    u32 chunks_needed = (total_bytes + track_file.img_file->chunk_size - 1) / track_file.img_file->chunk_size;
 
     Debug("Preloading all sectors for track %u (sectors: %u, bytes: %u)", track_number, track.sector_count, total_bytes);
+
+    if (total_bytes == 0)
+        return true;
+
+    u32 chunk_size = track_file.img_file->chunk_size;
+    u32 start_chunk = start_offset / chunk_size;
+    u32 end_chunk = (start_offset + total_bytes - 1) / chunk_size;
+    u32 chunks_needed = end_chunk - start_chunk + 1;
 
     return PreloadChunks(track_file.img_file, start_chunk, chunks_needed);
 }
