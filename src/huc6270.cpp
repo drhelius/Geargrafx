@@ -69,16 +69,17 @@ void HuC6270::Reset()
         m_register[HUC6270_REG_VSR] = 0x0F02;
         m_register[HUC6270_REG_VDR] = 0x00EF;
         m_register[HUC6270_REG_VCR] = 0x0004;
+        m_read_buffer = 0x0000;
     }
     else
     {
         m_register[HUC6270_REG_HDR] = 0x1F;
         m_register[HUC6270_REG_VDR] = 239;
+        m_read_buffer = 0xFFFF;
     }
 
     m_address_register = 0;
     m_status_register = 0;
-    m_read_buffer = 0xFFFF;
     m_vram_openbus = 0;
     m_pending_memory_read = false;
     m_pending_memory_write = false;
