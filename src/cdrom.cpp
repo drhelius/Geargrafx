@@ -272,19 +272,21 @@ void CdRom::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_enabled_irqs), sizeof(m_enabled_irqs));
     stream.read(reinterpret_cast<char*> (&m_cdaudio_sample_toggle), sizeof(m_cdaudio_sample_toggle));
     stream.read(reinterpret_cast<char*> (&m_cdaudio_sample), sizeof(m_cdaudio_sample));
-    stream.read(reinterpret_cast<char*> (&m_cdaudio_sample_last_clock), sizeof(m_cdaudio_sample_last_clock));
+    if (version >= 27)
+        stream.read(reinterpret_cast<char*> (&m_cdaudio_sample_last_clock), sizeof(m_cdaudio_sample_last_clock));
+    else
+        m_cdaudio_sample_last_clock = 0;
+
     stream.read(reinterpret_cast<char*> (&m_fader), sizeof(m_fader));
     stream.read(reinterpret_cast<char*> (&m_fader_enabled), sizeof(m_fader_enabled));
     stream.read(reinterpret_cast<char*> (&m_fader_adpcm), sizeof(m_fader_adpcm));
     stream.read(reinterpret_cast<char*> (&m_fader_fast), sizeof(m_fader_fast));
-    stream.read(reinterpret_cast<char*> (&m_fader_start_cycles), sizeof(m_fader_start_cycles));
-    stream.read(reinterpret_cast<char*> (&m_fader_cycles), sizeof(m_fader_cycles));
-
-    if (version < 27)
-    {
-        m_cdaudio_sample_last_clock = 0;
+    if (version >= 27)
+        stream.read(reinterpret_cast<char*> (&m_fader_start_cycles), sizeof(m_fader_start_cycles));
+    else
         m_fader_start_cycles = 0;
-    }
+
+    stream.read(reinterpret_cast<char*> (&m_fader_cycles), sizeof(m_fader_cycles));
 
     m_memory->UpdateBackupRam(m_bram_enabled);
 }
