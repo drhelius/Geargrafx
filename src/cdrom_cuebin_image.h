@@ -39,6 +39,7 @@ private:
         u32 chunk_size;
         u32 chunk_count;
         u8** chunks;
+        CdRomFile* file;
         bool is_wav;
         u32 wav_data_offset;
     };
@@ -83,7 +84,7 @@ private:
     void InitTrackFile(TrackFile& track_file);
     void DestroyImgFiles();
     bool GatherImgInfo(ImgFile* img_file);
-    bool ValidateFile(const char* file_path);
+    bool OpenImgFile(ImgFile* img_file);
     bool ProcessFileFormat(ImgFile* img_file);
     bool ProcessWavFormat(ImgFile* img_file);
     bool FindWavDataChunk(ImgFile* img_file, CdRomFile& file);
