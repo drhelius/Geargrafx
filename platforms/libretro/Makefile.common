@@ -18,6 +18,8 @@ SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
                 $(SOURCE_DIR)/cdrom_chd_image.cpp \
                 $(SOURCE_DIR)/cdrom_cuebin_image.cpp \
                 $(SOURCE_DIR)/cdrom_file.cpp \
+                $(SOURCE_DIR)/cdrom_file_libretro.cpp \
+                $(SOURCE_DIR)/cdrom_file_native.cpp \
                 $(SOURCE_DIR)/cdrom_image.cpp \
                 $(SOURCE_DIR)/cdrom_media.cpp \
                 $(SOURCE_DIR)/cdrom.cpp \

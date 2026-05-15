@@ -70,41 +70,41 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
         return m_ready;
     }
 
-    CdRomFile file;
+    CdRomFile* file = CdRomFile::OpenFile(path);
 
-    if (file.Open(path))
+    if (file)
     {
-        s64 file_size = file.GetSize();
+        s64 file_size = file->GetSize();
 
         if ((file_size <= 0) || (file_size > 0x7FFFFFFF))
         {
             Error("Unable to open file %s. Size: %lld", path, (long long)file_size);
-            file.Close();
+            SafeDelete(file);
             m_ready = false;
             return m_ready;
         }
 
-        if (!file.IsValid())
+        if (!file->IsValid())
         {
             Error("Unable to open file %s. Bad file!", path);
-            file.Close();
+            SafeDelete(file);
             m_ready = false;
             return m_ready;
         }
 
         int size = (int)file_size;
         char* buffer = new char[size + 1];
-        if (!file.Seek(0))
+        if (!file->Seek(0))
         {
             Error("Unable to seek to beginning of file %s", path);
             SafeDeleteArray(buffer);
-            file.Close();
+            SafeDelete(file);
             m_ready = false;
             return m_ready;
         }
 
-        s64 read = file.Read(buffer, size);
-        file.Close();
+        s64 read = file->Read(buffer, size);
+        SafeDelete(file);
 
         if (read != size)
         {
@@ -426,9 +426,9 @@ bool CdRomCueBinImage::OpenImgFile(ImgFile* img_file)
         return false;
 
     SafeDelete(img_file->file);
-    img_file->file = new CdRomFile;
+    img_file->file = CdRomFile::OpenFile(img_file->file_path);
 
-    if (img_file->file->Open(img_file->file_path))
+    if (img_file->file)
     {
         s64 size = img_file->file->GetSize();
 
@@ -454,6 +454,7 @@ bool CdRomCueBinImage::OpenImgFile(ImgFile* img_file)
         }
 
         img_file->file_size = (u32)size;
+
         return true;
     }
 
@@ -1012,6 +1013,12 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
         return false;
     }
 
+    if (chunk_index >= img_file->chunk_count)
+    {
+        Error("Cannot load chunk - Chunk index %u out of bounds (count: %u)", chunk_index, img_file->chunk_count);
+        return false;
+    }
+
     if (!img_file->chunks[chunk_index])
     {
         if (!IsValidPointer(img_file->file))
@@ -1024,7 +1031,8 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
         if (!img_file->file->Seek(file_offset))
         {
-            Error("Cannot load chunk - Failed to seek to offset %u in file %s", file_offset, img_file->file_path);
+            Error("Cannot load chunk - Failed to seek to offset %u in file %s (tell after failure: %lld)",
+                file_offset, img_file->file_path, (long long)img_file->file->Tell());
             return false;
         }
 
@@ -1154,19 +1162,9 @@ void CdRomCueBinImage::CalculateCRC()
         if (first_data_track->sector_size == 2352)
             file_offset += 16;
 
-        if (!img_file->file->Seek(file_offset))
+        if (!ReadFromImgFile(img_file, file_offset, buffer, sector_data_size))
         {
-            Error("Seek failed for sector %u in file %s",
-                sec, img_file->file_path);
-            break;
-        }
-
-        s64 bytes_read = img_file->file->Read(buffer, sector_data_size);
-
-        if (bytes_read != sector_data_size)
-        {
-            Error("Incomplete read for sector %u: %lld bytes read, expected %u",
-                sec, (long long)bytes_read, sector_data_size);
+            Error("CRC read failed for sector %u in file %s", sec, img_file->file_path);
             break;
         }
 

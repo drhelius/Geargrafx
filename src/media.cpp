@@ -789,27 +789,27 @@ bool Media::IsValidFile(const char* path)
         return false;
     }
 
-    CdRomFile file;
+    CdRomFile* file = CdRomFile::OpenFile(path);
 
-    if (file.Open(path))
+    if (file)
     {
-        s64 size = file.GetSize();
+        s64 size = file->GetSize();
 
         if (size <= 0)
         {
             Error("Unable to open file %s. Size: %lld", path, (long long)size);
-            file.Close();
+            SafeDelete(file);
             return false;
         }
 
-        if (!file.IsValid())
+        if (!file->IsValid())
         {
             Error("Unable to open file %s. Bad file!", path);
-            file.Close();
+            SafeDelete(file);
             return false;
         }
 
-        file.Close();
+        SafeDelete(file);
         return true;
     }
     else

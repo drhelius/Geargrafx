@@ -202,6 +202,9 @@
     <ClCompile Include="..\..\src\cdrom_file.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cdrom_file_native.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\cdrom_image.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -571,6 +574,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cdrom_file.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_file_native.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cdrom_image.h">

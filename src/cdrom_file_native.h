@@ -17,30 +17,29 @@
  *
  */
 
-#ifndef CDROM_FILE_H
-#define CDROM_FILE_H
+#ifndef CDROM_FILE_NATIVE_H
+#define CDROM_FILE_NATIVE_H
 
-#include "types.h"
+#include <fstream>
+#include "cdrom_file.h"
 
-struct retro_vfs_interface;
-
-class CdRomFile
+class CdRomFileNative : public CdRomFile
 {
 public:
-    virtual ~CdRomFile();
+    CdRomFileNative();
+    virtual ~CdRomFileNative();
 
-    static CdRomFile* OpenFile(const char* path);
-    static void SetVfsInterface(const retro_vfs_interface* iface);
-    static bool HasVfsInterface();
+    virtual bool Open(const char* path) override;
+    virtual void Close() override;
+    virtual bool IsOpen() const override;
+    virtual bool IsValid() const override;
+    virtual s64 GetSize() override;
+    virtual s64 Tell() override;
+    virtual bool Seek(s64 offset) override;
+    virtual s64 Read(void* buffer, u64 size) override;
 
-    virtual bool Open(const char* path) = 0;
-    virtual void Close() = 0;
-    virtual bool IsOpen() const = 0;
-    virtual bool IsValid() const = 0;
-    virtual s64 GetSize() = 0;
-    virtual s64 Tell() = 0;
-    virtual bool Seek(s64 offset) = 0;
-    virtual s64 Read(void* buffer, u64 size) = 0;
+private:
+    std::ifstream m_file;
 };
 
-#endif /* CDROM_FILE_H */
+#endif /* CDROM_FILE_NATIVE_H */

@@ -70,6 +70,7 @@ SOURCES_CXX := \
     $(SRC_DIR)/cdrom_chd_image.cpp \
     $(SRC_DIR)/cdrom_cuebin_image.cpp \
     $(SRC_DIR)/cdrom_file.cpp \
+    $(SRC_DIR)/cdrom_file_native.cpp \
     $(SRC_DIR)/cdrom_image.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
     $(SRC_DIR)/cdrom.cpp \
