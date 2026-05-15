@@ -198,7 +198,7 @@ bool CdRomPhysicalImage::PreloadDisc()
         return false;
 
     Debug("Physical CD-ROM queueing disc preload from LBA 0");
-    QueueReadAhead(0);
+    QueueReadAhead(0, GetTrackFromLBA(0));
     return true;
 }
 
@@ -213,7 +213,7 @@ bool CdRomPhysicalImage::PreloadTrack(u32 track_number)
         return false;
     }
 
-    QueueReadAhead(BlockStartLBA(m_toc.tracks[track_number].start_lba));
+    QueueReadAhead(m_toc.tracks[track_number].start_lba, (s32)track_number);
     Debug("Physical CD-ROM queueing preload for track %u at LBA %u", track_number, m_toc.tracks[track_number].start_lba);
     return true;
 }
@@ -465,7 +465,7 @@ bool CdRomPhysicalImage::ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 si
     }
 
     m_last_block_lba.store(block_lba);
-    QueueReadAhead(block_lba + CDROM_PHYSICAL_SECTORS_PER_BLOCK);
+    QueueReadAhead(block_lba + CDROM_PHYSICAL_SECTORS_PER_BLOCK, GetTrackFromLBA(lba));
 
     return true;
 }
@@ -527,15 +527,28 @@ void CdRomPhysicalImage::StoreCacheBlock(u32 block_lba, const u8* buffer)
     m_cache[index].valid = true;
 }
 
-void CdRomPhysicalImage::QueueReadAhead(u32 block_lba)
+void CdRomPhysicalImage::QueueReadAhead(u32 lba, s32 track_index)
 {
     if (m_disc_error.load())
         return;
+
+    if ((track_index < 0) || (track_index >= (s32)m_toc.tracks.size()))
+        return;
+
+    Track& track = m_toc.tracks[(size_t)track_index];
+    u32 block_lba = BlockStartLBA(lba);
+
+    if (block_lba < track.start_lba)
+        block_lba += CDROM_PHYSICAL_SECTORS_PER_BLOCK;
 
     for (u32 i = 0; i < CDROM_PHYSICAL_PREFETCH_BLOCKS; i++)
     {
         u32 next_lba = block_lba + (i * CDROM_PHYSICAL_SECTORS_PER_BLOCK);
         if (next_lba >= m_toc.sector_count)
+            break;
+
+        u32 block_end_lba = next_lba + CDROM_PHYSICAL_SECTORS_PER_BLOCK - 1;
+        if ((next_lba < track.start_lba) || (block_end_lba > track.end_lba))
             break;
 
         QueueBlock(next_lba);
@@ -639,7 +652,7 @@ void CdRomPhysicalImage::WorkerThread()
             if (ReadRawBlock(block_lba, block))
                 StoreCacheBlock(block_lba, block);
             else
-                SetDiscError();
+                Debug("Physical CD-ROM read-ahead failed at LBA %u, dropping block", block_lba);
 
             last_keep_alive = std::chrono::steady_clock::now();
             continue;
