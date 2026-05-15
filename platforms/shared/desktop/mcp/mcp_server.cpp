@@ -203,7 +203,7 @@ void McpServer::HandleInitialize(const json& request)
         {"serverInfo", {
             {"name", "geargrafx-mcp-server"},
             {"title", "Geargrafx MCP Server"},
-            {"description", "Debug and control Geargrafx PC Engine / TurboGrafx-16 emulator. Provides tools for: execution control (pause, continue, step, reset), breakpoints (exec/read/write), memory inspection and modification, CPU/VDC/VCE/PSG register access, disassembly, save states, controller input, screenshots, and CD-ROM/Arcade Card support."},
+            {"description", "Debug/control Geargrafx PC Engine/TurboGrafx-16: execution, breakpoints, memory, HuC6280 CPU, HuC6270 VDC, HuC6260 VCE, PSG, CD-ROM/SCSI, ADPCM, Arcade Card, sprites, save states, rewind, input, screenshots."},
             {"version", GG_VERSION}
         }}
     };
@@ -228,7 +228,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "debug_pause"},
         {"title", "Debug Pause"},
-        {"description", "Pause Geargrafx emulator execution (break at current instruction)"},
+        {"description", "Pause execution at current instruction; enter debugger."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -239,7 +239,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "debug_continue"},
         {"title", "Debug Continue"},
-        {"description", "Resume Geargrafx emulator execution"},
+        {"description", "Resume emulator execution from pause or breakpoint."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -250,7 +250,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "debug_step_into"},
         {"title", "Debug Step Into"},
-        {"description", "Step into next HuC6280 instruction (enters subroutines)"},
+        {"description", "Step next HuC6280 CPU instruction; enter JSR subroutines."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -261,7 +261,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "debug_step_over"},
         {"title", "Debug Step Over"},
-        {"description", "Step over next HuC6280 instruction (skips subroutines like JSR)"},
+        {"description", "Step next HuC6280 CPU instruction; skip JSR subroutines."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -272,7 +272,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "debug_step_out"},
         {"title", "Debug Step Out"},
-        {"description", "Step out of current subroutine (continues until RTS/RTI)"},
+        {"description", "Run until RTS/RTI returns from current subroutine."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -283,7 +283,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "debug_step_frame"},
         {"title", "Debug Step Frame"},
-        {"description", "Step one video frame (executes until next VBLANK on PC Engine)"},
+        {"description", "Run one video frame to next VBlank."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -294,7 +294,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "debug_reset"},
         {"title", "Debug Reset"},
-        {"description", "Reset the PC Engine / TurboGrafx-16 emulated system"},
+        {"description", "Reset the emulated PC Engine/TurboGrafx system."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -305,7 +305,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "debug_get_status"},
         {"title", "Debug Get Status"},
-        {"description", "Get current debugger status (paused: idle state, at_breakpoint: stopped due to breakpoint hit, pc: address when paused)"},
+        {"description", "Read debugger state: paused, breakpoint hit, current PC."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -317,30 +317,30 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "set_breakpoint"},
         {"title", "Set Breakpoint"},
-        {"description", "Set a breakpoint at specified logical address in PC Engine memory (ROM/RAM, VRAM, Palette, or hardware registers)"},
+        {"description", "Add execute/read/write breakpoint at logical ROM/RAM, VRAM, palette, VDC, or VCE address."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address in hex (e.g., '8000', '0x8000', '$8000')"}
+                    {"description", "Logical address hex: '8000', '0x8000', or '$8000'."}
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg"},
+                    {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg."},
                     {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
                 }},
                 {"read", {
                     {"type", "boolean"},
-                    {"description", "Break on memory read (default: false). IMPORTANT: Read breakpoints stop with PC at the instruction after the memory access."}
+                    {"description", "Break on memory reads; PC stops after the access. Default false."}
                 }},
                 {"write", {
                     {"type", "boolean"},
-                    {"description", "Break on memory write (default: false). IMPORTANT: Write breakpoints stop with PC at the instruction after the memory access."}
+                    {"description", "Break on memory writes; PC stops after the access. Default false."}
                 }},
                 {"execute", {
                     {"type", "boolean"},
-                    {"description", "Break on execution (default: true). Only valid for rom_ram memory area."}
+                    {"description", "Break on execution; only valid for rom_ram. Default true."}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -350,34 +350,34 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "set_breakpoint_range"},
         {"title", "Set Breakpoint Range"},
-        {"description", "Set a breakpoint for a logical address range"},
+        {"description", "Add execute/read/write breakpoint over a logical address range."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"start_address", {
                     {"type", "string"},
-                    {"description", "Start logical address in hex (e.g., '8000')"}
+                    {"description", "Start logical address hex, e.g. '8000'."}
                 }},
                 {"end_address", {
                     {"type", "string"},
-                    {"description", "End logical address in hex (e.g., '8FFF')"}
+                    {"description", "End logical address hex, e.g. '8FFF'."}
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: rom_ram, vram, palette, huc6270_reg, huc6260_reg"},
+                    {"description", "Memory area: rom_ram, vram, palette, huc6270_reg, huc6260_reg."},
                     {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
                 }},
                 {"read", {
                     {"type", "boolean"},
-                    {"description", "Break on memory read (default: false). IMPORTANT: Read breakpoints stop with PC at the instruction after the memory access."}
+                    {"description", "Break on memory reads; PC stops after the access. Default false."}
                 }},
                 {"write", {
                     {"type", "boolean"},
-                    {"description", "Break on memory write (default: false). IMPORTANT: Write breakpoints stop with PC at the instruction after the memory access."}
+                    {"description", "Break on memory writes; PC stops after the access. Default false."}
                 }},
                 {"execute", {
                     {"type", "boolean"},
-                    {"description", "Break on execution (default: true). Only valid for rom_ram memory area."}
+                    {"description", "Break on execution; only valid for rom_ram. Default true."}
                 }}
             }},
             {"required", json::array({"start_address", "end_address"})}
@@ -387,21 +387,21 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "remove_breakpoint"},
         {"title", "Remove Breakpoint"},
-        {"description", "Clear a breakpoint. Must match how it was set: single address needs 'address' only, range needs both 'address' and 'end_address' with exact values."},
+        {"description", "Remove matching single/range breakpoint by address, end_address, and memory area."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address in hex (e.g., '8000'). For ranges: the start address"}
+                    {"description", "Logical address hex; range removals use this as start."}
                 }},
                 {"end_address", {
                     {"type", "string"},
-                    {"description", "Logical end address in hex (e.g., '8FFF'). Required only for range breakpoints. Must match the end address used when creating the range"}
+                    {"description", "Range end address hex; required only for range breakpoints."}
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg"},
+                    {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg."},
                     {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
                 }}
             }},
@@ -412,7 +412,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_breakpoints"},
         {"title", "List Breakpoints"},
-        {"description", "List all breakpoints"},
+        {"description", "List all execution/read/write breakpoints."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -424,7 +424,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_memory_areas"},
         {"title", "List Memory Areas"},
-        {"description", "List memory editor tabs (physical memory spaces like WRAM, VRAM, ROM banks). Each area has 0-based offsets (though CPU may accesses them at different logical addresses)."},
+        {"description", "List memory spaces/tabs: WRAM, VRAM, palette, ROM banks; returns area IDs, sizes, offsets."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -435,21 +435,21 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "read_memory"},
         {"title", "Read Memory"},
-        {"description", "Read memory from a specific memory area"},
+        {"description", "Read bytes from memory area/tab by physical 0-based offset."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas to get IDs and physical offsets)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }},
                 {"offset", {
                     {"type", "string"},
-                    {"description", "0-based hex offset within the physical memory area (e.g., '0100' for byte 256 of that space)"}
+                    {"description", "0-based hex offset in area, e.g. '0100'."}
                 }},
                 {"size", {
                     {"type", "integer"},
-                    {"description", "Number of bytes to read"}
+                    {"description", "Number of bytes to read."}
                 }}
             }},
             {"required", json::array({"area", "offset", "size"})}
@@ -459,21 +459,21 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "write_memory"},
         {"title", "Write Memory"},
-        {"description", "Write memory to a specific memory area"},
+        {"description", "Write hex bytes to memory area/tab by physical 0-based offset."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas to get IDs and physical offsets)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }},
                 {"offset", {
                     {"type", "string"},
-                    {"description", "0-based hex offset within the physical memory area (e.g., '0100' for byte 256 of that space)"}
+                    {"description", "0-based hex offset in area, e.g. '0100'."}
                 }},
                 {"bytes", {
                     {"type", "string"},
-                    {"description", "Hex bytes separated by spaces (e.g., 'A9 00 85 10')"}
+                    {"description", "Hex bytes, spaces optional, e.g. 'A9 00 85 10'."}
                 }}
             }},
             {"required", json::array({"area", "offset", "bytes"})}
@@ -484,17 +484,17 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "write_huc6280_register"},
         {"title", "Write HuC6280 Register"},
-        {"description", "Write to a HuC6280 CPU register"},
+        {"description", "Write HuC6280 CPU register PC/A/X/Y/S/P."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"name", {
                     {"type", "string"},
-                    {"description", "Register name (PC, A, X, Y, S, P)"}
+                    {"description", "CPU register name: PC, A, X, Y, S, or P."}
                 }},
                 {"value", {
                     {"type", "string"},
-                    {"description", "Hex value"}
+                    {"description", "Hex value."}
                 }}
             }},
             {"required", json::array({"name", "value"})}
@@ -505,34 +505,29 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_disassembly"},
         {"title", "Get Disassembly"},
-        {"description", "Get disassembled HuC6280 assembly code for a logical address range. "
-                        "Returns: logical address, bank, segment, mnemonic, and raw bytes. "
-                        "NOTE: Disassembled records only exist for code that has been executed during emulation. "
-                        "Recommended max range is 0x2000 (one bank). Use multiple calls for larger areas."},
+        {"description", "Read recorded HuC6280 disassembly for logical range: bank, segment, mnemonic, bytes. Records exist after execution; max practical range 0x2000."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"start_address", {
                     {"type", "string"},
-                    {"description", "Start logical address in hex (required). Accepts formats: 'E177', '0xE177', '$E177'"}
+                    {"description", "Start logical address hex: 'E177', '0xE177', or '$E177'."}
                 }},
                 {"end_address", {
                     {"type", "string"},
-                    {"description", "End logical address in hex (required). Must be >= start_address. Accepts formats: 'E177', '0xE177', '$E177'"}
+                    {"description", "End logical address hex; must be >= start_address."}
                 }},
                 {"bank", {
                     {"type", "string"},
-                    {"description", "Optional bank in hex (00-FF). When provided, overrides the current MPR mapping for address translation. "
-                                    "The physical address is constructed as: (bank << 13) | (logical_address & 0x1FFF). "
-                                    "Use this when you want to inspect a specific ROM/RAM bank regardless of current CPU memory mapping."}
+                    {"description", "Optional bank 00-FF; overrides MPR mapping: (bank << 13) | (address & 0x1FFF)."}
                 }},
                 {"resolve_symbols", {
                     {"type", "boolean"},
-                    {"description", "When true, replace addresses in instruction mnemonics with user-defined symbol names and hardware register labels (e.g. 'LDA MY_VAR,X' instead of 'LDA $2C00,X'). Symbol resolution for non-jump operands depends on the current MPR mapping. Default: false"}
+                    {"description", "Resolve operands to symbols/hardware labels; non-jump operands use current MPR map. Default false."}
                 }},
                 {"detailed", {
                     {"type", "boolean"},
-                    {"description", "Default false. Do NOT set to true unless you specifically need opcode bytes, jump targets, or IRQ metadata. The compact format is sufficient for analyzing code."}
+                    {"description", "Include opcode bytes, jump targets, IRQ metadata. Default false compact output."}
                 }}
             }},
             {"required", json::array({"start_address", "end_address"})}
@@ -543,7 +538,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_media_info"},
         {"title", "Get Media Info"},
-        {"description", "Get information about the loaded PC Engine ROM or CD-ROM (file path, type, size, console type, mapper, BIOS paths, etc.)"},
+        {"description", "Read loaded media info: ROM/CD path, type, size, console, mapper, BIOS."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -554,7 +549,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_recent_media"},
         {"title", "List Recent Media"},
-        {"description", "List the 10 most recent ROMs or CD-ROM images opened by Geargrafx. Use file_path from an entry with load_media to reopen it"},
+        {"description", "List recent ROM/CD images with file_path values for load_media."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -566,7 +561,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_huc6280_status"},
         {"title", "Get HuC6280 Status"},
-        {"description", "Get HuC6280 CPU status (registers, MPR, timer, interrupts, I/O, speed)"},
+        {"description", "Read HuC6280 CPU state: PC/A/X/Y/S/P registers, MPR banks, timer, IRQ flags, speed."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -577,13 +572,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_huc6270_registers"},
         {"title", "Get HuC6270 Registers"},
-        {"description", "Get all 20 HuC6270 VDC registers (0x00-0x13), Address Register, and Status Register. Use vdc parameter (1 or 2) for SuperGrafx"},
+        {"description", "Read HuC6270 VDC registers: 0x00-0x13 data, address register, status; vdc selects SuperGrafx chip."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"vdc", {
                     {"type", "integer"},
-                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                    {"description", "VDC number: 1 or 2 for SuperGrafx. Default 1."}
                 }}
             }}
         }}
@@ -592,23 +587,23 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "write_huc6270_register"},
         {"title", "Write HuC6270 Register"},
-        {"description", "Write to a HuC6270 VDC register (0-19) or Address Register (20). Use vdc parameter (1 or 2) for SuperGrafx. Status Register is read-only."},
+        {"description", "Write HuC6270 VDC register 0-19 or address register 20; vdc selects SuperGrafx chip."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"register", {
                     {"type", "integer"},
-                    {"description", "Register number (0-19 for data registers, 20 for Address Register)"},
+                    {"description", "Register number: 0-19 data, 20 address register."},
                     {"minimum", 0},
                     {"maximum", 20}
                 }},
                 {"value", {
                     {"type", "string"},
-                    {"description", "16-bit hex value (e.g., '1234', '0x1234', '$1234')"}
+                    {"description", "16-bit hex value: '1234', '0x1234', or '$1234'."}
                 }},
                 {"vdc", {
                     {"type", "integer"},
-                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                    {"description", "VDC number: 1 or 2 for SuperGrafx. Default 1."}
                 }}
             }},
             {"required", json::array({"register", "value"})}
@@ -618,13 +613,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_huc6270_status"},
         {"title", "Get HuC6270 Status"},
-        {"description", "Get HuC6270 VDC status (position, state, control, interrupts). Use vdc parameter (1 or 2) for SuperGrafx"},
+        {"description", "Read HuC6270 VDC video state: raster position, scanline, display control, HBlank/VBlank/RCR IRQ."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"vdc", {
                     {"type", "integer"},
-                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                    {"description", "VDC number: 1 or 2 for SuperGrafx. Default 1."}
                 }}
             }}
         }}
@@ -633,7 +628,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_huc6260_status"},
         {"title", "Get HuC6260 Status"},
-        {"description", "Get HuC6260 VCE status (position, sync signals, control register, CTA, blur, B&W)"},
+        {"description", "Read HuC6260 VCE video/color state: position, sync, dot clock/control, CTA, blur, B&W."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -644,7 +639,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_huc6202_status"},
         {"title", "Get HuC6202 Status"},
-        {"description", "Get HuC6202 VPC status (only for SuperGrafx games - window priority, selected VDC, IRQ status)"},
+        {"description", "Read HuC6202 VPC SuperGrafx state: dual-VDC priority, windows, selected VDC, IRQ."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -655,7 +650,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_psg_status"},
         {"title", "Get PSG Status"},
-        {"description", "Get PSG (Programmable Sound Generator) status for all 6 channels (frequency, amplitude, waveform, noise, DDA)"},
+        {"description", "Read PSG audio state: 6 channels, frequency, amplitude, waveform, noise, DDA."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -666,7 +661,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_cdrom_status"},
         {"title", "Get CD-ROM Status"},
-        {"description", "Get CD-ROM drive status (only for CD-ROM games)"},
+        {"description", "Read CD-ROM drive state: command/status, LBA, sector transfer, IRQ, data/audio mode."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -677,7 +672,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_cdrom_tracks"},
         {"title", "List CD-ROM Tracks"},
-        {"description", "List all CD-ROM tracks with type, LBA range, sector count, lead-in info, and file offset (only for CD-ROM games)"},
+        {"description", "List CD-ROM tracks: type, LBA range, sectors, lead-in, file offset."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -688,7 +683,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_arcade_card_status"},
         {"title", "Get Arcade Card Status"},
-        {"description", "Get Arcade Card status (only for Arcade Card games)"},
+        {"description", "Read Arcade Card state: ports, base, offset, increment, transfer registers."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -699,7 +694,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_cdrom_audio_status"},
         {"title", "Get CD-ROM Audio Status"},
-        {"description", "Get CD-ROM audio playback status (only for CD-ROM games)"},
+        {"description", "Read CD-ROM audio playback state: track, LBA, status, volume, mode."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -710,7 +705,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_adpcm_status"},
         {"title", "Get ADPCM Status"},
-        {"description", "Get ADPCM audio status (only for CD-ROM games)"},
+        {"description", "Read ADPCM audio state: playback, read/write pointers, length, rate, status, IRQ."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -721,7 +716,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_screenshot"},
         {"title", "Get Screenshot"},
-        {"description", "Capture current PC Engine / TurboGrafx-16 screen frame as base64-encoded PNG image"},
+        {"description", "Capture current screen/frame/video output as PNG screenshot image."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -733,13 +728,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "load_media"},
         {"title", "Load Media"},
-        {"description", "Load a ROM file or CD-ROM image (.pce, .sgx, .hes, .cue, .zip). Automatically loads .sym symbol file if present. Resets emulator on successful load"},
+        {"description", "Load ROM/CD media (.pce .sgx .hes .cue .zip), auto-load .sym, reset emulator."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"file_path", {
                     {"type", "string"},
-                    {"description", "Absolute path to ROM or CD-ROM file"}
+                    {"description", "Absolute ROM or CD image path."}
                 }}
             }},
             {"required", json::array({"file_path"})}
@@ -749,18 +744,18 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "load_bios"},
         {"title", "Load BIOS"},
-        {"description", "Load a BIOS file for CD-ROM emulation. Two types are supported: 'syscard' (System Card, 256KB) and 'gameexpress' (Game Express, 32KB)"},
+        {"description", "Load CD BIOS: syscard System Card 256KB or gameexpress 32KB."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"file_path", {
                     {"type", "string"},
-                    {"description", "Absolute path to BIOS file"}
+                    {"description", "Absolute BIOS file path."}
                 }},
                 {"type", {
                     {"type", "string"},
                     {"enum", json::array({"syscard", "gameexpress"})},
-                    {"description", "BIOS type: 'syscard' for System Card (256KB) or 'gameexpress' for Game Express (32KB)"}
+                    {"description", "BIOS type: syscard or gameexpress."}
                 }}
             }},
             {"required", json::array({"file_path", "type"})}
@@ -770,13 +765,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "load_symbols"},
         {"title", "Load Symbols"},
-        {"description", "Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries). Adds to existing symbols"},
+        {"description", "Load .sym debug symbols (BANK:ADDRESS LABEL); append to symbol table."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"file_path", {
                     {"type", "string"},
-                    {"description", "Absolute path to symbol file"}
+                    {"description", "Absolute symbol file path."}
                 }}
             }},
             {"required", json::array({"file_path"})}
@@ -786,7 +781,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_save_state_slots"},
         {"title", "List Save State Slots"},
-        {"description", "List all 5 save state slots with their information (rom name, timestamp, screenshot availability)"},
+        {"description", "List save-state slots: slot, ROM name, timestamp, screenshot flag."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -797,13 +792,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "select_save_state_slot"},
         {"title", "Select Save State Slot"},
-        {"description", "Select active save state slot (1-5) for save_state and load_state operations"},
+        {"description", "Select active save-state slot 1-5 for save_state/load_state."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"slot", {
                     {"type", "integer"},
-                    {"description", "Slot number (1-5)"},
+                    {"description", "Slot number 1-5."},
                     {"minimum", 1},
                     {"maximum", 5}
                 }}
@@ -815,7 +810,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "save_state"},
         {"title", "Save State"},
-        {"description", "Save emulator state to currently selected slot (use select_save_state_slot to change)"},
+        {"description", "Save emulator state to active save-state slot."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -826,7 +821,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "load_state"},
         {"title", "Load State"},
-        {"description", "Load emulator state from currently selected slot (use select_save_state_slot to change)"},
+        {"description", "Load emulator state from active save-state slot."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -837,13 +832,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "set_fast_forward_speed"},
         {"title", "Set Fast Forward Speed"},
-        {"description", "Set fast forward speed multiplier (0: 1.5x, 1: 2x, 2: 2.5x, 3: 3x, 4: Unlimited)"},
+        {"description", "Set fast-forward speed index: 0=1.5x, 1=2x, 2=2.5x, 3=3x, 4=unlimited."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"speed", {
                     {"type", "integer"},
-                    {"description", "Speed index (0-4)"},
+                    {"description", "Speed index 0-4."},
                     {"minimum", 0},
                     {"maximum", 4}
                 }}
@@ -855,13 +850,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "toggle_fast_forward"},
         {"title", "Toggle Fast Forward"},
-        {"description", "Toggle fast forward mode on or off. When enabled, emulator runs at configured speed (see set_fast_forward_speed)"},
+        {"description", "Enable/disable fast-forward mode at configured speed."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"enabled", {
                     {"type", "boolean"},
-                    {"description", "true to enable fast forward, false to disable"}
+                    {"description", "true enables fast forward; false disables."}
                 }}
             }},
             {"required", json::array({"enabled"})}
@@ -871,7 +866,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_rewind_status"},
         {"title", "Get Rewind Status"},
-        {"description", "Get the current rewind buffer status: snapshot count, capacity, buffered seconds, and configuration. Use this to check how many snapshots are available before seeking."},
+        {"description", "Read rewind buffer: snapshot count, capacity, buffered seconds, settings."},
         {"inputSchema", {
             {"type", "object"},
             {"additionalProperties", false}
@@ -881,13 +876,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "rewind_seek"},
         {"title", "Rewind Seek"},
-        {"description", "Seek to a specific rewind snapshot by number (1 = oldest, snapshot_count = newest). Loads the emulator state from that snapshot and refreshes the screen. Use get_rewind_status first to check how many snapshots are available. The emulator should be paused before seeking. This does NOT consume the snapshot — you can seek to any snapshot multiple times."},
+        {"description", "Load rewind snapshot by number (1 oldest, snapshot_count newest); refresh screen; non-consuming seek."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"snapshot", {
                     {"type", "integer"},
-                    {"description", "Snapshot number to seek to (1 = oldest, snapshot_count = newest). Use get_rewind_status to check the valid range."},
+                    {"description", "Snapshot number: 1 oldest, snapshot_count newest."},
                     {"minimum", 1}
                 }}
             }},
@@ -899,24 +894,24 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "controller_button"},
         {"title", "Controller Button"},
-        {"description", "Control input on a controller (player 1-5). Use action 'press' to hold the input down, 'release' to let it go, or 'press_and_release' to simulate a quick tap. For pads, buttons are: up, down, left, right, select, run, I, II, III, IV, V, VI. For mouse controllers, up/down/left/right actuate relative mouse movement, press keeps moving until release, press_and_release performs a short step, and select/run/I/II actuate the mouse's four buttons."},
+        {"description", "Press/release/tap player input; pad buttons up/down/left/right/select/run/I-VI; mouse uses motion plus select/run/I/II."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"player", {
                     {"type", "integer"},
-                    {"description", "Player number (1-5)"},
+                    {"description", "Player number 1-5."},
                     {"minimum", 1},
                     {"maximum", 5}
                 }},
                 {"button", {
                     {"type", "string"},
-                    {"description", "Button name: up, down, left, right, select, run, I, II, III, IV, V, VI"},
+                    {"description", "Button: up, down, left, right, select, run, I, II, III, IV, V, VI."},
                     {"enum", json::array({"up", "down", "left", "right", "select", "run", "I", "II", "III", "IV", "V", "VI"})}
                 }},
                 {"action", {
                     {"type", "string"},
-                    {"description", "Action to perform: 'press' holds the button, 'release' lets it go, 'press_and_release' simulates a quick tap"},
+                    {"description", "Action: press, release, or press_and_release tap."},
                     {"enum", json::array({"press", "release", "press_and_release"})}
                 }}
             }},
@@ -927,19 +922,19 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "controller_set_type"},
         {"title", "Controller Set Type"},
-        {"description", "Set controller type for a player (1-5). Types: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons), mouse"},
+        {"description", "Set player controller type: standard, avenue_pad_3, avenue_pad_6, mouse."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"player", {
                     {"type", "integer"},
-                    {"description", "Player number (1-5)"},
+                    {"description", "Player number 1-5."},
                     {"minimum", 1},
                     {"maximum", 5}
                 }},
                 {"type", {
                     {"type", "string"},
-                    {"description", "Controller type"},
+                    {"description", "Controller type."},
                     {"enum", json::array({"standard", "avenue_pad_3", "avenue_pad_6", "mouse"})}
                 }}
             }},
@@ -950,13 +945,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "controller_set_turbo_tap"},
         {"title", "Controller Set Turbo Tap"},
-        {"description", "Enable or disable Turbo Tap (multitap) to allow 5 players. Disable for single player only"},
+        {"description", "Enable/disable Turbo Tap multitap for 5-player input; disable for single player."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"enabled", {
                     {"type", "boolean"},
-                    {"description", "true to enable Turbo Tap (5 players), false for single player"}
+                    {"description", "true enables Turbo Tap; false uses single player."}
                 }}
             }},
             {"required", json::array({"enabled"})}
@@ -966,13 +961,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "controller_get_type"},
         {"title", "Controller Get Type"},
-        {"description", "Get the current controller type for a player (1-5). Returns: standard, avenue_pad_3, avenue_pad_6, or mouse"},
+        {"description", "Read player controller type: standard, avenue_pad_3, avenue_pad_6, mouse."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"player", {
                     {"type", "integer"},
-                    {"description", "Player number (1-5)"},
+                    {"description", "Player number 1-5."},
                     {"minimum", 1},
                     {"maximum", 5}
                 }}
@@ -984,13 +979,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_sprites"},
         {"title", "List Sprites"},
-        {"description", "List information for all 64 hardware sprites (position, size, pattern index, palette, flags). Use vdc parameter (1 or 2) for SuperGrafx dual VDC"},
+        {"description", "List VDC hardware sprites: index, position, size, pattern, palette, flags; vdc selects SuperGrafx chip."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"vdc", {
                     {"type", "integer"},
-                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                    {"description", "VDC number: 1 or 2 for SuperGrafx. Default 1."}
                 }}
             }}
         }}
@@ -999,17 +994,17 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_sprite_image"},
         {"title", "Get Sprite Image"},
-        {"description", "Get the image of a specific sprite as base64-encoded PNG. Use vdc parameter (1 or 2) for SuperGrafx"},
+        {"description", "Capture one VDC sprite as PNG image; vdc selects SuperGrafx chip."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"sprite_index", {
                     {"type", "integer"},
-                    {"description", "Sprite index (0-63)"}
+                    {"description", "Sprite index 0-63."}
                 }},
                 {"vdc", {
                     {"type", "integer"},
-                    {"description", "VDC number (1 or 2 for SuperGrafx, default 1)"}
+                    {"description", "VDC number: 1 or 2 for SuperGrafx. Default 1."}
                 }}
             }},
             {"required", json::array({"sprite_index"})}
@@ -1020,13 +1015,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "debug_run_to_cursor"},
         {"title", "Debug Run To Cursor"},
-        {"description", "Continue execution until reaching specified logical address"},
+        {"description", "Continue execution until logical address."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address in hex (e.g., 'E177')"}
+                    {"description", "Logical hex address, e.g. 'E177'."}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -1036,17 +1031,17 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "add_disassembler_bookmark"},
         {"title", "Add Disassembler Bookmark"},
-        {"description", "Add a bookmark in the disassembler window at specified logical address"},
+        {"description", "Add disassembler bookmark at logical address."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address in hex (e.g., 'E177')"}
+                    {"description", "Logical hex address, e.g. 'E177'."}
                 }},
                 {"name", {
                     {"type", "string"},
-                    {"description", "Bookmark name (optional, auto-generated if not provided)"}
+                    {"description", "Bookmark name; optional, auto-generated if omitted."}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -1056,13 +1051,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "remove_disassembler_bookmark"},
         {"title", "Remove Disassembler Bookmark"},
-        {"description", "Remove a bookmark from the disassembler window at specified logical address"},
+        {"description", "Remove disassembler bookmark at logical address."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address in hex (e.g., 'E177')"}
+                    {"description", "Logical hex address, e.g. 'E177'."}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -1072,21 +1067,21 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "add_symbol"},
         {"title", "Add Symbol"},
-        {"description", "Add a symbol (label) at specified logical address with bank"},
+        {"description", "Add disassembler symbol/label at bank:logical address."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"bank", {
                     {"type", "string"},
-                    {"description", "Bank number in hex (e.g., '00')"}
+                    {"description", "Bank hex byte, e.g. '00'."}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address in hex (e.g., 'E177')"}
+                    {"description", "Logical hex address, e.g. 'E177'."}
                 }},
                 {"name", {
                     {"type", "string"},
-                    {"description", "Symbol name"}
+                    {"description", "Symbol/label name."}
                 }}
             }},
             {"required", json::array({"bank", "address", "name"})}
@@ -1096,17 +1091,17 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "remove_symbol"},
         {"title", "Remove Symbol"},
-        {"description", "Remove a symbol from specified logical address and bank"},
+        {"description", "Remove disassembler symbol/label at bank:logical address."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"bank", {
                     {"type", "string"},
-                    {"description", "Bank number in hex (e.g., '00')"}
+                    {"description", "Bank hex byte, e.g. '00'."}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address in hex (e.g., 'E177')"}
+                    {"description", "Logical hex address, e.g. 'E177'."}
                 }}
             }},
             {"required", json::array({"bank", "address"})}
@@ -1117,21 +1112,21 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "select_memory_range"},
         {"title", "Select Memory Range"},
-        {"description", "Select a range of 0-based offsets in a memory editor tab"},
+        {"description", "Select memory editor range by area and 0-based offsets."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }},
                 {"start_address", {
                     {"type", "string"},
-                    {"description", "Start 0-based offset in hex (e.g., '0100')"}
+                    {"description", "Start 0-based hex offset, e.g. '0100'."}
                 }},
                 {"end_address", {
                     {"type", "string"},
-                    {"description", "End 0-based offset in hex (e.g., '01FF')"}
+                    {"description", "End 0-based hex offset, e.g. '01FF'."}
                 }}
             }},
             {"required", json::array({"area", "start_address", "end_address"})}
@@ -1141,17 +1136,17 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "set_memory_selection_value"},
         {"title", "Set Memory Selection Value"},
-        {"description", "Set all bytes in current memory selection to specified value. Use get_memory_selection and select_memory_range to manage selection."},
+        {"description", "Fill current memory selection with byte value; use select_memory_range first."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }},
                 {"value", {
                     {"type", "string"},
-                    {"description", "Byte value in hex (e.g., 'FF' or '00')"}
+                    {"description", "Byte hex value, e.g. 'FF' or '00'."}
                 }}
             }},
             {"required", json::array({"area", "value"})}
@@ -1161,21 +1156,21 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "add_memory_bookmark"},
         {"title", "Add Memory Bookmark"},
-        {"description", "Add a bookmark in a memory area at specified address"},
+        {"description", "Add memory bookmark at area offset."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "0-based offset in hex (e.g., '0100' for byte 256 of physical memory space)"}
+                    {"description", "0-based hex offset in physical memory area."}
                 }},
                 {"name", {
                     {"type", "string"},
-                    {"description", "Bookmark name (optional)"}
+                    {"description", "Bookmark name; optional."}
                 }}
             }},
             {"required", json::array({"area", "address"})}
@@ -1185,17 +1180,17 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "remove_memory_bookmark"},
         {"title", "Remove Memory Bookmark"},
-        {"description", "Remove a bookmark from a memory area at specified address"},
+        {"description", "Remove memory bookmark at area offset."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "0-based offset in hex (e.g., '0100' for byte 256 of physical memory space)"}
+                    {"description", "0-based hex offset in physical memory area."}
                 }}
             }},
             {"required", json::array({"area", "address"})}
@@ -1205,25 +1200,25 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "add_memory_watch"},
         {"title", "Add Memory Watch"},
-        {"description", "Add a watch (tracked memory location) in a memory area"},
+        {"description", "Add memory watch at area offset with optional notes and bit size."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "0-based offset in hex (e.g., '0100' for byte 256 of physical memory space)"}
+                    {"description", "0-based hex offset in physical memory area."}
                 }},
                 {"notes", {
                     {"type", "string"},
-                    {"description", "Watch notes (optional)"}
+                    {"description", "Watch notes; optional."}
                 }},
                 {"size", {
                     {"type", "integer"},
-                    {"description", "Watch size in bits: 8, 16, 24, or 32 (default: 8)"},
+                    {"description", "Watch bit size: 8, 16, 24, or 32; default 8."},
                     {"enum", {8, 16, 24, 32}}
                 }}
             }},
@@ -1234,17 +1229,17 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "remove_memory_watch"},
         {"title", "Remove Memory Watch"},
-        {"description", "Remove a watch from a memory area at specified address"},
+        {"description", "Remove memory watch at area offset."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }},
                 {"address", {
                     {"type", "string"},
-                    {"description", "0-based offset in hex (e.g., '0100' for byte 256 of physical memory space)"}
+                    {"description", "0-based hex offset in physical memory area."}
                 }}
             }},
             {"required", json::array({"area", "address"})}
@@ -1254,7 +1249,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_disassembler_bookmarks"},
         {"title", "List Disassembler Bookmarks"},
-        {"description", "List all bookmarks in the disassembler"},
+        {"description", "List disassembler bookmarks."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -1265,7 +1260,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_symbols"},
         {"title", "List Symbols"},
-        {"description", "List all symbols (labels) defined in the disassembler"},
+        {"description", "List disassembler symbols/labels."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -1276,7 +1271,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_call_stack"},
         {"title", "Get Call Stack"},
-        {"description", "List the current call stack (function calls hierarchy)"},
+        {"description", "List current call stack/subroutine hierarchy."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -1287,13 +1282,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_memory_bookmarks"},
         {"title", "List Memory Bookmarks"},
-        {"description", "List all bookmarks in a specific memory area"},
+        {"description", "List bookmarks for memory area."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }}
             }},
             {"required", json::array({"area"})}
@@ -1303,13 +1298,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_memory_watches"},
         {"title", "List Memory Watches"},
-        {"description", "List all watches in a specific memory area"},
+        {"description", "List watches for memory area."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }}
             }},
             {"required", json::array({"area"})}
@@ -1319,13 +1314,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_memory_selection"},
         {"title", "Get Memory Selection"},
-        {"description", "Get the current memory selection range for a specific memory area"},
+        {"description", "Read current memory selection range for area."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }}
             }},
             {"required", json::array({"area"})}
@@ -1335,13 +1330,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "memory_search_capture"},
         {"title", "Memory Search Capture"},
-        {"description", "Capture a snapshot of memory for comparison in searches"},
+        {"description", "Snapshot memory area for later value-change search."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }}
             }},
             {"required", json::array({"area"})}
@@ -1351,7 +1346,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "memory_search"},
         {"title", "Memory Search"},
-        {"description", "Search memory for values matching criteria. Call memory_search_capture first to take a snapshot, then use this tool to find matches."},
+        {"description", "Search memory values by comparison against snapshot, constant value, or address."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -1361,21 +1356,21 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"operator", {
                     {"type", "string"},
-                    {"description", "Comparison operator. MUST be one of the exact strings: '<', '>', '==', '!=', '<=', '>='"},
+                    {"description", "Comparison operator: <, >, ==, !=, <=, >=."},
                     {"enum", json::array({"<", ">", "==", "!=", "<=", ">="})}
                 }},
                 {"compare_type", {
                     {"type", "string"},
-                    {"description", "What to compare against. MUST be one of: 'previous' (compare to snapshot from memory_search_capture), 'value' (compare to compare_value parameter), 'address' (compare to value at address specified in compare_value)"},
+                    {"description", "Compare against previous snapshot, constant value, or value at address."},
                     {"enum", json::array({"previous", "value", "address"})}
                 }},
                 {"compare_value", {
                     {"type", "integer"},
-                    {"description", "Required when compare_type='value' or 'address'. The value to search for (0-255 for bytes) or the address to compare against"}
+                    {"description", "Search value or address used for compare_type value/address."}
                 }},
                 {"data_type", {
                     {"type", "string"},
-                    {"description", "Optional. How to interpret values: 'unsigned' (default, 0-255), 'signed' (-128 to 127), 'hex'"},
+                    {"description", "Value type: unsigned default, signed, or hex."},
                     {"enum", json::array({"unsigned", "signed", "hex"})}
                 }}
             }},
@@ -1386,13 +1381,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "memory_find_bytes"},
         {"title", "Find Byte Sequence in Memory"},
-        {"description", "Search memory for a consecutive hex byte sequence. Returns matching addresses."},
+        {"description", "Find consecutive hex byte sequence in memory; return addresses."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"area", {
                     {"type", "integer"},
-                    {"description", "Memory editor tab ID (use list_memory_areas)"}
+                    {"description", "Memory area ID from list_memory_areas."}
                 }},
                 {"hex_bytes", {
                     {"type", "string"},
@@ -1406,7 +1401,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "get_trace_log"},
         {"title", "Get Trace Log"},
-        {"description", "Read trace logger entries (CPU + hardware events). Use set_trace_log to start/stop the trace logger."},
+        {"description", "Read trace log entries: CPU instructions and hardware events."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -1429,13 +1424,13 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "set_trace_log"},
         {"title", "Set Trace Logger"},
-        {"description", "Start or stop the trace logger. Records CPU instructions and hardware events into a ring buffer readable with get_trace_log. CPU tracing is always on. Filter event types with optional booleans."},
+        {"description", "Enable/disable trace log; CPU always traced; filter IRQ, VDC/VCE, input, timer, CD-ROM/SCSI, PSG, ADPCM."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"enabled", {
                     {"type", "boolean"},
-                    {"description", "true to start logging, false to stop. Existing entries are preserved when stopped."}
+                    {"description", "true starts logging, false stops; preserves entries."}
                 }},
                 {"cpu_irq", {
                     {"type", "boolean"},
