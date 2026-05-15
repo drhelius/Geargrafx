@@ -17,7 +17,7 @@
  *
  */
 
- #ifndef CDROM_PHYSICAL_IMAGE_H
+#ifndef CDROM_PHYSICAL_IMAGE_H
 #define CDROM_PHYSICAL_IMAGE_H
 
 #include "common.h"

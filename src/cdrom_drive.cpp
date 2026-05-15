@@ -17,7 +17,7 @@
  *
  */
 
- #include "cdrom_drive.h"
+#include "cdrom_drive.h"
 
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 
