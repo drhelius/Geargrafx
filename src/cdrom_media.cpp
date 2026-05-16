@@ -204,18 +204,7 @@ s32 CdRomMedia::GetTrackFromLBA(u32 lba)
 
 bool CdRomMedia::IsCdRomUriPath(const char* path)
 {
-    static const char* cdrom_uri_prefix = "cdrom://";
-
-    if (!IsValidPointer(path))
-        return false;
-
-    for (int i = 0; cdrom_uri_prefix[i] != 0; i++)
-    {
-        if (path[i] != cdrom_uri_prefix[i])
-            return false;
-    }
-
-    return true;
+    return IsValidPointer(path) && (strncmp(path, "cdrom://", 8) == 0);
 }
 
 ///////////////////////////////////////////////////////////////

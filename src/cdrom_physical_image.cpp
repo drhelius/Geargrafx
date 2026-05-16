@@ -301,44 +301,33 @@ void CdRomPhysicalImage::NormalizeTrackBoundaries()
         if (next_track.start_lba == 0)
             continue;
 
+        static const u32 audio_pregap_lengths[] = { CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS, (2 * 75) + 74, 75 * 3, 75 * 4 };
+        static const u32 data_pregap_lengths[] = { (2 * 75) + 74, CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS, 75 * 3, 75 * 4 };
+
+        const u32* pregap_lengths = (next_track.type == GG_CDROM_AUDIO_TRACK) ? audio_pregap_lengths : data_pregap_lengths;
+        u32 pregap_count = (u32)((next_track.type == GG_CDROM_AUDIO_TRACK) ?
+            (sizeof(audio_pregap_lengths) / sizeof(audio_pregap_lengths[0])) :
+            (sizeof(data_pregap_lengths) / sizeof(data_pregap_lengths[0])));
         u32 lead_in_lba = next_track.start_lba;
 
-        if (next_track.type == GG_CDROM_AUDIO_TRACK)
+        for (u32 j = 0; j < pregap_count; j++)
         {
-            static const u32 pregap_lengths[] = { CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS, 75 * 3, 75 * 4 };
+            u32 pregap_length = pregap_lengths[j];
+            if (next_track.start_lba <= pregap_length)
+                continue;
 
-            for (size_t j = 0; j < sizeof(pregap_lengths) / sizeof(pregap_lengths[0]); j++)
-            {
-                u32 pregap_length = pregap_lengths[j];
-                if (next_track.start_lba <= pregap_length)
-                    continue;
+            u32 pregap_lba = next_track.start_lba - pregap_length;
+            if ((pregap_lba <= track.start_lba) || (pregap_lba > track.end_lba))
+                continue;
 
-                u32 pregap_lba = next_track.start_lba - pregap_length;
-                if ((pregap_lba <= track.start_lba) || (pregap_lba > track.end_lba))
-                    continue;
+            if (!SectorMatchesTrackType(pregap_lba, next_track.type))
+                continue;
 
-                if (IsMode1DataSector(pregap_lba))
-                    continue;
+            if (SectorMatchesTrackType(pregap_lba - 1, next_track.type))
+                continue;
 
-                if (!IsMode1DataSector(pregap_lba - 1))
-                    continue;
-
-                lead_in_lba = pregap_lba;
-                break;
-            }
-        }
-        else
-        {
-            u32 max_scan = MIN((u32)CDROM_PHYSICAL_MAX_PREGAP_SECTORS, next_track.start_lba - track.start_lba);
-
-            while ((lead_in_lba > track.start_lba) && ((next_track.start_lba - lead_in_lba) < max_scan))
-            {
-                u32 probe_lba = lead_in_lba - 1;
-                if (!SectorMatchesTrackType(probe_lba, next_track.type))
-                    break;
-
-                lead_in_lba = probe_lba;
-            }
+            lead_in_lba = pregap_lba;
+            break;
         }
 
         if (lead_in_lba == next_track.start_lba)
