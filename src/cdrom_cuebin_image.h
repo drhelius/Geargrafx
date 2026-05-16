@@ -23,9 +23,18 @@
 #include <vector>
 #include "cdrom_image.h"
 
-class CdRomFile;
+#define GG_CDROM_CUEBIN_DEFAULT_CHUNK_SIZE (2352 * 128)
+#define GG_CDROM_CUEBIN_STREAMING_CHUNK_SIZE (2352 * 16)
+#define GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK 0
 
-#define CDROM_MEDIA_CHUNK_SIZE 2352 * 128 // 128 sectors per chunk (294 KB)
+struct GG_CdRomCueBinLoadOptions
+{
+    u32 chunk_size;
+    u32 max_preload_chunks;
+    bool allow_disc_preload;
+};
+
+class CdRomFile;
 
 class CdRomCueBinImage : public CdRomImage
 {
@@ -76,6 +85,7 @@ public:
     virtual bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count) override;
     virtual bool PreloadDisc() override;
     virtual bool PreloadTrack(u32 track_number) override;
+    void SetLoadOptions(const GG_CdRomCueBinLoadOptions& options);
 
 private:
     void InitImgFile(ImgFile* img_file);
@@ -101,6 +111,25 @@ private:
 private:
     std::vector<ImgFile*> m_img_files;
     std::vector<TrackFile> m_track_files;
+    GG_CdRomCueBinLoadOptions m_load_options;
 };
+
+INLINE GG_CdRomCueBinLoadOptions GG_CdRomCueBinDefaultLoadOptions()
+{
+    GG_CdRomCueBinLoadOptions options;
+    options.chunk_size = GG_CDROM_CUEBIN_DEFAULT_CHUNK_SIZE;
+    options.max_preload_chunks = GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK;
+    options.allow_disc_preload = true;
+    return options;
+}
+
+INLINE GG_CdRomCueBinLoadOptions GG_CdRomCueBinStreamingLoadOptions()
+{
+    GG_CdRomCueBinLoadOptions options;
+    options.chunk_size = GG_CDROM_CUEBIN_STREAMING_CHUNK_SIZE;
+    options.max_preload_chunks = GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK;
+    options.allow_disc_preload = false;
+    return options;
+}
 
 #endif /* CDROM_CUEBIN_IMAGE_H */

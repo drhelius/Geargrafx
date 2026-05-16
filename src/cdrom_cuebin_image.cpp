@@ -27,7 +27,7 @@
 
 CdRomCueBinImage::CdRomCueBinImage() : CdRomImage()
 {
-
+    m_load_options = GG_CdRomCueBinDefaultLoadOptions();
 }
 
 CdRomCueBinImage::~CdRomCueBinImage()
@@ -149,6 +149,14 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
         Reset();
 
     return m_ready;
+}
+
+void CdRomCueBinImage::SetLoadOptions(const GG_CdRomCueBinLoadOptions& options)
+{
+    m_load_options = options;
+
+    if (m_load_options.chunk_size == 0)
+        m_load_options.chunk_size = GG_CDROM_CUEBIN_DEFAULT_CHUNK_SIZE;
 }
 
 bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
@@ -278,6 +286,12 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
 
 bool CdRomCueBinImage::PreloadDisc()
 {
+    if (!m_load_options.allow_disc_preload)
+    {
+        Debug("Skipping full-disc preload for CUE/BIN media");
+        return true;
+    }
+
     Debug("Preloading all tracks...");
 
     size_t files_count = m_img_files.size();
@@ -323,8 +337,6 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     u32 start_offset = track.file_offset;
     u32 total_bytes = track.sector_count * sector_size;
 
-    Debug("Preloading all sectors for track %u (sectors: %u, bytes: %u)", track_number, track.sector_count, total_bytes);
-
     if (total_bytes == 0)
         return true;
 
@@ -332,6 +344,16 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     u32 start_chunk = start_offset / chunk_size;
     u32 end_chunk = (start_offset + total_bytes - 1) / chunk_size;
     u32 chunks_needed = end_chunk - start_chunk + 1;
+
+    if (m_load_options.max_preload_chunks != GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK)
+    {
+        chunks_needed = MIN(chunks_needed, m_load_options.max_preload_chunks);
+        Debug("Preloading %u chunk(s) for track %u", chunks_needed, track_number);
+    }
+    else
+    {
+        Debug("Preloading all sectors for track %u (sectors: %u, bytes: %u)", track_number, track.sector_count, total_bytes);
+    }
 
     return PreloadChunks(track_file.img_file, start_chunk, chunks_needed);
 }
@@ -583,7 +605,7 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, CdRomFile& file)
 
 void CdRomCueBinImage::SetupFileChunks(ImgFile* img_file)
 {
-    img_file->chunk_size = CDROM_MEDIA_CHUNK_SIZE;
+    img_file->chunk_size = m_load_options.chunk_size;
     img_file->chunk_count = img_file->file_size / img_file->chunk_size;
 
     if (img_file->file_size % img_file->chunk_size != 0)

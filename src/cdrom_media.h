@@ -68,6 +68,7 @@ public:
     bool PreloadTrack(u32 track_number);
 
 private:
+    bool IsCdRomUriPath(const char* path);
     u32 SeekFindGroup(u32 lba);
 
 private:
