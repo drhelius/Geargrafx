@@ -247,6 +247,7 @@ void gui_debug_load_settings(const char* file_path)
         file.read((char*)&bp.range, sizeof(bool));
         breakpoints->push_back(bp);
     }
+    processor->RefreshBreakpointFlags();
 
     file.read((char*)&emu_debug_irq_breakpoints, sizeof(bool));
 
