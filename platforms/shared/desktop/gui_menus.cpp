@@ -30,6 +30,8 @@
 #include "gamepad.h"
 #include "emu.h"
 #include "ogl_renderer.h"
+#include "ogl_shader_chain.h"
+#include "shader_preset.h"
 #include "utils.h"
 #include "geargrafx.h"
 #include "rewind.h"
@@ -51,6 +53,7 @@ static bool open_syscard_bios = false;
 static bool open_gameexpress_bios = false;
 static bool save_debug_settings = false;
 static bool load_debug_settings = false;
+static bool load_shader_preset = false;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 static bool open_physical_cdrom = false;
 #endif
@@ -58,6 +61,8 @@ static bool open_physical_cdrom = false;
 static void menu_geargrafx(void);
 static void menu_emulator(void);
 static void menu_video(void);
+static void menu_shader(void);
+static void draw_shader_parameters(void);
 static void menu_input(void);
 static void menu_audio(void);
 static void menu_debug(void);
@@ -96,6 +101,7 @@ void gui_main_menu(void)
     open_gameexpress_bios = false;
     save_debug_settings = false;
     load_debug_settings = false;
+    load_shader_preset = false;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     open_physical_cdrom = false;
 #endif
@@ -864,31 +870,7 @@ static void menu_video(void)
         }
 
         ImGui::Separator();
-
-        ImGui::MenuItem("Bilinear Filtering", "", &config_video.bilinear);
-
-        if (ImGui::BeginMenu("Screen Ghosting"))
-        {
-            ImGui::MenuItem("Enable Screen Ghosting", "", &config_video.mix_frames);
-            ImGui::SliderFloat("##screen_ghosting", &config_video.mix_frames_intensity, 0.0f, 1.0f, "Intensity = %.2f");
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("Scanlines"))
-        {
-            ImGui::MenuItem("Enable Scanlines", "", &config_video.scanlines);
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text("In Integer Scale modes, odd scale factors are adjusted");
-                ImGui::Text("when scanlines are enabled without the scanlines filter.");
-                ImGui::Text("Enable Scanlines Filter to allow odd scale factors.");
-                ImGui::EndTooltip();
-            }
-            ImGui::MenuItem("Enable Scanlines Filter", "", &config_video.scanlines_filter);
-            ImGui::SliderFloat("##scanlines", &config_video.scanlines_intensity, 0.0f, 1.0f, "Intensity = %.2f");
-            ImGui::EndMenu();
-        }
+        menu_shader();
 
         if (ImGui::BeginMenu("Low Pass Filter"))
         {
@@ -955,6 +937,118 @@ static void menu_video(void)
 
         ImGui::EndMenu();
     }
+}
+
+static void menu_shader(void)
+{
+    if (!ImGui::BeginMenu("Shader"))
+        return;
+
+    bool has_preset = ogl_shader_chain_has_preset();
+    bool shader_off = config_video.shader_mode == config_ShaderMode_Off || !has_preset;
+
+    if (ImGui::MenuItem("Off", "", shader_off))
+    {
+        ogl_renderer_unload_shader_preset();
+        gui_set_status_message("Shader disabled", 3000);
+    }
+
+    if (ImGui::BeginMenu("Presets"))
+    {
+        ShaderPresetInfo presets[SHADER_PRESET_MAX_DISCOVERED];
+        int count = shader_preset_scan_bundled(presets, SHADER_PRESET_MAX_DISCOVERED);
+        if (count == 0)
+        {
+            ImGui::MenuItem("No presets found", NULL, false, false);
+        }
+        else
+        {
+            for (int i = 0; i < count; i++)
+            {
+                bool selected = has_preset && config_video.shader_mode == config_ShaderMode_External &&
+                    config_video.shader_preset_path.compare(presets[i].path) == 0;
+                if (ImGui::MenuItem(presets[i].name, "", selected))
+                {
+                    if (ogl_renderer_load_shader_preset(presets[i].path))
+                    {
+                        std::string message("Shader preset loaded: ");
+                        message += ogl_shader_chain_get_preset_name();
+                        gui_set_status_message(message.c_str(), 3000);
+                    }
+                    else
+                    {
+                        std::string message("Shader preset failed: ");
+                        message += ogl_shader_chain_get_last_error();
+                        gui_set_status_message(message.c_str(), 5000);
+                    }
+                }
+            }
+        }
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::MenuItem("Load Preset..."))
+    {
+        load_shader_preset = true;
+    }
+
+    if (ImGui::MenuItem("Reload Current Preset", "", false, has_preset))
+    {
+        if (ogl_renderer_reload_shader_preset())
+        {
+            std::string message("Shader preset reloaded: ");
+            message += ogl_shader_chain_get_preset_name();
+            gui_set_status_message(message.c_str(), 3000);
+        }
+        else
+        {
+            std::string message("Shader preset failed: ");
+            message += ogl_shader_chain_get_last_error();
+            gui_set_status_message(message.c_str(), 5000);
+        }
+    }
+
+    if (has_preset)
+    {
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "%s", ogl_shader_chain_get_preset_name());
+        draw_shader_parameters();
+    }
+    else if (ogl_shader_chain_get_last_error()[0] != '\0')
+    {
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "%s", ogl_shader_chain_get_last_error());
+    }
+
+    ImGui::EndMenu();
+}
+
+static void draw_shader_parameters(void)
+{
+    int count = ogl_shader_chain_get_parameter_count();
+    if (count <= 0)
+        return;
+
+    ImGui::Separator();
+    ImGui::PushItemWidth(220.0f);
+
+    for (int i = 0; i < count; i++)
+    {
+        const ShaderPresetParameter* parameter = ogl_shader_chain_get_parameter(i);
+        if (!parameter)
+            continue;
+
+        float value = parameter->value;
+        char label[160];
+        snprintf(label, sizeof(label), "%s##shader_parameter_%d", parameter->label[0] != '\0' ? parameter->label : parameter->name, i);
+        if (ImGui::SliderFloat(label, &value, parameter->minimum, parameter->maximum, "%.3f"))
+        {
+            ogl_shader_chain_set_parameter(i, value);
+            ogl_renderer_save_shader_parameter_config();
+        }
+    }
+
+    ImGui::PopItemWidth();
 }
 
 static void menu_input(void)
@@ -1803,6 +1897,8 @@ static void file_dialogs(void)
         gui_file_dialog_save_debug_settings();
     if (load_debug_settings)
         gui_file_dialog_load_debug_settings();
+    if (load_shader_preset)
+        gui_file_dialog_load_shader_preset();
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     if (open_physical_cdrom)
     {

@@ -144,6 +144,9 @@
     </ClCompile>
     <ClCompile Include="..\shared\desktop\main.cpp" />
     <ClCompile Include="..\shared\desktop\ogl_renderer.cpp" />
+    <ClCompile Include="..\shared\desktop\ogl_shader_program.cpp" />
+    <ClCompile Include="..\shared\desktop\ogl_shader_chain.cpp" />
+    <ClCompile Include="..\shared\desktop\shader_preset.cpp" />
     <ClCompile Include="..\shared\desktop\display.cpp" />
     <ClCompile Include="..\shared\desktop\events.cpp" />
     <ClCompile Include="..\shared\desktop\gamepad.cpp" />
@@ -282,6 +285,9 @@
     <ClInclude Include="..\shared\dependencies\mINI\ini.h" />
     <ClInclude Include="..\shared\dependencies\stb\stb_image_write.h" />
     <ClInclude Include="..\shared\desktop\ogl_renderer.h" />
+    <ClInclude Include="..\shared\desktop\ogl_shader_program.h" />
+    <ClInclude Include="..\shared\desktop\ogl_shader_chain.h" />
+    <ClInclude Include="..\shared\desktop\shader_preset.h" />
     <ClInclude Include="..\shared\desktop\display.h" />
     <ClInclude Include="..\shared\desktop\events.h" />
     <ClInclude Include="..\shared\desktop\gamepad.h" />

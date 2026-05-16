@@ -35,6 +35,13 @@
 static const int config_version = 2;
 static const int config_max_recent_roms = 10;
 static const int config_memory_editor_count = 14;
+static const int config_shader_parameter_count = 16;
+
+enum config_ShaderMode
+{
+    config_ShaderMode_Off = 0,
+    config_ShaderMode_External = 1
+};
 
 struct config_Emulator
 {
@@ -87,14 +94,8 @@ struct config_Video
     int scanline_end = 234;
     int palette = 0;
     bool fps = false;
-    bool bilinear = false;
     bool sprite_limit = false;
     bool safe_vdc_defaults = false;
-    bool mix_frames = true;
-    float mix_frames_intensity = 0.50f;
-    bool scanlines = true;
-    bool scanlines_filter = false;
-    float scanlines_intensity = 0.10f;
     bool sync = true;
     float background_color[3] = {0.1f, 0.1f, 0.1f};
     float background_color_debugger[3] = {0.2f, 0.2f, 0.2f};
@@ -102,6 +103,11 @@ struct config_Video
     float lowpass_intensity = 1.0f;
     float lowpass_cutoff_mhz = 5.0f;
     bool lowpass_speed[3] = { false, true, true };
+    int shader_mode = config_ShaderMode_Off;
+    std::string shader_preset_path;
+    int shader_parameter_count = 0;
+    std::string shader_parameter_name[config_shader_parameter_count];
+    float shader_parameter_value[config_shader_parameter_count] = {0.0f};
 };
 
 struct config_Audio

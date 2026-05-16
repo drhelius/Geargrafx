@@ -397,20 +397,26 @@ void config_read(void)
     config_video.scanline_end = read_int("Video", "ScanlineEnd", 234);
     config_video.palette = read_int("Video", "Palette", 0);
     config_video.fps = read_bool("Video", "FPS", false);
-    config_video.bilinear = read_bool("Video", "Bilinear", false);
     config_video.sprite_limit = read_bool("Video", "SpriteLimit", false);
     config_video.safe_vdc_defaults = read_bool("Video", "SafeVdcDefaults", false);
-    config_video.mix_frames = read_bool("Video", "MixFrames", true);
-    config_video.mix_frames_intensity = read_float("Video", "MixFramesIntensity", 0.50f);
-    config_video.scanlines = read_bool("Video", "Scanlines", true);
-    config_video.scanlines_filter = read_bool("Video", "ScanlinesFilter", false);
-    config_video.scanlines_intensity = read_float("Video", "ScanlinesIntensity", 0.10f);
     config_video.lowpass_filter = read_bool("Video", "LowpassFilter", true);
     config_video.lowpass_intensity = read_float("Video", "LowpassIntensity", 1.0f);
     config_video.lowpass_cutoff_mhz = read_float("Video", "LowpassCutoffMhz", 5.0f);
     config_video.lowpass_speed[0] = read_bool("Video", "LowpassSpeed536", false);
     config_video.lowpass_speed[1] = read_bool("Video", "LowpassSpeed716", true);
     config_video.lowpass_speed[2] = read_bool("Video", "LowpassSpeed108", true);
+    config_video.shader_mode = read_int("Video", "ShaderMode", config_ShaderMode_Off);
+    config_video.shader_mode = CLAMP(config_video.shader_mode, config_ShaderMode_Off, config_ShaderMode_External);
+    config_video.shader_preset_path = read_string("Video", "ShaderPresetPath");
+    config_video.shader_parameter_count = read_int("Video", "ShaderParameterCount", 0);
+    config_video.shader_parameter_count = CLAMP(config_video.shader_parameter_count, 0, config_shader_parameter_count);
+    for (int i = 0; i < config_video.shader_parameter_count; i++)
+    {
+        std::string name_key = "ShaderParameter" + std::to_string(i) + "Name";
+        std::string value_key = "ShaderParameter" + std::to_string(i) + "Value";
+        config_video.shader_parameter_name[i] = read_string("Video", name_key.c_str());
+        config_video.shader_parameter_value[i] = read_float("Video", value_key.c_str(), 0.0f);
+    }
     config_video.sync = read_bool("Video", "Sync", true);
     config_video.background_color[0] = read_float("Video", "BackgroundColorR", 0.1f);
     config_video.background_color[1] = read_float("Video", "BackgroundColorG", 0.1f);
@@ -703,20 +709,24 @@ void config_write(void)
     write_int("Video", "ScanlineEnd", config_video.scanline_end);
     write_int("Video", "Palette", config_video.palette);
     write_bool("Video", "FPS", config_video.fps);
-    write_bool("Video", "Bilinear", config_video.bilinear);
     write_bool("Video", "SpriteLimit", config_video.sprite_limit);
     write_bool("Video", "SafeVdcDefaults", config_video.safe_vdc_defaults);
-    write_bool("Video", "MixFrames", config_video.mix_frames);
-    write_float("Video", "MixFramesIntensity", config_video.mix_frames_intensity);
-    write_bool("Video", "Scanlines", config_video.scanlines);
-    write_bool("Video", "ScanlinesFilter", config_video.scanlines_filter);
-    write_float("Video", "ScanlinesIntensity", config_video.scanlines_intensity);
     write_bool("Video", "LowpassFilter", config_video.lowpass_filter);
     write_float("Video", "LowpassIntensity", config_video.lowpass_intensity);
     write_float("Video", "LowpassCutoffMhz", config_video.lowpass_cutoff_mhz);
     write_bool("Video", "LowpassSpeed536", config_video.lowpass_speed[0]);
     write_bool("Video", "LowpassSpeed716", config_video.lowpass_speed[1]);
     write_bool("Video", "LowpassSpeed108", config_video.lowpass_speed[2]);
+    write_int("Video", "ShaderMode", config_video.shader_mode);
+    write_string("Video", "ShaderPresetPath", config_video.shader_preset_path);
+    write_int("Video", "ShaderParameterCount", config_video.shader_parameter_count);
+    for (int i = 0; i < config_video.shader_parameter_count; i++)
+    {
+        std::string name_key = "ShaderParameter" + std::to_string(i) + "Name";
+        std::string value_key = "ShaderParameter" + std::to_string(i) + "Value";
+        write_string("Video", name_key.c_str(), config_video.shader_parameter_name[i]);
+        write_float("Video", value_key.c_str(), config_video.shader_parameter_value[i]);
+    }
     write_bool("Video", "Sync", config_video.sync);
     write_float("Video", "BackgroundColorR", config_video.background_color[0]);
     write_float("Video", "BackgroundColorG", config_video.background_color[1]);

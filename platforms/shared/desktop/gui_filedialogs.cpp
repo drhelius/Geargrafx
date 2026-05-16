@@ -33,6 +33,8 @@
 #include "application.h"
 #include "config.h"
 #include "emu.h"
+#include "ogl_renderer.h"
+#include "ogl_shader_chain.h"
 #include "utils.h"
 
 enum FileDialogID
@@ -63,7 +65,8 @@ enum FileDialogID
     FileDialog_SaveLog,
     FileDialog_SaveDebugSettings,
     FileDialog_LoadDebugSettings,
-    FileDialog_LoadPalette
+    FileDialog_LoadPalette,
+    FileDialog_LoadShaderPreset
 };
 
 static FileDialogID pending_dialog_id = FileDialog_None;
@@ -318,6 +321,16 @@ void gui_file_dialog_load_palette(void)
     SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_LoadPalette, application_sdl_window, filters, 1, default_path, false);
 }
 
+void gui_file_dialog_load_shader_preset(void)
+{
+    if (!begin_dialog())
+        return;
+
+    SDL_DialogFileFilter filters[] = { { "Geargrafx Shader Presets", "gshader" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_LoadShaderPreset, application_sdl_window, filters, 1, default_path, false);
+}
+
 void gui_file_dialog_process_results(void)
 {
     bool refocus_window = pending_refocus_window && !dialog_active;
@@ -520,6 +533,22 @@ static void process_dialog_result(FileDialogID id, const char* path)
         case FileDialog_LoadPalette:
         {
             gui_load_palette(path);
+            break;
+        }
+        case FileDialog_LoadShaderPreset:
+        {
+            if (ogl_renderer_load_shader_preset(path))
+            {
+                std::string message("Shader preset loaded: ");
+                message += ogl_shader_chain_get_preset_name();
+                gui_set_status_message(message.c_str(), 3000);
+            }
+            else
+            {
+                std::string message("Shader preset failed: ");
+                message += ogl_shader_chain_get_last_error();
+                gui_set_status_message(message.c_str(), 5000);
+            }
             break;
         }
         default:
