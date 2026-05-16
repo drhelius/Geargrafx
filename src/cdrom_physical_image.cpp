@@ -295,30 +295,69 @@ void CdRomPhysicalImage::NormalizeTrackBoundaries()
         Track& track = m_toc.tracks[i];
         Track& next_track = m_toc.tracks[i + 1];
 
-        if ((track.type == GG_CDROM_AUDIO_TRACK) || (next_track.type != GG_CDROM_AUDIO_TRACK))
+        if (track.type == next_track.type)
             continue;
 
-        if (next_track.start_lba < CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS)
+        if (next_track.start_lba == 0)
             continue;
 
-        u32 pregap_lba = next_track.start_lba - CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS;
-        if ((pregap_lba <= track.start_lba) || (pregap_lba > track.end_lba))
+        u32 lead_in_lba = next_track.start_lba;
+
+        if (next_track.type == GG_CDROM_AUDIO_TRACK)
+        {
+            static const u32 pregap_lengths[] = { CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS, 75 * 3, 75 * 4 };
+
+            for (size_t j = 0; j < sizeof(pregap_lengths) / sizeof(pregap_lengths[0]); j++)
+            {
+                u32 pregap_length = pregap_lengths[j];
+                if (next_track.start_lba <= pregap_length)
+                    continue;
+
+                u32 pregap_lba = next_track.start_lba - pregap_length;
+                if ((pregap_lba <= track.start_lba) || (pregap_lba > track.end_lba))
+                    continue;
+
+                if (IsMode1DataSector(pregap_lba))
+                    continue;
+
+                if (!IsMode1DataSector(pregap_lba - 1))
+                    continue;
+
+                lead_in_lba = pregap_lba;
+                break;
+            }
+        }
+        else
+        {
+            u32 max_scan = MIN((u32)CDROM_PHYSICAL_MAX_PREGAP_SECTORS, next_track.start_lba - track.start_lba);
+
+            while ((lead_in_lba > track.start_lba) && ((next_track.start_lba - lead_in_lba) < max_scan))
+            {
+                u32 probe_lba = lead_in_lba - 1;
+                if (!SectorMatchesTrackType(probe_lba, next_track.type))
+                    break;
+
+                lead_in_lba = probe_lba;
+            }
+        }
+
+        if (lead_in_lba == next_track.start_lba)
             continue;
 
-        if (IsMode1DataSector(pregap_lba))
+        if (lead_in_lba <= track.start_lba)
             continue;
 
-        if (!IsMode1DataSector(pregap_lba - 1))
+        if (lead_in_lba > track.end_lba)
             continue;
 
-        Debug("Physical CD-ROM trimming %u-sector pregap before audio track %u at LBA %u",
-            (u32)CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS, (u32)(i + 2), pregap_lba);
+        Debug("Physical CD-ROM trimming %u-sector %s lead-in before track %u at LBA %u",
+            next_track.start_lba - lead_in_lba, TrackTypeName(next_track.type), (u32)(i + 2), lead_in_lba);
 
-        track.end_lba = pregap_lba - 1;
+        track.end_lba = lead_in_lba - 1;
         track.sector_count = track.end_lba - track.start_lba + 1;
         LbaToMsf(track.end_lba, &track.end_msf);
         next_track.has_lead_in = true;
-        next_track.lead_in_lba = pregap_lba;
+        next_track.lead_in_lba = lead_in_lba;
     }
 }
 
@@ -335,6 +374,16 @@ bool CdRomPhysicalImage::IsMode1DataSector(u32 lba)
         return false;
 
     return raw_sector_has_mode1_sync(raw);
+}
+
+bool CdRomPhysicalImage::SectorMatchesTrackType(u32 lba, GG_CdRomTrackType type)
+{
+    bool mode1 = IsMode1DataSector(lba);
+
+    if (type == GG_CDROM_AUDIO_TRACK)
+        return !mode1;
+
+    return mode1;
 }
 
 bool CdRomPhysicalImage::DetectDataTrackType(Track& track)
@@ -717,11 +766,18 @@ u32 CdRomPhysicalImage::BlockStartLBA(u32 lba) const
 
 bool CdRomPhysicalImage::IsAudioSector(u32 lba)
 {
-    s32 track_index = GetTrackFromLBA(lba);
-    if (track_index < 0)
-        return false;
+    for (size_t i = 0; i < m_toc.tracks.size(); i++)
+    {
+        const Track& track = m_toc.tracks[i];
 
-    return m_toc.tracks[(size_t)track_index].type == GG_CDROM_AUDIO_TRACK;
+        if ((lba >= track.start_lba) && (lba <= track.end_lba))
+            return track.type == GG_CDROM_AUDIO_TRACK;
+
+        if (track.has_lead_in && (lba >= track.lead_in_lba) && (lba < track.start_lba))
+            return track.type == GG_CDROM_AUDIO_TRACK;
+    }
+
+    return false;
 }
 
 #endif /* GG_ENABLE_PHYSICAL_CDROM */

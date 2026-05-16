@@ -38,6 +38,7 @@
 #define CDROM_PHYSICAL_REQUEST_QUEUE_SIZE 64
 #define CDROM_PHYSICAL_PREFETCH_BLOCKS 16
 #define CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS 150
+#define CDROM_PHYSICAL_MAX_PREGAP_SECTORS (75 * 4)
 
 class CdRomPhysicalImage : public CdRomImage
 {
@@ -67,6 +68,7 @@ private:
     bool DetectDataTrackType(Track& track);
     void NormalizeTrackBoundaries();
     bool IsMode1DataSector(u32 lba);
+    bool SectorMatchesTrackType(u32 lba, GG_CdRomTrackType type);
     void CalculateCRC();
     u32 CalculateTOCFingerprint();
     bool ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 size);
