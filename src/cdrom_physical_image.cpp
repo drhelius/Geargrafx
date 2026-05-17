@@ -58,7 +58,6 @@ CdRomPhysicalImage::CdRomPhysicalImage()
 {
     m_worker_running.store(false);
     m_disc_error.store(false);
-    m_last_block_lba.store(0);
     m_last_read_lba.store(0);
     ResetQueue();
     ResetCache();
@@ -75,7 +74,6 @@ void CdRomPhysicalImage::Reset()
     m_drive.Close();
     CdRomImage::Reset();
     m_disc_error.store(false);
-    m_last_block_lba.store(0);
     m_last_read_lba.store(0);
     ResetQueue();
     ResetCache();
@@ -513,7 +511,6 @@ bool CdRomPhysicalImage::ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 si
         memcpy(buffer, block + block_offset, size);
     }
 
-    m_last_block_lba.store(block_lba);
     m_last_read_lba.store(lba);
     QueueReadAhead(block_lba + CDROM_PHYSICAL_SECTORS_PER_BLOCK, GetTrackFromLBA(lba));
 
@@ -526,8 +523,6 @@ bool CdRomPhysicalImage::ReadRawBlock(u32 block_lba, u8* buffer)
         return false;
 
     u32 sector_count = MIN((u32)CDROM_PHYSICAL_SECTORS_PER_BLOCK, m_toc.sector_count - block_lba);
-    memset(buffer, 0, CDROM_PHYSICAL_SECTOR_SIZE * CDROM_PHYSICAL_SECTORS_PER_BLOCK);
-
     bool audio = IsAudioSector(block_lba);
     bool mixed = false;
     for (u32 i = 1; i < sector_count; i++)
@@ -539,18 +534,43 @@ bool CdRomPhysicalImage::ReadRawBlock(u32 block_lba, u8* buffer)
         }
     }
 
-    std::lock_guard<std::mutex> lock(m_drive_mutex);
-
-    if (!mixed)
-        return m_drive.ReadRawSectors2352(block_lba, sector_count, buffer, audio);
-
-    for (u32 i = 0; i < sector_count; i++)
+    for (u32 attempt = 0; attempt < CDROM_PHYSICAL_READ_RETRIES; attempt++)
     {
-        if (!m_drive.ReadRawSector2352(block_lba + i, buffer + (i * CDROM_PHYSICAL_SECTOR_SIZE), IsAudioSector(block_lba + i)))
-            return false;
+        bool read = false;
+        memset(buffer, 0, CDROM_PHYSICAL_SECTOR_SIZE * CDROM_PHYSICAL_SECTORS_PER_BLOCK);
+
+        {
+            std::lock_guard<std::mutex> lock(m_drive_mutex);
+
+            if (!mixed)
+            {
+                read = m_drive.ReadRawSectors2352(block_lba, sector_count, buffer, audio);
+            }
+            else
+            {
+                read = true;
+                for (u32 i = 0; i < sector_count; i++)
+                {
+                    if (!m_drive.ReadRawSector2352(block_lba + i, buffer + (i * CDROM_PHYSICAL_SECTOR_SIZE), IsAudioSector(block_lba + i)))
+                    {
+                        read = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (read)
+            return true;
+
+        if ((attempt + 1) < CDROM_PHYSICAL_READ_RETRIES)
+        {
+            Debug("Physical CD-ROM retrying block read at LBA %u (attempt %u)", block_lba, attempt + 2);
+            std::this_thread::sleep_for(std::chrono::milliseconds(CDROM_PHYSICAL_RETRY_DELAY_MS));
+        }
     }
 
-    return true;
+    return false;
 }
 
 bool CdRomPhysicalImage::ReadRawSector(u32 lba, u8* buffer)
@@ -558,8 +578,27 @@ bool CdRomPhysicalImage::ReadRawSector(u32 lba, u8* buffer)
     if ((lba >= m_toc.sector_count) || !IsValidPointer(buffer))
         return false;
 
-    std::lock_guard<std::mutex> lock(m_drive_mutex);
-    return m_drive.ReadRawSector2352(lba, buffer, IsAudioSector(lba));
+    for (u32 attempt = 0; attempt < CDROM_PHYSICAL_READ_RETRIES; attempt++)
+    {
+        bool read = false;
+        memset(buffer, 0, CDROM_PHYSICAL_SECTOR_SIZE);
+
+        {
+            std::lock_guard<std::mutex> lock(m_drive_mutex);
+            read = m_drive.ReadRawSector2352(lba, buffer, IsAudioSector(lba));
+        }
+
+        if (read)
+            return true;
+
+        if ((attempt + 1) < CDROM_PHYSICAL_READ_RETRIES)
+        {
+            Debug("Physical CD-ROM retrying sector read at LBA %u (attempt %u)", lba, attempt + 2);
+            std::this_thread::sleep_for(std::chrono::milliseconds(CDROM_PHYSICAL_RETRY_DELAY_MS));
+        }
+    }
+
+    return false;
 }
 
 bool CdRomPhysicalImage::FindCacheRange(u32 block_lba, u32 block_offset, u8* buffer, u32 size)
@@ -722,7 +761,7 @@ void CdRomPhysicalImage::WorkerThread()
         {
             u8 sector[CDROM_PHYSICAL_SECTOR_SIZE];
             if (!ReadRawSector(m_last_read_lba.load(), sector))
-                SetDiscError();
+                Debug("Physical CD-ROM keepalive read failed at LBA %u", m_last_read_lba.load());
 
             last_keep_alive = now;
         }

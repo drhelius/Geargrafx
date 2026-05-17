@@ -39,6 +39,8 @@
 #define CDROM_PHYSICAL_PREFETCH_BLOCKS 16
 #define CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS 150
 #define CDROM_PHYSICAL_KEEPALIVE_SECONDS 10
+#define CDROM_PHYSICAL_READ_RETRIES 5
+#define CDROM_PHYSICAL_RETRY_DELAY_MS 20
 
 class CdRomPhysicalImage : public CdRomImage
 {
@@ -102,7 +104,6 @@ private:
     u32 m_request_head;
     u32 m_request_tail;
     u32 m_request_count;
-    std::atomic<u32> m_last_block_lba;
     std::atomic<u32> m_last_read_lba;
 };
 
