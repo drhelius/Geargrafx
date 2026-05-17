@@ -336,7 +336,7 @@ bool CdRomDrive::ReadTOC(std::vector<CdRomDriveTrackInfo>& tracks, u32* lead_out
     return true;
 }
 
-bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool audio)
+bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool audio, bool report_errors)
 {
     (void)audio;
 
@@ -346,7 +346,8 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
     int status = ioctl(m_file, CDROM_DRIVE_STATUS, CDSL_CURRENT);
     if (drive_status_is_media_unavailable(status))
     {
-        Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
+        if (report_errors)
+            Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
         return false;
     }
 
@@ -360,10 +361,13 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
         if (ioctl(m_file, CDROMREADRAW, sector_buffer) < 0)
         {
             int error = errno;
-            if (drive_has_unavailable_media(m_file, error))
-                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
-            else
-                Error("CDROMREADRAW failed for %s at LBA %u: %s", m_device_id, sector_lba, strerror(error));
+            if (report_errors)
+            {
+                if (drive_has_unavailable_media(m_file, error))
+                    Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+                else
+                    Error("CDROMREADRAW failed for %s at LBA %u: %s", m_device_id, sector_lba, strerror(error));
+            }
             return false;
         }
     }

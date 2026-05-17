@@ -45,9 +45,9 @@ bool CdRomDrive::IsOpen() const
 #endif
 }
 
-bool CdRomDrive::ReadRawSector2352(u32 lba, u8* buffer, bool audio)
+bool CdRomDrive::ReadRawSector2352(u32 lba, u8* buffer, bool audio, bool report_errors)
 {
-    return ReadRawSectors2352(lba, 1, buffer, audio);
+    return ReadRawSectors2352(lba, 1, buffer, audio, report_errors);
 }
 
 const char* CdRomDrive::GetDeviceId() const

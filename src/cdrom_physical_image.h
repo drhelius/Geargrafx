@@ -41,6 +41,7 @@
 #define CDROM_PHYSICAL_KEEPALIVE_SECONDS 10
 #define CDROM_PHYSICAL_READ_RETRIES 5
 #define CDROM_PHYSICAL_RETRY_DELAY_MS 20
+#define CDROM_PHYSICAL_MAX_READ_DIAGNOSTICS 32
 
 class CdRomPhysicalImage : public CdRomImage
 {
@@ -69,8 +70,8 @@ private:
     bool ReadTOC();
     bool DetectDataTrackType(Track& track);
     void NormalizeTrackBoundaries();
-    bool IsMode1DataSector(u32 lba);
-    bool SectorMatchesTrackType(u32 lba, GG_CdRomTrackType type);
+    bool IsMode1DataSector(u32 lba, bool* read_ok = NULL);
+    bool SectorMatchesTrackType(u32 lba, GG_CdRomTrackType type, bool* read_ok = NULL);
     void CalculateCRC();
     u32 CalculateTOCFingerprint();
     bool ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 size);
@@ -86,6 +87,7 @@ private:
     void SetDiscError();
     void ResetCache();
     void ResetQueue();
+    bool ShouldLogReadDiagnostic();
     u32 CacheIndex(u32 block_lba) const;
     u32 BlockStartLBA(u32 lba) const;
     bool IsAudioSector(u32 lba);
@@ -105,6 +107,7 @@ private:
     u32 m_request_tail;
     u32 m_request_count;
     std::atomic<u32> m_last_read_lba;
+    std::atomic<u32> m_read_diagnostic_count;
 };
 
 #endif /* GG_ENABLE_PHYSICAL_CDROM */
