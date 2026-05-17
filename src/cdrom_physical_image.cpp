@@ -23,21 +23,6 @@
 #include <chrono>
 #include "crc.h"
 
-static void crc_append_u8(u32* crc, u8 value)
-{
-    *crc = CalculateCRC32(*crc, &value, 1);
-}
-
-static void crc_append_u32(u32* crc, u32 value)
-{
-    u8 data[4];
-    data[0] = (u8)value;
-    data[1] = (u8)(value >> 8);
-    data[2] = (u8)(value >> 16);
-    data[3] = (u8)(value >> 24);
-    *crc = CalculateCRC32(*crc, data, sizeof(data));
-}
-
 static bool raw_sector_has_mode1_sync(const u8* raw)
 {
     static const u8 sync[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -286,17 +271,10 @@ bool CdRomPhysicalImage::ReadTOC()
         LbaToMsf(track.start_lba, &track.start_msf);
         LbaToMsf(track.end_lba, &track.end_msf);
 
-        if (track.type != GG_CDROM_AUDIO_TRACK)
-        {
-            if (!DetectDataTrackType(track))
-                return false;
-        }
-
         m_toc.tracks.push_back(track);
     }
 
     m_toc.sector_count = lead_out_lba;
-    NormalizeTrackBoundaries();
 
     LbaToMsf(m_toc.sector_count + 150, &m_toc.total_length);
 
@@ -312,194 +290,6 @@ bool CdRomPhysicalImage::ReadTOC()
         m_toc.sector_count);
 
     return true;
-}
-
-void CdRomPhysicalImage::NormalizeTrackBoundaries()
-{
-    if (m_toc.tracks.size() < 2)
-        return;
-
-    for (size_t i = 0; (i + 1) < m_toc.tracks.size(); i++)
-    {
-        Track& track = m_toc.tracks[i];
-        Track& next_track = m_toc.tracks[i + 1];
-
-        if (track.type == next_track.type)
-            continue;
-
-        if (next_track.start_lba == 0)
-            continue;
-
-        static const u32 audio_pregap_lengths[] = { CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS, (2 * 75) + 74, 75 * 3, 75 * 4 };
-        static const u32 data_pregap_lengths[] = { (2 * 75) + 74, CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS, 75 * 3, 75 * 4 };
-
-        const u32* pregap_lengths = (next_track.type == GG_CDROM_AUDIO_TRACK) ? audio_pregap_lengths : data_pregap_lengths;
-        u32 pregap_count = (u32)((next_track.type == GG_CDROM_AUDIO_TRACK) ?
-            (sizeof(audio_pregap_lengths) / sizeof(audio_pregap_lengths[0])) :
-            (sizeof(data_pregap_lengths) / sizeof(data_pregap_lengths[0])));
-        u32 lead_in_lba = next_track.start_lba;
-
-        for (u32 j = 0; j < pregap_count; j++)
-        {
-            u32 pregap_length = pregap_lengths[j];
-            if (next_track.start_lba <= pregap_length)
-                continue;
-
-            u32 pregap_lba = next_track.start_lba - pregap_length;
-            if ((pregap_lba <= track.start_lba) || (pregap_lba > track.end_lba))
-                continue;
-
-            bool pregap_read_ok = false;
-            if (!SectorMatchesTrackType(pregap_lba, next_track.type, &pregap_read_ok))
-            {
-                if (!pregap_read_ok && ShouldLogReadDiagnostic())
-                    Debug("Physical CD-ROM boundary probe unreadable at LBA %u before track %u", pregap_lba, (u32)(i + 2));
-                continue;
-            }
-
-            bool previous_read_ok = false;
-            bool previous_matches = SectorMatchesTrackType(pregap_lba - 1, next_track.type, &previous_read_ok);
-            if (!previous_read_ok)
-            {
-                if (ShouldLogReadDiagnostic())
-                    Debug("Physical CD-ROM boundary edge probe unreadable at LBA %u before track %u", pregap_lba - 1, (u32)(i + 2));
-                continue;
-            }
-
-            if (previous_matches)
-                continue;
-
-            lead_in_lba = pregap_lba;
-            break;
-        }
-
-        if (lead_in_lba == next_track.start_lba)
-            continue;
-
-        if (lead_in_lba <= track.start_lba)
-            continue;
-
-        if (lead_in_lba > track.end_lba)
-            continue;
-
-        Debug("Physical CD-ROM detected %u-sector %s lead-in before track %u at LBA %u",
-            next_track.start_lba - lead_in_lba, TrackTypeName(next_track.type), (u32)(i + 2), lead_in_lba);
-
-        track.end_lba = lead_in_lba - 1;
-        track.sector_count = track.end_lba - track.start_lba + 1;
-        LbaToMsf(track.end_lba, &track.end_msf);
-        next_track.has_lead_in = true;
-        next_track.lead_in_lba = lead_in_lba;
-    }
-}
-
-bool CdRomPhysicalImage::IsMode1DataSector(u32 lba, bool* read_ok)
-{
-    if (IsValidPointer(read_ok))
-        *read_ok = false;
-
-    if (lba >= m_toc.sector_count)
-        return false;
-
-    u8 raw[CDROM_PHYSICAL_SECTOR_SIZE];
-    memset(raw, 0, sizeof(raw));
-
-    std::lock_guard<std::mutex> lock(m_drive_mutex);
-    if (!m_drive.ReadRawSector2352(lba, raw, false, false))
-        return false;
-
-    if (IsValidPointer(read_ok))
-        *read_ok = true;
-
-    return raw_sector_has_mode1_sync(raw);
-}
-
-bool CdRomPhysicalImage::IsReadableAudioSector(u32 lba)
-{
-    if (lba >= m_toc.sector_count)
-        return false;
-
-    u8 raw[CDROM_PHYSICAL_SECTOR_SIZE];
-    memset(raw, 0, sizeof(raw));
-
-    std::lock_guard<std::mutex> lock(m_drive_mutex);
-    return m_drive.ReadRawSector2352(lba, raw, true, false);
-}
-
-bool CdRomPhysicalImage::SectorMatchesTrackType(u32 lba, GG_CdRomTrackType type, bool* read_ok)
-{
-    bool local_read_ok = false;
-    bool mode1 = IsMode1DataSector(lba, &local_read_ok);
-
-    if (local_read_ok)
-    {
-        if (IsValidPointer(read_ok))
-            *read_ok = true;
-
-        if (type == GG_CDROM_AUDIO_TRACK)
-            return !mode1;
-
-        return mode1;
-    }
-
-    bool audio_read_ok = IsReadableAudioSector(lba);
-    if (IsValidPointer(read_ok))
-        *read_ok = audio_read_ok;
-
-    return audio_read_ok && (type == GG_CDROM_AUDIO_TRACK);
-}
-
-bool CdRomPhysicalImage::DetectDataTrackType(Track& track)
-{
-    u8 raw[CDROM_PHYSICAL_SECTOR_SIZE];
-    bool read = false;
-
-    for (u32 attempt = 0; attempt < CDROM_PHYSICAL_READ_RETRIES; attempt++)
-    {
-        memset(raw, 0, sizeof(raw));
-
-        {
-            std::lock_guard<std::mutex> lock(m_drive_mutex);
-            read = m_drive.ReadRawSector2352(track.start_lba, raw, false, (attempt + 1) >= CDROM_PHYSICAL_READ_RETRIES);
-        }
-
-        if (read && raw_sector_has_mode1_sync(raw))
-        {
-            if ((attempt > 0) && ShouldLogReadDiagnostic())
-                Debug("Physical CD-ROM recovered data track mode read at LBA %u after %u retry attempts", track.start_lba, attempt);
-            break;
-        }
-
-        if (read)
-        {
-            if (ShouldLogReadDiagnostic())
-                Debug("Physical CD-ROM data track mode sync check failed at LBA %u", track.start_lba);
-        }
-
-        if ((attempt + 1) < CDROM_PHYSICAL_READ_RETRIES)
-        {
-            Debug("Physical CD-ROM retrying data track mode detection at LBA %u (attempt %u)", track.start_lba, attempt + 2);
-            std::this_thread::sleep_for(std::chrono::milliseconds(CDROM_PHYSICAL_RETRY_DELAY_MS));
-        }
-    }
-
-    if (!read || !raw_sector_has_mode1_sync(raw))
-    {
-        Error("Failed to read physical data track %u for mode detection", (u32)(m_toc.tracks.size() + 1));
-        return false;
-    }
-
-    u8 mode = raw[15];
-    Debug("Physical CD-ROM data track %u mode detection at LBA %u: mode %u", (u32)(m_toc.tracks.size() + 1), track.start_lba, mode);
-    if (mode == 1)
-    {
-        track.type = GG_CDROM_DATA_TRACK_MODE1_2352;
-        track.sector_size = CDROM_PHYSICAL_SECTOR_SIZE;
-        return true;
-    }
-
-    Error("Unsupported physical CD-ROM data track mode %u", mode);
-    return false;
 }
 
 void CdRomPhysicalImage::CalculateCRC()
@@ -526,11 +316,9 @@ void CdRomPhysicalImage::CalculateCRC()
         for (u32 i = 1; i <= sectors; i++)
         {
             u32 lba = track.start_lba + i;
-            if (!ReadSector(lba, buffer))
+            if (!ReadDataSector(lba, buffer))
             {
                 Error("Physical CD-ROM CRC read failed at LBA %u", lba);
-                m_crc = CalculateTOCFingerprint();
-                Log("Physical CD-ROM fallback TOC fingerprint: %08X", m_crc);
                 m_current_sector = current_sector;
                 return;
             }
@@ -543,33 +331,7 @@ void CdRomPhysicalImage::CalculateCRC()
         return;
     }
 
-    m_crc = CalculateTOCFingerprint();
-    Log("Physical CD-ROM CRC unavailable, fallback TOC fingerprint: %08X", m_crc);
     m_current_sector = current_sector;
-}
-
-u32 CdRomPhysicalImage::CalculateTOCFingerprint()
-{
-    static const u8 tag[] = { 'G', 'G', 'P', 'H', 'Y', 'S', 'T', 'O', 'C' };
-    u32 crc = CalculateCRC32(0, tag, sizeof(tag));
-
-    crc_append_u32(&crc, (u32)m_toc.tracks.size());
-    crc_append_u32(&crc, m_toc.sector_count);
-
-    for (size_t i = 0; i < m_toc.tracks.size(); i++)
-    {
-        Track& track = m_toc.tracks[i];
-        crc_append_u8(&crc, (u8)track.type);
-        crc_append_u32(&crc, track.sector_size);
-        crc_append_u32(&crc, track.sector_count);
-        crc_append_u32(&crc, track.start_lba);
-        crc_append_u32(&crc, track.end_lba);
-    }
-
-    if (crc == 0)
-        crc = 0xFFFFFFFF;
-
-    return crc;
 }
 
 bool CdRomPhysicalImage::ReadDataSector(u32 lba, u8* buffer)

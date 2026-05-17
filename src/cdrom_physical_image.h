@@ -41,7 +41,6 @@
 #define CDROM_PHYSICAL_AUDIO_PREFETCH_BLOCKS 1
 #define CDROM_PHYSICAL_AUDIO_PRELOAD_BLOCKS 30
 #define CDROM_PHYSICAL_DRIVE_SPEED_KBPS 704
-#define CDROM_PHYSICAL_STANDARD_PREGAP_SECTORS 150
 #define CDROM_PHYSICAL_KEEPALIVE_SECONDS 10
 #define CDROM_PHYSICAL_READ_RETRIES 5
 #define CDROM_PHYSICAL_RETRY_DELAY_MS 20
@@ -73,13 +72,7 @@ private:
 
 private:
     bool ReadTOC();
-    bool DetectDataTrackType(Track& track);
-    void NormalizeTrackBoundaries();
-    bool IsMode1DataSector(u32 lba, bool* read_ok = NULL);
-    bool IsReadableAudioSector(u32 lba);
-    bool SectorMatchesTrackType(u32 lba, GG_CdRomTrackType type, bool* read_ok = NULL);
     void CalculateCRC();
-    u32 CalculateTOCFingerprint();
     bool ReadDataSector(u32 lba, u8* buffer);
     bool ReadDataSectorUncached(u32 lba, u8* buffer);
     bool ReadDataBlock(u32 block_lba, u8* buffer);
