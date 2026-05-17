@@ -697,7 +697,7 @@ void CdRomPhysicalImage::WorkerThread()
         }
 
         std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_keep_alive).count() >= 30)
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_keep_alive).count() >= CDROM_PHYSICAL_KEEPALIVE_SECONDS)
         {
             u8 block[CDROM_PHYSICAL_SECTOR_SIZE * CDROM_PHYSICAL_SECTORS_PER_BLOCK];
             if (!ReadRawBlock(m_last_block_lba.load(), block))
