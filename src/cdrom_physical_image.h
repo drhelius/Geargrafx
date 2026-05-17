@@ -73,6 +73,7 @@ private:
     u32 CalculateTOCFingerprint();
     bool ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 size);
     bool ReadRawBlock(u32 block_lba, u8* buffer);
+    bool ReadRawSector(u32 lba, u8* buffer);
     bool FindCacheRange(u32 block_lba, u32 block_offset, u8* buffer, u32 size);
     void StoreCacheBlock(u32 block_lba, const u8* buffer);
     void QueueReadAhead(u32 lba, s32 track_index);
@@ -102,6 +103,7 @@ private:
     u32 m_request_tail;
     u32 m_request_count;
     std::atomic<u32> m_last_block_lba;
+    std::atomic<u32> m_last_read_lba;
 };
 
 #endif /* GG_ENABLE_PHYSICAL_CDROM */

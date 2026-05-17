@@ -59,6 +59,7 @@ CdRomPhysicalImage::CdRomPhysicalImage()
     m_worker_running.store(false);
     m_disc_error.store(false);
     m_last_block_lba.store(0);
+    m_last_read_lba.store(0);
     ResetQueue();
     ResetCache();
 }
@@ -75,6 +76,7 @@ void CdRomPhysicalImage::Reset()
     CdRomImage::Reset();
     m_disc_error.store(false);
     m_last_block_lba.store(0);
+    m_last_read_lba.store(0);
     ResetQueue();
     ResetCache();
 }
@@ -494,8 +496,17 @@ bool CdRomPhysicalImage::ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 si
     {
         if (!ReadRawBlock(block_lba, block))
         {
-            SetDiscError();
-            return false;
+            u8 sector[CDROM_PHYSICAL_SECTOR_SIZE];
+            if (!ReadRawSector(lba, sector))
+            {
+                SetDiscError();
+                return false;
+            }
+
+            memcpy(buffer, sector + offset, size);
+            m_last_read_lba.store(lba);
+            QueueReadAhead(block_lba + CDROM_PHYSICAL_SECTORS_PER_BLOCK, GetTrackFromLBA(lba));
+            return true;
         }
 
         StoreCacheBlock(block_lba, block);
@@ -503,6 +514,7 @@ bool CdRomPhysicalImage::ReadCachedRange(u32 lba, u32 offset, u8* buffer, u32 si
     }
 
     m_last_block_lba.store(block_lba);
+    m_last_read_lba.store(lba);
     QueueReadAhead(block_lba + CDROM_PHYSICAL_SECTORS_PER_BLOCK, GetTrackFromLBA(lba));
 
     return true;
@@ -539,6 +551,15 @@ bool CdRomPhysicalImage::ReadRawBlock(u32 block_lba, u8* buffer)
     }
 
     return true;
+}
+
+bool CdRomPhysicalImage::ReadRawSector(u32 lba, u8* buffer)
+{
+    if ((lba >= m_toc.sector_count) || !IsValidPointer(buffer))
+        return false;
+
+    std::lock_guard<std::mutex> lock(m_drive_mutex);
+    return m_drive.ReadRawSector2352(lba, buffer, IsAudioSector(lba));
 }
 
 bool CdRomPhysicalImage::FindCacheRange(u32 block_lba, u32 block_offset, u8* buffer, u32 size)
@@ -699,8 +720,8 @@ void CdRomPhysicalImage::WorkerThread()
         std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - last_keep_alive).count() >= CDROM_PHYSICAL_KEEPALIVE_SECONDS)
         {
-            u8 block[CDROM_PHYSICAL_SECTOR_SIZE * CDROM_PHYSICAL_SECTORS_PER_BLOCK];
-            if (!ReadRawBlock(m_last_block_lba.load(), block))
+            u8 sector[CDROM_PHYSICAL_SECTOR_SIZE];
+            if (!ReadRawSector(m_last_read_lba.load(), sector))
                 SetDiscError();
 
             last_keep_alive = now;
