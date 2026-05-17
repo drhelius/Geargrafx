@@ -23,6 +23,9 @@
 #include <vector>
 #include "common.h"
 
+//#define SCSI_DEBUG(...) { }
+#define SCSI_DEBUG(x, ...) Debug(x, ## __VA_ARGS__)
+
 class CdRom;
 class CdRomMedia;
 class CdRomAudio;
