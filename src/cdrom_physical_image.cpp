@@ -125,10 +125,6 @@ bool CdRomPhysicalImage::LoadFromDevice(const char* device_id, bool preload)
         return false;
     }
 
-    bool speed_set = m_drive.SetSpeed(CDROM_PHYSICAL_DRIVE_SPEED_KBPS);
-    const char* speed_status = speed_set ? "ok" : "failed";
-    Log("Physical CD-ROM drive speed request %u KB/s: %s", CDROM_PHYSICAL_DRIVE_SPEED_KBPS, speed_status);
-
     m_ready = true;
     CalculateCRC();
 
@@ -138,6 +134,10 @@ bool CdRomPhysicalImage::LoadFromDevice(const char* device_id, bool preload)
         Reset();
         return false;
     }
+
+    bool speed_set = m_drive.SetSpeed(CDROM_PHYSICAL_DRIVE_SPEED_KBPS);
+    const char* speed_status = speed_set ? "ok" : "failed";
+    Log("Physical CD-ROM drive speed request %u KB/s: %s", CDROM_PHYSICAL_DRIVE_SPEED_KBPS, speed_status);
 
     StartWorker();
 
