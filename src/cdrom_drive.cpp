@@ -21,6 +21,12 @@
 
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 
+#if !defined(_WIN32)
+#define CDROM_DRIVE_DATA_SECTOR_SIZE 2048
+#define CDROM_DRIVE_DATA_SECTOR_OFFSET 16
+#define CDROM_DRIVE_RAW_SECTOR_SIZE 2352
+#endif
+
 CdRomDrive::CdRomDrive()
 {
 #if defined(_WIN32)
@@ -49,6 +55,21 @@ bool CdRomDrive::ReadRawSector2352(u32 lba, u8* buffer, bool audio, bool report_
 {
     return ReadRawSectors2352(lba, 1, buffer, audio, report_errors);
 }
+
+#if !defined(_WIN32)
+bool CdRomDrive::ReadDataSector2048(u32 lba, u8* buffer, bool report_errors)
+{
+    if (!IsValidPointer(buffer))
+        return false;
+
+    u8 raw[CDROM_DRIVE_RAW_SECTOR_SIZE];
+    if (!ReadRawSector2352(lba, raw, false, report_errors))
+        return false;
+
+    memcpy(buffer, raw + CDROM_DRIVE_DATA_SECTOR_OFFSET, CDROM_DRIVE_DATA_SECTOR_SIZE);
+    return true;
+}
+#endif
 
 const char* CdRomDrive::GetDeviceId() const
 {
