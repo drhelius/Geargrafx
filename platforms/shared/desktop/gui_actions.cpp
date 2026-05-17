@@ -83,7 +83,10 @@ void gui_action_eject_physical_cdrom(void)
     Log("Physical CD-ROM eject requested from GUI: %s", device_id);
 
     if (emu_eject_physical_cdrom())
+    {
+        application_update_title_with_rom(NULL);
         gui_set_status_message("Physical CD-ROM ejected", 3000);
+    }
     else
         gui_set_error_message("Unable to eject physical CD-ROM");
     #endif
