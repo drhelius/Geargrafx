@@ -21,6 +21,9 @@
 #include <sstream>
 #include <algorithm>
 #include "cdrom_cuebin_image.h"
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+#include <chrono>
+#endif
 #include "cdrom_common.h"
 #include "cdrom_file.h"
 #include "crc.h"
@@ -28,10 +31,18 @@
 CdRomCueBinImage::CdRomCueBinImage() : CdRomImage()
 {
     m_load_options = GG_CdRomCueBinDefaultLoadOptions();
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    m_read_ahead_running.store(false);
+    m_keep_alive_file = NULL;
+    ResetReadAheadQueue();
+#endif
 }
 
 CdRomCueBinImage::~CdRomCueBinImage()
 {
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    StopReadAheadWorker();
+#endif
     DestroyImgFiles();
 }
 
@@ -43,6 +54,10 @@ void CdRomCueBinImage::Init()
 
 void CdRomCueBinImage::Reset()
 {
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    StopReadAheadWorker();
+    m_keep_alive_file = NULL;
+#endif
     CdRomImage::Reset();
     DestroyImgFiles();
 }
@@ -138,6 +153,11 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
             m_ready = PreloadDisc();
 
         CalculateCRC();
+
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+        if (m_ready && m_load_options.enable_read_ahead)
+            StartReadAheadWorker();
+#endif
     }
     else
     {
@@ -156,7 +176,15 @@ void CdRomCueBinImage::SetLoadOptions(const GG_CdRomCueBinLoadOptions& options)
     m_load_options = options;
 
     if (m_load_options.chunk_size == 0)
-        m_load_options.chunk_size = GG_CDROM_CUEBIN_DEFAULT_CHUNK_SIZE;
+        m_load_options.chunk_size = GG_CdRomCueBinDefaultLoadOptions().chunk_size;
+
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    if (m_load_options.enable_read_ahead && (m_load_options.read_ahead_chunks == 0))
+        m_load_options.read_ahead_chunks = GG_CdRomCueBinStreamingLoadOptions().read_ahead_chunks;
+#else
+    m_load_options.enable_read_ahead = false;
+    m_load_options.read_ahead_chunks = 0;
+#endif
 }
 
 bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
@@ -344,6 +372,14 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     u32 start_chunk = start_offset / chunk_size;
     u32 end_chunk = (start_offset + total_bytes - 1) / chunk_size;
     u32 chunks_needed = end_chunk - start_chunk + 1;
+
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    if (m_load_options.enable_read_ahead)
+    {
+        QueueReadAhead(track_file.img_file, start_chunk);
+        return true;
+    }
+#endif
 
     if (m_load_options.max_preload_chunks != GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK)
     {
@@ -885,10 +921,25 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
             track.sector_size = TrackTypeSectorSize(p.type);
             track_file.img_file = f.img_file;
 
+            bool file_starts_at_index1 = m_load_options.track_files_start_at_index1 &&
+                (f.tracks.size() == 1);
+
             if (p.has_pregap)
                 total_pregap_length += p.pregap_length;
 
-            track.start_lba = p.index1_lba + total_pregap_length + start_sector;
+            u32 index1_lba = p.index1_lba;
+
+            if (file_starts_at_index1 && (p.type == GG_CDROM_AUDIO_TRACK))
+            {
+                bool previous_track_is_data = !m_toc.tracks.empty() &&
+                    (m_toc.tracks.back().type != GG_CDROM_AUDIO_TRACK);
+
+                if (!previous_track_is_data)
+                    index1_lba = 0;
+            }
+
+            track.start_lba = index1_lba + total_pregap_length + start_sector;
+
             LbaToMsf(track.start_lba, &track.start_msf);
 
             if (p.has_pregap)
@@ -916,7 +967,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
 
             track.file_offset = current_file_offset;
 
-            if (track.has_lead_in && !p.has_pregap)
+            if (track.has_lead_in && !p.has_pregap && !file_starts_at_index1)
                 track.file_offset += (track.start_lba - track.lead_in_lba) * track.sector_size;
 
             m_toc.tracks.push_back(track);
@@ -989,46 +1040,55 @@ bool CdRomCueBinImage::ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer
     const u32 chunk_size = img_file->chunk_size;
     u32 chunk_index = offset / chunk_size;
     u32 chunk_offset = offset % chunk_size;
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    u32 last_chunk_index = chunk_index;
+#endif
 
-    if (img_file->chunks[chunk_index] == NULL)
+    if (!LoadChunk(img_file, chunk_index))
     {
-        if (!LoadChunk(img_file, chunk_index))
-        {
-            Error("Failed to load chunk %d", chunk_index);
-            return false;
-        }
+        Error("Failed to load chunk %d", chunk_index);
+        return false;
     }
 
-    if (chunk_offset + size <= chunk_size)
+    if (chunk_offset + size > chunk_size)
     {
-        //Debug("Reading %d bytes from chunk %d, offset %d", size, chunk_index, chunk_offset);
-        memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, size);
-    }
-    else
-    {
-        u32 first_part = chunk_size - chunk_offset;
-
-        //Debug("Reading %d bytes from chunk %d (crossing), offset %d", first_part, chunk_index, chunk_offset);
-        memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, first_part);
-
         if (chunk_index + 1 >= img_file->chunk_count)
         {
             Error("ReadFromImgFile failed - chunk boundary crossing exceeds chunk count (chunk %u, count %u)", chunk_index + 1, img_file->chunk_count);
             return false;
         }
 
-        if (img_file->chunks[chunk_index + 1] == NULL)
+        if (!LoadChunk(img_file, chunk_index + 1))
         {
-            if (!LoadChunk(img_file, chunk_index + 1))
-            {
-                Error("Failed to load chunk %d", chunk_index + 1);
-                return false;
-            }
+            Error("Failed to load chunk %d", chunk_index + 1);
+            return false;
         }
 
-        //Debug("Reading %d bytes from chunk %d (crossing), offset 0", size - first_part, chunk_index + 1);
-        memcpy(buffer + first_part, img_file->chunks[chunk_index + 1], size - first_part);
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+        last_chunk_index = chunk_index + 1;
+#endif
     }
+
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    {
+        std::lock_guard<std::mutex> lock(m_chunk_mutex);
+#endif
+
+        if (chunk_offset + size <= chunk_size)
+        {
+            memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, size);
+        }
+        else
+        {
+            u32 first_part = chunk_size - chunk_offset;
+            memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, first_part);
+            memcpy(buffer + first_part, img_file->chunks[chunk_index + 1], size - first_part);
+        }
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    }
+
+    QueueReadAhead(img_file, last_chunk_index + 1);
+#endif
 
     return true;
 }
@@ -1046,6 +1106,10 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
         Error("Cannot load chunk - Chunk index %u out of bounds (count: %u)", chunk_index, img_file->chunk_count);
         return false;
     }
+
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    std::lock_guard<std::mutex> lock(m_chunk_mutex);
+#endif
 
     if (!img_file->chunks[chunk_index])
     {
@@ -1078,6 +1142,10 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
             SafeDeleteArray(img_file->chunks[chunk_index]);
             return false;
         }
+
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+        m_keep_alive_file = img_file;
+#endif
     }
 
     return true;
@@ -1120,6 +1188,177 @@ bool CdRomCueBinImage::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 cou
 
     return true;
 }
+
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+void CdRomCueBinImage::QueueReadAhead(ImgFile* img_file, u32 start_chunk)
+{
+    if (!m_load_options.enable_read_ahead || (m_load_options.read_ahead_chunks == 0))
+        return;
+
+    if (!m_read_ahead_running.load())
+        return;
+
+    if (!IsValidPointer(img_file) || (start_chunk >= img_file->chunk_count))
+        return;
+
+    for (u32 i = 0; i < m_load_options.read_ahead_chunks; i++)
+    {
+        u32 chunk_index = start_chunk + i;
+        if (chunk_index >= img_file->chunk_count)
+            break;
+
+        QueueChunk(img_file, chunk_index);
+    }
+}
+
+void CdRomCueBinImage::QueueChunk(ImgFile* img_file, u32 chunk_index)
+{
+    if (!m_read_ahead_running.load())
+        return;
+
+    if (!IsValidPointer(img_file) || (chunk_index >= img_file->chunk_count))
+        return;
+
+    {
+        std::lock_guard<std::mutex> lock(m_chunk_mutex);
+        if (img_file->chunks[chunk_index] != NULL)
+            return;
+    }
+
+    std::lock_guard<std::mutex> lock(m_queue_mutex);
+
+    for (u32 i = 0; i < m_request_count; i++)
+    {
+        u32 queue_index = (m_request_head + i) % GG_CDROM_CUEBIN_READAHEAD_QUEUE_SIZE;
+        if ((m_request_queue[queue_index].img_file == img_file) && (m_request_queue[queue_index].chunk_index == chunk_index))
+            return;
+    }
+
+    if (m_request_count >= GG_CDROM_CUEBIN_READAHEAD_QUEUE_SIZE)
+        return;
+
+    m_request_queue[m_request_tail].img_file = img_file;
+    m_request_queue[m_request_tail].chunk_index = chunk_index;
+    m_request_tail = (m_request_tail + 1) % GG_CDROM_CUEBIN_READAHEAD_QUEUE_SIZE;
+    m_request_count++;
+    m_queue_condition.notify_one();
+}
+
+void CdRomCueBinImage::StartReadAheadWorker()
+{
+    if (m_read_ahead_running.load())
+        return;
+
+    ResetReadAheadQueue();
+    m_read_ahead_running.store(true);
+    m_read_ahead_thread = std::thread(&CdRomCueBinImage::ReadAheadThread, this);
+}
+
+void CdRomCueBinImage::StopReadAheadWorker()
+{
+    if (!m_read_ahead_running.load() && !m_read_ahead_thread.joinable())
+        return;
+
+    m_read_ahead_running.store(false);
+    m_queue_condition.notify_one();
+
+    if (m_read_ahead_thread.joinable())
+        m_read_ahead_thread.join();
+
+    ResetReadAheadQueue();
+}
+
+void CdRomCueBinImage::ReadAheadThread()
+{
+    std::chrono::steady_clock::time_point last_keep_alive = std::chrono::steady_clock::now();
+
+    while (m_read_ahead_running.load())
+    {
+        ReadAheadRequest request;
+        request.img_file = NULL;
+        request.chunk_index = 0;
+        bool has_request = false;
+
+        {
+            std::unique_lock<std::mutex> lock(m_queue_mutex);
+            if (m_request_count == 0)
+                m_queue_condition.wait_for(lock, std::chrono::milliseconds(100));
+
+            if (!m_read_ahead_running.load())
+                break;
+
+            if (m_request_count != 0)
+            {
+                request = m_request_queue[m_request_head];
+                m_request_head = (m_request_head + 1) % GG_CDROM_CUEBIN_READAHEAD_QUEUE_SIZE;
+                m_request_count--;
+                has_request = true;
+            }
+        }
+
+        if (has_request)
+        {
+            LoadChunk(request.img_file, request.chunk_index);
+            last_keep_alive = std::chrono::steady_clock::now();
+            continue;
+        }
+
+        std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - last_keep_alive).count() >= GG_CDROM_CUEBIN_KEEPALIVE_SECONDS)
+        {
+            KeepAliveFile();
+            last_keep_alive = now;
+        }
+    }
+}
+
+bool CdRomCueBinImage::KeepAliveFile()
+{
+    std::lock_guard<std::mutex> lock(m_chunk_mutex);
+
+    ImgFile* img_file = m_keep_alive_file;
+
+    if (!IsValidPointer(img_file) && !m_img_files.empty())
+        img_file = m_img_files[0];
+
+    if (!IsValidPointer(img_file) || !IsValidPointer(img_file->file) || (img_file->file_size == 0))
+        return false;
+
+    s64 file_end = (s64)img_file->file_size;
+    if (img_file->is_wav)
+        file_end += img_file->wav_data_offset;
+
+    s64 offset = img_file->file->Tell();
+    if ((offset < 0) || (offset >= file_end))
+        offset = img_file->is_wav ? img_file->wav_data_offset : 0;
+
+    if (!img_file->file->Seek(offset))
+        return false;
+
+    u32 read_size = (u32)MIN((s64)GG_CDROM_CUEBIN_KEEPALIVE_SIZE, file_end - offset);
+    if (read_size == 0)
+        return false;
+
+    u8 buffer[GG_CDROM_CUEBIN_KEEPALIVE_SIZE];
+    s64 read = img_file->file->Read(buffer, read_size);
+
+    if (read > 0)
+    {
+        m_keep_alive_file = img_file;
+        return true;
+    }
+
+    return false;
+}
+
+void CdRomCueBinImage::ResetReadAheadQueue()
+{
+    std::lock_guard<std::mutex> lock(m_queue_mutex);
+    m_request_head = 0;
+    m_request_tail = 0;
+    m_request_count = 0;
+}
+#endif
 
 void CdRomCueBinImage::CalculateCRC()
 {
