@@ -109,6 +109,7 @@ const GG_DB_Entry k_game_database[] =
     { 0xBA3E56D9, "Ryuuko no Ken (J)" , GG_GAMEDB_ARCADE_CARD },
     { 0x654C5174, "Shin Nihon Pro Wrestling - '94 Battlefield in Tokyo Dome (J)" , GG_GAMEDB_ARCADE_CARD },
     { 0x9C980BF1, "Strider Hiryuu (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0xCA07E386, "Sorcery Saga I: The Fiery Kindergarten Graduation [Translation]" , GG_GAMEDB_ARCADE_CARD },
     { 0x70F5F55B, "World Heroes 2 (J)" , GG_GAMEDB_ARCADE_CARD },
     { 0xC55F9963, "World Heroes 2 (J) [Demo]" , GG_GAMEDB_ARCADE_CARD },
     { 0xB597F0A9, "Wrestling Universe - Fire Pro Joshi - Dome Choujo Taisen - Zenjo vs. JWP (J)" , GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
