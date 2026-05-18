@@ -817,23 +817,23 @@ void MemEditor::DrawContexMenu(int address, bool cell_hovered, bool options)
 
         if (IsValidPointer(m_breakpoint_callback))
         {
-            int start = address;
-            int end = address;
-
-            if (m_selection_start >= 0 && m_selection_end >= 0)
-            {
-                int sel_start = MIN(m_selection_start, m_selection_end);
-                int sel_end = MAX(m_selection_start, m_selection_end);
-
-                if (address >= sel_start && address <= sel_end)
-                {
-                    start = sel_start;
-                    end = sel_end;
-                }
-            }
-
             if (ImGui::MenuItem("Toggle Breakpoint"))
             {
+                int start = address;
+                int end = address;
+
+                if (m_selection_start >= 0 && m_selection_end >= 0)
+                {
+                    int sel_start = MIN(m_selection_start, m_selection_end);
+                    int sel_end = MAX(m_selection_start, m_selection_end);
+
+                    if (address >= sel_start && address <= sel_end)
+                    {
+                        start = sel_start;
+                        end = sel_end;
+                    }
+                }
+
                 m_breakpoint_callback(m_breakpoint_editor, start, end);
             }
         }
