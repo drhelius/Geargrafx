@@ -492,47 +492,28 @@ INLINE bool HuC6280::RunToBreakpointHit()
     return m_run_to_breakpoint_hit;
 }
 
-INLINE std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints()
+INLINE const std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints() const
 {
     return &m_breakpoints;
 }
 
 INLINE bool HuC6280::HasPhysicalMemoryBreakpoints(bool read) const
 {
-    return read ? m_has_physical_memory_read_breakpoints
-        : m_has_physical_memory_write_breakpoints;
+    return m_breakpoints_enabled &&
+        m_physical_breakpoint_cache[read ? HuC6280_BREAKPOINT_ACCESS_READ : HuC6280_BREAKPOINT_ACCESS_WRITE];
 }
 
 INLINE bool HuC6280::HasPhysicalMemoryBreakpoints(int type, bool read) const
 {
-    switch (type)
-    {
-        case HuC6280_BREAKPOINT_TYPE_WRAM:
-            return read ? m_has_wram_read_breakpoints : m_has_wram_write_breakpoints;
+    if (!m_breakpoints_enabled || type < 0 || type >= HuC6280_BREAKPOINT_TYPE_COUNT)
+        return false;
 
-        case HuC6280_BREAKPOINT_TYPE_ZERO_PAGE:
-            return read ? m_has_zp_read_breakpoints : m_has_zp_write_breakpoints;
-
-        case HuC6280_BREAKPOINT_TYPE_ROM:
-            return read ? m_has_rom_read_breakpoints : false;
-
-        case HuC6280_BREAKPOINT_TYPE_CARD_RAM:
-            return read ? m_has_card_ram_read_breakpoints : m_has_card_ram_write_breakpoints;
-
-        case HuC6280_BREAKPOINT_TYPE_CDROM_RAM:
-            return read ? m_has_cd_ram_read_breakpoints : m_has_cd_ram_write_breakpoints;
-
-        case HuC6280_BREAKPOINT_TYPE_BACKUP_RAM:
-            return read ? m_has_bram_read_breakpoints : m_has_bram_write_breakpoints;
-
-        default:
-            return false;
-    }
+    return m_breakpoint_cache[type][read ? HuC6280_BREAKPOINT_ACCESS_READ : HuC6280_BREAKPOINT_ACCESS_WRITE];
 }
 
 INLINE bool HuC6280::HasPhysicalExecuteBreakpoints() const
 {
-    return m_has_physical_memory_exec_breakpoints;
+    return m_breakpoints_enabled && m_physical_breakpoint_cache[HuC6280_BREAKPOINT_ACCESS_EXECUTE];
 }
 
 INLINE std::stack<HuC6280::GG_CallStackEntry>* HuC6280::GetDisassemblerCallStack()

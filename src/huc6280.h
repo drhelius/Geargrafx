@@ -85,6 +85,14 @@ public:
         HuC6280_BREAKPOINT_TYPE_COUNT
     };
 
+    enum GG_Breakpoint_Access
+    {
+        HuC6280_BREAKPOINT_ACCESS_READ = 0,
+        HuC6280_BREAKPOINT_ACCESS_WRITE,
+        HuC6280_BREAKPOINT_ACCESS_EXECUTE,
+        HuC6280_BREAKPOINT_ACCESS_COUNT
+    };
+
     struct GG_Breakpoint
     {
         bool enabled;
@@ -138,13 +146,18 @@ public:
     bool AddBreakpoint(int type, u32 address1, u32 address2,
         bool range, bool read, bool write, bool execute);
     void AddRunToBreakpoint(u16 address);
-    void RemoveBreakpoint(int type, u32 address);
+    bool RemoveBreakpoint(int type, u32 address);
+    bool RemoveBreakpointRange(int type, u32 address1, u32 address2);
+    bool RemoveBreakpointAt(int index);
+    bool SetBreakpointEnabled(int index, bool enabled);
+    bool ToggleBreakpointAccess(int index, GG_Breakpoint_Access access);
     bool IsBreakpoint(int type, u32 address);
+    bool IsBreakpointRange(int type, u32 address1, u32 address2);
+    void SetBreakpoints(const std::vector<GG_Breakpoint>& breakpoints);
     bool HasPhysicalMemoryBreakpoints(int type, bool read) const;
     bool HasPhysicalMemoryBreakpoints(bool read) const;
     bool HasPhysicalExecuteBreakpoints() const;
-    void RefreshBreakpointFlags();
-    std::vector<GG_Breakpoint>* GetBreakpoints();
+    const std::vector<GG_Breakpoint>* GetBreakpoints() const;
     void ClearDisassemblerCallStack();
     std::stack<GG_CallStackEntry>* GetDisassemblerCallStack();
     void CheckMemoryBreakpoints(int type, u32 address, bool read);
@@ -187,23 +200,8 @@ private:
     u32 m_extra_master_cycles;
     s32 m_debug_next_irq;
     bool m_breakpoints_enabled;
-    bool m_has_wram_read_breakpoints;
-    bool m_has_wram_write_breakpoints;
-    bool m_has_zp_read_breakpoints;
-    bool m_has_zp_write_breakpoints;
-    bool m_has_rom_read_breakpoints;
-    bool m_has_rom_exec_breakpoints;
-    bool m_has_card_ram_read_breakpoints;
-    bool m_has_card_ram_write_breakpoints;
-    bool m_has_card_ram_exec_breakpoints;
-    bool m_has_cd_ram_read_breakpoints;
-    bool m_has_cd_ram_write_breakpoints;
-    bool m_has_cd_ram_exec_breakpoints;
-    bool m_has_bram_read_breakpoints;
-    bool m_has_bram_write_breakpoints;
-    bool m_has_physical_memory_read_breakpoints;
-    bool m_has_physical_memory_write_breakpoints;
-    bool m_has_physical_memory_exec_breakpoints;
+    bool m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_COUNT][HuC6280_BREAKPOINT_ACCESS_COUNT];
+    bool m_physical_breakpoint_cache[HuC6280_BREAKPOINT_ACCESS_COUNT];
     bool m_breakpoints_irq_enabled;
     bool m_cpu_breakpoint_hit;
     bool m_memory_breakpoint_hit;
@@ -224,6 +222,11 @@ private:
     bool BreakpointAddressMatches(HuC6280::GG_Breakpoint* brk, u32 address);
     bool GetBreakpointMaxAddress(const GG_Breakpoint& brk, u32& max_address);
     bool BreakpointAddressValid(const GG_Breakpoint &brk);
+    bool BreakpointAccessSupported(int type, GG_Breakpoint_Access access) const;
+    bool BreakpointAccessesValid(const GG_Breakpoint& brk) const;
+    bool BreakpointHasAccess(const GG_Breakpoint& brk, GG_Breakpoint_Access access) const;
+    void SetBreakpointAccess(GG_Breakpoint& brk, GG_Breakpoint_Access access, bool enabled);
+    void RefreshBreakpointFlags();
     void PushCallStack(u16 src, u16 dest, u16 back, u8 bank);
     void PopCallStack();
 

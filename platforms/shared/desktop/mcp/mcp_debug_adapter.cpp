@@ -174,45 +174,15 @@ bool DebugAdapter::SetBreakpointRange(u32 start_address, u32 end_address, int ty
 bool DebugAdapter::ClearBreakpointByAddress(u32 address, int type, bool range, u32 end_address)
 {
     HuC6280* cpu = m_core->GetHuC6280();
-    std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
-    bool removed = false;
-
-    for (int i = (int)breakpoints->size() - 1; i >= 0; i--)
-    {
-        HuC6280::GG_Breakpoint& bp = (*breakpoints)[i];
-
-        if (bp.type != type)
-            continue;
-
-        if (range)
-        {
-            if (bp.range && bp.address1 == address && bp.address2 == end_address)
-            {
-                breakpoints->erase(breakpoints->begin() + i);
-                removed = true;
-            }
-        }
-        else
-        {
-            if (!bp.range && bp.address1 == address)
-            {
-                breakpoints->erase(breakpoints->begin() + i);
-                removed = true;
-            }
-        }
-    }
-
-    if (removed)
-        cpu->RefreshBreakpointFlags();
-
-    return removed;
+    return range ? cpu->RemoveBreakpointRange(type, address, end_address)
+        : cpu->RemoveBreakpoint(type, address);
 }
 
 std::vector<BreakpointInfo> DebugAdapter::ListBreakpoints()
 {
     std::vector<BreakpointInfo> result;
     HuC6280* cpu = m_core->GetHuC6280();
-    std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
+    const std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
 
     for (const HuC6280::GG_Breakpoint& brk : *breakpoints)
     {

@@ -151,12 +151,12 @@ void gui_debug_save_settings(const char* file_path)
     GeargrafxCore* core = emu_get_core();
     HuC6280* processor = core->GetHuC6280();
 
-    std::vector<HuC6280::GG_Breakpoint>* breakpoints = processor->GetBreakpoints();
+    const std::vector<HuC6280::GG_Breakpoint>* breakpoints = processor->GetBreakpoints();
     int bp_count = (int)breakpoints->size();
     file.write((const char*)&bp_count, sizeof(int));
     for (int i = 0; i < bp_count; i++)
     {
-        HuC6280::GG_Breakpoint& bp = (*breakpoints)[i];
+        const HuC6280::GG_Breakpoint& bp = (*breakpoints)[i];
         file.write((const char*)&bp.enabled, sizeof(bool));
         file.write((const char*)&bp.type, sizeof(int));
         file.write((const char*)&bp.address1, sizeof(u32));
@@ -215,7 +215,7 @@ void gui_debug_load_settings(const char* file_path)
     processor->ResetBreakpoints();
     int bp_count = 0;
     file.read((char*)&bp_count, sizeof(int));
-    std::vector<HuC6280::GG_Breakpoint>* breakpoints = processor->GetBreakpoints();
+    std::vector<HuC6280::GG_Breakpoint> breakpoints;
     for (int i = 0; i < bp_count; i++)
     {
         HuC6280::GG_Breakpoint bp{};
@@ -227,9 +227,9 @@ void gui_debug_load_settings(const char* file_path)
         file.read((char*)&bp.write, sizeof(bool));
         file.read((char*)&bp.execute, sizeof(bool));
         file.read((char*)&bp.range, sizeof(bool));
-        breakpoints->push_back(bp);
+        breakpoints.push_back(bp);
     }
-    processor->RefreshBreakpointFlags();
+    processor->SetBreakpoints(breakpoints);
 
     file.read((char*)&emu_debug_irq_breakpoints, sizeof(bool));
 

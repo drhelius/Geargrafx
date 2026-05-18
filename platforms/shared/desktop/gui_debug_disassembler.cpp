@@ -435,38 +435,6 @@ static void draw_controls(void)
     ImGui::TextColored(emu_is_debug_idle() ? red : green, emu_is_debug_idle() ? "   PAUSED" : "   RUNNING");
 }
 
-static void toggle_breakpoint_flag(HuC6280::GG_Breakpoint* brk, bool* flag)
-{
-    if (!brk->enabled)
-    {
-        brk->enabled = true;
-        *flag = true;
-        return;
-    }
-
-    int active_flags = 0;
-
-    if (brk->read)
-        active_flags++;
-
-    if (brk->write && brk->type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROM)
-        active_flags++;
-
-    if (brk->execute && breakpoint_type_supports_execute(brk->type))
-    {
-        active_flags++;
-    }
-
-    if (*flag && active_flags <= 1)
-    {
-        *flag = false;
-        brk->enabled = false;
-        return;
-    }
-
-    *flag = !*flag;
-}
-
 struct BreakpointTypeInfo
 {
     HuC6280::GG_Breakpoint_Type type;
@@ -537,7 +505,7 @@ static std::vector<BreakpointTypeInfo> get_breakpoint_types()
     return entries;
 }
 
-static void breakpoint_address_string(HuC6280::GG_Breakpoint* brk, char* out, size_t out_size)
+static void breakpoint_address_string(const HuC6280::GG_Breakpoint* brk, char* out, size_t out_size)
 {
     int digits = 4;
 
@@ -666,15 +634,14 @@ static void draw_breakpoints_content(void)
     ImGui::PushFont(gui_default_font);
 
     int remove = -1;
-    int move_up = -1;
-    int move_down = -1;
-    std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
+    HuC6280* cpu = emu_get_core()->GetHuC6280();
+    const std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
 
     float max_address_width = 0.0f;
     char address_text[32];
     for (long unsigned int b = 0; b < breakpoints->size(); b++)
     {
-        HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
+        const HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
 
         breakpoint_address_string(brk, address_text, sizeof(address_text));
 
@@ -686,13 +653,13 @@ static void draw_breakpoints_content(void)
 
     for (long unsigned int b = 0; b < breakpoints->size(); b++)
     {
-        HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
+        const HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
 
         ImGui::PushID((int)b);
 
         ImGui::PushFont(gui_material_icons_font);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
-        ImVec2 bp_icon_btn_size = ImGui::CalcTextSize(ICON_MD_KEYBOARD_ARROW_UP);
+        ImVec2 bp_icon_btn_size = ImGui::CalcTextSize("X");
         bp_icon_btn_size.x += ImGui::GetStyle().FramePadding.x * 2.0f;
         bp_icon_btn_size.y += ImGui::GetStyle().FramePadding.y * 2.0f;
 
@@ -715,8 +682,7 @@ static void draw_breakpoints_content(void)
 
         if (ImGui::Button(brk->enabled ? "-##toggle_enabled" : "+##toggle_enabled", bp_icon_btn_size))
         {
-            brk->enabled = !brk->enabled;
-            emu_get_core()->GetHuC6280()->RefreshBreakpointFlags();
+            cpu->SetBreakpointEnabled((int)b, !brk->enabled);
         }
         if (ImGui::IsItemHovered())
         {
@@ -724,18 +690,6 @@ static void draw_breakpoints_content(void)
             ImGui::Text(brk->enabled ? "Disable breakpoint" : "Enable breakpoint");
             ImGui::EndTooltip();
         }
-
-        ImGui::SameLine(0, 2);
-        if (b == 0) ImGui::BeginDisabled();
-        if (ImGui::Button(ICON_MD_KEYBOARD_ARROW_UP "##move_up", bp_icon_btn_size))
-            move_up = (int)b;
-        if (b == 0) ImGui::EndDisabled();
-
-        ImGui::SameLine(0, 2);
-        if (b == breakpoints->size() - 1) ImGui::BeginDisabled();
-        if (ImGui::Button(ICON_MD_KEYBOARD_ARROW_DOWN "##move_down", bp_icon_btn_size))
-            move_down = (int)b;
-        if (b == breakpoints->size() - 1) ImGui::EndDisabled();
 
         ImGui::PopStyleVar();
         ImGui::PopFont();
@@ -758,8 +712,7 @@ static void draw_breakpoints_content(void)
         ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled&& brk->read ? orange : gray);
         if (ImGui::SmallButton("R##read_btn"))
         {
-            toggle_breakpoint_flag(brk, &brk->read);
-            emu_get_core()->GetHuC6280()->RefreshBreakpointFlags();
+            cpu->ToggleBreakpointAccess((int)b, HuC6280::HuC6280_BREAKPOINT_ACCESS_READ);
         }
         ImGui::PopStyleColor();
 
@@ -769,8 +722,7 @@ static void draw_breakpoints_content(void)
             ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled && brk->write ? orange : gray);
             if (ImGui::SmallButton("W##write_btn"))
             {
-                toggle_breakpoint_flag(brk, &brk->write);
-                emu_get_core()->GetHuC6280()->RefreshBreakpointFlags();
+                cpu->ToggleBreakpointAccess((int)b, HuC6280::HuC6280_BREAKPOINT_ACCESS_WRITE);
             }
             ImGui::PopStyleColor();
         }
@@ -787,8 +739,7 @@ static void draw_breakpoints_content(void)
             ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled && brk->execute ? orange : gray);
             if (ImGui::SmallButton("X##exec_btn"))
             {
-                toggle_breakpoint_flag(brk, &brk->execute);
-                emu_get_core()->GetHuC6280()->RefreshBreakpointFlags();
+                cpu->ToggleBreakpointAccess((int)b, HuC6280::HuC6280_BREAKPOINT_ACCESS_EXECUTE);
             }
             ImGui::PopStyleColor();
         }
@@ -844,17 +795,8 @@ static void draw_breakpoints_content(void)
 
     ImGui::PopFont();
 
-    if (move_up > 0)
-        std::swap((*breakpoints)[move_up], (*breakpoints)[move_up - 1]);
-
-    if (move_down >= 0 && move_down < (int)breakpoints->size() - 1)
-        std::swap((*breakpoints)[move_down], (*breakpoints)[move_down + 1]);
-
     if (remove >= 0)
-    {
-        breakpoints->erase(breakpoints->begin() + remove);
-        emu_get_core()->GetHuC6280()->RefreshBreakpointFlags();
-    }
+        cpu->RemoveBreakpointAt(remove);
 
     ImGui::EndChild();
     ImGui::Columns(1);
@@ -966,11 +908,11 @@ static void prepare_drawable_lines(void)
             snprintf(line.name_enhanced, 64, "%s", line.record->name);
             line.tooltip[0] = 0;
 
-            std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
+            const std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
 
             for (long unsigned int b = 0; b < breakpoints->size(); b++)
             {
-                HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
+                const HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
 
                 if (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS &&
                     brk->execute &&
