@@ -374,7 +374,7 @@ static bool parse_breakpoint_address_text(const char* text, u32& address1, u32& 
     if (dash == NULL)
     {
         // Single address
-        if (!parse_hex_address(text, address1))
+        if (!parse_hex_string(text, strlen(text), &address1))
             return false;
 
         address2 = 0;
@@ -406,8 +406,8 @@ static bool parse_breakpoint_address_text(const char* text, u32& address1, u32& 
     memcpy(right, dash + 1, right_len);
     right[right_len] = 0;
 
-    if ((!parse_hex_address(left, address1)) ||
-        (!parse_hex_address(right, address2)) ||
+    if ((!parse_hex_string(left, left_len, &address1)) ||
+        (!parse_hex_string(right, right_len, &address2)) ||
         (address1 > address2))
         return false;
 
