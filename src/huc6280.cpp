@@ -669,7 +669,7 @@ void HuC6280::CheckMemoryBreakpoints(int type, u32 address, bool read)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
 
-    if (!m_breakpoints_enabled)
+    if (!HasMemoryBreakpoints(type, read))
         return;
 
     for (int i = 0; i < (int)m_breakpoints.size(); i++)

@@ -154,7 +154,7 @@ public:
     bool IsBreakpoint(int type, u32 address);
     bool IsBreakpointRange(int type, u32 address1, u32 address2);
     void SetBreakpoints(const std::vector<GG_Breakpoint>& breakpoints);
-    bool HasPhysicalMemoryBreakpoints(int type, bool read) const;
+    bool HasMemoryBreakpoints(int type, bool read) const;
     bool HasPhysicalMemoryBreakpoints(bool read) const;
     bool HasPhysicalExecuteBreakpoints() const;
     const std::vector<GG_Breakpoint>* GetBreakpoints() const;
@@ -382,6 +382,20 @@ private:
 
 static const int k_huc6280_speed_divisor[2] = { 12, 3 };
 static const int k_huc6280_timer_divisor = (1024 * 3);
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+#define GG_CHECK_MEMORY_BREAKPOINT(cpu, type, address, read) \
+    do \
+    { \
+        if ((cpu)->HasMemoryBreakpoints((type), (read))) \
+            (cpu)->CheckMemoryBreakpoints((type), (address), (read)); \
+    } while (0)
+#else
+#define GG_CHECK_MEMORY_BREAKPOINT(cpu, type, address, read) \
+    do \
+    { \
+    } while (0)
+#endif
 
 #include "huc6280_inline.h"
 #include "huc6280_opcodes_inline.h"

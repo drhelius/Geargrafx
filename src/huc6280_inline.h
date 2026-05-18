@@ -503,7 +503,7 @@ INLINE bool HuC6280::HasPhysicalMemoryBreakpoints(bool read) const
         m_physical_breakpoint_cache[read ? HuC6280_BREAKPOINT_ACCESS_READ : HuC6280_BREAKPOINT_ACCESS_WRITE];
 }
 
-INLINE bool HuC6280::HasPhysicalMemoryBreakpoints(int type, bool read) const
+INLINE bool HuC6280::HasMemoryBreakpoints(int type, bool read) const
 {
     if (!m_breakpoints_enabled || type < 0 || type >= HuC6280_BREAKPOINT_TYPE_COUNT)
         return false;
