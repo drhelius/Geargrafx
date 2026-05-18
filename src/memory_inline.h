@@ -160,6 +160,7 @@ INLINE bool Memory::TryPeek(u16 address, u8 bank, u8* value)
         return false;
 
 #if defined(GG_TESTING)
+    UNUSED(bank);
     *value = m_test_memory[address];
     return true;
 #else
