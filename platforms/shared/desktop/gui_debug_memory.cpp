@@ -634,5 +634,10 @@ static void toggle_memory_breakpoint(int editor, int start, int end)
             cpu->AddBreakpoint(type, start, 0, false, true, false, false);
     }
     else
-        cpu->AddBreakpoint(type, start, end, true, true, false, false);
+    {
+        if (cpu->IsBreakpointRange(type, start, end))
+            cpu->RemoveBreakpointRange(type, start, end);
+        else
+            cpu->AddBreakpoint(type, start, end, true, true, false, false);
+    }
 }
