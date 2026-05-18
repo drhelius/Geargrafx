@@ -60,7 +60,6 @@ EXTERN void ogl_renderer_set_screen_geometry(const OglRendererScreenGeometry* ge
 EXTERN uint32_t ogl_renderer_get_screen_texture(void);
 EXTERN void ogl_renderer_get_screen_uv(float* u, float* v);
 EXTERN bool ogl_renderer_load_shader_preset(const char* path);
-EXTERN bool ogl_renderer_reload_shader_preset(void);
 EXTERN void ogl_renderer_unload_shader_preset(void);
 EXTERN void ogl_renderer_save_shader_parameter_config(void);
 

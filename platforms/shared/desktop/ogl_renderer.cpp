@@ -35,6 +35,7 @@
 #define OGL_RENDERER_IMPORT
 #include "ogl_renderer.h"
 #include "ogl_shader_chain.h"
+#include "ogl_shader_program.h"
 
 static uint32_t system_texture;
 static uint32_t frame_buffer_object;
@@ -67,10 +68,8 @@ static void update_debug_textures(void);
 static void update_savestates_texture(void);
 static void load_configured_shader_preset(void);
 static void apply_shader_parameter_config(void);
+static bool get_active_shader_preset_file(char* preset_file, size_t preset_file_size);
 static float get_original_aspect(void);
-static const char* get_glsl_version(void);
-static uint32_t compile_shader(uint32_t shader_type, const char* shader_name, const char** sources, int source_count);
-static uint32_t link_program(uint32_t vertex_shader, uint32_t fragment_shader, const char* program_name);
 static void configure_texture_2d(bool filter_linear);
 static void create_texture_2d(uint32_t* texture, int width, int height, int internal_format, uint32_t format, uint32_t type, const void* pixels, bool filter_linear);
 static void resize_texture_2d(uint32_t texture, int width, int height, int internal_format, uint32_t format, uint32_t type, const void* pixels, bool filter_linear);
@@ -239,28 +238,23 @@ void ogl_renderer_get_screen_uv(float* u, float* v)
 
 bool ogl_renderer_load_shader_preset(const char* path)
 {
-    bool same_path = path && config_video.shader_preset_path.compare(path) == 0;
+    char resolved_path[SHADER_PRESET_MAX_PATH];
+    if (!shader_preset_resolve_config_path(path, resolved_path, sizeof(resolved_path)))
+    {
+        Error("Shader preset is not in the bundled shader directory: %s", path ? path : "");
+        return false;
+    }
 
-    if (!ogl_shader_chain_load_preset(path))
+    if (!ogl_shader_chain_load_preset(resolved_path))
         return false;
 
     config_video.shader_mode = config_ShaderMode_External;
+    apply_shader_parameter_config();
 
-    if (same_path)
-        apply_shader_parameter_config();
+    char config_path[SHADER_PRESET_MAX_PATH];
+    if (shader_preset_get_config_path(resolved_path, config_path, sizeof(config_path)))
+        config_video.shader_preset_path.assign(config_path);
 
-    config_video.shader_preset_path.assign(path ? path : "");
-    ogl_renderer_save_shader_parameter_config();
-    return true;
-}
-
-bool ogl_renderer_reload_shader_preset(void)
-{
-    if (!ogl_shader_chain_reload_preset())
-        return false;
-
-    config_video.shader_mode = config_ShaderMode_External;
-    config_video.shader_preset_path.assign(ogl_shader_chain_get_preset_path());
     ogl_renderer_save_shader_parameter_config();
     return true;
 }
@@ -268,15 +262,17 @@ bool ogl_renderer_reload_shader_preset(void)
 void ogl_renderer_unload_shader_preset(void)
 {
     ogl_shader_chain_unload_preset();
-    config_video.shader_mode = config_ShaderMode_Off;
-    config_video.shader_parameter_count = 0;
+    config_video.shader_mode = config_ShaderMode_PixelPerfect;
+    config_video.shader_preset_path.clear();
 }
 
 void ogl_renderer_save_shader_parameter_config(void)
 {
+    char preset_file[SHADER_PRESET_MAX_PATH];
+    if (!get_active_shader_preset_file(preset_file, sizeof(preset_file)))
+        return;
+
     int count = ogl_shader_chain_get_parameter_count();
-    count = CLAMP(count, 0, config_shader_parameter_count);
-    config_video.shader_parameter_count = count;
 
     for (int i = 0; i < count; i++)
     {
@@ -284,8 +280,7 @@ void ogl_renderer_save_shader_parameter_config(void)
         if (!parameter)
             continue;
 
-        config_video.shader_parameter_name[i].assign(parameter->name);
-        config_video.shader_parameter_value[i] = parameter->value;
+        config_write_shader_parameter(preset_file, parameter->name, parameter->value);
     }
 }
 
@@ -354,7 +349,13 @@ static void render_internal_shader_chain(void)
     bool has_preset = ogl_shader_chain_has_preset();
     bool filter_linear = has_preset ? ogl_shader_chain_get_preset_filter_linear() : false;
 
-    if (!ogl_shader_chain_update_source_texture(current_runtime.screen_width, current_runtime.screen_height, emu_frame_buffer, filter_linear))
+    OglShaderChainSourceTexture source_texture;
+    source_texture.width = current_runtime.screen_width;
+    source_texture.height = current_runtime.screen_height;
+    source_texture.pixels = emu_frame_buffer;
+    source_texture.filter_linear = filter_linear;
+
+    if (!ogl_shader_chain_update_source_texture(&source_texture))
     {
         render_emu_normal();
         return;
@@ -366,7 +367,13 @@ static void render_internal_shader_chain(void)
         return;
     }
 
-    if (!ogl_shader_chain_resize_pass_texture(screen_geometry.physical_width, screen_geometry.physical_height, false))
+    OglShaderChainFramebufferTexture pass_texture;
+    pass_texture.width = screen_geometry.physical_width;
+    pass_texture.height = screen_geometry.physical_height;
+    pass_texture.filter_linear = false;
+    pass_texture.float_framebuffer = false;
+
+    if (!ogl_shader_chain_resize_pass_texture(&pass_texture))
     {
         render_emu_normal();
         return;
@@ -396,28 +403,42 @@ static void render_external_shader_chain(void)
     int input_width = original_width;
     int input_height = original_height;
     uint32_t input_texture = ogl_shader_chain_get_source_texture();
+    bool input_float_framebuffer = false;
 
     for (int i = 0; i < pass_count; i++)
     {
         int output_width = screen_geometry.physical_width;
         int output_height = screen_geometry.physical_height;
         bool final_pass = i == pass_count - 1;
+        OglShaderChainPassSize pass_size;
+        pass_size.source_width = original_width;
+        pass_size.source_height = original_height;
+        pass_size.previous_width = input_width;
+        pass_size.previous_height = input_height;
+        pass_size.viewport_width = screen_geometry.physical_width;
+        pass_size.viewport_height = screen_geometry.physical_height;
 
-        ogl_shader_chain_get_preset_pass_output_size(i, original_width, original_height, input_width, input_height,
-                screen_geometry.physical_width, screen_geometry.physical_height, &output_width, &output_height);
+        ogl_shader_chain_get_preset_pass_output_size(i, &pass_size, &output_width, &output_height);
 
         uint32_t output_fbo = 0;
         uint32_t output_texture = 0;
+        OglShaderChainFramebufferTexture framebuffer_texture;
+        framebuffer_texture.width = output_width;
+        framebuffer_texture.height = output_height;
+        framebuffer_texture.float_framebuffer = ogl_shader_chain_get_preset_pass_float_framebuffer(i);
+
         if (final_pass)
         {
-            if (!ogl_shader_chain_resize_pass_texture(output_width, output_height, false))
+            framebuffer_texture.filter_linear = false;
+            if (!ogl_shader_chain_resize_pass_texture(&framebuffer_texture))
                 return;
             output_fbo = ogl_shader_chain_get_pass_framebuffer();
             output_texture = ogl_shader_chain_get_pass_texture();
         }
         else
         {
-            if (!ogl_shader_chain_resize_intermediate_texture(i, output_width, output_height, ogl_shader_chain_get_preset_pass_filter_linear(i + 1)))
+            framebuffer_texture.filter_linear = ogl_shader_chain_get_preset_pass_filter_linear(i + 1);
+            if (!ogl_shader_chain_resize_intermediate_texture(i, &framebuffer_texture))
                 return;
             output_fbo = ogl_shader_chain_get_intermediate_framebuffer(i);
             output_texture = ogl_shader_chain_get_intermediate_texture(i);
@@ -426,9 +447,16 @@ static void render_external_shader_chain(void)
         glBindFramebuffer(GL_FRAMEBUFFER, output_fbo);
         render_quad_preset(i, ogl_shader_chain_get_preset_pass_program(i), input_texture, input_width, input_height, output_width, output_height);
 
+        if (ogl_shader_chain_get_preset_pass_uses_history(i))
+        {
+            ogl_shader_chain_store_pass_history(i, input_texture, input_width, input_height,
+                ogl_shader_chain_get_preset_pass_filter_linear(i), input_float_framebuffer);
+        }
+
         input_texture = output_texture;
         input_width = output_width;
         input_height = output_height;
+        input_float_framebuffer = framebuffer_texture.float_framebuffer;
     }
 
 
@@ -554,10 +582,28 @@ static void render_quad_preset(int pass_index, uint32_t program, uint32_t textur
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, ogl_shader_chain_get_feedback_texture());
 
+    for (int i = 0; i < SHADER_PRESET_MAX_HISTORY_TEXTURES; i++)
+    {
+        glActiveTexture(GL_TEXTURE3 + i);
+        glBindTexture(GL_TEXTURE_2D, ogl_shader_chain_get_pass_history_texture(pass_index, i));
+    }
+
     glUseProgram(program);
-    ogl_shader_chain_apply_preset_uniforms(pass_index, current_runtime.screen_width, current_runtime.screen_height,
-            input_width, input_height, viewport_width, viewport_height,
-            screen_geometry.physical_width, screen_geometry.physical_height, get_original_aspect());
+    OglShaderChainUniforms uniforms;
+    uniforms.source_width = current_runtime.screen_width;
+    uniforms.source_height = current_runtime.screen_height;
+    uniforms.input_width = input_width;
+    uniforms.input_height = input_height;
+    uniforms.output_width = viewport_width;
+    uniforms.output_height = viewport_height;
+    uniforms.viewport_width = screen_geometry.physical_width;
+    uniforms.viewport_height = screen_geometry.physical_height;
+    uniforms.original_aspect = get_original_aspect();
+    uniforms.background_color[0] = config_video.background_color[0];
+    uniforms.background_color[1] = config_video.background_color[1];
+    uniforms.background_color[2] = config_video.background_color[2];
+
+    ogl_shader_chain_apply_preset_uniforms(pass_index, &uniforms);
 
     glViewport(0, 0, viewport_width, viewport_height);
 
@@ -574,35 +620,56 @@ static void load_configured_shader_preset(void)
     if (config_video.shader_mode != config_ShaderMode_External || config_video.shader_preset_path.empty())
         return;
 
-    if (!ogl_shader_chain_load_preset(config_video.shader_preset_path.c_str()))
+    char resolved_path[SHADER_PRESET_MAX_PATH];
+    if (!shader_preset_resolve_config_path(config_video.shader_preset_path.c_str(), resolved_path, sizeof(resolved_path)))
     {
-        Error("Unable to load configured shader preset: %s", ogl_shader_chain_get_last_error());
+        Error("Configured shader preset is not available in the bundled shader directory: %s", config_video.shader_preset_path.c_str());
+        ogl_renderer_unload_shader_preset();
         return;
     }
+
+    if (!ogl_shader_chain_load_preset(resolved_path))
+    {
+        Error("Unable to load configured shader preset: %s", ogl_shader_chain_get_last_error());
+        ogl_renderer_unload_shader_preset();
+        return;
+    }
+
+    char config_path[SHADER_PRESET_MAX_PATH];
+    if (shader_preset_get_config_path(resolved_path, config_path, sizeof(config_path)))
+        config_video.shader_preset_path.assign(config_path);
+    else
+        config_video.shader_preset_path.clear();
 
     apply_shader_parameter_config();
 }
 
 static void apply_shader_parameter_config(void)
 {
-    int count = CLAMP(config_video.shader_parameter_count, 0, config_shader_parameter_count);
+    char preset_file[SHADER_PRESET_MAX_PATH];
+    if (!get_active_shader_preset_file(preset_file, sizeof(preset_file)))
+        return;
+
     int parameter_count = ogl_shader_chain_get_parameter_count();
 
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < parameter_count; i++)
     {
-        for (int j = 0; j < parameter_count; j++)
-        {
-            const ShaderPresetParameter* parameter = ogl_shader_chain_get_parameter(j);
-            if (!parameter)
-                continue;
+        const ShaderPresetParameter* parameter = ogl_shader_chain_get_parameter(i);
+        if (!parameter)
+            continue;
 
-            if (config_video.shader_parameter_name[i].compare(parameter->name) == 0)
-            {
-                ogl_shader_chain_set_parameter(j, config_video.shader_parameter_value[i]);
-                break;
-            }
-        }
+        float value = 0.0f;
+        if (config_read_shader_parameter(preset_file, parameter->name, &value))
+            ogl_shader_chain_set_parameter(i, value);
     }
+}
+
+static bool get_active_shader_preset_file(char* preset_file, size_t preset_file_size)
+{
+    if (!preset_file || preset_file_size == 0 || !ogl_shader_chain_has_preset())
+        return false;
+
+    return shader_preset_get_config_path(ogl_shader_chain_get_preset_path(), preset_file, preset_file_size);
 }
 
 static float get_original_aspect(void)
@@ -613,58 +680,6 @@ static float get_original_aspect(void)
     int width_scale = current_runtime.width_scale > 0 ? current_runtime.width_scale : 1;
     float logical_width = (float)current_runtime.screen_width / (float)width_scale;
     return logical_width / (float)current_runtime.screen_height;
-}
-
-static const char* get_glsl_version(void)
-{
-#if defined(__APPLE__)
-    return "#version 150\n";
-#else
-    return "#version 130\n";
-#endif
-}
-
-static uint32_t compile_shader(uint32_t shader_type, const char* shader_name, const char** sources, int source_count)
-{
-    uint32_t shader = glCreateShader(shader_type);
-    glShaderSource(shader, source_count, sources, NULL);
-    glCompileShader(shader);
-
-    GLint compiled = 0;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-    if (!compiled)
-    {
-        GLchar info[2048];
-        glGetShaderInfoLog(shader, sizeof(info), NULL, info);
-        Error("%s shader compile error: %s", shader_name, info);
-        glDeleteShader(shader);
-        return 0;
-    }
-
-    return shader;
-}
-
-static uint32_t link_program(uint32_t vertex_shader, uint32_t fragment_shader, const char* program_name)
-{
-    uint32_t program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glBindAttribLocation(program, 0, "aPos");
-    glBindAttribLocation(program, 1, "aTexCoord");
-    glLinkProgram(program);
-
-    GLint linked = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, &linked);
-    if (!linked)
-    {
-        GLchar info[2048];
-        glGetProgramInfoLog(program, sizeof(info), NULL, info);
-        Error("%s program link error: %s", program_name, info);
-        glDeleteProgram(program);
-        return 0;
-    }
-
-    return program;
 }
 
 static void configure_texture_2d(bool filter_linear)
@@ -700,7 +715,7 @@ static bool check_framebuffer_complete(const char* name)
 
 static bool init_shaders(void)
 {
-    const char* version = get_glsl_version();
+    const char* version = ogl_shader_program_get_glsl_version();
 
     const char* vs_body =
         "in vec2 aPos;\n"
@@ -725,18 +740,18 @@ static bool init_shaders(void)
     const char* vs_sources[2] = { version, vs_body };
     const char* fs_sources[2] = { version, fs_body };
 
-    uint32_t vs = compile_shader(GL_VERTEX_SHADER, "Quad vertex", vs_sources, 2);
+    uint32_t vs = ogl_shader_program_compile_shader(GL_VERTEX_SHADER, "Quad vertex", vs_sources, 2, NULL, 0);
     if (!vs)
         return false;
 
-    uint32_t fs = compile_shader(GL_FRAGMENT_SHADER, "Quad fragment", fs_sources, 2);
+    uint32_t fs = ogl_shader_program_compile_shader(GL_FRAGMENT_SHADER, "Quad fragment", fs_sources, 2, NULL, 0);
     if (!fs)
     {
         glDeleteShader(vs);
         return false;
     }
 
-    quad_shader_program = link_program(vs, fs, "Quad shader");
+    quad_shader_program = ogl_shader_program_link(vs, fs, "Quad shader", NULL, 0);
 
     glDeleteShader(vs);
     glDeleteShader(fs);

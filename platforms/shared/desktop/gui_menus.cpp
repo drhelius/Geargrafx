@@ -53,16 +53,18 @@ static bool open_syscard_bios = false;
 static bool open_gameexpress_bios = false;
 static bool save_debug_settings = false;
 static bool load_debug_settings = false;
-static bool load_shader_preset = false;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 static bool open_physical_cdrom = false;
 #endif
+static ShaderPresetInfo shader_presets[SHADER_PRESET_MAX_DISCOVERED];
+static int shader_preset_count = 0;
 
 static void menu_geargrafx(void);
 static void menu_emulator(void);
 static void menu_video(void);
 static void menu_shader(void);
 static void draw_shader_parameters(void);
+static bool shader_parameter_is_toggle(const ShaderPresetParameter* parameter);
 static void menu_input(void);
 static void menu_audio(void);
 static void menu_debug(void);
@@ -80,6 +82,7 @@ static void draw_savestate_slot_info(int slot);
 void gui_init_menus(void)
 {
     gui_shortcut_open_rom = false;
+    shader_preset_count = shader_preset_scan_bundled(shader_presets, SHADER_PRESET_MAX_DISCOVERED);
 }
 
 void gui_main_menu(void)
@@ -102,7 +105,6 @@ void gui_main_menu(void)
     open_gameexpress_bios = false;
     save_debug_settings = false;
     load_debug_settings = false;
-    load_shader_preset = false;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     open_physical_cdrom = false;
 #endif
@@ -961,31 +963,44 @@ static void menu_shader(void)
         return;
 
     bool has_preset = ogl_shader_chain_has_preset();
-    bool shader_off = config_video.shader_mode == config_ShaderMode_Off || !has_preset;
+    int selected_index = 0;
 
-    if (ImGui::MenuItem("Off", "", shader_off))
+    if (has_preset && config_video.shader_mode == config_ShaderMode_External)
     {
-        ogl_renderer_unload_shader_preset();
-        gui_set_status_message("Shader disabled", 3000);
+        for (int i = 0; i < shader_preset_count; i++)
+        {
+            if (shader_preset_config_path_matches(config_video.shader_preset_path.c_str(), shader_presets[i].path))
+            {
+                selected_index = i + 1;
+                break;
+            }
+        }
     }
 
-    if (ImGui::BeginMenu("Presets"))
+    const char* preview = selected_index == 0 ? "Pixel Perfect" : shader_presets[selected_index - 1].name;
+    ImGui::PushItemWidth(240.0f);
+    if (ImGui::BeginCombo("##ShaderPreset", preview))
     {
-        ShaderPresetInfo presets[SHADER_PRESET_MAX_DISCOVERED];
-        int count = shader_preset_scan_bundled(presets, SHADER_PRESET_MAX_DISCOVERED);
-        if (count == 0)
+        bool selected = selected_index == 0;
+        if (ImGui::Selectable("Pixel Perfect", selected))
         {
-            ImGui::MenuItem("No presets found", NULL, false, false);
-        }
-        else
-        {
-            for (int i = 0; i < count; i++)
+            if (selected_index != 0)
             {
-                bool selected = has_preset && config_video.shader_mode == config_ShaderMode_External &&
-                    config_video.shader_preset_path.compare(presets[i].path) == 0;
-                if (ImGui::MenuItem(presets[i].name, "", selected))
+                ogl_renderer_unload_shader_preset();
+                gui_set_status_message("Shader preset: Pixel Perfect", 3000);
+            }
+        }
+        if (selected)
+            ImGui::SetItemDefaultFocus();
+
+        for (int i = 0; i < shader_preset_count; i++)
+        {
+            selected = selected_index == i + 1;
+            if (ImGui::Selectable(shader_presets[i].name, selected))
+            {
+                if (selected_index != i + 1)
                 {
-                    if (ogl_renderer_load_shader_preset(presets[i].path))
+                    if (ogl_renderer_load_shader_preset(shader_presets[i].path))
                     {
                         std::string message("Shader preset loaded: ");
                         message += ogl_shader_chain_get_preset_name();
@@ -999,36 +1014,22 @@ static void menu_shader(void)
                     }
                 }
             }
+            if (selected)
+                ImGui::SetItemDefaultFocus();
         }
-        ImGui::EndMenu();
+        ImGui::EndCombo();
     }
+    ImGui::PopItemWidth();
 
-    if (ImGui::MenuItem("Load Preset..."))
-    {
-        load_shader_preset = true;
-    }
+    has_preset = ogl_shader_chain_has_preset();
 
-    if (ImGui::MenuItem("Reload Current Preset", "", false, has_preset))
+    if (has_preset && ogl_shader_chain_get_parameter_count() > 0)
     {
-        if (ogl_renderer_reload_shader_preset())
+        if (ImGui::BeginMenu("Parameters"))
         {
-            std::string message("Shader preset reloaded: ");
-            message += ogl_shader_chain_get_preset_name();
-            gui_set_status_message(message.c_str(), 3000);
+            draw_shader_parameters();
+            ImGui::EndMenu();
         }
-        else
-        {
-            std::string message("Shader preset failed: ");
-            message += ogl_shader_chain_get_last_error();
-            gui_set_status_message(message.c_str(), 5000);
-        }
-    }
-
-    if (has_preset)
-    {
-        ImGui::Separator();
-        ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "%s", ogl_shader_chain_get_preset_name());
-        draw_shader_parameters();
     }
     else if (ogl_shader_chain_get_last_error()[0] != '\0')
     {
@@ -1045,8 +1046,18 @@ static void draw_shader_parameters(void)
     if (count <= 0)
         return;
 
-    ImGui::Separator();
-    ImGui::PushItemWidth(220.0f);
+    const float parameter_width = 220.0f;
+
+    if (ImGui::Button("Restore Defaults", ImVec2(parameter_width, 0.0f)))
+    {
+        if (ogl_shader_chain_restore_default_parameters())
+        {
+            ogl_renderer_save_shader_parameter_config();
+            gui_set_status_message("Shader parameters restored", 3000);
+        }
+    }
+
+    ImGui::PushItemWidth(parameter_width);
 
     for (int i = 0; i < count; i++)
     {
@@ -1057,6 +1068,18 @@ static void draw_shader_parameters(void)
         float value = parameter->value;
         char label[160];
         snprintf(label, sizeof(label), "%s##shader_parameter_%d", parameter->label[0] != '\0' ? parameter->label : parameter->name, i);
+
+        if (shader_parameter_is_toggle(parameter))
+        {
+            bool enabled = value >= 0.5f;
+            if (ImGui::Checkbox(label, &enabled))
+            {
+                ogl_shader_chain_set_parameter(i, enabled ? 1.0f : 0.0f);
+                ogl_renderer_save_shader_parameter_config();
+            }
+            continue;
+        }
+
         if (ImGui::SliderFloat(label, &value, parameter->minimum, parameter->maximum, "%.3f"))
         {
             ogl_shader_chain_set_parameter(i, value);
@@ -1065,6 +1088,11 @@ static void draw_shader_parameters(void)
     }
 
     ImGui::PopItemWidth();
+}
+
+static bool shader_parameter_is_toggle(const ShaderPresetParameter* parameter)
+{
+    return parameter && parameter->minimum == 0.0f && parameter->maximum == 1.0f && parameter->step >= 1.0f;
 }
 
 static void menu_input(void)
@@ -1913,8 +1941,6 @@ static void file_dialogs(void)
         gui_file_dialog_save_debug_settings();
     if (load_debug_settings)
         gui_file_dialog_load_debug_settings();
-    if (load_shader_preset)
-        gui_file_dialog_load_shader_preset();
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     if (open_physical_cdrom)
     {

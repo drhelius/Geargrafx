@@ -26,6 +26,8 @@
 
 #define CONFIG_IMPORT
 #include "config.h"
+#include "shader_preset.h"
+#include "utils.h"
 
 static bool check_portable(void);
 static int read_int(const char* group, const char* key, int default_value);
@@ -39,6 +41,9 @@ static void write_string(const char* group, const char* key, const std::string& 
 static config_Hotkey read_hotkey(const char* group, const char* key, config_Hotkey default_value);
 static void write_hotkey(const char* group, const char* key, config_Hotkey hotkey);
 static config_Hotkey make_hotkey(SDL_Scancode key, SDL_Keymod mod);
+static std::string shader_preset_section_name(const char* preset_file);
+static bool parse_float_string(const std::string& value, float* result);
+static void write_shader_preset_parameter_defaults(void);
 static void set_defaults(void);
 
 static void set_defaults(void)
@@ -405,18 +410,9 @@ void config_read(void)
     config_video.lowpass_speed[0] = read_bool("Video", "LowpassSpeed536", false);
     config_video.lowpass_speed[1] = read_bool("Video", "LowpassSpeed716", true);
     config_video.lowpass_speed[2] = read_bool("Video", "LowpassSpeed108", true);
-    config_video.shader_mode = read_int("Video", "ShaderMode", config_ShaderMode_Off);
-    config_video.shader_mode = CLAMP(config_video.shader_mode, config_ShaderMode_Off, config_ShaderMode_External);
-    config_video.shader_preset_path = read_string("Video", "ShaderPresetPath");
-    config_video.shader_parameter_count = read_int("Video", "ShaderParameterCount", 0);
-    config_video.shader_parameter_count = CLAMP(config_video.shader_parameter_count, 0, config_shader_parameter_count);
-    for (int i = 0; i < config_video.shader_parameter_count; i++)
-    {
-        std::string name_key = "ShaderParameter" + std::to_string(i) + "Name";
-        std::string value_key = "ShaderParameter" + std::to_string(i) + "Value";
-        config_video.shader_parameter_name[i] = read_string("Video", name_key.c_str());
-        config_video.shader_parameter_value[i] = read_float("Video", value_key.c_str(), 0.0f);
-    }
+    config_video.shader_mode = read_int("Video", "ShaderMode", config_ShaderMode_PixelPerfect);
+    config_video.shader_mode = CLAMP(config_video.shader_mode, config_ShaderMode_PixelPerfect, config_ShaderMode_External);
+    config_video.shader_preset_path = read_string("Video", "ShaderPresetFile");
     config_video.sync = read_bool("Video", "Sync", true);
     config_video.background_color[0] = read_float("Video", "BackgroundColorR", 0.1f);
     config_video.background_color[1] = read_float("Video", "BackgroundColorG", 0.1f);
@@ -718,15 +714,8 @@ void config_write(void)
     write_bool("Video", "LowpassSpeed716", config_video.lowpass_speed[1]);
     write_bool("Video", "LowpassSpeed108", config_video.lowpass_speed[2]);
     write_int("Video", "ShaderMode", config_video.shader_mode);
-    write_string("Video", "ShaderPresetPath", config_video.shader_preset_path);
-    write_int("Video", "ShaderParameterCount", config_video.shader_parameter_count);
-    for (int i = 0; i < config_video.shader_parameter_count; i++)
-    {
-        std::string name_key = "ShaderParameter" + std::to_string(i) + "Name";
-        std::string value_key = "ShaderParameter" + std::to_string(i) + "Value";
-        write_string("Video", name_key.c_str(), config_video.shader_parameter_name[i]);
-        write_float("Video", value_key.c_str(), config_video.shader_parameter_value[i]);
-    }
+    write_string("Video", "ShaderPresetFile", get_filename(config_video.shader_preset_path.c_str()));
+    write_shader_preset_parameter_defaults();
     write_bool("Video", "Sync", config_video.sync);
     write_float("Video", "BackgroundColorR", config_video.background_color[0]);
     write_float("Video", "BackgroundColorG", config_video.background_color[1]);
@@ -1020,6 +1009,78 @@ static void write_hotkey(const char* group, const char* key, config_Hotkey hotke
 
     write_int(group, scancode_key.c_str(), hotkey.key);
     write_int(group, mod_key.c_str(), hotkey.mod);
+}
+
+static std::string shader_preset_section_name(const char* preset_file)
+{
+    return std::string("ShaderPreset.") + get_filename(preset_file);
+}
+
+static bool parse_float_string(const std::string& value, float* result)
+{
+    if (value.empty() || !result)
+        return false;
+
+    char* end = NULL;
+    float parsed = strtof(value.c_str(), &end);
+    if (end == value.c_str())
+        return false;
+
+    *result = parsed;
+    return true;
+}
+
+bool config_read_shader_parameter(const char* preset_file, const char* parameter_name, float* value)
+{
+    if (!preset_file || preset_file[0] == '\0' || !parameter_name || parameter_name[0] == '\0' || !value)
+        return false;
+
+    std::string section = shader_preset_section_name(preset_file);
+    if (!config_ini_data.has(section))
+        return false;
+
+    mINI::INIMap<std::string> parameters = config_ini_data.get(section);
+    if (!parameters.has(parameter_name))
+        return false;
+
+    return parse_float_string(parameters.get(parameter_name), value);
+}
+
+void config_write_shader_parameter(const char* preset_file, const char* parameter_name, float value)
+{
+    if (!preset_file || preset_file[0] == '\0' || !parameter_name || parameter_name[0] == '\0')
+        return;
+
+    std::string section = shader_preset_section_name(preset_file);
+    write_float(section.c_str(), parameter_name, value);
+}
+
+static void write_shader_preset_parameter_defaults(void)
+{
+    ShaderPresetInfo presets[SHADER_PRESET_MAX_DISCOVERED];
+    int preset_count = shader_preset_scan_bundled(presets, SHADER_PRESET_MAX_DISCOVERED);
+
+    for (int i = 0; i < preset_count; i++)
+    {
+        ShaderPreset preset;
+        char error[512];
+        if (!shader_preset_load(presets[i].path, &preset, error, sizeof(error)))
+            continue;
+
+        char preset_file[SHADER_PRESET_MAX_PATH];
+        if (!shader_preset_get_config_path(preset.preset_path, preset_file, sizeof(preset_file)))
+            continue;
+
+        std::string section = shader_preset_section_name(preset_file);
+        for (int j = 0; j < preset.parameter_count; j++)
+        {
+            ShaderPresetParameter* parameter = &preset.parameters[j];
+            if (config_ini_data[section].has(parameter->name))
+                continue;
+
+            write_float(section.c_str(), parameter->name, parameter->default_value);
+        }
+    }
 }
 
 static config_Hotkey make_hotkey(SDL_Scancode key, SDL_Keymod mod)

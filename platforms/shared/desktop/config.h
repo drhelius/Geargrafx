@@ -35,11 +35,10 @@
 static const int config_version = 2;
 static const int config_max_recent_roms = 10;
 static const int config_memory_editor_count = 14;
-static const int config_shader_parameter_count = 16;
 
 enum config_ShaderMode
 {
-    config_ShaderMode_Off = 0,
+    config_ShaderMode_PixelPerfect = 0,
     config_ShaderMode_External = 1
 };
 
@@ -103,11 +102,8 @@ struct config_Video
     float lowpass_intensity = 1.0f;
     float lowpass_cutoff_mhz = 5.0f;
     bool lowpass_speed[3] = { false, true, true };
-    int shader_mode = config_ShaderMode_Off;
+    int shader_mode = config_ShaderMode_PixelPerfect;
     std::string shader_preset_path;
-    int shader_parameter_count = 0;
-    std::string shader_parameter_name[config_shader_parameter_count];
-    float shader_parameter_value[config_shader_parameter_count] = {0.0f};
 };
 
 struct config_Audio
@@ -318,6 +314,8 @@ EXTERN void config_write(void);
 EXTERN void config_load_defaults(void);
 EXTERN void config_push_recent_media(const std::string& path);
 EXTERN void config_update_hotkey_string(config_Hotkey* hotkey);
+EXTERN bool config_read_shader_parameter(const char* preset_file, const char* parameter_name, float* value);
+EXTERN void config_write_shader_parameter(const char* preset_file, const char* parameter_name, float value);
 
 #undef CONFIG_IMPORT
 #undef EXTERN

@@ -49,7 +49,6 @@ EXTERN void gui_file_dialog_save_log(void);
 EXTERN void gui_file_dialog_save_debug_settings(void);
 EXTERN void gui_file_dialog_load_debug_settings(void);
 EXTERN void gui_file_dialog_load_palette(void);
-EXTERN void gui_file_dialog_load_shader_preset(void);
 EXTERN void gui_file_dialog_process_results(void);
 EXTERN bool gui_file_dialog_is_active(void);
 

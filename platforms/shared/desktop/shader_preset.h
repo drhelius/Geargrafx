@@ -9,9 +9,10 @@
 #define SHADER_PRESET_MAX_PATH 1024
 #define SHADER_PRESET_MAX_NAME 128
 #define SHADER_PRESET_MAX_PARAMETER_NAME 64
-#define SHADER_PRESET_MAX_PARAMETERS 16
+#define SHADER_PRESET_MAX_PARAMETERS 24
 #define SHADER_PRESET_MAX_DISCOVERED 32
 #define SHADER_PRESET_MAX_PASSES 8
+#define SHADER_PRESET_MAX_HISTORY_TEXTURES 4
 
 enum ShaderPresetScaleType
 {
@@ -26,6 +27,7 @@ struct ShaderPresetParameter
     char name[SHADER_PRESET_MAX_PARAMETER_NAME];
     char label[SHADER_PRESET_MAX_NAME];
     float value;
+    float default_value;
     float minimum;
     float maximum;
     float step;
@@ -36,6 +38,8 @@ struct ShaderPresetPass
     char shader_path[SHADER_PRESET_MAX_PATH];
     bool filter_linear;
     bool feedback;
+    bool history;
+    bool float_framebuffer;
     ShaderPresetScaleType scale_type_x;
     ShaderPresetScaleType scale_type_y;
     float scale_x;
@@ -75,6 +79,9 @@ EXTERN bool shader_preset_get_resource_root(char* path, size_t path_size);
 EXTERN int shader_preset_scan_bundled(ShaderPresetInfo* presets, int max_presets);
 EXTERN bool shader_preset_path_exists(const char* path);
 EXTERN bool shader_preset_is_preset_path(const char* path);
+EXTERN bool shader_preset_get_config_path(const char* preset_path, char* config_path, size_t config_path_size);
+EXTERN bool shader_preset_resolve_config_path(const char* config_path, char* preset_path, size_t preset_path_size);
+EXTERN bool shader_preset_config_path_matches(const char* config_path, const char* preset_path);
 
 #undef SHADER_PRESET_IMPORT
 #undef EXTERN

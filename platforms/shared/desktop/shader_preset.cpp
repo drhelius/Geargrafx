@@ -9,7 +9,6 @@
     #include <windows.h>
 #else
     #include <dirent.h>
-    #include <sys/stat.h>
 #endif
 
 #include "geargrafx.h"
@@ -28,18 +27,18 @@ static bool resolve_shader_path(const char* path, const char* preset_dir, char* 
 static bool get_candidate_resource_root(int index, char* path, size_t path_size);
 static bool scan_directory_for_presets(const char* directory, ShaderPresetInfo* presets, int max_presets, int* count);
 static bool add_discovered_preset(const char* path, ShaderPresetInfo* presets, int max_presets, int* count);
+static void scan_bundled_presets_once(void);
+static void sort_discovered_presets(ShaderPresetInfo* presets, int count);
 static bool parse_bool(const std::string& value, bool default_value);
 static int parse_int(const std::string& value, int default_value);
 static float parse_float(const std::string& value, float default_value);
 static ShaderPresetScaleType parse_scale_type(const std::string& value, ShaderPresetScaleType default_value);
 static void set_error(char* error, size_t error_size, const char* message);
 static void set_error_path(char* error, size_t error_size, const char* prefix, const char* path);
-static bool is_absolute_path(const char* path);
-static void get_directory(const char* path, char* directory, size_t directory_size);
-static void get_filename_without_extension(const char* path, char* name, size_t name_size);
-static bool join_path(const char* directory, const char* path, char* out_path, size_t out_path_size);
-static bool ends_with_no_case(const char* text, const char* suffix);
-static void copy_string(char* destination, size_t destination_size, const std::string& source);
+
+static ShaderPresetInfo bundled_presets[SHADER_PRESET_MAX_DISCOVERED];
+static int bundled_preset_count = 0;
+static bool bundled_presets_scanned = false;
 
 bool shader_preset_load(const char* path, ShaderPreset* preset, char* error, size_t error_size)
 {
@@ -76,7 +75,7 @@ bool shader_preset_load(const char* path, ShaderPreset* preset, char* error, siz
     if (name.empty())
         get_filename_without_extension(path, preset->name, sizeof(preset->name));
     else
-        copy_string(preset->name, sizeof(preset->name), name);
+        strncpy_fit(preset->name, name.c_str(), sizeof(preset->name));
 
     if (!load_passes(ini, preset, error, error_size))
         return false;
@@ -144,32 +143,76 @@ int shader_preset_scan_bundled(ShaderPresetInfo* presets, int max_presets)
     if (!presets || max_presets <= 0)
         return 0;
 
-    char root[SHADER_PRESET_MAX_PATH];
-    if (!shader_preset_get_resource_root(root, sizeof(root)))
-        return 0;
+    scan_bundled_presets_once();
 
-    int count = 0;
-    scan_directory_for_presets(root, presets, max_presets, &count);
+    int count = max_presets < bundled_preset_count ? max_presets : bundled_preset_count;
+    for (int i = 0; i < count; i++)
+        presets[i] = bundled_presets[i];
+
     return count;
 }
 
 bool shader_preset_path_exists(const char* path)
 {
-    if (!path || path[0] == '\0')
-        return false;
-
-#if defined(_WIN32)
-    DWORD attributes = GetFileAttributesA(path);
-    return attributes != INVALID_FILE_ATTRIBUTES;
-#else
-    struct stat info;
-    return stat(path, &info) == 0;
-#endif
+    return path_exists(path);
 }
 
 bool shader_preset_is_preset_path(const char* path)
 {
     return path && ends_with_no_case(path, SHADER_PRESET_EXTENSION);
+}
+
+bool shader_preset_get_config_path(const char* preset_path, char* config_path, size_t config_path_size)
+{
+    if (!config_path || config_path_size == 0)
+        return false;
+
+    config_path[0] = '\0';
+
+    if (!preset_path || preset_path[0] == '\0')
+        return false;
+
+    const char* filename = get_filename(preset_path);
+    if (!filename || filename[0] == '\0')
+        return false;
+
+    strncpy_fit(config_path, filename, config_path_size);
+    return true;
+}
+
+bool shader_preset_resolve_config_path(const char* config_path, char* preset_path, size_t preset_path_size)
+{
+    if (!preset_path || preset_path_size == 0)
+        return false;
+
+    preset_path[0] = '\0';
+
+    if (!config_path || config_path[0] == '\0')
+        return false;
+
+    ShaderPresetInfo presets[SHADER_PRESET_MAX_DISCOVERED];
+    int count = shader_preset_scan_bundled(presets, SHADER_PRESET_MAX_DISCOVERED);
+    for (int i = 0; i < count; i++)
+    {
+        if (shader_preset_config_path_matches(config_path, presets[i].path))
+        {
+            strncpy_fit(preset_path, presets[i].path, preset_path_size);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool shader_preset_config_path_matches(const char* config_path, const char* preset_path)
+{
+    if (!config_path || config_path[0] == '\0' || !preset_path || preset_path[0] == '\0')
+        return false;
+
+    if (strcmp(config_path, preset_path) == 0)
+        return true;
+
+    return strcmp(get_filename(config_path), get_filename(preset_path)) == 0;
 }
 
 static void clear_preset(ShaderPreset* preset)
@@ -208,6 +251,8 @@ static bool load_passes(const mINI::INIStructure& ini, ShaderPreset* preset, cha
 
         pass->filter_linear = false;
         pass->feedback = false;
+        pass->history = false;
+        pass->float_framebuffer = false;
         pass->scale_type_x = ShaderPresetScale_Viewport;
         pass->scale_type_y = ShaderPresetScale_Viewport;
         pass->scale_x = 1.0f;
@@ -239,6 +284,8 @@ static bool load_passes(const mINI::INIStructure& ini, ShaderPreset* preset, cha
         pass->filter_linear = parse_bool(filter, false) || filter == "Linear" || filter == "linear" || filter == "Bilinear" || filter == "bilinear";
 
         pass->feedback = parse_bool(ini.get(section).get("Feedback"), false);
+        pass->history = parse_bool(ini.get(section).get("History"), false);
+        pass->float_framebuffer = parse_bool(ini.get(section).get("FloatFramebuffer"), false);
 
         std::string scale_type = ini.get(section).get("ScaleType");
         pass->scale_type_x = parse_scale_type(ini.get(section).get("ScaleTypeX"), parse_scale_type(scale_type, ShaderPresetScale_Viewport));
@@ -274,8 +321,8 @@ static void load_parameters(const mINI::INIStructure& ini, ShaderPreset* preset)
         ShaderPresetParameter* parameter = &preset->parameters[preset->parameter_count];
         memset(parameter, 0, sizeof(*parameter));
 
-        copy_string(parameter->name, sizeof(parameter->name), it->first);
-        copy_string(parameter->label, sizeof(parameter->label), it->first);
+        strncpy_fit(parameter->name, it->first.c_str(), sizeof(parameter->name));
+        strncpy_fit(parameter->label, it->first.c_str(), sizeof(parameter->label));
         parameter->value = parse_float(it->second, 0.0f);
         parameter->minimum = 0.0f;
         parameter->maximum = 1.0f;
@@ -284,7 +331,7 @@ static void load_parameters(const mINI::INIStructure& ini, ShaderPreset* preset)
         std::string section = "Parameter." + it->first;
         std::string label = ini.get(section).get("Label");
         if (!label.empty())
-            copy_string(parameter->label, sizeof(parameter->label), label);
+            strncpy_fit(parameter->label, label.c_str(), sizeof(parameter->label));
 
         std::string min_value = ini.get(section).get("Min");
         std::string max_value = ini.get(section).get("Max");
@@ -302,6 +349,7 @@ static void load_parameters(const mINI::INIStructure& ini, ShaderPreset* preset)
         }
 
         parameter->value = CLAMP(parameter->value, parameter->minimum, parameter->maximum);
+        parameter->default_value = parameter->value;
         preset->parameter_count++;
     }
 }
@@ -431,6 +479,38 @@ static bool add_discovered_preset(const char* path, ShaderPresetInfo* presets, i
     return true;
 }
 
+static void scan_bundled_presets_once(void)
+{
+    if (bundled_presets_scanned)
+        return;
+
+    bundled_presets_scanned = true;
+    bundled_preset_count = 0;
+
+    char root[SHADER_PRESET_MAX_PATH];
+    if (!shader_preset_get_resource_root(root, sizeof(root)))
+        return;
+
+    scan_directory_for_presets(root, bundled_presets, SHADER_PRESET_MAX_DISCOVERED, &bundled_preset_count);
+    sort_discovered_presets(bundled_presets, bundled_preset_count);
+}
+
+static void sort_discovered_presets(ShaderPresetInfo* presets, int count)
+{
+    for (int i = 0; i < count - 1; i++)
+    {
+        for (int j = i + 1; j < count; j++)
+        {
+            if (strcmp(presets[i].name, presets[j].name) <= 0)
+                continue;
+
+            ShaderPresetInfo tmp = presets[i];
+            presets[i] = presets[j];
+            presets[j] = tmp;
+        }
+    }
+}
+
 static bool parse_bool(const std::string& value, bool default_value)
 {
     if (value.empty())
@@ -502,129 +582,4 @@ static void set_error_path(char* error, size_t error_size, const char* prefix, c
 
     snprintf(error, error_size, "%s: %s", prefix ? prefix : "Shader preset error", path ? path : "");
     error[error_size - 1] = '\0';
-}
-
-static bool is_absolute_path(const char* path)
-{
-    if (!path || path[0] == '\0')
-        return false;
-
-#if defined(_WIN32)
-    if ((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z'))
-        return path[1] == ':';
-    return path[0] == '\\' || path[0] == '/';
-#else
-    return path[0] == '/';
-#endif
-}
-
-static void get_directory(const char* path, char* directory, size_t directory_size)
-{
-    if (!directory || directory_size == 0)
-        return;
-
-    directory[0] = '\0';
-
-    if (!path)
-        return;
-
-    const char* slash = strrchr(path, '/');
-#if defined(_WIN32)
-    const char* backslash = strrchr(path, '\\');
-    if (!slash || (backslash && backslash > slash))
-        slash = backslash;
-#endif
-
-    if (!slash)
-    {
-        strncpy_fit(directory, ".", directory_size);
-        return;
-    }
-
-    size_t length = (size_t)(slash - path);
-    if (length >= directory_size)
-        length = directory_size - 1;
-
-    memcpy(directory, path, length);
-    directory[length] = '\0';
-}
-
-static void get_filename_without_extension(const char* path, char* name, size_t name_size)
-{
-    if (!name || name_size == 0)
-        return;
-
-    name[0] = '\0';
-
-    const char* start = path ? path : "";
-    const char* slash = strrchr(start, '/');
-#if defined(_WIN32)
-    const char* backslash = strrchr(start, '\\');
-    if (!slash || (backslash && backslash > slash))
-        slash = backslash;
-#endif
-    if (slash)
-        start = slash + 1;
-
-    const char* dot = strrchr(start, '.');
-    size_t length = dot ? (size_t)(dot - start) : strlen(start);
-    if (length >= name_size)
-        length = name_size - 1;
-
-    memcpy(name, start, length);
-    name[length] = '\0';
-}
-
-static bool join_path(const char* directory, const char* path, char* out_path, size_t out_path_size)
-{
-    if (!directory || !path || !out_path || out_path_size == 0)
-        return false;
-
-    if (is_absolute_path(path))
-    {
-        strncpy_fit(out_path, path, out_path_size);
-        return true;
-    }
-
-    size_t directory_length = strlen(directory);
-    const char* separator = (directory_length > 0 && directory[directory_length - 1] != '/' && directory[directory_length - 1] != '\\') ? "/" : "";
-    int written = snprintf(out_path, out_path_size, "%s%s%s", directory, separator, path);
-    if (written < 0 || (size_t)written >= out_path_size)
-    {
-        out_path[0] = '\0';
-        return false;
-    }
-
-    return true;
-}
-
-static bool ends_with_no_case(const char* text, const char* suffix)
-{
-    if (!text || !suffix)
-        return false;
-
-    size_t text_length = strlen(text);
-    size_t suffix_length = strlen(suffix);
-    if (text_length < suffix_length)
-        return false;
-
-    const char* start = text + text_length - suffix_length;
-    for (size_t i = 0; i < suffix_length; i++)
-    {
-        char a = start[i];
-        char b = suffix[i];
-        if (a >= 'A' && a <= 'Z')
-            a = (char)(a - 'A' + 'a');
-        if (b >= 'A' && b <= 'Z')
-            b = (char)(b - 'A' + 'a');
-        if (a != b)
-            return false;
-    }
-
-    return true;
-}
-
-static void copy_string(char* destination, size_t destination_size, const std::string& source)
-{
-    strncpy_fit(destination, source.c_str(), destination_size);
 }

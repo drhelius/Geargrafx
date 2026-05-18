@@ -11,10 +11,7 @@
 #define OGL_SHADER_PROGRAM_IMPORT
 #include "ogl_shader_program.h"
 
-static const char* get_glsl_version(void);
 static bool source_has_version(const char* source);
-static uint32_t compile_shader(uint32_t shader_type, const char* shader_name, const char** sources, int source_count, char* error, size_t error_size);
-static uint32_t link_program(uint32_t vertex_shader, uint32_t fragment_shader, const char* program_name, char* error, size_t error_size);
 static void set_error(char* error, size_t error_size, const char* message);
 
 uint32_t ogl_shader_program_create_fragment(const char* program_name, const char* fragment_source, char* error, size_t error_size)
@@ -28,7 +25,7 @@ uint32_t ogl_shader_program_create_fragment(const char* program_name, const char
         return 0;
     }
 
-    const char* version = get_glsl_version();
+    const char* version = ogl_shader_program_get_glsl_version();
 
     const char* vs_body =
         "in vec2 aPos;\n"
@@ -46,18 +43,18 @@ uint32_t ogl_shader_program_create_fragment(const char* program_name, const char
     const char** fs_sources = source_has_version(fragment_source) ? fs_sources_without_version : fs_sources_with_version;
     int fs_source_count = source_has_version(fragment_source) ? 1 : 2;
 
-    uint32_t vertex_shader = compile_shader(GL_VERTEX_SHADER, "Shader preset vertex", vs_sources, 2, error, error_size);
+    uint32_t vertex_shader = ogl_shader_program_compile_shader(GL_VERTEX_SHADER, "Shader preset vertex", vs_sources, 2, error, error_size);
     if (!vertex_shader)
         return 0;
 
-    uint32_t fragment_shader = compile_shader(GL_FRAGMENT_SHADER, program_name ? program_name : "Shader preset fragment", fs_sources, fs_source_count, error, error_size);
+    uint32_t fragment_shader = ogl_shader_program_compile_shader(GL_FRAGMENT_SHADER, program_name ? program_name : "Shader preset fragment", fs_sources, fs_source_count, error, error_size);
     if (!fragment_shader)
     {
         glDeleteShader(vertex_shader);
         return 0;
     }
 
-    uint32_t program = link_program(vertex_shader, fragment_shader, program_name ? program_name : "Shader preset", error, error_size);
+    uint32_t program = ogl_shader_program_link(vertex_shader, fragment_shader, program_name ? program_name : "Shader preset", error, error_size);
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
@@ -65,7 +62,7 @@ uint32_t ogl_shader_program_create_fragment(const char* program_name, const char
     return program;
 }
 
-static const char* get_glsl_version(void)
+const char* ogl_shader_program_get_glsl_version(void)
 {
 #if defined(__APPLE__)
     return "#version 150\n";
@@ -82,7 +79,7 @@ static bool source_has_version(const char* source)
     return strncmp(source, "#version", 8) == 0;
 }
 
-static uint32_t compile_shader(uint32_t shader_type, const char* shader_name, const char** sources, int source_count, char* error, size_t error_size)
+uint32_t ogl_shader_program_compile_shader(uint32_t shader_type, const char* shader_name, const char** sources, int source_count, char* error, size_t error_size)
 {
     uint32_t shader = glCreateShader(shader_type);
     glShaderSource(shader, source_count, sources, NULL);
@@ -103,7 +100,7 @@ static uint32_t compile_shader(uint32_t shader_type, const char* shader_name, co
     return shader;
 }
 
-static uint32_t link_program(uint32_t vertex_shader, uint32_t fragment_shader, const char* program_name, char* error, size_t error_size)
+uint32_t ogl_shader_program_link(uint32_t vertex_shader, uint32_t fragment_shader, const char* program_name, char* error, size_t error_size)
 {
     uint32_t program = glCreateProgram();
     glAttachShader(program, vertex_shader);
