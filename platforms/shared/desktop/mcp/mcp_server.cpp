@@ -323,7 +323,7 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address hex: '8000', '0x8000', or '$8000'."}
+                    {"description", "Address hex for selected memory area: '8000', '0x8000', or '$8000'."}
                 }},
                 {"memory_area", {
                     {"type", "string"},
@@ -356,11 +356,11 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"start_address", {
                     {"type", "string"},
-                    {"description", "Start logical address hex, e.g. '8000'."}
+                    {"description", "Start address hex for selected memory area, e.g. '8000'."}
                 }},
                 {"end_address", {
                     {"type", "string"},
-                    {"description", "End logical address hex, e.g. '8FFF'."}
+                    {"description", "End address hex for selected memory area, e.g. '8FFF'."}
                 }},
                 {"memory_area", {
                     {"type", "string"},
@@ -393,7 +393,7 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address hex; range removals use this as start."}
+                    {"description", "Address hex for selected memory area; range removals use this as start."}
                 }},
                 {"end_address", {
                     {"type", "string"},
@@ -1527,6 +1527,27 @@ static int GetBreakpointTypeFromString(const std::string& memory_area)
     return HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS; // default
 }
 
+static int GetBreakpointAddressDigits(int type)
+{
+    switch (type)
+    {
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM:
+            return 3;
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER:
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER:
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE:
+            return 2;
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ROM:
+            return 6;
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM:
+            return 5;
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM:
+            return 3;
+        default:
+            return 4;
+    }
+}
+
 json McpServer::ExecuteCommand(const std::string& toolName, const json& arguments)
 {
     // Normalize tool name: VS Code converts underscores to dots
@@ -1581,7 +1602,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     else if (normalizedTool == "set_breakpoint")
     {
         std::string addrStr = arguments["address"];
-        u16 address;
+        u32 address;
         if (!parse_hex_with_prefix(addrStr, &address))
             return {{"error", "Invalid address format"}};
 
@@ -1601,14 +1622,16 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         if (!read && !write && !execute)
             return {{"error", "At least one of read, write, or execute must be true"}};
 
-        m_debugAdapter.SetBreakpoint(address, breakpoint_type, read, write, execute);
+        if (!m_debugAdapter.SetBreakpoint(address, breakpoint_type, read, write, execute))
+            return {{"error", "Breakpoint address is out of range for memory area"}};
+
         return {{"success", true}, {"address", addrStr}, {"memory_area", memory_area}};
     }
     else if (normalizedTool == "set_breakpoint_range")
     {
         std::string startAddrStr = arguments["start_address"];
         std::string endAddrStr = arguments["end_address"];
-        u16 start_address, end_address;
+        u32 start_address, end_address;
 
         if (!parse_hex_with_prefix(startAddrStr, &start_address))
             return {{"error", "Invalid start_address format"}};
@@ -1633,14 +1656,16 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         if (!read && !write && !execute)
             return {{"error", "At least one of read, write, or execute must be true"}};
 
-        m_debugAdapter.SetBreakpointRange(start_address, end_address, breakpoint_type,
-                                         read, write, execute);
+        if (!m_debugAdapter.SetBreakpointRange(start_address, end_address, breakpoint_type,
+                                              read, write, execute))
+            return {{"error", "Breakpoint range is out of range for memory area"}};
+
         return {{"success", true}, {"start_address", startAddrStr}, {"end_address", endAddrStr}, {"memory_area", memory_area}};
     }
     else if (normalizedTool == "remove_breakpoint")
     {
         std::string addrStr = arguments["address"];
-        u16 address;
+        u32 address;
         if (!parse_hex_with_prefix(addrStr, &address))
             return {{"error", "Invalid address format"}};
 
@@ -1648,16 +1673,20 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         int breakpoint_type = GetBreakpointTypeFromString(memory_area);
 
         // Check if end_address is provided for range breakpoints
-        u16 end_address = 0;
+        u32 end_address = 0;
+        bool range = false;
         if (arguments.contains("end_address"))
         {
             std::string endAddrStr = arguments["end_address"];
             if (!parse_hex_with_prefix(endAddrStr, &end_address))
                 return {{"error", "Invalid end_address format"}};
+            if (address > end_address)
+                return {{"error", "address must be <= end_address"}};
+            range = true;
         }
 
-        m_debugAdapter.ClearBreakpointByAddress(address, breakpoint_type, end_address);
-        return {{"success", true}, {"address", addrStr}, {"memory_area", memory_area}};
+        bool removed = m_debugAdapter.ClearBreakpointByAddress(address, breakpoint_type, range, end_address);
+        return {{"success", true}, {"removed", removed}, {"address", addrStr}, {"memory_area", memory_area}};
     }
     else if (normalizedTool == "list_breakpoints")
     {
@@ -1670,13 +1699,14 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
             bpObj["type"] = bp.type_name;
 
             std::ostringstream addr_ss;
-            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << bp.address1;
+            int address_digits = GetBreakpointAddressDigits(bp.type);
+            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << bp.address1;
             bpObj["address"] = addr_ss.str();
 
             if (bp.range)
             {
                 std::ostringstream addr2_ss;
-                addr2_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << bp.address2;
+                addr2_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << bp.address2;
                 bpObj["address2"] = addr2_ss.str();
             }
 

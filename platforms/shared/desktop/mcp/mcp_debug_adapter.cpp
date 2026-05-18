@@ -159,37 +159,23 @@ json DebugAdapter::GetDebugStatus()
     return result;
 }
 
-void DebugAdapter::SetBreakpoint(u16 address, int type, bool read, bool write, bool execute)
+bool DebugAdapter::SetBreakpoint(u32 address, int type, bool read, bool write, bool execute)
 {
     HuC6280* cpu = m_core->GetHuC6280();
-
-    char buffer[16];
-    snprintf(buffer, sizeof(buffer), "%04X", address);
-
-    if (type == HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS && execute && !read && !write)
-    {
-        cpu->AddBreakpoint(address);
-    }
-    else
-    {
-        cpu->AddBreakpoint(type, buffer, read, write, execute);
-    }
+    return cpu->AddBreakpoint(type, address, 0, false, read, write, execute);
 }
 
-void DebugAdapter::SetBreakpointRange(u16 start_address, u16 end_address, int type, bool read, bool write, bool execute)
+bool DebugAdapter::SetBreakpointRange(u32 start_address, u32 end_address, int type, bool read, bool write, bool execute)
 {
     HuC6280* cpu = m_core->GetHuC6280();
-
-    char buffer[16];
-    snprintf(buffer, sizeof(buffer), "%04X-%04X", start_address, end_address);
-
-    cpu->AddBreakpoint(type, buffer, read, write, execute);
+    return cpu->AddBreakpoint(type, start_address, end_address, true, read, write, execute);
 }
 
-void DebugAdapter::ClearBreakpointByAddress(u16 address, int type, u16 end_address)
+bool DebugAdapter::ClearBreakpointByAddress(u32 address, int type, bool range, u32 end_address)
 {
     HuC6280* cpu = m_core->GetHuC6280();
     std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
+    bool removed = false;
 
     for (int i = (int)breakpoints->size() - 1; i >= 0; i--)
     {
@@ -198,17 +184,28 @@ void DebugAdapter::ClearBreakpointByAddress(u16 address, int type, u16 end_addre
         if (bp.type != type)
             continue;
 
-        if (end_address > 0 && end_address >= address)
+        if (range)
         {
             if (bp.range && bp.address1 == address && bp.address2 == end_address)
+            {
                 breakpoints->erase(breakpoints->begin() + i);
+                removed = true;
+            }
         }
         else
         {
             if (!bp.range && bp.address1 == address)
+            {
                 breakpoints->erase(breakpoints->begin() + i);
+                removed = true;
+            }
         }
     }
+
+    if (removed)
+        cpu->RefreshBreakpointFlags();
+
+    return removed;
 }
 
 std::vector<BreakpointInfo> DebugAdapter::ListBreakpoints()

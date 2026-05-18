@@ -56,8 +56,8 @@ struct BreakpointInfo
 {
     bool enabled;
     int type;
-    u16 address1;
-    u16 address2;
+    u32 address1;
+    u32 address2;
     bool read;
     bool write;
     bool execute;
@@ -103,9 +103,9 @@ public:
     json RunToAddress(u16 address);
 
     // Breakpoints
-    void SetBreakpoint(u16 address, int type, bool read, bool write, bool execute);
-    void SetBreakpointRange(u16 start_address, u16 end_address, int type, bool read, bool write, bool execute);
-    void ClearBreakpointByAddress(u16 address, int type, u16 end_address = 0);
+    bool SetBreakpoint(u32 address, int type, bool read, bool write, bool execute);
+    bool SetBreakpointRange(u32 start_address, u32 end_address, int type, bool read, bool write, bool execute);
+    bool ClearBreakpointByAddress(u32 address, int type, bool range = false, u32 end_address = 0);
     std::vector<BreakpointInfo> ListBreakpoints();
 
     // Registers
