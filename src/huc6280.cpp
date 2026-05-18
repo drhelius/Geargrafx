@@ -157,11 +157,6 @@ static const u32 k_breakpoint_max_address[HuC6280::HuC6280_BREAKPOINT_TYPE_COUNT
     0xFFFF,   // CD RAM
     0x07FF,   // BRAM
 };
-static_assert(
-    sizeof(k_breakpoint_max_address) / sizeof(k_breakpoint_max_address[0]) ==
-    HuC6280::HuC6280_BREAKPOINT_TYPE_COUNT,
-    "k_breakpoint_max_address has wrong number of BP types compared to GG_Breakpoint_Type"
-);
 
 bool HuC6280::GetBreakpointMaxAddress(const GG_Breakpoint& brk, u32& max_address)
 {
