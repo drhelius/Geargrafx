@@ -43,7 +43,7 @@ static void write_hotkey(const char* group, const char* key, config_Hotkey hotke
 static config_Hotkey make_hotkey(SDL_Scancode key, SDL_Keymod mod);
 static std::string shader_preset_section_name(const char* preset_file);
 static bool parse_float_string(const std::string& value, float* result);
-static void write_shader_preset_parameter_defaults(void);
+static void sync_shader_preset_parameter_defaults(void);
 static void set_defaults(void);
 
 static void set_defaults(void)
@@ -573,6 +573,8 @@ void config_read(void)
     config_hotkeys[config_HotkeyIndex_SelectSlot5] = read_hotkey("Hotkeys", "SelectSlot5", make_hotkey(SDL_SCANCODE_5, SDL_KMOD_CTRL));
     config_hotkeys[config_HotkeyIndex_Mute] = read_hotkey("Hotkeys", "Mute", make_hotkey(SDL_SCANCODE_U, SDL_KMOD_CTRL));
 
+    sync_shader_preset_parameter_defaults();
+
     Debug("Settings loaded");
 }
 
@@ -715,7 +717,7 @@ void config_write(void)
     write_bool("Video", "LowpassSpeed108", config_video.lowpass_speed[2]);
     write_int("Video", "ShaderMode", config_video.shader_mode);
     write_string("Video", "ShaderPresetFile", get_filename(config_video.shader_preset_path.c_str()));
-    write_shader_preset_parameter_defaults();
+    sync_shader_preset_parameter_defaults();
     write_bool("Video", "Sync", config_video.sync);
     write_float("Video", "BackgroundColorR", config_video.background_color[0]);
     write_float("Video", "BackgroundColorG", config_video.background_color[1]);
@@ -1055,7 +1057,7 @@ void config_write_shader_parameter(const char* preset_file, const char* paramete
     write_float(section.c_str(), parameter_name, value);
 }
 
-static void write_shader_preset_parameter_defaults(void)
+static void sync_shader_preset_parameter_defaults(void)
 {
     ShaderPresetInfo presets[SHADER_PRESET_MAX_DISCOVERED];
     int preset_count = shader_preset_scan_bundled(presets, SHADER_PRESET_MAX_DISCOVERED);
