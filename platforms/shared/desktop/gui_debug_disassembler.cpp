@@ -516,6 +516,46 @@ static int get_breakpoint_types(const BreakpointTypeInfo** entries)
     return count;
 }
 
+static const char* breakpoint_type_range_text(int type)
+{
+    switch (type)
+    {
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS:
+            return "0000-FFFF (16-bit logical)";
+
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM:
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM:
+            return "0000-7FFF";
+
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM:
+            return "0000-FFFF";
+
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM:
+            return "000-1FF";
+
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER:
+            return "00-13";
+
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER:
+            return "00-06";
+
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE:
+            return "00-FF";
+
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ROM:
+            return "000000-27FFFF";
+
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM:
+            return "00000-2FFFF";
+
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM:
+            return "000-7FF";
+
+        default:
+            return "";
+    }
+}
+
 static void breakpoint_address_string(const HuC6280::GG_Breakpoint* brk, char* out, size_t out_size)
 {
     int digits = 4;
@@ -638,16 +678,12 @@ static void draw_breakpoints_content(void)
         ImGui::TextUnformatted("Enter a hex address or address range.");
         ImGui::TextUnformatted("Examples: 8000, 8000-8FFF");
         ImGui::Separator();
-        ImGui::TextUnformatted("The valid range depends on the selected type:");
-        ImGui::TextUnformatted("CPU, CD RAM: 0000-FFFF");
-        ImGui::TextUnformatted("WRAM, VRAM: 0000-7FFF");
-        ImGui::TextUnformatted("ROM: 000000-27FFFF");
-        ImGui::TextUnformatted("Card RAM: 00000-2FFFF");
-        ImGui::TextUnformatted("Palette RAM: 000-1FF");
-        ImGui::TextUnformatted("BRAM: 000-7FF");
-        ImGui::TextUnformatted("Zero page: 00-FF");
-        ImGui::TextUnformatted("VDC registers: 00-13");
-        ImGui::TextUnformatted("VCE registers: 00-06");
+        ImGui::TextUnformatted("Available type ranges:");
+        for (int type_index = 0; type_index < type_count; type_index++)
+        {
+            const BreakpointTypeInfo* entry = type_entries[type_index];
+            ImGui::Text("%s: %s", entry->combo_label, breakpoint_type_range_text(entry->type));
+        }
         ImGui::EndTooltip();
     }
 
