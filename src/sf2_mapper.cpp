@@ -50,6 +50,35 @@ u8 SF2Mapper::Peek(u8 bank, u16 address)
     return SF2Mapper::Read(bank, address);
 }
 
+bool SF2Mapper::GetROMPhysicalAddress(u8 bank, u16 address, u32& rom_address)
+{
+    int rom_size = m_media->GetROMSize();
+
+    if (rom_size <= 0)
+        return false;
+
+    u32 phys = 0;
+    if (bank < 0x40)
+    {
+        u32* rom_bank_offset = m_media->GetROMBankOffset();
+
+        if (!IsValidPointer(rom_bank_offset))
+            return false;
+
+        phys = rom_bank_offset[bank] + address;
+    }
+    else
+    {
+        phys = ((u32)bank * 0x2000) + (u32)m_bank_address + address;
+    }
+
+    if (phys >= (u32)rom_size)
+        return false;
+
+    rom_address = phys;
+    return true;
+}
+
 void SF2Mapper::Write(u8 bank, u16 address, u8 value)
 {
     if ((bank == 0x00) && ((address & 0x1FF0) == 0x1FF0))

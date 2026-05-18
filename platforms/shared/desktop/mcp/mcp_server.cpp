@@ -317,18 +317,18 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "set_breakpoint"},
         {"title", "Set Breakpoint"},
-        {"description", "Add execute/read/write breakpoint at logical ROM/RAM, VRAM, palette, VDC, or VCE address."},
+        {"description", "Add execute/read/write breakpoint at CPU address (logical ROM/RAM), VRAM, palette, VDC, VCE, WRAM, ROM, Card RAM or CD RAM address."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address hex: '8000', '0x8000', or '$8000'."}
+                    {"description", "Address hex for selected memory area: '8000', '0x8000', or '$8000'."}
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg."},
-                    {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
+                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, wram, rom, zp, card_ram, cd_ram, backup_ram"},
+                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "zp", "palette", "huc6270_reg", "huc6260_reg", "wram", "rom", "card_ram", "cd_ram", "backup_ram"})}
                 }},
                 {"read", {
                     {"type", "boolean"},
@@ -340,7 +340,7 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"execute", {
                     {"type", "boolean"},
-                    {"description", "Break on execution; only valid for rom_ram. Default true."}
+                    {"description", "Break on execution. Valid for cpu_addr, rom_ram, rom, card_ram, cd_ram"}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -356,16 +356,16 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"start_address", {
                     {"type", "string"},
-                    {"description", "Start logical address hex, e.g. '8000'."}
+                    {"description", "Start address hex for selected memory area, e.g. '8000'."}
                 }},
                 {"end_address", {
                     {"type", "string"},
-                    {"description", "End logical address hex, e.g. '8FFF'."}
+                    {"description", "End address hex for selected memory area, e.g. '8FFF'."}
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: rom_ram, vram, palette, huc6270_reg, huc6260_reg."},
-                    {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
+                    {"description", "Memory area: cpu_addr, rom_ram, vram, palette, huc6270_reg, huc6260_reg, wram, zp, rom, card_ram, cd_ram, backup_ram"},
+                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "wram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
                 }},
                 {"read", {
                     {"type", "boolean"},
@@ -377,7 +377,7 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"execute", {
                     {"type", "boolean"},
-                    {"description", "Break on execution; only valid for rom_ram. Default true."}
+                    {"description", "Break on execution; Valid for cpu_addr, rom_ram, rom, card_ram, cd_ram."}
                 }}
             }},
             {"required", json::array({"start_address", "end_address"})}
@@ -393,7 +393,7 @@ void McpServer::HandleToolsList(const json& request)
             {"properties", {
                 {"address", {
                     {"type", "string"},
-                    {"description", "Logical address hex; range removals use this as start."}
+                    {"description", "Address hex for selected memory area; range removals use this as start."}
                 }},
                 {"end_address", {
                     {"type", "string"},
@@ -401,8 +401,8 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: rom_ram (default), vram, palette, huc6270_reg, huc6260_reg."},
-                    {"enum", json::array({"rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg"})}
+                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, wram, zp, rom, card_ram, cd_ram, backup_ram"},
+                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "wram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -1511,14 +1511,175 @@ void McpServer::HandleToolsCall(const json& request)
     m_commandQueue.Push(cmd);
 }
 
-static int GetBreakpointTypeFromString(const std::string& memory_area)
+static bool GetBreakpointTypeFromString(const std::string& memory_area, int& type)
 {
-    if (memory_area == "rom_ram") return HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM;
-    if (memory_area == "vram") return HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM;
-    if (memory_area == "palette") return HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM;
-    if (memory_area == "huc6270_reg") return HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER;
-    if (memory_area == "huc6260_reg") return HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER;
-    return HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM; // default
+    if (memory_area == "cpu_addr" || memory_area == "rom_ram")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS;
+        return true;
+    }
+
+    if (memory_area == "vram")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM;
+        return true;
+    }
+
+    if (memory_area == "palette")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM;
+        return true;
+    }
+
+    if (memory_area == "huc6270_reg")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER;
+        return true;
+    }
+
+    if (memory_area == "huc6260_reg")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER;
+        return true;
+    }
+
+    if (memory_area == "wram")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM;
+        return true;
+    }
+
+    if (memory_area == "zp")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE;
+        return true;
+    }
+
+    if (memory_area == "rom")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_ROM;
+        return true;
+    }
+
+    if (memory_area == "card_ram")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM;
+        return true;
+    }
+
+    if (memory_area == "cd_ram")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM;
+        return true;
+    }
+
+    if (memory_area == "backup_ram")
+    {
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM;
+        return true;
+    }
+
+    return false;
+}
+
+static int GetBreakpointAddressDigits(int type)
+{
+    switch (type)
+    {
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM:
+            return 3;
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER:
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER:
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE:
+            return 2;
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ROM:
+            return 6;
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM:
+            return 5;
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM:
+            return 3;
+        default:
+            return 4;
+    }
+}
+
+static bool McpBreakpointAccessSupported(int type, HuC6280::GG_Breakpoint_Access access)
+{
+    if (type < 0 || type >= HuC6280::HuC6280_BREAKPOINT_TYPE_COUNT)
+        return false;
+
+    switch (access)
+    {
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_READ:
+            return true;
+
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_WRITE:
+            return type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROM;
+
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_EXECUTE:
+            return type == HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS ||
+                type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROM ||
+                type == HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM ||
+                type == HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM;
+
+        default:
+            return false;
+    }
+}
+
+static const char* GetBreakpointAccessName(HuC6280::GG_Breakpoint_Access access)
+{
+    switch (access)
+    {
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_READ:
+            return "read";
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_WRITE:
+            return "write";
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_EXECUTE:
+            return "execute";
+        default:
+            return "unknown";
+    }
+}
+
+static bool ValidateBreakpointAccess(const std::string& memory_area, int type,
+    HuC6280::GG_Breakpoint_Access access, std::string& error)
+{
+    if (McpBreakpointAccessSupported(type, access))
+        return true;
+
+    error = "Unsupported breakpoint access for memory_area: " + memory_area +
+        " does not support " + GetBreakpointAccessName(access);
+    return false;
+}
+
+static bool ParseBreakpointAccesses(const json& arguments, const std::string& memory_area,
+    int type, bool& read, bool& write, bool& execute, std::string& error)
+{
+    read = arguments.value("read", false);
+    write = arguments.value("write", false);
+    execute = arguments.value("execute", true);
+
+    if (!arguments.contains("execute") &&
+        !McpBreakpointAccessSupported(type, HuC6280::HuC6280_BREAKPOINT_ACCESS_EXECUTE))
+        execute = false;
+
+    if (read && !ValidateBreakpointAccess(memory_area, type, HuC6280::HuC6280_BREAKPOINT_ACCESS_READ, error))
+        return false;
+
+    if (write && !ValidateBreakpointAccess(memory_area, type, HuC6280::HuC6280_BREAKPOINT_ACCESS_WRITE, error))
+        return false;
+
+    if (execute && !ValidateBreakpointAccess(memory_area, type, HuC6280::HuC6280_BREAKPOINT_ACCESS_EXECUTE, error))
+        return false;
+
+    if (!read && !write && !execute)
+    {
+        error = "At least one of read, write, or execute must be true";
+        return false;
+    }
+
+    return true;
 }
 
 json McpServer::ExecuteCommand(const std::string& toolName, const json& arguments)
@@ -1526,7 +1687,8 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     // Normalize tool name: VS Code converts underscores to dots
     std::string normalizedTool = toolName;
     size_t pos = 0;
-    while ((pos = normalizedTool.find('.', pos)) != std::string::npos) {
+    while ((pos = normalizedTool.find('.', pos)) != std::string::npos)
+    {
         normalizedTool[pos] = '_';
         pos++;
     }
@@ -1575,31 +1737,35 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     else if (normalizedTool == "set_breakpoint")
     {
         std::string addrStr = arguments["address"];
-        u16 address;
+        u32 address;
         if (!parse_hex_with_prefix(addrStr, &address))
             return {{"error", "Invalid address format"}};
 
-        std::string memory_area = arguments.value("memory_area", "rom_ram");
-        int breakpoint_type = GetBreakpointTypeFromString(memory_area);
+        std::string memory_area = arguments.value("memory_area", "cpu_addr");
+        int breakpoint_type = HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS;
 
-        bool read = arguments.value("read", false);
-        bool write = arguments.value("write", false);
-        bool execute = arguments.value("execute", true);
+        if (!GetBreakpointTypeFromString(memory_area, breakpoint_type))
+            return {{"error", "Invalid memory_area: " + memory_area}};
 
-        if (breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
-            execute = false;
+        bool read = false;
+        bool write = false;
+        bool execute = false;
+        std::string access_error;
 
-        if (!read && !write && !execute)
-            return {{"error", "At least one of read, write, or execute must be true"}};
+        if (!ParseBreakpointAccesses(arguments, memory_area, breakpoint_type,
+            read, write, execute, access_error))
+            return {{"error", access_error}};
 
-        m_debugAdapter.SetBreakpoint(address, breakpoint_type, read, write, execute);
+        if (!m_debugAdapter.SetBreakpoint(address, breakpoint_type, read, write, execute))
+            return {{"error", "Breakpoint address is out of range for memory area"}};
+
         return {{"success", true}, {"address", addrStr}, {"memory_area", memory_area}};
     }
     else if (normalizedTool == "set_breakpoint_range")
     {
         std::string startAddrStr = arguments["start_address"];
         std::string endAddrStr = arguments["end_address"];
-        u16 start_address, end_address;
+        u32 start_address, end_address;
 
         if (!parse_hex_with_prefix(startAddrStr, &start_address))
             return {{"error", "Invalid start_address format"}};
@@ -1608,44 +1774,55 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         if (start_address > end_address)
             return {{"error", "start_address must be <= end_address"}};
 
-        std::string memory_area = arguments.value("memory_area", "rom_ram");
-        int breakpoint_type = GetBreakpointTypeFromString(memory_area);
+        std::string memory_area = arguments.value("memory_area", "cpu_addr");
+        int breakpoint_type = HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS;
 
-        bool read = arguments.value("read", false);
-        bool write = arguments.value("write", false);
-        bool execute = arguments.value("execute", true);
+        if (!GetBreakpointTypeFromString(memory_area, breakpoint_type))
+            return {{"error", "Invalid memory_area: " + memory_area}};
 
-        if (breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM)
-            execute = false;
+        bool read = false;
+        bool write = false;
+        bool execute = false;
+        std::string access_error;
 
-        if (!read && !write && !execute)
-            return {{"error", "At least one of read, write, or execute must be true"}};
+        if (!ParseBreakpointAccesses(arguments, memory_area, breakpoint_type,
+            read, write, execute, access_error))
+            return {{"error", access_error}};
 
-        m_debugAdapter.SetBreakpointRange(start_address, end_address, breakpoint_type,
-                                         read, write, execute);
+        if (!m_debugAdapter.SetBreakpointRange(start_address, end_address, breakpoint_type,
+                                              read, write, execute))
+            return {{"error", "Breakpoint range is out of range for memory area"}};
+
         return {{"success", true}, {"start_address", startAddrStr}, {"end_address", endAddrStr}, {"memory_area", memory_area}};
     }
     else if (normalizedTool == "remove_breakpoint")
     {
         std::string addrStr = arguments["address"];
-        u16 address;
+        u32 address;
         if (!parse_hex_with_prefix(addrStr, &address))
             return {{"error", "Invalid address format"}};
 
-        std::string memory_area = arguments.value("memory_area", "rom_ram");
-        int breakpoint_type = GetBreakpointTypeFromString(memory_area);
+        std::string memory_area = arguments.value("memory_area", "cpu_addr");
+        int breakpoint_type = HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS;
+
+        if (!GetBreakpointTypeFromString(memory_area, breakpoint_type))
+            return {{"error", "Invalid memory_area: " + memory_area}};
 
         // Check if end_address is provided for range breakpoints
-        u16 end_address = 0;
+        u32 end_address = 0;
+        bool range = false;
         if (arguments.contains("end_address"))
         {
             std::string endAddrStr = arguments["end_address"];
             if (!parse_hex_with_prefix(endAddrStr, &end_address))
                 return {{"error", "Invalid end_address format"}};
+            if (address > end_address)
+                return {{"error", "address must be <= end_address"}};
+            range = true;
         }
 
-        m_debugAdapter.ClearBreakpointByAddress(address, breakpoint_type, end_address);
-        return {{"success", true}, {"address", addrStr}, {"memory_area", memory_area}};
+        bool removed = m_debugAdapter.ClearBreakpointByAddress(address, breakpoint_type, range, end_address);
+        return {{"success", true}, {"removed", removed}, {"address", addrStr}, {"memory_area", memory_area}};
     }
     else if (normalizedTool == "list_breakpoints")
     {
@@ -1658,13 +1835,14 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
             bpObj["type"] = bp.type_name;
 
             std::ostringstream addr_ss;
-            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << bp.address1;
+            int address_digits = GetBreakpointAddressDigits(bp.type);
+            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << bp.address1;
             bpObj["address"] = addr_ss.str();
 
             if (bp.range)
             {
                 std::ostringstream addr2_ss;
-                addr2_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << bp.address2;
+                addr2_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << bp.address2;
                 bpObj["address2"] = addr2_ss.str();
             }
 

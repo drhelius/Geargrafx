@@ -46,6 +46,7 @@ HuC6280::HuC6280()
     m_processor_state.TIMER_RELOAD = &m_timer_reload;
     m_processor_state.IDR = &m_interrupt_disable_register;
     m_processor_state.IRR = &m_interrupt_request_register;
+    RefreshBreakpointFlags();
 }
 
 HuC6280::~HuC6280()
@@ -139,51 +140,317 @@ void HuC6280::EnableBreakpoints(bool enable, bool irqs)
 void HuC6280::ResetBreakpoints()
 {
     m_breakpoints.clear();
+    RefreshBreakpointFlags();
 }
 
-bool HuC6280::AddBreakpoint(int type, char* text, bool read, bool write, bool execute)
+static const u32 k_breakpoint_max_address[HuC6280::HuC6280_BREAKPOINT_TYPE_COUNT] =
 {
-    int input_len = (int)strlen(text);
-    GG_Breakpoint brk;
+    0xFFFF,   // CPU Address
+    0x7FFF,   // VRAM
+    0x01FF,   // Palette RAM
+    0x0013,   // HuC6270 Reg
+    0x0006,   // HuC6260 Reg
+    0x7FFF,   // WRAM
+    0x00FF,   // ZP
+    0x27FFFF, // ROM
+    0x2FFFF,  // Card RAM
+    0xFFFF,   // CD RAM
+    0x07FF,   // BRAM
+};
+
+bool HuC6280::GetBreakpointMaxAddress(const GG_Breakpoint& brk, u32& max_address)
+{
+    if (brk.type < 0 || brk.type >= HuC6280_BREAKPOINT_TYPE_COUNT)
+        return false;
+
+    switch (brk.type)
+    {
+        case HuC6280_BREAKPOINT_TYPE_WRAM:
+        {
+            int size = m_memory->GetWorkingRAMSize();
+            if (size <= 0)
+                return false;
+
+            max_address = (u32)(size - 1);
+            return true;
+        }
+        case HuC6280_BREAKPOINT_TYPE_ROM:
+        {
+            int size = m_memory->GetROMSize();
+            if (size <= 0)
+                return false;
+
+            max_address = (u32)(size - 1);
+            return true;
+        }
+
+        case HuC6280_BREAKPOINT_TYPE_CARD_RAM:
+        {
+            int size = m_memory->GetCardRAMSize();
+            if (size <= 0)
+                return false;
+
+            max_address = (u32)(size - 1);
+            return true;
+        }
+
+        case HuC6280_BREAKPOINT_TYPE_CDROM_RAM:
+        {
+            int size = m_memory->GetCDROMRAMSize();
+            if (size <= 0)
+                return false;
+
+            max_address = (u32)(size - 1);
+            return true;
+        }
+
+        default:
+            max_address = k_breakpoint_max_address[brk.type];
+            return true;
+    }
+}
+
+bool HuC6280::BreakpointAddressValid(const GG_Breakpoint &brk)
+{
+    u32 max_address = 0;
+    if (!GetBreakpointMaxAddress(brk, max_address))
+        return false;
+
+    if (brk.range)
+    {
+        if (brk.address1 > brk.address2)
+            return false;
+
+        if (brk.address1 > max_address || brk.address2 > max_address)
+            return false;
+    }
+    else
+    {
+        if (brk.address1 > max_address)
+            return false;
+    }
+
+    return true;
+}
+
+void HuC6280::RefreshBreakpointFlags()
+{
+    memset(m_breakpoint_cache, 0, sizeof(m_breakpoint_cache));
+    memset(m_physical_breakpoint_cache, 0, sizeof(m_physical_breakpoint_cache));
+
+    for (long unsigned int i = 0; i < m_breakpoints.size(); i++)
+    {
+        GG_Breakpoint* brk = &m_breakpoints[i];
+
+        if (!brk->enabled)
+            continue;
+
+        if (brk->type < 0 || brk->type >= HuC6280_BREAKPOINT_TYPE_COUNT)
+            continue;
+
+        if (brk->read && BreakpointAccessSupported(brk->type, HuC6280_BREAKPOINT_ACCESS_READ))
+            m_breakpoint_cache[brk->type][HuC6280_BREAKPOINT_ACCESS_READ] = true;
+
+        if (brk->write && BreakpointAccessSupported(brk->type, HuC6280_BREAKPOINT_ACCESS_WRITE))
+            m_breakpoint_cache[brk->type][HuC6280_BREAKPOINT_ACCESS_WRITE] = true;
+
+        if (brk->execute && BreakpointAccessSupported(brk->type, HuC6280_BREAKPOINT_ACCESS_EXECUTE))
+            m_breakpoint_cache[brk->type][HuC6280_BREAKPOINT_ACCESS_EXECUTE] = true;
+    }
+
+    m_physical_breakpoint_cache[HuC6280_BREAKPOINT_ACCESS_READ] =
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_WRAM][HuC6280_BREAKPOINT_ACCESS_READ] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_ZERO_PAGE][HuC6280_BREAKPOINT_ACCESS_READ] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_ROM][HuC6280_BREAKPOINT_ACCESS_READ] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CARD_RAM][HuC6280_BREAKPOINT_ACCESS_READ] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CDROM_RAM][HuC6280_BREAKPOINT_ACCESS_READ] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_BACKUP_RAM][HuC6280_BREAKPOINT_ACCESS_READ];
+
+    m_physical_breakpoint_cache[HuC6280_BREAKPOINT_ACCESS_WRITE] =
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_WRAM][HuC6280_BREAKPOINT_ACCESS_WRITE] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_ZERO_PAGE][HuC6280_BREAKPOINT_ACCESS_WRITE] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CARD_RAM][HuC6280_BREAKPOINT_ACCESS_WRITE] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CDROM_RAM][HuC6280_BREAKPOINT_ACCESS_WRITE] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_BACKUP_RAM][HuC6280_BREAKPOINT_ACCESS_WRITE];
+
+    m_physical_breakpoint_cache[HuC6280_BREAKPOINT_ACCESS_EXECUTE] =
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_ROM][HuC6280_BREAKPOINT_ACCESS_EXECUTE] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CARD_RAM][HuC6280_BREAKPOINT_ACCESS_EXECUTE] ||
+        m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CDROM_RAM][HuC6280_BREAKPOINT_ACCESS_EXECUTE];
+}
+
+bool HuC6280::BreakpointAccessSupported(int type, GG_Breakpoint_Access access) const
+{
+    if (type < 0 || type >= HuC6280_BREAKPOINT_TYPE_COUNT)
+        return false;
+
+    switch (access)
+    {
+        case HuC6280_BREAKPOINT_ACCESS_READ:
+            return true;
+
+        case HuC6280_BREAKPOINT_ACCESS_WRITE:
+            return type != HuC6280_BREAKPOINT_TYPE_ROM;
+
+        case HuC6280_BREAKPOINT_ACCESS_EXECUTE:
+            return type == HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS ||
+                type == HuC6280_BREAKPOINT_TYPE_ROM ||
+                type == HuC6280_BREAKPOINT_TYPE_CARD_RAM ||
+                type == HuC6280_BREAKPOINT_TYPE_CDROM_RAM;
+
+        default:
+            return false;
+    }
+}
+
+bool HuC6280::BreakpointHasAccess(const GG_Breakpoint& brk, GG_Breakpoint_Access access) const
+{
+    switch (access)
+    {
+        case HuC6280_BREAKPOINT_ACCESS_READ:
+            return brk.read;
+        case HuC6280_BREAKPOINT_ACCESS_WRITE:
+            return brk.write;
+        case HuC6280_BREAKPOINT_ACCESS_EXECUTE:
+            return brk.execute;
+        default:
+            return false;
+    }
+}
+
+void HuC6280::SetBreakpointAccess(GG_Breakpoint& brk, GG_Breakpoint_Access access, bool enabled)
+{
+    switch (access)
+    {
+        case HuC6280_BREAKPOINT_ACCESS_READ:
+            brk.read = enabled;
+            break;
+        case HuC6280_BREAKPOINT_ACCESS_WRITE:
+            brk.write = enabled;
+            break;
+        case HuC6280_BREAKPOINT_ACCESS_EXECUTE:
+            brk.execute = enabled;
+            break;
+        default:
+            break;
+    }
+}
+
+bool HuC6280::BreakpointAccessesValid(const GG_Breakpoint& brk) const
+{
+    bool active = false;
+
+    if (brk.read)
+    {
+        if (!BreakpointAccessSupported(brk.type, HuC6280_BREAKPOINT_ACCESS_READ))
+            return false;
+        active = true;
+    }
+
+    if (brk.write)
+    {
+        if (!BreakpointAccessSupported(brk.type, HuC6280_BREAKPOINT_ACCESS_WRITE))
+            return false;
+        active = true;
+    }
+
+    if (brk.execute)
+    {
+        if (!BreakpointAccessSupported(brk.type, HuC6280_BREAKPOINT_ACCESS_EXECUTE))
+            return false;
+        active = true;
+    }
+
+    return active;
+}
+
+static bool parse_breakpoint_address_text(const char* text, u32& address1, u32& address2, bool& range)
+{
+    if (!IsValidPointer(text))
+        return false;
+
+    const char* dash = strchr(text, '-');
+
+    if (dash == NULL)
+    {
+        // Single address
+        if (!parse_hex_string(text, strlen(text), &address1))
+            return false;
+
+        address2 = 0;
+        range = false;
+        return true;
+    }
+
+    // Range
+
+    // Reject multiple dashes.
+    if (strchr(dash + 1, '-') != NULL)
+        return false;
+
+    size_t left_len = dash - text;
+    size_t right_len = strlen(dash + 1);
+
+    if (left_len == 0 || right_len == 0)
+        return false;
+
+    char left[9];
+    char right[9];
+
+    if (left_len >= sizeof(left) || right_len >= sizeof(right))
+        return false;
+
+    memcpy(left, text, left_len);
+    left[left_len] = 0;
+
+    memcpy(right, dash + 1, right_len);
+    right[right_len] = 0;
+
+    if ((!parse_hex_string(left, left_len, &address1)) ||
+        (!parse_hex_string(right, right_len, &address2)) ||
+        (address1 > address2))
+        return false;
+
+    range = true;
+    return true;
+}
+
+bool HuC6280::AddBreakpoint(int type, const char* text, bool read, bool write, bool execute)
+{
+    u32 address1 = 0;
+    u32 address2 = 0;
+    bool range = false;
+
+    if (!parse_breakpoint_address_text(text, address1, address2, range))
+        return false;
+
+    return AddBreakpoint(type, address1, address2, range, read, write, execute);
+}
+
+bool HuC6280::AddBreakpoint(u16 address)
+{
+    return AddBreakpoint(
+        HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS,
+        address, 0, false, false, false, true);
+}
+
+bool HuC6280::AddBreakpoint(int type, u32 address1, u32 address2,
+    bool range, bool read, bool write, bool execute)
+{
+    GG_Breakpoint brk{};
     brk.enabled = true;
     brk.type = type;
-    brk.address1 = 0;
-    brk.address2 = 0;
-    brk.range = false;
+    brk.address1 = address1;
+    brk.address2 = range ? address2 : 0;
+    brk.range = range;
     brk.read = read;
     brk.write = write;
     brk.execute = execute;
 
-    if (!read && !write && !execute)
+    if (!BreakpointAccessesValid(brk) || !BreakpointAddressValid(brk))
         return false;
 
-    if ((input_len == 9) && (text[4] == '-'))
-    {
-        // format: AAAA-BBBB
-        if (parse_hex_string(text, 4, &brk.address1) &&
-            parse_hex_string(text + 5, 4, &brk.address2))
-        {
-            brk.range = true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    else if ((input_len > 0) && (input_len <= 4))
-    {
-        // format: AAAA
-        if (!parse_hex_string(text, input_len, &brk.address1))
-        {
-            return false;
-        }
-    }
-    else
-    {
-        return false;
-    }
-
-    bool found = false;
+    bool changed = false;
 
     for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
     {
@@ -192,41 +459,48 @@ bool HuC6280::AddBreakpoint(int type, char* text, bool read, bool write, bool ex
         if (item->type != brk.type)
             continue;
 
+        bool same_breakpoint = false;
+
         if (brk.range)
-        {
-            if (item->range && (item->address1 == brk.address1) && (item->address2 == brk.address2))
-            {
-                found = true;
-                break;
-            }
-        }
+            same_breakpoint = item->range && item->address1 == brk.address1 && item->address2 == brk.address2;
         else
-        {
-            if (!item->range && (item->address1 == brk.address1))
-            {
-                found = true;
-                break;
-            }
-        }
+            same_breakpoint = !item->range && item->address1 == brk.address1;
+
+        if (!same_breakpoint)
+            continue;
+
+        bool old_read = item->read;
+        bool old_write = item->write;
+        bool old_execute = item->execute;
+        bool old_enabled = item->enabled;
+
+        item->read |= brk.read;
+        item->write |= brk.write;
+        item->execute |= brk.execute;
+        item->enabled = true;
+
+        changed =
+            item->read != old_read ||
+            item->write != old_write ||
+            item->execute != old_execute ||
+            item->enabled != old_enabled;
+
+        if (changed)
+            RefreshBreakpointFlags();
+
+        return true;
     }
 
-    if (!found)
-        m_breakpoints.push_back(brk);
+    m_breakpoints.push_back(brk);
+    RefreshBreakpointFlags();
 
     return true;
-}
-
-bool HuC6280::AddBreakpoint(u16 address)
-{
-    char text[6];
-    snprintf(text, 6, "%04X", address);
-    return AddBreakpoint(HuC6280_BREAKPOINT_TYPE_ROMRAM, text, false, false, true);
 }
 
 void HuC6280::AddRunToBreakpoint(u16 address)
 {
     m_run_to_breakpoint.enabled = true;
-    m_run_to_breakpoint.type = HuC6280_BREAKPOINT_TYPE_ROMRAM;
+    m_run_to_breakpoint.type = HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS;
     m_run_to_breakpoint.address1 = address;
     m_run_to_breakpoint.address2 = 0;
     m_run_to_breakpoint.range = false;
@@ -236,7 +510,7 @@ void HuC6280::AddRunToBreakpoint(u16 address)
     m_run_to_breakpoint_requested = true;
 }
 
-void HuC6280::RemoveBreakpoint(int type, u16 address)
+bool HuC6280::RemoveBreakpoint(int type, u32 address)
 {
     for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
     {
@@ -245,12 +519,97 @@ void HuC6280::RemoveBreakpoint(int type, u16 address)
         if (!item->range && (item->address1 == address) && (item->type == type))
         {
             m_breakpoints.erase(m_breakpoints.begin() + b);
-            break;
+            RefreshBreakpointFlags();
+            return true;
         }
     }
+
+    return false;
 }
 
-bool HuC6280::IsBreakpoint(int type, u16 address)
+bool HuC6280::RemoveBreakpointRange(int type, u32 address1, u32 address2)
+{
+    for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
+    {
+        GG_Breakpoint* item = &m_breakpoints[b];
+
+        if (item->range && item->address1 == address1 && item->address2 == address2 && item->type == type)
+        {
+            m_breakpoints.erase(m_breakpoints.begin() + b);
+            RefreshBreakpointFlags();
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool HuC6280::RemoveBreakpointAt(int index)
+{
+    if (index < 0 || index >= (int)m_breakpoints.size())
+        return false;
+
+    m_breakpoints.erase(m_breakpoints.begin() + index);
+    RefreshBreakpointFlags();
+    return true;
+}
+
+bool HuC6280::SetBreakpointEnabled(int index, bool enabled)
+{
+    if (index < 0 || index >= (int)m_breakpoints.size())
+        return false;
+
+    if (m_breakpoints[index].enabled == enabled)
+        return true;
+
+    m_breakpoints[index].enabled = enabled;
+    RefreshBreakpointFlags();
+    return true;
+}
+
+bool HuC6280::ToggleBreakpointAccess(int index, GG_Breakpoint_Access access)
+{
+    if (index < 0 || index >= (int)m_breakpoints.size())
+        return false;
+
+    GG_Breakpoint& brk = m_breakpoints[index];
+
+    if (!BreakpointAccessSupported(brk.type, access))
+        return false;
+
+    bool current = BreakpointHasAccess(brk, access);
+
+    if (!brk.enabled)
+    {
+        brk.enabled = true;
+        SetBreakpointAccess(brk, access, true);
+        RefreshBreakpointFlags();
+        return true;
+    }
+
+    int active_flags = 0;
+
+    for (int i = 0; i < HuC6280_BREAKPOINT_ACCESS_COUNT; i++)
+    {
+        GG_Breakpoint_Access item = (GG_Breakpoint_Access)i;
+        if (BreakpointAccessSupported(brk.type, item) && BreakpointHasAccess(brk, item))
+            active_flags++;
+    }
+
+    if (current && active_flags <= 1)
+    {
+        brk.enabled = false;
+        RefreshBreakpointFlags();
+        return true;
+    }
+
+    SetBreakpointAccess(brk, access, !current);
+
+    RefreshBreakpointFlags();
+    return true;
+}
+
+bool HuC6280::IsBreakpoint(int type, u32 address)
 {
     for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
     {
@@ -265,17 +624,47 @@ bool HuC6280::IsBreakpoint(int type, u16 address)
     return false;
 }
 
+bool HuC6280::IsBreakpointRange(int type, u32 address1, u32 address2)
+{
+    for (long unsigned int b = 0; b < m_breakpoints.size(); b++)
+    {
+        GG_Breakpoint* item = &m_breakpoints[b];
+
+        if (item->range && item->address1 == address1 && item->address2 == address2 && item->type == type)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void HuC6280::SetBreakpoints(const std::vector<GG_Breakpoint>& breakpoints)
+{
+    m_breakpoints.clear();
+
+    for (long unsigned int i = 0; i < breakpoints.size(); i++)
+    {
+        const GG_Breakpoint& bp = breakpoints[i];
+
+        if (BreakpointAccessesValid(bp) && BreakpointAddressValid(bp))
+            m_breakpoints.push_back(bp);
+    }
+
+    RefreshBreakpointFlags();
+}
+
 void HuC6280::ClearDisassemblerCallStack()
 {
     while(!m_disassembler_call_stack.empty())
         m_disassembler_call_stack.pop();
 }
 
-void HuC6280::CheckMemoryBreakpoints(int type, u16 address, bool read)
+void HuC6280::CheckMemoryBreakpoints(int type, u32 address, bool read)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
 
-    if (!m_breakpoints_enabled)
+    if (!HasMemoryBreakpoints(type, read))
         return;
 
     for (int i = 0; i < (int)m_breakpoints.size(); i++)

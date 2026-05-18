@@ -159,63 +159,30 @@ json DebugAdapter::GetDebugStatus()
     return result;
 }
 
-void DebugAdapter::SetBreakpoint(u16 address, int type, bool read, bool write, bool execute)
+bool DebugAdapter::SetBreakpoint(u32 address, int type, bool read, bool write, bool execute)
 {
     HuC6280* cpu = m_core->GetHuC6280();
-
-    char buffer[16];
-    snprintf(buffer, sizeof(buffer), "%04X", address);
-
-    if (type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM && execute && !read && !write)
-    {
-        cpu->AddBreakpoint(address);
-    }
-    else
-    {
-        cpu->AddBreakpoint(type, buffer, read, write, execute);
-    }
+    return cpu->AddBreakpoint(type, address, 0, false, read, write, execute);
 }
 
-void DebugAdapter::SetBreakpointRange(u16 start_address, u16 end_address, int type, bool read, bool write, bool execute)
+bool DebugAdapter::SetBreakpointRange(u32 start_address, u32 end_address, int type, bool read, bool write, bool execute)
 {
     HuC6280* cpu = m_core->GetHuC6280();
-
-    char buffer[16];
-    snprintf(buffer, sizeof(buffer), "%04X-%04X", start_address, end_address);
-
-    cpu->AddBreakpoint(type, buffer, read, write, execute);
+    return cpu->AddBreakpoint(type, start_address, end_address, true, read, write, execute);
 }
 
-void DebugAdapter::ClearBreakpointByAddress(u16 address, int type, u16 end_address)
+bool DebugAdapter::ClearBreakpointByAddress(u32 address, int type, bool range, u32 end_address)
 {
     HuC6280* cpu = m_core->GetHuC6280();
-    std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
-
-    for (int i = (int)breakpoints->size() - 1; i >= 0; i--)
-    {
-        HuC6280::GG_Breakpoint& bp = (*breakpoints)[i];
-
-        if (bp.type != type)
-            continue;
-
-        if (end_address > 0 && end_address >= address)
-        {
-            if (bp.range && bp.address1 == address && bp.address2 == end_address)
-                breakpoints->erase(breakpoints->begin() + i);
-        }
-        else
-        {
-            if (!bp.range && bp.address1 == address)
-                breakpoints->erase(breakpoints->begin() + i);
-        }
-    }
+    return range ? cpu->RemoveBreakpointRange(type, address, end_address)
+        : cpu->RemoveBreakpoint(type, address);
 }
 
 std::vector<BreakpointInfo> DebugAdapter::ListBreakpoints()
 {
     std::vector<BreakpointInfo> result;
     HuC6280* cpu = m_core->GetHuC6280();
-    std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
+    const std::vector<HuC6280::GG_Breakpoint>* breakpoints = cpu->GetBreakpoints();
 
     for (const HuC6280::GG_Breakpoint& brk : *breakpoints)
     {
@@ -464,8 +431,8 @@ const char* DebugAdapter::GetBreakpointTypeName(int type)
 {
     switch (type)
     {
-        case HuC6280::HuC6280_BREAKPOINT_TYPE_ROMRAM:
-            return "ROM/RAM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS:
+            return "CPU ADDRESS";
         case HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM:
             return "VRAM";
         case HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM:
@@ -474,6 +441,18 @@ const char* DebugAdapter::GetBreakpointTypeName(int type)
             return "6270 REG";
         case HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER:
             return "6260 REG";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM:
+            return "WRAM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE:
+            return "ZERO PAGE";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_ROM:
+            return "ROM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM:
+            return "CARD RAM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM:
+            return "CDROM RAM";
+        case HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM:
+            return "BACKUP RAM";
         default:
             return "UNKNOWN";
     }
