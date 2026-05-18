@@ -1,17 +1,23 @@
 [Preset]
-Name=Ghosting
-Passes=1
+Name=Ghosting + Scanlines + Bilinear
+Passes=2
 
 [Pass0]
 Path=ghosting.glsl
 ScaleType=Viewport
-Filter=Nearest
+Filter=Linear
 Feedback=true
 History=true
+
+[Pass1]
+Path=scanlines.glsl
+ScaleType=Viewport
+Filter=Linear
 
 [Parameters]
 Trails=0.5
 FrameBlend=0.4
+ScanlineIntensity=0.10
 
 [Parameter.Trails]
 Label=Trails
@@ -24,3 +30,9 @@ Label=Frame Blend
 Min=0.0
 Max=1.0
 Step=0.05
+
+[Parameter.ScanlineIntensity]
+Label=Scanlines
+Min=0.0
+Max=1.0
+Step=0.01

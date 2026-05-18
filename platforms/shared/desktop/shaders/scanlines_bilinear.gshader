@@ -1,11 +1,11 @@
 [Preset]
-Name=Scanlines
+Name=Scanlines Bilinear
 Passes=1
 
 [Pass0]
 Path=scanlines.glsl
 ScaleType=Viewport
-Filter=Nearest
+Filter=Linear
 
 [Parameters]
 ScanlineIntensity=0.10
