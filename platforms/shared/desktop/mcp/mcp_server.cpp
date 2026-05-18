@@ -1603,6 +1603,85 @@ static int GetBreakpointAddressDigits(int type)
     }
 }
 
+static bool McpBreakpointAccessSupported(int type, HuC6280::GG_Breakpoint_Access access)
+{
+    if (type < 0 || type >= HuC6280::HuC6280_BREAKPOINT_TYPE_COUNT)
+        return false;
+
+    switch (access)
+    {
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_READ:
+            return true;
+
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_WRITE:
+            return type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROM;
+
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_EXECUTE:
+            return type == HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS ||
+                type == HuC6280::HuC6280_BREAKPOINT_TYPE_ROM ||
+                type == HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM ||
+                type == HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM;
+
+        default:
+            return false;
+    }
+}
+
+static const char* GetBreakpointAccessName(HuC6280::GG_Breakpoint_Access access)
+{
+    switch (access)
+    {
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_READ:
+            return "read";
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_WRITE:
+            return "write";
+        case HuC6280::HuC6280_BREAKPOINT_ACCESS_EXECUTE:
+            return "execute";
+        default:
+            return "unknown";
+    }
+}
+
+static bool ValidateBreakpointAccess(const std::string& memory_area, int type,
+    HuC6280::GG_Breakpoint_Access access, std::string& error)
+{
+    if (McpBreakpointAccessSupported(type, access))
+        return true;
+
+    error = "Unsupported breakpoint access for memory_area: " + memory_area +
+        " does not support " + GetBreakpointAccessName(access);
+    return false;
+}
+
+static bool ParseBreakpointAccesses(const json& arguments, const std::string& memory_area,
+    int type, bool& read, bool& write, bool& execute, std::string& error)
+{
+    read = arguments.value("read", false);
+    write = arguments.value("write", false);
+    execute = arguments.value("execute", true);
+
+    if (!arguments.contains("execute") &&
+        !McpBreakpointAccessSupported(type, HuC6280::HuC6280_BREAKPOINT_ACCESS_EXECUTE))
+        execute = false;
+
+    if (read && !ValidateBreakpointAccess(memory_area, type, HuC6280::HuC6280_BREAKPOINT_ACCESS_READ, error))
+        return false;
+
+    if (write && !ValidateBreakpointAccess(memory_area, type, HuC6280::HuC6280_BREAKPOINT_ACCESS_WRITE, error))
+        return false;
+
+    if (execute && !ValidateBreakpointAccess(memory_area, type, HuC6280::HuC6280_BREAKPOINT_ACCESS_EXECUTE, error))
+        return false;
+
+    if (!read && !write && !execute)
+    {
+        error = "At least one of read, write, or execute must be true";
+        return false;
+    }
+
+    return true;
+}
+
 json McpServer::ExecuteCommand(const std::string& toolName, const json& arguments)
 {
     // Normalize tool name: VS Code converts underscores to dots
@@ -1668,18 +1747,14 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         if (!GetBreakpointTypeFromString(memory_area, breakpoint_type))
             return {{"error", "Invalid memory_area: " + memory_area}};
 
-        bool read = arguments.value("read", false);
-        bool write = arguments.value("write", false);
-        bool execute = arguments.value("execute", true);
+        bool read = false;
+        bool write = false;
+        bool execute = false;
+        std::string access_error;
 
-        if (breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS &&
-            breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROM &&
-            breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM &&
-            breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM)
-            execute = false;
-
-        if (!read && !write && !execute)
-            return {{"error", "At least one of read, write, or execute must be true"}};
+        if (!ParseBreakpointAccesses(arguments, memory_area, breakpoint_type,
+            read, write, execute, access_error))
+            return {{"error", access_error}};
 
         if (!m_debugAdapter.SetBreakpoint(address, breakpoint_type, read, write, execute))
             return {{"error", "Breakpoint address is out of range for memory area"}};
@@ -1705,18 +1780,14 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         if (!GetBreakpointTypeFromString(memory_area, breakpoint_type))
             return {{"error", "Invalid memory_area: " + memory_area}};
 
-        bool read = arguments.value("read", false);
-        bool write = arguments.value("write", false);
-        bool execute = arguments.value("execute", true);
+        bool read = false;
+        bool write = false;
+        bool execute = false;
+        std::string access_error;
 
-        if (breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS &&
-            breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROM &&
-            breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM &&
-            breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM)
-            execute = false;
-
-        if (!read && !write && !execute)
-            return {{"error", "At least one of read, write, or execute must be true"}};
+        if (!ParseBreakpointAccesses(arguments, memory_area, breakpoint_type,
+            read, write, execute, access_error))
+            return {{"error", access_error}};
 
         if (!m_debugAdapter.SetBreakpointRange(start_address, end_address, breakpoint_type,
                                               read, write, execute))
