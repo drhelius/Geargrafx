@@ -457,59 +457,70 @@ static const BreakpointTypeInfo k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOI
     { HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM,        "CD RAM   ", "CD RAM",      4 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM,       "BRAM     ", "BRAM",        3 },
 };
-static_assert(
-    sizeof(k_breakpoint_type_info) / sizeof(k_breakpoint_type_info[0]) ==
-    HuC6280::HuC6280_BREAKPOINT_TYPE_COUNT,
-    "k_breakpoint_type_info has wrong number of BP types"
-);
+
+static const int k_breakpoint_type_info_count =
+    (int)(sizeof(k_breakpoint_type_info) / sizeof(k_breakpoint_type_info[0]));
 
 static const BreakpointTypeInfo* get_breakpoint_type_info(int type)
 {
-    for (auto& e : k_breakpoint_type_info)
+    for (int type_index = 0; type_index < k_breakpoint_type_info_count; type_index++)
     {
-        if (e.type == type)
-            return &e;
+        if (k_breakpoint_type_info[type_index].type == type)
+            return &k_breakpoint_type_info[type_index];
     }
     return NULL;
 }
 
-static std::vector<BreakpointTypeInfo> get_breakpoint_types()
+static void add_breakpoint_type_entry(const BreakpointTypeInfo** entries, int& count, HuC6280::GG_Breakpoint_Type type)
 {
-    std::vector<BreakpointTypeInfo> entries;
-    entries.reserve(HuC6280::HuC6280_BREAKPOINT_TYPE_COUNT);
+    entries[count] = &k_breakpoint_type_info[type];
+    count++;
+}
+
+static int get_breakpoint_types(const BreakpointTypeInfo** entries)
+{
+    int count = 0;
 
     GeargrafxCore* core = emu_get_core();
     Memory* memory = core->GetMemory();
     Media* media = core->GetMedia();
 
-    entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS]);
-    entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM]);
-    entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM]);
-    entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER]);
-    entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER]);
-    entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM]);
-    entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE]);
+    add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS);
+    add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM);
+    add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM);
+    add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER);
+    add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER);
+    add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM);
+    add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE);
 
     if (IsValidPointer(media->GetROM()))
-        entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_ROM]);
+    {
+        add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_ROM);
+    }
 
     if (memory->GetCardRAMSize() > 0)
-        entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM]);
+    {
+        add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM);
+    }
 
     if (memory->GetCDROMRAMSize() > 0)
-        entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM]);
+    {
+        add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM);
+    }
 
     if (memory->IsBackupRamEnabled())
-        entries.push_back(k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM]);
+    {
+        add_breakpoint_type_entry(entries, count, HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM);
+    }
 
-    return entries;
+    return count;
 }
 
 static void breakpoint_address_string(const HuC6280::GG_Breakpoint* brk, char* out, size_t out_size)
 {
     int digits = 4;
 
-    auto info = get_breakpoint_type_info(brk->type);
+    const BreakpointTypeInfo* info = get_breakpoint_type_info(brk->type);
     if (IsValidPointer(info))
         digits = info->address_digits;
 
@@ -551,38 +562,47 @@ static void draw_breakpoints_content(void)
 
     ImGui::Separator();
 
-    auto type_entries = get_breakpoint_types();
+    const BreakpointTypeInfo* type_entries[HuC6280::HuC6280_BREAKPOINT_TYPE_COUNT];
+    int type_count = get_breakpoint_types(type_entries);
 
-    const char* current_label = type_entries[0].combo_label;
+    const char* current_label = type_entries[0]->combo_label;
     bool current_type_available = false;
 
-    for (auto& e : type_entries)
+    for (int type_index = 0; type_index < type_count; type_index++)
     {
-        if (e.type == new_breakpoint_type)
+        const BreakpointTypeInfo* entry = type_entries[type_index];
+
+        if (entry->type == new_breakpoint_type)
         {
-            current_label = e.combo_label;
+            current_label = entry->combo_label;
             current_type_available = true;
         }
     }
 
     if (!current_type_available)
     {
-        new_breakpoint_type = type_entries[0].type;
-        current_label = type_entries[0].combo_label;
+        new_breakpoint_type = type_entries[0]->type;
+        current_label = type_entries[0]->combo_label;
     }
 
     ImGui::PushItemWidth(120);
 
     if (ImGui::BeginCombo("Type##type", current_label))
     {
-        for (auto& entry : type_entries)
+        for (int type_index = 0; type_index < type_count; type_index++)
         {
-            bool selected = (new_breakpoint_type == entry.type);
+            const BreakpointTypeInfo* entry = type_entries[type_index];
+            bool selected = (new_breakpoint_type == entry->type);
 
-            if (ImGui::Selectable(entry.combo_label, selected))
-                new_breakpoint_type = entry.type;
+            if (ImGui::Selectable(entry->combo_label, selected))
+            {
+                new_breakpoint_type = entry->type;
+            }
+
             if (selected)
+            {
                 ImGui::SetItemDefaultFocus();
+            }
         }
         ImGui::EndCombo();
     }
@@ -630,10 +650,14 @@ static void draw_breakpoints_content(void)
     ImGui::Checkbox("Read", &new_breakpoint_read);
 
     if (new_breakpoint_type != HuC6280::HuC6280_BREAKPOINT_TYPE_ROM)
+    {
         ImGui::Checkbox("Write", &new_breakpoint_write);
+    }
 
     if (breakpoint_type_supports_execute(new_breakpoint_type))
+    {
         ImGui::Checkbox("Execute", &new_breakpoint_execute);
+    }
 
     if (ImGui::Button("Add##add", ImVec2(85, 0)))
     {
@@ -660,7 +684,9 @@ static void draw_breakpoints_content(void)
         float width = ImGui::CalcTextSize(address_text).x;
 
         if (width > max_address_width)
+        {
             max_address_width = width;
+        }
     }
 
     for (long unsigned int b = 0; b < breakpoints->size(); b++)
@@ -707,7 +733,7 @@ static void draw_breakpoints_content(void)
         ImGui::PopFont();
 
         ImGui::SameLine();
-        auto info = get_breakpoint_type_info(brk->type);
+        const BreakpointTypeInfo* info = get_breakpoint_type_info(brk->type);
         const char* list_label = IsValidPointer(info) ? info->list_label : "???      ";
 
         ImGui::TextColored(brk->enabled ? red : gray, "%s", list_label);
@@ -721,7 +747,7 @@ static void draw_breakpoints_content(void)
         ImGui::SameLine();
         ImGui::SetCursorPosX(address_x + max_address_width + ImGui::CalcTextSize(" ").x);
 
-        ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled&& brk->read ? orange : gray);
+        ImGui::PushStyleColor(ImGuiCol_Text, brk->enabled && brk->read ? orange : gray);
         if (ImGui::SmallButton("R##read_btn"))
         {
             cpu->ToggleBreakpointAccess((int)b, HuC6280::HuC6280_BREAKPOINT_ACCESS_READ);
@@ -763,7 +789,9 @@ static void draw_breakpoints_content(void)
 
         GG_Disassembler_Record* record = NULL;
         if (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS)
+        {
             record = emu_get_core()->GetMemory()->GetDisassemblerRecord((u16)brk->address1);
+        }
 
         bool symbol_shown = false;
 
@@ -771,7 +799,9 @@ static void draw_breakpoints_content(void)
         {
             DebugSymbol* symbol = fixed_symbols[record->bank][brk->address1];
             if (!IsValidPointer(symbol))
+            {
                 symbol = dynamic_symbols[record->bank][brk->address1];
+            }
             if (IsValidPointer(symbol))
             {
                 ImGui::SameLine(0, 0);
@@ -808,7 +838,9 @@ static void draw_breakpoints_content(void)
     ImGui::PopFont();
 
     if (remove >= 0)
+    {
         cpu->RemoveBreakpointAt(remove);
+    }
 
     ImGui::EndChild();
     ImGui::Columns(1);

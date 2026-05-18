@@ -1608,7 +1608,8 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     // Normalize tool name: VS Code converts underscores to dots
     std::string normalizedTool = toolName;
     size_t pos = 0;
-    while ((pos = normalizedTool.find('.', pos)) != std::string::npos) {
+    while ((pos = normalizedTool.find('.', pos)) != std::string::npos)
+    {
         normalizedTool[pos] = '_';
         pos++;
     }

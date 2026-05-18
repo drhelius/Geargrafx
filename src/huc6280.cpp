@@ -387,7 +387,7 @@ static bool parse_breakpoint_address_text(const char* text, u32& address1, u32& 
         return true;
     }
 
-    //Range
+    // Range
 
     // Reject multiple dashes.
     if (strchr(dash + 1, '-') != NULL)

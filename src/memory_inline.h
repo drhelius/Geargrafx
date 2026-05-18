@@ -511,7 +511,8 @@ INLINE void Memory::UpdateBackupRam(bool enable)
 #if !defined(GG_DISABLE_DISASSEMBLER)
 INLINE void Memory::CheckPhysicalMemoryBreakpoints(u8 bank, u32 offset, bool read)
 {
-    switch (GetBankType(bank)) {
+    switch (GetBankType(bank))
+    {
         case MEMORY_BANK_TYPE_WRAM:
         {
             if (m_huc6280->HasPhysicalMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE, read))
