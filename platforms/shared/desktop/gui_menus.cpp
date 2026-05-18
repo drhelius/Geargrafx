@@ -69,6 +69,7 @@ static void menu_debug(void);
 static void menu_about(void);
 static void draw_mcp_status(void);
 static void file_dialogs(void);
+static bool media_menu_actions_enabled(void);
 static const char* get_current_media_directory_text(void);
 static void keyboard_configuration_item(const char* text, SDL_Scancode* key, int player);
 static void gamepad_configuration_item(const char* text, int* button, int player);
@@ -132,6 +133,7 @@ static void menu_geargrafx(void)
     if (ImGui::BeginMenu(GG_TITLE))
     {
         gui_in_use = true;
+        bool media_actions_enabled = media_menu_actions_enabled();
 
         if (ImGui::MenuItem("Open ROM/CD...", config_hotkeys[config_HotkeyIndex_OpenROM].str))
         {
@@ -176,19 +178,19 @@ static void menu_geargrafx(void)
 
         ImGui::Separator();
         
-        if (ImGui::MenuItem("Reset", config_hotkeys[config_HotkeyIndex_Reset].str))
+        if (ImGui::MenuItem("Reset", config_hotkeys[config_HotkeyIndex_Reset].str, false, media_actions_enabled))
         {
             gui_action_reset();
         }
 
-        if (ImGui::MenuItem("Pause", config_hotkeys[config_HotkeyIndex_Pause].str, &config_emulator.paused))
+        if (ImGui::MenuItem("Pause", config_hotkeys[config_HotkeyIndex_Pause].str, &config_emulator.paused, media_actions_enabled))
         {
             gui_action_pause();
         }
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Fast Forward", config_hotkeys[config_HotkeyIndex_FFWD].str, &config_emulator.ffwd))
+        if (ImGui::MenuItem("Fast Forward", config_hotkeys[config_HotkeyIndex_FFWD].str, &config_emulator.ffwd, media_actions_enabled))
         {
             gui_action_ffwd();
         }
@@ -203,7 +205,8 @@ static void menu_geargrafx(void)
 
         if (ImGui::BeginMenu("Rewind"))
         {
-            ImGui::MenuItem("Enabled", config_hotkeys[config_HotkeyIndex_Rewind].str, &config_rewind.enabled);
+            if (ImGui::MenuItem("Enabled", config_hotkeys[config_HotkeyIndex_Rewind].str, &config_rewind.enabled))
+                rewind_reset();
 
             ImGui::PushItemWidth(140.0f);
             ImGui::SliderFloat("Speed", &config_rewind.speed, 1.0f, 8.0f, "%.0fx");
@@ -214,24 +217,24 @@ static void menu_geargrafx(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Save BRAM As..."))
+        if (ImGui::MenuItem("Save BRAM As...", "", false, media_actions_enabled))
         {
             save_ram = true;
         }
 
-        if (ImGui::MenuItem("Load BRAM From..."))
+        if (ImGui::MenuItem("Load BRAM From...", "", false, media_actions_enabled))
         {
             open_ram = true;
         }
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Save State As...")) 
+        if (ImGui::MenuItem("Save State As...", "", false, media_actions_enabled))
         {
             save_state = true;
         }
 
-        if (ImGui::MenuItem("Load State From..."))
+        if (ImGui::MenuItem("Load State From...", "", false, media_actions_enabled))
         {
             open_state = true;
         }
@@ -250,7 +253,7 @@ static void menu_geargrafx(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::MenuItem("Save State", config_hotkeys[config_HotkeyIndex_SaveState].str))
+        if (ImGui::MenuItem("Save State", config_hotkeys[config_HotkeyIndex_SaveState].str, false, media_actions_enabled))
         {
             std::string message("Saving state to slot ");
             message += std::to_string(config_emulator.save_slot + 1);
@@ -258,7 +261,7 @@ static void menu_geargrafx(void)
             emu_save_state_slot(config_emulator.save_slot + 1);
         }
 
-        if (ImGui::MenuItem("Load State", config_hotkeys[config_HotkeyIndex_LoadState].str))
+        if (ImGui::MenuItem("Load State", config_hotkeys[config_HotkeyIndex_LoadState].str, false, media_actions_enabled))
         {
             std::string message("Loading state from slot ");
             message += std::to_string(config_emulator.save_slot + 1);
@@ -276,12 +279,12 @@ static void menu_geargrafx(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Save Screenshot As..."))
+        if (ImGui::MenuItem("Save Screenshot As...", "", false, media_actions_enabled))
         {
             save_screenshot = true;
         }
 
-        if (ImGui::MenuItem("Save Screenshot", config_hotkeys[config_HotkeyIndex_Screenshot].str))
+        if (ImGui::MenuItem("Save Screenshot", config_hotkeys[config_HotkeyIndex_Screenshot].str, false, media_actions_enabled))
         {
             gui_action_save_screenshot(NULL);
         }
@@ -302,6 +305,19 @@ static void menu_geargrafx(void)
 
         ImGui::EndMenu();
     }
+}
+
+static bool media_menu_actions_enabled(void)
+{
+    if (emu_is_empty())
+        return false;
+
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+    if (emu_get_core()->GetMedia()->HasPhysicalCdRomError())
+        return false;
+#endif
+
+    return true;
 }
 
 static void menu_emulator(void)

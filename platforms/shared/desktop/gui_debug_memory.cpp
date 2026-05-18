@@ -35,6 +35,7 @@ static char set_value_buffer[5] = { };
 
 static void memory_editor_menu(void);
 static void draw_tabs(void);
+static void toggle_memory_breakpoint(int editor, int start, int end);
 
 void gui_debug_memory_init(void)
 {
@@ -49,6 +50,8 @@ void gui_debug_memory_init(void)
         options.uppercase_hex = config_debug.mem_editor_uppercase_hex[i];
         options.gray_out_zeros = config_debug.mem_editor_gray_out_zeros[i];
         mem_edit[i].SetOptions(options);
+
+        mem_edit[i].SetBreakpointCallback(toggle_memory_breakpoint, i);
     }
 }
 
@@ -574,5 +577,67 @@ void gui_debug_memory_load_settings(std::istream& stream)
     for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
     {
         mem_edit[i].LoadSettings(stream);
+    }
+}
+
+static void toggle_memory_breakpoint(int editor, int start, int end)
+{
+    HuC6280::GG_Breakpoint_Type type;
+
+    switch (editor)
+    {
+    case MEMORY_EDITOR_RAM:
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM;
+        break;
+
+    case MEMORY_EDITOR_ZERO_PAGE:
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE;
+        start &= 0xFF;
+        break;
+
+    case MEMORY_EDITOR_ROM:
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_ROM;
+        break;
+
+    case MEMORY_EDITOR_CARD_RAM:
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM;
+        break;
+
+    case MEMORY_EDITOR_BACKUP_RAM:
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_BACKUP_RAM;
+        break;
+
+    case MEMORY_EDITOR_PALETTES:
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM;
+        break;
+
+    case MEMORY_EDITOR_VRAM_1:
+    case MEMORY_EDITOR_VRAM_2:
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM;
+        break;
+
+    case MEMORY_EDITOR_CDROM_RAM:
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_CDROM_RAM;
+        break;
+
+    default:
+        return;
+    }
+
+    HuC6280* cpu = emu_get_core()->GetHuC6280();
+
+    if (start == end)
+    {
+        if (cpu->IsBreakpoint(type, start))
+            cpu->RemoveBreakpoint(type, start);
+        else
+            cpu->AddBreakpoint(type, start, 0, false, true, false, false);
+    }
+    else
+    {
+        if (cpu->IsBreakpointRange(type, start, end))
+            cpu->RemoveBreakpointRange(type, start, end);
+        else
+            cpu->AddBreakpoint(type, start, end, true, true, false, false);
     }
 }

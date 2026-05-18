@@ -64,6 +64,8 @@ public:
     void SetMprTAM(u8 bits, u8 value);
     u8 GetMprTMA(u8 bits);
     u32 GetPhysicalAddress(u16 address);
+    bool GetROMPhysicalAddress(u16 cpu_address, u32& address);
+    bool GetROMPhysicalAddress(u8 bank, u16 offset, u32& address);
     u8 GetBank(u16 address);
     void SetResetValues(int mpr, int wram, int card_ram, int arcade_card);
     GG_Disassembler_Record* GetDisassemblerRecord(u16 address);
@@ -76,6 +78,7 @@ public:
     u8* GetCDROMRAM();
     u8* GetArcadeRAM();
     int GetWorkingRAMSize();
+    int GetROMSize();
     int GetCardRAMSize();
     int GetCardRAMStart();
     int GetCardRAMEnd();
@@ -98,6 +101,9 @@ public:
 
 private:
     void ReloadMemoryMap();
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    void CheckPhysicalMemoryBreakpoints(u8 bank, u32 offset, bool read);
+#endif
 
 private:
     HuC6260* m_huc6260;

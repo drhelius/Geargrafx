@@ -17,7 +17,7 @@
  *
  */
 
- #include "cdrom_drive.h"
+#include "cdrom_drive.h"
 
 #if defined(GG_ENABLE_PHYSICAL_CDROM) && defined(_WIN32)
 
@@ -28,8 +28,13 @@
 #include <ntddscsi.h>
 
 #define CDROM_DRIVE_RAW_SECTOR_SIZE 2352
+#define CDROM_DRIVE_DATA_SECTOR_SIZE 2048
 #define CDROM_DRIVE_SENSE_SIZE 32
 #define CDROM_DRIVE_TIMEOUT_SECONDS 20
+#define SCSI_READ_CD_EXPECTED_TYPE_CDDA 0x04
+#define SCSI_READ_CD_EXPECTED_TYPE_MODE1 0x08
+#define SCSI_READ_CD_READ_CDDA 0x10
+#define SCSI_READ_CD_READ_MODE1_RAW 0xF8
 
 struct ScsiPassThroughDirectWithSense
 {
@@ -45,6 +50,42 @@ struct GeargrafxCdRomSetSpeed
     USHORT write_speed;
     ULONG rotation_control;
 };
+
+static bool windows_error_is_media_unavailable(DWORD error);
+static bool scsi_sense_is_media_unavailable(const UCHAR* sense);
+
+static void init_scsi_read_request(ScsiPassThroughDirectWithSense& request, u8* buffer, ULONG length, UCHAR cdb_length)
+{
+    memset(&request, 0, sizeof(request));
+    request.pass_through.Length = sizeof(SCSI_PASS_THROUGH_DIRECT);
+    request.pass_through.CdbLength = cdb_length;
+    request.pass_through.SenseInfoLength = CDROM_DRIVE_SENSE_SIZE;
+    request.pass_through.DataIn = SCSI_IOCTL_DATA_IN;
+    request.pass_through.DataTransferLength = length;
+    request.pass_through.TimeOutValue = CDROM_DRIVE_TIMEOUT_SECONDS;
+    request.pass_through.DataBuffer = buffer;
+    request.pass_through.SenseInfoOffset = offsetof(ScsiPassThroughDirectWithSense, sense);
+}
+
+static bool execute_scsi_read(HANDLE file, ScsiPassThroughDirectWithSense& request, ULONG expected_length, bool* media_unavailable)
+{
+    DWORD bytes_returned = 0;
+    if (!DeviceIoControl(file, IOCTL_SCSI_PASS_THROUGH_DIRECT, &request, sizeof(request), &request, sizeof(request), &bytes_returned, NULL))
+    {
+        if (IsValidPointer(media_unavailable))
+            *media_unavailable = windows_error_is_media_unavailable(GetLastError());
+        return false;
+    }
+
+    if (request.pass_through.ScsiStatus != 0)
+    {
+        if (IsValidPointer(media_unavailable))
+            *media_unavailable = scsi_sense_is_media_unavailable(request.sense);
+        return false;
+    }
+
+    return request.pass_through.DataTransferLength == expected_length;
+}
 
 static void init_drive_info(CdRomDriveInfo& info)
 {
@@ -193,16 +234,11 @@ static bool read_cd_spti(HANDLE file, u32 lba, u32 sector_count, u8* buffer, boo
     if (!IsValidPointer(buffer) || (sector_count == 0))
         return false;
 
-    ScsiPassThroughDirectWithSense request = {};
-    request.pass_through.Length = sizeof(SCSI_PASS_THROUGH_DIRECT);
-    request.pass_through.CdbLength = 12;
-    request.pass_through.SenseInfoLength = CDROM_DRIVE_SENSE_SIZE;
-    request.pass_through.DataIn = SCSI_IOCTL_DATA_IN;
-    request.pass_through.DataTransferLength = sector_count * CDROM_DRIVE_RAW_SECTOR_SIZE;
-    request.pass_through.TimeOutValue = CDROM_DRIVE_TIMEOUT_SECONDS;
-    request.pass_through.DataBuffer = buffer;
-    request.pass_through.SenseInfoOffset = offsetof(ScsiPassThroughDirectWithSense, sense);
+    ULONG expected_length = sector_count * CDROM_DRIVE_RAW_SECTOR_SIZE;
+    ScsiPassThroughDirectWithSense request;
+    init_scsi_read_request(request, buffer, expected_length, 12);
     request.pass_through.Cdb[0] = 0xBE;
+    request.pass_through.Cdb[1] = audio ? SCSI_READ_CD_EXPECTED_TYPE_CDDA : SCSI_READ_CD_EXPECTED_TYPE_MODE1;
     request.pass_through.Cdb[2] = (UCHAR)(lba >> 24);
     request.pass_through.Cdb[3] = (UCHAR)(lba >> 16);
     request.pass_through.Cdb[4] = (UCHAR)(lba >> 8);
@@ -210,24 +246,29 @@ static bool read_cd_spti(HANDLE file, u32 lba, u32 sector_count, u8* buffer, boo
     request.pass_through.Cdb[6] = (UCHAR)(sector_count >> 16);
     request.pass_through.Cdb[7] = (UCHAR)(sector_count >> 8);
     request.pass_through.Cdb[8] = (UCHAR)sector_count;
-    request.pass_through.Cdb[9] = audio ? 0x10 : 0xF8;
+    request.pass_through.Cdb[9] = audio ? SCSI_READ_CD_READ_CDDA : SCSI_READ_CD_READ_MODE1_RAW;
 
-    DWORD bytes_returned = 0;
-    if (!DeviceIoControl(file, IOCTL_SCSI_PASS_THROUGH_DIRECT, &request, sizeof(request), &request, sizeof(request), &bytes_returned, NULL))
-    {
-        if (IsValidPointer(media_unavailable))
-            *media_unavailable = windows_error_is_media_unavailable(GetLastError());
+    return execute_scsi_read(file, request, expected_length, media_unavailable);
+}
+
+static bool read_data_spti(HANDLE file, u32 lba, u8* buffer, bool* media_unavailable)
+{
+    if (IsValidPointer(media_unavailable))
+        *media_unavailable = false;
+
+    if (!IsValidPointer(buffer))
         return false;
-    }
 
-    if (request.pass_through.ScsiStatus != 0)
-    {
-        if (IsValidPointer(media_unavailable))
-            *media_unavailable = scsi_sense_is_media_unavailable(request.sense);
-        return false;
-    }
+    ScsiPassThroughDirectWithSense request;
+    init_scsi_read_request(request, buffer, CDROM_DRIVE_DATA_SECTOR_SIZE, 10);
+    request.pass_through.Cdb[0] = 0x28;
+    request.pass_through.Cdb[2] = (UCHAR)(lba >> 24);
+    request.pass_through.Cdb[3] = (UCHAR)(lba >> 16);
+    request.pass_through.Cdb[4] = (UCHAR)(lba >> 8);
+    request.pass_through.Cdb[5] = (UCHAR)lba;
+    request.pass_through.Cdb[8] = 1;
 
-    return true;
+    return execute_scsi_read(file, request, CDROM_DRIVE_DATA_SECTOR_SIZE, media_unavailable);
 }
 
 static HANDLE open_device_handle(const char* device_id, bool read_write)
@@ -438,7 +479,7 @@ bool CdRomDrive::ReadTOC(std::vector<CdRomDriveTrackInfo>& tracks, u32* lead_out
     return true;
 }
 
-bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool audio)
+bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool audio, bool report_errors)
 {
     if (!IsOpen() || !IsValidPointer(buffer) || (sector_count == 0))
         return false;
@@ -449,17 +490,20 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
 
     if (media_unavailable)
     {
-        Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
+        if (report_errors)
+            Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
         return false;
     }
 
     if (sector_count == 1)
     {
-        Error("SCSI READ CD failed for %s at LBA %u", m_device_id, lba);
+        if (report_errors)
+            Error("SCSI READ CD failed for %s at LBA %u", m_device_id, lba);
         return false;
     }
 
-    Debug("Physical CD-ROM block read fallback for %s at LBA %u (%u sectors)", m_device_id, lba, sector_count);
+    if (report_errors)
+        Debug("Physical CD-ROM block read fallback for %s at LBA %u (%u sectors)", m_device_id, lba, sector_count);
 
     for (u32 i = 0; i < sector_count; i++)
     {
@@ -468,14 +512,42 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
         if (!read_cd_spti(m_file, sector_lba, 1, sector_buffer, audio, &media_unavailable))
         {
             if (media_unavailable)
-                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+            {
+                if (report_errors)
+                    Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+            }
             else
-                Error("SCSI READ CD failed for %s at LBA %u", m_device_id, sector_lba);
+            {
+                if (report_errors)
+                    Error("SCSI READ CD failed for %s at LBA %u", m_device_id, sector_lba);
+            }
             return false;
         }
     }
 
     return true;
+}
+
+bool CdRomDrive::ReadDataSector2048(u32 lba, u8* buffer, bool report_errors)
+{
+    if (!IsOpen() || !IsValidPointer(buffer))
+        return false;
+
+    bool media_unavailable = false;
+    if (read_data_spti(m_file, lba, buffer, &media_unavailable))
+        return true;
+
+    if (media_unavailable)
+    {
+        if (report_errors)
+            Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
+        return false;
+    }
+
+    if (report_errors)
+        Error("SCSI READ(10) failed for %s at LBA %u", m_device_id, lba);
+
+    return false;
 }
 
 bool CdRomDrive::SetSpeed(u16 speed)

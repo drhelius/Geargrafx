@@ -53,8 +53,9 @@ public:
     void Close();
     bool IsOpen() const;
     bool ReadTOC(std::vector<CdRomDriveTrackInfo>& tracks, u32* lead_out_lba);
-    bool ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool audio);
-    bool ReadRawSector2352(u32 lba, u8* buffer, bool audio = false);
+    bool ReadDataSector2048(u32 lba, u8* buffer, bool report_errors = true);
+    bool ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool audio, bool report_errors = true);
+    bool ReadRawSector2352(u32 lba, u8* buffer, bool audio = false, bool report_errors = true);
     bool SetSpeed(u16 speed);
     const char* GetDeviceId() const;
 

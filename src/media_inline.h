@@ -187,4 +187,9 @@ inline u8** Media::GetROMMap()
     return m_rom_map;
 }
 
+inline u32* Media::GetROMBankOffset()
+{
+    return m_rom_bank_offset;
+}
+
 #endif /* MEDIA_INLINE_H */

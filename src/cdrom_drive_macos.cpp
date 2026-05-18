@@ -305,7 +305,7 @@ bool CdRomDrive::ReadTOC(std::vector<CdRomDriveTrackInfo>& tracks, u32* lead_out
     return true;
 }
 
-bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool audio)
+bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool audio, bool report_errors)
 {
     if (!IsOpen() || !IsValidPointer(buffer) || (sector_count == 0))
         return false;
@@ -326,11 +326,13 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
 
     if (media_unavailable)
     {
-        Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
+        if (report_errors)
+            Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, lba);
         return false;
     }
 
-    Debug("Physical CD-ROM block read fallback for %s at LBA %u (%u sectors)", m_device_id, lba, sector_count);
+    if (report_errors)
+        Debug("Physical CD-ROM block read fallback for %s at LBA %u (%u sectors)", m_device_id, lba, sector_count);
 
     for (u32 i = 0; i < sector_count; i++)
     {
@@ -344,7 +346,8 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
 
             if (media_unavailable)
             {
-                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+                if (report_errors)
+                    Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
                 return false;
             }
         }
@@ -356,7 +359,8 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
 
             if (media_unavailable)
             {
-                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+                if (report_errors)
+                    Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
                 return false;
             }
 
@@ -365,12 +369,14 @@ bool CdRomDrive::ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool 
 
             if (media_unavailable)
             {
-                Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
+                if (report_errors)
+                    Error("Physical CD-ROM media unavailable for %s at LBA %u", m_device_id, sector_lba);
                 return false;
             }
         }
 
-        Error("DKIOCCDREAD failed for %s at LBA %u", m_device_id, sector_lba);
+        if (report_errors)
+            Error("DKIOCCDREAD failed for %s at LBA %u", m_device_id, sector_lba);
         return false;
     }
 

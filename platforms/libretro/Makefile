@@ -320,6 +320,15 @@ else
 	SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=$(CORE_DIR)/link.T -Wl,--no-undefined
 endif
 
+ifneq (,$(filter $(platform),unix osx win))
+	CXXFLAGS += -DGG_ENABLE_CDROM_CUEBIN_READAHEAD
+endif
+
+ifneq (,$(filter $(platform),unix win))
+	CXXFLAGS += -pthread
+	LDFLAGS += -pthread
+endif
+
 LDFLAGS += $(LIBM)
 
 DEBUG ?= 0

@@ -71,6 +71,7 @@ public:
     const char* GetBiosName(bool syscard);
     u8* GetROM();
     u8** GetROMMap();
+    u32* GetROMBankOffset();
     bool LoadMedia(const char* path);
     bool LoadHuCardFromBuffer(const u8* buffer, int size, const char* path);
     bool LoadCueFromFile(const char* path);
@@ -96,6 +97,7 @@ private:
     CdRomMedia* m_cdrom_media;
     u8* m_rom;
     u8** m_rom_map;
+    u32* m_rom_bank_offset;
     int m_rom_size;
     int m_card_ram_size;
     bool m_ready;

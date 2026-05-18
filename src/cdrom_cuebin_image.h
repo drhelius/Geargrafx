@@ -20,12 +20,32 @@
 #ifndef CDROM_CUEBIN_IMAGE_H
 #define CDROM_CUEBIN_IMAGE_H
 
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+#endif
+
 #include <vector>
 #include "cdrom_image.h"
 
-class CdRomFile;
+#define GG_CDROM_CUEBIN_KEEPALIVE_SECONDS 5
+#define GG_CDROM_CUEBIN_KEEPALIVE_SIZE 2352
+#define GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK 0
+#define GG_CDROM_CUEBIN_READAHEAD_QUEUE_SIZE 32
 
-#define CDROM_MEDIA_CHUNK_SIZE 2352 * 128 // 128 sectors per chunk (294 KB)
+struct GG_CdRomCueBinLoadOptions
+{
+    u32 chunk_size;
+    u32 max_preload_chunks;
+    u32 read_ahead_chunks;
+    bool allow_disc_preload;
+    bool enable_read_ahead;
+    bool track_files_start_at_index1;
+};
+
+class CdRomFile;
 
 class CdRomCueBinImage : public CdRomImage
 {
@@ -66,6 +86,14 @@ private:
         ImgFile* img_file;
     };
 
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    struct ReadAheadRequest
+    {
+        ImgFile* img_file;
+        u32 chunk_index;
+    };
+#endif
+
 public:
     CdRomCueBinImage();
     virtual ~CdRomCueBinImage();
@@ -76,6 +104,7 @@ public:
     virtual bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count) override;
     virtual bool PreloadDisc() override;
     virtual bool PreloadTrack(u32 track_number) override;
+    void SetLoadOptions(const GG_CdRomCueBinLoadOptions& options);
 
 private:
     void InitImgFile(ImgFile* img_file);
@@ -96,11 +125,70 @@ private:
     bool ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer, u32 size);
     bool LoadChunk(ImgFile* img_file, u32 chunk_index);
     bool PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count);
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    void QueueReadAhead(ImgFile* img_file, u32 start_chunk);
+    void QueueChunk(ImgFile* img_file, u32 chunk_index);
+    void StartReadAheadWorker();
+    void StopReadAheadWorker();
+    void ReadAheadThread();
+    bool KeepAliveFile();
+    void ResetReadAheadQueue();
+#endif
     void CalculateCRC();
 
 private:
     std::vector<ImgFile*> m_img_files;
     std::vector<TrackFile> m_track_files;
+    GG_CdRomCueBinLoadOptions m_load_options;
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    std::mutex m_chunk_mutex;
+    std::mutex m_queue_mutex;
+    std::condition_variable m_queue_condition;
+    std::thread m_read_ahead_thread;
+    std::atomic<bool> m_read_ahead_running;
+    ImgFile* m_keep_alive_file;
+    ReadAheadRequest m_request_queue[GG_CDROM_CUEBIN_READAHEAD_QUEUE_SIZE];
+    u32 m_request_head;
+    u32 m_request_tail;
+    u32 m_request_count;
+#endif
 };
+
+INLINE GG_CdRomCueBinLoadOptions GG_CdRomCueBinDefaultLoadOptions()
+{
+    GG_CdRomCueBinLoadOptions options;
+
+    options.chunk_size = (2352 * 128);
+    options.max_preload_chunks = GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK;
+    options.read_ahead_chunks = 0;
+    options.allow_disc_preload = true;
+    options.enable_read_ahead = false;
+    options.track_files_start_at_index1 = false;
+
+    return options;
+}
+
+INLINE GG_CdRomCueBinLoadOptions GG_CdRomCueBinStreamingLoadOptions()
+{
+    GG_CdRomCueBinLoadOptions options;
+
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    options.chunk_size = (2352 * 1);
+    options.max_preload_chunks = 8;
+    options.read_ahead_chunks = 2;
+    options.allow_disc_preload = false;
+    options.enable_read_ahead = true;
+    options.track_files_start_at_index1 = true;
+#else
+    options.chunk_size = (2352 * 128);
+    options.max_preload_chunks = GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK;
+    options.read_ahead_chunks = 0;
+    options.allow_disc_preload = false;
+    options.enable_read_ahead = false;
+    options.track_files_start_at_index1 = true;
+#endif
+
+    return options;
+}
 
 #endif /* CDROM_CUEBIN_IMAGE_H */

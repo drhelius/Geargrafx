@@ -148,6 +148,8 @@ int application_init(const char* rom_file, const char* symbol_file, bool force_f
         emu_mcp_start();
     }
 
+    application_refocus_window();
+
     return 0;
 }
 
@@ -256,6 +258,12 @@ void application_update_title_with_rom(const char* rom)
 {
     if (!application_sdl_window)
         return;
+
+    if (!IsValidPointer(rom) || (rom[0] == 0))
+    {
+        SDL_SetWindowTitle(application_sdl_window, WINDOW_TITLE);
+        return;
+    }
 
     char final_title[256];
     snprintf(final_title, 256, "%s - %s", WINDOW_TITLE, rom);

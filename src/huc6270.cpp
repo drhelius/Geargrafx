@@ -196,9 +196,10 @@ u8 HuC6270::ReadRegister(u16 address)
             if (m_pending_memory_read)
                 WaitForVramAccess();
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, m_address_register, true);
-#endif
+            GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
+                HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER,
+                m_address_register,
+                true);
             u8 ret = m_read_buffer >> 8;
 
             if (m_address_register == HUC6270_REG_VRR)
@@ -227,9 +228,10 @@ void HuC6270::WriteRegister(u16 address, u8 value)
         // Data register (MSB)
         case 3:
         {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, m_address_register, false);
-#endif
+            GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
+                HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER,
+                m_address_register,
+                false);
 
             bool msb = address & 0x01;
 

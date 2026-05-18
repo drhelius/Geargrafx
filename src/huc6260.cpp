@@ -143,9 +143,10 @@ void HuC6260::Reset()
 
 u8 HuC6260::ReadRegister(u16 address)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER, address & 0x07, true);
-#endif
+    GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
+        HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER,
+        address & 0x07,
+        true);
 
     u8 ret = 0xFF;
 
@@ -157,9 +158,10 @@ u8 HuC6260::ReadRegister(u16 address)
             break;
         case 5:
             // Color table data MSB
-#if !defined(GG_DISABLE_DISASSEMBLER)
-            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM, m_color_table_address, true);
-#endif
+            GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
+                HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM,
+                m_color_table_address,
+                true);
             ret = 0xFE | ((m_color_table[m_color_table_address] >> 8) & 0x01);
             m_color_table_address = (m_color_table_address + 1) & 0x01FF;
             break;
@@ -170,9 +172,10 @@ u8 HuC6260::ReadRegister(u16 address)
 
 void HuC6260::WriteRegister(u16 address, u8 value)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER, address & 0x07, false);
-#endif
+    GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
+        HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER,
+        address & 0x07,
+        false);
 
     switch (address & 0x07)
     {
@@ -236,9 +239,10 @@ void HuC6260::WriteRegister(u16 address, u8 value)
             break;
         case 5:
             // Color table data MSB
-#if !defined(GG_DISABLE_DISASSEMBLER)
-            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM, m_color_table_address, false);
-#endif
+            GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
+                HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM,
+                m_color_table_address,
+                false);
             m_color_table[m_color_table_address] = (m_color_table[m_color_table_address] & 0x00FF) | ((value & 0x01) << 8);
 
 #if !defined(GG_DISABLE_DISASSEMBLER)

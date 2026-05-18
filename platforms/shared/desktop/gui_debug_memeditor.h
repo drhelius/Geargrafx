@@ -26,6 +26,8 @@
 #include <iostream>
 #include "imgui.h"
 
+typedef void (*ContextMenuBreakpointCallback)(int editor, int start, int end);
+
 class MemEditor
 {
 public:
@@ -106,6 +108,7 @@ public:
     int PerformSearch(int op, int compare_type, int compare_value, int data_type);
     std::vector<Search>* GetSearchResults();
     int FindBytesSequence(const char* hex_str, int* out_addresses, int max_results);
+    void SetBreakpointCallback(ContextMenuBreakpointCallback cb, int editor);
 
 private:
     bool IsColumnSeparator(int current_column, int column_count);
@@ -184,6 +187,8 @@ private:
     int m_find_bytes_last_address;
     int m_find_bytes_pattern_len;
     std::vector<int> m_find_bytes_results;
+    ContextMenuBreakpointCallback m_breakpoint_callback;
+    int m_breakpoint_editor;
 };
 
 #endif /* GUI_DEBUG_MEMEDITOR_H */

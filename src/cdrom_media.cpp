@@ -70,6 +70,12 @@ void CdRomMedia::Reset()
 
 bool CdRomMedia::LoadCueFromFile(const char* path, bool preload)
 {
+    bool cdrom_uri_path = IsCdRomUriPath(path);
+    GG_CdRomCueBinLoadOptions options = cdrom_uri_path ?
+        GG_CdRomCueBinStreamingLoadOptions() : GG_CdRomCueBinDefaultLoadOptions();
+
+    m_cue_bin_image->SetLoadOptions(options);
+
     if (m_cue_bin_image->LoadFromFile(path, preload))
     {
         m_current_image = m_cue_bin_image;
@@ -196,6 +202,11 @@ s32 CdRomMedia::GetTrackFromLBA(u32 lba)
         Error("GetTrackFromLBA failed - Current image is NULL");
         return -1;
     }
+}
+
+bool CdRomMedia::IsCdRomUriPath(const char* path)
+{
+    return IsValidPointer(path) && (strncmp(path, "cdrom://", 8) == 0);
 }
 
 ///////////////////////////////////////////////////////////////

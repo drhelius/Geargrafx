@@ -492,9 +492,28 @@ INLINE bool HuC6280::RunToBreakpointHit()
     return m_run_to_breakpoint_hit;
 }
 
-INLINE std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints()
+INLINE const std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints() const
 {
     return &m_breakpoints;
+}
+
+INLINE bool HuC6280::HasPhysicalMemoryBreakpoints(bool read) const
+{
+    return m_breakpoints_enabled &&
+        m_physical_breakpoint_cache[read ? HuC6280_BREAKPOINT_ACCESS_READ : HuC6280_BREAKPOINT_ACCESS_WRITE];
+}
+
+INLINE bool HuC6280::HasMemoryBreakpoints(int type, bool read) const
+{
+    if (!m_breakpoints_enabled || type < 0 || type >= HuC6280_BREAKPOINT_TYPE_COUNT)
+        return false;
+
+    return m_breakpoint_cache[type][read ? HuC6280_BREAKPOINT_ACCESS_READ : HuC6280_BREAKPOINT_ACCESS_WRITE];
+}
+
+INLINE bool HuC6280::HasPhysicalExecuteBreakpoints() const
+{
+    return m_breakpoints_enabled && m_physical_breakpoint_cache[HuC6280_BREAKPOINT_ACCESS_EXECUTE];
 }
 
 INLINE std::stack<HuC6280::GG_CallStackEntry>* HuC6280::GetDisassemblerCallStack()
@@ -548,6 +567,49 @@ INLINE void HuC6280::CheckBreakpoints()
     if (!m_breakpoints_enabled)
         return;
 
+    u16 pc = m_PC.GetValue();
+    bool has_physical_execute_breakpoints = HasPhysicalExecuteBreakpoints();
+    bool rom_execute_valid = false;
+    bool card_ram_execute_valid = false;
+    bool cdrom_ram_execute_valid = false;
+    u32 rom_execute_address = 0;
+    u32 card_ram_execute_address = 0;
+    u32 cdrom_ram_execute_address = 0;
+
+    if (has_physical_execute_breakpoints)
+    {
+        bool has_rom_execute_breakpoints = m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_ROM][HuC6280_BREAKPOINT_ACCESS_EXECUTE];
+        bool has_card_ram_execute_breakpoints = m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CARD_RAM][HuC6280_BREAKPOINT_ACCESS_EXECUTE];
+        bool has_cdrom_ram_execute_breakpoints = m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CDROM_RAM][HuC6280_BREAKPOINT_ACCESS_EXECUTE];
+
+        if (has_rom_execute_breakpoints || has_card_ram_execute_breakpoints || has_cdrom_ram_execute_breakpoints)
+        {
+            u8 bank = m_memory->GetBank(pc);
+            u16 offset = pc & 0x1FFF;
+            Memory::MemoryBankType bank_type = m_memory->GetBankType(bank);
+
+            if (has_rom_execute_breakpoints && bank_type == Memory::MEMORY_BANK_TYPE_ROM)
+                rom_execute_valid = m_memory->GetROMPhysicalAddress(bank, offset, rom_execute_address);
+
+            if (has_card_ram_execute_breakpoints && bank_type == Memory::MEMORY_BANK_TYPE_CARD_RAM)
+            {
+                int size = m_memory->GetCardRAMSize();
+                if (size > 0)
+                {
+                    card_ram_execute_address = ((bank - m_memory->GetCardRAMStart()) * 0x2000) + offset;
+                    card_ram_execute_address %= size;
+                    card_ram_execute_valid = true;
+                }
+            }
+
+            if (has_cdrom_ram_execute_breakpoints && bank_type == Memory::MEMORY_BANK_TYPE_CDROM_RAM)
+            {
+                cdrom_ram_execute_address = ((bank - 0x80) * 0x2000) + offset;
+                cdrom_ram_execute_valid = true;
+            }
+        }
+    }
+
     for (int i = 0; i < (int)m_breakpoints.size(); i++)
     {
         GG_Breakpoint* brk = &m_breakpoints[i];
@@ -556,30 +618,59 @@ INLINE void HuC6280::CheckBreakpoints()
             continue;
         if (!brk->execute)
             continue;
-        if (brk->type != HuC6280_BREAKPOINT_TYPE_ROMRAM)
-            continue;
 
-        if (brk->range)
+        u32 address = 0;
+        bool valid = false;
+
+        if (brk->type == HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS)
         {
-            if (m_PC.GetValue() >= brk->address1 && m_PC.GetValue() <= brk->address2)
-            {
-                m_cpu_breakpoint_hit = true;
-                m_run_to_breakpoint_requested = false;
-                return;
-            }
+            address = pc;
+            valid = true;
         }
+        else if (!has_physical_execute_breakpoints)
+            continue;
         else
-        {
-            if (m_PC.GetValue() == brk->address1)
+            switch (brk->type)
             {
-                m_cpu_breakpoint_hit = true;
-                m_run_to_breakpoint_requested = false;
-                return;
+                case HuC6280_BREAKPOINT_TYPE_ROM:
+                {
+                    address = rom_execute_address;
+                    valid = rom_execute_valid;
+                    break;
+                }
+                case HuC6280_BREAKPOINT_TYPE_CARD_RAM:
+                {
+                    address = card_ram_execute_address;
+                    valid = card_ram_execute_valid;
+                    break;
+                }
+                case HuC6280_BREAKPOINT_TYPE_CDROM_RAM:
+                {
+                    address = cdrom_ram_execute_address;
+                    valid = cdrom_ram_execute_valid;
+                    break;
+                }
+                default:
+                    break;
             }
+
+        if (valid && BreakpointAddressMatches(brk, address))
+        {
+            m_cpu_breakpoint_hit = true;
+            m_run_to_breakpoint_requested = false;
+            return;
         }
     }
 
 #endif
+}
+
+INLINE bool HuC6280::BreakpointAddressMatches(GG_Breakpoint* brk, u32 address)
+{
+    if (brk->range)
+        return address >= brk->address1 && address <= brk->address2;
+
+    return address == brk->address1;
 }
 
 INLINE void HuC6280::DisassembleNextOPCode()

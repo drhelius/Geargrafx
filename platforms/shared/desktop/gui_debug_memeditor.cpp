@@ -66,6 +66,8 @@ MemEditor::MemEditor()
     m_find_bytes_buffer[0] = 0;
     m_find_bytes_last_address = -1;
     m_find_bytes_pattern_len = 0;
+    m_breakpoint_callback = NULL;
+    m_breakpoint_editor = -1;
 }
 
 MemEditor::~MemEditor()
@@ -810,6 +812,29 @@ void MemEditor::DrawContexMenu(int address, bool cell_hovered, bool options)
             if (ImGui::Selectable("Add Watch..."))
             {
                 m_add_watch = true;
+            }
+        }
+
+        if (IsValidPointer(m_breakpoint_callback))
+        {
+            if (ImGui::MenuItem("Toggle Breakpoint"))
+            {
+                int start = address;
+                int end = address;
+
+                if (m_selection_start >= 0 && m_selection_end >= 0)
+                {
+                    int sel_start = MIN(m_selection_start, m_selection_end);
+                    int sel_end = MAX(m_selection_start, m_selection_end);
+
+                    if (address >= sel_start && address <= sel_end)
+                    {
+                        start = sel_start;
+                        end = sel_end;
+                    }
+                }
+
+                m_breakpoint_callback(m_breakpoint_editor, start, end);
             }
         }
 
@@ -2392,4 +2417,10 @@ void MemEditor::LoadSettings(std::istream& stream)
         stream.read((char*)&watch.format, sizeof(int));
         m_watches.push_back(watch);
     }
+}
+
+void MemEditor::SetBreakpointCallback(ContextMenuBreakpointCallback callback, int editor)
+{
+    m_breakpoint_callback = callback;
+    m_breakpoint_editor = editor;
 }
