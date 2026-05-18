@@ -64,6 +64,7 @@ void gui_debug_reset(void)
 {
     gui_debug_disassembler_reset();
     gui_debug_memory_reset();
+    gui_debug_reset_breakpoints();
     gui_debug_reset_symbols();
 }
 
@@ -133,8 +134,7 @@ void gui_debug_windows(void)
     }
 }
 
-static const char* GGDEBUG_MAGIC_V2 = "GGDEBUG2";
-static const char* GGDEBUG_MAGIC_V3 = "GGDEBUG3";
+static const char* GGDEBUG_MAGIC = "GGDEBUG3";
 static const int GGDEBUG_MAGIC_LEN = 8;
 
 void gui_debug_save_settings(const char* file_path)
@@ -146,7 +146,7 @@ void gui_debug_save_settings(const char* file_path)
         return;
     }
 
-    file.write(GGDEBUG_MAGIC_V3, GGDEBUG_MAGIC_LEN);
+    file.write(GGDEBUG_MAGIC, GGDEBUG_MAGIC_LEN);
 
     GeargrafxCore* core = emu_get_core();
     HuC6280* processor = core->GetHuC6280();
@@ -202,9 +202,7 @@ void gui_debug_load_settings(const char* file_path)
     char magic[8];
     file.read(magic, GGDEBUG_MAGIC_LEN);
 
-    bool is_v2 = memcmp(magic, GGDEBUG_MAGIC_V2, GGDEBUG_MAGIC_LEN) == 0;
-    bool is_v3 = memcmp(magic, GGDEBUG_MAGIC_V3, GGDEBUG_MAGIC_LEN) == 0;
-    if (!is_v2 && !is_v3)
+    if (memcmp(magic, GGDEBUG_MAGIC, GGDEBUG_MAGIC_LEN) != 0)
     {
         Log("Invalid debug settings file: %s", file_path);
         file.close();
@@ -223,24 +221,8 @@ void gui_debug_load_settings(const char* file_path)
         HuC6280::GG_Breakpoint bp{};
         file.read((char*)&bp.enabled, sizeof(bool));
         file.read((char*)&bp.type, sizeof(int));
-
-        if (is_v2)
-        {
-            u16 address1 = 0;
-            u16 address2 = 0;
-
-            file.read((char*)&address1, sizeof(u16));
-            file.read((char*)&address2, sizeof(u16));
-
-            bp.address1 = address1;
-            bp.address2 = address2;
-        }
-        else
-        {
-            file.read((char*)&bp.address1, sizeof(u32));
-            file.read((char*)&bp.address2, sizeof(u32));
-        }
-
+        file.read((char*)&bp.address1, sizeof(u32));
+        file.read((char*)&bp.address2, sizeof(u32));
         file.read((char*)&bp.read, sizeof(bool));
         file.read((char*)&bp.write, sizeof(bool));
         file.read((char*)&bp.execute, sizeof(bool));
