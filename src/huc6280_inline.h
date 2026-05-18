@@ -567,6 +567,49 @@ INLINE void HuC6280::CheckBreakpoints()
     if (!m_breakpoints_enabled)
         return;
 
+    u16 pc = m_PC.GetValue();
+    bool has_physical_execute_breakpoints = HasPhysicalExecuteBreakpoints();
+    bool rom_execute_valid = false;
+    bool card_ram_execute_valid = false;
+    bool cdrom_ram_execute_valid = false;
+    u32 rom_execute_address = 0;
+    u32 card_ram_execute_address = 0;
+    u32 cdrom_ram_execute_address = 0;
+
+    if (has_physical_execute_breakpoints)
+    {
+        bool has_rom_execute_breakpoints = m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_ROM][HuC6280_BREAKPOINT_ACCESS_EXECUTE];
+        bool has_card_ram_execute_breakpoints = m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CARD_RAM][HuC6280_BREAKPOINT_ACCESS_EXECUTE];
+        bool has_cdrom_ram_execute_breakpoints = m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CDROM_RAM][HuC6280_BREAKPOINT_ACCESS_EXECUTE];
+
+        if (has_rom_execute_breakpoints || has_card_ram_execute_breakpoints || has_cdrom_ram_execute_breakpoints)
+        {
+            u8 bank = m_memory->GetBank(pc);
+            u16 offset = pc & 0x1FFF;
+            Memory::MemoryBankType bank_type = m_memory->GetBankType(bank);
+
+            if (has_rom_execute_breakpoints && bank_type == Memory::MEMORY_BANK_TYPE_ROM)
+                rom_execute_valid = m_memory->GetROMPhysicalAddress(bank, offset, rom_execute_address);
+
+            if (has_card_ram_execute_breakpoints && bank_type == Memory::MEMORY_BANK_TYPE_CARD_RAM)
+            {
+                int size = m_memory->GetCardRAMSize();
+                if (size > 0)
+                {
+                    card_ram_execute_address = ((bank - m_memory->GetCardRAMStart()) * 0x2000) + offset;
+                    card_ram_execute_address %= size;
+                    card_ram_execute_valid = true;
+                }
+            }
+
+            if (has_cdrom_ram_execute_breakpoints && bank_type == Memory::MEMORY_BANK_TYPE_CDROM_RAM)
+            {
+                cdrom_ram_execute_address = ((bank - 0x80) * 0x2000) + offset;
+                cdrom_ram_execute_valid = true;
+            }
+        }
+    }
+
     for (int i = 0; i < (int)m_breakpoints.size(); i++)
     {
         GG_Breakpoint* brk = &m_breakpoints[i];
@@ -581,48 +624,30 @@ INLINE void HuC6280::CheckBreakpoints()
 
         if (brk->type == HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS)
         {
-            address = m_PC.GetValue();
+            address = pc;
             valid = true;
         }
-        else if (!HasPhysicalExecuteBreakpoints())
+        else if (!has_physical_execute_breakpoints)
             continue;
         else
             switch (brk->type)
             {
                 case HuC6280_BREAKPOINT_TYPE_ROM:
                 {
-                    valid = m_memory->GetROMPhysicalAddress(m_PC.GetValue(), address);
+                    address = rom_execute_address;
+                    valid = rom_execute_valid;
                     break;
                 }
                 case HuC6280_BREAKPOINT_TYPE_CARD_RAM:
                 {
-                    u16 pc = m_PC.GetValue();
-                    u8 bank = m_memory->GetBank(pc);
-
-                    if (m_memory->GetBankType(bank) == Memory::MEMORY_BANK_TYPE_CARD_RAM)
-                    {
-                        u32 offset = pc & 0x1FFF;
-                        int size = m_memory->GetCardRAMSize();
-                        if (size > 0)
-                        {
-                            address = ((bank - m_memory->GetCardRAMStart()) * 0x2000) + offset;
-                            address %= size;
-                            valid = true;
-                        }
-                    }
+                    address = card_ram_execute_address;
+                    valid = card_ram_execute_valid;
                     break;
                 }
                 case HuC6280_BREAKPOINT_TYPE_CDROM_RAM:
                 {
-                    u16 pc = m_PC.GetValue();
-                    u8 bank = m_memory->GetBank(pc);
-
-                    if (m_memory->GetBankType(bank) == Memory::MEMORY_BANK_TYPE_CDROM_RAM)
-                    {
-                        u32 offset = pc & 0x1FFF;
-                        address = ((bank - 0x80) * 0x2000) + offset;
-                        valid = true;
-                    }
+                    address = cdrom_ram_execute_address;
+                    valid = cdrom_ram_execute_valid;
                     break;
                 }
                 default:
