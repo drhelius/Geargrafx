@@ -639,11 +639,15 @@ static void draw_breakpoints_content(void)
         ImGui::TextUnformatted("Examples: 8000, 8000-8FFF");
         ImGui::Separator();
         ImGui::TextUnformatted("The valid range depends on the selected type:");
-        ImGui::TextUnformatted("CPU, WRAM, VRAM, CD RAM: 0000-FFFF");
+        ImGui::TextUnformatted("CPU, CD RAM: 0000-FFFF");
+        ImGui::TextUnformatted("WRAM, VRAM: 0000-7FFF");
         ImGui::TextUnformatted("ROM: 000000-27FFFF");
         ImGui::TextUnformatted("Card RAM: 00000-2FFFF");
-        ImGui::TextUnformatted("Palette RAM, BRAM: 000-7FF");
-        ImGui::TextUnformatted("Zero page, VDC/VCE registers: 00-FF");
+        ImGui::TextUnformatted("Palette RAM: 000-1FF");
+        ImGui::TextUnformatted("BRAM: 000-7FF");
+        ImGui::TextUnformatted("Zero page: 00-FF");
+        ImGui::TextUnformatted("VDC registers: 00-13");
+        ImGui::TextUnformatted("VCE registers: 00-06");
         ImGui::EndTooltip();
     }
 
