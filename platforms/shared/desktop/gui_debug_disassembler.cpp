@@ -613,7 +613,19 @@ static void draw_breakpoints_content(void)
     ImGui::PopItemWidth();
 
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Use hex XXXX format for single addresses or XXXX-XXXX for address ranges");
+    {
+        ImGui::BeginTooltip();
+        ImGui::TextUnformatted("Enter a hex address or address range.");
+        ImGui::TextUnformatted("Examples: 8000, 8000-8FFF");
+        ImGui::Separator();
+        ImGui::TextUnformatted("The valid range depends on the selected type:");
+        ImGui::TextUnformatted("CPU, WRAM, VRAM, CD RAM: 0000-FFFF");
+        ImGui::TextUnformatted("ROM: 000000-27FFFF");
+        ImGui::TextUnformatted("Card RAM: 00000-2FFFF");
+        ImGui::TextUnformatted("Palette RAM, BRAM: 000-7FF");
+        ImGui::TextUnformatted("Zero page, VDC/VCE registers: 00-FF");
+        ImGui::EndTooltip();
+    }
 
     ImGui::Checkbox("Read", &new_breakpoint_read);
 
