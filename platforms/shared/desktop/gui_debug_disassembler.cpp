@@ -735,7 +735,7 @@ static void draw_breakpoints_content(void)
 
         ImGui::PushID((int)b);
 
-        ImGui::PushFont(gui_material_icons_font);
+        //ImGui::PushFont(gui_material_icons_font);
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2.0f, 1.0f));
         ImVec2 bp_icon_btn_size = ImGui::CalcTextSize("X");
         bp_icon_btn_size.x += ImGui::GetStyle().FramePadding.x * 2.0f;
@@ -745,15 +745,17 @@ static void draw_breakpoints_content(void)
         {
            remove = b;
            ImGui::PopStyleVar();
-           ImGui::PopFont();
+           //ImGui::PopFont();
            ImGui::PopID();
            continue;
         }
         if (ImGui::IsItemHovered())
         {
+            ImGui::PopFont();
             ImGui::BeginTooltip();
             ImGui::Text("Remove breakpoint");
             ImGui::EndTooltip();
+            ImGui::PushFont(gui_default_font);
         }
 
         ImGui::SameLine(0, 2);
@@ -764,13 +766,15 @@ static void draw_breakpoints_content(void)
         }
         if (ImGui::IsItemHovered())
         {
+            ImGui::PopFont();
             ImGui::BeginTooltip();
             ImGui::Text(brk->enabled ? "Disable breakpoint" : "Enable breakpoint");
             ImGui::EndTooltip();
+            ImGui::PushFont(gui_default_font);
         }
 
         ImGui::PopStyleVar();
-        ImGui::PopFont();
+        //ImGui::PopFont();
 
         ImGui::SameLine();
         const BreakpointTypeInfo* info = get_breakpoint_type_info(brk->type);
