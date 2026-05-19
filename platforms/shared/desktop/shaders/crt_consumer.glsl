@@ -16,8 +16,8 @@ uniform float warpx;
 uniform float warpy;
 uniform float corner;
 uniform float smoothness;
-uniform float inter;
-uniform float Downscale;
+uniform float inter = 1.0;
+uniform float Downscale = 2.0;
 uniform float scanlow;
 uniform float scanhigh;
 uniform float beamlow;
@@ -182,9 +182,10 @@ void main()
     }
 
     vec2 tex_size = SourceSize.xy;
+    float interlace_downscale = Downscale > 0.0 ? Downscale : 2.0;
     vec2 pixel_phase = fract(pos * tex_size);
     if (inter < 0.5 && tex_size.y > 400.0)
-        pixel_phase.y = fract(pos.y * tex_size.y / Downscale);
+        pixel_phase.y = fract(pos.y * tex_size.y / interlace_downscale);
 
     vec2 texel = pos * tex_size;
     vec2 texel_floored = floor(texel);
