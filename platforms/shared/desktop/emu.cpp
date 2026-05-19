@@ -638,6 +638,8 @@ void emu_load_state_file(const char* file_path)
 
 void update_savestates_data(void)
 {
+    emu_savestates_generation++;
+
     for (int i = 0; i < 5; i++)
     {
         emu_savestates[i].rom_name[0] = 0;
