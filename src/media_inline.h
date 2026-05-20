@@ -48,6 +48,11 @@ inline bool Media::IsCDROM()
     return m_is_cdrom;
 }
 
+inline bool Media::IsInGameDatabase()
+{
+    return m_is_in_game_database;
+}
+
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 inline bool Media::IsPhysicalCdRom()
 {

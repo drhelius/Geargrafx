@@ -683,10 +683,11 @@ void emu_get_info(char* info, int buffer_size)
         const char* filename = media->GetFileName();
         u32 crc = media->GetCRC();
         int rom_size = media->GetROMSize();
+        const char* is_in_database = media->IsInGameDatabase() ? "YES" : "NO";
         const char* is_sgx = media->IsSGX() ? "YES" : "NO";
         const char* is_cdrom = media->IsCDROM() ? "YES" : "NO";
 
-        snprintf(info, buffer_size, "File Name: %s\nCRC: %08X\nROM Size: %d bytes, %d KB\nSuperGrafx: %s\nCD-ROM: %s\nScreen Resolution: %dx%d", filename, crc, rom_size, rom_size / 1024, is_sgx, is_cdrom, runtime.screen_width, runtime.screen_height);
+        snprintf(info, buffer_size, "File Name: %s\nCRC: %08X\nInternal DB: %s\nROM Size: %d bytes, %d KB\nSuperGrafx: %s\nCD-ROM: %s\nScreen Resolution: %dx%d", filename, crc, is_in_database, rom_size, rom_size / 1024, is_sgx, is_cdrom, runtime.screen_width, runtime.screen_height);
     }
     else
     {

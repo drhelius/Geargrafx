@@ -47,6 +47,7 @@ public:
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool IsPhysicalCdRom();
 #endif
+    bool IsInGameDatabase();
     bool IsGameExpress();
     bool IsArcadeCard();
     bool IsMB128();
@@ -113,6 +114,7 @@ private:
     bool m_is_gameexpress;
     bool m_is_sgx;
     bool m_is_cdrom;
+    bool m_is_in_game_database;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool m_is_physical_cdrom;
     char m_physical_cdrom_device_id[256];
