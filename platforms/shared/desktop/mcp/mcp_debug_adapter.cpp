@@ -89,6 +89,11 @@ static bool NormalizeMemoryAreaAddress(const MemoryAreaInfo& info, u32 address, 
     return false;
 }
 
+static u32 GetMemoryAreaByteSize(const MemoryAreaInfo& info)
+{
+    return info.size * info.unit_size;
+}
+
 void DebugAdapter::Pause()
 {
     emu_debug_break();
@@ -277,16 +282,18 @@ std::vector<u8> DebugAdapter::ReadMemoryArea(int area, u32 offset, size_t size)
     std::vector<u8> result;
     MemoryAreaInfo info = GetMemoryAreaInfo(area);
 
-    if (info.data == NULL || offset >= info.size)
+    if (info.data == NULL || info.unit_size == 0 || offset >= info.size)
         return result;
 
+    u32 byte_offset = offset * info.unit_size;
+    u32 byte_size = GetMemoryAreaByteSize(info);
     u32 bytes_to_read = (u32)size;
-    if (offset + bytes_to_read > info.size)
-        bytes_to_read = info.size - offset;
+    if (byte_offset + bytes_to_read > byte_size)
+        bytes_to_read = byte_size - byte_offset;
 
     for (u32 i = 0; i < bytes_to_read; i++)
     {
-        result.push_back(info.data[offset + i]);
+        result.push_back(info.data[byte_offset + i]);
     }
 
     return result;
@@ -296,12 +303,15 @@ void DebugAdapter::WriteMemoryArea(int area, u32 offset, const std::vector<u8>& 
 {
     MemoryAreaInfo info = GetMemoryAreaInfo(area);
 
-    if (info.data == NULL || offset >= info.size)
+    if (info.data == NULL || info.unit_size == 0 || offset >= info.size)
         return;
 
-    for (size_t i = 0; i < data.size() && (offset + i) < info.size; i++)
+    u32 byte_offset = offset * info.unit_size;
+    u32 byte_size = GetMemoryAreaByteSize(info);
+
+    for (size_t i = 0; i < data.size() && (byte_offset + i) < byte_size; i++)
     {
-        info.data[offset + i] = data[i];
+        info.data[byte_offset + i] = data[i];
     }
 }
 
@@ -464,6 +474,7 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
     info.id = area;
     info.data = NULL;
     info.size = 0;
+    info.unit_size = 1;
 
     Memory* memory = m_core->GetMemory();
     Media* media = m_core->GetMedia();
@@ -504,11 +515,13 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
             info.name = "PALETTES";
             info.data = (u8*)huc6260->GetColorTable();
             info.size = 512;
+            info.unit_size = sizeof(u16);
             break;
         case MEMORY_EDITOR_VRAM_1:
             info.name = is_sgx ? "VRAM 1" : "VRAM";
             info.data = (u8*)huc6270_1->GetVRAM();
             info.size = HUC6270_VRAM_SIZE;
+            info.unit_size = sizeof(u16);
             break;
         case MEMORY_EDITOR_VRAM_2:
             if (is_sgx)
@@ -516,12 +529,14 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
                 info.name = "VRAM 2";
                 info.data = (u8*)huc6270_2->GetVRAM();
                 info.size = HUC6270_VRAM_SIZE;
+                info.unit_size = sizeof(u16);
             }
             break;
         case MEMORY_EDITOR_SAT_1:
             info.name = is_sgx ? "SAT 1" : "SAT";
             info.data = (u8*)huc6270_1->GetSAT();
             info.size = HUC6270_SAT_SIZE;
+            info.unit_size = sizeof(u16);
             break;
         case MEMORY_EDITOR_SAT_2:
             if (is_sgx)
@@ -529,6 +544,7 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
                 info.name = "SAT 2";
                 info.data = (u8*)huc6270_2->GetSAT();
                 info.size = HUC6270_SAT_SIZE;
+                info.unit_size = sizeof(u16);
             }
             break;
         case MEMORY_EDITOR_CDROM_RAM:

@@ -424,7 +424,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "list_memory_areas"},
         {"title", "List Memory Areas"},
-        {"description", "List memory spaces/tabs: WRAM, VRAM, palette, ROM banks; returns area IDs, sizes, offsets."},
+        {"description", "List memory spaces/tabs: WRAM, VRAM, palette, ROM banks; returns area IDs, sizes in addressable units, unit sizes, and byte sizes."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
@@ -435,7 +435,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "read_memory"},
         {"title", "Read Memory"},
-        {"description", "Read bytes from memory area/tab by physical 0-based offset."},
+        {"description", "Read bytes from memory area/tab by physical 0-based addressable-unit offset."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -445,7 +445,7 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"offset", {
                     {"type", "string"},
-                    {"description", "0-based hex offset in area, e.g. '0100'."}
+                    {"description", "0-based hex offset in area addressable units, e.g. '0100'. Word-addressed areas report unit_size=2."}
                 }},
                 {"size", {
                     {"type", "integer"},
@@ -459,7 +459,7 @@ void McpServer::HandleToolsList(const json& request)
     tools.push_back({
         {"name", "write_memory"},
         {"title", "Write Memory"},
-        {"description", "Write hex bytes to memory area/tab by physical 0-based offset."},
+        {"description", "Write hex bytes to memory area/tab by physical 0-based addressable-unit offset."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -469,7 +469,7 @@ void McpServer::HandleToolsList(const json& request)
                 }},
                 {"offset", {
                     {"type", "string"},
-                    {"description", "0-based hex offset in area, e.g. '0100'."}
+                    {"description", "0-based hex offset in area addressable units, e.g. '0100'. Word-addressed areas report unit_size=2."}
                 }},
                 {"bytes", {
                     {"type", "string"},
@@ -1864,6 +1864,8 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
             areaObj["id"] = area.id;
             areaObj["name"] = area.name;
             areaObj["size"] = area.size;
+            areaObj["unit_size"] = area.unit_size;
+            areaObj["byte_size"] = area.size * area.unit_size;
             areaArray.push_back(areaObj);
         }
         return {{"areas", areaArray}};
