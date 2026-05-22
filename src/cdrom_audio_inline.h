@@ -34,7 +34,6 @@ INLINE void CdRomAudio::Clock(u32 cycles)
         if (m_seek_cycles <= 0)
         {
             m_seek_cycles = 0;
-            m_scsi_controller->StartStatus(ScsiController::SCSI_STATUS_GOOD);
         }
     }
 
@@ -83,8 +82,13 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
         return;
 
     u32 current_lba = m_cdrom_media->GetCurrentSector();
-    u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
-    m_seek_cycles = TimeToCycles(seek_time * 1000);
+    if (pause)
+        m_seek_cycles = 0;
+    else
+    {
+        u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
+        m_seek_cycles = TimeToCycles(seek_time * 1000);
+    }
     m_start_lba = lba;
     m_current_lba = lba;
     m_current_sample = 0;

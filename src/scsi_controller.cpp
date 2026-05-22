@@ -471,7 +471,7 @@ void ScsiController::CommandAudioStartPosition()
 
     m_cdrom_audio->StartAudio(start_lba, mode == 0);
 
-    SetPhase(SCSI_PHASE_BUSY);
+    StartStatus(SCSI_STATUS_GOOD);
 }
 
 void ScsiController::CommandAudioStopPosition()
