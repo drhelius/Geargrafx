@@ -252,15 +252,15 @@ u32 CdRomMedia::SeekTime(u32 start_lba, u32 end_lba)
 
     // Now, we use the algorithm to determine how long to wait
     if (lba_difference < 2)
-        return (u32)(3 * 1000 / 60);
+        return (u32)((9 * 1000 / 60));
     if (lba_difference < 5)
         return (u32)((9 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2));
     else if (track_difference <= 80)
-        return (u32)((16 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2));
+        return (u32)((18 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2));
     else if (track_difference <= 160)
         return (u32)((22 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2));
     else if (track_difference <= 644)
         return (u32)((22 * 1000 / 60) + (k_seek_sector_list[target_index].rotation_ms / 2) + ((track_difference - 161) * 16.66 / 80));
     else
-        return (u32)((36 * 1000 / 60) + ((track_difference - 644) * 16.66 / 195));
+        return (u32)((48 * 1000 / 60) + ((track_difference - 644) * 16.66 / 195));
 }
