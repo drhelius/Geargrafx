@@ -33,16 +33,17 @@ CdRomFile::~CdRomFile()
 CdRomFile* CdRomFile::OpenFile(const char* path)
 {
 #if defined(__LIBRETRO__)
-    if (CdRomFileLibretro::HasVfsInterface())
+    if (CdRomFileLibretro::IsCdRomUriPath(path))
     {
+        if (!CdRomFileLibretro::HasVfsInterface())
+            return NULL;
+
         CdRomFile* file = new CdRomFileLibretro;
         if (file->Open(path))
             return file;
 
         SafeDelete(file);
-
-        if (CdRomFileLibretro::IsCdRomUriPath(path))
-            return NULL;
+        return NULL;
     }
 #endif
 
