@@ -907,7 +907,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
             continue;
         }
 
-        u32 start_sector = ((i == 0) ? 0 : m_toc.tracks.back().end_lba + 1);
+        u32 start_sector = (m_toc.tracks.empty() ? 0 : m_toc.tracks.back().end_lba + 1);
         u32 total_pregap_length = 0;
 
         for (size_t j = 0; j < f.tracks.size(); j++)
