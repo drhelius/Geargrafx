@@ -94,18 +94,21 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
             {
                 Error("Invalid CHD header - hunk size or count is zero");
                 chd_close(m_chd_file);
+                InitPointer(m_chd_file);
                 m_ready = false;
             }
             else if (m_hunk_count > 500000)
             {
                 Error("Invalid CHD header - hunk count %u exceeds maximum", m_hunk_count);
                 chd_close(m_chd_file);
+                InitPointer(m_chd_file);
                 m_ready = false;
             }
             else if (m_hunk_bytes % (2352 + 96) != 0)
             {
                 Error("Invalid CHD hunk size %d, must be a multiple of 2448 (2352 + 96)", m_hunk_bytes);
                 chd_close(m_chd_file);
+                InitPointer(m_chd_file);
                 m_ready = false;
             }
             else
@@ -123,6 +126,7 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
         {
             Error("Failed to get CHD header for %s", path);
             chd_close(m_chd_file);
+            InitPointer(m_chd_file);
             m_ready = false;
         }
     }
@@ -131,6 +135,7 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
         Error("Unable to open CHD file %s.", path);
         Error("CHD: %d, %s", err, chd_error_string(err));
         chd_close(m_chd_file);
+        InitPointer(m_chd_file);
         m_ready = false;
     }
 
