@@ -651,9 +651,31 @@ void ScsiController::LoadSector()
 {
     if (m_data_buffer.empty())
     {
+        if (m_load_sector >= m_cdrom_media->GetSectorCount())
+        {
+            Debug("SCSI Load sector: sector %d past end of disc", m_load_sector);
+            TraceProblem(TRACE_SCSI_WARNING, TRACE_SCSI_PROBLEM_INVALID_READ_REQUEST,
+                         SCSI_CMD_READ, m_load_sector);
+            m_load_sector_count = 0;
+            m_next_load_cycles = 0;
+            StartStatus(SCSI_STATUS_CHECK_CONDITION);
+            return;
+        }
+
         m_data_buffer.resize(k_scsi_data_buffer_capacity);
         m_data_buffer_offset = 0;
-        m_cdrom_media->ReadSector(m_load_sector, m_data_buffer.data());
+        if (!m_cdrom_media->ReadSector(m_load_sector, m_data_buffer.data()))
+        {
+            Debug("SCSI Load sector: failed to read sector %d", m_load_sector);
+            TraceProblem(TRACE_SCSI_WARNING, TRACE_SCSI_PROBLEM_INVALID_READ_REQUEST,
+                         SCSI_CMD_READ, m_load_sector);
+            m_data_buffer.clear();
+            m_data_buffer_offset = 0;
+            m_load_sector_count = 0;
+            m_next_load_cycles = 0;
+            StartStatus(SCSI_STATUS_CHECK_CONDITION);
+            return;
+        }
 
     SCSI_DEBUG("SCSI Load sector %d", m_load_sector);
 
