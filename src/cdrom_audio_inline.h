@@ -95,11 +95,12 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
     m_stop_lba = m_cdrom_media->GetLastSectorOfTrack(track);
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_current_state = pause ? CD_AUDIO_STATE_PAUSED : CD_AUDIO_STATE_PLAYING;
+    m_cdrom_media->SetCurrentSector(m_current_lba);
 
     Debug("CD AUDIO: Start audio at LBA %d, track %d, current lba %d, seek cycles %d",
           lba, track, current_lba, m_seek_cycles);
 
-    m_cdrom_media->PreloadTrack(m_cdrom_media->GetTrackFromLBA(m_start_lba));
+    m_cdrom_media->PreloadTrack((u32)track);
 }
 
 INLINE void CdRomAudio::StopAudio()
@@ -172,6 +173,8 @@ INLINE void CdRomAudio::GenerateSamples()
                     break;
             }
         }
+
+        m_cdrom_media->SetCurrentSector(m_current_lba);
     }
 }
 
