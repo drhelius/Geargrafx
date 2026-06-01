@@ -956,8 +956,7 @@ static void check_variables(void)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         bool enabled = (strcmp(var.value, "Enabled") == 0);
-        core->GetMemory()->EnableBackupRam(enabled);
-        core->GetInput()->EnableCDROM(enabled);
+        core->GetMedia()->ForceBackupRAM(enabled);
     }
 
     var.key = "geargrafx_deterministic_netplay";
