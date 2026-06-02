@@ -477,6 +477,8 @@ bool Media::LoadMediaFromZipFile(const char* path)
         }
     }
 
+    mz_zip_reader_end(&zip_archive);
+
     Error("No valid ROM or CUE file found in ZIP archive %s", path);
 
     return false;
