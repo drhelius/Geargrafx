@@ -111,6 +111,7 @@ static void save_mb128(void);
 static void load_mb128(void);
 static void set_controller_info(void);
 static int get_mouse_port(void);
+static void release_controller_input(unsigned port);
 static void poll_input(void);
 static void apply_input(void);
 static bool categories_supported = false;
@@ -254,6 +255,9 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
         log_cb(RETRO_LOG_DEBUG, "retro_set_controller_port_device invalid port number: %u\n", port);
         return;
     }
+
+    if (input_device[port] != device)
+        release_controller_input(port);
 
     input_device[port] = device;
 
@@ -620,6 +624,21 @@ static int get_mouse_port(void)
     }
 
     return -1;
+}
+
+static void release_controller_input(unsigned port)
+{
+    for (int i = 0; i < 12; i++)
+        core->KeyReleased((GG_Controllers)port, keymap[i]);
+
+    for (int i = 0; i < MAX_BUTTONS; i++)
+    {
+        joypad_current[port][i] = 0;
+        joypad_old[port][i] = 0;
+    }
+
+    if (input_device[port] == RETRO_DEVICE_PCE_MOUSE)
+        core->GetInput()->SetMouseDelta(0, 0);
 }
 
 static void poll_input(void)
