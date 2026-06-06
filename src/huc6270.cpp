@@ -1017,6 +1017,7 @@ void HuC6270::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
     stream.read(reinterpret_cast<char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
     stream.read(reinterpret_cast<char*> (&m_sprite_count), sizeof(m_sprite_count));
+    m_sprite_count = CLAMP(m_sprite_count, 0, HUC6270_SPRITES * 2);
     stream.read(reinterpret_cast<char*> (&m_sprite_overflow), sizeof(m_sprite_overflow));
     stream.read(reinterpret_cast<char*> (&m_next_event), sizeof(m_next_event));
     stream.read(reinterpret_cast<char*> (&m_clocks_to_next_event), sizeof(m_clocks_to_next_event));
