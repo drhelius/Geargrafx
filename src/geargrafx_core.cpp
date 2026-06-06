@@ -741,7 +741,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     }
 
     // Fallback to libretro header
-    if (header.magic != GG_SAVESTATE_MAGIC)
+    if ((header.magic != GG_SAVESTATE_MAGIC) && (size >= sizeof(header)))
     {
         stream.seekg(size - sizeof(header), ios::beg);
         stream.read(reinterpret_cast<char*> (&header), sizeof(header));
