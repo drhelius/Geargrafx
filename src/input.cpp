@@ -156,6 +156,8 @@ void Input::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_selected_pad), sizeof(m_selected_pad));
     stream.read(reinterpret_cast<char*> (&m_selected_extra_buttons), sizeof(m_selected_extra_buttons));
 
+    m_selected_pad = MAX(m_selected_pad, 0);
+
     if (version >= 25)
         stream.read(reinterpret_cast<char*> (m_gamepads), sizeof(m_gamepads));
     else
