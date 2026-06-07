@@ -844,6 +844,13 @@ bool GeargrafxCore::GetSaveStateHeader(int index, const char* path, GG_SaveState
     size_t savestate_size = static_cast<size_t>(stream.tellg());
     stream.seekg(0, ios::beg);
 
+    if (savestate_size < sizeof(GG_SaveState_Header))
+    {
+        Error("Invalid save state file size: %zu", savestate_size);
+        stream.close();
+        return false;
+    }
+
     stream.seekg(savestate_size - sizeof(GG_SaveState_Header), ios::beg);
     stream.read(reinterpret_cast<char*> (header), sizeof(GG_SaveState_Header));
     stream.seekg(0, ios::beg);
@@ -889,7 +896,13 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
     }
 
     GG_SaveState_Header header;
-    GetSaveStateHeader(index, path, &header);
+
+    if (!GetSaveStateHeader(index, path, &header))
+    {
+        Error("Invalid save state header");
+        stream.close();
+        return false;
+    }
 
     if (header.screenshot_size == 0)
     {
@@ -914,6 +927,13 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
     Debug("Screenshot width: %d", screenshot->width);
     Debug("Screenshot height: %d", screenshot->height);
     Debug("Screenshot width scale: %d", screenshot->width_scale);
+
+    if (header.size < sizeof(header) + screenshot->size)
+    {
+        Error("Invalid screenshot offset");
+        stream.close();
+        return false;
+    }
 
     stream.seekg(header.size - sizeof(header) - screenshot->size, ios::beg);
     stream.read(reinterpret_cast<char*> (screenshot->data), screenshot->size);
