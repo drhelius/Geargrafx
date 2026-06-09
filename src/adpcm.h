@@ -55,6 +55,7 @@ public:
     void Reset();
     void SoftReset();
     void Clock(u32 cycles);
+    void Sample();
     u8 Read(u16 address);
     u8 GetStatusRegisterSnapshot();
     void Write(u16 address, u8 value);
@@ -73,7 +74,6 @@ private:
     u32 NextSlotCycles(bool read);
     void UpdateReadWriteEvents(u32 cycles);
     void UpdateDMA(u32 cycles);
-    void UpdateAudio(u32 cycles);
     void RunAdpcm(u32 cycles);
     void WriteControl(u8 value);
     void SetEndIRQ(bool asserted);
@@ -113,7 +113,6 @@ private:
     s16 m_sample;
     u8 m_step_index;
     s32 m_adpcm_cycle_counter;
-    s32 m_audio_cycle_counter;
     s32 m_buffer_index;
     s32 m_frame_samples;
     s16 m_buffer[GG_AUDIO_BUFFER_SIZE] = {};

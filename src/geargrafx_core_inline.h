@@ -163,8 +163,6 @@ INLINE bool GeargrafxCore::ClockHardware(u32 cycles)
             if (is_cdrom)
             {
                 m_cdrom->Clock(cycles);
-                m_adpcm->Clock(cycles);
-                m_cdrom_audio->Clock(cycles);
             }
             m_audio->Clock(cycles);
             break;
@@ -179,8 +177,6 @@ INLINE bool GeargrafxCore::ClockHardware(u32 cycles)
         if (is_cdrom)
         {
             m_cdrom->Clock(step);
-            m_adpcm->Clock(step);
-            m_cdrom_audio->Clock(step);
         }
         m_audio->Clock(step);
         cycles -= step;

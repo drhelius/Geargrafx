@@ -70,6 +70,7 @@ public:
     void Init();
     void Reset();
     void Clock(u32 cycles);
+    void Sample();
     void Write(u16 address, u8 value);
     int EndFrame(s16* sample_buffer);
     void EnableHuC6280A(bool enabled);
@@ -95,7 +96,6 @@ private:
     u16 m_lfo_frequency;
     u8 m_lfo_control;
     s32 m_elapsed_cycles;
-    s32 m_sample_cycle_counter;
     s32 m_frame_samples;
     s32 m_buffer_index;
     u16 m_volume_lut[32];

@@ -37,30 +37,25 @@ INLINE void CdRomAudio::Clock(u32 cycles)
         }
     }
 
-    m_sample_cycle_counter += cycles;
+}
 
-    if (m_sample_cycle_counter >= GG_CDAUDIO_CYCLES_PER_SAMPLE)
+INLINE void CdRomAudio::Sample()
+{
+    m_left_sample = 0;
+    m_right_sample = 0;
+
+    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0))
+        GenerateSamples();
+
+    m_buffer[m_buffer_index + 0] = m_left_sample;
+    m_buffer[m_buffer_index + 1] = m_right_sample;
+
+    m_buffer_index += 2;
+
+    if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
     {
-        m_sample_cycle_counter -= GG_CDAUDIO_CYCLES_PER_SAMPLE;
-
-        m_left_sample = 0;
-        m_right_sample = 0;
-
-        if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0))
-        {
-            GenerateSamples();
-        }
-
-        m_buffer[m_buffer_index + 0] = m_left_sample;
-        m_buffer[m_buffer_index + 1] = m_right_sample;
-
-        m_buffer_index += 2;
-
-        if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
-        {
-            Error("CD AUDIO buffer overflow");
-            m_buffer_index = 0;
-        }
+        Error("CD AUDIO buffer overflow");
+        m_buffer_index = 0;
     }
 }
 

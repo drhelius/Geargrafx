@@ -33,7 +33,6 @@ INLINE void Adpcm::Clock(u32 cycles)
     RunAdpcm(cycles);
     UpdateReadWriteEvents(cycles);
     UpdateDMA(cycles);
-    UpdateAudio(cycles);
     CheckLength();
     CheckReset();
 }
@@ -340,47 +339,34 @@ INLINE void Adpcm::CheckLength()
     }
 }
 
-INLINE void Adpcm::UpdateAudio(u32 cycles)
+INLINE void Adpcm::Sample()
 {
-    m_audio_cycle_counter += cycles;
+    float x = (float)((int)m_sample - 2048) * 10.0f;
 
-    if (m_audio_cycle_counter >= GG_CDAUDIO_CYCLES_PER_SAMPLE)
+    const float R = 0.997f;
+    float y = x - m_dc_prev_x + R * m_dc_prev_y;
+    m_dc_prev_x = x;
+    m_dc_prev_y = y;
+
+    const float alpha_lpf = 0.4f;
+    m_filter_state += alpha_lpf * (y - m_filter_state);
+
+    float target_gain = m_cdrom->IsFaderEnabled(true) ? (float)m_cdrom->GetFaderValue() : 1.0f;
+    const float gain_smooth = 0.003f;
+    m_gain_smooth += (target_gain - m_gain_smooth) * gain_smooth;
+
+    int out32 = (int)(m_filter_state * m_gain_smooth);
+    s16 final_sample = (s16)CLAMP(out32, -32768, 32767);
+
+    m_buffer[m_buffer_index + 0] = final_sample;
+    m_buffer[m_buffer_index + 1] = final_sample;
+
+    m_buffer_index += 2;
+
+    if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
     {
-        m_audio_cycle_counter -= GG_CDAUDIO_CYCLES_PER_SAMPLE;
-
-        // Convert to signed and amplify
-        float x = (float)((int)m_sample - 2048) * 10.0f;
-
-        // One-pole DC blocker: y[n] = x[n] - x[n-1] + R * y[n-1]
-        const float R = 0.997f;
-        float y = x - m_dc_prev_x + R * m_dc_prev_y;
-        m_dc_prev_x = x;
-        m_dc_prev_y = y;
-
-        // IIR Low-pass filter
-        const float alpha_lpf = 0.4f;
-        m_filter_state += alpha_lpf * (y - m_filter_state);
-
-        // Smooth gain
-        float target_gain = m_cdrom->IsFaderEnabled(true) ? (float)m_cdrom->GetFaderValue() : 1.0f;
-        const float gain_smooth = 0.003f;
-        m_gain_smooth += (target_gain - m_gain_smooth) * gain_smooth;
-
-        int out32 = (int)(m_filter_state * m_gain_smooth);
-
-        // Clamp to 16-bit signed
-        s16 final_sample = (s16)CLAMP(out32, -32768, 32767);
-
-        m_buffer[m_buffer_index + 0] = final_sample;
-        m_buffer[m_buffer_index + 1] = final_sample;
-
-        m_buffer_index += 2;
-
-        if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
-        {
-            Error("ADPCM buffer overflow");
-            m_buffer_index = 0;
-        }
+        Error("ADPCM buffer overflow");
+        m_buffer_index = 0;
     }
 }
 

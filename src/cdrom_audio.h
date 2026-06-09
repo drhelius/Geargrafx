@@ -64,6 +64,7 @@ public:
     void Init(CdRom* cdrom, ScsiController* scsi_controller);
     void Reset();
     void Clock(u32 cycles);
+    void Sample();
     int EndFrame(s16* sample_buffer);
     CdAudioState GetCurrentState();
     CdRomAudio_State* GetState();
@@ -86,7 +87,6 @@ private:
     CdRomMedia* m_cdrom_media;
     ScsiController* m_scsi_controller;
     CdRomAudio_State m_state;
-    s32 m_sample_cycle_counter;
     s32 m_buffer_index;
     s32 m_frame_samples;
     s16 m_buffer[GG_AUDIO_BUFFER_SIZE] = {};

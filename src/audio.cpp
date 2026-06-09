@@ -33,6 +33,8 @@ Audio::Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio)
     InitPointer(m_trace_logger);
     m_mute = false;
     m_is_cdrom = false;
+    m_cycle_counter = 0;
+    m_sample_clock_counter = 0;
     m_master_volume = 1.0f;
     m_psg_volume = 1.0f;
     m_adpcm_volume = 1.0f;
@@ -60,6 +62,7 @@ void Audio::Reset(bool cdrom)
 {
     m_is_cdrom = cdrom;
     m_cycle_counter = 0;
+    m_sample_clock_counter = 0;
     m_psg->Reset();
 
     memset(m_psg_buffer, 0, sizeof(m_psg_buffer));
@@ -98,11 +101,6 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         {
             Error("CDA Audio buffer exceeded maximum size");
             count_cdrom = GG_AUDIO_BUFFER_SIZE;
-        }
-
-        if (count_psg != count_adpcm || count_adpcm != count_cdrom)
-        {
-            Error("Audio buffers have different sample counts: PSG=%d, ADPCM=%d, CDROM=%d", count_psg, count_adpcm, count_cdrom);
         }
 
         int samples = count_psg;
@@ -162,6 +160,7 @@ void Audio::SaveState(std::ostream& stream)
 {
     using namespace std;
     stream.write(reinterpret_cast<const char*> (&m_cycle_counter), sizeof(m_cycle_counter));
+    stream.write(reinterpret_cast<const char*> (&m_sample_clock_counter), sizeof(m_sample_clock_counter));
     m_psg->SaveState(stream);
 }
 
@@ -169,6 +168,10 @@ void Audio::LoadState(std::istream& stream, int version)
 {
     using namespace std;
     stream.read(reinterpret_cast<char*> (&m_cycle_counter), sizeof(m_cycle_counter));
+    if (version >= 32)
+        stream.read(reinterpret_cast<char*> (&m_sample_clock_counter), sizeof(m_sample_clock_counter));
+    else
+        m_sample_clock_counter = 0;
     m_psg->LoadState(stream, version);
 }
 

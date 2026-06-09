@@ -25,7 +25,6 @@ CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
     m_cdrom_media = cdrom_media;
     InitPointer(m_cdrom);
     InitPointer(m_scsi_controller);
-    m_sample_cycle_counter = 0;
     m_buffer_index = 0;
     m_frame_samples = 0;
     m_current_state = CD_AUDIO_STATE_STOPPED;
@@ -62,7 +61,6 @@ void CdRomAudio::Init(CdRom* cdrom, ScsiController* scsi_controller)
 
 void CdRomAudio::Reset()
 {
-    m_sample_cycle_counter = 0;
     m_buffer_index = 0;
     m_frame_samples = 0;
     m_current_state = CD_AUDIO_STATE_IDLE;
@@ -96,7 +94,6 @@ void CdRomAudio::SaveState(std::ostream& stream)
 {
     using namespace std;
 
-    stream.write(reinterpret_cast<const char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
     stream.write(reinterpret_cast<const char*> (&m_buffer_index), sizeof(m_buffer_index));
     stream.write(reinterpret_cast<const char*> (&m_frame_samples), sizeof(m_frame_samples));
     stream.write(reinterpret_cast<const char*> (m_buffer), sizeof(m_buffer));
@@ -115,7 +112,11 @@ void CdRomAudio::LoadState(std::istream& stream, int version)
 {
     using namespace std;
 
-    stream.read(reinterpret_cast<char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+    if (version < 32)
+    {
+        s32 sample_cycle_counter = 0;
+        stream.read(reinterpret_cast<char*> (&sample_cycle_counter), sizeof(sample_cycle_counter));
+    }
 
     if (version >= 27)
     {

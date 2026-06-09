@@ -54,6 +54,10 @@ public:
     void SetTraceLogger(TraceLogger* trace_logger);
 
 private:
+    void ClockSources(u32 cycles);
+    void SampleSources();
+
+private:
     bool m_mute;
     bool m_is_cdrom;
     TraceLogger* m_trace_logger;
@@ -64,6 +68,7 @@ private:
     s16 m_adpcm_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     s16 m_cdrom_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     u32 m_cycle_counter;
+    u64 m_sample_clock_counter;
     float m_master_volume;
     float m_psg_volume;
     float m_adpcm_volume;

@@ -66,7 +66,6 @@ void HuC6280PSG::Reset()
 {
     m_elapsed_cycles = 0;
     m_buffer_index = 0;
-    m_sample_cycle_counter = 0;
     m_frame_samples = 0;
 
     m_hpf_prev_input[0] = 0.0f;
@@ -239,7 +238,7 @@ void HuC6280PSG::Sync()
 
     while (remaining_cycles > 0)
     {
-        int batch_size = MIN(remaining_cycles, GG_PSG_CYCLES_PER_SAMPLE - m_sample_cycle_counter);
+        int batch_size = remaining_cycles;
         remaining_cycles -= batch_size;
 
         for (int i = 0; i < 6; i++)
@@ -371,26 +370,25 @@ void HuC6280PSG::Sync()
             }
         }
 
-        m_sample_cycle_counter += batch_size;
+    }
+}
 
-        if (m_sample_cycle_counter >= GG_PSG_CYCLES_PER_SAMPLE)
-        {
-            m_sample_cycle_counter -= GG_PSG_CYCLES_PER_SAMPLE;
+void HuC6280PSG::Sample()
+{
+    Sync();
 
-            for (int i = 0; i < 6; i++)
-            {
-                m_channels[i].output[m_buffer_index + 0] = m_channels[i].left_sample;
-                m_channels[i].output[m_buffer_index + 1] = m_channels[i].right_sample;
-            }
+    for (int i = 0; i < 6; i++)
+    {
+        m_channels[i].output[m_buffer_index + 0] = m_channels[i].left_sample;
+        m_channels[i].output[m_buffer_index + 1] = m_channels[i].right_sample;
+    }
 
-            m_buffer_index += 2;
+    m_buffer_index += 2;
 
-            if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
-            {
-                Error("PSG buffer overflow");
-                m_buffer_index = 0;
-            }
-        }
+    if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
+    {
+        Error("PSG buffer overflow");
+        m_buffer_index = 0;
     }
 }
 
@@ -463,7 +461,6 @@ void HuC6280PSG::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_lfo_frequency), sizeof(m_lfo_frequency));
     stream.write(reinterpret_cast<const char*> (&m_lfo_control), sizeof(m_lfo_control));
     stream.write(reinterpret_cast<const char*> (&m_elapsed_cycles), sizeof(m_elapsed_cycles));
-    stream.write(reinterpret_cast<const char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
     stream.write(reinterpret_cast<const char*> (&m_frame_samples), sizeof(m_frame_samples));
     stream.write(reinterpret_cast<const char*> (&m_buffer_index), sizeof(m_buffer_index));
 
@@ -506,7 +503,12 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_lfo_frequency), sizeof(m_lfo_frequency));
     stream.read(reinterpret_cast<char*> (&m_lfo_control), sizeof(m_lfo_control));
     stream.read(reinterpret_cast<char*> (&m_elapsed_cycles), sizeof(m_elapsed_cycles));
-    stream.read(reinterpret_cast<char*> (&m_sample_cycle_counter), sizeof(m_sample_cycle_counter));
+
+    if (version < 32)
+    {
+        s32 sample_cycle_counter = 0;
+        stream.read(reinterpret_cast<char*> (&sample_cycle_counter), sizeof(sample_cycle_counter));
+    }
 
     if (version >= 27)
     {

@@ -22,14 +22,55 @@
 #include "audio.h"
 #include "huc6280_psg.h"
 #include "adpcm.h"
+#include "cdrom_audio.h"
 #include "trace_logger.h"
 
 INLINE void Audio::Clock(u32 cycles)
+{
+    while (cycles > 0)
+    {
+        u32 step = cycles;
+        u64 cycles_to_sample = (GG_MASTER_CLOCK_RATE - m_sample_clock_counter + GG_AUDIO_SAMPLE_RATE - 1) / GG_AUDIO_SAMPLE_RATE;
+
+        if ((cycles_to_sample > 0) && (cycles_to_sample < step))
+            step = (u32)cycles_to_sample;
+
+        ClockSources(step);
+
+        m_sample_clock_counter += (u64)step * GG_AUDIO_SAMPLE_RATE;
+        cycles -= step;
+
+        while (m_sample_clock_counter >= GG_MASTER_CLOCK_RATE)
+        {
+            m_sample_clock_counter -= GG_MASTER_CLOCK_RATE;
+            SampleSources();
+        }
+    }
+}
+
+INLINE void Audio::ClockSources(u32 cycles)
 {
     u32 total_cycles = m_cycle_counter + cycles;
     u32 psg_cycles = total_cycles / 6;
     m_psg->Clock(psg_cycles);
     m_cycle_counter = total_cycles % 6;
+
+    if (m_is_cdrom)
+    {
+        m_adpcm->Clock(cycles);
+        m_cdrom_audio->Clock(cycles);
+    }
+}
+
+INLINE void Audio::SampleSources()
+{
+    m_psg->Sample();
+
+    if (m_is_cdrom)
+    {
+        m_adpcm->Sample();
+        m_cdrom_audio->Sample();
+    }
 }
 
 INLINE void Audio::WritePSG(u32 address, u8 value)
