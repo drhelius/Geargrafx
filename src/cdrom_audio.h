@@ -67,6 +67,8 @@ public:
     void Sample();
     int EndFrame(s16* sample_buffer);
     CdAudioState GetCurrentState();
+    CdAudioState GetSubcodeState();
+    u32 GetSubcodeLBA();
     CdRomAudio_State* GetState();
     void StartAudio(u32 lba, bool pause);
     void StopAudio();
@@ -94,6 +96,7 @@ private:
     u32 m_start_lba;
     u32 m_stop_lba;
     u32 m_current_lba;
+    u32 m_seek_start_lba;
     u32 m_current_sample;
     CdAudioStopEvent m_stop_event;
     s32 m_seek_cycles;

@@ -31,6 +31,7 @@ CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
     m_start_lba = 0;
     m_stop_lba = 0;
     m_current_lba = 0;
+    m_seek_start_lba = 0;
     m_current_sample = 0;
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_seek_cycles = 0;
@@ -67,6 +68,7 @@ void CdRomAudio::Reset()
     m_start_lba = 0;
     m_stop_lba = 0;
     m_current_lba = 0;
+    m_seek_start_lba = 0;
     m_current_sample = 0;
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_seek_cycles = 0;
@@ -101,6 +103,7 @@ void CdRomAudio::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_start_lba), sizeof(m_start_lba));
     stream.write(reinterpret_cast<const char*> (&m_stop_lba), sizeof(m_stop_lba));
     stream.write(reinterpret_cast<const char*> (&m_current_lba), sizeof(m_current_lba));
+    stream.write(reinterpret_cast<const char*> (&m_seek_start_lba), sizeof(m_seek_start_lba));
     stream.write(reinterpret_cast<const char*> (&m_current_sample), sizeof(m_current_sample));
     stream.write(reinterpret_cast<const char*> (&m_stop_event), sizeof(m_stop_event));
     stream.write(reinterpret_cast<const char*> (&m_seek_cycles), sizeof(m_seek_cycles));
@@ -135,6 +138,12 @@ void CdRomAudio::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_start_lba), sizeof(m_start_lba));
     stream.read(reinterpret_cast<char*> (&m_stop_lba), sizeof(m_stop_lba));
     stream.read(reinterpret_cast<char*> (&m_current_lba), sizeof(m_current_lba));
+
+    if (version >= 32)
+        stream.read(reinterpret_cast<char*> (&m_seek_start_lba), sizeof(m_seek_start_lba));
+    else
+        m_seek_start_lba = m_current_lba;
+
     stream.read(reinterpret_cast<char*> (&m_current_sample), sizeof(m_current_sample));
     stream.read(reinterpret_cast<char*> (&m_stop_event), sizeof(m_stop_event));
     stream.read(reinterpret_cast<char*> (&m_seek_cycles), sizeof(m_seek_cycles));

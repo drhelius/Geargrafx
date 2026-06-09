@@ -529,8 +529,9 @@ void ScsiController::CommandReadSubcodeQ()
     SCSI_DEBUG("SCSI CMD Read Subcode Q");
     SCSI_DEBUG("******");
 
-    CdRomAudio::CdAudioState audio_state = m_cdrom_audio->GetCurrentState();
-    u32 current_lba = m_cdrom_media->GetCurrentSector();
+    CdRomAudio::CdAudioState audio_state = m_cdrom_audio->GetSubcodeState();
+    u32 current_lba = (m_cdrom_audio->GetCurrentState() == CdRomAudio::CD_AUDIO_STATE_IDLE) ?
+        m_cdrom_media->GetCurrentSector() : m_cdrom_audio->GetSubcodeLBA();
     s32 current_track = m_cdrom_media->GetTrackFromLBA(current_lba);
     bool is_data_track = current_track >= 0 ? m_cdrom_media->GetTrackType(current_track) != GG_CDROM_AUDIO_TRACK : false;
     u8 adr_control = is_data_track ? 0x41 : 0x01;
