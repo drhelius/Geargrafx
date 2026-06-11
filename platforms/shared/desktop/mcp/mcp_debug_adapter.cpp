@@ -509,7 +509,7 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
         case MEMORY_EDITOR_BACKUP_RAM:
             info.name = "BRAM";
             info.data = memory->GetBackupRAM();
-            info.size = memory->IsBackupRamEnabled() ? 0x800 : 0;
+            info.size = memory->GetBackupRAMSize();
             break;
         case MEMORY_EDITOR_PALETTES:
             info.name = "PALETTES";

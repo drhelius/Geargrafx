@@ -391,6 +391,8 @@ INLINE u8* Memory::GetCardRAM()
 
 INLINE u8* Memory::GetBackupRAM()
 {
+    if (!m_backup_ram_enabled)
+        return NULL;
     return m_backup_ram;
 }
 
@@ -431,6 +433,8 @@ INLINE int Memory::GetCardRAMEnd()
 
 INLINE int Memory::GetBackupRAMSize()
 {
+    if (!m_backup_ram_enabled)
+        return 0;
     return 0x800;
 }
 
