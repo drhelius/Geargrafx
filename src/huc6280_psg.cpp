@@ -514,6 +514,10 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
     {
         stream.read(reinterpret_cast<char*> (&m_frame_samples), sizeof(m_frame_samples));
         stream.read(reinterpret_cast<char*> (&m_buffer_index), sizeof(m_buffer_index));
+
+        m_buffer_index = CLAMP(m_buffer_index, 0, GG_AUDIO_BUFFER_SIZE - 2);
+        m_buffer_index &= ~1;
+        m_frame_samples = CLAMP(m_frame_samples, 0, GG_AUDIO_BUFFER_SIZE);
     }
     else
     {
