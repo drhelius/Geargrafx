@@ -135,10 +135,18 @@ INLINE void CdRomAudio::SetIdle()
 
 INLINE void CdRomAudio::SetStopLBA(u32 lba, CdAudioStopEvent event)
 {
-    if (lba >= m_cdrom_media->GetSectorCount())
+    u32 sector_count = m_cdrom_media->GetSectorCount();
+
+    if (sector_count == 0)
+    {
+        Error("Invalid stop LBA %d - no sectors", lba);
+        return;
+    }
+
+    if (lba >= sector_count)
     {
         Error("Invalid stop LBA %d", lba);
-        lba = m_cdrom_media->GetSectorCount() - 1;
+        lba = sector_count - 1;
     }
 
     m_stop_lba = lba;
