@@ -69,17 +69,16 @@ void HuC6270::Reset()
         m_register[HUC6270_REG_VSR] = 0x0F02;
         m_register[HUC6270_REG_VDR] = 0x00EF;
         m_register[HUC6270_REG_VCR] = 0x0004;
-        m_read_buffer = 0x0000;
     }
     else
     {
         m_register[HUC6270_REG_HDR] = 0x1F;
         m_register[HUC6270_REG_VDR] = 239;
-        m_read_buffer = 0xFFFF;
     }
 
     m_address_register = 0;
     m_status_register = 0;
+    m_read_buffer = 0xFFFF;
     m_vram_openbus = 0;
     m_pending_memory_read = false;
     m_pending_memory_write = false;
@@ -196,10 +195,9 @@ u8 HuC6270::ReadRegister(u16 address)
             if (m_pending_memory_read)
                 WaitForVramAccess();
 
-            GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
-                HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER,
-                m_address_register,
-                true);
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, m_address_register, true);
+#endif
             u8 ret = m_read_buffer >> 8;
 
             if (m_address_register == HUC6270_REG_VRR)
@@ -228,10 +226,9 @@ void HuC6270::WriteRegister(u16 address, u8 value)
         // Data register (MSB)
         case 3:
         {
-            GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
-                HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER,
-                m_address_register,
-                false);
+#if !defined(GG_DISABLE_DISASSEMBLER)
+            m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, m_address_register, false);
+#endif
 
             bool msb = address & 0x01;
 
@@ -1017,7 +1014,6 @@ void HuC6270::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_line_buffer_index), sizeof(m_line_buffer_index));
     stream.read(reinterpret_cast<char*> (&m_no_sprite_limit), sizeof(m_no_sprite_limit));
     stream.read(reinterpret_cast<char*> (&m_sprite_count), sizeof(m_sprite_count));
-    m_sprite_count = CLAMP(m_sprite_count, 0, HUC6270_SPRITES * 2);
     stream.read(reinterpret_cast<char*> (&m_sprite_overflow), sizeof(m_sprite_overflow));
     stream.read(reinterpret_cast<char*> (&m_next_event), sizeof(m_next_event));
     stream.read(reinterpret_cast<char*> (&m_clocks_to_next_event), sizeof(m_clocks_to_next_event));

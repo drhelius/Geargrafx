@@ -202,10 +202,9 @@ INLINE void HuC6270::WaitForVramAccess()
 
 INLINE void HuC6270::ProcessVramRead()
 {
-    GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
-        HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM,
-        m_register[HUC6270_REG_MARR],
-        true);
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, m_register[HUC6270_REG_MARR], true);
+#endif
     m_read_buffer = ReadVRAM(m_register[HUC6270_REG_MARR]);
     m_register[HUC6270_REG_MARR] += k_huc6270_read_write_increment[(m_register[HUC6270_REG_CR] >> 11) & 0x03];
     m_pending_memory_read = false;
@@ -220,10 +219,9 @@ INLINE void HuC6270::ProcessVramWrite()
     }
     else
     {
-        GG_CHECK_MEMORY_BREAKPOINT(m_huc6280,
-            HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM,
-            m_register[HUC6270_REG_MAWR],
-            false);
+#if !defined(GG_DISABLE_DISASSEMBLER)
+        m_huc6280->CheckMemoryBreakpoints(HuC6280::HuC6280_BREAKPOINT_TYPE_VRAM, m_register[HUC6270_REG_MAWR], false);
+#endif
         m_vram[m_register[HUC6270_REG_MAWR] & 0x7FFF] = m_register[HUC6270_REG_VWR];
     }
 

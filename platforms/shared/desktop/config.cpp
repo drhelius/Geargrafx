@@ -309,6 +309,10 @@ void config_read(void)
     config_debug.dis_replace_symbols = read_bool("Debug", "DisReplaceSymbols", true);
     config_debug.dis_replace_labels = read_bool("Debug", "DisReplaceLabels", true);
     config_debug.dis_look_ahead_count = read_int("Debug", "DisLookAheadCount", 20);
+    config_debug.pause_on_brk = read_bool("Debug", "PauseOnBRK", false);
+    config_debug.pause_on_brk_value = read_int("Debug", "PauseOnBRKValue", 0xFF);
+    config_debug.pause_on_brk_value = CLAMP(config_debug.pause_on_brk_value, 0, 0xFF);
+    config_debug.pause_on_brk_trigger_irq = read_bool("Debug", "PauseOnBRKTriggerIRQ", false);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
     config_debug.scale = read_int("Debug", "Scale", 2);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
@@ -650,6 +654,9 @@ void config_write(void)
     write_bool("Debug", "DisReplaceSymbols", config_debug.dis_replace_symbols);
     write_bool("Debug", "DisReplaceLabels", config_debug.dis_replace_labels);
     write_int("Debug", "DisLookAheadCount", config_debug.dis_look_ahead_count);
+    write_bool("Debug", "PauseOnBRK", config_debug.pause_on_brk);
+    write_int("Debug", "PauseOnBRKValue", config_debug.pause_on_brk_value);
+    write_bool("Debug", "PauseOnBRKTriggerIRQ", config_debug.pause_on_brk_trigger_irq);
     write_int("Debug", "FontSize", config_debug.font_size);
     write_int("Debug", "Scale", config_debug.scale);
     write_bool("Debug", "MultiViewport", config_debug.multi_viewport);

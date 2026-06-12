@@ -33,6 +33,9 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_memory_breakpoint_hit = false;
     m_cpu_breakpoint_hit = false;
+    m_debug_brk_breakpoint_hit = false;
+    m_breakpoint_hit_address_valid = false;
+    m_prev_opcode_address = m_PC.GetValue();
     u16 trace_pc = m_PC.GetValue();
 #endif
 
@@ -45,6 +48,8 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
     m_extra_master_cycles = 0;
 
     u8 opcode = Fetch8();
+    m_cycles += k_huc6280_opcode_cycles[opcode];
+
     CheckIRQs();
 
     (this->*m_opcodes[opcode])();
@@ -76,8 +81,6 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
         HandleIRQ();
 
     DisassembleNextOPCode();
-
-    m_cycles += k_huc6280_opcode_cycles[opcode];
 
     return (m_cycles * k_huc6280_speed_divisor[m_speed]) + m_extra_master_cycles;
 }
@@ -479,7 +482,16 @@ INLINE u16 HuC6280::AbsoluteIndexedIndirectAddressing()
 
 INLINE bool HuC6280::BreakpointHit()
 {
-    return (m_cpu_breakpoint_hit || m_memory_breakpoint_hit);
+    return (m_cpu_breakpoint_hit || m_memory_breakpoint_hit || m_debug_brk_breakpoint_hit);
+}
+
+INLINE bool HuC6280::GetBreakpointHitAddress(u16* address)
+{
+    if (!m_breakpoint_hit_address_valid)
+        return false;
+
+    *address = m_breakpoint_hit_address;
+    return true;
 }
 
 INLINE bool HuC6280::MemoryBreakpointHit()
@@ -490,6 +502,19 @@ INLINE bool HuC6280::MemoryBreakpointHit()
 INLINE bool HuC6280::RunToBreakpointHit()
 {
     return m_run_to_breakpoint_hit;
+}
+
+INLINE void HuC6280::SetDebugBRK(bool enable, u8 value, bool trigger_irq)
+{
+    m_debug_brk_enabled = enable;
+    m_debug_brk_value = value;
+    m_debug_brk_trigger_irq = trigger_irq;
+}
+
+INLINE void HuC6280::SetBreakpointHitAddress(u16 address)
+{
+    m_breakpoint_hit_address_valid = true;
+    m_breakpoint_hit_address = address;
 }
 
 INLINE const std::vector<HuC6280::GG_Breakpoint>* HuC6280::GetBreakpoints() const

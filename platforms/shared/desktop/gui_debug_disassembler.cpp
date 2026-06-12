@@ -919,6 +919,9 @@ static void prepare_drawable_lines(void)
     HuC6280* processor = emu_get_core()->GetHuC6280();
     HuC6280::HuC6280_State* proc_state = processor->GetState();
     u16 pc = proc_state->PC->GetValue();
+    u16 hit_address = 0;
+    bool breakpoint_hit = processor->GetBreakpointHitAddress(&hit_address);
+    u16 focus_address = breakpoint_hit ? hit_address : pc;
 
     disassembler_lines.clear();
     pc_pos = 0;
@@ -1011,7 +1014,10 @@ static void prepare_drawable_lines(void)
                 }
             }
 
-            if ((u16)i == pc)
+            if (breakpoint_hit && hit_address == i)
+                line.is_breakpoint = true;
+
+            if ((u16)i == focus_address)
                 pc_pos = (int)disassembler_lines.size();
 
             if (goto_address_requested && (i <= goto_address_target))
@@ -1848,6 +1854,29 @@ static void disassembler_menu(void)
         }
 
         ImGui::MenuItem("Break On IRQs", 0, &emu_debug_irq_breakpoints);
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("BRK #n"))
+        {
+            ImGui::MenuItem("Pause on BRK #n", NULL, &config_debug.pause_on_brk);
+
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("#n");
+            ImGui::SameLine();
+            u8 brk_value = (u8)(config_debug.pause_on_brk_value & 0xFF);
+            u8 step = 1;
+            u8 step_fast = 16;
+            ImGui::PushItemWidth(80.0f);
+            if (ImGui::InputScalar("##brk_value", ImGuiDataType_U8, &brk_value, &step, &step_fast, "%02X", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+                config_debug.pause_on_brk_value = brk_value;
+            ImGui::PopItemWidth();
+
+            ImGui::MenuItem("Trigger IRQ", NULL, &config_debug.pause_on_brk_trigger_irq);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("When disabled, matching BRK #n pauses and runs as NOP");
+            ImGui::EndMenu();
+        }
 
         ImGui::Separator();
 

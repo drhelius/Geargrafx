@@ -302,6 +302,9 @@ void emu_update(void)
         debug_run.stop_on_breakpoint = !emu_debug_disable_breakpoints;
         debug_run.stop_on_run_to_breakpoint = true;
         debug_run.stop_on_irq = emu_debug_irq_breakpoints;
+        debug_run.stop_on_brk = config_debug.pause_on_brk && !emu_debug_disable_breakpoints;
+        debug_run.brk_value = (u8)(config_debug.pause_on_brk_value & 0xFF);
+        debug_run.brk_trigger_irq = config_debug.pause_on_brk_trigger_irq;
 
         if (emu_debug_command != Debug_Command_None)
         {

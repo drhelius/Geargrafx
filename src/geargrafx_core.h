@@ -49,6 +49,9 @@ public:
         bool stop_on_breakpoint;
         bool stop_on_run_to_breakpoint;
         bool stop_on_irq;
+        bool stop_on_brk;
+        u8 brk_value;
+        bool brk_trigger_irq;
     };
 
 public:

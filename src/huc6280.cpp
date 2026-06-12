@@ -33,6 +33,17 @@ HuC6280::HuC6280()
     InitPointer(m_clock_hardware_context);
     m_breakpoints_enabled = false;
     m_breakpoints_irq_enabled = false;
+    m_cpu_breakpoint_hit = false;
+    m_memory_breakpoint_hit = false;
+    m_debug_brk_breakpoint_hit = false;
+    m_breakpoint_hit_address_valid = false;
+    m_breakpoint_hit_address = 0xFFFF;
+    m_run_to_breakpoint_hit = false;
+    m_run_to_breakpoint_requested = false;
+    m_debug_brk_enabled = false;
+    m_debug_brk_value = 0;
+    m_debug_brk_trigger_irq = false;
+    m_prev_opcode_address = 0xFFFF;
     m_reset_value = -1;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
@@ -116,8 +127,15 @@ void HuC6280::Reset()
     m_extra_master_cycles = 0;
     m_cpu_breakpoint_hit = false;
     m_memory_breakpoint_hit = false;
+    m_debug_brk_breakpoint_hit = false;
+    m_breakpoint_hit_address_valid = false;
+    m_breakpoint_hit_address = 0xFFFF;
     m_run_to_breakpoint_hit = false;
     m_run_to_breakpoint_requested = false;
+    m_debug_brk_enabled = false;
+    m_debug_brk_value = 0;
+    m_debug_brk_trigger_irq = false;
+    m_prev_opcode_address = 0xFFFF;
     ClearDisassemblerCallStack();
 }
 
@@ -685,6 +703,7 @@ void HuC6280::CheckMemoryBreakpoints(int type, u32 address, bool read)
             if (address >= brk->address1 && address <= brk->address2)
             {
                 m_memory_breakpoint_hit = true;
+                SetBreakpointHitAddress(m_prev_opcode_address);
                 m_run_to_breakpoint_requested = false;
                 return;
             }
@@ -694,6 +713,7 @@ void HuC6280::CheckMemoryBreakpoints(int type, u32 address, bool read)
             if (address == brk->address1)
             {
                 m_memory_breakpoint_hit = true;
+                SetBreakpointHitAddress(m_prev_opcode_address);
                 m_run_to_breakpoint_requested = false;
                 return;
             }

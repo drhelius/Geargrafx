@@ -161,6 +161,20 @@ INLINE void HuC6280::OPCodes_BIT(u16 address)
 INLINE void HuC6280::OPCodes_BRK()
 {
     u16 pc = m_PC.GetValue();
+
+    if (m_debug_brk_enabled && m_memory->Read(pc) == m_debug_brk_value)
+    {
+        m_debug_brk_breakpoint_hit = true;
+        SetBreakpointHitAddress(pc - 1);
+
+        if (!m_debug_brk_trigger_irq)
+        {
+            Fetch8();
+            m_cycles = 2;
+            return;
+        }
+    }
+
     StackPush16(pc + 1);
     StackPush8(m_P.GetValue() | FLAG_BREAK);
     SetFlag(FLAG_INTERRUPT);

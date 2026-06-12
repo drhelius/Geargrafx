@@ -287,6 +287,9 @@ struct config_Debug
     bool dis_replace_symbols = true;
     bool dis_replace_labels = true;
     int dis_look_ahead_count = 20;
+    bool pause_on_brk = false;
+    int pause_on_brk_value = 0xFF;
+    bool pause_on_brk_trigger_irq = false;
     int font_size = 0;
     int scale = 2;
     bool multi_viewport = false;

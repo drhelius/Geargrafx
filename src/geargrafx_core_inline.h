@@ -82,6 +82,10 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             m_huc6280->EnableBreakpoints(debug->stop_on_breakpoint, debug->stop_on_irq);
         }
 
+        m_huc6280->SetDebugBRK(debug_enable && debug->stop_on_brk,
+            debug_enable ? debug->brk_value : 0,
+            debug_enable && debug->brk_trigger_irq);
+
         m_huc6260->SetBuffer(frame_buffer);
         bool stop = false;
 
