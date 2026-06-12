@@ -71,7 +71,7 @@ The default mode uses standard input/output for communication. The emulator is l
 
 ### HTTP Transport
 
-The HTTP transport mode runs the emulator with an embedded web server on `localhost:7777/mcp`. The emulator stays running independently while the AI client connects via HTTP.
+The HTTP transport mode runs the emulator with an embedded web server on `127.0.0.1:7777/mcp` by default. The emulator stays running independently while the AI client connects via HTTP. The listener rejects foreign `Host` and browser `Origin` values that do not match the configured endpoint. If `GEARGRAFX_MCP_HTTP_TOKEN` is set, HTTP requests must include `Authorization: Bearer <token>`.
 
 ### Headless Mode
 
@@ -177,11 +177,35 @@ If you prefer to build from source or configure manually:
 1. **Start the emulator manually** with HTTP transport:
    ```bash
    ./geargrafx --mcp-http
-   # Server will start on http://localhost:7777/mcp
+  # Server will start on http://127.0.0.1:7777/mcp
    
    # Or specify a custom port:
    ./geargrafx --mcp-http --mcp-http-port 3000
-   # Server will start on http://localhost:3000/mcp
+  # Server will start on http://127.0.0.1:3000/mcp
+
+  # Or specify a custom bind address:
+  ./geargrafx --mcp-http --mcp-http-address 192.168.1.50 --mcp-http-port 3000
+  # Server will start on http://192.168.1.50:3000/mcp
+  ```
+
+  To require bearer-token authentication, set `GEARGRAFX_MCP_HTTP_TOKEN` before starting HTTP mode:
+
+  ```bash
+  GEARGRAFX_MCP_HTTP_TOKEN="change-this-token" ./geargrafx --mcp-http
+  ```
+
+  Windows PowerShell:
+
+  ```powershell
+  $env:GEARGRAFX_MCP_HTTP_TOKEN = "change-this-token"
+  .\geargrafx.exe --mcp-http
+  ```
+
+  Windows Command Prompt:
+
+  ```cmd
+  set GEARGRAFX_MCP_HTTP_TOKEN=change-this-token
+  geargrafx.exe --mcp-http
    ```
 
    You can optionally start the server using the "MCP" menu in the GUI.
@@ -192,8 +216,10 @@ If you prefer to build from source or configure manually:
      "servers": {
        "geargrafx": {
          "type": "http",
-         "url": "http://localhost:7777/mcp",
-         "headers": {}
+         "url": "http://127.0.0.1:7777/mcp",
+         "headers": {
+           "Authorization": "Bearer change-this-token"
+         }
        }
      }
    }
@@ -205,7 +231,10 @@ If you prefer to build from source or configure manually:
      "mcpServers": {
        "geargrafx": {
          "type": "http",
-         "url": "http://localhost:7777/mcp"
+         "url": "http://127.0.0.1:7777/mcp",
+         "headers": {
+           "Authorization": "Bearer change-this-token"
+         }
        }
      }
    }
@@ -213,12 +242,13 @@ If you prefer to build from source or configure manually:
 
 4. **Or configure Claude Code**:
    ```bash
-   claude mcp add --transport http geargrafx http://localhost:7777/mcp
+  claude mcp add --transport http geargrafx http://127.0.0.1:7777/mcp
    ```
 
 5. **Restart your AI client** and start debugging
 
 > **Note:** The MCP HTTP Server must be running standalone before connecting the AI client.
+> **Security:** If `GEARGRAFX_MCP_HTTP_TOKEN` is unset, HTTP mode accepts unauthenticated requests from clients that pass the configured `Host` and `Origin` checks. The default bind address is local-only; use a non-loopback address only on trusted networks or with bearer-token authentication enabled.
 
 ## Usage Examples
 

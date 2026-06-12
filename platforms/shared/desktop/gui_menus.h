@@ -33,6 +33,7 @@ EXTERN char gui_backup_ram_path[4096];
 EXTERN char gui_mb128_path[4096];
 EXTERN char gui_syscard_bios_path[4096];
 EXTERN char gui_gameexpress_bios_path[4096];
+EXTERN char gui_mcp_http_address[64];
 
 EXTERN void gui_init_menus(void);
 EXTERN void gui_main_menu(void);

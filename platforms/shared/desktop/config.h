@@ -86,6 +86,7 @@ struct config_Emulator
     int cdrom_type = 0;
     bool preload_cdrom = false;
     int mcp_tcp_port = 7777;
+    std::string mcp_http_address = "127.0.0.1";
     bool capture_mouse = false;
     int mouse_sensitivity = 5;
 };

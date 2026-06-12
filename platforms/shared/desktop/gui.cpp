@@ -162,6 +162,7 @@ bool gui_init(void)
     strncpy_fit(gui_mb128_path, config_emulator.mb128_path.c_str(), sizeof(gui_mb128_path));
     strncpy_fit(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str(), sizeof(gui_syscard_bios_path));
     strncpy_fit(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str(), sizeof(gui_gameexpress_bios_path));
+    strncpy_fit(gui_mcp_http_address, config_emulator.mcp_http_address.c_str(), sizeof(gui_mcp_http_address));
     if (strlen(gui_syscard_bios_path) > 0)
         gui_load_bios(gui_syscard_bios_path, true);
     if (strlen(gui_gameexpress_bios_path) > 0)
