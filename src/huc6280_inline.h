@@ -927,6 +927,9 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
         }
     }
 
+    if (opcode == 0x00 && op1 != 0x00)
+        snprintf(record->name, 64, "{n}BRK {o}#$%02X", op1);
+
     // JMP hhll, JSR hhll
     if (opcode == 0x4C || opcode == 0x20)
     {
