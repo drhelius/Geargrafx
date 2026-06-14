@@ -82,10 +82,16 @@ static bool lowpass_speed_108 = true;
 
 static bool turbo_toggle_hotkey = false;
 static int mouse_sensitivity = 5;
-static bool libretro_supports_bitmasks;
+static bool libretro_supports_bitmasks = false;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
 static int joypad_old[MAX_PADS][MAX_BUTTONS];
-static unsigned input_device[MAX_PADS];
+static unsigned input_device[MAX_PADS] = {
+    RETRO_DEVICE_PCE_PAD,
+    RETRO_DEVICE_PCE_PAD,
+    RETRO_DEVICE_PCE_PAD,
+    RETRO_DEVICE_PCE_PAD,
+    RETRO_DEVICE_PCE_PAD
+};
 
 static GG_Keys keymap[MAX_BUTTONS] = {
     GG_KEY_UP,
@@ -111,6 +117,9 @@ static void save_mb128(void);
 static void load_mb128(void);
 static void set_controller_info(void);
 static int get_mouse_port(void);
+static void clear_input_state(void);
+static void reset_controller_devices(void);
+static void apply_controller_device(unsigned port, unsigned device, bool log_device);
 static void release_controller_input(unsigned port);
 static void poll_input(void);
 static void apply_input(void);
@@ -225,16 +234,10 @@ void retro_init(void)
 
     frame_buffer = new u8[2048 * 512 * 2];
 
-    for (int i = 0; i < MAX_PADS; i++)
-    {
-        input_device[i] = RETRO_DEVICE_PCE_PAD;
+    clear_input_state();
 
-        for (int j = 0; j < MAX_BUTTONS; j++)
-        {
-            joypad_current[i][j] = 0;
-            joypad_old[i][j] = 0;
-        }
-    }
+    for (int i = 0; i < MAX_PADS; i++)
+        apply_controller_device(i, input_device[i], false);
 
     libretro_supports_bitmasks = environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL);
 }
@@ -243,6 +246,17 @@ void retro_deinit(void)
 {
     SafeDeleteArray(frame_buffer);
     SafeDelete(core);
+
+    audio_sample_count = 0;
+    current_screen_width = 0;
+    current_screen_height = 0;
+    current_width_scale = 1;
+    current_aspect_ratio = 0.0f;
+    aspect_ratio = 0.0f;
+    libretro_supports_bitmasks = false;
+
+    reset_controller_devices();
+    clear_input_state();
 }
 
 void retro_reset(void)
@@ -258,43 +272,17 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 {
     if (port >= MAX_PADS)
     {
-        log_cb(RETRO_LOG_DEBUG, "retro_set_controller_port_device invalid port number: %u\n", port);
+        if (log_cb)
+            log_cb(RETRO_LOG_DEBUG, "retro_set_controller_port_device invalid port number: %u\n", port);
         return;
     }
 
-    if (input_device[port] != device)
+    if ((input_device[port] != device) && core)
         release_controller_input(port);
 
     input_device[port] = device;
 
-    switch ( device )
-    {
-        case RETRO_DEVICE_NONE:
-            log_cb(RETRO_LOG_INFO, "Controller %u: Unplugged\n", port);
-            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_STANDARD);
-            break;
-        case RETRO_DEVICE_PCE_PAD:
-        case RETRO_DEVICE_JOYPAD:
-            log_cb(RETRO_LOG_INFO, "Controller %u: Standard PCE Pad\n", port);
-            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_STANDARD);
-            break;
-        case RETRO_DEVICE_PCE_AVENUE_PAD_3:
-            log_cb(RETRO_LOG_INFO, "Controller %u: Avenue Pad 3\n", port);
-            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_AVENUE_PAD_3);
-            break;
-        case RETRO_DEVICE_PCE_AVENUE_PAD_6:
-            log_cb(RETRO_LOG_INFO, "Controller %u: Avenue Pad 6\n", port);
-            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_AVENUE_PAD_6);
-            break;
-        case RETRO_DEVICE_PCE_MOUSE:
-            log_cb(RETRO_LOG_INFO, "Controller %u: Mouse\n", port);
-            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_MOUSE);
-            break;
-        default:
-            log_cb(RETRO_LOG_DEBUG, "Setting descriptors for unsupported device.\n");
-            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_STANDARD);
-            break;
-    }
+    apply_controller_device(port, device, true);
 }
 
 void retro_get_system_info(struct retro_system_info *info)
@@ -632,10 +620,72 @@ static int get_mouse_port(void)
     return -1;
 }
 
+static void clear_input_state(void)
+{
+    for (int i = 0; i < MAX_PADS; i++)
+    {
+        for (int j = 0; j < MAX_BUTTONS; j++)
+        {
+            joypad_current[i][j] = 0;
+            joypad_old[i][j] = 0;
+        }
+    }
+}
+
+static void reset_controller_devices(void)
+{
+    for (int i = 0; i < MAX_PADS; i++)
+        input_device[i] = RETRO_DEVICE_PCE_PAD;
+}
+
+static void apply_controller_device(unsigned port, unsigned device, bool log_device)
+{
+    if (!core)
+        return;
+
+    switch (device)
+    {
+        case RETRO_DEVICE_NONE:
+            if (log_device && log_cb)
+                log_cb(RETRO_LOG_INFO, "Controller %u: Unplugged\n", port);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_STANDARD);
+            break;
+        case RETRO_DEVICE_PCE_PAD:
+        case RETRO_DEVICE_JOYPAD:
+            if (log_device && log_cb)
+                log_cb(RETRO_LOG_INFO, "Controller %u: Standard PCE Pad\n", port);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_STANDARD);
+            break;
+        case RETRO_DEVICE_PCE_AVENUE_PAD_3:
+            if (log_device && log_cb)
+                log_cb(RETRO_LOG_INFO, "Controller %u: Avenue Pad 3\n", port);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_AVENUE_PAD_3);
+            break;
+        case RETRO_DEVICE_PCE_AVENUE_PAD_6:
+            if (log_device && log_cb)
+                log_cb(RETRO_LOG_INFO, "Controller %u: Avenue Pad 6\n", port);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_AVENUE_PAD_6);
+            break;
+        case RETRO_DEVICE_PCE_MOUSE:
+            if (log_device && log_cb)
+                log_cb(RETRO_LOG_INFO, "Controller %u: Mouse\n", port);
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_MOUSE);
+            break;
+        default:
+            if (log_device && log_cb)
+                log_cb(RETRO_LOG_DEBUG, "Setting descriptors for unsupported device.\n");
+            core->GetInput()->SetControllerType((GG_Controllers)port, GG_CONTROLLER_STANDARD);
+            break;
+    }
+}
+
 static void release_controller_input(unsigned port)
 {
-    for (int i = 0; i < 12; i++)
-        core->KeyReleased((GG_Controllers)port, keymap[i]);
+    if (core)
+    {
+        for (int i = 0; i < 12; i++)
+            core->KeyReleased((GG_Controllers)port, keymap[i]);
+    }
 
     for (int i = 0; i < MAX_BUTTONS; i++)
     {
@@ -643,7 +693,7 @@ static void release_controller_input(unsigned port)
         joypad_old[port][i] = 0;
     }
 
-    if (input_device[port] == RETRO_DEVICE_PCE_MOUSE)
+    if ((input_device[port] == RETRO_DEVICE_PCE_MOUSE) && core)
         core->GetInput()->SetMouseDelta(0, 0);
 }
 
