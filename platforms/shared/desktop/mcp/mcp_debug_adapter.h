@@ -141,7 +141,9 @@ public:
     // Media and state management
     json GetMediaInfo();
     json ListRecentMedia();
-    json LoadMedia(const std::string& file_path);
+    json StartLoadMedia(const std::string& file_path);
+    bool IsMediaLoading() const;
+    json FinishLoadMedia(const std::string& file_path);
     json LoadBios(const std::string& file_path, bool syscard);
     json ListSaveStateSlots();
     json SelectSaveStateSlot(int slot);

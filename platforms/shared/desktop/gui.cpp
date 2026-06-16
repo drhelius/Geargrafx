@@ -55,7 +55,7 @@ static void main_window(void);
 static void show_status_message(void);
 static void show_error_window(void);
 static void show_loading_popup(void);
-static void finish_loading_rom(void);
+static bool finish_loading_rom(void);
 static void set_style(void);
 static void set_style_light(ImGuiStyle& style);
 static void set_style_dark(ImGuiStyle& style);
@@ -438,10 +438,10 @@ void gui_load_palette(const char* path)
     gui_set_status_message(message.c_str(), 3000);
 }
 
-void gui_load_rom(const char* path)
+bool gui_load_rom(const char* path)
 {
     if (loading_rom_active)
-        return;
+        return false;
 
     loading_physical_cdrom = false;
 
@@ -454,6 +454,38 @@ void gui_load_rom(const char* path)
     loading_rom_active = true;
 
     emu_load_media_async(path);
+
+    return true;
+}
+
+bool gui_is_rom_loading(void)
+{
+    return loading_rom_active;
+}
+
+bool gui_finish_loading_rom(void)
+{
+    if (!loading_rom_active || emu_is_media_loading())
+        return false;
+
+    loading_rom_active = false;
+    gui_dialog_in_use = false;
+    bool success = emu_finish_media_loading();
+
+    if (success)
+        success = finish_loading_rom();
+    else
+    {
+        std::string message("Error loading media:\n");
+        message += loading_rom_path;
+        gui_set_error_message(message.c_str());
+
+        emu_get_core()->GetMedia()->Reset();
+        gui_action_reset();
+        loading_physical_cdrom = false;
+    }
+
+    return success;
 }
 
 void gui_load_physical_cdrom(const char* device_id)
@@ -736,24 +768,7 @@ static void show_loading_popup(void)
 
     if (!emu_is_media_loading())
     {
-        loading_rom_active = false;
-        gui_dialog_in_use = false;
-        bool success = emu_finish_media_loading();
-
-        if (success)
-        {
-            finish_loading_rom();
-        }
-        else
-        {
-            std::string message("Error loading media:\n");
-            message += loading_rom_path;
-            gui_set_error_message(message.c_str());
-
-            emu_get_core()->GetMedia()->Reset();
-            gui_action_reset();
-            loading_physical_cdrom = false;
-        }
+        gui_finish_loading_rom();
         return;
     }
 
@@ -795,7 +810,7 @@ static void show_loading_popup(void)
     ImGui::PopStyleVar(3);
 }
 
-static void finish_loading_rom(void)
+static bool finish_loading_rom(void)
 {
     if (emu_get_core()->GetMedia()->IsCDROM() && !emu_get_core()->GetMedia()->IsLoadedBios())
     {
@@ -810,7 +825,7 @@ static void finish_loading_rom(void)
 
         emu_get_core()->GetMedia()->Reset();
         gui_action_reset();
-        return;
+        return false;
     }
 
     gui_debug_reset();
@@ -840,6 +855,8 @@ static void finish_loading_rom(void)
 
     if (!emu_is_empty())
         application_update_title_with_rom(emu_get_core()->GetMedia()->GetFileName());
+
+    return true;
 }
 
 static void show_error_window(void)

@@ -81,14 +81,6 @@ int application_headless_init(const ApplicationParams& params)
     {
         Log("Rom file argument: %s", params.rom_file);
         gui_load_rom(params.rom_file);
-
-        while (emu_is_media_loading())
-            SDL_Delay(10);
-
-        if (!emu_finish_media_loading())
-        {
-            Error("Failed to load ROM: %s", params.rom_file);
-        }
     }
 
     if (IsValidPointer(params.symbol_file) && (strlen(params.symbol_file) > 0))
@@ -128,6 +120,7 @@ void application_headless_mainloop(void)
         Uint64 frame_start = SDL_GetPerformanceCounter();
 
         emu_update();
+        gui_finish_loading_rom();
 
         if (!emu_mcp_is_running())
         {
