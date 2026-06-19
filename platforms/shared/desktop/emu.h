@@ -58,6 +58,7 @@ EXTERN int emu_debug_tiles_palette[2];
 EXTERN Debug_Command emu_debug_command;
 EXTERN bool emu_debug_pc_changed;
 EXTERN int emu_debug_step_frames_pending;
+EXTERN u64 emu_frame_counter;
 
 EXTERN bool emu_audio_sync;
 EXTERN bool emu_debug_disable_breakpoints;
@@ -102,6 +103,7 @@ EXTERN void emu_debug_step_over(void);
 EXTERN void emu_debug_step_into(void);
 EXTERN void emu_debug_step_out(void);
 EXTERN void emu_debug_step_frame(void);
+EXTERN void emu_debug_step_frames(int frames);
 EXTERN void emu_debug_break(void);
 EXTERN void emu_debug_continue(void);
 EXTERN void emu_set_palette(int palette);

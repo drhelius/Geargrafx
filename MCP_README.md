@@ -298,7 +298,7 @@ The server exposes tools organized in the following categories:
 - `debug_step_into` - Step one instruction
 - `debug_step_over` - Step over subroutine calls
 - `debug_step_out` - Step out of current subroutine
-- `debug_step_frame` - Step one frame
+- `debug_step_frame` - Step one or more frames
 - `debug_run_to_cursor` - Continue execution until reaching specified address
 - `debug_reset` - Reset emulation
 - `debug_get_status` - Get debug status (paused, at_breakpoint, pc address)
@@ -377,6 +377,7 @@ The server exposes tools organized in the following categories:
 
 ### Controller Input
 - `controller_button` - Control a button on a controller (player 1-5). Use action 'press' to hold the button, 'release' to let it go, or 'press_and_release' to simulate a quick tap. Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI
+- `controller_macro` - Run an ordered input macro. Top-level `player` defaults to 1, and each command may override it. Supported commands are `tap`, `press`, `release`, and `wait`; timing is explicit through `wait` frame counts
 - `controller_set_type` - Set controller type for a player: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)
 - `controller_get_type` - Get the current controller type for a player (returns: standard, avenue_pad_3, or avenue_pad_6)
 - `controller_set_turbo_tap` - Enable or disable Turbo Tap (multitap) for 5-player support
