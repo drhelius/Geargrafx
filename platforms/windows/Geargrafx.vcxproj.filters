@@ -667,9 +667,6 @@
     <ClInclude Include="..\shared\dependencies\imgui\imgui.h">
       <Filter>dependencies\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_opengl3.h">
-      <Filter>dependencies\imgui</Filter>
-    </ClInclude>
     <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_opengl3_loader.h">
       <Filter>dependencies\imgui</Filter>
     </ClInclude>
@@ -700,6 +697,7 @@
     <ClInclude Include="..\shared\dependencies\stb\stb_image_write.h">
       <Filter>dependencies\stb</Filter>
     </ClInclude>
+    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl3.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
