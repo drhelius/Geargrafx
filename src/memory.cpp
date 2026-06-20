@@ -421,14 +421,27 @@ void Memory::LoadState(std::istream& stream)
     using namespace std;
     stream.read(reinterpret_cast<char*> (m_mpr), sizeof(m_mpr));
     stream.read(reinterpret_cast<char*> (m_wram), sizeof(u8) * 0x8000);
-    stream.read(reinterpret_cast<char*> (&m_cdrom_ram_size), sizeof(m_cdrom_ram_size));
-    if (m_cdrom_ram_size > sizeof(m_cdrom_ram))
-        m_cdrom_ram_size = sizeof(m_cdrom_ram);
-    stream.read(reinterpret_cast<char*> (m_cdrom_ram), sizeof(u8) * m_cdrom_ram_size);
-    stream.read(reinterpret_cast<char*> (&m_card_ram_size), sizeof(m_card_ram_size));
-    if (m_card_ram_size > sizeof(m_card_ram))
-        m_card_ram_size = sizeof(m_card_ram);
-    stream.read(reinterpret_cast<char*> (m_card_ram), sizeof(u8) * m_card_ram_size);
+
+    u32 serialized_cdrom_ram_size;
+    stream.read(reinterpret_cast<char*> (&serialized_cdrom_ram_size), sizeof(serialized_cdrom_ram_size));
+    u32 cdrom_ram_read_size = serialized_cdrom_ram_size;
+    if (cdrom_ram_read_size > sizeof(m_cdrom_ram))
+        cdrom_ram_read_size = sizeof(m_cdrom_ram);
+    m_cdrom_ram_size = cdrom_ram_read_size;
+    stream.read(reinterpret_cast<char*> (m_cdrom_ram), sizeof(u8) * cdrom_ram_read_size);
+    if (serialized_cdrom_ram_size > cdrom_ram_read_size)
+        stream.ignore(static_cast<streamsize>(serialized_cdrom_ram_size - cdrom_ram_read_size));
+
+    u32 serialized_card_ram_size;
+    stream.read(reinterpret_cast<char*> (&serialized_card_ram_size), sizeof(serialized_card_ram_size));
+    u32 card_ram_read_size = serialized_card_ram_size;
+    if (card_ram_read_size > sizeof(m_card_ram))
+        card_ram_read_size = sizeof(m_card_ram);
+    m_card_ram_size = card_ram_read_size;
+    stream.read(reinterpret_cast<char*> (m_card_ram), sizeof(u8) * card_ram_read_size);
+    if (serialized_card_ram_size > card_ram_read_size)
+        stream.ignore(static_cast<streamsize>(serialized_card_ram_size - card_ram_read_size));
+
     stream.read(reinterpret_cast<char*> (&m_card_ram_start), sizeof(m_card_ram_start));
     stream.read(reinterpret_cast<char*> (&m_card_ram_end), sizeof(m_card_ram_end));
     stream.read(reinterpret_cast<char*> (m_backup_ram), sizeof(u8) * 0x800);
