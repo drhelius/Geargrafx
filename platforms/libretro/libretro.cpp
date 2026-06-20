@@ -787,20 +787,23 @@ static void poll_input(void)
             if (turbo_toggle_hotkey && joypad_current[j][i] && !joypad_old[j][i])
             {
                 GG_Keys key = (i == 12) ? GG_KEY_II : GG_KEY_I;
-                bool turbo = core->GetInput()->IsTurboEnabled((GG_Controllers)j, key);
+                bool turbo_enabled = core->GetInput()->IsTurboEnabled((GG_Controllers)j, key);
+                bool new_turbo_enabled = !turbo_enabled;
 
                 char option_key[64];
                 snprintf(option_key, sizeof(option_key), "geargrafx_turbo_p%d_%s", j + 1, (key == GG_KEY_I) ? "i" : "ii");
 
                 struct retro_variable var = {};
                 var.key = option_key;
-                var.value = turbo ? "Disabled" : "Enabled";
+                var.value = new_turbo_enabled ? "Enabled" : "Disabled";
                 environ_cb(RETRO_ENVIRONMENT_SET_VARIABLE, &var);
+
+                core->GetInput()->EnableTurbo((GG_Controllers)j, key, new_turbo_enabled);
 
                 struct retro_message msg = {};
                 char msg_buf[64];
                 snprintf(msg_buf, sizeof(msg_buf), "P%d Turbo %s %s", j + 1,
-                    (key == GG_KEY_I) ? "I" : "II", turbo ? "OFF" : "ON");
+                    (key == GG_KEY_I) ? "I" : "II", new_turbo_enabled ? "ON" : "OFF");
                 msg.msg = msg_buf;
                 msg.frames = 180;
                 environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
