@@ -103,6 +103,7 @@ private:
     template <bool SGX, int BPP>
     void RenderFrameTemplate();
     void CalculateScreenBounds();
+    void SanitizeState();
     template <int BPP>
     void ApplyLowPassFilter();
     u8 RGB565Component(u8 value, u16 max);

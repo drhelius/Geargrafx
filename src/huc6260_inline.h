@@ -331,6 +331,41 @@ void HuC6260::RenderFrameTemplate()
     }
 }
 
+INLINE void HuC6260::SanitizeState()
+{
+    m_color_table_address &= 0x01FF;
+    m_speed = m_control_register & 0x03;
+    m_blur = (m_control_register >> 2) & 0x01;
+    m_black_and_white = (m_control_register >> 7) & 0x01;
+
+    switch (m_speed)
+    {
+        case 0:
+            m_clock_divider = 4;
+            break;
+        case 1:
+            m_clock_divider = 3;
+            break;
+        default:
+            m_clock_divider = 2;
+            break;
+    }
+
+    m_hpos = CLAMP(m_hpos, 0, HUC6260_LINE_LENGTH - 1);
+    m_vpos = CLAMP(m_vpos, 0, k_huc6260_total_lines[m_blur] - 1);
+    m_pixel_x = CLAMP(m_pixel_x, 0, k_huc6260_full_line_width[m_speed] - 1);
+    m_pixel_index = CLAMP(m_pixel_index, 0, k_huc6260_line_width[1][HuC6260_SPEED_10_8_MHZ] * HUC6270_LINES_ACTIVE);
+    m_hsync = m_hsync ? true : false;
+    m_vsync = m_vsync ? true : false;
+    m_multiple_speeds = m_multiple_speeds ? true : false;
+
+    for (int i = 0; i < 512; i++)
+        m_color_table[i] &= 0x01FF;
+
+    CalculateScreenBounds();
+    m_active_line = (m_vpos >= m_screen_start_y) && (m_vpos < m_screen_end_y);
+}
+
 INLINE HuC6260::HuC6260_State* HuC6260::GetState()
 {
     return &m_state;
