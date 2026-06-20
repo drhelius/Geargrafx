@@ -74,33 +74,42 @@ void HuC6260::InitPalettes()
         u8 green = ((i >> 6) & 0x07) * 255 / 7;
         u8 red = ((i >> 3) & 0x07) * 255 / 7;
         u8 blue = (i & 0x07) * 255 / 7;
-        m_rgba888_palette[0][i][0] = red;
-        m_rgba888_palette[0][i][1] = green;
-        m_rgba888_palette[0][i][2] = blue;
-        m_rgba888_palette[0][i][3] = 255;
+        m_rgba888_palette[HuC6260_PALETTE_STANDARD_RGB][i][0] = red;
+        m_rgba888_palette[HuC6260_PALETTE_STANDARD_RGB][i][1] = green;
+        m_rgba888_palette[HuC6260_PALETTE_STANDARD_RGB][i][2] = blue;
+        m_rgba888_palette[HuC6260_PALETTE_STANDARD_RGB][i][3] = 255;
 
         // Custom palette defaults to standard RGB
-        m_rgba888_palette[2][i][0] = red;
-        m_rgba888_palette[2][i][1] = green;
-        m_rgba888_palette[2][i][2] = blue;
-        m_rgba888_palette[2][i][3] = 255;
+        m_rgba888_palette[HuC6260_PALETTE_CUSTOM][i][0] = red;
+        m_rgba888_palette[HuC6260_PALETTE_CUSTOM][i][1] = green;
+        m_rgba888_palette[HuC6260_PALETTE_CUSTOM][i][2] = blue;
+        m_rgba888_palette[HuC6260_PALETTE_CUSTOM][i][3] = 255;
 
         green = ((i >> 6) & 0x07) * 63 / 7;
         red = ((i >> 3) & 0x07) * 31 / 7;
         blue = (i & 0x07) * 31 / 7;
         u16 rgb565 = (red << 11) | (green << 5) | blue;
-        m_rgb565_palette[0][i] = rgb565;
-        m_rgb565_palette[2][i] = rgb565;
+        m_rgb565_palette[HuC6260_PALETTE_STANDARD_RGB][i] = rgb565;
+        m_rgb565_palette[HuC6260_PALETTE_CUSTOM][i] = rgb565;
 
-        m_rgba888_palette[1][i][0] = k_rgb888_palette_composite[i][0];
-        m_rgba888_palette[1][i][1] = k_rgb888_palette_composite[i][1];
-        m_rgba888_palette[1][i][2] = k_rgb888_palette_composite[i][2];
-        m_rgba888_palette[1][i][3] = 255;
+        const u8* turboxray = &k_rgb888_palette_turboxray[i * 3];
+        m_rgba888_palette[HuC6260_PALETTE_TURBOXRAY][i][0] = turboxray[0];
+        m_rgba888_palette[HuC6260_PALETTE_TURBOXRAY][i][1] = turboxray[1];
+        m_rgba888_palette[HuC6260_PALETTE_TURBOXRAY][i][2] = turboxray[2];
+        m_rgba888_palette[HuC6260_PALETTE_TURBOXRAY][i][3] = 255;
+
+        rgb565 = PackRGB565(turboxray[0], turboxray[1], turboxray[2]);
+        m_rgb565_palette[HuC6260_PALETTE_TURBOXRAY][i] = rgb565;
+
+        m_rgba888_palette[HuC6260_PALETTE_KITRINX][i][0] = k_rgb888_palette_composite[i][0];
+        m_rgba888_palette[HuC6260_PALETTE_KITRINX][i][1] = k_rgb888_palette_composite[i][1];
+        m_rgba888_palette[HuC6260_PALETTE_KITRINX][i][2] = k_rgb888_palette_composite[i][2];
+        m_rgba888_palette[HuC6260_PALETTE_KITRINX][i][3] = 255;
 
         rgb565 = PackRGB565(k_rgb888_palette_composite[i][0],
                             k_rgb888_palette_composite[i][1],
                             k_rgb888_palette_composite[i][2]);
-        m_rgb565_palette[1][i] = rgb565;
+        m_rgb565_palette[HuC6260_PALETTE_KITRINX][i] = rgb565;
     }
 }
 
@@ -344,13 +353,13 @@ void HuC6260::SetCustomPalette(const u8* data)
         u8 green = data[i * 3 + 1];
         u8 blue = data[i * 3 + 2];
 
-        m_rgba888_palette[2][i][0] = red;
-        m_rgba888_palette[2][i][1] = green;
-        m_rgba888_palette[2][i][2] = blue;
-        m_rgba888_palette[2][i][3] = 255;
+        m_rgba888_palette[HuC6260_PALETTE_CUSTOM][i][0] = red;
+        m_rgba888_palette[HuC6260_PALETTE_CUSTOM][i][1] = green;
+        m_rgba888_palette[HuC6260_PALETTE_CUSTOM][i][2] = blue;
+        m_rgba888_palette[HuC6260_PALETTE_CUSTOM][i][3] = 255;
 
         u16 rgb565 = PackRGB565(red, green, blue);
-        m_rgb565_palette[2][i] = rgb565;
+        m_rgb565_palette[HuC6260_PALETTE_CUSTOM][i] = rgb565;
     }
 }
 

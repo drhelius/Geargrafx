@@ -839,7 +839,7 @@ static void menu_video(void)
         if (ImGui::BeginMenu("Color Palette"))
         {
             ImGui::PushItemWidth(180.0f);
-            if (ImGui::Combo("##palette", &config_video.palette, "Standard RGB\0Composite RGB\0Custom\0\0"))
+            if (ImGui::Combo("##palette", &config_video.palette, "Standard RGB\0Turboxray\0Kitrinx\0Custom\0\0"))
             {
                 emu_set_palette(config_video.palette);
             }

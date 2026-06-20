@@ -415,7 +415,7 @@ INLINE void HuC6260::SetResetValue(int value)
 
 INLINE void HuC6260::SetPalette(int palette)
 {
-    if (palette >= 0 && palette <= 2)
+    if (palette >= 0 && palette < HuC6260_PALETTE_COUNT)
         m_palette = palette;
 }
 

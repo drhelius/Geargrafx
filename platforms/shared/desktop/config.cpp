@@ -244,7 +244,7 @@ void config_read(void)
 
     int file_version = read_int("General", "Version", 0);
 
-    if (file_version < config_version)
+    if (file_version < 2)
     {
         Log("Settings version %d is outdated (current: %d). Using defaults.", file_version, config_version);
         config_write();
@@ -411,6 +411,14 @@ void config_read(void)
     config_video.scanline_start = read_int("Video", "ScanlineStart", 11);
     config_video.scanline_end = read_int("Video", "ScanlineEnd", 234);
     config_video.palette = read_int("Video", "Palette", 0);
+    if (file_version < 3)
+    {
+        if (config_video.palette == 1)
+            config_video.palette = 2;
+        else if (config_video.palette == 2)
+            config_video.palette = 3;
+    }
+    config_video.palette = CLAMP(config_video.palette, 0, 3);
     config_video.fps = read_bool("Video", "FPS", false);
     config_video.sprite_limit = read_bool("Video", "SpriteLimit", false);
     config_video.safe_vdc_defaults = read_bool("Video", "SafeVdcDefaults", false);

@@ -429,7 +429,7 @@ void gui_load_palette(const char* path)
         Log("Warning: Could not save custom palette to %s", dest_path.c_str());
     }
 
-    config_video.palette = 2;
+    config_video.palette = 3;
     emu_set_palette(config_video.palette);
     gui_custom_palette_loaded = true;
 

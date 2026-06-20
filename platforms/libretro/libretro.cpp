@@ -969,12 +969,28 @@ static void check_variables(void)
         }
     }
 
-    var.key = "geargrafx_composite_colors";
+    var.key = "geargrafx_palette";
     var.value = NULL;
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        core->GetHuC6260()->SetPalette(strcmp(var.value, "Enabled") == 0 ? 1 : 0);
+        if (strcmp(var.value, "Turboxray") == 0)
+            core->GetHuC6260()->SetPalette(HuC6260::HuC6260_PALETTE_TURBOXRAY);
+        else if (strcmp(var.value, "Kitrinx") == 0)
+            core->GetHuC6260()->SetPalette(HuC6260::HuC6260_PALETTE_KITRINX);
+        else
+            core->GetHuC6260()->SetPalette(HuC6260::HuC6260_PALETTE_STANDARD_RGB);
+    }
+    else
+    {
+        var.key = "geargrafx_composite_colors";
+        var.value = NULL;
+
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+        {
+            core->GetHuC6260()->SetPalette(strcmp(var.value, "Enabled") == 0 ?
+                HuC6260::HuC6260_PALETTE_KITRINX : HuC6260::HuC6260_PALETTE_STANDARD_RGB);
+        }
     }
 
     var.key = "geargrafx_lowpass_filter";

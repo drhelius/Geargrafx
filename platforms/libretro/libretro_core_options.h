@@ -259,18 +259,19 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         "241"
     },
     {
-        "geargrafx_composite_colors",
-        "Composite Colors",
+        "geargrafx_palette",
+        "Color Palette",
         NULL,
-        "If enabled, the core will use composite colors instead of RGB colors.",
+        "Selects the color palette used by the video encoder.",
         NULL,
         "video",
         {
-            { "Disabled", NULL },
-            { "Enabled",  NULL },
+            { "Standard RGB", NULL },
+            { "Turboxray",    NULL },
+            { "Kitrinx",      NULL },
             { NULL, NULL },
         },
-        "Disabled"
+        "Standard RGB"
     },
     {
         "geargrafx_no_sprite_limit",
