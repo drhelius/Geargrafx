@@ -12,7 +12,7 @@ on:
       - Trigger RPM Build
     types: [completed]
     branches:
-      - master
+      - main
 if: "${{ github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'timed_out' }}"
 permissions:
   contents: read
