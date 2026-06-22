@@ -50,6 +50,7 @@ static bool error_window_active = false;
 static char error_message[4096] = "";
 static bool loading_rom_active = false;
 static char loading_rom_path[4096] = "";
+static char loading_symbol_path[4096] = "";
 static bool loading_physical_cdrom = false;
 static void main_window(void);
 static void show_status_message(void);
@@ -438,7 +439,7 @@ void gui_load_palette(const char* path)
     gui_set_status_message(message.c_str(), 3000);
 }
 
-bool gui_load_rom(const char* path)
+bool gui_load_rom(const char* path, const char* symbol_path)
 {
     if (loading_rom_active)
         return false;
@@ -451,6 +452,13 @@ bool gui_load_rom(const char* path)
 
     strncpy(loading_rom_path, path, sizeof(loading_rom_path) - 1);
     loading_rom_path[sizeof(loading_rom_path) - 1] = '\0';
+    if (IsValidPointer(symbol_path) && (strlen(symbol_path) > 0))
+    {
+        strncpy(loading_symbol_path, symbol_path, sizeof(loading_symbol_path) - 1);
+        loading_symbol_path[sizeof(loading_symbol_path) - 1] = '\0';
+    }
+    else
+        loading_symbol_path[0] = '\0';
     loading_rom_active = true;
 
     emu_load_media_async(path);
@@ -504,6 +512,7 @@ void gui_load_physical_cdrom(const char* device_id)
 
     strncpy(loading_rom_path, device_id, sizeof(loading_rom_path) - 1);
     loading_rom_path[sizeof(loading_rom_path) - 1] = '\0';
+    loading_symbol_path[0] = '\0';
     loading_rom_active = true;
 
     emu_load_physical_cdrom_async(device_id);
@@ -834,11 +843,16 @@ static bool finish_loading_rom(void)
     if (!loading_physical_cdrom)
 #endif
     {
-        std::string str(loading_rom_path);
-        str = str.substr(0, str.find_last_of("."));
-        if (!gui_debug_load_symbols_file((str + ".sym").c_str()))
-            if (!gui_debug_load_symbols_file((str + ".lbl").c_str()))
-                gui_debug_load_symbols_file((str + ".noi").c_str());
+        if (loading_symbol_path[0] != '\0')
+            gui_debug_load_symbols_file(loading_symbol_path);
+        else
+        {
+            std::string str(loading_rom_path);
+            str = str.substr(0, str.find_last_of("."));
+            if (!gui_debug_load_symbols_file((str + ".sym").c_str()))
+                if (!gui_debug_load_symbols_file((str + ".lbl").c_str()))
+                    gui_debug_load_symbols_file((str + ".noi").c_str());
+        }
     }
 
     gui_debug_auto_load_settings();
