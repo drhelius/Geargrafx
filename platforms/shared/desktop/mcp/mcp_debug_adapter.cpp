@@ -817,33 +817,37 @@ json DebugAdapter::GetHuC6270Registers(int vdc)
     // HuC6270 has 20 valid registers (0x00-0x13), although the array has 32 slots
     for (int i = 0; i < 20; i++)
     {
-        json reg;
-        reg["index"] = i;
+        json reg = json::array();
+        reg.push_back(i);
 
         std::ostringstream ss;
         ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << huc6270_state->R[i];
-        reg["value"] = ss.str();
+        reg.push_back(ss.str());
 
         registers.push_back(reg);
     }
 
     // Add address register
-    json ar;
-    ar["index"] = "AR";
+    json ar = json::array();
+    ar.push_back("AR");
     std::ostringstream ar_ss;
     ar_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << *huc6270_state->AR;
-    ar["value"] = ar_ss.str();
+    ar.push_back(ar_ss.str());
     registers.push_back(ar);
 
     // Add status register (read-only)
-    json sr;
-    sr["index"] = "SR";
+    json sr = json::array();
+    sr.push_back("SR");
     std::ostringstream sr_ss;
     sr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << *huc6270_state->SR;
-    sr["value"] = sr_ss.str();
+    sr.push_back(sr_ss.str());
     registers.push_back(sr);
 
-    return registers;
+    json result;
+    result["fields"] = json::array({"index", "value"});
+    result["registers"] = registers;
+
+    return result;
 }
 
 json DebugAdapter::WriteHuC6270Register(int vdc, int reg, u16 value)
@@ -1546,12 +1550,12 @@ json DebugAdapter::ListSaveStateSlots()
 {
     json result;
     json slots = json::array();
+    json empty_slots = json::array();
 
     for (int i = 0; i < 5; i++)
     {
         json slot;
         slot["slot"] = i + 1;
-        slot["selected"] = (config_emulator.save_slot == i);
 
         if (emu_savestates[i].rom_name[0] != 0)
         {
@@ -1563,17 +1567,18 @@ json DebugAdapter::ListSaveStateSlots()
 
             if (emu_savestates[i].emu_build[0] != 0)
                 slot["emu_build"] = emu_savestates[i].emu_build;
+
+            slots.push_back(slot);
         }
         else
         {
-            slot["empty"] = true;
+            empty_slots.push_back(i + 1);
         }
-
-        slots.push_back(slot);
     }
 
-    result["slots"] = slots;
     result["current_slot"] = config_emulator.save_slot + 1;
+    result["empty_slots"] = empty_slots;
+    result["slots"] = slots;
 
     return result;
 }
@@ -2041,7 +2046,6 @@ json DebugAdapter::RunToAddress(u16 address)
 
     result["success"] = true;
     result["address"] = address;
-    result["message"] = "Running to address";
 
     return result;
 }
@@ -2598,16 +2602,15 @@ json DebugAdapter::GetMemorySelection(int area)
         start_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << start;
         end_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << end;
 
+        result["selected"] = true;
         result["start"] = start_ss.str();
         result["end"] = end_ss.str();
         result["size"] = end - start + 1;
     }
     else
     {
-        result["start"] = NULL;
-        result["end"] = NULL;
+        result["selected"] = false;
         result["size"] = 0;
-        result["note"] = "No selection";
     }
 
     return result;
@@ -2633,7 +2636,6 @@ json DebugAdapter::MemorySearchCapture(int area)
 
     result["success"] = true;
     result["area"] = area;
-    result["message"] = "Memory snapshot captured";
 
     return result;
 }
@@ -2705,6 +2707,7 @@ json DebugAdapter::MemorySearch(int area, const std::string& op, const std::stri
 
     result["area"] = area;
     result["count"] = count;
+    result["fields"] = json::array({"address", "value", "previous"});
     result["results"] = json::array();
 
     if (count > 0 && results_ptr != NULL)
@@ -2716,21 +2719,20 @@ json DebugAdapter::MemorySearch(int area, const std::string& op, const std::stri
         for (int i = 0; i < max_results; i++)
         {
             MemEditor::Search& search = (*results)[i];
-            json item;
+            json item = json::array();
 
             std::ostringstream addr_ss;
             addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << search.address;
 
-            item["address"] = addr_ss.str();
-            item["value"] = search.value;
-            item["previous"] = search.prev_value;
+            item.push_back(addr_ss.str());
+            item.push_back(search.value);
+            item.push_back(search.prev_value);
 
             result["results"].push_back(item);
         }
 
         if (count > 1000)
         {
-            result["note"] = "Results limited to first 1000 matches";
             result["total_matches"] = count;
         }
     }
@@ -2765,22 +2767,19 @@ json DebugAdapter::MemoryFindBytes(int area, const std::string& hex_bytes)
 
     result["area"] = area;
     result["count"] = count;
-    result["results"] = json::array();
+    result["addresses"] = json::array();
 
     int max_results = (count > 100) ? 100 : count;
 
     for (int i = 0; i < max_results; i++)
     {
-        json item;
         std::ostringstream addr_ss;
         addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << addresses[i];
-        item["address"] = addr_ss.str();
-        result["results"].push_back(item);
+        result["addresses"].push_back(addr_ss.str());
     }
 
     if (count > 100)
     {
-        result["note"] = "Results limited to first 100 matches";
         result["total_matches"] = count;
     }
 
