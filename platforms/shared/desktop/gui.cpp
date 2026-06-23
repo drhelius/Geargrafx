@@ -138,6 +138,7 @@ bool gui_init(void)
     emu_set_preload_cdrom(config_emulator.preload_cdrom);
     emu_set_backup_ram(config_emulator.backup_ram);
     emu_set_mb128_mode((GG_MB128_Mode)config_emulator.mb128_mode);
+    emu_set_disassembler_syntax(config_debug.dis_syntax);
     emu_set_palette(config_video.palette);
     emu_set_turbo_tap(config_input.turbo_tap);
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)

@@ -1841,7 +1841,10 @@ static void disassembler_menu(void)
             for (int i = 0; i < GG_Disassembler_Syntax_Count; i++)
             {
                 if (ImGui::MenuItem(syntax_names[i], NULL, config_debug.dis_syntax == i))
+                {
                     config_debug.dis_syntax = i;
+                    emu_set_disassembler_syntax(i);
+                }
             }
 
             ImGui::Separator();
