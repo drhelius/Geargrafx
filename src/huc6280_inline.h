@@ -797,6 +797,34 @@ INLINE void HuC6280::InvalidateOverlappingRecords(u16 address, u8 opcode_size)
 #endif
 }
 
+INLINE void HuC6280::SetDisassemblerOperandText(GG_Disassembler_Record* record, const char* text)
+{
+    if (!IsValidPointer(text) || (text[0] == 0))
+        return;
+
+    const char* match = record->name;
+    const char* last_match = NULL;
+    while ((match = strstr(match, text)) != NULL)
+    {
+        last_match = match;
+        match++;
+    }
+
+    if (IsValidPointer(last_match))
+    {
+        record->operand_offset = (int)(last_match - record->name);
+        record->operand_length = (int)strlen(text);
+    }
+}
+
+INLINE void HuC6280::SetDisassemblerOperand(GG_Disassembler_Record* record, u16 address, bool is_zp, const char* text)
+{
+    record->has_operand_address = true;
+    record->operand_address = address;
+    record->operand_is_zp = is_zp;
+    SetDisassemblerOperandText(record, text);
+}
+
 INLINE void HuC6280::PopulateUnavailableDisassemblerRecord(GG_Disassembler_Record* record, u16 address)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
@@ -816,6 +844,8 @@ INLINE void HuC6280::PopulateUnavailableDisassemblerRecord(GG_Disassembler_Recor
     record->has_operand_address = false;
     record->operand_address = 0;
     record->operand_is_zp = false;
+    record->operand_offset = 0;
+    record->operand_length = 0;
 
     if (m_debug_next_irq > 0)
     {
@@ -858,6 +888,8 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
     record->has_operand_address = false;
     record->operand_address = 0;
     record->operand_is_zp = false;
+    record->operand_offset = 0;
+    record->operand_length = 0;
 
     if (m_debug_next_irq > 0)
     {
@@ -889,13 +921,19 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
         }
         case GG_OPCode_Type_1b:
         {
-            if (!strstr(k_huc6280_opcode_names[opcode].name[GG_Disassembler_Syntax_Geargrafx], "#$"))
-            {
-                record->has_operand_address = true;
-                record->operand_address = op1;
-                record->operand_is_zp = true;
-            }
+            bool has_address = !strstr(k_huc6280_opcode_names[opcode].name[GG_Disassembler_Syntax_Geargrafx], "#$");
             snprintf(record->name, 64, format, op1);
+            if (has_address)
+            {
+                char operand_text[8];
+                snprintf(operand_text, sizeof(operand_text), "$%02X", op1);
+                SetDisassemblerOperand(record, op1, true, operand_text);
+                if (record->operand_length == 0)
+                {
+                    snprintf(operand_text, sizeof(operand_text), "%02X", op1);
+                    SetDisassemblerOperandText(record, operand_text);
+                }
+            }
             break;
         }
         case GG_OPCode_Type_1b_1b:
@@ -905,15 +943,20 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
         }
         case GG_OPCode_Type_1b_2b:
         {
-            snprintf(record->name, 64, format, op1, op2 | (record->opcodes[3] << 8));
+            u16 operand = op2 | (record->opcodes[3] << 8);
+            snprintf(record->name, 64, format, op1, operand);
+            char operand_text[8];
+            snprintf(operand_text, sizeof(operand_text), "$%04X", operand);
+            SetDisassemblerOperand(record, operand, false, operand_text);
             break;
         }
         case GG_OPCode_Type_2b:
         {
             u16 operand = op1 | (op2 << 8);
-            record->has_operand_address = true;
-            record->operand_address = operand;
             snprintf(record->name, 64, format, operand);
+            char operand_text[8];
+            snprintf(operand_text, sizeof(operand_text), "$%04X", operand);
+            SetDisassemblerOperand(record, operand, false, operand_text);
             break;
         }
         case GG_OPCode_Type_2b_2b_2b:
@@ -929,9 +972,19 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
             record->jump_address = jump_address;
             record->jump_bank = m_memory->GetBank(jump_address);
             if (m_disassembler_syntax == GG_Disassembler_Syntax_WLADX)
+            {
                 snprintf(record->name, 64, format, op1);
+                char operand_text[8];
+                snprintf(operand_text, sizeof(operand_text), "$%02X", op1);
+                SetDisassemblerOperandText(record, operand_text);
+            }
             else
+            {
                 snprintf(record->name, 64, format, jump_address, rel);
+                char operand_text[8];
+                snprintf(operand_text, sizeof(operand_text), "$%04X", jump_address);
+                SetDisassemblerOperandText(record, operand_text);
+            }
             break;
         }
         case GG_OPCode_Type_1b_1b_Relative:
@@ -942,9 +995,19 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
             record->jump_address = jump_address;
             record->jump_bank = m_memory->GetBank(jump_address);
             if (m_disassembler_syntax == GG_Disassembler_Syntax_WLADX)
+            {
                 snprintf(record->name, 64, format, op1, op2);
+                char operand_text[8];
+                snprintf(operand_text, sizeof(operand_text), "$%02X", op2);
+                SetDisassemblerOperandText(record, operand_text);
+            }
             else
+            {
                 snprintf(record->name, 64, format, op1, jump_address, rel);
+                char operand_text[8];
+                snprintf(operand_text, sizeof(operand_text), "$%04X", jump_address);
+                SetDisassemblerOperandText(record, operand_text);
+            }
             break;
         }
         case GG_OPCode_Type_ST0:

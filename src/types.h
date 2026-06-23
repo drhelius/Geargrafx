@@ -165,6 +165,8 @@ struct GG_Disassembler_Record
     bool has_operand_address;
     u16 operand_address;
     bool operand_is_zp;
+    int operand_offset;
+    int operand_length;
     char auto_symbol[64];
 };
 

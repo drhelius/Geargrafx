@@ -279,6 +279,8 @@ private:
 
     void PopulateDisassemblerRecord(GG_Disassembler_Record* record, u8 opcode, u16 address);
     void PopulateUnavailableDisassemblerRecord(GG_Disassembler_Record* record, u16 address);
+    void SetDisassemblerOperandText(GG_Disassembler_Record* record, const char* text);
+    void SetDisassemblerOperand(GG_Disassembler_Record* record, u16 address, bool is_zp, const char* text);
     void SetDisassemblerRecordSegment(GG_Disassembler_Record* record);
     void InvalidateOverlappingRecords(u16 address, u8 opcode_size);
 

@@ -1461,41 +1461,22 @@ static bool is_return_instruction(u8 opcode)
     }
 }
 
-static bool replace_address_in_string(std::string& instr, u16 address, bool is_zp, const char* replacement_text)
+static bool replace_operand_in_string(GG_Disassembler_Record* record, std::string& instr, const char* replacement_text)
 {
-    const char* format = is_zp ? "$%02X" : "$%04X";
-    const char* indirect_format = is_zp ? "$(%02X" : "$(%04X";
-    int replace_len = is_zp ? 3 : 5;
-    int indirect_replace_len = is_zp ? 4 : 6;
+    if (record->operand_length <= 0)
+        return false;
 
-    char address_str[8];
-    snprintf(address_str, 8, format, address);
-    size_t pos = instr.find(address_str);
-    if (pos != std::string::npos)
-    {
-        instr.replace(pos, replace_len, replacement_text);
-        return true;
-    }
+    if ((record->operand_offset < 0) || ((record->operand_offset + record->operand_length) > (int)instr.length()))
+        return false;
 
-    snprintf(address_str, 8, indirect_format, address);
-    pos = instr.find(address_str);
-    if (pos != std::string::npos)
-    {
-        std::string indirect_replacement = std::string("(") + replacement_text;
-        instr.replace(pos, indirect_replace_len, indirect_replacement);
-        return true;
-    }
-
-    return false;
+    instr.replace(record->operand_offset, record->operand_length, replacement_text);
+    return true;
 }
 
-static void add_assembler_label_definition(std::vector<AssemblerLabelDefinition>& definitions, const char* label, u16 address)
+static void add_assembler_definition(std::vector<AssemblerLabelDefinition>& definitions, const char* name, u16 address)
 {
-    if (label == NULL)
+    if (name == NULL)
         return;
-
-    char name[64];
-    snprintf(name, sizeof(name), "%s_%04X", label, address);
 
     for (size_t i = 0; i < definitions.size(); i++)
     {
@@ -1507,6 +1488,31 @@ static void add_assembler_label_definition(std::vector<AssemblerLabelDefinition>
     strncpy_fit(definition.name, name, sizeof(definition.name));
     definition.address = address;
     definitions.push_back(definition);
+}
+
+static void add_assembler_label_definition(std::vector<AssemblerLabelDefinition>& definitions, const char* label, u16 address)
+{
+    if (label == NULL)
+        return;
+
+    char name[64];
+    snprintf(name, sizeof(name), "%s_%04X", label, address);
+    add_assembler_definition(definitions, name, address);
+}
+
+static bool symbol_label_is_exported(const char* name, u16 address, u8 bank)
+{
+    if (name == NULL)
+        return false;
+
+    for (size_t i = 0; i < disassembler_lines.size(); i++)
+    {
+        DisassemblerLine& line = disassembler_lines[i];
+        if (line.symbol && line.address == address && line.symbol->bank == bank && strcmp(line.symbol->text, name) == 0)
+            return true;
+    }
+
+    return false;
 }
 
 static void write_assembler_label_definitions(FILE* file, const std::vector<AssemblerLabelDefinition>& definitions)
@@ -1549,7 +1555,7 @@ bool gui_debug_resolve_symbol(GG_Disassembler_Record* record, std::string& instr
     if (IsValidPointer(symbol))
     {
         std::string replacement = std::string(color) + symbol->text + original_color;
-        if (replace_address_in_string(instr, lookup_address, is_zp, replacement.c_str()))
+        if (replace_operand_in_string(record, instr, replacement.c_str()))
         {
             if (out_name) *out_name = symbol->text;
             if (out_address) *out_address = lookup_address;
@@ -1587,7 +1593,7 @@ bool gui_debug_resolve_label(GG_Disassembler_Record* record, std::string& instr,
                 char label_address[5];
                 snprintf(label_address, 5, "%04X", lookup_address);
                 std::string replacement = std::string(color) + k_debug_labels[i].label + "_" + label_address + original_color;
-                if (replace_address_in_string(instr, lookup_address, is_zp, replacement.c_str()))
+                if (replace_operand_in_string(record, instr, replacement.c_str()))
                 {
                     if (out_name) *out_name = k_debug_labels[i].label;
                     if (out_address) *out_address = lookup_address;
@@ -1643,12 +1649,69 @@ static void replace_symbols(DisassemblerLine* line, const char* jump_color, cons
     if (auto_symbol_text != NULL)
     {
         std::string replacement = std::string(auto_color) + auto_symbol_text + original_color;
-        if (replace_address_in_string(instr, lookup_address, is_zp, replacement.c_str()))
+        if (replace_operand_in_string(line->record, instr, replacement.c_str()))
         {
             snprintf(line->name_enhanced, 64, "%s", instr.c_str());
             snprintf(line->tooltip, 128, "%s%s%s = %s$%04X", auto_color, auto_symbol_text, c_white.c_str(), c_cyan.c_str(), lookup_address);
         }
     }
+}
+
+static bool collect_assembler_symbol_definition(DisassemblerLine* line, std::vector<AssemblerLabelDefinition>& definitions)
+{
+    std::string instr = line->record->name;
+    const char* resolved_name = NULL;
+    u16 resolved_address = 0;
+
+    if (gui_debug_resolve_symbol(line->record, instr, "", "", &resolved_name, &resolved_address))
+    {
+        u16 lookup_address = 0;
+        bool is_zp = false;
+        get_record_operand(line->record, &lookup_address, &is_zp);
+        u16 bank_address = is_zp ? (0x2000 | lookup_address) : lookup_address;
+        u8 bank = line->record->jump ? line->record->jump_bank : emu_get_core()->GetMemory()->GetBank(bank_address);
+        if (!symbol_label_is_exported(resolved_name, resolved_address, bank))
+            add_assembler_definition(definitions, resolved_name, resolved_address);
+        return true;
+    }
+
+    if (!config_debug.dis_show_auto_symbols)
+        return false;
+
+    if (!line->record->jump)
+        return false;
+
+    u16 lookup_address = 0;
+    bool is_zp = false;
+
+    if (!get_record_operand(line->record, &lookup_address, &is_zp))
+        return false;
+
+    DebugSymbol* dynamic_symbol = dynamic_symbols[line->record->jump_bank][lookup_address];
+    const char* auto_symbol_text = NULL;
+
+    if (IsValidPointer(dynamic_symbol))
+    {
+        auto_symbol_text = dynamic_symbol->text;
+    }
+    else
+    {
+        GG_Disassembler_Record* target = emu_get_core()->GetMemory()->GetDisassemblerRecord(lookup_address, line->record->jump_bank);
+        if (IsValidPointer(target) && target->auto_symbol[0] != 0)
+            auto_symbol_text = target->auto_symbol;
+    }
+
+    if (auto_symbol_text != NULL)
+    {
+        if (replace_operand_in_string(line->record, instr, auto_symbol_text))
+        {
+            if (!symbol_label_is_exported(auto_symbol_text, lookup_address, line->record->jump_bank))
+                add_assembler_definition(definitions, auto_symbol_text, lookup_address);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 static bool collect_assembler_label_definition(DisassemblerLine* line, std::vector<AssemblerLabelDefinition>& definitions)
@@ -2597,13 +2660,18 @@ static void save_current_disassembler(FILE* file)
     bool assembler_syntax = disassembler_uses_assembler_syntax();
     std::vector<AssemblerLabelDefinition> definitions;
 
-    if (assembler_syntax && config_debug.dis_replace_labels)
+    if (assembler_syntax && (config_debug.dis_replace_symbols || config_debug.dis_replace_labels))
     {
         for (int i = 0; i < total_lines; i++)
         {
             DisassemblerLine line = disassembler_lines[i];
             if (!line.symbol)
-                collect_assembler_label_definition(&line, definitions);
+            {
+                if (config_debug.dis_replace_symbols)
+                    collect_assembler_symbol_definition(&line, definitions);
+                if (config_debug.dis_replace_labels)
+                    collect_assembler_label_definition(&line, definitions);
+            }
         }
 
         write_assembler_label_definitions(file, definitions);
