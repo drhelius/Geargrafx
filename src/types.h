@@ -140,6 +140,14 @@ struct GG_SaveState_Screenshot
     u8 width_scale;
 };
 
+enum GG_Disassembler_Syntax
+{
+    GG_Disassembler_Syntax_Geargrafx = 0,
+    GG_Disassembler_Syntax_PCEAS,
+    GG_Disassembler_Syntax_WLADX,
+    GG_Disassembler_Syntax_Count
+};
+
 struct GG_Disassembler_Record
 {
     u32 address;

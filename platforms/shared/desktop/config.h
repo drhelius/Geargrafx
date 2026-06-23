@@ -293,6 +293,7 @@ struct config_Debug
     bool dis_dim_auto_symbols = false;
     bool dis_replace_symbols = true;
     bool dis_replace_labels = true;
+    int dis_syntax = GG_Disassembler_Syntax_Geargrafx;
     int dis_look_ahead_count = 20;
     bool pause_on_brk = false;
     int pause_on_brk_value = 0xFF;

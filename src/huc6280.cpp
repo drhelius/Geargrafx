@@ -44,6 +44,7 @@ HuC6280::HuC6280()
     m_debug_brk_value = 0;
     m_debug_brk_trigger_irq = false;
     m_prev_opcode_address = 0xFFFF;
+    m_disassembler_syntax = GG_Disassembler_Syntax_Geargrafx;
     m_reset_value = -1;
     m_processor_state.A = &m_A;
     m_processor_state.X = &m_X;
@@ -147,6 +148,19 @@ HuC6280::HuC6280_State* HuC6280::GetState()
 void HuC6280::SetResetValue(int value)
 {
     m_reset_value = value;
+}
+
+void HuC6280::SetDisassemblerSyntax(GG_Disassembler_Syntax syntax)
+{
+    if (syntax < GG_Disassembler_Syntax_Geargrafx || syntax >= GG_Disassembler_Syntax_Count)
+        syntax = GG_Disassembler_Syntax_Geargrafx;
+
+    m_disassembler_syntax = syntax;
+}
+
+GG_Disassembler_Syntax HuC6280::GetDisassemblerSyntax() const
+{
+    return m_disassembler_syntax;
 }
 
 void HuC6280::EnableBreakpoints(bool enable, bool irqs)

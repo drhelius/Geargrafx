@@ -311,6 +311,8 @@ void config_read(void)
     config_debug.dis_dim_auto_symbols = read_bool("Debug", "DisDimAutoSymbols", false);
     config_debug.dis_replace_symbols = read_bool("Debug", "DisReplaceSymbols", true);
     config_debug.dis_replace_labels = read_bool("Debug", "DisReplaceLabels", true);
+    config_debug.dis_syntax = read_int("Debug", "DisSyntax", GG_Disassembler_Syntax_Geargrafx);
+    config_debug.dis_syntax = CLAMP(config_debug.dis_syntax, GG_Disassembler_Syntax_Geargrafx, GG_Disassembler_Syntax_Count - 1);
     config_debug.dis_look_ahead_count = read_int("Debug", "DisLookAheadCount", 20);
     config_debug.pause_on_brk = read_bool("Debug", "PauseOnBRK", false);
     config_debug.pause_on_brk_value = read_int("Debug", "PauseOnBRKValue", 0xFF);
@@ -677,6 +679,7 @@ void config_write(void)
     write_bool("Debug", "DisDimAutoSymbols", config_debug.dis_dim_auto_symbols);
     write_bool("Debug", "DisReplaceSymbols", config_debug.dis_replace_symbols);
     write_bool("Debug", "DisReplaceLabels", config_debug.dis_replace_labels);
+    write_int("Debug", "DisSyntax", config_debug.dis_syntax);
     write_int("Debug", "DisLookAheadCount", config_debug.dis_look_ahead_count);
     write_bool("Debug", "PauseOnBRK", config_debug.pause_on_brk);
     write_int("Debug", "PauseOnBRKValue", config_debug.pause_on_brk_value);

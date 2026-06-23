@@ -160,6 +160,8 @@ public:
     bool HasPhysicalMemoryBreakpoints(bool read) const;
     bool HasPhysicalExecuteBreakpoints() const;
     const std::vector<GG_Breakpoint>* GetBreakpoints() const;
+    void SetDisassemblerSyntax(GG_Disassembler_Syntax syntax);
+    GG_Disassembler_Syntax GetDisassemblerSyntax() const;
     void ClearDisassemblerCallStack();
     std::stack<GG_CallStackEntry>* GetDisassemblerCallStack();
     void CheckMemoryBreakpoints(int type, u32 address, bool read);
@@ -219,6 +221,7 @@ private:
     bool m_debug_brk_trigger_irq;
     u16 m_prev_opcode_address;
     std::stack<GG_CallStackEntry> m_disassembler_call_stack;
+    GG_Disassembler_Syntax m_disassembler_syntax;
     int m_reset_value;
 
 private:

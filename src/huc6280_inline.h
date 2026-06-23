@@ -878,33 +878,34 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
 
     u8 op1 = record->opcodes[1];
     u8 op2 = record->opcodes[2];
+    const char* format = k_huc6280_opcode_names[opcode].name[m_disassembler_syntax];
 
     switch (k_huc6280_opcode_names[opcode].type)
     {
         case GG_OPCode_Type_Implied:
         {
-            snprintf(record->name, 64, "%s", k_huc6280_opcode_names[opcode].name);
+            snprintf(record->name, 64, "%s", format);
             break;
         }
         case GG_OPCode_Type_1b:
         {
-            if (!strstr(k_huc6280_opcode_names[opcode].name, "#$"))
+            if (!strstr(k_huc6280_opcode_names[opcode].name[GG_Disassembler_Syntax_Geargrafx], "#$"))
             {
                 record->has_operand_address = true;
                 record->operand_address = op1;
                 record->operand_is_zp = true;
             }
-            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, op1);
+            snprintf(record->name, 64, format, op1);
             break;
         }
         case GG_OPCode_Type_1b_1b:
         {
-            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, op1, op2);
+            snprintf(record->name, 64, format, op1, op2);
             break;
         }
         case GG_OPCode_Type_1b_2b:
         {
-            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, op1, op2 | (record->opcodes[3] << 8));
+            snprintf(record->name, 64, format, op1, op2 | (record->opcodes[3] << 8));
             break;
         }
         case GG_OPCode_Type_2b:
@@ -912,12 +913,12 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
             u16 operand = op1 | (op2 << 8);
             record->has_operand_address = true;
             record->operand_address = operand;
-            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, operand);
+            snprintf(record->name, 64, format, operand);
             break;
         }
         case GG_OPCode_Type_2b_2b_2b:
         {
-            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, op1 | (op2 << 8), record->opcodes[3] | (record->opcodes[4] << 8), record->opcodes[5] | (record->opcodes[6] << 8));
+            snprintf(record->name, 64, format, op1 | (op2 << 8), record->opcodes[3] | (record->opcodes[4] << 8), record->opcodes[5] | (record->opcodes[6] << 8));
             break;
         }
         case GG_OPCode_Type_1b_Relative:
@@ -927,7 +928,10 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
             record->jump = true;
             record->jump_address = jump_address;
             record->jump_bank = m_memory->GetBank(jump_address);
-            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, jump_address, rel);
+            if (m_disassembler_syntax == GG_Disassembler_Syntax_WLADX)
+                snprintf(record->name, 64, format, op1);
+            else
+                snprintf(record->name, 64, format, jump_address, rel);
             break;
         }
         case GG_OPCode_Type_1b_1b_Relative:
@@ -937,13 +941,63 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
             record->jump = true;
             record->jump_address = jump_address;
             record->jump_bank = m_memory->GetBank(jump_address);
-            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, op1, jump_address, rel);
+            if (m_disassembler_syntax == GG_Disassembler_Syntax_WLADX)
+                snprintf(record->name, 64, format, op1, op2);
+            else
+                snprintf(record->name, 64, format, op1, jump_address, rel);
             break;
         }
         case GG_OPCode_Type_ST0:
         {
             u8 reg = op1 & 0x1F;
-            snprintf(record->name, 64, k_huc6280_opcode_names[opcode].name, reg, k_register_names[reg]);
+            snprintf(record->name, 64, format, reg, k_register_names[reg]);
+            break;
+        }
+        case GG_OPCode_Type_BRK:
+        {
+            if (m_disassembler_syntax == GG_Disassembler_Syntax_Geargrafx)
+            {
+                if (op1 == 0x00)
+                    snprintf(record->name, 64, "{n}BRK");
+                else
+                    snprintf(record->name, 64, "{n}BRK {o}#$%02X", op1);
+            }
+            else if (m_disassembler_syntax == GG_Disassembler_Syntax_PCEAS)
+            {
+                if (op1 == 0x00)
+                    snprintf(record->name, 64, "%s", format);
+                else
+                    snprintf(record->name, 64, "{n}.db {o}$00,$%02X", op1);
+            }
+            else
+            {
+                snprintf(record->name, 64, format, op1);
+            }
+            break;
+        }
+        case GG_OPCode_Type_MPR:
+        {
+            if (m_disassembler_syntax == GG_Disassembler_Syntax_PCEAS)
+            {
+                int mpr = -1;
+                for (int i = 0; i < 8; i++)
+                {
+                    if (op1 == (1 << i))
+                    {
+                        mpr = i;
+                        break;
+                    }
+                }
+
+                if (mpr >= 0)
+                    snprintf(record->name, 64, format, mpr);
+                else
+                    snprintf(record->name, 64, "{n}.db {o}$%02X,$%02X", opcode, op1);
+            }
+            else
+            {
+                snprintf(record->name, 64, format, op1);
+            }
             break;
         }
         default:
@@ -951,9 +1005,6 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
             break;
         }
     }
-
-    if (opcode == 0x00 && op1 != 0x00)
-        snprintf(record->name, 64, "{n}BRK {o}#$%02X", op1);
 
     // JMP hhll, JSR hhll
     if (opcode == 0x4C || opcode == 0x20)

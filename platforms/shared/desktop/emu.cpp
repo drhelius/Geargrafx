@@ -70,6 +70,7 @@ static void load_ram(void);
 static void save_mb128(void);
 static void load_mb128(void);
 static void reset_buffers(void);
+static void apply_disassembler_syntax(void);
 static const char* get_configurated_dir(int option, const char* path); 
 static void init_debug(void);
 static void destroy_debug(void);
@@ -95,6 +96,7 @@ bool emu_init(GG_Input_Pump_Fn input_pump_fn)
     geargrafx = new GeargrafxCore();
     geargrafx->Init(input_pump_fn);
     geargrafx->GetMedia()->SetTempPath(config_temp_path);
+    apply_disassembler_syntax();
 
     sound_queue_init();
 
@@ -157,6 +159,14 @@ static void load_media_thread_func(void)
     loading_state.store(Loading_State_Finished);
 }
 
+static void apply_disassembler_syntax(void)
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (IsValidPointer(geargrafx))
+        geargrafx->GetHuC6280()->SetDisassemblerSyntax((GG_Disassembler_Syntax)config_debug.dis_syntax);
+#endif
+}
+
 void emu_load_media_async(const char* file_path)
 {
     if (loading_state.load() != Loading_State_None)
@@ -164,6 +174,7 @@ void emu_load_media_async(const char* file_path)
 
     emu_debug_command = Debug_Command_None;
     reset_buffers();
+    apply_disassembler_syntax();
 
     save_ram();
     save_mb128();
@@ -191,6 +202,7 @@ void emu_load_physical_cdrom_async(const char* device_id)
     Log("Queueing physical CD-ROM async load: %s", device_id);
     emu_debug_command = Debug_Command_None;
     reset_buffers();
+    apply_disassembler_syntax();
 
     save_ram();
     save_mb128();
