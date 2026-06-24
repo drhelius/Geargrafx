@@ -750,10 +750,53 @@ static void poll_input(void)
         }
         else
         {
-            joypad_current[j][0] = (up_pressed && (!down_pressed || joypad_old[j][0])) ? 1 : 0;
-            joypad_current[j][1] = (down_pressed && (!up_pressed || joypad_old[j][1])) ? 1 : 0;
-            joypad_current[j][2] = (left_pressed && (!right_pressed || joypad_old[j][2])) ? 1 : 0;
-            joypad_current[j][3] = (right_pressed && (!left_pressed || joypad_old[j][3])) ? 1 : 0;
+            int up = up_pressed;
+            int down = down_pressed;
+            int left = left_pressed;
+            int right = right_pressed;
+
+            if (up_pressed && down_pressed)
+            {
+                if (joypad_old[j][0])
+                {
+                    up = 1;
+                    down = 0;
+                }
+                else if (joypad_old[j][1])
+                {
+                    up = 0;
+                    down = 1;
+                }
+                else
+                {
+                    up = 1;
+                    down = 0;
+                }
+            }
+
+            if (left_pressed && right_pressed)
+            {
+                if (joypad_old[j][2])
+                {
+                    left = 1;
+                    right = 0;
+                }
+                else if (joypad_old[j][3])
+                {
+                    left = 0;
+                    right = 1;
+                }
+                else
+                {
+                    left = 1;
+                    right = 0;
+                }
+            }
+
+            joypad_current[j][0] = up;
+            joypad_current[j][1] = down;
+            joypad_current[j][2] = left;
+            joypad_current[j][3] = right;
         }
 
         int select_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_SELECT);
