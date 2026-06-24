@@ -1093,7 +1093,7 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
         snprintf(record->auto_symbol, 64, k_irq_auto_symbol_format[record->irq], record->bank, address);
     }
 
-    if (record->jump && record->jump_address != 0)
+    if (record->jump)
     {
         GG_Disassembler_Record* target = m_memory->GetOrCreateDisassemblerRecord(record->jump_address);
         if (IsValidPointer(target))
@@ -1224,7 +1224,7 @@ inline void HuC6280::DisassembleAhead(u16 start_address, int count, int depth)
             m_debug_next_irq = saved_irq;
         }
 
-        if (record->jump && record->jump_address != 0)
+        if (record->jump)
         {
             u8 jump_bank = m_memory->GetBank(record->jump_address);
             if (jump_bank != 0xFF)
