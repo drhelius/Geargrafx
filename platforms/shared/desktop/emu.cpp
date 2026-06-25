@@ -26,6 +26,7 @@
 #include "sound_queue.h"
 #include "config.h"
 #include "rewind.h"
+#include "runahead.h"
 #include "events.h"
 #include "mcp/mcp_manager.h"
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
@@ -114,6 +115,7 @@ bool emu_init(GG_Input_Pump_Fn input_pump_fn)
     mcp_manager->Init(geargrafx);
 
     rewind_init();
+    runahead_init();
 
     return true;
 }
@@ -130,6 +132,7 @@ void emu_destroy(void)
     save_ram();
     save_mb128();
     rewind_destroy();
+    runahead_destroy();
     SafeDelete(mcp_manager);
     SafeDeleteArray(audio_buffer);
     sound_queue_destroy();
@@ -348,7 +351,13 @@ void emu_update(void)
         if (!geargrafx->IsPaused())
         {
             rewind_commit_seek();
-            geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
+
+            int runahead = runahead_get_frames();
+            if (runahead > 0)
+                runahead_run(runahead, emu_frame_buffer, audio_buffer, &sampleCount);
+            else
+                geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
+
             frame_executed = true;
             frame_completed = true;
         }
