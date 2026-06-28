@@ -276,7 +276,8 @@ void retro_reset(void)
     log_cb(RETRO_LOG_DEBUG, "Resetting...\n");
 
     check_variables();
-    load_bios();
+    if (core->GetMedia()->IsCDROM())
+        load_bios();
     core->ResetMedia(true);
 }
 
@@ -366,7 +367,6 @@ bool retro_load_game(const struct retro_game_info *info)
     }
 
     check_variables();
-    load_bios();
 
     const char* load_path = info->path;
     const struct retro_game_info_ext* info_ext = NULL;
@@ -384,6 +384,9 @@ bool retro_load_game(const struct retro_game_info *info)
 
     if (path_is_cdrom_uri(retro_game_path))
         log_cb(RETRO_LOG_INFO, "Loading CD-ROM through libretro VFS: %s\n", retro_game_path);
+
+    if (is_cd_content)
+        load_bios();
 
     if (IsValidPointer(info->data) && !is_cd_content)
     {
