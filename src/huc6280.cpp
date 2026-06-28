@@ -792,6 +792,7 @@ void HuC6280::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_cycles), sizeof(m_cycles));
     stream.read(reinterpret_cast<char*> (&m_irq_pending), sizeof(m_irq_pending));
     stream.read(reinterpret_cast<char*> (&m_speed), sizeof(m_speed));
+    m_speed = CLAMP(m_speed, 0, 1);
     stream.read(reinterpret_cast<char*> (&m_transfer_state), sizeof(m_transfer_state));
     stream.read(reinterpret_cast<char*> (&m_transfer_count), sizeof(m_transfer_count));
     stream.read(reinterpret_cast<char*> (&m_transfer_length), sizeof(m_transfer_length));
