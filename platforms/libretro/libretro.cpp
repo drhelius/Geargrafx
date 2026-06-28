@@ -85,6 +85,18 @@ static int mouse_sensitivity = 5;
 static bool libretro_supports_bitmasks = false;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
 static int joypad_old[MAX_PADS][MAX_BUTTONS];
+struct MouseState
+{
+    int delta_x;
+    int delta_y;
+    int button_i;
+    int button_ii;
+    int button_select;
+    int button_run;
+    bool delta_applied;
+};
+
+static MouseState mouse_current[MAX_PADS];
 static unsigned input_device[MAX_PADS] = {
     RETRO_DEVICE_PCE_PAD,
     RETRO_DEVICE_PCE_PAD,
@@ -312,11 +324,10 @@ void retro_run(void)
         check_variables();
 
     poll_input();
+    apply_input();
 
     audio_sample_count = 0;
     core->RunToVBlank(frame_buffer, audio_buf, &audio_sample_count);
-
-    apply_input();
 
     core->GetRuntimeInfo(runtime_info);
 
@@ -629,6 +640,14 @@ static void clear_input_state(void)
             joypad_current[i][j] = 0;
             joypad_old[i][j] = 0;
         }
+
+        mouse_current[i].delta_x = 0;
+        mouse_current[i].delta_y = 0;
+        mouse_current[i].button_i = 0;
+        mouse_current[i].button_ii = 0;
+        mouse_current[i].button_select = 0;
+        mouse_current[i].button_run = 0;
+        mouse_current[i].delta_applied = false;
     }
 }
 
@@ -693,6 +712,14 @@ static void release_controller_input(unsigned port)
         joypad_old[port][i] = 0;
     }
 
+    mouse_current[port].delta_x = 0;
+    mouse_current[port].delta_y = 0;
+    mouse_current[port].button_i = 0;
+    mouse_current[port].button_ii = 0;
+    mouse_current[port].button_select = 0;
+    mouse_current[port].button_run = 0;
+    mouse_current[port].delta_applied = false;
+
     if ((input_device[port] == RETRO_DEVICE_PCE_MOUSE) && core)
         core->GetInput()->SetMouseDelta(0, 0);
 }
@@ -723,6 +750,32 @@ static void poll_input(void)
                 for (int i = 0; i < (RETRO_DEVICE_ID_JOYPAD_R3+1); i++)
                     joypad_bits[j] |= input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0;
             }
+        }
+    }
+
+    for (int j = 0; j < MAX_PADS; j++)
+    {
+        mouse_current[j].delta_x = 0;
+        mouse_current[j].delta_y = 0;
+        mouse_current[j].button_i = 0;
+        mouse_current[j].button_ii = 0;
+        mouse_current[j].button_select = 0;
+        mouse_current[j].button_run = 0;
+        mouse_current[j].delta_applied = false;
+
+        if (input_device[j] == RETRO_DEVICE_PCE_MOUSE)
+        {
+            int mouse_x = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+            int mouse_y = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+            int sen = MAX(mouse_sensitivity, 1);
+
+            mouse_current[j].delta_x = (int)((float)mouse_x * ((float)sen / 6.0f));
+            mouse_current[j].delta_y = (int)((float)mouse_y * ((float)sen / 6.0f));
+            mouse_current[j].button_i = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT) ? 1 : 0;
+            mouse_current[j].button_ii = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT) ? 1 : 0;
+            mouse_current[j].button_select = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_BUTTON_4) ? 1 : 0;
+            mouse_current[j].button_run = (input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE) ||
+                input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_BUTTON_5)) ? 1 : 0;
         }
     }
 
@@ -862,31 +915,28 @@ static void apply_input(void)
     {
         if (j == mouse_port)
         {
-            int mouse_x = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-            int mouse_y = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+            if (!mouse_current[j].delta_applied)
+            {
+                core->GetInput()->SetMouseDelta(mouse_current[j].delta_x, mouse_current[j].delta_y);
+                mouse_current[j].delta_applied = true;
+            }
 
-            int sen = MAX(mouse_sensitivity, 1);
-            int relx = (int)((float)mouse_x * ((float)sen / 6.0f));
-            int rely = (int)((float)mouse_y * ((float)sen / 6.0f));
-
-            core->GetInput()->SetMouseDelta(relx, rely);
-
-            if (input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+            if (mouse_current[j].button_i)
                 core->KeyPressed((GG_Controllers)j, GG_KEY_I);
             else
                 core->KeyReleased((GG_Controllers)j, GG_KEY_I);
 
-            if (input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+            if (mouse_current[j].button_ii)
                 core->KeyPressed((GG_Controllers)j, GG_KEY_II);
             else
                 core->KeyReleased((GG_Controllers)j, GG_KEY_II);
 
-            if (joypad_current[j][6] || input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_BUTTON_4))
+            if (joypad_current[j][6] || mouse_current[j].button_select)
                 core->KeyPressed((GG_Controllers)j, GG_KEY_SELECT);
             else
                 core->KeyReleased((GG_Controllers)j, GG_KEY_SELECT);
 
-            if (joypad_current[j][7] || input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE) || input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_BUTTON_5))
+            if (joypad_current[j][7] || mouse_current[j].button_run)
                 core->KeyPressed((GG_Controllers)j, GG_KEY_RUN);
             else
                 core->KeyReleased((GG_Controllers)j, GG_KEY_RUN);
