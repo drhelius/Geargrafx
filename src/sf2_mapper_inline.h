@@ -17,36 +17,23 @@
  *
  */
 
-#ifndef SF2_MAPPER_H
-#define SF2_MAPPER_H
+#ifndef SF2_MAPPER_INLINE_H
+#define SF2_MAPPER_INLINE_H
 
-#include "types.h"
-#include "mapper.h"
+#include "sf2_mapper.h"
+#include "media.h"
 
-class Media;
-class Memory;
-
-class SF2Mapper : public Mapper
+INLINE int SF2Mapper::ComputeBankAddress(int bank)
 {
-public:
-    SF2Mapper(Media* media, Memory* memory);
-    virtual ~SF2Mapper();
-    virtual u8 Read(u8 bank, u16 address);
-    u8 Peek(u8 bank, u16 address);
-    bool GetROMPhysicalAddress(u8 bank, u16 address, u32& rom_address);
-    virtual void Write(u8 bank, u16 address, u8 value);
-    virtual void Reset();
-    virtual void SaveState(std::ostream& stream);
-    virtual void LoadState(std::istream& stream);
+    bank &= 0x0F;
 
-private:
-    int ComputeBankAddress(int bank);
+    int rom_size = m_media->GetROMSize();
+    int blocks = (rom_size > 0x80000) ? ((rom_size - 0x80000) / 0x80000) : 1;
 
-private:
-    int m_bank;
-    int m_bank_address;
-};
+    if (blocks < 1)
+        blocks = 1;
 
-#include "sf2_mapper_inline.h"
+    return (bank % blocks) * 0x80000;
+}
 
-#endif /* SF2_MAPPER_H */
+#endif /* SF2_MAPPER_INLINE_H */

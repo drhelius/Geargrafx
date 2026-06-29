@@ -85,7 +85,7 @@ void SF2Mapper::Write(u8 bank, u16 address, u8 value)
     {
         UNUSED(value);
         m_bank = address & 0x0F;
-        m_bank_address = m_bank * 0x80000;
+        m_bank_address = ComputeBankAddress(m_bank);
     }
     else
     {
@@ -112,4 +112,6 @@ void SF2Mapper::LoadState(std::istream& stream)
     using namespace std;
     stream.read(reinterpret_cast<char*> (&m_bank), sizeof(m_bank));
     stream.read(reinterpret_cast<char*> (&m_bank_address), sizeof(m_bank_address));
+    m_bank &= 0x0F;
+    m_bank_address = ComputeBankAddress(m_bank);
 }
