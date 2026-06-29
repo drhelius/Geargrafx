@@ -733,6 +733,9 @@ void HuC6270::RenderBackground(int width)
 
 void HuC6270::RenderSprites(int width)
 {
+    static const u16 sprite_rendered_flag = 0x0200;
+    static const u16 sprite_limit_flag = 0x0400;
+
     for (int i = 0; i < width; i++)
     {
         m_line_buffer_sprites[i] = 0;
@@ -740,6 +743,7 @@ void HuC6270::RenderSprites(int width)
 
     for(int i = (m_sprite_count - 1) ; i >= 0; i--)
     {
+        bool in_sprite_limit = (i < 16);
         int pos = m_sprites[i].x - 0x20;
 
         if ((pos + 15) < 0 || pos >= width)
@@ -769,13 +773,17 @@ void HuC6270::RenderSprites(int width)
             {
                 int x_in_screen = pos + x;
 
-                if ((m_sprites[i].index == 0) && (m_line_buffer_sprites[x_in_screen] & 0x0F))
+                if ((m_sprites[i].index == 0) && (m_line_buffer_sprites[x_in_screen] & 0x0F) &&
+                    (!m_no_sprite_limit || (m_line_buffer_sprites[x_in_screen] & sprite_limit_flag)))
                     SpriteCollisionIRQ();
 
                 if (!priority && (m_line_buffer[x_in_screen] & 0x0F))
                     pixel |= 0x100;
                 else
-                    pixel |= m_sprites[i].palette | 0x100 | 0x200;
+                    pixel |= m_sprites[i].palette | 0x100 | sprite_rendered_flag;
+
+                if (m_no_sprite_limit && in_sprite_limit)
+                    pixel |= sprite_limit_flag;
 
                 m_line_buffer_sprites[x_in_screen] = pixel;
             }
@@ -784,8 +792,8 @@ void HuC6270::RenderSprites(int width)
 
     for (int i = 0; i < width; i++)
     {
-        if(m_line_buffer_sprites[i] & 0x200)
-            m_line_buffer[i] = m_line_buffer_sprites[i] & ~0x200;
+        if(m_line_buffer_sprites[i] & sprite_rendered_flag)
+            m_line_buffer[i] = m_line_buffer_sprites[i] & ~(sprite_rendered_flag | sprite_limit_flag);
     }
 }
 
