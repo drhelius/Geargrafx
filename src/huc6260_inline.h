@@ -168,6 +168,9 @@ INLINE bool HuC6260::Clock(u32 cycles)
 template <bool is_sgx>
 INLINE void HuC6260::RenderFrame()
 {
+    if (!IsValidPointer(m_frame_buffer))
+        return;
+
     if (is_sgx)
     {
         if (m_pixel_format == GG_PIXEL_RGB565)
