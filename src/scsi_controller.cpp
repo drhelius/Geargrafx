@@ -17,7 +17,8 @@
  *
  */
 
-#include <assert.h> 
+#include <assert.h>
+#include <stdlib.h>
 #include "scsi_controller.h"
 #include "cdrom.h"
 #include "cdrom_media.h"
@@ -27,6 +28,7 @@
 
 static const u32 k_scsi_command_buffer_capacity = 16;
 static const u32 k_scsi_data_buffer_capacity = 2048;
+static const u32 k_scsi_initial_read_phase_max_cycles = GG_MASTER_CLOCK_RATE / 60;
 static const u8 k_scsi_command_buffer_padding[k_scsi_command_buffer_capacity] = {};
 static const u8 k_scsi_data_buffer_padding[k_scsi_data_buffer_capacity] = {};
 
@@ -44,6 +46,7 @@ ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio)
     m_load_sector = 0;
     m_load_sector_count = 0;
     m_auto_ack_cycles = 0;
+    m_initial_read_phase_cycles = 0;
     m_command_buffer.clear();
     m_command_buffer.reserve(k_scsi_command_buffer_capacity);
     m_data_buffer.clear();
@@ -125,6 +128,10 @@ void ScsiController::Reset(bool keep_rst_signal)
     m_load_sector = 0;
     m_load_sector_count = 0;
     m_auto_ack_cycles = 0;
+    if (!keep_rst_signal)
+    {
+        m_initial_read_phase_cycles = (u32)rand() % (k_scsi_initial_read_phase_max_cycles + 1);
+    }
     m_command_buffer.clear();
     m_data_buffer.clear();
     m_data_buffer_offset = 0;
@@ -438,6 +445,12 @@ void ScsiController::CommandRead()
     u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
     u32 seek_cycles = TimeToCycles(seek_time * 1000);
     u32 transfer_cycles = m_cdrom_media->SectorTransferCycles();
+
+    if (m_initial_read_phase_cycles > 0)
+    {
+        seek_cycles += m_initial_read_phase_cycles;
+        m_initial_read_phase_cycles = 0;
+    }
 
     m_next_load_cycles = seek_cycles + transfer_cycles;
     m_load_sector = lba;
@@ -855,4 +868,5 @@ void ScsiController::LoadState(std::istream& stream, int version)
     }
 
     m_cdrom_media->SetCurrentSector(current_sector);
+    m_initial_read_phase_cycles = 0;
 }

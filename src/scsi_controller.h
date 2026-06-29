@@ -182,6 +182,7 @@ private:
     u32 m_load_sector;
     u32 m_load_sector_count;
     s32 m_auto_ack_cycles;
+    u32 m_initial_read_phase_cycles;
     std::vector<u8> m_command_buffer;
     std::vector<u8> m_data_buffer;
     u32 m_data_buffer_offset;
