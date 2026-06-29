@@ -31,7 +31,7 @@ Features:
 - Internal database for automatic rom detection and hardware selection if Auto options are selected.
 - Full debugger with just-in-time disassembler, CPU breakpoints, memory access breakpoints, code navigation, debug symbols, automatic labels, memory editor, PSG inspector and video viewer.
 - MCP server for AI-assisted debugging with GitHub Copilot, Claude, Codex and similar, exposing tools for execution control, memory inspection, hardware status, and more.
-- Windows and Linux Portable Mode.
+- Windows, Linux and macOS Portable Mode.
 - ROM loading from the command line by adding the ROM path as an argument.
 - ROM loading using drag & drop.
 - Support for modern game controllers through gamecontrollerdb.txt file located in the same directory as the application binary.
