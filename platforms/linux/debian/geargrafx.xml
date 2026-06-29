@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+    <mime-type type="application/x-pc-engine-rom">
+        <comment>PC Engine ROM</comment>
+        <glob pattern="*.pce"/>
+    </mime-type>
+    <mime-type type="application/x-supergrafx-rom">
+        <comment>SuperGrafx ROM</comment>
+        <glob pattern="*.sgx"/>
+    </mime-type>
+    <mime-type type="application/x-pc-engine-hes">
+        <comment>PC Engine HES Audio</comment>
+        <glob pattern="*.hes"/>
+    </mime-type>
+</mime-info>

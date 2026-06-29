@@ -22,5 +22,104 @@
     <string>@version@</string>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.arcade-games</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>PC Engine ROM</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.drhelius.geargrafx.pce</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>SuperGrafx ROM</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.drhelius.geargrafx.sgx</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>PC Engine HES Audio</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.drhelius.geargrafx.hes</string>
+            </array>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.drhelius.geargrafx.pce</string>
+            <key>UTTypeDescription</key>
+            <string>PC Engine ROM</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>pce</string>
+                </array>
+                <key>public.mime-type</key>
+                <string>application/x-pc-engine-rom</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.drhelius.geargrafx.sgx</string>
+            <key>UTTypeDescription</key>
+            <string>SuperGrafx ROM</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>sgx</string>
+                </array>
+                <key>public.mime-type</key>
+                <string>application/x-supergrafx-rom</string>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.drhelius.geargrafx.hes</string>
+            <key>UTTypeDescription</key>
+            <string>PC Engine HES Audio</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>hes</string>
+                </array>
+                <key>public.mime-type</key>
+                <string>application/x-pc-engine-hes</string>
+            </dict>
+        </dict>
+    </array>
 </dict>
 </plist>

@@ -7,6 +7,7 @@ Exec=/usr/games/geargrafx %f
 TryExec=/usr/games/geargrafx
 Icon=geargrafx
 Terminal=false
+MimeType=application/x-pc-engine-rom;application/x-supergrafx-rom;application/x-pc-engine-hes;
 Categories=Game;Emulator;
 Keywords=PC Engine;TurboGrafx-16;SuperGrafx;CD-ROM2;PCE;HuCard;
 StartupNotify=true
