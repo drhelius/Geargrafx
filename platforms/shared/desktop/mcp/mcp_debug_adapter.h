@@ -149,6 +149,8 @@ public:
     json SelectSaveStateSlot(int slot);
     json SaveState();
     json LoadState();
+    json SaveStateFile(const std::string& file_path);
+    json LoadStateFile(const std::string& file_path);
     json SetFastForwardSpeed(int speed);
     json ToggleFastForward(bool enabled);
 
