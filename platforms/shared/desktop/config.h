@@ -89,6 +89,7 @@ struct config_Emulator
     int window_width = 770;
     int window_height = 600;
     bool status_messages = false;
+    bool allow_screensaver = false;
     bool backup_ram = true;
     int console_type = 0;
     int cdrom_type = 0;

@@ -373,6 +373,7 @@ void config_read(void)
     config_emulator.window_width = read_int("Emulator", "WindowWidth", 770);
     config_emulator.window_height = read_int("Emulator", "WindowHeight", 600);
     config_emulator.status_messages = read_bool("Emulator", "StatusMessages", false);
+    config_emulator.allow_screensaver = read_bool("Emulator", "AllowScreenSaver", false);
     config_emulator.backup_ram = read_bool("Emulator", "BackupRAM", true);
     config_emulator.console_type = read_int("Emulator", "ConsoleType", 0);
     config_emulator.cdrom_type = read_int("Emulator", "CDROMType", 0);
@@ -738,6 +739,7 @@ void config_write(void)
     write_int("Emulator", "WindowWidth", config_emulator.window_width);
     write_int("Emulator", "WindowHeight", config_emulator.window_height);
     write_bool("Emulator", "StatusMessages", config_emulator.status_messages);
+    write_bool("Emulator", "AllowScreenSaver", config_emulator.allow_screensaver);
     write_bool("Emulator", "BackupRAM", config_emulator.backup_ram);
     write_int("Emulator", "ConsoleType", config_emulator.console_type);
     write_int("Emulator", "CDROMType", config_emulator.cdrom_type);
