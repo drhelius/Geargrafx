@@ -188,7 +188,7 @@ static const McpToolCategory kMcpToolCategories[] =
     {"memory", "Memory", "List memory areas, read/write bytes, select ranges, fill selections, search memory, and manage watches/bookmarks."},
     {"cpu", "CPU", "Inspect HuC6280 registers, flags, interrupts, MPRs, PC, stack, and write CPU register values."},
     {"disassembly", "Disassembly", "Read executed-code disassembly, run to addresses, inspect call stacks, and manage disassembly bookmarks."},
-    {"symbols", "Symbols", "Add, remove, load, and list debug symbols or labels used by disassembly and debugger views."},
+    {"symbols", "Symbols", "Add, remove, load, list, and look up debug symbols or labels."},
     {"hardware_video", "Video Hardware", "Inspect HuC6270 VDC, HuC6260 VCE, HuC6202 priority, sprites, backgrounds, tiles, and display state."},
     {"hardware_audio", "Audio Hardware", "Inspect PC Engine PSG audio state, channels, waveform, noise, volume, and sound registers."},
     {"hardware_cdrom", "CD-ROM Hardware", "Inspect CD-ROM drive, tracks, CD audio, ADPCM, Arcade Card, and disc subsystem state."},
@@ -234,7 +234,8 @@ static const char* const kMcpDisassemblyTools[] =
 
 static const char* const kMcpSymbolTools[] =
 {
-    "add_symbol", "remove_symbol", "list_symbols", "load_symbols"
+    "add_symbol", "remove_symbol", "list_symbols", "load_symbols",
+    "lookup_symbol_by_name", "lookup_symbol_at_address"
 };
 
 static const char* const kMcpVideoTools[] =
