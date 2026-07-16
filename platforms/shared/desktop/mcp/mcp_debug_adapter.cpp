@@ -18,6 +18,7 @@
  */
 
 #include "mcp_debug_adapter.h"
+#include "input.h"
 #include "log.h"
 #include "../utils.h"
 #include "../emu.h"
@@ -1849,6 +1850,38 @@ json DebugAdapter::ControllerButton(int player, const std::string& button, const
     result["action"] = action;
 
     return result;
+}
+
+json DebugAdapter::GetInputState()
+{
+    static const char* button_names[] = {"up", "down", "left", "right", "select", "run", "I", "II", "III", "IV", "V", "VI"};
+    static const GG_Keys button_keys[] = {
+        GG_KEY_UP, GG_KEY_DOWN, GG_KEY_LEFT, GG_KEY_RIGHT, GG_KEY_SELECT, GG_KEY_RUN,
+        GG_KEY_I, GG_KEY_II, GG_KEY_III, GG_KEY_IV, GG_KEY_V, GG_KEY_VI
+    };
+
+    json players = json::array();
+    Input* input = m_core->GetInput();
+
+    for (int player = 0; player < GG_MAX_GAMEPADS; player++)
+    {
+        json pressed = json::array();
+        GG_Controllers controller = static_cast<GG_Controllers>(player);
+        bool is_mouse = IsMouseController(player + 1);
+
+        for (size_t i = 0; i < sizeof(button_keys) / sizeof(button_keys[0]); i++)
+        {
+            bool mouse_button = button_keys[i] == GG_KEY_SELECT || button_keys[i] == GG_KEY_RUN ||
+                button_keys[i] == GG_KEY_I || button_keys[i] == GG_KEY_II;
+
+            if ((!is_mouse || mouse_button) && input->IsKeyPressed(controller, button_keys[i]))
+                pressed.push_back(button_names[i]);
+        }
+
+        players.push_back({{"player", player + 1}, {"pressed", pressed}});
+    }
+
+    return {{"players", players}};
 }
 
 bool DebugAdapter::IsMouseController(int player) const

@@ -63,6 +63,11 @@ INLINE void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
     }
 }
 
+INLINE bool Input::IsKeyPressed(GG_Controllers controller, GG_Keys key) const
+{
+    return !(m_gamepads[controller] & key);
+}
+
 INLINE u8 Input::ReadK()
 {
     u8 result;

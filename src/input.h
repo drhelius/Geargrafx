@@ -37,6 +37,7 @@ public:
     void Reset();
     void KeyPressed(GG_Controllers controller, GG_Keys key);
     void KeyReleased(GG_Controllers controller, GG_Keys key);
+    bool IsKeyPressed(GG_Controllers controller, GG_Keys key) const;
     u8 ReadK();
     void WriteO(u8 value);
     u8 GetIORegister();

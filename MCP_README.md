@@ -52,7 +52,8 @@ This server provides tools for game development, rom hacking, reverse engineerin
 - **Disassembly**: View disassembled code around PC or any address
 - **Hardware Inspection**: HuC6280 CPU, HuC6270 VDC, HuC6260 VCE, HuC6202 VPC, PSG, CD-ROM subsystems
 - **Sprite Viewer**: List and inspect all 64 sprites with images
-- **Symbol Support**: Add, remove, and list debug symbols
+- **Symbol Support**: Add, remove, list, and look up debug symbols
+- **Input State**: Inspect effective pressed buttons and pending tap releases
 - **Bookmarks**: Memory and disassembler bookmarks for navigation
 - **Call Stack**: View function call hierarchy
 - **Trace Logger**: CPU instruction trace with interleaved hardware events (VDC, VCE, PSG, timer, CD-ROM, SCSI, ADPCM, input)
@@ -351,12 +352,15 @@ The server exposes tools organized in the following categories:
 - `list_memory_watches` - List all watches in memory area
 - `memory_search_capture` - Capture memory snapshot for search comparison
 - `memory_search` - Search memory with operators (<, >, ==, !=, <=, >=), compare types (previous, value, address), and data types (hex, signed, unsigned)
+- `memory_find_bytes` - Find byte sequences in memory
 
 ### Disassembly & Debugging
 - `get_disassembly` - Get disassembly for specified address range
 - `add_symbol` - Add symbol (label) at specified address
 - `remove_symbol` - Remove symbol
 - `list_symbols` - List all defined symbols
+- `lookup_symbol_by_name` - Find all exact-name symbol matches
+- `lookup_symbol_at_address` - Find symbol at bank/address
 - `add_disassembler_bookmark` - Add bookmark in disassembler
 - `remove_disassembler_bookmark` - Remove disassembler bookmark
 - `list_disassembler_bookmarks` - List all disassembler bookmarks
@@ -378,6 +382,7 @@ The server exposes tools organized in the following categories:
 - `get_huc6202_status` - Get VPC status (SuperGrafx only)
 - `get_psg_status` - Get PSG status for all 6 channels
 - `get_cdrom_status` - Get CD-ROM drive status (CD games only)
+- `list_cdrom_tracks` - List CD-ROM track types and LBA ranges
 - `get_cdrom_audio_status` - Get CD-ROM audio playback status
 - `get_adpcm_status` - Get ADPCM audio status
 - `get_arcade_card_status` - Get Arcade Card status
@@ -399,6 +404,8 @@ The server exposes tools organized in the following categories:
 - `select_save_state_slot` - Select active save state slot (1-5) for save/load operations
 - `save_state` - Save emulator state to currently selected slot
 - `load_state` - Load emulator state from currently selected slot
+- `save_state_file` - Save emulator state to an explicit file path
+- `load_state_file` - Load emulator state from an explicit file path
 - `set_fast_forward_speed` - Set fast forward speed multiplier (0: 1.5x, 1: 2x, 2: 2.5x, 3: 3x, 4: Unlimited)
 - `toggle_fast_forward` - Toggle fast forward mode on/off
 - `get_rewind_status` - Get rewind buffer status (enabled, snapshots, capacity, buffered seconds)
@@ -407,6 +414,7 @@ The server exposes tools organized in the following categories:
 ### Controller Input
 - `controller_button` - Control a button on a controller (player 1-5). Use action 'press' to hold the button, 'release' to let it go, or 'press_and_release' to simulate a quick tap. Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI
 - `controller_macro` - Run an ordered input macro. Top-level `player` defaults to 1, and each command may override it. Supported commands are `tap`, `press`, `release`, and `wait`; timing is explicit through `wait` frame counts
+- `get_input_state` - Get effective pressed buttons and pending tap releases
 - `controller_set_type` - Set controller type for a player: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)
 - `controller_get_type` - Get the current controller type for a player (returns: standard, avenue_pad_3, or avenue_pad_6)
 - `controller_set_turbo_tap` - Enable or disable Turbo Tap (multitap) for 5-player support
