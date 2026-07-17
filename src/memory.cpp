@@ -388,13 +388,22 @@ bool Memory::LoadRam(std::istream &file, s32 file_size)
 {
     Debug("Loading BRAM from file");
 
-    if (file_size <= 0 || file_size > static_cast<s32>(sizeof(m_backup_ram)))
+    if (file_size != 0x800)
     {
         Log("Invalid BRAM size: %d", file_size);
         return false;
     }
 
-    file.read(reinterpret_cast<char*> (m_backup_ram), sizeof(u8) * file_size);
+    u8 loaded_data[0x800];
+    file.read(reinterpret_cast<char*> (loaded_data), sizeof(loaded_data));
+
+    if (file.gcount() != sizeof(loaded_data))
+    {
+        Error("Failed to read complete BRAM");
+        return false;
+    }
+
+    memcpy(m_backup_ram, loaded_data, sizeof(loaded_data));
 
     return true;
 }
