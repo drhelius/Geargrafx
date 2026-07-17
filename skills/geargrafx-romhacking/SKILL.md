@@ -12,9 +12,10 @@ description: >-
   or PC Engine games. Also use for any ROM hacking, memory poking, or game
   modification task involving Geargrafx.
 compatibility: >-
-  Requires the Geargrafx MCP server. Before installing or configuring, call
-  debug_get_status to check if the server is already connected. If it responds,
-  the server is ready — skip setup entirely.
+  Requires the Geargrafx MCP server. Direct tool mode is the default. Before
+  installing or configuring, call debug_get_status to check if the server is
+  already connected. If --mcp-router is enabled, use get_tool_info and
+  execute_tool for routed tools.
 metadata:
   author: drhelius
   version: "1.0"
@@ -28,9 +29,9 @@ Hack, modify, and translate TurboGrafx-16, PC Engine, and SuperGrafx ROMs using 
 
 ## MCP Server Prerequisite
 
-**IMPORTANT — Check before installing:** Before attempting any installation or configuration, you MUST first verify if the Geargrafx MCP server is already connected in your current session. Call `debug_get_status` — if it returns a valid response, the server is active and ready.
+**IMPORTANT — Check before installing:** Before attempting any installation or configuration, you MUST first verify if the Geargrafx MCP server is already connected in your current session. In the default mode, call `debug_get_status` directly. If Geargrafx was intentionally started with `--mcp-router`, call `get_tool_info` with `{"name":"debug_get_status"}`, then call `execute_tool` with `{"name":"debug_get_status","arguments":{}}`. A valid response from either workflow means the server is active and ready.
 
-Only if the tool is not available or the call fails, you need to help install and configure the Geargrafx MCP server:
+Only if neither workflow is available or the call fails, you need to help install and configure the Geargrafx MCP server:
 
 ### Installing Geargrafx
 

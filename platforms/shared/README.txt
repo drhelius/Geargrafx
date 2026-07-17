@@ -62,7 +62,7 @@ Options:
   -w, --windowed           Start in windowed mode with menu visible
       --mcp-stdio          Auto-start MCP server with stdio transport
       --mcp-http           Auto-start MCP server with HTTP transport
-      --mcp-no-router      Expose all MCP tools directly
+      --mcp-router         Enable compact MCP tool routing
       --mcp-http-port N    HTTP port for MCP server (default: 7777)
   -v, --version            Display version information
   -h, --help               Display this help message

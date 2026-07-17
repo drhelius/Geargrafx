@@ -24,7 +24,7 @@
 #include <fstream>
 #include "log.h"
 
-bool g_mcp_router_disabled = false;
+bool g_mcp_router_enabled = false;
 
 static void* ReaderThreadFunc(void* arg)
 {
@@ -234,6 +234,20 @@ void McpServer::HandleInitialize(const json& request)
             {"version", GG_VERSION}
         }}
     };
+
+    response["result"]["instructions"] =
+        "Use this server for PC Engine and TurboGrafx-16 game debugging, reverse engineering, memory "
+        "inspection, HuC6280 tracing, breakpoints, VDC, VCE, PSG, CD-ROM/SCSI, ADPCM, Arcade Card, "
+        "sprites, save states, rewind, input, and screenshots.";
+
+    if (g_mcp_router_enabled)
+    {
+        response["result"]["instructions"] =
+            response["result"]["instructions"].get<std::string>() +
+            " The tool router is enabled. Common tools are directly callable. Advanced tools are routed: "
+            "call search_tools to find a tool, call get_tool_info to obtain its exact input schema, then "
+            "call execute_tool with the returned tool name and arguments. Never call a routed tool directly.";
+    }
 
     m_initialized = true;
     SendResponse(response);
@@ -1666,7 +1680,7 @@ void McpServer::HandleToolsList(const json& request)
 
     m_toolRegistry.SetTools(tools);
 
-    if (!g_mcp_router_disabled)
+    if (g_mcp_router_enabled)
     {
         json visibleTools = m_toolRegistry.GetDirectTools();
         AddRouterTools(visibleTools);
@@ -1749,7 +1763,7 @@ void McpServer::AddRouterTools(json& tools)
     tools.push_back({
         {"name", "execute_tool"},
         {"title", "Execute Routed Tool"},
-        {"description", "Execute a routed MCP tool by name with arguments. Use get_category_tools or search_tools first to discover the tool name and input schema."},
+        {"description", "Execute a routed MCP tool by name. First use search_tools or get_category_tools to discover the tool, then call get_tool_info to obtain its exact input schema."},
         {"inputSchema", {
             {"type", "object"},
             {"properties", {
@@ -1878,7 +1892,7 @@ void McpServer::HandleToolsCall(const json& request)
 
     EnsureToolRegistry();
 
-    if (!g_mcp_router_disabled && m_toolRegistry.IsRouterTool(toolName, "list_tool_categories"))
+    if (g_mcp_router_enabled && m_toolRegistry.IsRouterTool(toolName, "list_tool_categories"))
     {
         if (!arguments.empty())
         {
@@ -1889,7 +1903,7 @@ void McpServer::HandleToolsCall(const json& request)
         return;
     }
 
-    if (!g_mcp_router_disabled && m_toolRegistry.IsRouterTool(toolName, "get_category_tools"))
+    if (g_mcp_router_enabled && m_toolRegistry.IsRouterTool(toolName, "get_category_tools"))
     {
         if (arguments.size() != 1 || !arguments.contains("category") || !arguments["category"].is_string())
         {
@@ -1900,7 +1914,7 @@ void McpServer::HandleToolsCall(const json& request)
         return;
     }
 
-    if (!g_mcp_router_disabled && m_toolRegistry.IsRouterTool(toolName, "get_tool_info"))
+    if (g_mcp_router_enabled && m_toolRegistry.IsRouterTool(toolName, "get_tool_info"))
     {
         if (arguments.size() != 1 || !arguments.contains("name") || !arguments["name"].is_string())
         {
@@ -1911,7 +1925,7 @@ void McpServer::HandleToolsCall(const json& request)
         return;
     }
 
-    if (!g_mcp_router_disabled && m_toolRegistry.IsRouterTool(toolName, "search_tools"))
+    if (g_mcp_router_enabled && m_toolRegistry.IsRouterTool(toolName, "search_tools"))
     {
         if (arguments.size() != 1 || !arguments.contains("query") || !arguments["query"].is_string())
         {
@@ -1922,7 +1936,7 @@ void McpServer::HandleToolsCall(const json& request)
         return;
     }
 
-    if (!g_mcp_router_disabled && m_toolRegistry.IsRouterTool(toolName, "execute_tool"))
+    if (g_mcp_router_enabled && m_toolRegistry.IsRouterTool(toolName, "execute_tool"))
     {
         if (arguments.size() > 2 || !arguments.contains("name") || !arguments["name"].is_string() ||
             (arguments.size() == 2 && !arguments.contains("arguments")))
