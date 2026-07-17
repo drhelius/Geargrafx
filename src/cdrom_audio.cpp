@@ -149,6 +149,8 @@ void CdRomAudio::LoadState(std::istream& stream, int version)
         m_seek_start_lba = m_current_lba;
 
     stream.read(reinterpret_cast<char*> (&m_current_sample), sizeof(m_current_sample));
+    if (m_current_sample >= (2352 / 4))
+        m_current_sample = 0;
     stream.read(reinterpret_cast<char*> (&m_stop_event), sizeof(m_stop_event));
     stream.read(reinterpret_cast<char*> (&m_seek_cycles), sizeof(m_seek_cycles));
     stream.read(reinterpret_cast<char*> (&m_left_sample), sizeof(m_left_sample));
