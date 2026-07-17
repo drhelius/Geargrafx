@@ -143,9 +143,13 @@ INLINE void CdRomAudio::SetStopLBA(u32 lba, CdAudioStopEvent event)
         return;
     }
 
-    if (lba >= sector_count)
+    if (lba > sector_count)
     {
         Error("Invalid stop LBA %d", lba);
+        lba = sector_count - 1;
+    }
+    else if (lba == sector_count)
+    {
         lba = sector_count - 1;
     }
 

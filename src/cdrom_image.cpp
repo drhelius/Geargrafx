@@ -61,7 +61,7 @@ u32 CdRomImage::GetFirstSectorOfTrack(u8 track)
     }
     else if ((track > 0) && (track == m_toc.tracks.size()))
     {
-        return m_toc.tracks[track - 1].end_lba;
+        return m_toc.tracks[track - 1].end_lba + 1;
     }
 
     Error("GetFirstSectorOfTrack failed - Track number %d out of bounds (max: %d)", track, m_toc.tracks.size());
