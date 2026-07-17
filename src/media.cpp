@@ -742,7 +742,7 @@ void Media::GatherDataFromPath(const char* path)
 
 void Media::InitRomMAP()
 {
-    int rom_size = m_is_cdrom ? GG_BIOS_SYSCARD_SIZE : m_rom_size;
+    int rom_size = m_is_cdrom ? (m_is_gameexpress ? GG_BIOS_GAME_EXPRESS_SIZE : GG_BIOS_SYSCARD_SIZE) : m_rom_size;
     int rom_bank_count = (rom_size / 0x2000) + (rom_size % 0x2000 ? 1 : 0);
     u8* bios_ptr = m_is_gameexpress ? m_gameexpress_bios : m_syscard_bios;
     u8* rom_ptr = m_is_cdrom ? bios_ptr : m_rom;
