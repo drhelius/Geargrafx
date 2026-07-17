@@ -166,37 +166,53 @@ bool Media::LoadMedia(const char* path)
     {
         ifstream file;
         open_ifstream_utf8(file, path, ios::in | ios::binary | ios::ate);
-        int size = (int)(file.tellg());
 
         if (file.is_open())
         {
-            char* buffer = new char[size];
-            file.seekg(0, ios::beg);
-            file.read(buffer, size);
-            file.close();
-
-            bool is_empty = false;
-
-            for (int i = 0; i < size; i++)
+            int size = (int)(file.tellg());
+            if (size > 0)
             {
-                if (buffer[i] != 0)
-                    break;
+                char* buffer = new char[size];
+                file.seekg(0, ios::beg);
 
-                if (i == size - 1)
+                if (file.read(buffer, size))
                 {
-                    Error("File %s is empty!", path);
-                    is_empty = true;
+                    bool is_empty = false;
+
+                    for (int i = 0; i < size; i++)
+                    {
+                        if (buffer[i] != 0)
+                            break;
+
+                        if (i == size - 1)
+                        {
+                            Error("File %s is empty!", path);
+                            is_empty = true;
+                            m_ready = false;
+                        }
+                    }
+
+                    if (!is_empty)
+                    {
+                        m_is_cdrom = false;
+                        m_ready = LoadHuCardFromBuffer((u8*)(buffer), size, path);
+                    }
+                }
+                else
+                {
+                    Error("There was a problem reading the file %s...", path);
                     m_ready = false;
                 }
-            }
 
-            if (!is_empty)
+                SafeDeleteArray(buffer);
+            }
+            else
             {
-                m_is_cdrom = false;
-                m_ready = LoadHuCardFromBuffer((u8*)(buffer), size, path);
+                Error("Invalid file size %d for file %s...", size, path);
+                m_ready = false;
             }
 
-            SafeDeleteArray(buffer);
+            file.close();
         }
         else
         {
