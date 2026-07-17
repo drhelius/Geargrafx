@@ -288,8 +288,9 @@ std::vector<u8> DebugAdapter::ReadMemoryArea(int area, u32 offset, size_t size)
     u32 byte_offset = offset * info.unit_size;
     u32 byte_size = GetMemoryAreaByteSize(info);
     u32 bytes_to_read = (u32)size;
-    if (byte_offset + bytes_to_read > byte_size)
-        bytes_to_read = byte_size - byte_offset;
+    u32 bytes_remaining = byte_size - byte_offset;
+    if (size > bytes_remaining)
+        bytes_to_read = bytes_remaining;
 
     for (u32 i = 0; i < bytes_to_read; i++)
     {
