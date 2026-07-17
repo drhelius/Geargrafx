@@ -991,6 +991,7 @@ void HuC6270::LoadState(std::istream& stream, int version)
     UpdateCpuVramBusyStatus();
     stream.read(reinterpret_cast<char*> (&m_trigger_sat_transfer), sizeof(m_trigger_sat_transfer));
     stream.read(reinterpret_cast<char*> (&m_sat_transfer_pending), sizeof(m_sat_transfer_pending));
+    m_sat_transfer_pending = MIN(m_sat_transfer_pending, 1024);
     stream.read(reinterpret_cast<char*> (&m_vram_transfer_pending), sizeof(m_vram_transfer_pending));
     stream.read(reinterpret_cast<char*> (&m_vram_transfer_src), sizeof(m_vram_transfer_src));
     stream.read(reinterpret_cast<char*> (&m_vram_transfer_dest), sizeof(m_vram_transfer_dest));
