@@ -363,7 +363,8 @@ bool Media::LoadBios(const char* file_path, bool syscard)
 
     bool ret = true;
 
-    ifstream file(file_path, ios::in | ios::binary | ios::ate);
+    ifstream file;
+    open_ifstream_utf8(file, file_path, ios::in | ios::binary | ios::ate);
 
     if (file.is_open())
     {
