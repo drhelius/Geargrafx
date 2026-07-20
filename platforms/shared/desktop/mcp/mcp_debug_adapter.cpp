@@ -617,6 +617,9 @@ json DebugAdapter::GetMediaInfo()
     GG_Console_Type console_type = media->GetConsoleType();
     switch (console_type)
     {
+        case GG_CONSOLE_AUTO:
+            info["console_type"] = media->IsSGX() ? "SuperGrafx" : "Auto";
+            break;
         case GG_CONSOLE_PCE:
             info["console_type"] = "PC Engine";
             break;
@@ -636,6 +639,9 @@ json DebugAdapter::GetMediaInfo()
         GG_CDROM_Type cdrom_type = media->GetCDROMType();
         switch (cdrom_type)
         {
+            case GG_CDROM_AUTO:
+                info["cdrom_type"] = media->IsArcadeCard() ? "Arcade CD-ROM²" : "Super CD-ROM²";
+                break;
             case GG_CDROM_STANDARD:
                 info["cdrom_type"] = "CD-ROM²";
                 break;
