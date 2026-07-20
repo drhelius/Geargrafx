@@ -62,7 +62,7 @@ struct McpInputMacroStep
 struct McpInputMacroState
 {
     bool active;
-    int64_t request_id;
+    json request_id;
     std::vector<McpInputMacroStep> steps;
     size_t step_index;
     bool waiting;
@@ -94,7 +94,7 @@ public:
         m_tcp_port = 7777;
         m_tcp_address = "127.0.0.1";
         m_pending_media_load = false;
-        m_pending_media_load_request_id = 0;
+        m_pending_media_load_request_id = json();
         reset_input_macro();
 
         for (int i = 0; i < GG_MAX_GAMEPADS; i++)
@@ -363,7 +363,7 @@ private:
     void reset_input_macro()
     {
         m_inputMacro.active = false;
-        m_inputMacro.request_id = 0;
+        m_inputMacro.request_id = json();
         m_inputMacro.steps.clear();
         m_inputMacro.step_index = 0;
         m_inputMacro.waiting = false;
@@ -373,7 +373,7 @@ private:
         m_inputMacro.restore_pause = false;
     }
 
-    json start_input_macro(const json& arguments, int64_t request_id)
+    json start_input_macro(const json& arguments, const json& request_id)
     {
         json result;
 
@@ -731,7 +731,7 @@ private:
     int m_tcp_port;
     std::string m_tcp_address;
     bool m_pending_media_load;
-    int64_t m_pending_media_load_request_id;
+    json m_pending_media_load_request_id;
     std::string m_pending_media_load_file_path;
     std::vector<DelayedButtonRelease> m_delayedReleases;
     McpInputMacroState m_inputMacro;
