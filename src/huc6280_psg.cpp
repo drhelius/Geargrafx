@@ -26,7 +26,6 @@ HuC6280PSG::HuC6280PSG()
 {
     InitPointer(m_channels);
     InitPointer(m_ch);
-    m_huc6280a = true;
     m_dc_offset = 16;
     m_hpf_prev_input[0] = 0.0f;
     m_hpf_prev_input[1] = 0.0f;
@@ -405,29 +404,18 @@ int HuC6280PSG::EndFrame(s16* sample_buffer)
 
         for (int s = 0; s < samples; s++)
         {
-            if (m_huc6280a)
-            {
-                s16 final_sample = 0;
-                for (int i = 0; i < 6; i++)
-                    final_sample += m_channels[i].output[s];
+            int channel = s & 0x01;
+            float raw = 0.0f;
+            for (int i = 0; i < 6; i++)
+                raw += m_channels[i].output[s];
 
-                sample_buffer[s] = final_sample;
-            }
-            else
-            {
-                int channel = s & 0x01;
-                float raw = 0.0f;
-                for (int i = 0; i < 6; i++)
-                    raw += m_channels[i].output[s];
+            const float hpf_r = 0.9985f;
+            float outSample = raw - m_hpf_prev_input[channel] + hpf_r * m_hpf_prev_output[channel];
 
-                const float hpf_r = 0.9985f;
-                float outSample = raw - m_hpf_prev_input[channel] + hpf_r * m_hpf_prev_output[channel];
+            m_hpf_prev_input[channel] = raw;
+            m_hpf_prev_output[channel] = outSample;
 
-                m_hpf_prev_input[channel] = raw;
-                m_hpf_prev_output[channel] = outSample;
-
-                sample_buffer[s] = (s16)outSample;
-            }
+            sample_buffer[s] = (s16)outSample;
         }
     }
 

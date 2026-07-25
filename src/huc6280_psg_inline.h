@@ -29,7 +29,6 @@ INLINE void HuC6280PSG::Clock(u32 cycles)
 
 INLINE void HuC6280PSG::EnableHuC6280A(bool enabled)
 {
-    m_huc6280a = enabled;
     m_dc_offset = enabled ? 16 : 0;
     m_hpf_prev_input[0] = 0.0f;
     m_hpf_prev_input[1] = 0.0f;

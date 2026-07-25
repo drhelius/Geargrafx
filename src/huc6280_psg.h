@@ -99,7 +99,6 @@ private:
     s32 m_frame_samples;
     s32 m_buffer_index;
     u16 m_volume_lut[32];
-    bool m_huc6280a;
     u8 m_dc_offset;
     float m_hpf_prev_input[2];
     float m_hpf_prev_output[2];
