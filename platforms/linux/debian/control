@@ -14,7 +14,7 @@ Vcs-Browser: https://github.com/drhelius/Geargrafx
 Vcs-Git: https://github.com/drhelius/Geargrafx.git
 
 Package: geargrafx
-Architecture: any
+Architecture: amd64 amd64v3 arm64 armhf i386
 Depends:
  ${misc:Depends},
  ${shlibs:Depends}
