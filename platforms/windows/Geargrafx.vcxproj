@@ -22,6 +22,7 @@
     <ClCompile Include="..\..\src\adpcm.cpp" />
     <ClCompile Include="..\..\src\audio.cpp" />
     <ClCompile Include="..\..\src\arcade_card_mapper.cpp" />
+    <ClCompile Include="..\..\src\cdrom_chd_file_adapter.cpp" />
     <ClCompile Include="..\..\src\cdrom_chd_image.cpp" />
     <ClCompile Include="..\..\src\cdrom_cuebin_image.cpp" />
     <ClCompile Include="..\..\src\cdrom_file.cpp" />
@@ -155,6 +156,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\arcade_card_mapper_inline.h" />
+    <ClInclude Include="..\..\src\cdrom_chd_file_adapter.h" />
     <ClInclude Include="..\..\src\cdrom_chd_image.h" />
     <ClInclude Include="..\..\src\cdrom_cuebin_image.h" />
     <ClInclude Include="..\..\src\cdrom_file.h" />

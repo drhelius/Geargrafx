@@ -23,7 +23,7 @@
 #if defined(__LIBRETRO__)
 
 #include "cdrom_file.h"
-#include "libretro.h"
+#include "libretro_vfs_file.h"
 
 class CdRomFileLibretro : public CdRomFile
 {
@@ -51,9 +51,8 @@ private:
 
 private:
     static const retro_vfs_interface* s_vfs_interface;
-    const retro_vfs_interface* m_vfs_interface;
-    retro_vfs_file_handle* m_vfs_file;
-    char m_path[1024];
+    LibretroVfsFile m_file;
+    char* m_path;
     s64 m_position;
 };
 

@@ -65,6 +65,8 @@ public:
 #endif
     bool LoadHuCardFromBuffer(const u8* buffer, int size, const char* path = NULL);
     bool LoadBios(const char* file_path, bool syscard);
+    bool LoadBiosFromBuffer(const u8* buffer, int size, bool syscard);
+    void UnloadBios(bool syscard);
     void ResetMedia(bool preserve_ram);
     void KeyPressed(GG_Controllers controller, GG_Keys key);
     void KeyReleased(GG_Controllers controller, GG_Keys key);

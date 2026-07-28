@@ -35,6 +35,7 @@ public:
     u8 Read();
     u8*       GetRAM();
     const u8* GetRAM() const;
+    u32 GetRAMSize() const;
     bool IsDirty() const { return m_dirty; }
     void ClearDirty() { m_dirty = false; }
     void SaveState(std::ostream& stream);

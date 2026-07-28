@@ -42,6 +42,11 @@ INLINE const u8* MB128::GetRAM() const
     return m_ram;
 }
 
+INLINE u32 MB128::GetRAMSize() const
+{
+    return kMB128Size;
+}
+
 INLINE void MB128::Connect(bool connected)
 {
     m_connected = connected;

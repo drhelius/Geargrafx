@@ -28,6 +28,7 @@
 #include "geargrafx.h"
 #include "cdrom_file.h"
 #include "libretro_core_options.h"
+#include "libretro_vfs_file.h"
 
 #ifdef _WIN32
 static const char slash = '\\';
@@ -123,6 +124,7 @@ static GG_Keys keymap[MAX_BUTTONS] = {
 static GeargrafxCore* core;
 static GG_Runtime_Info runtime_info;
 static u8* frame_buffer;
+static const retro_vfs_interface* vfs_interface = NULL;
 
 static void load_bios(void);
 static void save_mb128(void);
@@ -200,9 +202,15 @@ void retro_set_environment(retro_environment_t cb)
     vfs_interface_info.iface = NULL;
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_interface_info) && vfs_interface_info.iface)
-        CdRomFile::SetVfsInterface(vfs_interface_info.iface);
+    {
+        vfs_interface = vfs_interface_info.iface;
+        CdRomFile::SetVfsInterface(vfs_interface);
+    }
     else
+    {
+        vfs_interface = NULL;
         CdRomFile::SetVfsInterface(NULL);
+    }
 
     static const struct retro_system_content_info_override content_overrides[] = {
         {
@@ -258,6 +266,8 @@ void retro_deinit(void)
 {
     SafeDeleteArray(frame_buffer);
     SafeDelete(core);
+    vfs_interface = NULL;
+    CdRomFile::SetVfsInterface(NULL);
 
     audio_sample_count = 0;
     current_screen_width = 0;
@@ -499,6 +509,43 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
     // TODO [libretro] Implement cheats
 }
 
+static bool load_bios_file(const char* path, bool syscard)
+{
+    core->UnloadBios(syscard);
+
+    if (!vfs_interface)
+        return core->LoadBios(path, syscard);
+
+    LibretroVfsFile file(vfs_interface);
+    if (!file.Open(path, RETRO_VFS_FILE_ACCESS_READ))
+    {
+        log_cb(RETRO_LOG_ERROR, "There was a problem opening the file %s\n", path);
+        return false;
+    }
+
+    s64 size = file.GetSize();
+    if ((size <= 0) || (size > 0x7FFFFFFF))
+    {
+        log_cb(RETRO_LOG_ERROR, "Invalid BIOS size %lld: %s\n", (long long)size, path);
+        return false;
+    }
+
+    u8* buffer = new u8[(int)size];
+    bool loaded = file.ReadAll(buffer, size);
+    loaded = file.Close() && loaded;
+    loaded = loaded && core->LoadBiosFromBuffer(buffer, (int)size, syscard);
+    SafeDeleteArray(buffer);
+
+    if (!loaded)
+    {
+        log_cb(RETRO_LOG_ERROR, "There was a problem reading the BIOS file %s\n", path);
+        return false;
+    }
+
+    log_cb(RETRO_LOG_INFO, "BIOS %s loaded (%lld bytes)\n", path, (long long)size);
+    return true;
+}
+
 static void load_bios(void)
 {
     char bios_path[4113];
@@ -530,7 +577,7 @@ static void load_bios(void)
     log_cb(RETRO_LOG_INFO, "Loading BIOS: %s\n", selected_bios);
 
     snprintf(bios_path, 4113, "%s%c%s", retro_system_directory, slash, selected_bios);
-    if (!core->LoadBios(bios_path, true))
+    if (!load_bios_file(bios_path, true))
     {
         struct retro_message msg = {};
         char msg_buf[128];
@@ -542,26 +589,88 @@ static void load_bios(void)
     }
 
     snprintf(bios_path, 4113, "%s%c%s", retro_system_directory, slash, gameexpress);
-    core->LoadBios(bios_path, false);
+    load_bios_file(bios_path, false);
 }
 
 static void save_mb128(void)
 {
-    if (core->GetInput()->GetMB128()->IsDirty())
+    MB128* mb128 = core->GetInput()->GetMB128();
+    if (mb128->IsDirty())
     {
         char mb128_path[4120];
         snprintf(mb128_path, sizeof(mb128_path), "%s%cgeargrafx_mb128.sav", retro_save_directory, slash);
-        core->SaveMB128(mb128_path, true);
+
+        if (!vfs_interface)
+        {
+            core->SaveMB128(mb128_path, true);
+            return;
+        }
+
+        LibretroVfsFile file(vfs_interface);
+        if (!file.Open(mb128_path, RETRO_VFS_FILE_ACCESS_WRITE))
+        {
+            log_cb(RETRO_LOG_ERROR, "Failed to open MB128 file for writing: %s\n", mb128_path);
+            return;
+        }
+
+        s64 size = mb128->GetRAMSize();
+        bool saved = file.WriteAll(mb128->GetRAM(), size) && file.Flush();
+        saved = file.Close() && saved;
+
+        if (!saved)
+        {
+            log_cb(RETRO_LOG_ERROR, "Failed to save MB128 file: %s\n", mb128_path);
+            return;
+        }
+
+        mb128->ClearDirty();
+        log_cb(RETRO_LOG_INFO, "MB128 %s saved (%lld bytes)\n", mb128_path, (long long)size);
     }
 }
 
 static void load_mb128(void)
 {
-    if (core->GetInput()->GetMB128()->IsConnected())
+    MB128* mb128 = core->GetInput()->GetMB128();
+    if (mb128->IsConnected())
     {
         char mb128_path[4120];
         snprintf(mb128_path, sizeof(mb128_path), "%s%cgeargrafx_mb128.sav", retro_save_directory, slash);
-        core->LoadMB128(mb128_path, true);
+
+        if (!vfs_interface)
+        {
+            core->LoadMB128(mb128_path, true);
+            return;
+        }
+
+        LibretroVfsFile file(vfs_interface);
+        if (!file.Open(mb128_path, RETRO_VFS_FILE_ACCESS_READ))
+        {
+            log_cb(RETRO_LOG_INFO, "MB128 file doesn't exist: %s\n", mb128_path);
+            return;
+        }
+
+        s64 size = file.GetSize();
+        if (size != mb128->GetRAMSize())
+        {
+            log_cb(RETRO_LOG_ERROR, "Invalid MB128 size %lld (expected %u): %s\n",
+                (long long)size, mb128->GetRAMSize(), mb128_path);
+            return;
+        }
+
+        u8* buffer = new u8[mb128->GetRAMSize()];
+        bool loaded = file.ReadAll(buffer, size);
+        loaded = file.Close() && loaded;
+        if (!loaded)
+        {
+            SafeDeleteArray(buffer);
+            log_cb(RETRO_LOG_ERROR, "Failed to load MB128 file: %s\n", mb128_path);
+            return;
+        }
+
+        memcpy(mb128->GetRAM(), buffer, mb128->GetRAMSize());
+        SafeDeleteArray(buffer);
+        mb128->ClearDirty();
+        log_cb(RETRO_LOG_INFO, "MB128 %s loaded (%lld bytes)\n", mb128_path, (long long)size);
     }
 }
 

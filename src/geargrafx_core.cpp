@@ -174,6 +174,16 @@ bool GeargrafxCore::LoadBios(const char* file_path, bool syscard)
     return m_media->LoadBios(file_path, syscard);
 }
 
+bool GeargrafxCore::LoadBiosFromBuffer(const u8* buffer, int size, bool syscard)
+{
+    return m_media->LoadBiosFromBuffer(buffer, size, syscard);
+}
+
+void GeargrafxCore::UnloadBios(bool syscard)
+{
+    m_media->UnloadBios(syscard);
+}
+
 bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
 {
     runtime_info.screen_width = m_huc6260->GetCurrentWidth();
@@ -313,9 +323,23 @@ void GeargrafxCore::SaveMB128(const char* path, bool full_path)
 
         ofstream file;
         open_ofstream_utf8(file, final_path.c_str(), ios::out | ios::binary);
-        file.write(reinterpret_cast<const char*>(m_input->GetMB128()->GetRAM()), 0x20000);
+        if (!file.is_open())
+        {
+            Error("Failed to open MB128 file for writing: %s", final_path.c_str());
+            return;
+        }
 
-        m_input->GetMB128()->ClearDirty();
+        MB128* mb128 = m_input->GetMB128();
+        file.write(reinterpret_cast<const char*>(mb128->GetRAM()), mb128->GetRAMSize());
+        file.close();
+
+        if (file.fail())
+        {
+            Error("Failed to save MB128 file: %s", final_path.c_str());
+            return;
+        }
+
+        mb128->ClearDirty();
         Debug("MB128 saved");
     }
 }
@@ -349,16 +373,26 @@ void GeargrafxCore::LoadMB128(const char* path, bool full_path)
             s32 file_size = (s32)file.tellg();
             file.seekg(0, file.beg);
 
-            if (file_size == 0x20000)
+            MB128* mb128 = m_input->GetMB128();
+            if (file_size == (s32)mb128->GetRAMSize())
             {
-                file.read(reinterpret_cast<char*>(m_input->GetMB128()->GetRAM()), 0x20000);
-                m_input->GetMB128()->ClearDirty();
+                u8* buffer = new u8[mb128->GetRAMSize()];
+                if (!file.read(reinterpret_cast<char*>(buffer), mb128->GetRAMSize()))
+                {
+                    SafeDeleteArray(buffer);
+                    Error("Failed to read MB128 file: %s", final_path.c_str());
+                    return;
+                }
+
+                memcpy(mb128->GetRAM(), buffer, mb128->GetRAMSize());
+                SafeDeleteArray(buffer);
+                mb128->ClearDirty();
                 Debug("MB128 loaded");
             }
             else
             {
                 Error("Failed to load MB128 from %s", final_path.c_str());
-                Error("Invalid MB128 size: %d (expected %d)", file_size, 0x20000);
+                Error("Invalid MB128 size: %d (expected %u)", file_size, mb128->GetRAMSize());
             }
         }
         else

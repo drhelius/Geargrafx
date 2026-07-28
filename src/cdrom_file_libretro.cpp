@@ -27,9 +27,7 @@ const retro_vfs_interface* CdRomFileLibretro::s_vfs_interface = NULL;
 
 CdRomFileLibretro::CdRomFileLibretro()
 {
-    m_vfs_interface = NULL;
-    m_vfs_file = NULL;
-    m_path[0] = 0;
+    m_path = NULL;
     m_position = 0;
 }
 
@@ -80,21 +78,21 @@ bool CdRomFileLibretro::Open(const char* path)
     if (!s_vfs_interface || !s_vfs_interface->open || !s_vfs_interface->close || !s_vfs_interface->size || !s_vfs_interface->read)
         return false;
 
-    strncpy_fit(m_path, path, sizeof(m_path));
-    m_vfs_interface = s_vfs_interface;
+    size_t path_size = strlen(path) + 1;
+    m_path = new char[path_size];
+    memcpy(m_path, path, path_size);
+    m_file.SetInterface(s_vfs_interface);
 
     unsigned hints = GetOpenHints(path);
 
-    m_vfs_file = m_vfs_interface->open(path, RETRO_VFS_FILE_ACCESS_READ, hints);
-    if (!m_vfs_file)
+    if (!m_file.Open(path, RETRO_VFS_FILE_ACCESS_READ, hints))
     {
-        m_vfs_interface = NULL;
-        m_path[0] = 0;
+        SafeDeleteArray(m_path);
         m_position = 0;
         return false;
     }
 
-    s64 position = m_vfs_interface->tell ? (s64)m_vfs_interface->tell(m_vfs_file) : -1;
+    s64 position = m_file.Tell();
     m_position = (position >= 0) ? position : 0;
 
     return true;
@@ -102,50 +100,34 @@ bool CdRomFileLibretro::Open(const char* path)
 
 void CdRomFileLibretro::Close()
 {
-    if (m_vfs_file)
-    {
-        if (m_vfs_interface && m_vfs_interface->close)
-            m_vfs_interface->close(m_vfs_file);
-    }
-
-    m_vfs_file = NULL;
-    m_vfs_interface = NULL;
-    m_path[0] = 0;
+    m_file.SetInterface(NULL);
+    SafeDeleteArray(m_path);
     m_position = 0;
 }
 
 bool CdRomFileLibretro::IsOpen() const
 {
-    return m_vfs_file != NULL;
+    return m_file.IsOpen();
 }
 
 bool CdRomFileLibretro::IsValid() const
 {
-    return m_vfs_file != NULL;
+    return m_file.IsOpen();
 }
 
 s64 CdRomFileLibretro::GetSize()
 {
-    if (!m_vfs_file)
-        return -1;
-
-    if (m_vfs_interface && m_vfs_interface->size)
-        return (s64)m_vfs_interface->size(m_vfs_file);
-
-    return -1;
+    return m_file.GetSize();
 }
 
 s64 CdRomFileLibretro::Tell()
 {
-    if (!m_vfs_file)
+    if (!m_file.IsOpen())
         return -1;
 
-    if (m_vfs_interface && m_vfs_interface->tell)
-    {
-        s64 position = (s64)m_vfs_interface->tell(m_vfs_file);
-        if (position >= 0)
-            m_position = position;
-    }
+    s64 position = m_file.Tell();
+    if (position >= 0)
+        m_position = position;
 
     return m_position;
 }
@@ -155,27 +137,24 @@ bool CdRomFileLibretro::Seek(s64 offset)
     if (offset < 0)
         return false;
 
-    if (!m_vfs_file || !m_vfs_interface)
+    if (!m_file.IsOpen())
         return false;
 
     s64 before = Tell();
 
-    if (m_vfs_interface->seek)
+    if (m_file.CanSeek())
     {
         if (before == offset)
             return true;
 
-        s64 result = (s64)m_vfs_interface->seek(m_vfs_file, offset, RETRO_VFS_SEEK_POSITION_START);
-        s64 after = m_vfs_interface->tell ? (s64)m_vfs_interface->tell(m_vfs_file) : -1;
+        s64 result = m_file.Seek(offset, RETRO_VFS_SEEK_POSITION_START);
+        s64 after = m_file.Tell();
 
         if (result >= 0)
             m_position = (after >= 0) ? after : offset;
 
         return result >= 0;
     }
-
-    if (!m_vfs_interface->read)
-        return false;
 
     if (offset < before)
     {
@@ -197,11 +176,11 @@ s64 CdRomFileLibretro::Read(void* buffer, u64 size)
     if (!IsValidPointer(buffer))
         return -1;
 
-    if (!m_vfs_file || !m_vfs_interface || !m_vfs_interface->read)
+    if (!m_file.IsOpen())
         return -1;
 
     s64 before = Tell();
-    s64 read = (s64)m_vfs_interface->read(m_vfs_file, buffer, size);
+    s64 read = m_file.Read(buffer, size);
 
     if (read > 0)
         m_position = before + read;
@@ -211,34 +190,21 @@ s64 CdRomFileLibretro::Read(void* buffer, u64 size)
 
 bool CdRomFileLibretro::Reopen()
 {
-    if (!m_vfs_interface || !m_vfs_interface->open || (m_path[0] == 0))
+    if (!m_path)
         return false;
-
-    if (m_vfs_file)
-    {
-        if (!m_vfs_interface->close)
-            return false;
-
-        m_vfs_interface->close(m_vfs_file);
-        m_vfs_file = NULL;
-    }
 
     unsigned hints = GetOpenHints(m_path);
 
-    m_vfs_file = m_vfs_interface->open(m_path, RETRO_VFS_FILE_ACCESS_READ, hints);
-    if (!m_vfs_file)
+    if (!m_file.Open(m_path, RETRO_VFS_FILE_ACCESS_READ, hints))
     {
         m_position = 0;
         return false;
     }
 
     m_position = 0;
-    if (m_vfs_interface->tell)
-    {
-        s64 position = (s64)m_vfs_interface->tell(m_vfs_file);
-        if (position >= 0)
-            m_position = position;
-    }
+    s64 position = m_file.Tell();
+    if (position >= 0)
+        m_position = position;
 
     return true;
 }
@@ -251,7 +217,7 @@ bool CdRomFileLibretro::SkipBytes(s64 bytes)
     if (bytes == 0)
         return true;
 
-    if (!m_vfs_file || !m_vfs_interface || !m_vfs_interface->read)
+    if (!m_file.IsOpen())
         return false;
 
     u8 scratch[4096];
@@ -260,7 +226,7 @@ bool CdRomFileLibretro::SkipBytes(s64 bytes)
     while (remaining > 0)
     {
         u64 to_read = (remaining > (s64)sizeof(scratch)) ? (u64)sizeof(scratch) : (u64)remaining;
-        s64 read = (s64)m_vfs_interface->read(m_vfs_file, scratch, to_read);
+        s64 read = m_file.Read(scratch, to_read);
 
         if (read <= 0)
             return false;

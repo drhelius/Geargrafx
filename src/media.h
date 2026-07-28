@@ -83,11 +83,14 @@ public:
     bool HasPhysicalCdRomError();
 #endif
     bool LoadBios(const char* file_path, bool syscard);
+    bool LoadBiosFromBuffer(const u8* buffer, int size, bool syscard);
+    void UnloadBios(bool syscard);
     void SetTempPath(const char* path);
     void GatherMediaInfo();
 
 private:
     bool LoadMediaFromZipFile(const char* path);
+    bool LoadBiosData(const u8* buffer, int size, bool syscard, const char* path);
     void GatherMediaInfoFromDB();
     void GatherBIOSInfoFromDB(bool syscard);
     void GatherDataFromPath(const char* path);

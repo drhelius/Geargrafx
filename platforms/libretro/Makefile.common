@@ -10,11 +10,13 @@ SOURCES_C   :=  $(DEPS_DIR)/miniz/miniz.c \
                 $(DEPS_DIR)/lzma/src/CpuArch.c \
 
 SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
+                $(CORE_DIR)/libretro_vfs_file.cpp \
                 $(SOURCE_DIR)/geargrafx_core.cpp \
                 $(SOURCE_DIR)/adpcm.cpp \
                 $(SOURCE_DIR)/audio.cpp \
                 $(SOURCE_DIR)/arcade_card_mapper.cpp \
                 $(SOURCE_DIR)/cdrom_audio.cpp \
+                $(SOURCE_DIR)/cdrom_chd_file_adapter.cpp \
                 $(SOURCE_DIR)/cdrom_chd_image.cpp \
                 $(SOURCE_DIR)/cdrom_cuebin_image.cpp \
                 $(SOURCE_DIR)/cdrom_file.cpp \

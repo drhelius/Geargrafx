@@ -208,6 +208,9 @@
     <ClCompile Include="..\..\src\arcade_card_mapper.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cdrom_chd_file_adapter.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\cdrom_chd_image.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -595,6 +598,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\arcade_card_mapper_inline.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_chd_file_adapter.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cdrom_chd_image.h">

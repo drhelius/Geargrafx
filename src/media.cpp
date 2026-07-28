@@ -339,70 +339,100 @@ bool Media::LoadPhysicalCdRom(const char* device_id)
 bool Media::LoadBios(const char* file_path, bool syscard)
 {
     using namespace std;
-    int expected_size = 0;
-    u8* bios = NULL;
-    u32* bios_crc = NULL;
-    bool* loaded_bios;
 
-    if (syscard)
-    {
-        expected_size = GG_BIOS_SYSCARD_SIZE;
-        bios = m_syscard_bios;
-        bios_crc = &m_bios_crc_syscard;
-        m_is_valid_bios_syscard = false;
-        loaded_bios = &m_is_loaded_bios_syscard;
-    }
-    else
-    {
-        expected_size = GG_BIOS_GAME_EXPRESS_SIZE;
-        bios = m_gameexpress_bios;
-        bios_crc = &m_bios_crc_gameexpress;
-        m_is_valid_bios_gameexpress = false;
-        loaded_bios = &m_is_loaded_bios_gameexpress;
-    }
-
-    bool ret = true;
+    UnloadBios(syscard);
 
     ifstream file;
     open_ifstream_utf8(file, file_path, ios::in | ios::binary | ios::ate);
 
-    if (file.is_open())
+    if (!file.is_open())
     {
-        int size = static_cast<int> (file.tellg());
+        Log("There was a problem opening the file %s", file_path);
+        return false;
+    }
 
-        if (size != expected_size)
-        {
-            Log("Incorrect BIOS size %d: expected: %d. %s", size, expected_size, file_path);
-        }
+    int size = static_cast<int>(file.tellg());
+    if (size <= 0)
+    {
+        Log("Invalid BIOS size %d: %s", size, file_path);
+        return false;
+    }
 
-        memset(bios, 0x00, expected_size);
+    u8* buffer = new u8[size];
+    file.seekg(0, ios::beg);
+    if (!file.read(reinterpret_cast<char*>(buffer), size))
+    {
+        SafeDeleteArray(buffer);
+        Log("There was a problem reading the BIOS file %s", file_path);
+        return false;
+    }
+    file.close();
 
-        file.seekg(0, ios::beg);
+    bool loaded = LoadBiosData(buffer, size, syscard, file_path);
+    SafeDeleteArray(buffer);
+    return loaded;
+}
 
-        if(size & 512)
-        {
-            Log("Removing 512 bytes header from BIOS...");
-            size &= ~512;
-            file.seekg(512, ios::beg);
-        }
+bool Media::LoadBiosFromBuffer(const u8* buffer, int size, bool syscard)
+{
+    return LoadBiosData(buffer, size, syscard, NULL);
+}
 
-        file.read(reinterpret_cast<char*>(bios), MIN(size, expected_size));
-        file.close();
-
-        *bios_crc = CalculateCRC32(0, bios, expected_size);
-        GatherBIOSInfoFromDB(syscard);
-
-        Log("BIOS loaded (%d bytes): %s", size, file_path);
+void Media::UnloadBios(bool syscard)
+{
+    if (syscard)
+    {
+        m_is_loaded_bios_syscard = false;
+        m_is_valid_bios_syscard = false;
     }
     else
     {
-        Log("There was a problem opening the file %s", file_path);
-        ret = false;
+        m_is_loaded_bios_gameexpress = false;
+        m_is_valid_bios_gameexpress = false;
+    }
+}
+
+bool Media::LoadBiosData(const u8* buffer, int size, bool syscard, const char* path)
+{
+    int expected_size = syscard ? GG_BIOS_SYSCARD_SIZE : GG_BIOS_GAME_EXPRESS_SIZE;
+    u8* bios = syscard ? m_syscard_bios : m_gameexpress_bios;
+    u32* bios_crc = syscard ? &m_bios_crc_syscard : &m_bios_crc_gameexpress;
+    bool* loaded_bios = syscard ? &m_is_loaded_bios_syscard : &m_is_loaded_bios_gameexpress;
+    UnloadBios(syscard);
+
+    if (!IsValidPointer(buffer) || (size <= 0))
+        return false;
+
+    if (size != expected_size)
+    {
+        if (path)
+            Log("Incorrect BIOS size %d: expected: %d. %s", size, expected_size, path);
+        else
+            Log("Incorrect BIOS size %d: expected: %d", size, expected_size);
     }
 
-    *loaded_bios = ret;
+    const u8* source = buffer;
+    int data_size = size;
+    if (data_size & 512)
+    {
+        Log("Removing 512 bytes header from BIOS...");
+        data_size &= ~512;
+        source += 512;
+    }
 
-    return ret;
+    memset(bios, 0x00, expected_size);
+    memcpy(bios, source, MIN(data_size, expected_size));
+
+    *bios_crc = CalculateCRC32(0, bios, expected_size);
+    GatherBIOSInfoFromDB(syscard);
+    *loaded_bios = true;
+
+    if (path)
+        Log("BIOS loaded (%d bytes): %s", data_size, path);
+    else
+        Log("BIOS loaded (%d bytes)", data_size);
+
+    return true;
 }
 
 bool Media::LoadMediaFromZipFile(const char* path)

@@ -18,17 +18,20 @@
  */
 
 #include "cdrom_chd_image.h"
+#include "cdrom_chd_file_adapter.h"
 #include "crc.h"
 
 CdRomChdImage::CdRomChdImage() : CdRomImage()
 {
     InitPointer(m_chd_file);
+    InitPointer(m_file_adapter);
     InitPointer(m_hunk_cache);
 }
 
 CdRomChdImage::~CdRomChdImage()
 {
     chd_close(m_chd_file);
+    SafeDelete(m_file_adapter);
     DestroyHunkCache();
 }
 
@@ -48,6 +51,7 @@ void CdRomChdImage::Reset()
 
     chd_close(m_chd_file);
     InitPointer(m_chd_file);
+    SafeDelete(m_file_adapter);
 
     DestroyHunkCache();
 }
@@ -75,7 +79,8 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
         return m_ready;
     }
 
-    chd_error err = chd_open(path, CHD_OPEN_READ, NULL, &m_chd_file);
+    m_file_adapter = new CdRomChdFileAdapter;
+    chd_error err = m_file_adapter->Open(path) ? chd_open_core_file(m_file_adapter->GetCoreFile(), CHD_OPEN_READ, NULL, &m_chd_file) : CHDERR_FILE_NOT_FOUND;
 
     if (err == CHDERR_NONE)
     {
