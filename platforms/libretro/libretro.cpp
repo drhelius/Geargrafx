@@ -368,6 +368,33 @@ void retro_run(void)
         audio_batch_cb(audio_buf, audio_sample_count / 2);
 }
 
+static bool load_hucard(const struct retro_game_info* info, const char* path)
+{
+    if (IsValidPointer(info->data) && (info->size > 0))
+        return core->LoadHuCardFromBuffer((const u8*)info->data, info->size, path);
+
+    if (!path || !path[0])
+        return false;
+
+    if (!vfs_interface)
+        return core->LoadMedia(path);
+
+    LibretroVfsFile file(vfs_interface);
+    if (!file.Open(path, RETRO_VFS_FILE_ACCESS_READ))
+        return false;
+
+    s64 size = file.GetSize();
+    if ((size <= 0) || (size > 0x7FFFFFFF))
+        return false;
+
+    u8* buffer = new u8[(int)size];
+    bool loaded = file.ReadAll(buffer, size);
+    loaded = file.Close() && loaded;
+    loaded = loaded && core->LoadHuCardFromBuffer(buffer, (int)size, path);
+    SafeDeleteArray(buffer);
+    return loaded;
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
     if (!info)
@@ -398,21 +425,21 @@ bool retro_load_game(const struct retro_game_info *info)
     if (is_cd_content)
         load_bios();
 
-    if (IsValidPointer(info->data) && !is_cd_content)
+    if (is_cd_content)
     {
-        log_cb(RETRO_LOG_INFO, "retro_load_game HuCard from buffer.\n");
-        if (!core->LoadHuCardFromBuffer((const u8*)(info->data), info->size, retro_game_path))
+        log_cb(RETRO_LOG_INFO, "retro_load_game CD-ROM from file.\n");
+        if (!core->LoadMedia(retro_game_path))
         {
-            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted HuCard file.\n");
+            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted CD-ROM media.\n");
             return false;
         }
     }
     else
     {
-        log_cb(RETRO_LOG_INFO, "retro_load_game Media from file.\n");
-        if (!core->LoadMedia(retro_game_path))
+        log_cb(RETRO_LOG_INFO, "retro_load_game HuCard.\n");
+        if (!load_hucard(info, retro_game_path))
         {
-            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted Media.\n");
+            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted HuCard file.\n");
             return false;
         }
     }
