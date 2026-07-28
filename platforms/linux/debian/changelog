@@ -1,11 +1,176 @@
-geargrafx (1.7.2-1~ppa1~noble1) noble; urgency=medium
+geargrafx (1.7.16-1) UNRELEASED; urgency=medium
 
-  * Initial PPA build for Noble.
+  [ Upstream ]
+  * New upstream release 1.7.16.
+  * Harden MCP server protocol compliance, including version negotiation
+    and validation.
+  * Add MCP tool behavior annotations.
+  * Improve MCP HTTP transport reliability and error handling.
+  * Include additional bug fixes and improvements.
+
+  [ Reaper ]
+  * Build against libsdl3-dev 3.4.10+ds-1.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Fri, 24 Jul 2026 10:58:08 +0000
+
+geargrafx (1.7.15-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.15.
+  * Improve MCP tool discoverability and usability for agents.
+  * Add configurable screen-saver behavior.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Sat, 18 Jul 2026 00:19:19 +0000
+
+geargrafx (1.7.14-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.14.
+  * Improve emulation accuracy.
+  * Associate ROM file extensions with the macOS and Linux desktop
+    applications.
+  * Update the game controller database.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Mon, 29 Jun 2026 20:27:40 +0200
+
+geargrafx (1.7.13-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.13.
+  * Add run-ahead support for reduced input latency.
+  * Improve libretro input timing and mouse handling.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Sun, 28 Jun 2026 20:35:30 +0200
+
+geargrafx (1.7.12-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.12.
+  * Add Variable Refresh Rate support.
+  * Add an optional MCP tool router to reduce token usage.
+  * Add WLA-DX and PCEAS disassembler syntaxes.
+  * Add a new color palette contributed by Turboxray.
+  * Add agentic workflows.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Thu, 25 Jun 2026 19:20:12 +0200
+
+geargrafx (1.7.11-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.11.
+  * Improve the MCP server.
+  * Improve the debugger.
+  * Update the game controller database.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Sat, 20 Jun 2026 01:29:02 +0200
+
+geargrafx (1.7.10-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.10.
+  * Improve emulation accuracy.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Thu, 11 Jun 2026 23:53:31 +0200
+
+geargrafx (1.7.9-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.9.
+  * Improve emulation accuracy.
+  * Add optional light and dark interface themes.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Sun, 31 May 2026 22:19:02 +0200
+
+geargrafx (1.7.8-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.8.
+  * Add physical CD-ROM support to the desktop application and libretro
+    core.
+  * Add programmable shader chains with built-in and custom shaders.
+  * Add physical-memory breakpoints to the debugger.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Tue, 19 May 2026 22:18:42 +0200
+
+geargrafx (1.7.7-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.7.
+  * Improve HuC6270 emulation accuracy.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Wed, 13 May 2026 19:56:34 +0200
+
+geargrafx (1.7.6-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.6.
+  * Improve HuC6270 emulation accuracy.
+  * Add a master-volume control.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Sun, 10 May 2026 01:30:08 +0200
+
+geargrafx (1.7.5-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.5.
+  * Add rewind support.
+  * Add mouse support.
+  * Improve the MCP server and agent skill.
+  * Improve the debugger trace logger.
+  * Update the game controller database.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Mon, 27 Apr 2026 23:02:38 +0200
+
+geargrafx (1.7.4-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.4.
+  * Improve the MCP server and agent skill, including headless mode.
+  * Update the game controller database.
+  * Include additional bug fixes and improvements.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Mon, 30 Mar 2026 15:32:02 +0200
+
+geargrafx (1.7.3-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.3.
+  * Improve the debugger trace logger.
+  * Improve debugger call-stack handling.
+  * Improve automatic-symbol performance.
+  * Include additional bug fixes and improvements.
+
+  [ Reaper ]
+  * Integrate the initial packaging into the upstream source tree.
+
+ -- Reaper <JohnGrimmReaper@disroot.org>  Wed, 25 Mar 2026 19:42:35 +0100
+
+geargrafx (1.7.2-1) UNRELEASED; urgency=medium
+
+  [ Upstream ]
+  * New upstream release 1.7.2.
+  * Improve the CHD loader.
+  * Add linear search to the debugger memory editor.
+  * Improve the debugger sprite viewer.
+  * Include additional bug fixes and improvements.
+
+  [ Reaper ]
+  * Initial package build.
   * Add Debian packaging for Geargrafx 1.7.2.
-  * Build against libsdl3-dev from the ubuntu-goodies PPA.
   * Install the binary under /usr/games.
   * Add a desktop entry and application icon.
-  * Add a minimal manual page.
-  * Clean up packaging metadata for lintian.
+  * Add a manual page.
+  * Clean up the packaging metadata for lintian.
 
- -- Nacho Sanchez <863613+drhelius@users.noreply.github.com>  Thu, 19 Mar 2026 18:11:06 +0000
+ -- Reaper <JohnGrimmReaper@disroot.org>  Sun, 15 Mar 2026 12:08:16 +0100
