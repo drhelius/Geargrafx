@@ -19,9 +19,9 @@
 
 #include "libretro_vfs_file.h"
 
-LibretroVfsFile::LibretroVfsFile(const retro_vfs_interface* interface)
+LibretroVfsFile::LibretroVfsFile(const retro_vfs_interface* iface)
 {
-    m_interface = interface;
+    m_interface = iface;
     m_file = NULL;
 }
 
@@ -30,10 +30,10 @@ LibretroVfsFile::~LibretroVfsFile()
     Close();
 }
 
-void LibretroVfsFile::SetInterface(const retro_vfs_interface* interface)
+void LibretroVfsFile::SetInterface(const retro_vfs_interface* iface)
 {
     Close();
-    m_interface = interface;
+    m_interface = iface;
 }
 
 bool LibretroVfsFile::Open(const char* path, unsigned mode, unsigned hints)

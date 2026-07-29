@@ -26,9 +26,9 @@
 class LibretroVfsFile
 {
 public:
-    LibretroVfsFile(const retro_vfs_interface* interface = NULL);
+    LibretroVfsFile(const retro_vfs_interface* iface = NULL);
     ~LibretroVfsFile();
-    void SetInterface(const retro_vfs_interface* interface);
+    void SetInterface(const retro_vfs_interface* iface);
     bool Open(const char* path, unsigned mode, unsigned hints = RETRO_VFS_FILE_ACCESS_HINT_NONE);
     bool Close();
     bool IsOpen() const;
