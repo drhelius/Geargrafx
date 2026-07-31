@@ -223,7 +223,7 @@ void ArcadeCardMapper::WriteRegister(u8 reg, u8 value)
         case 0x03:
         {
             int dis = (reg & 0x03) << 3;
-            m_register = (m_register & ~(0xFF << dis)) | (value << dis);
+            m_register = (m_register & ~(0xFFu << dis)) | (static_cast<u32>(value) << dis);
             break;
         }
         case 0x04:
