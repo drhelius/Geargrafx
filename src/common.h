@@ -259,7 +259,8 @@ inline bool remove_directory_and_contents(const char* path)
             std::string item = std::string(path) + "\\" + name;
             if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
-                remove_directory_and_contents(item.c_str());
+                if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
+                    remove_directory_and_contents(item.c_str());
                 RemoveDirectoryA(item.c_str());
             }
             else
@@ -286,7 +287,7 @@ inline bool remove_directory_and_contents(const char* path)
         {
             std::string item = std::string(path) + "/" + name;
             struct stat st;
-            if (stat(item.c_str(), &st) == 0) {
+            if (lstat(item.c_str(), &st) == 0) {
                 if (S_ISDIR(st.st_mode))
                     remove_directory_and_contents(item.c_str());
                 else
