@@ -21,7 +21,9 @@
 #define UTILS_H
 
 #include <stdio.h>
+#include <string>
 #include <string.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <windows.h>
 #elif defined(__APPLE__)
@@ -32,7 +34,9 @@
 #include <linux/limits.h>
 #endif
 #if !defined(_WIN32)
+#include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #endif
 #include <math.h>
 #include <SDL3/SDL.h>
@@ -77,6 +81,78 @@ static inline int get_reset_value(int option)
         default:
             return -1;
     }
+}
+
+static inline void get_date_time_string(time_t timestamp, char* buffer, size_t size)
+{
+    struct tm* timeinfo = localtime(&timestamp);
+    strftime(buffer, size, "%Y-%m-%d %H:%M:%S", timeinfo);
+}
+
+static inline void get_current_date_time_string(char* buffer, size_t size)
+{
+    time_t timestamp = time(NULL);
+    get_date_time_string(timestamp, buffer, size);
+}
+
+static inline bool remove_directory_and_contents(const char* path)
+{
+#if defined(_WIN32)
+    std::string search = std::string(path) + "\\*";
+    WIN32_FIND_DATAA fd;
+    HANDLE hFind = FindFirstFileA(search.c_str(), &fd);
+
+    if (hFind == INVALID_HANDLE_VALUE)
+        return false;
+
+    do
+    {
+        const char* name = fd.cFileName;
+        if (strcmp(name, ".") && strcmp(name, ".."))
+        {
+            std::string item = std::string(path) + "\\" + name;
+            if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            {
+                if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
+                    remove_directory_and_contents(item.c_str());
+                RemoveDirectoryA(item.c_str());
+            }
+            else
+            {
+                DeleteFileA(item.c_str());
+            }
+        }
+    }
+    while (FindNextFileA(hFind, &fd));
+
+    FindClose(hFind);
+    return RemoveDirectoryA(path) != 0;
+#else
+    DIR* dir = opendir(path);
+    if (!dir)
+        return false;
+
+    struct dirent* entry;
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        const char* name = entry->d_name;
+        if (strcmp(name, ".") && strcmp(name, ".."))
+        {
+            std::string item = std::string(path) + "/" + name;
+            struct stat st;
+            if (lstat(item.c_str(), &st) == 0) {
+                if (S_ISDIR(st.st_mode))
+                    remove_directory_and_contents(item.c_str());
+                else
+                    unlink(item.c_str());
+            }
+        }
+    }
+
+    closedir(dir);
+    return (rmdir(path) == 0);
+#endif
 }
 
 static inline int ends_with(const char* s, const char* suffix)
