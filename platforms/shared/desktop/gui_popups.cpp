@@ -209,6 +209,7 @@ void gui_popup_modal_keyboard()
 {
     if (ImGui::BeginPopupModal("Keyboard Configuration", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
+        gui_dialog_in_use = true;
         ImGui::Text("Press any key to assign...\n\n");
         ImGui::Separator();
 
@@ -216,11 +217,13 @@ void gui_popup_modal_keyboard()
         if (scancode != SDL_SCANCODE_UNKNOWN)
         {
             *gui_configured_key = scancode;
+            gui_dialog_in_use = false;
             ImGui::CloseCurrentPopup();
         }
 
         if (ImGui::Button("Cancel", ImVec2(120, 0)))
         {
+            gui_dialog_in_use = false;
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -231,6 +234,7 @@ void gui_popup_modal_gamepad(int pad)
 {
     if (ImGui::BeginPopupModal("Gamepad Configuration", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
+        gui_dialog_in_use = true;
         SDL_Gamepad* controller = gamepad_controller[pad];
 
         if (IsValidPointer(controller))
@@ -247,6 +251,7 @@ void gui_popup_modal_gamepad(int pad)
                 if (SDL_GetGamepadButton(controller, (SDL_GamepadButton)i))
                 {
                     *gui_configured_button = i;
+                    gui_dialog_in_use = false;
                     ImGui::CloseCurrentPopup();
                     break;
                 }
@@ -262,6 +267,7 @@ void gui_popup_modal_gamepad(int pad)
                 if (value > GAMEPAD_VBTN_AXIS_THRESHOLD)
                 {
                     *gui_configured_button = GAMEPAD_VBTN_AXIS_BASE + a;
+                    gui_dialog_in_use = false;
                     ImGui::CloseCurrentPopup();
                     break;
                 }
@@ -270,6 +276,7 @@ void gui_popup_modal_gamepad(int pad)
 
         if (ImGui::Button("Cancel", ImVec2(120, 0)))
         {
+            gui_dialog_in_use = false;
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
@@ -280,6 +287,7 @@ void gui_popup_modal_hotkey()
 {
     if (ImGui::BeginPopupModal("Hotkey Configuration", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
+        gui_dialog_in_use = true;
         ImGui::Text("Press any key combination...\n");
         ImGui::Text("Hold Ctrl, Shift, or Alt before pressing the key\n\n");
         ImGui::Separator();
@@ -292,11 +300,13 @@ void gui_popup_modal_hotkey()
             gui_configured_hotkey->mod = mods;
             config_update_hotkey_string(gui_configured_hotkey);
             check_hotkey_duplicates_popup(gui_configured_hotkey);
+            gui_dialog_in_use = false;
             ImGui::CloseCurrentPopup();
         }
 
         if (ImGui::Button("Cancel", ImVec2(120, 0)))
         {
+            gui_dialog_in_use = false;
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();
