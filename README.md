@@ -1,5 +1,7 @@
 # Geargrafx
 
+[![MCP Toplist](https://mcptoplist.com/badge/io.github.drhelius%2Fgeargrafx.svg)](https://mcptoplist.com/server/io.github.drhelius%2Fgeargrafx)
+
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/drhelius/Geargrafx/geargrafx.yml)](https://github.com/drhelius/Geargrafx/actions/workflows/geargrafx.yml)
 [![GitHub Releases)](https://img.shields.io/github/v/tag/drhelius/Geargrafx?label=version)](https://github.com/drhelius/Geargrafx/releases)
 [![commits)](https://img.shields.io/github/commit-activity/t/drhelius/Geargrafx)](https://github.com/drhelius/Geargrafx/commits/main)
