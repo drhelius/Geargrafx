@@ -83,10 +83,22 @@ static inline int get_reset_value(int option)
     }
 }
 
+static inline bool get_local_time(time_t timestamp, struct tm* time_info)
+{
+#if defined(_WIN32)
+    return localtime_s(time_info, &timestamp) == 0;
+#else
+    return localtime_r(&timestamp, time_info) != NULL;
+#endif
+}
+
 static inline void get_date_time_string(time_t timestamp, char* buffer, size_t size)
 {
-    struct tm* timeinfo = localtime(&timestamp);
-    strftime(buffer, size, "%Y-%m-%d %H:%M:%S", timeinfo);
+    struct tm time_info;
+    if (get_local_time(timestamp, &time_info))
+        strftime(buffer, size, "%Y-%m-%d %H:%M:%S", &time_info);
+    else if (size > 0)
+        buffer[0] = '\0';
 }
 
 static inline void get_current_date_time_string(char* buffer, size_t size)
