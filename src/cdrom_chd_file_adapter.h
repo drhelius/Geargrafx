@@ -23,7 +23,7 @@
 #include <libchdr/chd.h>
 #include "types.h"
 
-class CdRomFile;
+class MediaFile;
 
 class CdRomChdFileAdapter
 {
@@ -47,7 +47,7 @@ private:
     CdRomChdFileAdapter(const CdRomChdFileAdapter&);
     CdRomChdFileAdapter& operator=(const CdRomChdFileAdapter&);
     core_file m_core_file;
-    CdRomFile* m_file;
+    MediaFile* m_file;
 };
 
 #endif /* CDROM_CHD_FILE_ADAPTER_H */

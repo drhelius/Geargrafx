@@ -17,20 +17,20 @@
  *
  */
 
-#include "cdrom_file_native.h"
+#include "media_file_native.h"
 #include "common.h"
 
-CdRomFileNative::CdRomFileNative()
+MediaFileNative::MediaFileNative()
 {
 
 }
 
-CdRomFileNative::~CdRomFileNative()
+MediaFileNative::~MediaFileNative()
 {
     Close();
 }
 
-bool CdRomFileNative::Open(const char* path)
+bool MediaFileNative::Open(const char* path)
 {
     Close();
 
@@ -41,23 +41,23 @@ bool CdRomFileNative::Open(const char* path)
     return IsValid();
 }
 
-void CdRomFileNative::Close()
+void MediaFileNative::Close()
 {
     if (m_file.is_open())
         m_file.close();
 }
 
-bool CdRomFileNative::IsOpen() const
+bool MediaFileNative::IsOpen() const
 {
     return m_file.is_open();
 }
 
-bool CdRomFileNative::IsValid() const
+bool MediaFileNative::IsValid() const
 {
     return m_file.is_open() && !m_file.bad() && !m_file.fail() && m_file.good() && !m_file.eof();
 }
 
-s64 CdRomFileNative::GetSize()
+s64 MediaFileNative::GetSize()
 {
     if (!m_file.is_open())
         return -1;
@@ -81,7 +81,7 @@ s64 CdRomFileNative::GetSize()
     return (s64)size;
 }
 
-s64 CdRomFileNative::Tell()
+s64 MediaFileNative::Tell()
 {
     if (!m_file.is_open())
         return -1;
@@ -93,7 +93,7 @@ s64 CdRomFileNative::Tell()
     return (s64)position;
 }
 
-bool CdRomFileNative::Seek(s64 offset)
+bool MediaFileNative::Seek(s64 offset)
 {
     if (offset < 0)
         return false;
@@ -106,7 +106,7 @@ bool CdRomFileNative::Seek(s64 offset)
     return !m_file.fail();
 }
 
-s64 CdRomFileNative::Read(void* buffer, u64 size)
+s64 MediaFileNative::Read(void* buffer, u64 size)
 {
     if (!IsValidPointer(buffer))
         return -1;

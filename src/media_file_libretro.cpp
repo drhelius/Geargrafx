@@ -17,36 +17,36 @@
  *
  */
 
-#include "cdrom_file_libretro.h"
+#include "media_file_libretro.h"
 
 #if defined(__LIBRETRO__)
 
 #include "common.h"
 
-const retro_vfs_interface* CdRomFileLibretro::s_vfs_interface = NULL;
+const retro_vfs_interface* MediaFileLibretro::s_vfs_interface = NULL;
 
-CdRomFileLibretro::CdRomFileLibretro()
+MediaFileLibretro::MediaFileLibretro()
 {
     m_path = NULL;
     m_position = 0;
 }
 
-CdRomFileLibretro::~CdRomFileLibretro()
+MediaFileLibretro::~MediaFileLibretro()
 {
     Close();
 }
 
-void CdRomFileLibretro::SetVfsInterface(const retro_vfs_interface* iface)
+void MediaFileLibretro::SetVfsInterface(const retro_vfs_interface* iface)
 {
     s_vfs_interface = iface;
 }
 
-bool CdRomFileLibretro::HasVfsInterface()
+bool MediaFileLibretro::HasVfsInterface()
 {
     return s_vfs_interface && s_vfs_interface->open;
 }
 
-bool CdRomFileLibretro::IsCdRomUriPath(const char* path)
+bool MediaFileLibretro::IsCdRomUriPath(const char* path)
 {
     static const char* kCdRomUriPrefix = "cdrom://";
 
@@ -62,13 +62,13 @@ bool CdRomFileLibretro::IsCdRomUriPath(const char* path)
     return true;
 }
 
-unsigned CdRomFileLibretro::GetOpenHints(const char* path)
+unsigned MediaFileLibretro::GetOpenHints(const char* path)
 {
     return IsCdRomUriPath(path) ?
         RETRO_VFS_FILE_ACCESS_HINT_NONE : RETRO_VFS_FILE_ACCESS_HINT_FREQUENT_ACCESS;
 }
 
-bool CdRomFileLibretro::Open(const char* path)
+bool MediaFileLibretro::Open(const char* path)
 {
     Close();
 
@@ -98,29 +98,29 @@ bool CdRomFileLibretro::Open(const char* path)
     return true;
 }
 
-void CdRomFileLibretro::Close()
+void MediaFileLibretro::Close()
 {
     m_file.SetInterface(NULL);
     SafeDeleteArray(m_path);
     m_position = 0;
 }
 
-bool CdRomFileLibretro::IsOpen() const
+bool MediaFileLibretro::IsOpen() const
 {
     return m_file.IsOpen();
 }
 
-bool CdRomFileLibretro::IsValid() const
+bool MediaFileLibretro::IsValid() const
 {
     return m_file.IsOpen();
 }
 
-s64 CdRomFileLibretro::GetSize()
+s64 MediaFileLibretro::GetSize()
 {
     return m_file.GetSize();
 }
 
-s64 CdRomFileLibretro::Tell()
+s64 MediaFileLibretro::Tell()
 {
     if (!m_file.IsOpen())
         return -1;
@@ -132,7 +132,7 @@ s64 CdRomFileLibretro::Tell()
     return m_position;
 }
 
-bool CdRomFileLibretro::Seek(s64 offset)
+bool MediaFileLibretro::Seek(s64 offset)
 {
     if (offset < 0)
         return false;
@@ -171,7 +171,7 @@ bool CdRomFileLibretro::Seek(s64 offset)
     return skipped && (m_position == offset);
 }
 
-s64 CdRomFileLibretro::Read(void* buffer, u64 size)
+s64 MediaFileLibretro::Read(void* buffer, u64 size)
 {
     if (!IsValidPointer(buffer))
         return -1;
@@ -188,7 +188,7 @@ s64 CdRomFileLibretro::Read(void* buffer, u64 size)
     return read;
 }
 
-bool CdRomFileLibretro::Reopen()
+bool MediaFileLibretro::Reopen()
 {
     if (!m_path)
         return false;
@@ -209,7 +209,7 @@ bool CdRomFileLibretro::Reopen()
     return true;
 }
 
-bool CdRomFileLibretro::SkipBytes(s64 bytes)
+bool MediaFileLibretro::SkipBytes(s64 bytes)
 {
     if (bytes < 0)
         return false;

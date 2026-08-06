@@ -17,17 +17,23 @@
  *
  */
 
-#ifndef CDROM_FILE_NATIVE_H
-#define CDROM_FILE_NATIVE_H
+#ifndef MEDIA_FILE_LIBRETRO_H
+#define MEDIA_FILE_LIBRETRO_H
 
-#include <fstream>
-#include "cdrom_file.h"
+#if defined(__LIBRETRO__)
 
-class CdRomFileNative : public CdRomFile
+#include "media_file.h"
+#include "libretro_vfs_file.h"
+
+class MediaFileLibretro : public MediaFile
 {
 public:
-    CdRomFileNative();
-    virtual ~CdRomFileNative();
+    MediaFileLibretro();
+    virtual ~MediaFileLibretro();
+
+    static void SetVfsInterface(const retro_vfs_interface* iface);
+    static bool HasVfsInterface();
+    static bool IsCdRomUriPath(const char* path);
 
     virtual bool Open(const char* path) override;
     virtual void Close() override;
@@ -39,7 +45,17 @@ public:
     virtual s64 Read(void* buffer, u64 size) override;
 
 private:
-    std::ifstream m_file;
+    bool Reopen();
+    bool SkipBytes(s64 bytes);
+    unsigned GetOpenHints(const char* path);
+
+private:
+    static const retro_vfs_interface* s_vfs_interface;
+    LibretroVfsFile m_file;
+    char* m_path;
+    s64 m_position;
 };
 
-#endif /* CDROM_FILE_NATIVE_H */
+#endif
+
+#endif /* MEDIA_FILE_LIBRETRO_H */

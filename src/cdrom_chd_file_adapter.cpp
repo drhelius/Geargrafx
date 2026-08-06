@@ -18,7 +18,7 @@
  */
 
 #include "cdrom_chd_file_adapter.h"
-#include "cdrom_file.h"
+#include "media_file.h"
 #include "common.h"
 
 CdRomChdFileAdapter::CdRomChdFileAdapter()
@@ -39,7 +39,7 @@ CdRomChdFileAdapter::~CdRomChdFileAdapter()
 bool CdRomChdFileAdapter::Open(const char* path)
 {
     Close();
-    m_file = CdRomFile::OpenFile(path);
+    m_file = MediaFile::OpenFile(path);
     return m_file != NULL;
 }
 

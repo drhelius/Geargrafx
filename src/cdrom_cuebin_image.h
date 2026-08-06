@@ -45,7 +45,7 @@ struct GG_CdRomCueBinLoadOptions
     bool track_files_start_at_index1;
 };
 
-class CdRomFile;
+class MediaFile;
 
 class CdRomCueBinImage : public CdRomImage
 {
@@ -59,7 +59,7 @@ private:
         u32 chunk_size;
         u32 chunk_count;
         u8** chunks;
-        CdRomFile* file;
+        MediaFile* file;
         bool is_wav;
         u32 wav_data_offset;
     };
@@ -116,7 +116,7 @@ private:
     bool OpenImgFile(ImgFile* img_file);
     bool ProcessFileFormat(ImgFile* img_file);
     bool ProcessWavFormat(ImgFile* img_file);
-    bool FindWavDataChunk(ImgFile* img_file, CdRomFile& file);
+    bool FindWavDataChunk(ImgFile* img_file, MediaFile& file);
     void SetupFileChunks(ImgFile* img_file);
     u32 CalculateFileOffset(ImgFile* img_file, u32 chunk_index);
     u32 CalculateReadSize(ImgFile* img_file, u32 file_offset);

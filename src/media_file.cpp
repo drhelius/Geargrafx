@@ -17,25 +17,25 @@
  *
  */
 
-#include "cdrom_file.h"
-#include "cdrom_file_native.h"
+#include "media_file.h"
+#include "media_file_native.h"
 #include "common.h"
 
 #if defined(__LIBRETRO__)
-#include "cdrom_file_libretro.h"
+#include "media_file_libretro.h"
 #endif
 
-CdRomFile::~CdRomFile()
+MediaFile::~MediaFile()
 {
 
 }
 
-CdRomFile* CdRomFile::OpenFile(const char* path)
+MediaFile* MediaFile::OpenFile(const char* path)
 {
 #if defined(__LIBRETRO__)
-    if (CdRomFileLibretro::HasVfsInterface())
+    if (MediaFileLibretro::HasVfsInterface())
     {
-        CdRomFile* file = new CdRomFileLibretro;
+        MediaFile* file = new MediaFileLibretro;
         if (file->Open(path))
             return file;
 
@@ -43,11 +43,11 @@ CdRomFile* CdRomFile::OpenFile(const char* path)
         return NULL;
     }
 
-    if (CdRomFileLibretro::IsCdRomUriPath(path))
+    if (MediaFileLibretro::IsCdRomUriPath(path))
         return NULL;
 #endif
 
-    CdRomFile* file = new CdRomFileNative;
+    MediaFile* file = new MediaFileNative;
     if (file->Open(path))
         return file;
 
@@ -55,19 +55,19 @@ CdRomFile* CdRomFile::OpenFile(const char* path)
     return NULL;
 }
 
-void CdRomFile::SetVfsInterface(const retro_vfs_interface* iface)
+void MediaFile::SetVfsInterface(const retro_vfs_interface* iface)
 {
 #if defined(__LIBRETRO__)
-    CdRomFileLibretro::SetVfsInterface(iface);
+    MediaFileLibretro::SetVfsInterface(iface);
 #else
     (void)iface;
 #endif
 }
 
-bool CdRomFile::HasVfsInterface()
+bool MediaFile::HasVfsInterface()
 {
 #if defined(__LIBRETRO__)
-    return CdRomFileLibretro::HasVfsInterface();
+    return MediaFileLibretro::HasVfsInterface();
 #else
     return false;
 #endif

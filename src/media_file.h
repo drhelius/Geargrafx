@@ -17,19 +17,19 @@
  *
  */
 
-#ifndef CDROM_FILE_H
-#define CDROM_FILE_H
+#ifndef MEDIA_FILE_H
+#define MEDIA_FILE_H
 
 #include "types.h"
 
 struct retro_vfs_interface;
 
-class CdRomFile
+class MediaFile
 {
 public:
-    virtual ~CdRomFile();
+    virtual ~MediaFile();
 
-    static CdRomFile* OpenFile(const char* path);
+    static MediaFile* OpenFile(const char* path);
     static void SetVfsInterface(const retro_vfs_interface* iface);
     static bool HasVfsInterface();
 
@@ -43,4 +43,4 @@ public:
     virtual s64 Read(void* buffer, u64 size) = 0;
 };
 
-#endif /* CDROM_FILE_H */
+#endif /* MEDIA_FILE_H */

@@ -25,7 +25,7 @@
 #include <chrono>
 #endif
 #include "cdrom_common.h"
-#include "cdrom_file.h"
+#include "media_file.h"
 #include "crc.h"
 
 CdRomCueBinImage::CdRomCueBinImage() : CdRomImage()
@@ -85,7 +85,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
         return m_ready;
     }
 
-    CdRomFile* file = CdRomFile::OpenFile(path);
+    MediaFile* file = MediaFile::OpenFile(path);
 
     if (file)
     {
@@ -490,7 +490,7 @@ bool CdRomCueBinImage::OpenImgFile(ImgFile* img_file)
         return false;
 
     SafeDelete(img_file->file);
-    img_file->file = CdRomFile::OpenFile(img_file->file_path);
+    img_file->file = MediaFile::OpenFile(img_file->file_path);
 
     if (img_file->file)
     {
@@ -589,7 +589,7 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
     return FindWavDataChunk(img_file, *img_file->file);
 }
 
-bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, CdRomFile& file)
+bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
 {
     if (!file.Seek(12))
     {

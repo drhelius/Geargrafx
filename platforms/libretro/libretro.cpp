@@ -26,7 +26,7 @@
 #include <math.h>
 #include "libretro.h"
 #include "geargrafx.h"
-#include "cdrom_file.h"
+#include "media_file.h"
 #include "libretro_core_options.h"
 #include "libretro_vfs_file.h"
 
@@ -204,12 +204,12 @@ void retro_set_environment(retro_environment_t cb)
     if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_interface_info) && vfs_interface_info.iface)
     {
         vfs_interface = vfs_interface_info.iface;
-        CdRomFile::SetVfsInterface(vfs_interface);
+        MediaFile::SetVfsInterface(vfs_interface);
     }
     else
     {
         vfs_interface = NULL;
-        CdRomFile::SetVfsInterface(NULL);
+        MediaFile::SetVfsInterface(NULL);
     }
 
     static const struct retro_system_content_info_override content_overrides[] = {
@@ -267,7 +267,7 @@ void retro_deinit(void)
     SafeDeleteArray(frame_buffer);
     SafeDelete(core);
     vfs_interface = NULL;
-    CdRomFile::SetVfsInterface(NULL);
+    MediaFile::SetVfsInterface(NULL);
 
     audio_sample_count = 0;
     current_screen_width = 0;

@@ -25,8 +25,8 @@
     <ClCompile Include="..\..\src\cdrom_chd_file_adapter.cpp" />
     <ClCompile Include="..\..\src\cdrom_chd_image.cpp" />
     <ClCompile Include="..\..\src\cdrom_cuebin_image.cpp" />
-    <ClCompile Include="..\..\src\cdrom_file.cpp" />
-    <ClCompile Include="..\..\src\cdrom_file_native.cpp" />
+    <ClCompile Include="..\..\src\media_file.cpp" />
+    <ClCompile Include="..\..\src\media_file_native.cpp" />
     <ClCompile Include="..\..\src\cdrom_image.cpp" />
     <ClCompile Include="..\..\src\media.cpp" />
     <ClCompile Include="..\..\src\cdrom_audio.cpp" />
@@ -159,8 +159,8 @@
     <ClInclude Include="..\..\src\cdrom_chd_file_adapter.h" />
     <ClInclude Include="..\..\src\cdrom_chd_image.h" />
     <ClInclude Include="..\..\src\cdrom_cuebin_image.h" />
-    <ClInclude Include="..\..\src\cdrom_file.h" />
-    <ClInclude Include="..\..\src\cdrom_file_native.h" />
+    <ClInclude Include="..\..\src\media_file.h" />
+    <ClInclude Include="..\..\src\media_file_native.h" />
     <ClInclude Include="..\..\src\cdrom_image.h" />
     <ClInclude Include="..\..\src\crc.h" />
     <ClInclude Include="..\..\src\huc6202_inline.h" />

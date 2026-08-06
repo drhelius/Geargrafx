@@ -217,10 +217,10 @@
     <ClCompile Include="..\..\src\cdrom_cuebin_image.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cdrom_file.cpp">
+    <ClCompile Include="..\..\src\media_file.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cdrom_file_native.cpp">
+    <ClCompile Include="..\..\src\media_file_native.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cdrom_image.cpp">
@@ -609,10 +609,10 @@
     <ClInclude Include="..\..\src\cdrom_cuebin_image.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cdrom_file.h">
+    <ClInclude Include="..\..\src\media_file.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cdrom_file_native.h">
+    <ClInclude Include="..\..\src\media_file_native.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cdrom_image.h">

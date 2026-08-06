@@ -24,7 +24,7 @@
 #include "media.h"
 #include "game_db.h"
 #include "crc.h"
-#include "cdrom_file.h"
+#include "media_file.h"
 #include "cdrom_media.h"
 
 Media::Media(CdRomMedia* cdrom_media)
@@ -860,7 +860,7 @@ bool Media::IsValidFile(const char* path)
         return false;
     }
 
-    CdRomFile* file = CdRomFile::OpenFile(path);
+    MediaFile* file = MediaFile::OpenFile(path);
 
     if (file)
     {
