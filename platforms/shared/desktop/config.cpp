@@ -322,6 +322,7 @@ void config_read(void)
     config_debug.pause_on_brk_value = CLAMP(config_debug.pause_on_brk_value, 0, 0xFF);
     config_debug.pause_on_brk_trigger_irq = read_bool("Debug", "PauseOnBRKTriggerIRQ", false);
     config_debug.font_size = read_int("Debug", "FontSize", 0);
+    config_debug.font_size = CLAMP(config_debug.font_size, 0, 3);
     config_debug.scale = read_int("Debug", "Scale", 2);
     config_debug.multi_viewport = read_bool("Debug", "MultiViewport", false);
     config_debug.single_instance = read_bool("Debug", "SingleInstance", false);
