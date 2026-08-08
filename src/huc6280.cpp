@@ -24,9 +24,11 @@
 #include <assert.h>
 #include "huc6280.h"
 #include "memory.h"
+#include "random.h"
 
-HuC6280::HuC6280()
+HuC6280::HuC6280(Random* random)
 {
+    m_random = random;
     InitOPCodeFunctors();
     InitPointer(m_trace_logger);
     InitPointer(m_clock_hardware_fn);
@@ -86,11 +88,12 @@ void HuC6280::Reset()
 
     if (m_reset_value < 0)
     {
-        m_A.SetValue(rand() & 0xFF);
-        m_X.SetValue(rand() & 0xFF);
-        m_Y.SetValue(rand() & 0xFF);
-        m_S.SetValue(rand() & 0xFF);
-        m_P.SetValue(rand() & 0xFF);
+        u32 rnd = m_random->Next();
+        m_A.SetValue((u8)rnd);
+        m_X.SetValue((u8)(rnd >> 8));
+        m_Y.SetValue((u8)(rnd >> 16));
+        m_S.SetValue((u8)(rnd >> 24));
+        m_P.SetValue(m_random->Next8Bit());
     }
     else
     {

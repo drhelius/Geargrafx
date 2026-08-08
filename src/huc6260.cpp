@@ -20,12 +20,14 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "huc6260.h"
+#include "random.h"
 #include "trace_logger.h"
 
-HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280)
+HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random)
 {
     m_huc6280 = huc6280;
     m_huc6202 = huc6202;
+    m_random = random;
     InitPointer(m_trace_logger);
     m_pixel_format = GG_PIXEL_RGBA8888;
     m_state.CR = &m_control_register;
@@ -135,10 +137,10 @@ void HuC6260::Reset()
     {
         if (m_reset_value < 0)
         {
-            bool random = (rand() & 0x1);
+            bool random = (m_random->Next8Bit() & 0x1);
             u16 and_value = random ? 0x1D0 : 0x1F1;
             u16 or_value = random ? 0x1C0 : 0x1FC;
-            m_color_table[i] = (((rand() & and_value) ) | or_value);
+            m_color_table[i] = ((m_random->Next16Bit() & and_value) | or_value);
             m_color_table[i] = MIN(m_color_table[i] + ((i & 0xFF) >> 2), 0x1FF);
         }
         else

@@ -627,6 +627,9 @@
     <ClInclude Include="..\..\src\memory_stream.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\random.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="..\shared\dependencies\miniz\miniz.h">
       <Filter>dependencies\miniz</Filter>
     </ClInclude>

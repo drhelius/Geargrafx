@@ -24,6 +24,7 @@
 #include "cdrom_media.h"
 #include "cdrom_audio.h"
 #include "huc6280.h"
+#include "random.h"
 #include "trace_logger.h"
 
 static const u32 k_scsi_command_buffer_capacity = 16;
@@ -32,10 +33,11 @@ static const u32 k_scsi_initial_read_phase_max_cycles = GG_MASTER_CLOCK_RATE / 6
 static const u8 k_scsi_command_buffer_padding[k_scsi_command_buffer_capacity] = {};
 static const u8 k_scsi_data_buffer_padding[k_scsi_data_buffer_capacity] = {};
 
-ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio)
+ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random)
 {
     m_cdrom_media = cdrom_media;
     m_cdrom_audio = cdrom_audio;
+    m_random = random;
     InitPointer(m_trace_logger);
     m_bus.db = 0;
     m_bus.signals = 0;
@@ -130,7 +132,7 @@ void ScsiController::Reset(bool keep_rst_signal)
     m_auto_ack_cycles = 0;
     if (!keep_rst_signal)
     {
-        m_initial_read_phase_cycles = (u32)rand() % (k_scsi_initial_read_phase_max_cycles + 1);
+        m_initial_read_phase_cycles = m_random->Next(k_scsi_initial_read_phase_max_cycles + 1);
     }
     m_command_buffer.clear();
     m_data_buffer.clear();

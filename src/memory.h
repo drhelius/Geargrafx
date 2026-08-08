@@ -31,6 +31,7 @@ class HuC6280;
 class Input;
 class Audio;
 class CdRom;
+class Random;
 class Mapper;
 class SF2Mapper;
 class ArcadeCardMapper;
@@ -51,7 +52,7 @@ public:
     };
 
 public:
-    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom);
+    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random);
     ~Memory();
     void Init();
     void Reset();
@@ -115,6 +116,7 @@ private:
     Input* m_input;
     Audio* m_audio;
     CdRom* m_cdrom;
+    Random* m_random;
     u8 m_mpr[8];
     u8* m_memory_map[0x100] = {};
     bool m_memory_map_write[0x100] = {};

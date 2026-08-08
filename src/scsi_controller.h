@@ -30,6 +30,7 @@ class CdRom;
 class CdRomMedia;
 class CdRomAudio;
 class HuC6280;
+class Random;
 class TraceLogger;
 
 class ScsiController
@@ -119,7 +120,7 @@ public:
     };
 
 public:
-    ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio);
+    ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random);
     ~ScsiController();
     void Init(HuC6280* huc6280, CdRom* cdrom);
     void Reset(bool keep_rst_signal = false);
@@ -173,6 +174,7 @@ private:
     CdRom* m_cdrom;
     CdRomMedia* m_cdrom_media;
     CdRomAudio* m_cdrom_audio;
+    Random* m_random;
     TraceLogger* m_trace_logger;
     ScsiBus m_bus;
     ScsiPhase m_phase;

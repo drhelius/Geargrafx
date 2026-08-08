@@ -33,6 +33,7 @@
 
 class HuC6202;
 class HuC6280;
+class Random;
 class TraceLogger;
 
 class HuC6260
@@ -65,7 +66,7 @@ public:
     };
 
 public:
-    HuC6260(HuC6202* huc6202, HuC6280* huc6280);
+    HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random);
     ~HuC6260();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     void Reset();
@@ -113,6 +114,7 @@ private:
 private:
     HuC6202* m_huc6202;
     HuC6280* m_huc6280;
+    Random* m_random;
     TraceLogger* m_trace_logger;
     HuC6260_State m_state;
     u8 m_control_register;

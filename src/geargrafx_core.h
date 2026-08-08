@@ -37,6 +37,7 @@ class CdRomMedia;
 class CdRomAudio;
 class Adpcm;
 class ScsiController;
+class Random;
 class TraceLogger;
 
 class GeargrafxCore
@@ -131,6 +132,7 @@ private:
     CdRomAudio* m_cdrom_audio;
     Adpcm* m_adpcm;
     ScsiController* m_scsi_controller;
+    Random* m_random;
     bool m_paused;
     TraceLogger* m_trace_logger;
     u64 m_master_clock_cycles;

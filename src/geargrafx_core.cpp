@@ -33,6 +33,7 @@
 #include "huc6280.h"
 #include "trace_logger.h"
 #include "scsi_controller.h"
+#include "random.h"
 #include "cdrom.h"
 #include "cdrom_media.h"
 #include "cdrom_audio.h"
@@ -54,6 +55,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_cdrom_audio);
     InitPointer(m_adpcm);
     InitPointer(m_scsi_controller);
+    InitPointer(m_random);
     InitPointer(m_audio);
     InitPointer(m_input);
     InitPointer(m_media);
@@ -81,28 +83,29 @@ GeargrafxCore::~GeargrafxCore()
     SafeDelete(m_huc6260);
     SafeDelete(m_huc6202);
     SafeDelete(m_memory);
+    SafeDelete(m_random);
 }
 
 void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_format)
 {
     Log("Loading %s core %s by Ignacio Sanchez", GG_TITLE, GG_VERSION);
 
-    srand((unsigned int)time(NULL));
-
     m_cdrom_media = new CdRomMedia();
     m_media = new Media(m_cdrom_media);
-    m_huc6280 = new HuC6280();
+    m_random = new Random();
+    m_random->Seed((u32)time(NULL));
+    m_huc6280 = new HuC6280(m_random);
     m_huc6270_1 = new HuC6270(m_huc6280);
     m_huc6270_2 = new HuC6270(m_huc6280);
     m_huc6202 = new HuC6202(m_huc6270_1, m_huc6270_2, m_huc6280);
-    m_huc6260 = new HuC6260(m_huc6202, m_huc6280);
+    m_huc6260 = new HuC6260(m_huc6202, m_huc6280, m_random);
     m_input = new Input(m_media, this);
     m_adpcm = new Adpcm();
     m_cdrom_audio = new CdRomAudio(m_cdrom_media);
     m_audio = new Audio(m_adpcm, m_cdrom_audio);
-    m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio);
+    m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio, m_random);
     m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, m_audio, this);
-    m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom);
+    m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom, m_random);
 
     m_audio->Init();
     m_input->Init();
@@ -603,6 +606,7 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
         m_cdrom_audio->SaveState(stream);
         m_adpcm->SaveState(stream);
     }
+    m_random->SaveState(stream);
 
     if (stream.fail())
     {
@@ -847,6 +851,9 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         m_cdrom_audio->LoadState(stream, header.version);
         m_adpcm->LoadState(stream, header.version);
     }
+
+    if (header.version >= 33)
+        m_random->LoadState(stream);
 
     if (stream.fail())
     {

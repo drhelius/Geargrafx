@@ -46,6 +46,7 @@
 
 class Memory;
 class HuC6202;
+class Random;
 class TraceLogger;
 
 typedef void (*GG_Clock_Hardware_Fn)(void* context, u32 master_cycles);
@@ -114,7 +115,7 @@ public:
     };
 
 public:
-    HuC6280();
+    HuC6280(Random* random);
     ~HuC6280();
     void Init(Memory* memory, HuC6202* huc6202);
     void Reset();
@@ -189,6 +190,7 @@ private:
     u16 m_transfer_dest;
     Memory* m_memory;
     HuC6202* m_huc6202;
+    Random* m_random;
     TraceLogger* m_trace_logger;
     HuC6280_State m_processor_state;
     bool m_timer_enabled;
