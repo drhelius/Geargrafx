@@ -311,7 +311,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 void retro_get_system_info(struct retro_system_info *info)
 {
     memset(info, 0, sizeof(*info));
-    info->library_name     = "Geargrafx";
+    info->library_name     = GG_TITLE;
     info->library_version  = GG_VERSION;
     info->need_fullpath    = true;
     info->valid_extensions = "pce|sgx|hes|cue|chd";

@@ -42,7 +42,7 @@ static const char* k_lock_filename = ".lock";
 static const char* k_mailbox_filename = ".mailbox";
 
 #if defined(_WIN32)
-static const char* k_event_name_prefix = "Local\\Geargrafx_";
+static const char* k_event_name_prefix = "Local\\" GG_TITLE "_";
 #endif
 
 static std::string s_lock_path;

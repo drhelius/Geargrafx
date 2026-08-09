@@ -241,7 +241,7 @@ void GeargrafxCore::ResetMedia(bool preserve_ram)
     if (preserve_ram)
         m_memory->SaveRam(stream);
 
-    Log("Geargrafx RESET");
+    Log(GG_TITLE " RESET");
     Reset();
     m_huc6280->DisassembleNextOPCode();
 

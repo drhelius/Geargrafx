@@ -1836,7 +1836,7 @@ static void disassembler_menu(void)
 
         if (ImGui::BeginMenu("Syntax"))
         {
-            static const char* syntax_names[GG_Disassembler_Syntax_Count] = { "Geargrafx", "PCEAS", "WLA-DX" };
+            static const char* syntax_names[GG_Disassembler_Syntax_Count] = { GG_TITLE, "PCEAS", "WLA-DX" };
 
             for (int i = 0; i < GG_Disassembler_Syntax_Count; i++)
             {

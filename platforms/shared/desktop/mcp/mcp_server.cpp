@@ -311,8 +311,8 @@ void McpServer::HandleInitialize(const json& request)
         }},
         {"serverInfo", {
             {"name", "geargrafx-mcp-server"},
-            {"title", "Geargrafx MCP Server"},
-            {"description", "Debug/control Geargrafx PC Engine/TurboGrafx-16: execution, breakpoints, memory, HuC6280 CPU, HuC6270 VDC, HuC6260 VCE, PSG, CD-ROM/SCSI, ADPCM, Arcade Card, sprites, save states, rewind, input, screenshots."},
+            {"title", GG_TITLE " MCP Server"},
+            {"description", "Debug/control " GG_TITLE " PC Engine/TurboGrafx-16: execution, breakpoints, memory, HuC6280 CPU, HuC6270 VDC, HuC6260 VCE, PSG, CD-ROM/SCSI, ADPCM, Arcade Card, sprites, save states, rewind, input, screenshots."},
             {"version", GG_VERSION}
         }}
     };
