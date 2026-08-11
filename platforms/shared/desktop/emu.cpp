@@ -261,10 +261,10 @@ void emu_reset_rewind_timing(void)
 
 void emu_update(void)
 {
-    emu_mcp_pump_commands();
-
     if (loading_state.load() != Loading_State_None)
         return;
+
+    emu_mcp_pump_commands();
 
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     if (geargrafx->GetMedia()->HasPhysicalCdRomError())
@@ -509,7 +509,11 @@ bool emu_is_empty(void)
 void emu_reset(void)
 {
     emu_debug_command = Debug_Command_None;
+    emu_debug_step_frames_pending = 0;
+    emu_debug_pc_changed = true;
+    emu_frame_counter = 0;
     reset_buffers();
+    reset_rewind_timing();
     emu_audio_reset();
     save_ram();
     save_mb128();
@@ -785,8 +789,11 @@ void emu_debug_step_frames(int frames)
 void emu_debug_break(void)
 {
     geargrafx->Pause(false);
-    if (emu_debug_command == Debug_Command_Continue)
+    if (emu_debug_command == Debug_Command_Continue || emu_debug_command == Debug_Command_StepFrame)
+    {
+        emu_debug_step_frames_pending = 0;
         emu_debug_command = Debug_Command_Step;
+    }
 }
 
 void emu_debug_continue(void)
