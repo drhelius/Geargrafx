@@ -51,8 +51,8 @@ static void add_build_info(const char* fmt, ...);
 static void check_hotkey_duplicates_popup(config_Hotkey* current_hotkey);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 static bool open_selected_physical_cdrom_drive(void);
-#endif
 static void refresh_physical_cdrom_drives(void);
+#endif
 
 void gui_popup_open_physical_cdrom(void)
 {
@@ -183,9 +183,9 @@ static bool open_selected_physical_cdrom_drive(void)
 }
 #endif
 
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
 static void refresh_physical_cdrom_drives(void)
 {
-    #if defined(GG_ENABLE_PHYSICAL_CDROM)
     Debug("Enumerating physical CD-ROM drives");
     bool listed = CdRomDrive::ListDrives(physical_cdrom_drives);
     physical_cdrom_selected = -1;
@@ -202,8 +202,8 @@ static void refresh_physical_cdrom_drives(void)
     {
         Debug("Physical CD-ROM drive %d: id=%s name=%s has_disc=%s", i, physical_cdrom_drives[i].id, physical_cdrom_drives[i].name, physical_cdrom_drives[i].has_disc ? "true" : "false");
     }
-    #endif
 }
+#endif
 
 void gui_popup_modal_keyboard()
 {
