@@ -117,7 +117,7 @@ private:
     bool ProcessFileFormat(ImgFile* img_file);
     bool ProcessWavFormat(ImgFile* img_file);
     bool FindWavDataChunk(ImgFile* img_file, MediaFile& file);
-    void SetupFileChunks(ImgFile* img_file);
+    bool SetupFileChunks(ImgFile* img_file);
     u32 CalculateFileOffset(ImgFile* img_file, u32 chunk_index);
     u32 CalculateReadSize(ImgFile* img_file, u32 file_offset);
     bool IsUriPath(const char* path);

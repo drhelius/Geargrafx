@@ -475,7 +475,11 @@ bool CdRomCueBinImage::GatherImgInfo(ImgFile* img_file)
         return false;
     }
 
-    SetupFileChunks(img_file);
+    if (!SetupFileChunks(img_file))
+    {
+        SafeDelete(img_file->file);
+        return false;
+    }
 
     Debug("Gathered ImgFile info: %s", img_file->file_path);
     Debug("ImgFile info Size: %d, Chunk size: %d, Chunk count: %d", 
@@ -639,18 +643,40 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
     return true;
 }
 
-void CdRomCueBinImage::SetupFileChunks(ImgFile* img_file)
+bool CdRomCueBinImage::SetupFileChunks(ImgFile* img_file)
 {
+    if (!IsValidPointer(img_file))
+    {
+        Error("Invalid ImgFile pointer");
+        return false;
+    }
+
     img_file->chunk_size = m_load_options.chunk_size;
+
+    if (img_file->chunk_size == 0)
+    {
+        Error("Invalid chunk size for %s", img_file->file_path);
+        return false;
+    }
+
     img_file->chunk_count = img_file->file_size / img_file->chunk_size;
 
     if (img_file->file_size % img_file->chunk_size != 0)
         img_file->chunk_count++;
 
+    const u32 max_chunk_count = 0x7FFFFFFFU / (u32)sizeof(u8*);
+    if (img_file->chunk_count > max_chunk_count)
+    {
+        Error("Too many chunks for %s: %u", img_file->file_path, img_file->chunk_count);
+        return false;
+    }
+
     img_file->chunks = new u8*[img_file->chunk_count];
 
     for (u32 i = 0; i < img_file->chunk_count; i++)
         InitPointer(img_file->chunks[i]);
+
+    return true;
 }
 
 u32 CdRomCueBinImage::CalculateFileOffset(ImgFile* img_file, u32 chunk_index)

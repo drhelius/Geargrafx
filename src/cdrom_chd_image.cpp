@@ -118,13 +118,19 @@ bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
             }
             else
             {
-                InitHunkCache();
-                m_ready = ReadTOC();
+                if (InitHunkCache())
+                {
+                    m_ready = ReadTOC();
 
-                if (preload && m_ready)
-                    m_ready = PreloadDisc();
+                    if (preload && m_ready)
+                        m_ready = PreloadDisc();
 
-                CalculateCRC();
+                    CalculateCRC();
+                }
+                else
+                {
+                    m_ready = false;
+                }
             }
         }
         else
@@ -507,11 +513,17 @@ void CdRomChdImage::CalculateCRC()
     SafeDeleteArray(buffer);
 }
 
-void CdRomChdImage::InitHunkCache()
+bool CdRomChdImage::InitHunkCache()
 {
     if (IsValidPointer(m_hunk_cache))
     {
         DestroyHunkCache();
+    }
+
+    if (m_hunk_count == 0 || m_hunk_count > 500000)
+    {
+        Error("Invalid CHD hunk count %u", m_hunk_count);
+        return false;
     }
 
     m_hunk_cache = new u8*[m_hunk_count];
@@ -520,6 +532,8 @@ void CdRomChdImage::InitHunkCache()
     {
         InitPointer(m_hunk_cache[i]);
     }
+
+    return true;
 }
 
 void CdRomChdImage::DestroyHunkCache()

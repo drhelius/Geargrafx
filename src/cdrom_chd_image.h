@@ -41,7 +41,7 @@ public:
 private:
     bool ReadTOC();
     void CalculateCRC();
-    void InitHunkCache();
+    bool InitHunkCache();
     void DestroyHunkCache();
     bool LoadHunk(u32 hunk_index);
     GG_CdRomTrackType GetTrackType(const char* type_str);
