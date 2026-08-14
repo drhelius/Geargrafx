@@ -20,6 +20,7 @@
 #define GUI_DEBUG_DISASSEMBLER_IMPORT
 #include "gui_debug_disassembler.h"
 
+#include <sstream>
 #include "imgui.h"
 #include "fonts/IconsMaterialDesign.h"
 #include "geargrafx.h"
