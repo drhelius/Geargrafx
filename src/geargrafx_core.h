@@ -86,7 +86,6 @@ public:
     bool LoadState(const u8* buffer, size_t size);
     bool GetSaveStateHeader(int index, const char* path, GG_SaveState_Header* header);
     bool GetSaveStateScreenshot(int index, const char* path, GG_SaveState_Screenshot* screenshot);
-    void ResetSound();
     bool GetRuntimeInfo(GG_Runtime_Info& runtime_info);
     Memory* GetMemory();
     Media* GetMedia();

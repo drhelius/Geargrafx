@@ -254,11 +254,6 @@ void GeargrafxCore::ResetMedia(bool preserve_ram)
     }
 }
 
-void GeargrafxCore::ResetSound()
-{
-    m_audio->Reset(m_media->IsCDROM());
-}
-
 void GeargrafxCore::SaveRam()
 {
     SaveRam(NULL);
