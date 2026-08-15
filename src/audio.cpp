@@ -150,10 +150,6 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         }
     }
 
-#ifndef GG_DISABLE_VGMRECORDER
-    if (m_vgm_recording_enabled)
-        m_vgm_recorder.UpdateTiming(*sample_count / 2);
-#endif
 }
 
 void Audio::SaveState(std::ostream& stream)

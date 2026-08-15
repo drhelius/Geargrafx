@@ -36,7 +36,7 @@ public:
     bool IsRecording() const { return m_recording; }
 
     void WriteHuC6280(u16 address, u8 data);
-    void UpdateTiming(int elapsed_samples);
+    void UpdateTiming();
    
 
 private:
@@ -55,5 +55,14 @@ private:
     int m_clock_rate;
     bool m_huc6280_used;
 };
+
+inline void VgmRecorder::UpdateTiming()
+{
+    if (!m_recording)
+        return;
+
+    m_pending_wait++;
+    m_total_samples++;
+}
 
 #endif /* VGM_RECORDER_H */

@@ -71,6 +71,11 @@ INLINE void Audio::SampleSources()
         m_adpcm->Sample();
         m_cdrom_audio->Sample();
     }
+
+#ifndef GG_DISABLE_VGMRECORDER
+    if (m_vgm_recording_enabled)
+        m_vgm_recorder.UpdateTiming();
+#endif
 }
 
 INLINE void Audio::WritePSG(u32 address, u8 value)

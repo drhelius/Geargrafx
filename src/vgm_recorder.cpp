@@ -179,15 +179,6 @@ void VgmRecorder::WriteHuC6280(u16 address, u8 data)
     }
 }
 
-void VgmRecorder::UpdateTiming(int elapsed_samples)
-{
-    if (!m_recording)
-        return;
-
-    m_pending_wait += elapsed_samples;
-    m_total_samples += elapsed_samples;
-}
-
 void VgmRecorder::WriteCommand(u8 command)
 {
     m_command_buffer.push_back(command);
