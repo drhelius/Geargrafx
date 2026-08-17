@@ -313,8 +313,18 @@ bool CdRomChdImage::PreloadTrack(u32 track_number)
 
     const Track& track = m_toc.tracks[track_number];
 
+    if (track.sector_count == 0)
+        return true;
+
     u32 first_sector = track.file_offset;
-    u32 last_sector  = track.file_offset + track.sector_count - 1;
+    u32 last_sector = 0;
+
+    if (!checked_add_u32(track.file_offset, track.sector_count - 1, &last_sector))
+    {
+        Error("PreloadTrack failed - Track sector range overflow");
+        return false;
+    }
+
     u32 first_hunk = first_sector / m_sectors_per_hunk;
     u32 last_hunk  = last_sector  / m_sectors_per_hunk;
 
@@ -378,12 +388,28 @@ bool CdRomChdImage::ReadTOC()
         Debug("Track %d: Type: %s, Subtype: %s, Frames: %d, Pregap: %d, Postgap: %d, PGType: %s, PGSub: %s", 
                 track, type, subtype, frames, pregap, postgap, pgtype, pgsub);
 
+        if (frames < 0 || pregap < 0 || postgap < 0)
+        {
+            Error("Invalid CHD metadata for track %d - Negative frame or gap count", i + 1);
+            return false;
+        }
+
         // Calculate real pregap and pregap_dv
         u32 pregap_real = (pgtype[0] == 'V' ? 0 : pregap);
         u32 pregap_dv = (pgtype[0] == 'V' ? pregap : 0);
 
+        if ((u32)frames <= pregap_dv)
+        {
+            Error("Invalid CHD metadata for track %d - Frames must exceed stored pregap", i + 1);
+            return false;
+        }
+
         // Advance current LBA by pregaps
-        current_lba += pregap_real + pregap_dv;
+        if (!checked_add_u32(current_lba, pregap_real + pregap_dv, &current_lba))
+        {
+            Error("Invalid CHD metadata for track %d - LBA overflow", i + 1);
+            return false;
+        }
 
         Track new_track;
         InitTrack(new_track);
@@ -400,22 +426,43 @@ bool CdRomChdImage::ReadTOC()
             new_track.lead_in_lba = current_lba - pregap_real - pregap_dv;
         }
 
-        u32 data_frames = frames - pregap_dv;
+        u32 data_frames = (u32)frames - pregap_dv;
         new_track.sector_count = data_frames;
 
-        new_track.end_lba = new_track.start_lba + data_frames - 1;
+        if (!checked_add_u32(new_track.start_lba, data_frames - 1, &new_track.end_lba))
+        {
+            Error("Invalid CHD metadata for track %d - Track end LBA overflow", i + 1);
+            return false;
+        }
+
         LbaToMsf(new_track.end_lba, &new_track.end_msf);
 
         // Advance current LBA past data and postgap
-        current_lba += data_frames;
-        current_lba += postgap;
+        if (!checked_add_u32(current_lba, data_frames, &current_lba) ||
+            !checked_add_u32(current_lba, (u32)postgap, &current_lba))
+        {
+            Error("Invalid CHD metadata for track %d - LBA overflow", i + 1);
+            return false;
+        }
 
         // Update file_offset: pregap_dv + data + postgap + alignment to 4 sectors
-        file_offset += pregap_dv;
+        if (!checked_add_u32(file_offset, pregap_dv, &file_offset))
+        {
+            Error("Invalid CHD metadata for track %d - File offset overflow", i + 1);
+            return false;
+        }
+
         new_track.file_offset = file_offset;
-        file_offset += data_frames;
-        file_offset += postgap;
-        file_offset += ((frames + 3) & ~3) - frames;
+
+        u32 frame_padding = (4 - ((u32)frames & 3)) & 3;
+
+        if (!checked_add_u32(file_offset, data_frames, &file_offset) ||
+            !checked_add_u32(file_offset, (u32)postgap, &file_offset) ||
+            !checked_add_u32(file_offset, frame_padding, &file_offset))
+        {
+            Error("Invalid CHD metadata for track %d - File offset overflow", i + 1);
+            return false;
+        }
 
         m_toc.tracks.push_back(new_track);
     }
@@ -442,8 +489,20 @@ bool CdRomChdImage::ReadTOC()
     }
     else
     {
-        m_toc.sector_count = m_toc.tracks.back().end_lba + 1;
-        LbaToMsf(m_toc.sector_count + 150, &m_toc.total_length);
+        if (!checked_add_u32(m_toc.tracks.back().end_lba, 1, &m_toc.sector_count))
+        {
+            Error("Invalid CHD metadata - Total sector count overflow");
+            return false;
+        }
+
+        u32 total_frames = 0;
+        if (!checked_add_u32(m_toc.sector_count, 150, &total_frames))
+        {
+            Error("Invalid CHD metadata - Total length overflow");
+            return false;
+        }
+
+        LbaToMsf(total_frames, &m_toc.total_length);
     }
 
     Debug("CD-ROM length: %02d:%02d:%02d, Total sectors: %d",
