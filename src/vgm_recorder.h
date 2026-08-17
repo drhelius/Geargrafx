@@ -25,13 +25,20 @@
 #include <string>
 #include <fstream>
 
+struct VgmMetadata
+{
+    std::string game_name;
+    std::string system_name;
+    std::string comment;
+};
+
 class VgmRecorder
 {
 public:
     VgmRecorder();
     ~VgmRecorder();
 
-    void Start(const char* file_path, int clock_rate);
+    void Start(const char* file_path, int clock_rate, const VgmMetadata& metadata);
     void Stop();
     bool IsRecording() const { return m_recording; }
 
@@ -45,10 +52,15 @@ private:
     void WriteCommand(u8 command, u8 data1, u8 data2);
     void WriteWait(int samples);
     void FlushPendingWait();
+    void AppendUint32(std::vector<u8>& buffer, u32 value);
+    void AppendGD3Codepoint(std::vector<u8>& buffer, u32 codepoint);
+    void AppendGD3String(std::vector<u8>& buffer, const char* value);
+    void BuildGD3Tag(std::vector<u8>& tag, const VgmMetadata& metadata);
 
 private:
     bool m_recording;
     std::string m_file_path;
+    VgmMetadata m_metadata;
     std::vector<u8> m_command_buffer;
     int m_pending_wait;
     int m_total_samples;

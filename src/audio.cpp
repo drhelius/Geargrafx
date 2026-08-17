@@ -171,12 +171,12 @@ void Audio::LoadState(std::istream& stream, int version)
     m_psg->LoadState(stream, version);
 }
 
-bool Audio::StartVgmRecording(const char* file_path, int clock_rate)
+bool Audio::StartVgmRecording(const char* file_path, int clock_rate, const VgmMetadata& metadata)
 {
     if (m_vgm_recording_enabled)
         return false;
 
-    m_vgm_recorder.Start(file_path, clock_rate);
+    m_vgm_recorder.Start(file_path, clock_rate, metadata);
     m_vgm_recording_enabled = m_vgm_recorder.IsRecording();
 
     // Write initial state of all audio registers to VGM

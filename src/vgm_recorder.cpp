@@ -18,6 +18,7 @@
  */
 
 #include "vgm_recorder.h"
+#include "common.h"
 #include "log.h"
 #include <cstring>
 
@@ -38,12 +39,13 @@ VgmRecorder::~VgmRecorder()
     }
 }
 
-void VgmRecorder::Start(const char* file_path, int clock_rate)
+void VgmRecorder::Start(const char* file_path, int clock_rate, const VgmMetadata& metadata)
 {
     if (m_recording)
         return;
 
     m_file_path = file_path;
+    m_metadata = metadata;
     m_clock_rate = clock_rate;
     m_recording = true;
     m_pending_wait = 0;
@@ -64,6 +66,9 @@ void VgmRecorder::Stop()
     // Write end of sound data command
     WriteCommand(0x66);
 
+    std::vector<u8> gd3_tag;
+    BuildGD3Tag(gd3_tag, m_metadata);
+
     std::ofstream file(m_file_path.c_str(), std::ios::binary);
     if (file.is_open())
     {
@@ -77,7 +82,8 @@ void VgmRecorder::Stop()
         header[0x03] = 0x20;
 
         // EOF offset (file length - 4)
-        u32 eof_offset = (256 + (u32)m_command_buffer.size()) - 4;
+        u32 gd3_offset = 256 + (u32)m_command_buffer.size();
+        u32 eof_offset = gd3_offset + (u32)gd3_tag.size() - 4;
         header[0x04] = (eof_offset >> 0) & 0xFF;
         header[0x05] = (eof_offset >> 8) & 0xFF;
         header[0x06] = (eof_offset >> 16) & 0xFF;
@@ -95,11 +101,12 @@ void VgmRecorder::Stop()
         header[0x0E] = 0x00;
         header[0x0F] = 0x00;
 
-        // GD3 offset (0 = no GD3 tag)
-        header[0x14] = 0x00;
-        header[0x15] = 0x00;
-        header[0x16] = 0x00;
-        header[0x17] = 0x00;
+        // GD3 offset (relative from 0x14)
+        u32 gd3_relative_offset = gd3_offset - 0x14;
+        header[0x14] = (gd3_relative_offset >> 0) & 0xFF;
+        header[0x15] = (gd3_relative_offset >> 8) & 0xFF;
+        header[0x16] = (gd3_relative_offset >> 16) & 0xFF;
+        header[0x17] = (gd3_relative_offset >> 24) & 0xFF;
 
         // Total # samples
         header[0x18] = (m_total_samples >> 0) & 0xFF;
@@ -148,6 +155,9 @@ void VgmRecorder::Stop()
 
         // Write command buffer
         file.write(reinterpret_cast<const char*>(&m_command_buffer[0]), m_command_buffer.size());
+
+        // Write GD3 tag
+        file.write(reinterpret_cast<const char*>(&gd3_tag[0]), gd3_tag.size());
 
         file.close();
     }
@@ -248,4 +258,65 @@ void VgmRecorder::FlushPendingWait()
         WriteWait(m_pending_wait);
         m_pending_wait = 0;
     }
+}
+
+void VgmRecorder::AppendUint32(std::vector<u8>& buffer, u32 value)
+{
+    u8 data[4];
+    write_u32_le(data, value);
+    buffer.insert(buffer.end(), data, data + 4);
+}
+
+void VgmRecorder::AppendGD3Codepoint(std::vector<u8>& buffer, u32 codepoint)
+{
+    u8 data[2];
+
+    if (codepoint <= 0xFFFF)
+    {
+        write_u16_le(data, (u16)codepoint);
+        buffer.insert(buffer.end(), data, data + 2);
+    }
+    else
+    {
+        codepoint -= 0x10000;
+        write_u16_le(data, (u16)(0xD800 + (codepoint >> 10)));
+        buffer.insert(buffer.end(), data, data + 2);
+        write_u16_le(data, (u16)(0xDC00 + (codepoint & 0x3FF)));
+        buffer.insert(buffer.end(), data, data + 2);
+    }
+}
+
+void VgmRecorder::AppendGD3String(std::vector<u8>& buffer, const char* value)
+{
+    size_t length = strlen(value);
+    size_t index = 0;
+
+    while (index < length)
+        AppendGD3Codepoint(buffer, utf8_decode_next(value, length, index));
+
+    AppendGD3Codepoint(buffer, 0);
+}
+
+void VgmRecorder::BuildGD3Tag(std::vector<u8>& tag, const VgmMetadata& metadata)
+{
+    std::vector<u8> data;
+    for (int i = 0; i < 11; i++)
+    {
+        const char* value = "";
+        if (i == 2)
+            value = metadata.game_name.c_str();
+        else if (i == 4)
+            value = metadata.system_name.c_str();
+        else if (i == 10)
+            value = metadata.comment.c_str();
+        AppendGD3String(data, value);
+    }
+
+    tag.push_back('G');
+    tag.push_back('d');
+    tag.push_back('3');
+    tag.push_back(' ');
+    AppendUint32(tag, 0x00000100);
+    AppendUint32(tag, (u32)data.size());
+    tag.insert(tag.end(), data.begin(), data.end());
 }

@@ -1380,8 +1380,18 @@ void emu_start_vgm_recording(const char* file_path)
 
     // PC Engine audio chip always runs at 3.579545 MHz
     int clock_rate = 3579545;
+    Media* media = geargrafx->GetMedia();
+    VgmMetadata metadata;
+    metadata.system_name = "NEC PC Engine / TurboGrafx-16";
+    if (media->IsSGX())
+        metadata.system_name = "NEC PC Engine SuperGrafx";
+    else if (media->IsCDROM())
+        metadata.system_name = "NEC PC Engine CD-ROM";
 
-    if (geargrafx->GetAudio()->StartVgmRecording(file_path, clock_rate))
+    metadata.game_name = media->IsInGameDatabase() ? media->GetGameDatabaseName() : media->GetFileName();
+    metadata.comment = "Created with " GG_TITLE " " GG_VERSION;
+
+    if (geargrafx->GetAudio()->StartVgmRecording(file_path, clock_rate, metadata))
     {
         Log("VGM recording started: %s", file_path);
     }
@@ -1444,4 +1454,3 @@ void emu_mcp_pump_commands(void)
     if (mcp_manager && mcp_manager->IsRunning())
         mcp_manager->PumpCommands(geargrafx);
 }
-

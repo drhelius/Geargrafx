@@ -49,6 +49,7 @@ Media::Media(CdRomMedia* cdrom_media)
     m_is_sgx = false;
     m_is_cdrom = false;
     m_is_in_game_database = false;
+    m_game_database_name = NULL;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     m_is_physical_cdrom = false;
     m_physical_cdrom_device_id[0] = 0;
@@ -102,6 +103,7 @@ void Media::Reset()
     m_is_sgx = false;
     m_is_cdrom = false;
     m_is_in_game_database = false;
+    m_game_database_name = NULL;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     m_is_physical_cdrom = false;
     m_physical_cdrom_device_id[0] = 0;
@@ -625,6 +627,7 @@ void Media::GatherMediaInfoFromDB()
     m_card_ram_size = 0;
     m_is_sgx = false;
     m_is_in_game_database = false;
+    m_game_database_name = NULL;
 
     int i = 0;
 
@@ -635,6 +638,7 @@ void Media::GatherMediaInfoFromDB()
         if (db_crc == m_crc)
         {
             m_is_in_game_database = true;
+            m_game_database_name = k_game_database[i].title;
             Log("Media found in database: %s. CRC: %08X", k_game_database[i].title, m_crc);
 
             if (k_game_database[i].flags & GG_GAMEDB_CARD_RAM_8000)

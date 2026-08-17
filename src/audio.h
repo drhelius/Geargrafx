@@ -48,7 +48,7 @@ public:
     HuC6280PSG* GetPSG();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
-    bool StartVgmRecording(const char* file_path, int clock_rate);
+    bool StartVgmRecording(const char* file_path, int clock_rate, const VgmMetadata& metadata);
     void StopVgmRecording();
     bool IsVgmRecording() const;
     void SetTraceLogger(TraceLogger* trace_logger);
