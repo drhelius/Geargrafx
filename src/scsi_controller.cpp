@@ -563,7 +563,7 @@ void ScsiController::CommandReadSubcodeQ()
     GG_CdRomMSF absolute;
 
     LbaToMsf(lba_offset, &relative);
-    LbaToMsf(current_lba, &absolute);
+    LbaToMsf(current_lba + 150, &absolute);
 
     const int buffer_size = 10;
     u8 buffer[buffer_size] = { };
