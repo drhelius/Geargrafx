@@ -29,6 +29,8 @@
 
 static const u32 k_scsi_command_buffer_capacity = 16;
 static const u32 k_scsi_data_buffer_capacity = 2048;
+static const u32 k_scsi_response_byte_cycles = 900;
+static const u32 k_scsi_phase_change_cycles = 1500;
 static const u32 k_scsi_initial_read_phase_max_cycles = GG_MASTER_CLOCK_RATE / 60;
 static const u8 k_scsi_command_buffer_padding[k_scsi_command_buffer_capacity] = {};
 static const u8 k_scsi_data_buffer_padding[k_scsi_data_buffer_capacity] = {};
@@ -308,6 +310,7 @@ void ScsiController::UpdateDataInPhase()
     {
         if (m_data_buffer.size() > 0)
         {
+            bool delay = (m_data_buffer.size() < k_scsi_data_buffer_capacity) && (m_data_buffer_offset > 0);
             assert(m_data_buffer_offset < m_data_buffer.size());
             m_bus.db = m_data_buffer[m_data_buffer_offset];
             m_data_buffer_offset++;
@@ -316,7 +319,10 @@ void ScsiController::UpdateDataInPhase()
                 SCSI_DEBUG("SCSI Data in phase completed %02X, %d", m_bus.signals, m_data_buffer_offset);
                 m_data_buffer.clear();
             }
-            SetSignal(SCSI_SIGNAL_REQ);
+            if (delay)
+                NextEvent(SCSI_EVENT_SET_REQ_SIGNAL, k_scsi_response_byte_cycles);
+            else
+                SetSignal(SCSI_SIGNAL_REQ);
         }
         else
         {
@@ -344,10 +350,10 @@ void ScsiController::UpdateStatusPhase()
             {
                 SCSI_DEBUG("SCSI Status phase completed");
                 m_data_buffer.clear();
-                SetPhase(SCSI_PHASE_MESSAGE_IN);
+                NextEvent(SCSI_EVENT_SET_MESSAGE_IN_PHASE, k_scsi_phase_change_cycles);
             }
             else
-                SetSignal(SCSI_SIGNAL_REQ);
+                NextEvent(SCSI_EVENT_SET_REQ_SIGNAL, k_scsi_phase_change_cycles);
         }
     }
 }
@@ -359,7 +365,7 @@ void ScsiController::UpdateMessageInPhase()
     else if (!IsSignalSet(SCSI_SIGNAL_REQ) && !IsSignalSet(SCSI_SIGNAL_ACK))
     {
         SCSI_DEBUG("SCSI Message in phase completed");
-        SetPhase(SCSI_PHASE_BUS_FREE);
+        NextEvent(SCSI_EVENT_SET_BUS_FREE_PHASE, k_scsi_phase_change_cycles);
     }
 }
 

@@ -87,7 +87,9 @@ public:
         SCSI_EVENT_SET_COMMAND_PHASE,
         SCSI_EVENT_SET_REQ_SIGNAL,
         SCSI_EVENT_SET_GOOD_STATUS,
-        SCSI_EVENT_SET_DATA_IN_PHASE
+        SCSI_EVENT_SET_DATA_IN_PHASE,
+        SCSI_EVENT_SET_MESSAGE_IN_PHASE,
+        SCSI_EVENT_SET_BUS_FREE_PHASE
     };
 
     enum ScsiStatus
@@ -210,7 +212,9 @@ static const char* const k_scsi_event_names[] = {
     "SET COMMAND PHASE",
     "SET REQ SIGNAL",
     "SET GOOD STATUS",
-    "SET DATA IN PHASE"
+    "SET DATA IN PHASE",
+    "SET MESSAGE IN PHASE",
+    "SET BUS FREE PHASE"
 };
 
 #include "scsi_controller_inline.h"
