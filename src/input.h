@@ -63,6 +63,8 @@ public:
 
 private:
     u64 GetMasterClockCycles();
+    void TraceEvent(u8 event, u8 value, u8 source);
+    void LogTraceEvent(u8 event, u8 value, u8 source);
 
 private:
     Media* m_media;

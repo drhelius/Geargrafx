@@ -28,6 +28,8 @@
 #include "../gui_debug_memory.h"
 #include "../gui_debug_memeditor.h"
 #include "../gui_debug_rewind.h"
+#include "../gui_debug_trace_logger.h"
+#include "../trace_logger_formatter.h"
 #include "../config.h"
 #include "../events.h"
 #include "../rewind.h"
@@ -2919,7 +2921,7 @@ json DebugAdapter::MemoryFindBytes(int area, const std::string& hex_bytes)
     return result;
 }
 
-json DebugAdapter::GetTraceLog(int start, int count)
+json DebugAdapter::GetTraceLog(s64 start, int count)
 {
     json result;
 
@@ -2930,256 +2932,81 @@ json DebugAdapter::GetTraceLog(int start, int count)
         return result;
     }
 
-    u32 total = tl->GetCount();
+    u32 retained = tl->GetCount();
+    u64 total = tl->GetSequence();
+    u64 oldest = total - retained;
 
     if (count < 1) count = 100;
     if (count > 1000) count = 1000;
 
-    u32 actual_start;
+    u64 actual_start;
+    bool overrun = false;
     if (start < 0)
-        actual_start = (total > (u32)count) ? (total - (u32)count) : 0;
+        actual_start = (total - oldest > (u64)count) ? (total - (u64)count) : oldest;
     else
-        actual_start = (u32)start;
+    {
+        actual_start = (u64)start;
+        if (actual_start < oldest)
+        {
+            actual_start = oldest;
+            overrun = true;
+        }
+    }
 
     if (actual_start >= total)
     {
-        result["total_entries"] = total;
+        result["total_entries"] = retained;
+        result["total_logged"] = total;
+        result["oldest_sequence"] = oldest;
         result["start"] = actual_start;
+        result["next_sequence"] = actual_start;
         result["count"] = 0;
+        result["overrun"] = overrun;
         result["lines"] = json::array();
         return result;
     }
 
     u32 actual_count = (u32)count;
     if (actual_start + actual_count > total)
-        actual_count = total - actual_start;
+        actual_count = (u32)(total - actual_start);
+    u32 buffer_start = (u32)(actual_start - oldest);
 
     Memory* memory = m_core->GetMemory();
 
     json lines = json::array();
     for (u32 i = 0; i < actual_count; i++)
     {
-        const GG_Trace_Entry& entry = tl->GetEntry(actual_start + i);
-        char buf[256];
+        const GG_Trace_Entry& entry = tl->GetEntry(buffer_start + i);
+        char buf[GG_TRACE_FORMAT_BUFFER_SIZE];
 
-        switch (entry.type)
-        {
-            case TRACE_CPU:
-            {
-                GG_Disassembler_Record* record = memory->GetDisassemblerRecord(entry.cpu.pc, entry.cpu.bank);
-                char instr[64] = "???";
-                char bytes[25] = "";
-                if (IsValidPointer(record))
-                {
-                    strncpy(instr, record->name, sizeof(instr) - 1);
-                    instr[sizeof(instr) - 1] = '\0';
-                    char* p = instr;
-                    while (*p)
-                    {
-                        if (*p == '{')
-                        {
-                            char* end = strchr(p, '}');
-                            if (end)
-                                memmove(p, end + 1, strlen(end + 1) + 1);
-                            else
-                                break;
-                        }
-                        else
-                            p++;
-                    }
-                    strncpy(bytes, record->bytes, sizeof(bytes) - 1);
-                    bytes[sizeof(bytes) - 1] = '\0';
-                }
-                u8 p = entry.cpu.p;
-                snprintf(buf, sizeof(buf), "%02X:%04X  A:%02X X:%02X Y:%02X S:%02X  %c%c%c%c%c%c%c%c  %-26s %s",
-                         entry.cpu.bank, entry.cpu.pc, entry.cpu.a, entry.cpu.x, entry.cpu.y, entry.cpu.s,
-                         (p & FLAG_NEGATIVE) ? 'N' : 'n', (p & FLAG_OVERFLOW) ? 'V' : 'v',
-                         (p & FLAG_TRANSFER) ? 'T' : 't', (p & FLAG_BREAK) ? 'B' : 'b',
-                         (p & FLAG_DECIMAL) ? 'D' : 'd', (p & FLAG_INTERRUPT) ? 'I' : 'i',
-                         (p & FLAG_ZERO) ? 'Z' : 'z', (p & FLAG_CARRY) ? 'C' : 'c',
-                         instr, bytes);
-                break;
-            }
-            case TRACE_CPU_IRQ:
-            {
-                const char* irq_name = "???";
-                if (entry.irq.vector == 0xFFFA) irq_name = "TIQ";
-                else if (entry.irq.vector == 0xFFF8) irq_name = "IRQ1";
-                else if (entry.irq.vector == 0xFFF6) irq_name = "IRQ2";
-                snprintf(buf, sizeof(buf), "  [CPU]  IRQ       %s  PC:$%04X  Vector:$%04X  Mask:%02X",
-                         irq_name, entry.irq.pc, entry.irq.vector, entry.irq.irq_mask);
-                break;
-            }
-            case TRACE_VDC:
-            {
-                static const char* k_vdc_reg_names[] = {
-                    "MAWR", "MARR", "VWR", "???", "???", "CR", "RCR", "BXR",
-                    "BYR", "MWR", "HSR", "HDR", "VSR", "VDR", "VCR", "DCR",
-                    "SOUR", "DESR", "LENR", "DVSSR"
-                };
-                const char* chip_name = entry.vdc.chip == 0 ? "VDC1" : "VDC2";
-                switch (entry.vdc.event)
-                {
-                    case TRACE_VDC_REG_WRITE:
-                    {
-                        const char* reg_name = entry.vdc.reg < 20 ? k_vdc_reg_names[entry.vdc.reg] : "???";
-                        snprintf(buf, sizeof(buf), "  [%s]  REG       %s($%02X)=$%04X",
-                                 chip_name, reg_name, entry.vdc.reg, entry.vdc.value);
-                        break;
-                    }
-                    case TRACE_VDC_VBLANK_IRQ:
-                        snprintf(buf, sizeof(buf), "  [%s]  VBLANK    IRQ", chip_name);
-                        break;
-                    case TRACE_VDC_SCANLINE_IRQ:
-                        snprintf(buf, sizeof(buf), "  [%s]  SCANLINE  IRQ  RCR=%d", chip_name, entry.vdc.value);
-                        break;
-                    case TRACE_VDC_OVERFLOW_IRQ:
-                        snprintf(buf, sizeof(buf), "  [%s]  OVERFLOW  IRQ", chip_name);
-                        break;
-                    case TRACE_VDC_SPRITE_COLLISION_IRQ:
-                        snprintf(buf, sizeof(buf), "  [%s]  SPRITE    COLLISION IRQ", chip_name);
-                        break;
-                    case TRACE_VDC_SATB_DMA_END_IRQ:
-                        snprintf(buf, sizeof(buf), "  [%s]  SATB DMA  END IRQ", chip_name);
-                        break;
-                    case TRACE_VDC_VRAM_DMA_END_IRQ:
-                        snprintf(buf, sizeof(buf), "  [%s]  VRAM DMA  END IRQ", chip_name);
-                        break;
-                    case TRACE_VDC_VRAM_DMA_START:
-                        snprintf(buf, sizeof(buf), "  [%s]  VRAM DMA  START", chip_name);
-                        break;
-                    case TRACE_VDC_SATB_DMA_START:
-                        snprintf(buf, sizeof(buf), "  [%s]  SATB DMA  START  DVSSR=$%04X", chip_name, entry.vdc.value);
-                        break;
-                    default:
-                        snprintf(buf, sizeof(buf), "  [%s]  ???", chip_name);
-                        break;
-                }
-                break;
-            }
-            case TRACE_INPUT:
-                snprintf(buf, sizeof(buf), "  [INPUT] PORT %d  Data:$%02X",
-                         entry.input.port, entry.input.value);
-                break;
-            case TRACE_TIMER:
-                snprintf(buf, sizeof(buf), "  [TIMER] IRQ     Counter:%02X  Reload:%02X",
-                         entry.timer.counter, entry.timer.reload);
-                break;
-            case TRACE_CDROM:
-            {
-                switch (entry.cdrom.event)
-                {
-                    case TRACE_CDROM_IRQ:
-                        snprintf(buf, sizeof(buf), "  [CDROM] IRQ     Type:%02X  Active:%02X  Enabled:%02X",
-                                 entry.cdrom.irq_type, entry.cdrom.active, entry.cdrom.enabled);
-                        break;
-                    case TRACE_CDROM_FADER:
-                    {
-                        u8 v = entry.cdrom.irq_type;
-                        snprintf(buf, sizeof(buf), "  [CDROM] FADER    %s  %s  %s",
-                                 IS_SET_BIT(v, 3) ? "ON" : "OFF",
-                                 IS_SET_BIT(v, 1) ? "ADPCM" : "CD",
-                                 IS_SET_BIT(v, 2) ? "FAST" : "SLOW");
-                        break;
-                    }
-                    case TRACE_CDROM_RESET:
-                        snprintf(buf, sizeof(buf), "  [CDROM] RESET    $%02X", entry.cdrom.irq_type);
-                        break;
-                    default:
-                        snprintf(buf, sizeof(buf), "  [CDROM] ???");
-                        break;
-                }
-                break;
-            }
-            case TRACE_PSG:
-                snprintf(buf, sizeof(buf), "  [PSG]   CH %d    Reg:$%02X=$%02X",
-                         entry.psg.channel, entry.psg.reg, entry.psg.value);
-                break;
-            case TRACE_ADPCM:
-                snprintf(buf, sizeof(buf), "  [ADPCM] REG     $%02X=$%02X",
-                         entry.adpcm.reg, entry.adpcm.value);
-                break;
-            case TRACE_VCE:
-            {
-                switch (entry.vce.event)
-                {
-                    case TRACE_VCE_CONTROL_WRITE:
-                    {
-                        static const char* k_speed_names[] = { "5.36MHz", "7.16MHz", "10.8MHz", "10.8MHz" };
-                        u8 speed = entry.vce.value & 0x03;
-                        snprintf(buf, sizeof(buf), "  [VCE]  CONTROL   Speed:%s  Blur:%d  B&W:%d",
-                                 k_speed_names[speed],
-                                 (entry.vce.value >> 2) & 1,
-                                 (entry.vce.value >> 7) & 1);
-                        break;
-                    }
-                    case TRACE_VCE_COLOR_WRITE:
-                        snprintf(buf, sizeof(buf), "  [VCE]  COLOR     Addr:$%03X=$%03X",
-                                 entry.vce.reg, entry.vce.value & 0x1FF);
-                        break;
-                    case TRACE_VCE_VSYNC_START:
-                        snprintf(buf, sizeof(buf), "  [VCE]  VSYNC     START  Line:%d", entry.vce.value);
-                        break;
-                    case TRACE_VCE_VSYNC_END:
-                        snprintf(buf, sizeof(buf), "  [VCE]  VSYNC     END    Line:%d", entry.vce.value);
-                        break;
-                    default:
-                        snprintf(buf, sizeof(buf), "  [VCE]  ???");
-                        break;
-                }
-                break;
-            }
-            case TRACE_SCSI:
-            {
-                static const char* k_scsi_cmd_names[] = {
-                    "TEST_UNIT_READY", NULL, NULL, "REQUEST_SENSE",
-                    NULL, NULL, NULL, NULL, "READ"
-                };
-                switch (entry.scsi.event)
-                {
-                    case TRACE_SCSI_COMMAND:
-                    {
-                        const char* cmd_name = NULL;
-                        if (entry.scsi.command < 9)
-                            cmd_name = k_scsi_cmd_names[entry.scsi.command];
-                        else if (entry.scsi.command == 0xD8) cmd_name = "AUDIO_START";
-                        else if (entry.scsi.command == 0xD9) cmd_name = "AUDIO_STOP";
-                        else if (entry.scsi.command == 0xDA) cmd_name = "AUDIO_PAUSE";
-                        else if (entry.scsi.command == 0xDD) cmd_name = "READ_SUBCODE_Q";
-                        else if (entry.scsi.command == 0xDE) cmd_name = "READ_TOC";
-                        if (cmd_name)
-                        {
-                            if (entry.scsi.command == 0x08)
-                                snprintf(buf, sizeof(buf), "  [SCSI] CMD      %s  LBA:%u", cmd_name, entry.scsi.param);
-                            else
-                                snprintf(buf, sizeof(buf), "  [SCSI] CMD      %s", cmd_name);
-                        }
-                        else
-                            snprintf(buf, sizeof(buf), "  [SCSI] CMD      $%02X", entry.scsi.command);
-                        break;
-                    }
-                    default:
-                        snprintf(buf, sizeof(buf), "  [SCSI] ???");
-                        break;
-                }
-                break;
-            }
-            default:
-                snprintf(buf, sizeof(buf), "  [???]");
-                break;
-        }
+        GG_Trace_Format_Options options;
+        options.bank = true;
+        options.registers = true;
+        options.flags = true;
+        options.bytes = true;
+        options.cycles = true;
+        options.previous_cycle_valid = (buffer_start + i) > 0;
+        options.previous_cycle = options.previous_cycle_valid ?
+            tl->GetEntry(buffer_start + i - 1).cycle : 0;
+        trace_log_format_entry(memory, entry, options, buf, sizeof(buf));
 
         lines.push_back(buf);
     }
 
-    result["total_entries"] = total;
+    result["total_entries"] = retained;
+    result["total_logged"] = total;
+    result["oldest_sequence"] = oldest;
     result["start"] = actual_start;
+    result["next_sequence"] = actual_start + actual_count;
     result["count"] = actual_count;
+    result["overrun"] = overrun;
     result["lines"] = lines;
     return result;
 }
 
-json DebugAdapter::SetTraceLog(bool enabled, u32 flags)
+json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& output,
+    const std::string& memory_size, const std::string& disk_size,
+    const std::string& output_path, const u32* event_filters)
 {
     json result;
 
@@ -3192,29 +3019,134 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags)
 
     if (enabled)
     {
-        if (flags == 0)
-            flags = TRACE_FLAG_CPU;
+        bool was_enabled = gui_debug_trace_logger_is_enabled();
+        int output_value;
+        if (output.empty())
+            output_value = was_enabled ? config_debug.trace_output : gui_TraceOutput_Memory;
+        else if (output == "memory")
+            output_value = gui_TraceOutput_Memory;
+        else if (output == "disk")
+            output_value = gui_TraceOutput_Disk;
+        else
+        {
+            result["error"] = "Invalid trace output";
+            return result;
+        }
 
-        tl->SetEnabledFlags(flags);
+        int memory_size_value = config_debug.trace_capacity;
+        if (!memory_size.empty())
+        {
+            memory_size_value = gui_debug_trace_logger_memory_size_index(memory_size.c_str());
+            if (memory_size_value < 0)
+            {
+                result["error"] = "Invalid trace memory size";
+                return result;
+            }
+        }
+
+        int disk_size_value = config_debug.trace_disk_size;
+        if (!disk_size.empty())
+        {
+            disk_size_value = gui_debug_trace_logger_disk_size_index(disk_size.c_str());
+            if (disk_size_value < 0)
+            {
+                result["error"] = "Invalid trace disk size";
+                return result;
+            }
+        }
+
+        bool configuration_changed = output_value != config_debug.trace_output;
+        if (output_value == gui_TraceOutput_Memory)
+            configuration_changed = configuration_changed || memory_size_value != config_debug.trace_capacity;
+        else
+        {
+            configuration_changed = configuration_changed || disk_size_value != config_debug.trace_disk_size;
+            if (!output_path.empty())
+            {
+                configuration_changed = configuration_changed ||
+                    config_debug.trace_disk_dir_option != Directory_Location_Custom ||
+                    output_path != config_debug.trace_disk_path;
+            }
+        }
+
+        if (was_enabled && configuration_changed && !gui_debug_trace_logger_stop())
+        {
+            result["error"] = "Unable to stop trace logger cleanly";
+            return result;
+        }
+
+        if (!gui_debug_trace_logger_is_enabled())
+        {
+            if (!gui_debug_trace_logger_configure(output_value, memory_size_value, disk_size_value, output_path.c_str()))
+            {
+                result["error"] = "Unable to configure trace logger";
+                return result;
+            }
+        }
+
+        gui_debug_trace_logger_set_event_filters(event_filters);
+
+        if (!gui_debug_trace_logger_start(flags))
+        {
+            result["error"] = "Unable to start trace logger";
+            return result;
+        }
 
         result["status"] = "started";
-        result["enabled_flags"] = flags;
+        result["output"] = config_debug.trace_output == gui_TraceOutput_Disk ? "disk" : "memory";
+        result["memory_size"] = gui_debug_trace_logger_memory_size_name(config_debug.trace_capacity);
+        result["disk_size"] = gui_debug_trace_logger_disk_size_name(config_debug.trace_disk_size);
+        if (config_debug.trace_output == gui_TraceOutput_Disk)
+            result["output_path"] = gui_debug_trace_logger_get_output_path();
 
-        json enabled_list = json::array();
-        if (flags & TRACE_FLAG_CPU) enabled_list.push_back("cpu");
-        if (flags & TRACE_FLAG_CPU_IRQ) enabled_list.push_back("cpu_irq");
-        if (flags & TRACE_FLAG_VDC) enabled_list.push_back("vdc");
-        if (flags & TRACE_FLAG_INPUT) enabled_list.push_back("input");
-        if (flags & TRACE_FLAG_TIMER) enabled_list.push_back("timer");
-        if (flags & TRACE_FLAG_CDROM) enabled_list.push_back("cdrom");
-        if (flags & TRACE_FLAG_PSG) enabled_list.push_back("psg");
-        if (flags & TRACE_FLAG_ADPCM) enabled_list.push_back("adpcm");
-        if (flags & TRACE_FLAG_VCE) enabled_list.push_back("vce");
-        if (flags & TRACE_FLAG_SCSI) enabled_list.push_back("scsi");
-        result["enabled"] = enabled_list;
+        u32 enabled_flags = tl->GetEnabledFlags();
+        json event_filter_list = json::array();
+        if (enabled_flags & TRACE_FLAG_CPU) event_filter_list.push_back("cpu.instructions");
+        if (enabled_flags & TRACE_FLAG_CPU_IRQ) event_filter_list.push_back("cpu.irqs");
+        u32 vdc = (enabled_flags & TRACE_FLAG_VDC) ? tl->GetEventFilter(TRACE_VDC) : 0;
+        u32 input = (enabled_flags & TRACE_FLAG_INPUT) ? tl->GetEventFilter(TRACE_INPUT) : 0;
+        u32 timer = (enabled_flags & TRACE_FLAG_TIMER) ? tl->GetEventFilter(TRACE_TIMER) : 0;
+        u32 cdrom = (enabled_flags & TRACE_FLAG_CDROM) ? tl->GetEventFilter(TRACE_CDROM) : 0;
+        u32 psg = (enabled_flags & TRACE_FLAG_PSG) ? tl->GetEventFilter(TRACE_PSG) : 0;
+        u32 adpcm = (enabled_flags & TRACE_FLAG_ADPCM) ? tl->GetEventFilter(TRACE_ADPCM) : 0;
+        u32 vce = (enabled_flags & TRACE_FLAG_VCE) ? tl->GetEventFilter(TRACE_VCE) : 0;
+        u32 scsi = (enabled_flags & TRACE_FLAG_SCSI) ? tl->GetEventFilter(TRACE_SCSI) : 0;
+        if ((vdc & TRACE_VDC_FILTER_REGISTERS) == TRACE_VDC_FILTER_REGISTERS) event_filter_list.push_back("vdc.registers");
+        if ((vdc & TRACE_VDC_FILTER_IRQS) == TRACE_VDC_FILTER_IRQS) event_filter_list.push_back("vdc.irqs");
+        if ((vdc & TRACE_VDC_FILTER_DMA) == TRACE_VDC_FILTER_DMA) event_filter_list.push_back("vdc.dma");
+        if ((vce & TRACE_VCE_FILTER_REGISTERS) == TRACE_VCE_FILTER_REGISTERS) event_filter_list.push_back("vce.registers");
+        if ((vce & TRACE_VCE_FILTER_TIMING) == TRACE_VCE_FILTER_TIMING) event_filter_list.push_back("vce.timing");
+        if ((input & TRACE_INPUT_FILTER_READS) != 0) event_filter_list.push_back("input.reads");
+        if ((input & TRACE_INPUT_FILTER_WRITES) != 0) event_filter_list.push_back("input.writes");
+        if ((timer & TRACE_TIMER_FILTER_IRQS) != 0) event_filter_list.push_back("timer.irqs");
+        if ((timer & TRACE_TIMER_FILTER_REGISTERS) == TRACE_TIMER_FILTER_REGISTERS) event_filter_list.push_back("timer.registers");
+        if ((cdrom & TRACE_CDROM_FILTER_IRQS) == TRACE_CDROM_FILTER_IRQS) event_filter_list.push_back("cdrom.irqs");
+        if ((cdrom & TRACE_CDROM_FILTER_CONTROL) == TRACE_CDROM_FILTER_CONTROL) event_filter_list.push_back("cdrom.control");
+        if ((cdrom & TRACE_CDROM_FILTER_AUDIO) == TRACE_CDROM_FILTER_AUDIO) event_filter_list.push_back("cdrom.audio");
+        if ((psg & TRACE_PSG_FILTER_GLOBAL) == TRACE_PSG_FILTER_GLOBAL) event_filter_list.push_back("psg.global_lfo");
+        if ((psg & TRACE_PSG_FILTER_FREQUENCY) == TRACE_PSG_FILTER_FREQUENCY) event_filter_list.push_back("psg.frequency");
+        if ((psg & TRACE_PSG_FILTER_CHANNEL) == TRACE_PSG_FILTER_CHANNEL) event_filter_list.push_back("psg.channel");
+        if ((psg & TRACE_PSG_FILTER_WAVE) != 0) event_filter_list.push_back("psg.wave_dda");
+        if ((psg & TRACE_PSG_FILTER_NOISE) != 0) event_filter_list.push_back("psg.noise");
+        if ((adpcm & TRACE_ADPCM_FILTER_REGISTERS) != 0) event_filter_list.push_back("adpcm.registers");
+        if ((adpcm & TRACE_ADPCM_FILTER_DMA) != 0) event_filter_list.push_back("adpcm.dma");
+        if ((adpcm & TRACE_ADPCM_FILTER_PLAYBACK) == TRACE_ADPCM_FILTER_PLAYBACK) event_filter_list.push_back("adpcm.playback");
+        if ((adpcm & TRACE_ADPCM_FILTER_TRANSFERS) == TRACE_ADPCM_FILTER_TRANSFERS) event_filter_list.push_back("adpcm.transfers");
+        if ((adpcm & TRACE_ADPCM_FILTER_IRQS) == TRACE_ADPCM_FILTER_IRQS) event_filter_list.push_back("adpcm.irqs");
+        if ((scsi & TRACE_SCSI_FILTER_COMMANDS) != 0) event_filter_list.push_back("scsi.commands");
+        if ((scsi & TRACE_SCSI_FILTER_PHASES) != 0) event_filter_list.push_back("scsi.phases");
+        if ((scsi & TRACE_SCSI_FILTER_RESPONSES) == TRACE_SCSI_FILTER_RESPONSES) event_filter_list.push_back("scsi.responses");
+        if ((scsi & TRACE_SCSI_FILTER_RESPONSE_BYTES) != 0) event_filter_list.push_back("scsi.response_bytes");
+        if ((scsi & TRACE_SCSI_FILTER_PROBLEMS) == TRACE_SCSI_FILTER_PROBLEMS) event_filter_list.push_back("scsi.problems");
+        result["filters"] = event_filter_list;
     }
     else
     {
+        if (!gui_debug_trace_logger_stop())
+        {
+            result["error"] = "Unable to stop trace logger cleanly";
+            return result;
+        }
         tl->SetEnabledFlags(0);
         result["status"] = "stopped";
     }

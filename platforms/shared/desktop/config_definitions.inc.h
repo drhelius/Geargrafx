@@ -58,20 +58,35 @@ static inline void process(config_Operation operation)
 
     // Trace logger
     CONFIG_BOOL("Debug", "TraceCounter", config_debug.trace_counter, true);
+    CONFIG_BOOL("Debug", "TraceCycles", config_debug.trace_cycles, false);
     CONFIG_BOOL("Debug", "TraceBank", config_debug.trace_bank, true);
     CONFIG_BOOL("Debug", "TraceRegisters", config_debug.trace_registers, true);
     CONFIG_BOOL("Debug", "TraceFlags", config_debug.trace_flags, true);
     CONFIG_BOOL("Debug", "TraceBytes", config_debug.trace_bytes, true);
+    CONFIG_BOOL("Debug", "TraceCpuEnabled", config_debug.trace_cpu_enabled, true);
     CONFIG_BOOL("Debug", "TraceCpu", config_debug.trace_cpu, true);
     CONFIG_BOOL("Debug", "TraceCpuIrq", config_debug.trace_cpu_irq, true);
-    CONFIG_BOOL("Debug", "TraceVdc", config_debug.trace_vdc, true);
-    CONFIG_BOOL("Debug", "TraceInput", config_debug.trace_input, true);
-    CONFIG_BOOL("Debug", "TraceTimer", config_debug.trace_timer, true);
-    CONFIG_BOOL("Debug", "TraceCdrom", config_debug.trace_cdrom, true);
-    CONFIG_BOOL("Debug", "TracePsg", config_debug.trace_psg, true);
-    CONFIG_BOOL("Debug", "TraceAdpcm", config_debug.trace_adpcm, true);
-    CONFIG_BOOL("Debug", "TraceVce", config_debug.trace_vce, true);
-    CONFIG_BOOL("Debug", "TraceScsi", config_debug.trace_scsi, true);
+    CONFIG_BOOL("Debug", "TraceVdc", config_debug.trace_vdc, false);
+    CONFIG_BOOL("Debug", "TraceInput", config_debug.trace_input, false);
+    CONFIG_BOOL("Debug", "TraceTimer", config_debug.trace_timer, false);
+    CONFIG_BOOL("Debug", "TraceCdrom", config_debug.trace_cdrom, false);
+    CONFIG_BOOL("Debug", "TracePsg", config_debug.trace_psg, false);
+    CONFIG_BOOL("Debug", "TraceAdpcm", config_debug.trace_adpcm, false);
+    CONFIG_BOOL("Debug", "TraceVce", config_debug.trace_vce, false);
+    CONFIG_BOOL("Debug", "TraceScsi", config_debug.trace_scsi, false);
+    CONFIG_INT_RANGE("Debug", "TraceVdcEvents", config_debug.trace_vdc_events, TRACE_VDC_FILTER_ALL, 0, TRACE_VDC_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceInputEvents", config_debug.trace_input_events, TRACE_INPUT_FILTER_ALL, 0, TRACE_INPUT_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceTimerEvents", config_debug.trace_timer_events, TRACE_TIMER_FILTER_ALL, 0, TRACE_TIMER_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceCdromEvents", config_debug.trace_cdrom_events, TRACE_CDROM_FILTER_ALL, 0, TRACE_CDROM_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TracePsgEvents", config_debug.trace_psg_events, TRACE_PSG_FILTER_ALL, 0, TRACE_PSG_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceAdpcmEvents", config_debug.trace_adpcm_events, TRACE_ADPCM_FILTER_ALL, 0, TRACE_ADPCM_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceVceEvents", config_debug.trace_vce_events, TRACE_VCE_FILTER_ALL, 0, TRACE_VCE_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceScsiEvents", config_debug.trace_scsi_events, TRACE_SCSI_FILTER_ALL, 0, TRACE_SCSI_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceOutput", config_debug.trace_output, 0, 0, 1);
+    CONFIG_INT_RANGE("Debug", "TraceCapacity", config_debug.trace_capacity, 0, 0, 4);
+    CONFIG_INT_RANGE("Debug", "TraceDiskDirOption", config_debug.trace_disk_dir_option, 0, 0, 2);
+    CONFIG_INT_RANGE("Debug", "TraceDiskSize", config_debug.trace_disk_size, 2, 0, 6);
+    CONFIG_STRING_NOT_EMPTY("Debug", "TraceDiskPath", config_debug.trace_disk_path, config_root_path);
 
     // Disassembler
     CONFIG_BOOL("Debug", "DisMem", config_debug.dis_show_mem, true);
@@ -428,12 +443,43 @@ static void migrate(int file_version)
 {
     std::string stored;
 
+    if (file_version < 6)
+    {
+        write_bool("Debug", "TraceCycles", false);
+
+        bool trace_cpu = read_bool("Debug", "TraceCpu", true);
+        bool trace_cpu_irq = read_bool("Debug", "TraceCpuIrq", true);
+        write_bool("Debug", "TraceCpuEnabled", trace_cpu || trace_cpu_irq);
+
+        bool default_trace_filters =
+            read_bool("Debug", "TraceVdc", true) &&
+            read_bool("Debug", "TraceInput", true) &&
+            read_bool("Debug", "TraceTimer", true) &&
+            read_bool("Debug", "TraceCdrom", true) &&
+            read_bool("Debug", "TracePsg", true) &&
+            read_bool("Debug", "TraceAdpcm", true) &&
+            read_bool("Debug", "TraceVce", true) &&
+            read_bool("Debug", "TraceScsi", true);
+
+        if (default_trace_filters)
+        {
+            write_bool("Debug", "TraceVdc", false);
+            write_bool("Debug", "TraceInput", false);
+            write_bool("Debug", "TraceTimer", false);
+            write_bool("Debug", "TraceCdrom", false);
+            write_bool("Debug", "TracePsg", false);
+            write_bool("Debug", "TraceAdpcm", false);
+            write_bool("Debug", "TraceVce", false);
+            write_bool("Debug", "TraceScsi", false);
+        }
+    }
+
     int sync_mode = -1;
     bool valid_sync_mode = get_setting("Video", "SyncMode", &stored) &&
         parse_int_string(stored, &sync_mode) && sync_mode >= config_VideoSync_Disabled &&
         sync_mode <= config_VideoSync_VRR;
 
-    if (file_version < config_version || !valid_sync_mode)
+    if (file_version < 5 || !valid_sync_mode)
     {
         bool sync = read_bool("Video", "Sync", true);
         bool vrr = read_bool("Video", "VRR", false);

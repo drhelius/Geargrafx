@@ -69,6 +69,34 @@ void HuC6260::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
+#if !defined(GG_DISABLE_DISASSEMBLER)
+void HuC6260::LogTraceEvent(u8 event)
+{
+    GG_Trace_Entry e = {};
+    e.type = TRACE_VCE;
+    e.vce.event = event;
+
+    switch (event)
+    {
+        case TRACE_VCE_CONTROL_WRITE:
+            e.vce.value = m_control_register;
+            break;
+        case TRACE_VCE_COLOR_WRITE:
+            e.vce.reg = m_color_table_address;
+            e.vce.value = m_color_table[m_color_table_address];
+            break;
+        case TRACE_VCE_VSYNC_START:
+        case TRACE_VCE_VSYNC_END:
+            e.vce.value = (u16)m_vpos;
+            break;
+        default:
+            break;
+    }
+
+    m_trace_logger->TraceLog(e);
+}
+#endif
+
 void HuC6260::InitPalettes()
 {
     for (int i = 0; i < 512; i++)
@@ -224,16 +252,7 @@ void HuC6260::WriteRegister(u16 address, u8 value)
                     break;
             }
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-            if (m_trace_logger->IsEnabled(TRACE_VCE))
-            {
-                GG_Trace_Entry e = {};
-                e.type = TRACE_VCE;
-                e.vce.event = TRACE_VCE_CONTROL_WRITE;
-                e.vce.value = m_control_register;
-                m_trace_logger->TraceLog(e);
-            }
-#endif
+            TraceEvent(TRACE_VCE_CONTROL_WRITE);
             break;
         }
         case 2:
@@ -256,17 +275,7 @@ void HuC6260::WriteRegister(u16 address, u8 value)
                 false);
             m_color_table[m_color_table_address] = (m_color_table[m_color_table_address] & 0x00FF) | ((value & 0x01) << 8);
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-            if (m_trace_logger->IsEnabled(TRACE_VCE))
-            {
-                GG_Trace_Entry e = {};
-                e.type = TRACE_VCE;
-                e.vce.event = TRACE_VCE_COLOR_WRITE;
-                e.vce.reg = (u8)(m_color_table_address & 0xFF);
-                e.vce.value = m_color_table[m_color_table_address];
-                m_trace_logger->TraceLog(e);
-            }
-#endif
+            TraceEvent(TRACE_VCE_COLOR_WRITE);
             m_color_table_address = (m_color_table_address + 1) & 0x01FF;
             break;
         default:

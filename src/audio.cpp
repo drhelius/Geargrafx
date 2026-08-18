@@ -24,6 +24,7 @@
 #include "huc6280_psg.h"
 #include "adpcm.h"
 #include "cdrom_audio.h"
+#include "trace_logger.h"
 
 Audio::Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio)
 {
@@ -57,6 +58,18 @@ void Audio::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
 }
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+void Audio::LogTraceEvent(u8 reg, u8 value)
+{
+    GG_Trace_Entry e = {};
+    e.type = TRACE_PSG;
+    e.psg.channel = *m_psg->GetState()->CHANNEL_SELECT;
+    e.psg.reg = reg;
+    e.psg.value = value;
+    m_trace_logger->TraceLog(e);
+}
+#endif
 
 void Audio::Reset(bool cdrom)
 {

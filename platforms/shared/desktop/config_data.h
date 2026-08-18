@@ -25,7 +25,7 @@
 #include "geargrafx.h"
 
 static const char* config_application_name = GG_TITLE;
-static const int config_version = 5;
+static const int config_version = 6;
 static const int config_minimum_version = 2;
 static const int config_max_recent_roms = 10;
 static const int config_memory_editor_count = 14;
@@ -261,10 +261,12 @@ struct config_Debug
     bool show_trace_logger;
     bool show_rewind;
     bool trace_counter;
+    bool trace_cycles;
     bool trace_bank;
     bool trace_registers;
     bool trace_flags;
     bool trace_bytes;
+    bool trace_cpu_enabled;
     bool trace_cpu;
     bool trace_cpu_irq;
     bool trace_vdc;
@@ -275,6 +277,19 @@ struct config_Debug
     bool trace_adpcm;
     bool trace_vce;
     bool trace_scsi;
+    int trace_vdc_events;
+    int trace_input_events;
+    int trace_timer_events;
+    int trace_cdrom_events;
+    int trace_psg_events;
+    int trace_adpcm_events;
+    int trace_vce_events;
+    int trace_scsi_events;
+    int trace_output;
+    int trace_capacity;
+    int trace_disk_dir_option;
+    int trace_disk_size;
+    std::string trace_disk_path;
     bool dis_show_mem;
     bool dis_show_symbols;
     bool dis_show_segment;

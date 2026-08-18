@@ -19,12 +19,14 @@
 
 #include "huc6202.h"
 #include "huc6270.h"
+#include "trace_logger.h"
 
 HuC6202::HuC6202(HuC6270* huc6270_1, HuC6270* huc6270_2, HuC6280* huc6280)
 {
     m_huc6280 = huc6280;
     m_huc6270_1 = huc6270_1;
     m_huc6270_2 = huc6270_2;
+    InitPointer(m_trace_logger);
     m_is_sgx = false;
     m_priority_1 = 0;
     m_priority_2 = 0;
@@ -43,6 +45,29 @@ HuC6202::HuC6202(HuC6270* huc6270_1, HuC6270* huc6270_2, HuC6280* huc6280)
     m_state.IRQ1_2 = &m_irq1_2;
     m_state.WINDOW_PRIORITY = m_window_priority;
 }
+
+void HuC6202::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
+}
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+void HuC6202::LogTraceEvent(u8 event, u8 reg, u8 raw)
+{
+    GG_Trace_Entry e = {};
+    e.type = TRACE_VDC;
+    e.vdc.event = event;
+    e.vdc.chip = 2;
+    e.vdc.reg = reg;
+    e.vdc.raw = raw;
+    if (reg == 0x08) e.vdc.value = m_priority_1;
+    else if (reg == 0x09) e.vdc.value = m_priority_2;
+    else if (reg == 0x0A || reg == 0x0B) e.vdc.value = m_window_1;
+    else if (reg == 0x0C || reg == 0x0D) e.vdc.value = m_window_2;
+    else e.vdc.value = m_vdc2_selected ? 1 : 0;
+    m_trace_logger->TraceLog(e);
+}
+#endif
 
 HuC6202::~HuC6202()
 {

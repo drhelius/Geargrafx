@@ -171,6 +171,8 @@ private:
     int m_chip_id;
 
 private:
+    void TraceEvent(u8 event, u8 raw = 0, bool msb = false);
+    void LogTraceEvent(u8 event, u8 raw, bool msb);
     void EndOfLine();
     void LineEvents();
     void HSyncStart();

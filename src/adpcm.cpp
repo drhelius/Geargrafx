@@ -23,6 +23,7 @@
 #include "adpcm.h"
 #include "geargrafx_core.h"
 #include "cdrom.h"
+#include "trace_logger.h"
 
 Adpcm::Adpcm()
 {
@@ -64,6 +65,24 @@ void Adpcm::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
 }
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+void Adpcm::LogTraceEvent(u8 event, u8 reg, u8 value, u16 address)
+{
+    GG_Trace_Entry e = {};
+    e.type = TRACE_ADPCM;
+    e.adpcm.event = event;
+    e.adpcm.reg = reg;
+    e.adpcm.value = value;
+    e.adpcm.address = address;
+    e.adpcm.length = m_length;
+    e.adpcm.state = (m_playing ? 0x01 : 0x00) |
+                    (m_play_pending ? 0x02 : 0x00) |
+                    (m_half_irq ? 0x04 : 0x00) |
+                    (m_end_irq ? 0x08 : 0x00);
+    m_trace_logger->TraceLog(e);
+}
+#endif
 
 void Adpcm::Reset()
 {

@@ -26,6 +26,13 @@
 
 bool g_mcp_router_enabled = false;
 
+static void add_trace_event_filter(u32* flags, u32* event_filters,
+    GG_Trace_Type type, u32 filter)
+{
+    *flags |= 1U << type;
+    event_filters[type] |= filter;
+}
+
 void McpServer::ReaderLoop()
 {
     while (m_running.load())
@@ -1751,7 +1758,7 @@ json McpServer::BuildToolList()
             {"properties", {
                 {"start", {
                     {"type", "integer"},
-                    {"description", "Start index (0=oldest, omit for latest)"},
+                    {"description", "Absolute trace sequence (omit for latest retained entries)"},
                     {"minimum", 0}
                 }},
                 {"count", {
@@ -1768,7 +1775,7 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "set_trace_log"},
         {"title", "Set Trace Logger"},
-        {"description", "Enable/disable trace log; CPU always traced; filter IRQ, VDC/VCE, input, timer, CD-ROM/SCSI, PSG, ADPCM."},
+        {"description", "Enable/disable trace logging to memory or disk; configure capacity, file limit, output directory, and event filters."},
         {"annotations", {{"readOnlyHint", false}, {"destructiveHint", true}, {"idempotentHint", true}, {"openWorldHint", false}}},
         {"inputSchema", {
             {"type", "object"},
@@ -1777,41 +1784,44 @@ json McpServer::BuildToolList()
                     {"type", "boolean"},
                     {"description", "true starts logging, false stops; preserves entries."}
                 }},
-                {"cpu_irq", {
-                    {"type", "boolean"},
-                    {"description", "Trace IRQ events (default true)"}
+                {"output", {
+                    {"type", "string"},
+                    {"description", "Trace destination. Defaults to memory when starting a stopped logger."},
+                    {"enum", json::array({"memory", "disk"})}
                 }},
-                {"vdc", {
-                    {"type", "boolean"},
-                    {"description", "Trace VDC events (default true)"}
+                {"memory_size", {
+                    {"type", "string"},
+                    {"description", "Maximum entries retained in memory mode."},
+                    {"enum", json::array({"100K", "500K", "1M", "2M", "5M"})}
                 }},
-                {"input", {
-                    {"type", "boolean"},
-                    {"description", "Trace input reads (default true)"}
+                {"disk_size", {
+                    {"type", "string"},
+                    {"description", "Maximum disk trace file size."},
+                    {"enum", json::array({"10MB", "50MB", "100MB", "250MB", "500MB", "1GB", "unbounded"})}
                 }},
-                {"timer", {
-                    {"type", "boolean"},
-                    {"description", "Trace timer IRQ events (default true)"}
+                {"output_path", {
+                    {"type", "string"},
+                    {"description", "Directory for the automatically named disk trace file."}
                 }},
-                {"cdrom", {
-                    {"type", "boolean"},
-                    {"description", "Trace CD-ROM events (default true)"}
-                }},
-                {"psg", {
-                    {"type", "boolean"},
-                    {"description", "Trace PSG audio register writes (default true)"}
-                }},
-                {"adpcm", {
-                    {"type", "boolean"},
-                    {"description", "Trace ADPCM events (default true)"}
-                }},
-                {"vce", {
-                    {"type", "boolean"},
-                    {"description", "Trace VCE events (default true)"}
-                }},
-                {"scsi", {
-                    {"type", "boolean"},
-                    {"description", "Trace SCSI events (default true)"}
+                {"filters", {
+                    {"type", "array"},
+                    {"description", "Exact event streams to record. Defaults to CPU instructions and IRQs."},
+                    {"items", {
+                        {"type", "string"},
+                        {"enum", json::array({
+                            "cpu.instructions", "cpu.irqs",
+                            "vdc.registers", "vdc.irqs", "vdc.dma",
+                            "vce.registers", "vce.timing",
+                            "input.reads", "input.writes",
+                            "timer.irqs", "timer.registers",
+                            "cdrom.irqs", "cdrom.control", "cdrom.audio",
+                            "psg.global_lfo", "psg.frequency", "psg.channel", "psg.wave_dda", "psg.noise",
+                            "adpcm.registers", "adpcm.dma", "adpcm.playback", "adpcm.transfers", "adpcm.irqs",
+                            "scsi.commands", "scsi.phases", "scsi.responses", "scsi.response_bytes", "scsi.problems"
+                        })}
+                    }},
+                    {"minItems", 1},
+                    {"uniqueItems", true}
                 }}
             }},
             {"required", json::array({"enabled"})},
@@ -3049,27 +3059,103 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     }
     else if (normalizedTool == "get_trace_log")
     {
-        int start = arguments.value("start", -1);
+        s64 start = arguments.value("start", (s64)-1);
         int count = arguments.value("count", 100);
         return m_debugAdapter.GetTraceLog(start, count);
     }
     else if (normalizedTool == "set_trace_log")
     {
         bool enabled = arguments["enabled"];
-        u32 flags = TRACE_FLAG_CPU;
+        u32 flags = TRACE_FLAG_CPU | TRACE_FLAG_CPU_IRQ;
+        u32 event_filters[TRACE_TYPE_COUNT] = {};
+        event_filters[TRACE_VDC] = TRACE_VDC_FILTER_ALL;
+        event_filters[TRACE_INPUT] = TRACE_INPUT_FILTER_ALL;
+        event_filters[TRACE_TIMER] = TRACE_TIMER_FILTER_ALL;
+        event_filters[TRACE_CDROM] = TRACE_CDROM_FILTER_ALL;
+        event_filters[TRACE_PSG] = TRACE_PSG_FILTER_ALL;
+        event_filters[TRACE_ADPCM] = TRACE_ADPCM_FILTER_ALL;
+        event_filters[TRACE_VCE] = TRACE_VCE_FILTER_ALL;
+        event_filters[TRACE_SCSI] = TRACE_SCSI_FILTER_ALL;
         if (enabled)
         {
-            if (arguments.value("cpu_irq", true)) flags |= TRACE_FLAG_CPU_IRQ;
-            if (arguments.value("vdc", true)) flags |= TRACE_FLAG_VDC;
-            if (arguments.value("input", true)) flags |= TRACE_FLAG_INPUT;
-            if (arguments.value("timer", true)) flags |= TRACE_FLAG_TIMER;
-            if (arguments.value("cdrom", true)) flags |= TRACE_FLAG_CDROM;
-            if (arguments.value("psg", true)) flags |= TRACE_FLAG_PSG;
-            if (arguments.value("adpcm", true)) flags |= TRACE_FLAG_ADPCM;
-            if (arguments.value("vce", true)) flags |= TRACE_FLAG_VCE;
-            if (arguments.value("scsi", true)) flags |= TRACE_FLAG_SCSI;
+            if (arguments.contains("filters"))
+            {
+                flags = 0;
+                for (int i = 0; i < TRACE_TYPE_COUNT; i++)
+                    event_filters[i] = 0;
+                const json& filters = arguments["filters"];
+                for (json::const_iterator it = filters.begin(); it != filters.end(); ++it)
+                {
+                    std::string filter = it->get<std::string>();
+                    if (filter == "cpu.instructions") flags |= TRACE_FLAG_CPU;
+                    else if (filter == "cpu.irqs") flags |= TRACE_FLAG_CPU_IRQ;
+                    else if (filter == "vdc.registers")
+                        add_trace_event_filter(&flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_REGISTERS);
+                    else if (filter == "vdc.irqs")
+                        add_trace_event_filter(&flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_IRQS);
+                    else if (filter == "vdc.dma")
+                        add_trace_event_filter(&flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_DMA);
+                    else if (filter == "vce.registers")
+                        add_trace_event_filter(&flags, event_filters, TRACE_VCE, TRACE_VCE_FILTER_REGISTERS);
+                    else if (filter == "vce.timing")
+                        add_trace_event_filter(&flags, event_filters, TRACE_VCE, TRACE_VCE_FILTER_TIMING);
+                    else if (filter == "input.reads")
+                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_READS);
+                    else if (filter == "input.writes")
+                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_WRITES);
+                    else if (filter == "timer.irqs")
+                        add_trace_event_filter(&flags, event_filters, TRACE_TIMER, TRACE_TIMER_FILTER_IRQS);
+                    else if (filter == "timer.registers")
+                        add_trace_event_filter(&flags, event_filters, TRACE_TIMER, TRACE_TIMER_FILTER_REGISTERS);
+                    else if (filter == "cdrom.irqs")
+                        add_trace_event_filter(&flags, event_filters, TRACE_CDROM, TRACE_CDROM_FILTER_IRQS);
+                    else if (filter == "cdrom.control")
+                        add_trace_event_filter(&flags, event_filters, TRACE_CDROM, TRACE_CDROM_FILTER_CONTROL);
+                    else if (filter == "cdrom.audio")
+                        add_trace_event_filter(&flags, event_filters, TRACE_CDROM, TRACE_CDROM_FILTER_AUDIO);
+                    else if (filter == "psg.global_lfo")
+                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_GLOBAL);
+                    else if (filter == "psg.frequency")
+                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_FREQUENCY);
+                    else if (filter == "psg.channel")
+                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_CHANNEL);
+                    else if (filter == "psg.wave_dda")
+                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_WAVE);
+                    else if (filter == "psg.noise")
+                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_NOISE);
+                    else if (filter == "adpcm.registers")
+                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_REGISTERS);
+                    else if (filter == "adpcm.dma")
+                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_DMA);
+                    else if (filter == "adpcm.playback")
+                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_PLAYBACK);
+                    else if (filter == "adpcm.transfers")
+                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_TRANSFERS);
+                    else if (filter == "adpcm.irqs")
+                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_IRQS);
+                    else if (filter == "scsi.commands")
+                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_COMMANDS);
+                    else if (filter == "scsi.phases")
+                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_PHASES);
+                    else if (filter == "scsi.responses")
+                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_RESPONSES);
+                    else if (filter == "scsi.response_bytes")
+                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_RESPONSE_BYTES);
+                    else if (filter == "scsi.problems")
+                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_PROBLEMS);
+                    else return {{"error", "Unknown trace filter: " + filter}};
+                }
+
+                if (flags == 0)
+                    return {{"error", "At least one trace filter is required"}};
+            }
         }
-        return m_debugAdapter.SetTraceLog(enabled, flags);
+        std::string output = arguments.value("output", "");
+        std::string memory_size = arguments.value("memory_size", "");
+        std::string disk_size = arguments.value("disk_size", "");
+        std::string output_path = arguments.value("output_path", "");
+        return m_debugAdapter.SetTraceLog(enabled, flags, output, memory_size,
+                                          disk_size, output_path, event_filters);
     }
     else
     {
@@ -3319,4 +3405,3 @@ void McpServer::HandleResourcesRead(const json& request)
 
     SendResponse(response);
 }
-

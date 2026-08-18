@@ -380,7 +380,7 @@ The server exposes tools organized in the following categories:
 - `list_disassembler_bookmarks` - List all disassembler bookmarks
 - `get_call_stack` - View function call hierarchy
 - `get_trace_log` - Read trace logger entries (CPU + hardware events). Use set_trace_log to start/stop the logger
-- `set_trace_log` - Start or stop the trace logger. Records CPU instructions and hardware events into a ring buffer. Filter event types with optional booleans
+- `set_trace_log` - Start or stop trace logging. Use `filters` for exact event streams such as `cpu.instructions`, `vdc.irqs`, or `scsi.commands`; omitting it enables the safe default of CPU instructions and IRQs. Storage options are `output` (`memory` or `disk`), `memory_size` (`100K` through `5M`), `disk_size` (`10MB` through `1GB`, or `unbounded`), and `output_path`
 
 ### Breakpoints
 - `set_breakpoint` - Set execution, read, or write breakpoint (supports 5 memory areas: rom_ram, vram, palette, huc6270_reg, huc6260_reg)

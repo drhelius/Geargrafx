@@ -48,6 +48,7 @@ class Memory;
 class HuC6202;
 class Random;
 class TraceLogger;
+enum GG_Trace_Type : u8;
 
 typedef void (*GG_Clock_Hardware_Fn)(void* context, u32 master_cycles);
 
@@ -285,6 +286,10 @@ private:
     void SetDisassemblerOperand(GG_Disassembler_Record* record, u16 address, bool is_zp, const char* text);
     void SetDisassemblerRecordSegment(GG_Disassembler_Record* record);
     void InvalidateOverlappingRecords(u16 address, u8 opcode_size);
+    void TraceEvent(GG_Trace_Type type, u16 value = 0, u16 value2 = 0);
+    void TraceEvent(u8 event, u8 value);
+    void LogTraceEvent(GG_Trace_Type type, u16 value, u16 value2);
+    void LogTraceEvent(u8 event, u8 value);
 
     void UnofficialOPCode();
     void OPCodes_ADC(u8 value);

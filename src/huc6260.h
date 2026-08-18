@@ -97,6 +97,8 @@ public:
     void LoadState(std::istream& stream);
 
 private:
+    void TraceEvent(u8 event);
+    void LogTraceEvent(u8 event);
     void InitPalettes();
     void AdjustForMultipleDividers();
     template <bool is_sgx>

@@ -59,6 +59,42 @@ void HuC6270::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
+#if !defined(GG_DISABLE_DISASSEMBLER)
+void HuC6270::LogTraceEvent(u8 event, u8 raw, bool msb)
+{
+    GG_Trace_Entry e = {};
+    e.type = TRACE_VDC;
+    e.vdc.event = event;
+    e.vdc.chip = m_chip_id;
+
+    switch (event)
+    {
+        case TRACE_VDC_REG_WRITE:
+            e.vdc.reg = m_address_register;
+            e.vdc.value = m_register[m_address_register];
+            e.vdc.raw = raw;
+            e.vdc.msb = msb ? 1 : 0;
+            break;
+        case TRACE_VDC_SCANLINE_IRQ:
+            e.vdc.value = m_register[HUC6270_REG_RCR];
+            break;
+        case TRACE_VDC_VRAM_DMA_START:
+            e.vdc.value = m_vram_transfer_src;
+            e.vdc.value2 = m_vram_transfer_dest;
+            e.vdc.value3 = m_register[HUC6270_REG_DCR];
+            e.vdc.param = (u32)m_register[HUC6270_REG_LENR] + 1;
+            break;
+        case TRACE_VDC_SATB_DMA_START:
+            e.vdc.value = m_register[HUC6270_REG_DVSSR];
+            break;
+        default:
+            break;
+    }
+
+    m_trace_logger->TraceLog(e);
+}
+#endif
+
 void HuC6270::Reset()
 {
     memset(m_register, 0, sizeof(m_register));
@@ -248,6 +284,8 @@ void HuC6270::WriteRegister(u16 address, u8 value)
 
             m_register[m_address_register] &= k_register_mask[m_address_register];
 
+            TraceEvent(TRACE_VDC_REG_WRITE, value, msb);
+
             switch (m_address_register)
             {
                 // 0x01
@@ -309,6 +347,8 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                         m_vram_transfer_pending = 4 * (m_register[HUC6270_REG_LENR] + 1);
                         m_vram_transfer_src = m_register[HUC6270_REG_SOUR];
                         m_vram_transfer_dest = m_register[HUC6270_REG_DESR];
+
+                        TraceEvent(TRACE_VDC_VRAM_DMA_START);
                     }
                     break;
                 // 0x13
@@ -494,16 +534,7 @@ void HuC6270::SATTransfer()
                 m_status_register |= HUC6270_STATUS_SAT_END;
                 m_huc6202->AssertIRQ1(this, true);
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-                if (m_trace_logger->IsEnabled(TRACE_VDC))
-                {
-                    GG_Trace_Entry e = {};
-                    e.type = TRACE_VDC;
-                    e.vdc.event = TRACE_VDC_SATB_DMA_END_IRQ;
-                    e.vdc.chip = m_chip_id;
-                    m_trace_logger->TraceLog(e);
-                }
-#endif
+                TraceEvent(TRACE_VDC_SATB_DMA_END_IRQ);
             }
         }
     }
@@ -539,16 +570,7 @@ void HuC6270::VRAMTransfer()
                 m_status_register |= HUC6270_STATUS_VRAM_END;
                 m_huc6202->AssertIRQ1(this, true);
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-                if (m_trace_logger->IsEnabled(TRACE_VDC))
-                {
-                    GG_Trace_Entry e = {};
-                    e.type = TRACE_VDC;
-                    e.vdc.event = TRACE_VDC_VRAM_DMA_END_IRQ;
-                    e.vdc.chip = m_chip_id;
-                    m_trace_logger->TraceLog(e);
-                }
-#endif
+                TraceEvent(TRACE_VDC_VRAM_DMA_END_IRQ);
             }
         }
     }
@@ -639,16 +661,7 @@ void HuC6270::VBlankIRQ()
         if(IsValidPointer(m_input_pump_fn))
             m_input_pump_fn();
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-        if (m_trace_logger->IsEnabled(TRACE_VDC))
-        {
-            GG_Trace_Entry e = {};
-            e.type = TRACE_VDC;
-            e.vdc.event = TRACE_VDC_VBLANK_IRQ;
-            e.vdc.chip = m_chip_id;
-            m_trace_logger->TraceLog(e);
-        }
-#endif
+        TraceEvent(TRACE_VDC_VBLANK_IRQ);
     }
 
     if (m_trigger_sat_transfer || (m_register[HUC6270_REG_DCR] & 0x10))
@@ -656,17 +669,7 @@ void HuC6270::VBlankIRQ()
         m_trigger_sat_transfer = false;
         m_sat_transfer_pending = 1024;
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-        if (m_trace_logger->IsEnabled(TRACE_VDC))
-        {
-            GG_Trace_Entry e = {};
-            e.type = TRACE_VDC;
-            e.vdc.event = TRACE_VDC_SATB_DMA_START;
-            e.vdc.value = m_register[HUC6270_REG_DVSSR];
-            e.vdc.chip = m_chip_id;
-            m_trace_logger->TraceLog(e);
-        }
-#endif
+        TraceEvent(TRACE_VDC_SATB_DMA_START);
     }
 }
 

@@ -26,6 +26,7 @@
 
 class HuC6270;
 class HuC6280;
+class TraceLogger;
 
 class HuC6202
 {
@@ -79,6 +80,7 @@ public:
     void ProcessCpuVramAccesses(u32 cycles);
     bool HasPendingCpuVramAccess();
     void AssertIRQ1(HuC6270* vdc, bool assert);
+    void SetTraceLogger(TraceLogger* trace_logger);
     u16 GetWindow1Width();
     u16 GetWindow2Width();
     HuC6202_Window_Priority* GetWindowPriorities();
@@ -87,10 +89,13 @@ public:
     void LoadState(std::istream& stream);
 
 private:
+    void TraceEvent(u8 event, u8 reg, u8 raw);
+    void LogTraceEvent(u8 event, u8 reg, u8 raw);
     void CalculatePriorityMode(HuC6202_Window_Mode window_mode, u8 value);
 
 private:
     HuC6280* m_huc6280;
+    TraceLogger* m_trace_logger;
     HuC6270* m_huc6270_1;
     HuC6270* m_huc6270_2;
     HuC6202_State m_state;

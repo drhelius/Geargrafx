@@ -90,28 +90,36 @@ void ScsiController::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
-void ScsiController::TraceEvent(u8 event, u8 command, u8 phase, u8 status, u32 param)
-{
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEnabled(TRACE_SCSI))
+void ScsiController::LogTraceEvent(u8 event, u8 command, u8 phase, u8 status,
+    u32 param, const u8* data, u8 size)
+{
+    GG_Trace_Entry e = {};
+    e.type = TRACE_SCSI;
+    e.scsi.event = event;
+    e.scsi.command = command;
+    e.scsi.phase = phase;
+    e.scsi.status = status;
+    e.scsi.param = param;
+    if (event == TRACE_SCSI_COMMAND)
     {
-        GG_Trace_Entry e = {};
-        e.type = TRACE_SCSI;
-        e.scsi.event = event;
-        e.scsi.command = command;
-        e.scsi.phase = phase;
-        e.scsi.status = status;
-        e.scsi.param = param;
-        m_trace_logger->TraceLog(e);
+        e.scsi.size = (u8)MIN(m_command_buffer.size(), sizeof(e.scsi.data));
+        if (e.scsi.size > 0)
+            memcpy(e.scsi.data, m_command_buffer.data(), e.scsi.size);
     }
-#else
-    UNUSED(event);
-    UNUSED(command);
-    UNUSED(phase);
-    UNUSED(status);
-    UNUSED(param);
-#endif
+    else if (event == TRACE_SCSI_RESPONSE)
+    {
+        if (m_command_buffer.size() > 1)
+            e.scsi.param = m_command_buffer[1] << 8;
+        if (m_command_buffer.size() > 2)
+            e.scsi.param |= m_command_buffer[2];
+        e.scsi.size = MIN(size, (u8)sizeof(e.scsi.data));
+        if (e.scsi.size > 0 && IsValidPointer(data))
+            memcpy(e.scsi.data, data, e.scsi.size);
+    }
+    m_trace_logger->TraceLog(e);
 }
+#endif
 
 void ScsiController::TraceProblem(u8 event, u8 problem, u8 command, u32 param)
 {
@@ -190,6 +198,7 @@ void ScsiController::SetPhase(ScsiPhase phase)
 
     ClearSignal(SCSI_SIGNAL_BSY | SCSI_SIGNAL_REQ | SCSI_SIGNAL_CD | SCSI_SIGNAL_MSG | SCSI_SIGNAL_IO);
     m_phase = phase;
+    TraceEvent(TRACE_SCSI_PHASE_CHANGE, 0, (u8)m_phase, 0, 0);
 
     switch (m_phase)
     {
@@ -205,9 +214,11 @@ void ScsiController::SetPhase(ScsiPhase phase)
             break;
         case SCSI_PHASE_MESSAGE_IN:
             SetSignal(SCSI_SIGNAL_BSY | SCSI_SIGNAL_CD | SCSI_SIGNAL_IO | SCSI_SIGNAL_MSG | SCSI_SIGNAL_REQ);
+            TraceEvent(TRACE_SCSI_RESPONSE_BYTE, 0, (u8)m_phase, m_bus.db, 0);
             break;
         case SCSI_PHASE_STATUS:
             SetSignal(SCSI_SIGNAL_BSY | SCSI_SIGNAL_CD | SCSI_SIGNAL_IO | SCSI_SIGNAL_REQ);
+            TraceEvent(TRACE_SCSI_RESPONSE_BYTE, 0, (u8)m_phase, m_bus.db, 0);
             break;
         case SCSI_PHASE_BUSY:
             SetSignal(SCSI_SIGNAL_BSY);
@@ -216,7 +227,6 @@ void ScsiController::SetPhase(ScsiPhase phase)
             break;
     }
 
-    TraceEvent(TRACE_SCSI_PHASE_CHANGE, 0, (u8)m_phase, 0, 0);
 }
 
 void ScsiController::UpdateScsi()
@@ -310,7 +320,7 @@ void ScsiController::UpdateDataInPhase()
     {
         if (m_data_buffer.size() > 0)
         {
-            bool delay = (m_data_buffer.size() < k_scsi_data_buffer_capacity) && (m_data_buffer_offset > 0);
+            bool short_response = m_data_buffer.size() < k_scsi_data_buffer_capacity;
             assert(m_data_buffer_offset < m_data_buffer.size());
             m_bus.db = m_data_buffer[m_data_buffer_offset];
             m_data_buffer_offset++;
@@ -319,8 +329,16 @@ void ScsiController::UpdateDataInPhase()
                 SCSI_DEBUG("SCSI Data in phase completed %02X, %d", m_bus.signals, m_data_buffer_offset);
                 m_data_buffer.clear();
             }
-            if (delay)
-                NextEvent(SCSI_EVENT_SET_REQ_SIGNAL, k_scsi_response_byte_cycles);
+            if (short_response)
+            {
+                if (m_data_buffer_offset > 1)
+                    NextEvent(SCSI_EVENT_SET_RESPONSE_REQ_SIGNAL, k_scsi_response_byte_cycles);
+                else
+                {
+                    SetSignal(SCSI_SIGNAL_REQ);
+                    TraceEvent(TRACE_SCSI_RESPONSE_BYTE, 0, (u8)m_phase, m_bus.db, m_data_buffer_offset - 1);
+                }
+            }
             else
                 SetSignal(SCSI_SIGNAL_REQ);
         }
@@ -353,7 +371,7 @@ void ScsiController::UpdateStatusPhase()
                 NextEvent(SCSI_EVENT_SET_MESSAGE_IN_PHASE, k_scsi_phase_change_cycles);
             }
             else
-                NextEvent(SCSI_EVENT_SET_REQ_SIGNAL, k_scsi_phase_change_cycles);
+                NextEvent(SCSI_EVENT_SET_RESPONSE_REQ_SIGNAL, k_scsi_phase_change_cycles);
         }
     }
 }
@@ -581,6 +599,7 @@ void ScsiController::CommandReadSubcodeQ()
 
     m_data_buffer.assign(buffer, buffer + buffer_size);
     m_data_buffer_offset = 0;
+    TraceEvent(TRACE_SCSI_RESPONSE, SCSI_CMD_READ_SUBCODE_Q, (u8)m_phase, 0, 0, buffer, buffer_size);
 
     SCSI_DEBUG("SCSI CMD Read Subcode Q: audio state %d, track %d, relative %02X:%02X:%02X, absolute %02X:%02X:%02X",
                audio_state, current_track + 1, relative.minutes, relative.seconds, relative.frames,
@@ -608,6 +627,7 @@ void ScsiController::CommandReadTOC()
             SCSI_DEBUG("Number of tracks: %d", track_count);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
+            TraceEvent(TRACE_SCSI_RESPONSE, SCSI_CMD_READ_TOC, (u8)m_phase, 0, 0, buffer, buffer_size);
             NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
         }
@@ -620,6 +640,8 @@ void ScsiController::CommandReadTOC()
             buffer[2] = DecToBcd(length.frames);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
+            TraceEvent(TRACE_SCSI_RESPONSE, SCSI_CMD_READ_TOC, (u8)m_phase,
+                0, 0, buffer, buffer_size);
             SCSI_DEBUG("Disc length: %d %02X:%02X:%02X", MsfToLba(&length), buffer[0], buffer[1], buffer[2]);
             NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
@@ -657,6 +679,7 @@ void ScsiController::CommandReadTOC()
             SCSI_DEBUG("Track %d start: %d %02X:%02X:%02X, type: %d", track, MsfToLba(&start_msf), buffer[0], buffer[1], buffer[2], type);
             m_data_buffer.assign(buffer, buffer + buffer_size);
             m_data_buffer_offset = 0;
+            TraceEvent(TRACE_SCSI_RESPONSE, SCSI_CMD_READ_TOC, (u8)m_phase, 0, 0, buffer, buffer_size);
 
             NextEvent(SCSI_EVENT_SET_DATA_IN_PHASE, 9000);
             break;
@@ -676,8 +699,7 @@ void ScsiController::LoadSector()
         if (m_load_sector >= m_cdrom_media->GetSectorCount())
         {
             Debug("SCSI Load sector: sector %d past end of disc", m_load_sector);
-            TraceProblem(TRACE_SCSI_WARNING, TRACE_SCSI_PROBLEM_INVALID_READ_REQUEST,
-                         SCSI_CMD_READ, m_load_sector);
+            TraceProblem(TRACE_SCSI_WARNING, TRACE_SCSI_PROBLEM_READ_PAST_END, SCSI_CMD_READ, m_load_sector);
             m_load_sector_count = 0;
             m_next_load_cycles = 0;
             StartStatus(SCSI_STATUS_CHECK_CONDITION);
@@ -689,8 +711,7 @@ void ScsiController::LoadSector()
         if (!m_cdrom_media->ReadSector(m_load_sector, m_data_buffer.data()))
         {
             Debug("SCSI Load sector: failed to read sector %d", m_load_sector);
-            TraceProblem(TRACE_SCSI_WARNING, TRACE_SCSI_PROBLEM_INVALID_READ_REQUEST,
-                         SCSI_CMD_READ, m_load_sector);
+            TraceProblem(TRACE_SCSI_WARNING, TRACE_SCSI_PROBLEM_READ_SECTOR_FAILED, SCSI_CMD_READ, m_load_sector);
             m_data_buffer.clear();
             m_data_buffer_offset = 0;
             m_load_sector_count = 0;

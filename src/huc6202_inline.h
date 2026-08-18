@@ -23,6 +23,19 @@
 #include "huc6202.h"
 #include "huc6270.h"
 #include "huc6280.h"
+#include "trace_logger.h"
+
+INLINE void HuC6202::TraceEvent(u8 event, u8 reg, u8 raw)
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_VDC, event))
+        LogTraceEvent(event, reg, raw);
+#else
+    UNUSED(event);
+    UNUSED(reg);
+    UNUSED(raw);
+#endif
+}
 
 INLINE u16 HuC6202::Clock(void)
 {
@@ -131,6 +144,10 @@ INLINE void HuC6202::WriteRegister(u16 address, u8 value)
                 Debug("HuC6202: Invalid write at %04X, value=%02X", address, value);
                 break;
         }
+
+        u8 reg = address & 0x1F;
+        if (reg >= 0x08 && reg <= 0x0E)
+            TraceEvent(TRACE_VDC_VPC_REG_WRITE, reg, value);
     }
     else
     {

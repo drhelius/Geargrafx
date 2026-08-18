@@ -40,7 +40,6 @@
 #include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
 #include "gui_debug_psg.h"
-#include "gui_debug_trace_logger.h"
 
 static bool status_message_active = false;
 static char status_message[4096] = "";

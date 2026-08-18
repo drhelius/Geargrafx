@@ -83,6 +83,7 @@ public:
 private:
     void GenerateSamples();
     void SyncMediaCurrentSector();
+    void TraceEvent(u8 event, u32 lba, u32 param = 0);
 
 private:
     CdRom* m_cdrom;

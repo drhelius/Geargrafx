@@ -21,6 +21,7 @@
 #include "media.h"
 #include "geargrafx_core.h"
 #include "common.h"
+#include "trace_logger.h"
 
 Input::Input(Media* media, GeargrafxCore* core)
 {
@@ -65,6 +66,22 @@ void Input::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
 }
+
+#if !defined(GG_DISABLE_DISASSEMBLER)
+void Input::LogTraceEvent(u8 event, u8 value, u8 source)
+{
+    GG_Trace_Entry e = {};
+    e.type = TRACE_INPUT;
+    e.input.event = event;
+    e.input.value = value;
+    e.input.port = (u8)m_selected_pad;
+    e.input.source = source;
+    e.input.state = (m_sel ? 0x01 : 0x00) |
+                    (m_clr ? 0x02 : 0x00) |
+                    (m_selected_extra_buttons ? 0x04 : 0x00);
+    m_trace_logger->TraceLog(e);
+}
+#endif
 
 void Input::Init()
 {
