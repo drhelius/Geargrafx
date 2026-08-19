@@ -89,6 +89,14 @@
     #define NO_INLINE
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+    #define likely(x)   __builtin_expect(!!(x), 1)
+    #define unlikely(x) __builtin_expect(!!(x), 0)
+#else
+    #define likely(x)   (x)
+    #define unlikely(x) (x)
+#endif
+
 #if !defined(GG_DEBUG)
     #if defined(__GNUC__) || defined(__clang__)
         #if !defined(__OPTIMIZE__) && !defined(__OPTIMIZE_SIZE__)
