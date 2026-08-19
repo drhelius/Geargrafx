@@ -58,6 +58,7 @@ static Uint64 trace_logger_disk_last_flush = 0;
 
 static const u32 k_trace_logger_capacities[] = { 100000, 500000, 1000000, 2000000, 5000000 };
 static const char* const k_trace_logger_capacity_names[] = { "100K", "500K", "1M", "2M", "5M" };
+static const char* const k_trace_logger_capacity_labels[] = { "100K (5 MB)", "500K (25 MB)", "1M (50 MB)", "2M (100 MB)", "5M (250 MB)" };
 static const char* const k_trace_logger_disk_size_names[] = {
     "10MB", "50MB", "100MB", "250MB", "500MB", "1GB", "unbounded"
 };
@@ -141,15 +142,7 @@ void gui_debug_window_trace_logger(void)
     if (config_debug.trace_output == gui_TraceOutput_Memory)
     {
         int previous_capacity = config_debug.trace_capacity;
-        char capacity_labels[IM_ARRAYSIZE(k_trace_logger_capacities)][32];
-        const char* capacity_items[IM_ARRAYSIZE(k_trace_logger_capacities)];
-        for (int i = 0; i < IM_ARRAYSIZE(k_trace_logger_capacities); i++)
-        {
-            double memory_mib = ((double)k_trace_logger_capacities[i] * sizeof(GG_Trace_Entry)) / (1024.0 * 1024.0);
-            snprintf(capacity_labels[i], sizeof(capacity_labels[i]), "%s (%.1f MiB)", k_trace_logger_capacity_names[i], memory_mib);
-            capacity_items[i] = capacity_labels[i];
-        }
-        if (ImGui::Combo("##trace_capacity", &config_debug.trace_capacity, capacity_items, IM_ARRAYSIZE(capacity_items)) && !trace_logger_apply_capacity())
+        if (ImGui::Combo("##trace_capacity", &config_debug.trace_capacity, k_trace_logger_capacity_labels, IM_ARRAYSIZE(k_trace_logger_capacity_labels)) && !trace_logger_apply_capacity())
             config_debug.trace_capacity = previous_capacity;
     }
     else
@@ -994,7 +987,7 @@ static void trace_logger_set_config_event_filter(GG_Trace_Type type, u32 filter)
 
 static void trace_logger_menu_event_filter(const char* label, int* filter, u32 mask)
 {
-    bool enabled = ((u32)*filter & mask) == mask;
+    bool enabled = ((u32)*filter & mask) != 0;
     if (ImGui::MenuItem(label, "", &enabled))
     {
         if (enabled)
