@@ -23,6 +23,21 @@
 #include <cstdio>
 #include <cstring>
 
+static void format_hex_bytes(const u8* data, u8 size, char* buffer, size_t buffer_size)
+{
+    if (buffer_size == 0)
+        return;
+
+    buffer[0] = '\0';
+    int pos = 0;
+    u8 count = MIN(size, (u8)16);
+
+    for (u8 i = 0; i < count && (size_t)(pos + 3) < buffer_size; i++)
+    {
+        pos += snprintf(buffer + pos, buffer_size - pos, "%s%02X", i ? " " : "", data[i]);
+    }
+}
+
 void trace_log_format_cpu_bytes(const GG_Trace_Entry& entry, char* buffer, size_t buffer_size)
 {
     static const char k_hex[] = "0123456789ABCDEF";
@@ -145,18 +160,18 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
             break;
         case TRACE_CPU_IRQ:
         {
-            const char* irq_name = "???";
+            const char* irq_name = "UNKNOWN";
             if (entry.irq.vector == 0xFFFA) irq_name = "TIQ";
             else if (entry.irq.vector == 0xFFF8) irq_name = "IRQ1";
             else if (entry.irq.vector == 0xFFF6) irq_name = "IRQ2";
-            snprintf(buf, buf_size, "  [CPU]  IRQ       %s  PC:$%04X  Vector:$%04X  Mask:%02X",
+            snprintf(buf, buf_size, "  [CPU]  IRQ       %s  PC:$%04X  Vector:$%04X  Mask:$%02X",
                      irq_name, entry.irq.pc, entry.irq.vector, entry.irq.irq_mask);
             break;
         }
         case TRACE_VDC:
         {
             static const char* k_vdc_reg_names[] = {
-                "MAWR", "MARR", "VWR", "???", "???", "CR", "RCR", "BXR",
+                "MAWR", "MARR", "VWR", "RESERVED_03", "RESERVED_04", "CR", "RCR", "BXR",
                 "BYR", "MWR", "HSR", "HDR", "VSR", "VDR", "VCR", "DCR",
                 "SOUR", "DESR", "LENR", "DVSSR"
             };
@@ -165,8 +180,8 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
             {
                 case TRACE_VDC_REG_WRITE:
                 {
-                    const char* reg_name = entry.vdc.reg < 20 ? k_vdc_reg_names[entry.vdc.reg] : "???";
-                    snprintf(buf, buf_size, "  [%s]  REG       %s($%02X) %s:$%02X  Effective:$%04X",
+                    const char* reg_name = entry.vdc.reg < 20 ? k_vdc_reg_names[entry.vdc.reg] : "UNKNOWN";
+                    snprintf(buf, buf_size, "  [%s]  REG       %s($%02X) %s:$%02X  Value:$%04X",
                              chip_name, reg_name, entry.vdc.reg,
                              entry.vdc.msb ? "MSB" : "LSB", entry.vdc.raw, entry.vdc.value);
                     break;
@@ -175,7 +190,7 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                     snprintf(buf, buf_size, "  [%s]  VBLANK    IRQ", chip_name);
                     break;
                 case TRACE_VDC_SCANLINE_IRQ:
-                    snprintf(buf, buf_size, "  [%s]  SCANLINE  IRQ  RCR=%d", chip_name, entry.vdc.value);
+                    snprintf(buf, buf_size, "  [%s]  SCANLINE  IRQ  RCR:$%04X", chip_name, entry.vdc.value);
                     break;
                 case TRACE_VDC_OVERFLOW_IRQ:
                     snprintf(buf, buf_size, "  [%s]  OVERFLOW  IRQ", chip_name);
@@ -190,12 +205,12 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                     snprintf(buf, buf_size, "  [%s]  VRAM DMA  END IRQ", chip_name);
                     break;
                 case TRACE_VDC_VRAM_DMA_START:
-                    snprintf(buf, buf_size, "  [%s]  VRAM DMA  START  Source:$%04X  Dest:$%04X  Words:%u  DCR:$%04X",
+                    snprintf(buf, buf_size, "  [%s]  VRAM DMA  START  Src:$%04X  Dst:$%04X  Words:%u  DCR:$%04X",
                              chip_name, entry.vdc.value, entry.vdc.value2,
                              entry.vdc.param, entry.vdc.value3);
                     break;
                 case TRACE_VDC_SATB_DMA_START:
-                    snprintf(buf, buf_size, "  [%s]  SATB DMA  START  DVSSR=$%04X", chip_name, entry.vdc.value);
+                    snprintf(buf, buf_size, "  [%s]  SATB DMA  START  Src:$%04X", chip_name, entry.vdc.value);
                     break;
                 case TRACE_VDC_VPC_REG_WRITE:
                 {
@@ -205,12 +220,12 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                     };
                     const char* reg_name = entry.vdc.reg >= 0x08 && entry.vdc.reg <= 0x0E ?
                         k_vpc_reg_names[entry.vdc.reg - 0x08] : "UNKNOWN";
-                    snprintf(buf, buf_size, "  [VPC]   REG       %s($%02X) Write:$%02X  Effective:$%03X",
+                    snprintf(buf, buf_size, "  [VPC]   REG       %s($%02X) Write:$%02X  Value:$%03X",
                              reg_name, entry.vdc.reg, entry.vdc.raw, entry.vdc.value);
                     break;
                 }
                 default:
-                    snprintf(buf, buf_size, "  [%s]  ???", chip_name);
+                    snprintf(buf, buf_size, "  [%s]  EVENT     UNKNOWN($%02X)", chip_name, entry.vdc.event);
                     break;
             }
             break;
@@ -218,9 +233,15 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
         case TRACE_INPUT:
         {
             const char* source = "NONE";
+            char unknown_source[24];
             if (entry.input.source == TRACE_INPUT_SOURCE_GAMEPAD) source = "GAMEPAD";
             else if (entry.input.source == TRACE_INPUT_SOURCE_MOUSE) source = "MOUSE";
             else if (entry.input.source == TRACE_INPUT_SOURCE_MB128) source = "MB128";
+            else if (entry.input.source != TRACE_INPUT_SOURCE_NONE)
+            {
+                snprintf(unknown_source, sizeof(unknown_source), "UNKNOWN($%02X)", entry.input.source);
+                source = unknown_source;
+            }
 
             if (entry.input.event == TRACE_INPUT_WRITE)
             {
@@ -234,13 +255,14 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 }
                 else
                 {
-                    snprintf(buf, buf_size, "  [INPUT] WRITE   Data:$%02X  Pad:NONE  SEL:%u  CLR:%u  Extra:%u",
+                    snprintf(buf, buf_size, "  [INPUT] WRITE   Data:$%02X  Pad:-  SEL:%u  CLR:%u  Extra:%u",
                              entry.input.value, entry.input.state & 0x01,
                              (entry.input.state >> 1) & 0x01,
                              (entry.input.state >> 2) & 0x01);
                 }
             }
-            else if (entry.input.port < GG_MAX_GAMEPADS && entry.input.source != TRACE_INPUT_SOURCE_MB128)
+            else if (entry.input.event == TRACE_INPUT_READ &&
+                     entry.input.port < GG_MAX_GAMEPADS && entry.input.source != TRACE_INPUT_SOURCE_MB128)
             {
                 snprintf(buf, buf_size, "  [INPUT] READ    %s Pad:%u  Data:$%02X  SEL:%u  CLR:%u  Extra:%u",
                          source, entry.input.port + 1, entry.input.value,
@@ -248,12 +270,17 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                          (entry.input.state >> 1) & 0x01,
                          (entry.input.state >> 2) & 0x01);
             }
-            else
+            else if (entry.input.event == TRACE_INPUT_READ)
             {
                 snprintf(buf, buf_size, "  [INPUT] READ    %s  Data:$%02X  SEL:%u  CLR:%u  Extra:%u",
                          source, entry.input.value, entry.input.state & 0x01,
                          (entry.input.state >> 1) & 0x01,
                          (entry.input.state >> 2) & 0x01);
+            }
+            else
+            {
+                snprintf(buf, buf_size, "  [INPUT] EVENT   UNKNOWN($%02X)  Data:$%02X",
+                         entry.input.event, entry.input.value);
             }
             break;
         }
@@ -275,7 +302,7 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                          entry.timer.counter, entry.timer.reload);
             }
             else
-                snprintf(buf, buf_size, "  [TIMER] ???");
+                snprintf(buf, buf_size, "  [TIMER] EVENT   UNKNOWN($%02X)", entry.timer.event);
             break;
         case TRACE_CDROM:
         {
@@ -285,24 +312,30 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 case TRACE_CDROM_IRQ_CLEAR:
                 {
                     const char* irq_name = "UNKNOWN";
+                    char unknown_irq[24];
                     if (entry.cdrom.irq_type == CDROM_IRQ_ADPCM_HALF) irq_name = "ADPCM_HALF";
                     else if (entry.cdrom.irq_type == CDROM_IRQ_ADPCM_END) irq_name = "ADPCM_END";
                     else if (entry.cdrom.irq_type == CDROM_IRQ_STATUS_AND_MSG_IN) irq_name = "STATUS_MESSAGE_IN";
                     else if (entry.cdrom.irq_type == CDROM_IRQ_DATA_IN) irq_name = "DATA_IN";
+                    else
+                    {
+                        snprintf(unknown_irq, sizeof(unknown_irq), "UNKNOWN($%02X)", entry.cdrom.irq_type);
+                        irq_name = unknown_irq;
+                    }
                     snprintf(buf, buf_size, "  [CDROM] IRQ     %s %s  Active:$%02X  Enabled:$%02X",
                              entry.cdrom.event == TRACE_CDROM_IRQ_SET ? "SET" : "CLEAR",
                              irq_name, entry.cdrom.active, entry.cdrom.enabled);
                     break;
                 }
                 case TRACE_CDROM_IRQ_ENABLE:
-                    snprintf(buf, buf_size, "  [CDROM] IRQ     ENABLE Write:$%02X  Mask:$%02X  Active:$%02X",
+                    snprintf(buf, buf_size, "  [CDROM] IRQ     MASK  Write:$%02X  Enabled:$%02X  Active:$%02X",
                              entry.cdrom.irq_type, entry.cdrom.enabled, entry.cdrom.active);
                     break;
                 case TRACE_CDROM_FADER:
                 {
                     u8 v = entry.cdrom.irq_type;
-                    snprintf(buf, buf_size, "  [CDROM] FADER    %s  %s  %s",
-                             IS_SET_BIT(v, 3) ? "ON" : "OFF",
+                    snprintf(buf, buf_size, "  [CDROM] FADER   Write:$%02X  %s  Target:%s  Speed:%s",
+                             v, IS_SET_BIT(v, 3) ? "ON" : "OFF",
                              IS_SET_BIT(v, 1) ? "ADPCM" : "CD",
                              IS_SET_BIT(v, 2) ? "FAST" : "SLOW");
                     break;
@@ -320,22 +353,38 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 {
                     static const char* k_audio_states[] = { "PLAYING", "IDLE", "PAUSED", "STOPPED" };
                     static const char* k_stop_events[] = { "STOP", "LOOP", "IRQ" };
-                    const char* state = entry.cdrom.state < 4 ? k_audio_states[entry.cdrom.state] : "UNKNOWN";
-                    const char* stop_event = entry.cdrom.irq_type < 3 ? k_stop_events[entry.cdrom.irq_type] : "UNKNOWN";
+                    const char* state = NULL;
+                    const char* stop_event = NULL;
+                    char unknown_state[24];
+                    char unknown_stop_event[24];
+                    if (entry.cdrom.state < 4)
+                        state = k_audio_states[entry.cdrom.state];
+                    else
+                    {
+                        snprintf(unknown_state, sizeof(unknown_state), "UNKNOWN($%02X)", entry.cdrom.state);
+                        state = unknown_state;
+                    }
+                    if (entry.cdrom.irq_type < 3)
+                        stop_event = k_stop_events[entry.cdrom.irq_type];
+                    else
+                    {
+                        snprintf(unknown_stop_event, sizeof(unknown_stop_event),
+                                 "UNKNOWN($%02X)", entry.cdrom.irq_type);
+                        stop_event = unknown_stop_event;
+                    }
                     if (entry.cdrom.event == TRACE_CDROM_AUDIO_START)
                     {
-                        snprintf(buf, buf_size, "  [CDROM] AUDIO   START  State:%s  LBA:%u  SeekCycles:%u",
-                                 state, entry.cdrom.lba, entry.cdrom.param);
+                        snprintf(buf, buf_size, "  [CDROM] AUDIO   START  LBA:%u  State:%s  Seek:%u cycles",
+                                 entry.cdrom.lba, state, entry.cdrom.param);
                     }
                     else if (entry.cdrom.event == TRACE_CDROM_AUDIO_SEEK_END)
                     {
-                        snprintf(buf, buf_size, "  [CDROM] AUDIO   SEEK END  State:%s  LBA:%u",
-                                 state, entry.cdrom.lba);
+                        snprintf(buf, buf_size, "  [CDROM] AUDIO   SEEK END  LBA:%u  State:%s",
+                                 entry.cdrom.lba, state);
                     }
                     else if (entry.cdrom.event == TRACE_CDROM_AUDIO_STATE)
                     {
-                        snprintf(buf, buf_size, "  [CDROM] AUDIO   STATE  %s  LBA:%u",
-                                 state, entry.cdrom.lba);
+                        snprintf(buf, buf_size, "  [CDROM] AUDIO   STATE  %s  LBA:%u", state, entry.cdrom.lba);
                     }
                     else if (entry.cdrom.event == TRACE_CDROM_AUDIO_STOP_LBA)
                     {
@@ -350,41 +399,73 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                     break;
                 }
                 default:
-                    snprintf(buf, buf_size, "  [CDROM] ???");
+                    snprintf(buf, buf_size, "  [CDROM] EVENT   UNKNOWN($%02X)", entry.cdrom.event);
                     break;
             }
             break;
         }
         case TRACE_PSG:
         {
-            static const char* k_psg_reg_names[] = {
-                "CHANNEL_SELECT", "MAIN_BALANCE", "FREQUENCY_L", "FREQUENCY_H",
-                "CONTROL", "BALANCE", "WAVE_DDA", "NOISE",
-                "LFO_FREQUENCY", "LFO_CONTROL"
-            };
-
-            const char* reg_name = entry.psg.reg < 10 ? k_psg_reg_names[entry.psg.reg] : "UNKNOWN";
-            if (entry.psg.reg == 0)
+            switch (entry.psg.reg)
             {
-                snprintf(buf, buf_size, "  [PSG]   %-14s Channel:%u  Write:$%02X",
-                         reg_name, entry.psg.value & 0x07, entry.psg.value);
-            }
-            else if (entry.psg.reg == 1 || entry.psg.reg == 8 || entry.psg.reg == 9)
-            {
-                snprintf(buf, buf_size, "  [PSG]   %-14s Write:$%02X",
-                         reg_name, entry.psg.value);
-            }
-            else
-            {
-                snprintf(buf, buf_size, "  [PSG]   CH %u  %-14s Write:$%02X",
-                         entry.psg.channel, reg_name, entry.psg.value);
+                case TRACE_PSG_CHANNEL_SELECT:
+                    snprintf(buf, buf_size, "  [PSG]   SELECT    Channel:%u  Write:$%02X",
+                             entry.psg.value & 0x07, entry.psg.value);
+                    break;
+                case TRACE_PSG_MAIN_BALANCE:
+                    snprintf(buf, buf_size, "  [PSG]   MAIN BAL  Write:$%02X  L:$%X  R:$%X",
+                             entry.psg.value, entry.psg.value >> 4, entry.psg.value & 0x0F);
+                    break;
+                case TRACE_PSG_FREQUENCY_L:
+                    snprintf(buf, buf_size, "  [PSG]   CH %u  FREQ L    Write:$%02X",
+                             entry.psg.channel, entry.psg.value);
+                    break;
+                case TRACE_PSG_FREQUENCY_H:
+                    snprintf(buf, buf_size, "  [PSG]   CH %u  FREQ H    Write:$%02X",
+                             entry.psg.channel, entry.psg.value);
+                    break;
+                case TRACE_PSG_CONTROL:
+                    snprintf(buf, buf_size,
+                             "  [PSG]   CH %u  CONTROL   Write:$%02X  Enabled:%u  DDA:%u  Volume:$%02X",
+                             entry.psg.channel, entry.psg.value,
+                             (entry.psg.value >> 7) & 1, (entry.psg.value >> 6) & 1,
+                             entry.psg.value & 0x1F);
+                    break;
+                case TRACE_PSG_BALANCE:
+                    snprintf(buf, buf_size, "  [PSG]   CH %u  BALANCE   Write:$%02X  L:$%X  R:$%X",
+                             entry.psg.channel, entry.psg.value,
+                             entry.psg.value >> 4, entry.psg.value & 0x0F);
+                    break;
+                case TRACE_PSG_WAVE_DDA:
+                    snprintf(buf, buf_size, "  [PSG]   CH %u  WAVE/DDA  Data:$%02X",
+                             entry.psg.channel, entry.psg.value);
+                    break;
+                case TRACE_PSG_NOISE:
+                    snprintf(buf, buf_size, "  [PSG]   CH %u  NOISE     Write:$%02X  Enabled:%u  Code:$%02X",
+                             entry.psg.channel, entry.psg.value,
+                             (entry.psg.value >> 7) & 1, entry.psg.value & 0x1F);
+                    break;
+                case TRACE_PSG_LFO_FREQUENCY:
+                    snprintf(buf, buf_size, "  [PSG]   LFO FREQ  Write:$%02X  Period:$%04X",
+                             entry.psg.value, entry.psg.value ? entry.psg.value : 0x100);
+                    break;
+                case TRACE_PSG_LFO_CONTROL:
+                    snprintf(buf, buf_size,
+                             "  [PSG]   LFO CTRL  Write:$%02X  Enabled:%u  Depth:%u  Reset:%u",
+                             entry.psg.value, (entry.psg.value & 0x03) != 0,
+                             entry.psg.value & 0x03, (entry.psg.value >> 7) & 1);
+                    break;
+                default:
+                    snprintf(buf, buf_size, "  [PSG]   REG       UNKNOWN($%02X)  CH:%u  Write:$%02X",
+                             entry.psg.reg, entry.psg.channel, entry.psg.value);
+                    break;
             }
             break;
         }
         case TRACE_ADPCM:
         {
             char state[64];
-            snprintf(state, sizeof(state), "  Playing:%u Pending:%u HalfIRQ:%u EndIRQ:%u",
+            snprintf(state, sizeof(state), "  Play:%u Pending:%u HalfIRQ:%u EndIRQ:%u",
                      entry.adpcm.state & 0x01 ? 1 : 0,
                      entry.adpcm.state & 0x02 ? 1 : 0,
                      entry.adpcm.state & 0x04 ? 1 : 0,
@@ -395,10 +476,10 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                     "ADDRESS_L", "ADDRESS_H", "DATA", "DMA", "RESERVED", "CONTROL", "SAMPLE_RATE"
                 };
                 const char* reg_name = entry.adpcm.reg >= 0x08 && entry.adpcm.reg <= 0x0E ?
-                    k_adpcm_reg_names[entry.adpcm.reg - 0x08] : "INVALID";
+                    k_adpcm_reg_names[entry.adpcm.reg - 0x08] : "UNKNOWN";
                 if (entry.adpcm.reg == 0x0D)
                 {
-                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X)=$%02X  Play:%u  Repeat:%u  Reset:%u%s",
+                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X) Value:$%02X  Start:%u  Repeat:%u  Reset:%u%s",
                              reg_name, entry.adpcm.reg, entry.adpcm.value,
                              (entry.adpcm.value >> 5) & 1,
                              (entry.adpcm.value >> 6) & 1,
@@ -407,54 +488,54 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 else if (entry.adpcm.reg == 0x0E)
                 {
                     u8 rate = entry.adpcm.value & 0x0F;
-                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X)=$%02X  Rate:%uHz%s",
+                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X) Value:$%02X  Rate:%uHz%s",
                              reg_name, entry.adpcm.reg, entry.adpcm.value,
                              32000 / (16 - rate), state);
                 }
                 else
                 {
-                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X)=$%02X%s",
+                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X) Value:$%02X%s",
                              reg_name, entry.adpcm.reg, entry.adpcm.value, state);
                 }
             }
             else if (entry.adpcm.event == TRACE_ADPCM_DMA_STATE)
             {
-                snprintf(buf, buf_size, "  [ADPCM] DMA     State:$%02X  Active:%u  Length:%u%s",
+                snprintf(buf, buf_size, "  [ADPCM] DMA     State:$%02X  Active:%u  Length:$%05X%s",
                          entry.adpcm.value, entry.adpcm.value & 0x03 ? 1 : 0,
                          entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_PLAY_REQUEST)
             {
-                snprintf(buf, buf_size, "  [ADPCM] PLAY    REQUEST  Address:$%04X  Length:%u%s",
+                snprintf(buf, buf_size, "  [ADPCM] PLAY    REQUEST  Addr:$%04X  Length:$%05X%s",
                          entry.adpcm.address, entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_PLAY_START)
             {
-                snprintf(buf, buf_size, "  [ADPCM] PLAY    START  Address:$%04X  Length:%u%s",
+                snprintf(buf, buf_size, "  [ADPCM] PLAY    START  Addr:$%04X  Length:$%05X%s",
                          entry.adpcm.address, entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_PLAY_STOP)
             {
-                snprintf(buf, buf_size, "  [ADPCM] PLAY    STOP  Address:$%04X  Length:%u%s",
+                snprintf(buf, buf_size, "  [ADPCM] PLAY    STOP  Addr:$%04X  Length:$%05X%s",
                          entry.adpcm.address, entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_READ_COMPLETE ||
                      entry.adpcm.event == TRACE_ADPCM_WRITE_COMPLETE)
             {
-                snprintf(buf, buf_size, "  [ADPCM] %s  Address:$%04X  Data:$%02X  Length:%u%s",
+                snprintf(buf, buf_size, "  [ADPCM] %s  Addr:$%04X  Data:$%02X  Length:$%05X%s",
                          entry.adpcm.event == TRACE_ADPCM_READ_COMPLETE ? "READ " : "WRITE",
                          entry.adpcm.address, entry.adpcm.value, entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_HALF_IRQ ||
                      entry.adpcm.event == TRACE_ADPCM_END_IRQ)
             {
-                snprintf(buf, buf_size, "  [ADPCM] IRQ     %s %s  Address:$%04X  Length:%u%s",
+                snprintf(buf, buf_size, "  [ADPCM] IRQ     %s %s  Addr:$%04X  Length:$%05X%s",
                          entry.adpcm.event == TRACE_ADPCM_HALF_IRQ ? "HALF" : "END",
                          entry.adpcm.value ? "SET" : "CLEAR",
                          entry.adpcm.address, entry.adpcm.length, state);
             }
             else
-                snprintf(buf, buf_size, "  [ADPCM] ???");
+                snprintf(buf, buf_size, "  [ADPCM] EVENT   UNKNOWN($%02X)", entry.adpcm.event);
             break;
         }
         case TRACE_SYSTEM:
@@ -471,7 +552,7 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
             else if (entry.system.event == TRACE_SYSTEM_SF2_MAPPER)
             {
                 snprintf(buf, buf_size,
-                         "  [SF2]   LATCH   Address:$%04X  Block:$%02X->$%02X  PhysicalBase:$%06X",
+                         "  [SF2]   LATCH   Addr:$%04X  Block:$%02X->$%02X  Physical:$%06X",
                          entry.system.address, entry.system.old_value,
                          entry.system.new_value, entry.system.physical);
             }
@@ -492,7 +573,7 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                          entry.system.state);
             }
             else
-                snprintf(buf, buf_size, "  [SYSTEM] ???");
+                snprintf(buf, buf_size, "  [SYSTEM] EVENT   UNKNOWN($%02X)", entry.system.event);
             break;
         }
         case TRACE_VCE:
@@ -503,14 +584,14 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 {
                     static const char* k_speed_names[] = { "5.36MHz", "7.16MHz", "10.8MHz", "10.8MHz" };
                     u8 speed = entry.vce.value & 0x03;
-                    snprintf(buf, buf_size, "  [VCE]  CONTROL   Speed:%s  Blur:%d  B&W:%d",
-                             k_speed_names[speed],
+                    snprintf(buf, buf_size, "  [VCE]  CONTROL  Write:$%02X  Speed:%s  Blur:%d  B&W:%d",
+                             entry.vce.value, k_speed_names[speed],
                              (entry.vce.value >> 2) & 1,
                              (entry.vce.value >> 7) & 1);
                     break;
                 }
                 case TRACE_VCE_COLOR_WRITE:
-                    snprintf(buf, buf_size, "  [VCE]  COLOR     Addr:$%03X=$%03X",
+                    snprintf(buf, buf_size, "  [VCE]  COLOR    Addr:$%03X  Value:$%03X",
                              entry.vce.reg, entry.vce.value & 0x1FF);
                     break;
                 case TRACE_VCE_VSYNC_START:
@@ -520,7 +601,7 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                     snprintf(buf, buf_size, "  [VCE]  VSYNC     END    Line:%d", entry.vce.value);
                     break;
                 default:
-                    snprintf(buf, buf_size, "  [VCE]  ???");
+                    snprintf(buf, buf_size, "  [VCE]  EVENT    UNKNOWN($%02X)", entry.vce.event);
                     break;
             }
             break;
@@ -536,7 +617,7 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 "DATA OUT", "MESSAGE IN", "STATUS", "BUSY"
             };
             static const char* k_scsi_status_names[] = {
-                "GOOD", "???", "CHECK_CONDITION", "???", "CONDITION_MET", "???", "???", "???",
+                "GOOD", NULL, "CHECK_CONDITION", NULL, "CONDITION_MET", NULL, NULL, NULL,
                 "BUSY"
             };
             static const char* k_scsi_problem_names[] = {
@@ -561,12 +642,7 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 {
                     const char* cmd_name = NULL;
                     char bytes[49] = "";
-                    int bytes_pos = 0;
-                    for (u8 i = 0; i < entry.scsi.size && (bytes_pos + 3) < (int)sizeof(bytes); i++)
-                    {
-                        bytes_pos += snprintf(bytes + bytes_pos, sizeof(bytes) - bytes_pos,
-                                              "%02X ", entry.scsi.data[i]);
-                    }
+                    format_hex_bytes(entry.scsi.data, entry.scsi.size, bytes, sizeof(bytes));
                     if (entry.scsi.command < 9)
                         cmd_name = k_scsi_cmd_names[entry.scsi.command];
                     else if (entry.scsi.command == 0xD8) cmd_name = "AUDIO_START";
@@ -581,33 +657,37 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                             u32 lba = ((entry.scsi.data[1] & 0x1F) << 16) |
                                       (entry.scsi.data[2] << 8) | entry.scsi.data[3];
                             u16 count = entry.scsi.data[4] == 0 ? 256 : entry.scsi.data[4];
-                            snprintf(buf, buf_size, "  [SCSI] CMD      %s  LBA:%u  Count:%u  Bytes:%s",
+                            snprintf(buf, buf_size, "  [SCSI] CMD      %s  LBA:%u  Count:%u  CDB:%s",
                                      cmd_name, lba, count, bytes);
                         }
                         else if ((entry.scsi.command == 0xD8 || entry.scsi.command == 0xD9) &&
                                  entry.scsi.size >= 10)
                         {
-                            snprintf(buf, buf_size, "  [SCSI] CMD      %s  Mode:$%02X  AddressMode:%u  Address:%02X:%02X:%02X:%02X  Bytes:%s",
-                                     cmd_name, entry.scsi.data[1], entry.scsi.data[9] >> 6,
+                            static const char* k_address_modes[] = { "LBA", "MSF", "TRACK", "UNKNOWN($03)" };
+                            u8 address_mode = entry.scsi.data[9] >> 6;
+                            snprintf(buf, buf_size, "  [SCSI] CMD      %s  Mode:$%02X  AddrMode:%s  Addr:%02X:%02X:%02X:%02X  CDB:%s",
+                                     cmd_name, entry.scsi.data[1], k_address_modes[address_mode],
                                      entry.scsi.data[2], entry.scsi.data[3],
                                      entry.scsi.data[4], entry.scsi.data[5], bytes);
                         }
                         else if (entry.scsi.command == 0xDE && entry.scsi.size >= 3)
                         {
-                            snprintf(buf, buf_size, "  [SCSI] CMD      %s  Mode:$%02X  Track:$%02X  Bytes:%s",
+                            snprintf(buf, buf_size, "  [SCSI] CMD      %s  Mode:$%02X  Track:$%02X  CDB:%s",
                                      cmd_name, entry.scsi.data[1], entry.scsi.data[2], bytes);
                         }
                         else
-                            snprintf(buf, buf_size, "  [SCSI] CMD      %s  Bytes:%s", cmd_name, bytes);
+                            snprintf(buf, buf_size, "  [SCSI] CMD      %s  CDB:%s", cmd_name, bytes);
                     }
                     else
-                        snprintf(buf, buf_size, "  [SCSI] CMD      $%02X  Bytes:%s", entry.scsi.command, bytes);
+                        snprintf(buf, buf_size, "  [SCSI] CMD      UNKNOWN($%02X)  CDB:%s", entry.scsi.command, bytes);
                     break;
                 }
                 case TRACE_SCSI_PHASE_CHANGE:
                 {
-                    const char* phase_name = entry.scsi.phase < 9 ? k_scsi_phase_names[entry.scsi.phase] : "???";
-                    snprintf(buf, buf_size, "  [SCSI] PHASE    %s", phase_name);
+                    if (entry.scsi.phase < 9)
+                        snprintf(buf, buf_size, "  [SCSI] PHASE    %s", k_scsi_phase_names[entry.scsi.phase]);
+                    else
+                        snprintf(buf, buf_size, "  [SCSI] PHASE    UNKNOWN($%02X)", entry.scsi.phase);
                     break;
                 }
                 case TRACE_SCSI_STATUS:
@@ -622,12 +702,7 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 case TRACE_SCSI_RESPONSE:
                 {
                     char bytes[49] = "";
-                    int bytes_pos = 0;
-                    for (u8 i = 0; i < entry.scsi.size && (bytes_pos + 3) < (int)sizeof(bytes); i++)
-                    {
-                        bytes_pos += snprintf(bytes + bytes_pos, sizeof(bytes) - bytes_pos,
-                                              "%02X ", entry.scsi.data[i]);
-                    }
+                    format_hex_bytes(entry.scsi.data, entry.scsi.size, bytes, sizeof(bytes));
 
                     if (entry.scsi.command == 0xDD && entry.scsi.size >= 10)
                     {
@@ -651,9 +726,16 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 }
                 case TRACE_SCSI_RESPONSE_BYTE:
                 {
-                    const char* phase_name = entry.scsi.phase < 9 ? k_scsi_phase_names[entry.scsi.phase] : "???";
-                    snprintf(buf, buf_size, "  [SCSI] BYTE     %s  Offset:%u  Data:$%02X  REQ",
-                             phase_name, entry.scsi.param, entry.scsi.status);
+                    if (entry.scsi.phase < 9)
+                    {
+                        snprintf(buf, buf_size, "  [SCSI] BYTE     %s  Offset:%u  Data:$%02X  REQ",
+                                 k_scsi_phase_names[entry.scsi.phase], entry.scsi.param, entry.scsi.status);
+                    }
+                    else
+                    {
+                        snprintf(buf, buf_size, "  [SCSI] BYTE     UNKNOWN($%02X)  Offset:%u  Data:$%02X  REQ",
+                                 entry.scsi.phase, entry.scsi.param, entry.scsi.status);
+                    }
                     break;
                 }
                 case TRACE_SCSI_WARNING:
@@ -661,50 +743,84 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 {
                     const char* severity = entry.scsi.event == TRACE_SCSI_ERROR ? "ERROR" : "WARN";
                     const u8 problem_count = sizeof(k_scsi_problem_names) / sizeof(k_scsi_problem_names[0]);
-                    const char* problem = entry.scsi.status < problem_count ? k_scsi_problem_names[entry.scsi.status] : "UNKNOWN";
+                    const char* problem = entry.scsi.status < problem_count ? k_scsi_problem_names[entry.scsi.status] : NULL;
 
                     switch (entry.scsi.status)
                     {
+                        case TRACE_SCSI_PROBLEM_UNKNOWN_COMMAND:
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  CMD:$%02X",
+                                     severity, problem, entry.scsi.command);
+                            break;
                         case TRACE_SCSI_PROBLEM_COMMAND_OVERFLOW:
-                            snprintf(buf, buf_size, "  [SCSI] %s    %s  CMD:$%02X  Size:%u  Byte:$%02X",
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  CMD:$%02X  Size:%u  Byte:$%02X",
                                      severity, problem, entry.scsi.command,
                                      entry.scsi.param >> 8, entry.scsi.param & 0xFF);
                             break;
                         case TRACE_SCSI_PROBLEM_INVALID_READ_REQUEST:
-                            snprintf(buf, buf_size, "  [SCSI] %s    %s  LBA:%u  Count:%u",
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  LBA:%u  Count:%u",
                                      severity, problem, entry.scsi.param & 0xFFFFFF,
                                      entry.scsi.param >> 24);
                             break;
+                        case TRACE_SCSI_PROBLEM_SELECTION_DURING_DATA_IN:
+                            if (entry.scsi.phase < 9)
+                            {
+                                snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Phase:%s",
+                                         severity, problem, k_scsi_phase_names[entry.scsi.phase]);
+                            }
+                            else
+                            {
+                                snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Phase:UNKNOWN($%02X)",
+                                         severity, problem, entry.scsi.phase);
+                            }
+                            break;
+                        case TRACE_SCSI_PROBLEM_INVALID_AUDIO_START_LBA:
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  LBA:%u",
+                                     severity, problem, entry.scsi.param);
+                            break;
+                        case TRACE_SCSI_PROBLEM_UNKNOWN_AUDIO_STOP_MODE:
+                        case TRACE_SCSI_PROBLEM_UNKNOWN_TOC_MODE:
+                        case TRACE_SCSI_PROBLEM_UNKNOWN_AUDIO_LBA_MODE:
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Mode:$%02X",
+                                     severity, problem, entry.scsi.param & 0xFF);
+                            break;
                         case TRACE_SCSI_PROBLEM_LOAD_SECTOR_BUFFER_BUSY:
-                            snprintf(buf, buf_size, "  [SCSI] %s    %s  Size:%u  Offset:%u",
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Size:%u  Offset:%u",
                                      severity, problem, entry.scsi.param >> 16,
                                      entry.scsi.param & 0xFFFF);
                             break;
+                        case TRACE_SCSI_PROBLEM_CLAMPED_COMMAND_SIZE:
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Size:%u",
+                                     severity, problem, entry.scsi.param);
+                            break;
+                        case TRACE_SCSI_PROBLEM_CLAMPED_DATA_SIZE:
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Size:%u",
+                                     severity, problem, entry.scsi.param);
+                            break;
                         case TRACE_SCSI_PROBLEM_CLAMPED_DATA_OFFSET:
-                            snprintf(buf, buf_size, "  [SCSI] %s    %s  Offset:%u  Size:%u",
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Offset:%u  Size:%u",
                                      severity, problem, entry.scsi.param >> 16,
                                      entry.scsi.param & 0xFFFF);
                             break;
                         case TRACE_SCSI_PROBLEM_READ_PAST_END:
                         case TRACE_SCSI_PROBLEM_READ_SECTOR_FAILED:
-                            snprintf(buf, buf_size, "  [SCSI] %s    %s  LBA:%u",
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  LBA:%u",
                                      severity, problem, entry.scsi.param);
                             break;
                         default:
-                            snprintf(buf, buf_size, "  [SCSI] %s    %s  CMD:$%02X  Param:%u",
-                                     severity, problem, entry.scsi.command, entry.scsi.param);
+                            snprintf(buf, buf_size, "  [SCSI] %-5s    UNKNOWN($%02X)  CMD:$%02X  Param:$%08X",
+                                     severity, entry.scsi.status, entry.scsi.command, entry.scsi.param);
                             break;
                     }
                     break;
                 }
                 default:
-                    snprintf(buf, buf_size, "  [SCSI] ???");
+                    snprintf(buf, buf_size, "  [SCSI] EVENT    UNKNOWN($%02X)", entry.scsi.event);
                     break;
             }
             break;
         }
         default:
-            snprintf(buf, buf_size, "  [???]");
+            snprintf(buf, buf_size, "  [TRACE] UNKNOWN TYPE:$%02X", entry.type);
             break;
     }
 }
