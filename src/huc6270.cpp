@@ -70,7 +70,7 @@ void HuC6270::LogVdcEvent(u8 event, u8 raw, bool msb)
     switch (event)
     {
         case TRACE_VDC_REG_WRITE:
-            e.vdc.reg = m_address_register;
+            e.vdc.reg = (u8)(m_address_register);
             e.vdc.value = m_register[m_address_register];
             e.vdc.raw = raw;
             e.vdc.msb = msb ? 1 : 0;

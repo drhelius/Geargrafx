@@ -1123,7 +1123,7 @@ static void render_entry_colored(const GG_Trace_Entry& entry, u64 index,
     {
         char counter[32];
         snprintf(counter, sizeof(counter), "%06llu ", (unsigned long long)index);
-        prefix_length += strlen(counter);
+        prefix_length += (int)(strlen(counter));
         ImGui::TextColored(gray, "%s", counter);
         ImGui::SameLine(0, 0);
     }
@@ -1133,7 +1133,7 @@ static void render_entry_colored(const GG_Trace_Entry& entry, u64 index,
         char cycles[64];
         trace_log_format_cycle_prefix(entry, previous_cycle_valid, previous_cycle,
                                       cycles, sizeof(cycles));
-        prefix_length += strlen(cycles);
+        prefix_length += (int)(strlen(cycles));
         ImGui::TextColored(gray, "%s", cycles);
         ImGui::SameLine(0, 0);
     }
