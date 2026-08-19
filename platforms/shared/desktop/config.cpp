@@ -88,7 +88,7 @@ void config_init(bool force_portable)
     if (portable_path)
         root_path = portable_path;
     else
-        root_path = SDL_GetPrefPath("Geardome", config_application_name);
+        root_path = SDL_GetPrefPath("Geardome", GG_TITLE);
 
     if (root_path == NULL)
     {
