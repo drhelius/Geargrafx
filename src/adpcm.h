@@ -78,8 +78,8 @@ private:
     void WriteControl(u8 value);
     void SetEndIRQ(bool asserted);
     void SetHalfIRQ(bool asserted);
-    void TraceEvent(u8 event, u8 reg = 0, u8 value = 0, u16 address = 0);
-    void LogTraceEvent(u8 event, u8 reg, u8 value, u16 address);
+    void TraceAdpcmEvent(u8 event, u16 reg = 0, u8 value = 0, u16 address = 0);
+    void LogAdpcmEvent(u8 event, u16 reg, u8 value, u16 address);
     bool CheckReset();
     void CheckLength();
 

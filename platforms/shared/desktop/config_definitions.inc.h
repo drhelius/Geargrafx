@@ -74,6 +74,7 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Debug", "TraceAdpcm", config_debug.trace_adpcm, false);
     CONFIG_BOOL("Debug", "TraceVce", config_debug.trace_vce, false);
     CONFIG_BOOL("Debug", "TraceScsi", config_debug.trace_scsi, false);
+    CONFIG_BOOL("Debug", "TraceSystem", config_debug.trace_system, false);
     CONFIG_INT_RANGE("Debug", "TraceVdcEvents", config_debug.trace_vdc_events, TRACE_VDC_FILTER_ALL, 0, TRACE_VDC_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceInputEvents", config_debug.trace_input_events, TRACE_INPUT_FILTER_ALL, 0, TRACE_INPUT_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceTimerEvents", config_debug.trace_timer_events, TRACE_TIMER_FILTER_ALL, 0, TRACE_TIMER_FILTER_ALL);
@@ -82,6 +83,7 @@ static inline void process(config_Operation operation)
     CONFIG_INT_RANGE("Debug", "TraceAdpcmEvents", config_debug.trace_adpcm_events, TRACE_ADPCM_FILTER_ALL, 0, TRACE_ADPCM_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceVceEvents", config_debug.trace_vce_events, TRACE_VCE_FILTER_ALL, 0, TRACE_VCE_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceScsiEvents", config_debug.trace_scsi_events, TRACE_SCSI_FILTER_ALL, 0, TRACE_SCSI_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceSystemEvents", config_debug.trace_system_events, TRACE_SYSTEM_FILTER_ALL, 0, TRACE_SYSTEM_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceOutput", config_debug.trace_output, 0, 0, 1);
     CONFIG_INT_RANGE("Debug", "TraceCapacity", config_debug.trace_capacity, 0, 0, 4);
     CONFIG_INT_RANGE("Debug", "TraceDiskDirOption", config_debug.trace_disk_dir_option, 0, 0, 2);
@@ -451,7 +453,7 @@ static void migrate(int file_version)
         bool trace_cpu_irq = read_bool("Debug", "TraceCpuIrq", true);
         write_bool("Debug", "TraceCpuEnabled", trace_cpu || trace_cpu_irq);
 
-        bool default_trace_filters =
+        bool default_trace_filters = trace_cpu && trace_cpu_irq &&
             read_bool("Debug", "TraceVdc", true) &&
             read_bool("Debug", "TraceInput", true) &&
             read_bool("Debug", "TraceTimer", true) &&
@@ -472,6 +474,16 @@ static void migrate(int file_version)
             write_bool("Debug", "TraceVce", false);
             write_bool("Debug", "TraceScsi", false);
         }
+
+        write_int("Debug", "TraceVdcEvents", TRACE_VDC_FILTER_ALL);
+        write_int("Debug", "TraceInputEvents", TRACE_INPUT_FILTER_ALL);
+        write_int("Debug", "TraceTimerEvents", TRACE_TIMER_FILTER_ALL);
+        write_int("Debug", "TraceCdromEvents", TRACE_CDROM_FILTER_ALL);
+        write_int("Debug", "TracePsgEvents", TRACE_PSG_FILTER_ALL);
+        write_int("Debug", "TraceAdpcmEvents", TRACE_ADPCM_FILTER_ALL);
+        write_int("Debug", "TraceVceEvents", TRACE_VCE_FILTER_ALL);
+        write_int("Debug", "TraceScsiEvents", TRACE_SCSI_FILTER_ALL);
+        write_int("Debug", "TraceSystemEvents", TRACE_SYSTEM_FILTER_ALL);
     }
 
     int sync_mode = -1;

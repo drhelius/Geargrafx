@@ -29,6 +29,7 @@
 #include "sf2_mapper.h"
 #include "arcade_card_mapper.h"
 #include "random.h"
+#include "trace_logger.h"
 
 Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random)
 {
@@ -40,6 +41,7 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* medi
     m_audio = audio;
     m_cdrom = cdrom;
     m_random = random;
+    InitPointer(m_trace_logger);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
@@ -288,9 +290,36 @@ void Memory::SetMprTAM(u8 bits, u8 value)
     {
         if ((bits & (0x01 << i)) != 0)
         {
+            TraceMprEvent(bits, (u8)i, value);
             m_mpr[i] = value;
         }
     }
+}
+
+void Memory::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
+    m_sf2_mapper->SetTraceLogger(trace_logger);
+}
+
+void Memory::LogMprEvent(u8 bits, u8 index, u8 new_value)
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    GG_Trace_Entry entry = {};
+    entry.type = TRACE_SYSTEM;
+    entry.system.event = TRACE_SYSTEM_MPR_WRITE;
+    entry.system.index = index;
+    entry.system.mask = bits;
+    entry.system.old_value = m_mpr[index];
+    entry.system.new_value = new_value;
+    entry.system.address = (u16)index * 0x2000;
+    entry.system.physical = (u32)new_value * 0x2000;
+    m_trace_logger->TraceLog(entry);
+#else
+    UNUSED(bits);
+    UNUSED(index);
+    UNUSED(new_value);
+#endif
 }
 
 u8 Memory::GetMprTMA(u8 bits)

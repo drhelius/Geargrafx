@@ -397,6 +397,12 @@ void trace_log_format_entry(Memory* memory, const GG_Trace_Entry& entry,
         }
         case TRACE_ADPCM:
         {
+            char state[64];
+            snprintf(state, sizeof(state), "  Playing:%u Pending:%u HalfIRQ:%u EndIRQ:%u",
+                     entry.adpcm.state & 0x01 ? 1 : 0,
+                     entry.adpcm.state & 0x02 ? 1 : 0,
+                     entry.adpcm.state & 0x04 ? 1 : 0,
+                     entry.adpcm.state & 0x08 ? 1 : 0);
             if (entry.adpcm.event == TRACE_ADPCM_REG_WRITE)
             {
                 static const char* k_adpcm_reg_names[] = {
@@ -406,63 +412,101 @@ void trace_log_format_entry(Memory* memory, const GG_Trace_Entry& entry,
                     k_adpcm_reg_names[entry.adpcm.reg - 0x08] : "INVALID";
                 if (entry.adpcm.reg == 0x0D)
                 {
-                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X)=$%02X  Play:%u  Repeat:%u  Reset:%u",
+                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X)=$%02X  Play:%u  Repeat:%u  Reset:%u%s",
                              reg_name, entry.adpcm.reg, entry.adpcm.value,
                              (entry.adpcm.value >> 5) & 1,
                              (entry.adpcm.value >> 6) & 1,
-                             (entry.adpcm.value >> 7) & 1);
+                             (entry.adpcm.value >> 7) & 1, state);
                 }
                 else if (entry.adpcm.reg == 0x0E)
                 {
                     u8 rate = entry.adpcm.value & 0x0F;
-                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X)=$%02X  Rate:%uHz",
+                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X)=$%02X  Rate:%uHz%s",
                              reg_name, entry.adpcm.reg, entry.adpcm.value,
-                             32000 / (16 - rate));
+                             32000 / (16 - rate), state);
                 }
                 else
                 {
-                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X)=$%02X",
-                             reg_name, entry.adpcm.reg, entry.adpcm.value);
+                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X)=$%02X%s",
+                             reg_name, entry.adpcm.reg, entry.adpcm.value, state);
                 }
             }
             else if (entry.adpcm.event == TRACE_ADPCM_DMA_STATE)
             {
-                snprintf(buf, buf_size, "  [ADPCM] DMA     State:$%02X  Active:%u  Length:%u",
+                snprintf(buf, buf_size, "  [ADPCM] DMA     State:$%02X  Active:%u  Length:%u%s",
                          entry.adpcm.value, entry.adpcm.value & 0x03 ? 1 : 0,
-                         entry.adpcm.length);
+                         entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_PLAY_REQUEST)
             {
-                snprintf(buf, buf_size, "  [ADPCM] PLAY    REQUEST  Address:$%04X  Length:%u",
-                         entry.adpcm.address, entry.adpcm.length);
+                snprintf(buf, buf_size, "  [ADPCM] PLAY    REQUEST  Address:$%04X  Length:%u%s",
+                         entry.adpcm.address, entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_PLAY_START)
             {
-                snprintf(buf, buf_size, "  [ADPCM] PLAY    START  Address:$%04X  Length:%u",
-                         entry.adpcm.address, entry.adpcm.length);
+                snprintf(buf, buf_size, "  [ADPCM] PLAY    START  Address:$%04X  Length:%u%s",
+                         entry.adpcm.address, entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_PLAY_STOP)
             {
-                snprintf(buf, buf_size, "  [ADPCM] PLAY    STOP  Address:$%04X  Length:%u",
-                         entry.adpcm.address, entry.adpcm.length);
+                snprintf(buf, buf_size, "  [ADPCM] PLAY    STOP  Address:$%04X  Length:%u%s",
+                         entry.adpcm.address, entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_READ_COMPLETE ||
                      entry.adpcm.event == TRACE_ADPCM_WRITE_COMPLETE)
             {
-                snprintf(buf, buf_size, "  [ADPCM] %s  Address:$%04X  Data:$%02X  Length:%u",
+                snprintf(buf, buf_size, "  [ADPCM] %s  Address:$%04X  Data:$%02X  Length:%u%s",
                          entry.adpcm.event == TRACE_ADPCM_READ_COMPLETE ? "READ " : "WRITE",
-                         entry.adpcm.address, entry.adpcm.value, entry.adpcm.length);
+                         entry.adpcm.address, entry.adpcm.value, entry.adpcm.length, state);
             }
             else if (entry.adpcm.event == TRACE_ADPCM_HALF_IRQ ||
                      entry.adpcm.event == TRACE_ADPCM_END_IRQ)
             {
-                snprintf(buf, buf_size, "  [ADPCM] IRQ     %s %s  Address:$%04X  Length:%u",
+                snprintf(buf, buf_size, "  [ADPCM] IRQ     %s %s  Address:$%04X  Length:%u%s",
                          entry.adpcm.event == TRACE_ADPCM_HALF_IRQ ? "HALF" : "END",
                          entry.adpcm.value ? "SET" : "CLEAR",
-                         entry.adpcm.address, entry.adpcm.length);
+                         entry.adpcm.address, entry.adpcm.length, state);
             }
             else
                 snprintf(buf, buf_size, "  [ADPCM] ???");
+            break;
+        }
+        case TRACE_SYSTEM:
+        {
+            if (entry.system.event == TRACE_SYSTEM_MPR_WRITE)
+            {
+                snprintf(buf, buf_size,
+                         "  [MPR]   TAM     Mask:$%02X  MPR%u:$%02X->$%02X  Logical:$%04X-$%04X  Physical:$%06X",
+                         entry.system.mask, entry.system.index,
+                         entry.system.old_value, entry.system.new_value,
+                         entry.system.address, entry.system.address + 0x1FFF,
+                         entry.system.physical);
+            }
+            else if (entry.system.event == TRACE_SYSTEM_SF2_MAPPER)
+            {
+                snprintf(buf, buf_size,
+                         "  [SF2]   LATCH   Address:$%04X  Block:$%02X->$%02X  PhysicalBase:$%06X",
+                         entry.system.address, entry.system.old_value,
+                         entry.system.new_value, entry.system.physical);
+            }
+            else if (entry.system.event == TRACE_SYSTEM_IRQ_MASK_WRITE)
+            {
+                snprintf(buf, buf_size,
+                         "  [IRQ]   MASK    Write:$%02X  Mask:$%02X->$%02X  Request:$%02X  Active:$%02X",
+                         entry.system.raw, entry.system.old_value,
+                         entry.system.new_value, entry.system.request,
+                         entry.system.state);
+            }
+            else if (entry.system.event == TRACE_SYSTEM_IRQ_ACK)
+            {
+                snprintf(buf, buf_size,
+                         "  [IRQ]   ACK     Write:$%02X  Request:$%02X->$%02X  Mask:$%02X  Active:$%02X",
+                         entry.system.raw, entry.system.old_value,
+                         entry.system.new_value, entry.system.mask,
+                         entry.system.state);
+            }
+            else
+                snprintf(buf, buf_size, "  [SYSTEM] ???");
             break;
         }
         case TRACE_VCE:

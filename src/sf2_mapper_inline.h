@@ -22,6 +22,16 @@
 
 #include "sf2_mapper.h"
 #include "media.h"
+#include "trace_logger.h"
+
+INLINE void SF2Mapper::TraceSF2MapperEvent(u16 address)
+{
+    if (IsValidPointer(m_trace_logger) &&
+        m_trace_logger->IsEventEnabled(TRACE_SYSTEM, TRACE_SYSTEM_SF2_MAPPER))
+    {
+        LogSF2MapperEvent(address);
+    }
+}
 
 INLINE int SF2Mapper::ComputeBankAddress(int bank)
 {

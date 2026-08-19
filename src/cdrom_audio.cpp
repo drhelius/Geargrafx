@@ -19,12 +19,14 @@
 
 #include "cdrom_audio.h"
 #include "cdrom_media.h"
+#include "trace_logger.h"
 
 CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
 {
     m_cdrom_media = cdrom_media;
     InitPointer(m_cdrom);
     InitPointer(m_scsi_controller);
+    InitPointer(m_trace_logger);
     m_buffer_index = 0;
     m_frame_samples = 0;
     m_current_state = CD_AUDIO_STATE_STOPPED;
@@ -58,6 +60,29 @@ void CdRomAudio::Init(CdRom* cdrom, ScsiController* scsi_controller)
     m_cdrom = cdrom;
     m_scsi_controller = scsi_controller;
     Reset();
+}
+
+void CdRomAudio::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
+}
+
+void CdRomAudio::LogCdRomAudioEvent(u8 event, u32 lba, u32 param)
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    GG_Trace_Entry e = {};
+    e.type = TRACE_CDROM;
+    e.cdrom.event = event;
+    e.cdrom.state = (u8)m_current_state;
+    e.cdrom.irq_type = (u8)m_stop_event;
+    e.cdrom.lba = lba;
+    e.cdrom.param = param;
+    m_trace_logger->TraceLog(e);
+#else
+    UNUSED(event);
+    UNUSED(lba);
+    UNUSED(param);
+#endif
 }
 
 void CdRomAudio::Reset()

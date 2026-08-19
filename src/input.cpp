@@ -67,21 +67,34 @@ void Input::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-void Input::LogTraceEvent(u8 event, u8 value, u8 source)
+void Input::LogInputEvent(u8 event, u8 value)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
     GG_Trace_Entry e = {};
     e.type = TRACE_INPUT;
     e.input.event = event;
     e.input.value = value;
     e.input.port = (u8)m_selected_pad;
-    e.input.source = source;
+    if (event == TRACE_INPUT_READ)
+    {
+        if (m_mb128.IsConnected() && m_mb128.IsActive())
+            e.input.source = TRACE_INPUT_SOURCE_MB128;
+        else if (m_selected_pad >= GG_MAX_GAMEPADS)
+            e.input.source = TRACE_INPUT_SOURCE_NONE;
+        else if (m_controller_type[m_selected_pad] == GG_CONTROLLER_MOUSE)
+            e.input.source = TRACE_INPUT_SOURCE_MOUSE;
+        else
+            e.input.source = TRACE_INPUT_SOURCE_GAMEPAD;
+    }
     e.input.state = (m_sel ? 0x01 : 0x00) |
                     (m_clr ? 0x02 : 0x00) |
                     (m_selected_extra_buttons ? 0x04 : 0x00);
     m_trace_logger->TraceLog(e);
-}
+#else
+    UNUSED(event);
+    UNUSED(value);
 #endif
+}
 
 void Input::Init()
 {

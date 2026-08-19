@@ -379,8 +379,74 @@ The server exposes tools organized in the following categories:
 - `remove_disassembler_bookmark` - Remove disassembler bookmark
 - `list_disassembler_bookmarks` - List all disassembler bookmarks
 - `get_call_stack` - View function call hierarchy
-- `get_trace_log` - Read trace logger entries (CPU + hardware events). Use set_trace_log to start/stop the logger
-- `set_trace_log` - Start or stop trace logging. Use `filters` for exact event streams such as `cpu.instructions`, `vdc.irqs`, or `scsi.commands`; omitting it enables the safe default of CPU instructions and IRQs. Storage options are `output` (`memory` or `disk`), `memory_size` (`100K` through `5M`), `disk_size` (`10MB` through `1GB`, or `unbounded`), and `output_path`
+- `get_trace_log` - Read trace logger entries (CPU + hardware events) using absolute sequence pagination. Use `set_trace_log` to start or stop the logger
+- `set_trace_log` - Start or stop trace logging and configure exact event filters and memory or disk storage
+
+#### Trace pagination
+
+`get_trace_log` returns:
+
+- `total_entries`: entries currently retained in the memory ring.
+- `total_logged`: the next absolute sequence number. It is monotonic for the process lifetime and is not reset by clear, resize, media changes, or save-state loads.
+- `oldest_sequence`: absolute sequence of the oldest retained entry (`total_logged - total_entries`).
+- `start`: actual absolute sequence used for this page.
+- `next_sequence`: absolute sequence to pass as the next `start`.
+- `count`: number of returned entries.
+- `overrun`: `true` when a requested `start` had expired and was clamped to `oldest_sequence`.
+- `lines`: formatted trace entries in sequence order.
+
+When `start` is omitted, the latest 100 retained entries are returned. A negative `start` requests that many entries from the retained tail. Positive starts are absolute sequences. `count` defaults to 100 and is capped at 1000. A requested sequence older than `oldest_sequence` starts at the oldest retained entry and sets `overrun` to `true`. A sequence at or beyond `total_logged` returns an empty page with `start` and `next_sequence` equal to the requested value and `overrun` set to `false`.
+
+Memory-mode counters shown in the GUI and written by manual export use the same absolute sequence values as MCP. Disk trace files use a separate zero-based entry counter local to each file.
+
+#### Trace filters
+
+Omitting `filters` enables the safe default of CPU instructions and IRQs. When supplied, `filters` must be non-empty, unique, and contain only these exact values:
+
+```text
+cpu.instructions
+cpu.irqs
+vdc.registers
+vdc.irqs
+vdc.dma
+vce.registers
+vce.timing
+input.reads
+input.writes
+timer.irqs
+timer.registers
+cdrom.irqs
+cdrom.control
+cdrom.audio
+psg.global_lfo
+psg.frequency
+psg.channel
+psg.wave_dda
+psg.noise
+adpcm.registers
+adpcm.dma
+adpcm.playback
+adpcm.transfers
+adpcm.irqs
+scsi.commands
+scsi.phases
+scsi.responses
+scsi.response_bytes
+scsi.problems
+system.mpr
+system.mapper
+system.interrupts
+```
+
+The `system` streams cover TAM/MPR mappings, Street Fighter II mapper latch updates, and HuC6280 interrupt-controller mask/acknowledgement writes. ADPCM lines include playing, pending, half-IRQ, and end-IRQ state bits.
+
+#### Trace storage
+
+Starting a stopped logger without `output` selects `memory`. Memory capacities are `100K`, `500K`, `1M`, `2M`, and `5M` entries; the persisted default is `100K`. Disk limits are `10MB`, `50MB`, `100MB`, `250MB`, `500MB`, `1GB`, and `unbounded`; the persisted default is `100MB`.
+
+Storage changes while tracing is active cleanly stop and restart the logger. Repeating the active storage configuration is idempotent and only updates filters. Stopping preserves retained memory entries; changing memory capacity or starting disk output resets the ring used by that recording. Disk output is flushed before stop, reset, media changes, physical CD-ROM eject/error, save-state loads, and shutdown. Failures are reported in the UI and application log but do not cancel unrelated emulator operations.
+
+`output_path` is a directory only, not a filename. Geargrafx creates a unique timestamped UTF-compatible trace filename in that directory. When omitted, the configured default, media, or custom directory policy remains in effect.
 
 ### Breakpoints
 - `set_breakpoint` - Set execution, read, or write breakpoint (supports 5 memory areas: rom_ram, vram, palette, huc6270_reg, huc6260_reg)

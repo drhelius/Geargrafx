@@ -26,18 +26,10 @@
 #include "cdrom_audio.h"
 #include "trace_logger.h"
 
-INLINE void CdRom::TraceEvent(u8 event, u8 value, u8 state, u32 lba, u32 param)
+INLINE void CdRom::TraceCdRomEvent(u8 event, u8 value)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_trace_logger->IsEventEnabled(TRACE_CDROM, event))
-        LogTraceEvent(event, value, state, lba, param);
-#else
-    UNUSED(event);
-    UNUSED(value);
-    UNUSED(state);
-    UNUSED(lba);
-    UNUSED(param);
-#endif
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_CDROM, event))
+        LogCdRomEvent(event, value);
 }
 
 INLINE void CdRom::Clock(u32 cycles)
@@ -52,7 +44,7 @@ INLINE void CdRom::SetIRQ(u8 value)
 
     m_active_irqs |= value;
 
-    TraceEvent(TRACE_CDROM_IRQ_SET, value);
+    TraceCdRomEvent(TRACE_CDROM_IRQ_SET, value);
 
     AssertIRQ2();
 }
@@ -64,14 +56,9 @@ INLINE void CdRom::ClearIRQ(u8 value)
 
     m_active_irqs &= ~value;
 
-    TraceEvent(TRACE_CDROM_IRQ_CLEAR, value);
+    TraceCdRomEvent(TRACE_CDROM_IRQ_CLEAR, value);
 
     AssertIRQ2();
-}
-
-INLINE void CdRom::TraceAudio(u8 event, u8 state, u8 stop_event, u32 lba, u32 param)
-{
-    TraceEvent(event, stop_event, state, lba, param);
 }
 
 INLINE void CdRom::AssertIRQ2()
@@ -128,7 +115,7 @@ inline void CdRom::WriteFader(u8 value)
     double fader_seconds = m_fader_fast ? CDROM_FAST_FADE : CDROM_SLOW_FADE;
     m_fader_cycles = (u64)(fader_seconds * GG_MASTER_CLOCK_RATE);
 
-    TraceEvent(TRACE_CDROM_FADER, value);
+    TraceCdRomEvent(TRACE_CDROM_FADER, value);
 
     Debug("CDROM Fader: %02X, enabled: %d, adpcm: %d, fast: %d, cycles: %llu",
           value, m_fader_enabled, m_fader_adpcm, m_fader_fast, m_fader_cycles);

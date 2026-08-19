@@ -71,27 +71,18 @@ INLINE bool Input::IsKeyPressed(GG_Controllers controller, GG_Keys key) const
 INLINE u8 Input::ReadK()
 {
     u8 result;
-    u8 source;
-
     if (m_mb128.IsConnected() && m_mb128.IsActive())
     {
         u8 low  = m_mb128.Read() & 0x0F;
         u8 high = m_register & 0xF0;
         result = high | low;
-        source = TRACE_INPUT_SOURCE_MB128;
     }
     else
     {
         result = m_register;
-        if (m_selected_pad >= GG_MAX_GAMEPADS)
-            source = TRACE_INPUT_SOURCE_NONE;
-        else if (m_controller_type[m_selected_pad] == GG_CONTROLLER_MOUSE)
-            source = TRACE_INPUT_SOURCE_MOUSE;
-        else
-            source = TRACE_INPUT_SOURCE_GAMEPAD;
     }
 
-    TraceEvent(TRACE_INPUT_READ, result, source);
+    TraceInputEvent(TRACE_INPUT_READ, result);
 
     return result;
 }
@@ -125,7 +116,7 @@ INLINE void Input::WriteO(u8 value)
         if (m_selected_pad >= GG_MAX_GAMEPADS)
         {
             m_register |= 0x0F;
-            TraceEvent(TRACE_INPUT_WRITE, value, TRACE_INPUT_SOURCE_NONE);
+            TraceInputEvent(TRACE_INPUT_WRITE, value);
             return;
         }
     }
@@ -163,7 +154,7 @@ INLINE void Input::WriteO(u8 value)
         else
             m_register |= (m_gamepads[m_selected_pad] & 0x0F);
 
-        TraceEvent(TRACE_INPUT_WRITE, value, TRACE_INPUT_SOURCE_NONE);
+        TraceInputEvent(TRACE_INPUT_WRITE, value);
         return;
     }
 
@@ -204,19 +195,13 @@ INLINE void Input::WriteO(u8 value)
         }
     }
 
-    TraceEvent(TRACE_INPUT_WRITE, value, TRACE_INPUT_SOURCE_NONE);
+    TraceInputEvent(TRACE_INPUT_WRITE, value);
 }
 
-INLINE void Input::TraceEvent(u8 event, u8 value, u8 source)
+INLINE void Input::TraceInputEvent(u8 event, u8 value)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_trace_logger->IsEventEnabled(TRACE_INPUT, event))
-        LogTraceEvent(event, value, source);
-#else
-    UNUSED(event);
-    UNUSED(value);
-    UNUSED(source);
-#endif
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_INPUT, event))
+        LogInputEvent(event, value);
 }
 
 INLINE u8 Input::GetIORegister()

@@ -27,6 +27,7 @@
 class CdRom;
 class CdRomMedia;
 class ScsiController;
+class TraceLogger;
 
 class CdRomAudio
 {
@@ -79,16 +80,19 @@ public:
     s16 GetRightSample();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
+    void SetTraceLogger(TraceLogger* trace_logger);
 
 private:
     void GenerateSamples();
     void SyncMediaCurrentSector();
-    void TraceEvent(u8 event, u32 lba, u32 param = 0);
+    void TraceCdRomAudioEvent(u8 event, u32 lba, u32 param = 0);
+    void LogCdRomAudioEvent(u8 event, u32 lba, u32 param);
 
 private:
     CdRom* m_cdrom;
     CdRomMedia* m_cdrom_media;
     ScsiController* m_scsi_controller;
+    TraceLogger* m_trace_logger;
     CdRomAudio_State m_state;
     s32 m_buffer_index;
     s32 m_frame_samples;

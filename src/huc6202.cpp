@@ -51,9 +51,12 @@ void HuC6202::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-void HuC6202::LogTraceEvent(u8 event, u8 reg, u8 raw)
+void HuC6202::LogVpcEvent(u8 event, u16 address, u8 raw)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    u8 reg = (u8)(address & 0x1F);
+    if (reg < 0x08 || reg > 0x0E)
+        return;
     GG_Trace_Entry e = {};
     e.type = TRACE_VDC;
     e.vdc.event = event;
@@ -66,8 +69,12 @@ void HuC6202::LogTraceEvent(u8 event, u8 reg, u8 raw)
     else if (reg == 0x0C || reg == 0x0D) e.vdc.value = m_window_2;
     else e.vdc.value = m_vdc2_selected ? 1 : 0;
     m_trace_logger->TraceLog(e);
-}
+#else
+    UNUSED(event);
+    UNUSED(address);
+    UNUSED(raw);
 #endif
+}
 
 HuC6202::~HuC6202()
 {

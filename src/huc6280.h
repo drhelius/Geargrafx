@@ -286,10 +286,14 @@ private:
     void SetDisassemblerOperand(GG_Disassembler_Record* record, u16 address, bool is_zp, const char* text);
     void SetDisassemblerRecordSegment(GG_Disassembler_Record* record);
     void InvalidateOverlappingRecords(u16 address, u8 opcode_size);
-    void TraceEvent(GG_Trace_Type type, u16 value = 0, u16 value2 = 0);
-    void TraceEvent(u8 event, u8 value);
-    void LogTraceEvent(GG_Trace_Type type, u16 value, u16 value2);
-    void LogTraceEvent(u8 event, u8 value);
+    void TraceCpuEvent();
+    void LogCpuEvent();
+    void TraceCpuIrqEvent(u16 pc, u16 vector);
+    void LogCpuIrqEvent(u16 pc, u16 vector);
+    void TraceTimerEvent(u8 event, u8 value);
+    void LogTimerEvent(u8 event, u8 value);
+    void TraceSystemInterruptEvent(u8 event, u16 address, u8 raw);
+    void LogSystemInterruptEvent(u8 event, u16 address, u8 raw);
 
     void UnofficialOPCode();
     void OPCodes_ADC(u8 value);

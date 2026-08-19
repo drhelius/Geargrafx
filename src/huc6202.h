@@ -89,8 +89,8 @@ public:
     void LoadState(std::istream& stream);
 
 private:
-    void TraceEvent(u8 event, u8 reg, u8 raw);
-    void LogTraceEvent(u8 event, u8 reg, u8 raw);
+    void TraceVpcEvent(u8 event, u16 address, u8 raw);
+    void LogVpcEvent(u8 event, u16 address, u8 raw);
     void CalculatePriorityMode(HuC6202_Window_Mode window_mode, u8 value);
 
 private:

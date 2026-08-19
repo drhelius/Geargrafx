@@ -25,6 +25,7 @@
 
 class Media;
 class Memory;
+class TraceLogger;
 
 class SF2Mapper : public Mapper
 {
@@ -38,13 +39,17 @@ public:
     virtual void Reset();
     virtual void SaveState(std::ostream& stream);
     virtual void LoadState(std::istream& stream);
+    void SetTraceLogger(TraceLogger* trace_logger);
 
 private:
+    void TraceSF2MapperEvent(u16 address);
+    void LogSF2MapperEvent(u16 address);
     int ComputeBankAddress(int bank);
 
 private:
     int m_bank;
     int m_bank_address;
+    TraceLogger* m_trace_logger;
 };
 
 #include "sf2_mapper_inline.h"

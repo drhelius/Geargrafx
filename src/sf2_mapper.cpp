@@ -23,11 +23,34 @@
 
 SF2Mapper::SF2Mapper(Media* media, Memory* memory) : Mapper(media, memory)
 {
+    InitPointer(m_trace_logger);
     Reset();
 }
 
 SF2Mapper::~SF2Mapper()
 {
+}
+
+void SF2Mapper::SetTraceLogger(TraceLogger* trace_logger)
+{
+    m_trace_logger = trace_logger;
+}
+
+void SF2Mapper::LogSF2MapperEvent(u16 address)
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    u8 new_bank = (u8)(address & 0x0F);
+    GG_Trace_Entry entry = {};
+    entry.type = TRACE_SYSTEM;
+    entry.system.event = TRACE_SYSTEM_SF2_MAPPER;
+    entry.system.address = address;
+    entry.system.old_value = (u8)m_bank;
+    entry.system.new_value = new_bank;
+    entry.system.physical = 0x80000U + (u32)ComputeBankAddress(new_bank);
+    m_trace_logger->TraceLog(entry);
+#else
+    UNUSED(address);
+#endif
 }
 
 u8 SF2Mapper::Read(u8 bank, u16 address)
@@ -84,6 +107,7 @@ void SF2Mapper::Write(u8 bank, u16 address, u8 value)
     if ((bank == 0x00) && ((address & 0x1FF0) == 0x1FF0))
     {
         UNUSED(value);
+        TraceSF2MapperEvent(address);
         m_bank = address & 0x0F;
         m_bank_address = ComputeBankAddress(m_bank);
     }

@@ -72,9 +72,9 @@ void CdRom::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-void CdRom::LogTraceEvent(u8 event, u8 value, u8 state, u32 lba, u32 param)
+void CdRom::LogCdRomEvent(u8 event, u8 value)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
     GG_Trace_Entry e = {};
     e.type = TRACE_CDROM;
     e.cdrom.event = event;
@@ -93,16 +93,15 @@ void CdRom::LogTraceEvent(u8 event, u8 value, u8 state, u32 lba, u32 param)
             e.cdrom.irq_type = value;
             break;
         default:
-            e.cdrom.state = state;
-            e.cdrom.irq_type = value;
-            e.cdrom.lba = lba;
-            e.cdrom.param = param;
             break;
     }
 
     m_trace_logger->TraceLog(e);
-}
+#else
+    UNUSED(event);
+    UNUSED(value);
 #endif
+}
 
 void CdRom::Reset()
 {
@@ -229,7 +228,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
 
             m_enabled_irqs = value & 0x7F;
 
-            TraceEvent(TRACE_CDROM_IRQ_ENABLE, value);
+            TraceCdRomEvent(TRACE_CDROM_IRQ_ENABLE, value);
 
             AssertIRQ2();
             break;
@@ -247,7 +246,7 @@ void CdRom::WriteRegister(u16 address, u8 value)
             else
                 m_scsi_controller->ClearSignal(ScsiController::SCSI_SIGNAL_RST);
 
-            TraceEvent(TRACE_CDROM_RESET, value);
+            TraceCdRomEvent(TRACE_CDROM_RESET, value);
 
             break;
         case 0x05:

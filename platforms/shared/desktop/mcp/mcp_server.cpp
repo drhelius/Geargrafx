@@ -1758,8 +1758,7 @@ json McpServer::BuildToolList()
             {"properties", {
                 {"start", {
                     {"type", "integer"},
-                    {"description", "Absolute trace sequence (omit for latest retained entries)"},
-                    {"minimum", 0}
+                    {"description", "Absolute trace sequence, or a negative value to read that many entries from the retained tail (omit for latest 100)"}
                 }},
                 {"count", {
                     {"type", "integer"},
@@ -1817,7 +1816,8 @@ json McpServer::BuildToolList()
                             "cdrom.irqs", "cdrom.control", "cdrom.audio",
                             "psg.global_lfo", "psg.frequency", "psg.channel", "psg.wave_dda", "psg.noise",
                             "adpcm.registers", "adpcm.dma", "adpcm.playback", "adpcm.transfers", "adpcm.irqs",
-                            "scsi.commands", "scsi.phases", "scsi.responses", "scsi.response_bytes", "scsi.problems"
+                            "scsi.commands", "scsi.phases", "scsi.responses", "scsi.response_bytes", "scsi.problems",
+                            "system.mpr", "system.mapper", "system.interrupts"
                         })}
                     }},
                     {"minItems", 1},
@@ -3059,7 +3059,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     }
     else if (normalizedTool == "get_trace_log")
     {
-        s64 start = arguments.value("start", (s64)-1);
+        s64 start = arguments.value("start", (s64)-100);
         int count = arguments.value("count", 100);
         return m_debugAdapter.GetTraceLog(start, count);
     }
@@ -3076,6 +3076,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         event_filters[TRACE_ADPCM] = TRACE_ADPCM_FILTER_ALL;
         event_filters[TRACE_VCE] = TRACE_VCE_FILTER_ALL;
         event_filters[TRACE_SCSI] = TRACE_SCSI_FILTER_ALL;
+        event_filters[TRACE_SYSTEM] = TRACE_SYSTEM_FILTER_ALL;
         if (enabled)
         {
             if (arguments.contains("filters"))
@@ -3143,6 +3144,12 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
                         add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_RESPONSE_BYTES);
                     else if (filter == "scsi.problems")
                         add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_PROBLEMS);
+                    else if (filter == "system.mpr")
+                        add_trace_event_filter(&flags, event_filters, TRACE_SYSTEM, TRACE_SYSTEM_FILTER_MPR);
+                    else if (filter == "system.mapper")
+                        add_trace_event_filter(&flags, event_filters, TRACE_SYSTEM, TRACE_SYSTEM_FILTER_MAPPER);
+                    else if (filter == "system.interrupts")
+                        add_trace_event_filter(&flags, event_filters, TRACE_SYSTEM, TRACE_SYSTEM_FILTER_INTERRUPTS);
                     else return {{"error", "Unknown trace filter: " + filter}};
                 }
 

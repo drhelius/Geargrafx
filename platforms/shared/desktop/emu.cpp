@@ -443,6 +443,8 @@ static bool unload_physical_cdrom(char* device_id, size_t device_id_size)
     if (IsValidPointer(device_id) && (device_id_size > 0))
         strncpy_fit(device_id, geargrafx->GetMedia()->GetPhysicalCdRomDeviceId(), device_id_size);
 
+    gui_debug_trace_logger_reset();
+
     emu_debug_command = Debug_Command_None;
     reset_buffers();
     emu_audio_reset();

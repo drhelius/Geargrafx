@@ -69,9 +69,9 @@ void HuC6260::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-void HuC6260::LogTraceEvent(u8 event)
+void HuC6260::LogVceEvent(u8 event)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
     GG_Trace_Entry e = {};
     e.type = TRACE_VCE;
     e.vce.event = event;
@@ -94,8 +94,10 @@ void HuC6260::LogTraceEvent(u8 event)
     }
 
     m_trace_logger->TraceLog(e);
-}
+#else
+    UNUSED(event);
 #endif
+}
 
 void HuC6260::InitPalettes()
 {
@@ -252,7 +254,7 @@ void HuC6260::WriteRegister(u16 address, u8 value)
                     break;
             }
 
-            TraceEvent(TRACE_VCE_CONTROL_WRITE);
+            TraceVceEvent(TRACE_VCE_CONTROL_WRITE);
             break;
         }
         case 2:
@@ -275,7 +277,7 @@ void HuC6260::WriteRegister(u16 address, u8 value)
                 false);
             m_color_table[m_color_table_address] = (m_color_table[m_color_table_address] & 0x00FF) | ((value & 0x01) << 8);
 
-            TraceEvent(TRACE_VCE_COLOR_WRITE);
+            TraceVceEvent(TRACE_VCE_COLOR_WRITE);
             m_color_table_address = (m_color_table_address + 1) & 0x01FF;
             break;
         default:

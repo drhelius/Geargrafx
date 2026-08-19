@@ -32,6 +32,16 @@
 #include "mapper.h"
 #include "sf2_mapper.h"
 #include "arcade_card_mapper.h"
+#include "trace_logger.h"
+
+INLINE void Memory::TraceMprEvent(u8 bits, u8 index, u8 new_value)
+{
+    if (IsValidPointer(m_trace_logger) &&
+        m_trace_logger->IsEventEnabled(TRACE_SYSTEM, TRACE_SYSTEM_MPR_WRITE))
+    {
+        LogMprEvent(bits, index, new_value);
+    }
+}
 
 INLINE u8 Memory::Read(u16 address, bool block_transfer)
 {

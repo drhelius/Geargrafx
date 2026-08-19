@@ -53,6 +53,7 @@ static u64 trace_logger_disk_previous_cycle = 0;
 static bool trace_logger_disk_previous_cycle_valid = false;
 static bool trace_logger_disk_limit_reached = false;
 static bool trace_logger_disk_overflow = false;
+static bool trace_logger_disk_error = false;
 static Uint64 trace_logger_disk_last_flush = 0;
 
 static const u32 k_trace_logger_capacities[] = { 100000, 500000, 1000000, 2000000, 5000000 };
@@ -223,7 +224,7 @@ void gui_debug_window_trace_logger(void)
             for (int item = clipper.DisplayStart; item < clipper.DisplayEnd; item++)
             {
                 const GG_Trace_Entry& entry = tl->GetEntry((u32)item);
-                u64 entry_number = tl->GetTotalLogged() - (u64)count + (u64)item;
+                u64 entry_number = tl->GetSequence() - (u64)count + (u64)item;
                 bool previous_cycle_valid = item > 0;
                 u64 previous_cycle = previous_cycle_valid ? tl->GetEntry((u32)item - 1).cycle : 0;
                 render_entry_colored(entry, entry_number, previous_cycle_valid, previous_cycle);
@@ -263,10 +264,6 @@ void gui_debug_trace_logger_update(void)
         if (!trace_logger_flush_disk_entries())
         {
             trace_logger_stop_disk(false, false);
-            if (trace_logger_disk_overflow)
-                gui_set_error_message("Trace disk staging buffer overflow.");
-            else
-                gui_set_error_message("Error writing trace log to disk.");
         }
         else if (trace_logger_disk_limit_reached)
         {
@@ -281,7 +278,6 @@ void gui_debug_trace_logger_update(void)
                 if (!trace_logger_flush_disk_buffer(true))
                 {
                     trace_logger_stop_disk(false, false);
-                    gui_set_error_message("Error flushing trace log to disk.");
                 }
                 else
                     trace_logger_disk_last_flush = now;
@@ -292,8 +288,8 @@ void gui_debug_trace_logger_update(void)
 
 void gui_debug_trace_logger_shutdown(void)
 {
-    if (trace_logger_disk_file && !trace_logger_stop_disk(false, true))
-        Error("Error closing trace log file: %s", trace_logger_disk_path);
+    if (trace_logger_disk_file)
+        trace_logger_stop_disk(false, true);
 }
 
 void gui_debug_trace_logger_clear(void)
@@ -303,12 +299,7 @@ void gui_debug_trace_logger_clear(void)
     {
         if (!trace_logger_flush_disk_entries())
         {
-            bool overflow = trace_logger_disk_overflow;
             trace_logger_stop_disk(false, false);
-            if (overflow)
-                gui_set_error_message("Trace disk staging buffer overflow.");
-            else
-                gui_set_error_message("Error writing trace log to disk.");
             return;
         }
         tl->Reset();
@@ -322,8 +313,7 @@ void gui_debug_trace_logger_clear(void)
 
 void gui_debug_trace_logger_reset(void)
 {
-    if (!trace_logger_stop(false))
-        Error("Error stopping trace logger during reset");
+    trace_logger_stop(false);
 
     emu_get_core()->GetTraceLogger()->Reset();
     trace_logger_disk_flushed_total = 0;
@@ -426,7 +416,7 @@ static bool trace_logger_start(u32 flags, bool update_config)
 {
     if (flags == 0)
     {
-        flags = TRACE_FLAG_CPU;
+        flags = TRACE_FLAG_CPU | TRACE_FLAG_CPU_IRQ;
         update_config = true;
     }
     if (update_config)
@@ -490,7 +480,7 @@ void gui_debug_save_log(const char* file_path)
     {
         TraceLogger* tl = emu_get_core()->GetTraceLogger();
         u32 count = tl->GetCount();
-        u64 oldest = tl->GetTotalLogged() - (u64)count;
+        u64 oldest = tl->GetSequence() - (u64)count;
         char buf[GG_TRACE_FORMAT_BUFFER_SIZE];
 
         for (u32 i = 0; i < count; i++)
@@ -683,6 +673,18 @@ static void trace_logger_menu(void)
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("System / Memory"))
+        {
+            ImGui::MenuItem("Enabled", "", &config_debug.trace_system);
+            ImGui::Separator();
+            ImGui::BeginDisabled(!config_debug.trace_system);
+            trace_logger_menu_event_filter("MPR / TAM", &config_debug.trace_system_events, TRACE_SYSTEM_FILTER_MPR);
+            trace_logger_menu_event_filter("SF2 Mapper", &config_debug.trace_system_events, TRACE_SYSTEM_FILTER_MAPPER);
+            trace_logger_menu_event_filter("Interrupt Controller", &config_debug.trace_system_events, TRACE_SYSTEM_FILTER_INTERRUPTS);
+            ImGui::EndDisabled();
+            ImGui::EndMenu();
+        }
+
         ImGui::EndMenu();
     }
 
@@ -776,6 +778,7 @@ static bool trace_logger_start_disk(void)
     trace_logger_disk_previous_cycle_valid = false;
     trace_logger_disk_limit_reached = false;
     trace_logger_disk_overflow = false;
+    trace_logger_disk_error = false;
     trace_logger_disk_last_flush = SDL_GetTicks();
     emu_get_core()->GetTraceLogger()->Reset();
     gui_set_status_message("Trace recording started", 3000);
@@ -784,7 +787,8 @@ static bool trace_logger_start_disk(void)
 
 static bool trace_logger_stop_disk(bool show_status, bool flush_entries)
 {
-    bool success = trace_logger_disk_file != NULL;
+    bool success = trace_logger_disk_file != NULL &&
+        !trace_logger_disk_overflow && !trace_logger_disk_error;
 
     if (trace_logger_disk_file)
     {
@@ -799,14 +803,17 @@ static bool trace_logger_stop_disk(bool show_status, bool flush_entries)
 
     trace_logger_enabled = false;
     emu_get_core()->GetTraceLogger()->SetEnabledFlags(0);
-    if (show_status)
+    if (!success)
     {
-        if (success)
-            gui_set_status_message("Trace recording stopped", 3000);
-        else if (trace_logger_disk_overflow)
-            gui_set_error_message("Trace recording stopped: staging buffer overflow.");
-        else
-            gui_set_error_message("Trace recording stopped with a disk write error.");
+        const char* message = trace_logger_disk_overflow ?
+            "Trace recording stopped: staging buffer overflow." :
+            "Trace recording stopped with a disk write error.";
+        gui_set_error_message(message);
+        Error("%s File: %s", message, trace_logger_disk_path);
+    }
+    else if (show_status)
+    {
+        gui_set_status_message("Trace recording stopped", 3000);
     }
     return success;
 }
@@ -814,7 +821,10 @@ static bool trace_logger_stop_disk(bool show_status, bool flush_entries)
 static bool trace_logger_flush_disk_buffer(bool flush_file)
 {
     if (!trace_logger_disk_file)
+    {
+        trace_logger_disk_error = true;
         return false;
+    }
 
     if (trace_logger_disk_buffer_used > 0)
     {
@@ -829,16 +839,27 @@ static bool trace_logger_flush_disk_buffer(bool flush_file)
             }
         }
         if (trace_logger_disk_buffer_used > 0)
+        {
+            trace_logger_disk_error = true;
             return false;
+        }
     }
 
-    return !flush_file || fflush(trace_logger_disk_file) == 0;
+    if (flush_file && fflush(trace_logger_disk_file) != 0)
+    {
+        trace_logger_disk_error = true;
+        return false;
+    }
+    return true;
 }
 
 static bool trace_logger_flush_disk_entries(void)
 {
     if (!trace_logger_disk_file)
+    {
+        trace_logger_disk_error = true;
         return false;
+    }
     if (trace_logger_disk_limit_reached)
         return true;
 
@@ -867,7 +888,10 @@ static bool trace_logger_flush_disk_entries(void)
         else
             length = snprintf(line, sizeof(line), "%s\n", entry_text);
         if (length < 0)
+        {
+            trace_logger_disk_error = true;
             return false;
+        }
 
         size_t line_size = MIN((size_t)length, sizeof(line) - 1);
         u64 max_size = k_trace_logger_disk_sizes[config_debug.trace_disk_size];
@@ -914,6 +938,7 @@ static u32 trace_logger_get_config_flags(void)
     if (config_debug.trace_adpcm) flags |= TRACE_FLAG_ADPCM;
     if (config_debug.trace_vce) flags |= TRACE_FLAG_VCE;
     if (config_debug.trace_scsi) flags |= TRACE_FLAG_SCSI;
+    if (config_debug.trace_system) flags |= TRACE_FLAG_SYSTEM;
     return flags;
 }
 
@@ -930,6 +955,7 @@ static void trace_logger_set_config_flags(u32 flags)
     config_debug.trace_adpcm = (flags & TRACE_FLAG_ADPCM) != 0;
     config_debug.trace_vce = (flags & TRACE_FLAG_VCE) != 0;
     config_debug.trace_scsi = (flags & TRACE_FLAG_SCSI) != 0;
+    config_debug.trace_system = (flags & TRACE_FLAG_SYSTEM) != 0;
 }
 
 static u32 trace_logger_get_config_event_filter(GG_Trace_Type type)
@@ -944,6 +970,7 @@ static u32 trace_logger_get_config_event_filter(GG_Trace_Type type)
         case TRACE_ADPCM: return (u32)config_debug.trace_adpcm_events;
         case TRACE_VCE: return (u32)config_debug.trace_vce_events;
         case TRACE_SCSI: return (u32)config_debug.trace_scsi_events;
+        case TRACE_SYSTEM: return (u32)config_debug.trace_system_events;
         default: return 0xFFFFFFFFU;
     }
 }
@@ -960,6 +987,7 @@ static void trace_logger_set_config_event_filter(GG_Trace_Type type, u32 filter)
         case TRACE_ADPCM: config_debug.trace_adpcm_events = (int)filter; break;
         case TRACE_VCE: config_debug.trace_vce_events = (int)filter; break;
         case TRACE_SCSI: config_debug.trace_scsi_events = (int)filter; break;
+        case TRACE_SYSTEM: config_debug.trace_system_events = (int)filter; break;
         default: break;
     }
 }
@@ -1150,6 +1178,10 @@ static void render_entry_colored(const GG_Trace_Entry& entry, u64 index,
         case TRACE_SCSI:
             format_entry_text(entry, false, false, 0, buf, sizeof(buf));
             ImGui::TextColored(brown, "%s", buf);
+            break;
+        case TRACE_SYSTEM:
+            format_entry_text(entry, false, false, 0, buf, sizeof(buf));
+            ImGui::TextColored(white, "%s", buf);
             break;
         default:
             break;

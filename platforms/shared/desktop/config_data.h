@@ -277,6 +277,7 @@ struct config_Debug
     bool trace_adpcm;
     bool trace_vce;
     bool trace_scsi;
+    bool trace_system;
     int trace_vdc_events;
     int trace_input_events;
     int trace_timer_events;
@@ -285,6 +286,7 @@ struct config_Debug
     int trace_adpcm_events;
     int trace_vce_events;
     int trace_scsi_events;
+    int trace_system_events;
     int trace_output;
     int trace_capacity;
     int trace_disk_dir_option;

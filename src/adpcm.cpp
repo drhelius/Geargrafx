@@ -66,23 +66,65 @@ void Adpcm::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-void Adpcm::LogTraceEvent(u8 event, u8 reg, u8 value, u16 address)
+void Adpcm::LogAdpcmEvent(u8 event, u16 reg, u8 value, u16 address)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
     GG_Trace_Entry e = {};
     e.type = TRACE_ADPCM;
     e.adpcm.event = event;
-    e.adpcm.reg = reg;
+    e.adpcm.reg = (u8)(reg & 0xFF);
     e.adpcm.value = value;
     e.adpcm.address = address;
     e.adpcm.length = m_length;
-    e.adpcm.state = (m_playing ? 0x01 : 0x00) |
-                    (m_play_pending ? 0x02 : 0x00) |
-                    (m_half_irq ? 0x04 : 0x00) |
-                    (m_end_irq ? 0x08 : 0x00);
+    bool playing = m_playing;
+    bool play_pending = m_play_pending;
+    bool half_irq = m_half_irq;
+    bool end_irq = m_end_irq;
+    if (event == TRACE_ADPCM_READ_COMPLETE)
+        e.adpcm.address = (u16)(m_read_address - 1);
+    else if (event == TRACE_ADPCM_WRITE_COMPLETE)
+        e.adpcm.address = (u16)(m_write_address - 1);
+    else if (event == TRACE_ADPCM_PLAY_START)
+    {
+        if (IS_SET_BIT(m_control, 7) &&
+            (!IS_SET_BIT(m_control, 5) || m_playing))
+            return;
+        playing = true;
+        play_pending = false;
+    }
+    else if (event == TRACE_ADPCM_PLAY_STOP)
+    {
+        bool active = IS_SET_BIT(m_control, 7) ?
+            (!IS_SET_BIT(m_control, 5) && m_playing) : (m_playing || m_play_pending);
+        if (!active)
+            return;
+        playing = false;
+        play_pending = false;
+    }
+    else if (event == TRACE_ADPCM_HALF_IRQ)
+    {
+        if (m_half_irq == (value != 0))
+            return;
+        half_irq = value != 0;
+    }
+    else if (event == TRACE_ADPCM_END_IRQ)
+    {
+        if (m_end_irq == (value != 0))
+            return;
+        end_irq = value != 0;
+    }
+    e.adpcm.state = (playing ? 0x01 : 0x00) |
+                    (play_pending ? 0x02 : 0x00) |
+                    (half_irq ? 0x04 : 0x00) |
+                    (end_irq ? 0x08 : 0x00);
     m_trace_logger->TraceLog(e);
-}
+#else
+    UNUSED(event);
+    UNUSED(reg);
+    UNUSED(value);
+    UNUSED(address);
 #endif
+}
 
 void Adpcm::Reset()
 {

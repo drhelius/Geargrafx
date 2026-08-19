@@ -63,7 +63,6 @@ public:
     void WriteRegister(u16 address, u8 value);
     void SetIRQ(u8 value);
     void ClearIRQ(u8 value);
-    void TraceAudio(u8 event, u8 state, u8 stop_event, u32 lba, u32 param = 0);
     bool IsFaderEnabled(bool adpcm);
     double GetFaderValue();
     CdRom_State* GetState();
@@ -72,8 +71,8 @@ public:
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
 private:
-    void TraceEvent(u8 event, u8 value = 0, u8 state = 0, u32 lba = 0, u32 param = 0);
-    void LogTraceEvent(u8 event, u8 value, u8 state, u32 lba, u32 param);
+    void TraceCdRomEvent(u8 event, u8 value = 0);
+    void LogCdRomEvent(u8 event, u8 value);
     void AssertIRQ2();
     void LatchCdAudioSample();
     void WriteFader(u8 value);

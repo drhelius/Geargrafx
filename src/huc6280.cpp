@@ -80,56 +80,58 @@ void HuC6280::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-void HuC6280::LogTraceEvent(GG_Trace_Type type, u16 value, u16 value2)
+void HuC6280::LogCpuEvent()
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_transfer_state != 0)
+        return;
+
     GG_Trace_Entry e = {};
-    e.type = type;
+    e.type = TRACE_CPU;
+    e.cpu.pc = m_PC.GetValue();
+    e.cpu.bank = m_memory->GetBank(e.cpu.pc);
+    e.cpu.a = m_A.GetValue();
+    e.cpu.x = m_X.GetValue();
+    e.cpu.y = m_Y.GetValue();
+    e.cpu.s = m_S.GetValue();
+    e.cpu.p = m_P.GetValue();
 
-    switch (type)
+    u8 opcode;
+    if (m_memory->TryPeek(e.cpu.pc, &opcode))
     {
-        case TRACE_CPU:
+        e.cpu.size = k_huc6280_opcode_sizes[opcode];
+        for (u8 i = 0; i < e.cpu.size; i++)
         {
-            if (m_transfer_state != 0)
-                return;
-
-            e.cpu.pc = m_PC.GetValue();
-            e.cpu.bank = m_memory->GetBank(e.cpu.pc);
-            e.cpu.a = m_A.GetValue();
-            e.cpu.x = m_X.GetValue();
-            e.cpu.y = m_Y.GetValue();
-            e.cpu.s = m_S.GetValue();
-            e.cpu.p = m_P.GetValue();
-
-            u8 opcode;
-            if (m_memory->TryPeek(e.cpu.pc, &opcode))
+            if (!m_memory->TryPeek(e.cpu.pc + i, &e.cpu.opcodes[i]))
             {
-                e.cpu.size = k_huc6280_opcode_sizes[opcode];
-                for (u8 i = 0; i < e.cpu.size; i++)
-                {
-                    if (!m_memory->TryPeek(e.cpu.pc + i, &e.cpu.opcodes[i]))
-                    {
-                        e.cpu.size = i;
-                        break;
-                    }
-                }
+                e.cpu.size = i;
+                break;
             }
-            break;
         }
-        case TRACE_CPU_IRQ:
-            e.irq.pc = value;
-            e.irq.vector = value2;
-            e.irq.irq_mask = m_interrupt_disable_register;
-            break;
-        default:
-            return;
     }
 
     m_trace_logger->TraceLog(e);
+#endif
 }
 
-void HuC6280::LogTraceEvent(u8 event, u8 value)
+void HuC6280::LogCpuIrqEvent(u16 pc, u16 vector)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    GG_Trace_Entry e = {};
+    e.type = TRACE_CPU_IRQ;
+    e.irq.pc = pc;
+    e.irq.vector = vector;
+    e.irq.irq_mask = m_interrupt_disable_register;
+    m_trace_logger->TraceLog(e);
+#else
+    UNUSED(pc);
+    UNUSED(vector);
+#endif
+}
+
+void HuC6280::LogTimerEvent(u8 event, u8 value)
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
     GG_Trace_Entry e = {};
     e.type = TRACE_TIMER;
     e.timer.event = event;
@@ -138,8 +140,44 @@ void HuC6280::LogTraceEvent(u8 event, u8 value)
     e.timer.reload = m_timer_reload;
     e.timer.enabled = m_timer_enabled ? 1 : 0;
     m_trace_logger->TraceLog(e);
-}
+#else
+    UNUSED(event);
+    UNUSED(value);
 #endif
+}
+
+void HuC6280::LogSystemInterruptEvent(u8 event, u16 address, u8 raw)
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    GG_Trace_Entry e = {};
+    e.type = TRACE_SYSTEM;
+    e.system.event = event;
+    e.system.address = address;
+    e.system.raw = raw;
+    u8 mask = m_interrupt_disable_register;
+    u8 request = m_interrupt_request_register;
+    if (event == TRACE_SYSTEM_IRQ_MASK_WRITE)
+    {
+        e.system.old_value = mask;
+        mask = raw & 0x07;
+        e.system.new_value = mask;
+    }
+    else
+    {
+        e.system.old_value = request;
+        request = UNSET_BIT(request, 2);
+        e.system.new_value = request;
+    }
+    e.system.mask = mask;
+    e.system.request = request;
+    e.system.state = request & ~mask & 0x07;
+    m_trace_logger->TraceLog(e);
+#else
+    UNUSED(event);
+    UNUSED(address);
+    UNUSED(raw);
+#endif
+}
 
 void HuC6280::Reset()
 {

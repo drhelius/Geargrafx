@@ -2942,7 +2942,10 @@ json DebugAdapter::GetTraceLog(s64 start, int count)
     u64 actual_start;
     bool overrun = false;
     if (start < 0)
-        actual_start = (total - oldest > (u64)count) ? (total - (u64)count) : oldest;
+    {
+        u64 tail = (u64)(-(start + 1)) + 1;
+        actual_start = (total - oldest > tail) ? (total - tail) : oldest;
+    }
     else
     {
         actual_start = (u64)start;
@@ -2967,7 +2970,7 @@ json DebugAdapter::GetTraceLog(s64 start, int count)
     }
 
     u32 actual_count = (u32)count;
-    if (actual_start + actual_count > total)
+    if ((u64)actual_count > total - actual_start)
         actual_count = (u32)(total - actual_start);
     u32 buffer_start = (u32)(actual_start - oldest);
 
@@ -2979,7 +2982,7 @@ json DebugAdapter::GetTraceLog(s64 start, int count)
         const GG_Trace_Entry& entry = tl->GetEntry(buffer_start + i);
         char buf[GG_TRACE_FORMAT_BUFFER_SIZE];
 
-        GG_Trace_Format_Options options;
+        GG_Trace_Format_Options options = {};
         options.bank = true;
         options.registers = true;
         options.flags = true;
@@ -2989,7 +2992,6 @@ json DebugAdapter::GetTraceLog(s64 start, int count)
         options.previous_cycle = options.previous_cycle_valid ?
             tl->GetEntry(buffer_start + i - 1).cycle : 0;
         trace_log_format_entry(memory, entry, options, buf, sizeof(buf));
-
         lines.push_back(buf);
     }
 
@@ -3111,6 +3113,7 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& outpu
         u32 adpcm = (enabled_flags & TRACE_FLAG_ADPCM) ? tl->GetEventFilter(TRACE_ADPCM) : 0;
         u32 vce = (enabled_flags & TRACE_FLAG_VCE) ? tl->GetEventFilter(TRACE_VCE) : 0;
         u32 scsi = (enabled_flags & TRACE_FLAG_SCSI) ? tl->GetEventFilter(TRACE_SCSI) : 0;
+        u32 system = (enabled_flags & TRACE_FLAG_SYSTEM) ? tl->GetEventFilter(TRACE_SYSTEM) : 0;
         if ((vdc & TRACE_VDC_FILTER_REGISTERS) == TRACE_VDC_FILTER_REGISTERS) event_filter_list.push_back("vdc.registers");
         if ((vdc & TRACE_VDC_FILTER_IRQS) == TRACE_VDC_FILTER_IRQS) event_filter_list.push_back("vdc.irqs");
         if ((vdc & TRACE_VDC_FILTER_DMA) == TRACE_VDC_FILTER_DMA) event_filter_list.push_back("vdc.dma");
@@ -3138,6 +3141,9 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& outpu
         if ((scsi & TRACE_SCSI_FILTER_RESPONSES) == TRACE_SCSI_FILTER_RESPONSES) event_filter_list.push_back("scsi.responses");
         if ((scsi & TRACE_SCSI_FILTER_RESPONSE_BYTES) != 0) event_filter_list.push_back("scsi.response_bytes");
         if ((scsi & TRACE_SCSI_FILTER_PROBLEMS) == TRACE_SCSI_FILTER_PROBLEMS) event_filter_list.push_back("scsi.problems");
+        if ((system & TRACE_SYSTEM_FILTER_MPR) != 0) event_filter_list.push_back("system.mpr");
+        if ((system & TRACE_SYSTEM_FILTER_MAPPER) != 0) event_filter_list.push_back("system.mapper");
+        if ((system & TRACE_SYSTEM_FILTER_INTERRUPTS) == TRACE_SYSTEM_FILTER_INTERRUPTS) event_filter_list.push_back("system.interrupts");
         result["filters"] = event_filter_list;
     }
     else

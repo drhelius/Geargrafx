@@ -28,27 +28,28 @@
 #include "memory.h"
 #include "trace_logger.h"
 
-INLINE void HuC6280::TraceEvent(GG_Trace_Type type, u16 value, u16 value2)
+INLINE void HuC6280::TraceCpuEvent()
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_trace_logger->IsEnabled(type))
-        LogTraceEvent(type, value, value2);
-#else
-    UNUSED(type);
-    UNUSED(value);
-    UNUSED(value2);
-#endif
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEnabled(TRACE_CPU))
+        LogCpuEvent();
 }
 
-INLINE void HuC6280::TraceEvent(u8 event, u8 value)
+INLINE void HuC6280::TraceCpuIrqEvent(u16 pc, u16 vector)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_trace_logger->IsEventEnabled(TRACE_TIMER, event))
-        LogTraceEvent(event, value);
-#else
-    UNUSED(event);
-    UNUSED(value);
-#endif
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEnabled(TRACE_CPU_IRQ))
+        LogCpuIrqEvent(pc, vector);
+}
+
+INLINE void HuC6280::TraceTimerEvent(u8 event, u8 value)
+{
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_TIMER, event))
+        LogTimerEvent(event, value);
+}
+
+INLINE void HuC6280::TraceSystemInterruptEvent(u8 event, u16 address, u8 raw)
+{
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_SYSTEM, event))
+        LogSystemInterruptEvent(event, address, raw);
 }
 
 INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
@@ -69,7 +70,7 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
     m_clocked_master_cycles = 0;
     m_extra_master_cycles = 0;
 
-    TraceEvent(TRACE_CPU);
+    TraceCpuEvent();
 
     u8 opcode = Fetch8();
     m_cycles += k_huc6280_opcode_cycles[opcode];
@@ -120,7 +121,7 @@ inline void HuC6280::HandleIRQ()
 
     m_cycles += 8;
 
-    TraceEvent(TRACE_CPU_IRQ, pc, vector);
+    TraceCpuIrqEvent(pc, vector);
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_debug_next_irq =((0xFFFA - vector) >> 1) + 3;
@@ -230,10 +231,14 @@ INLINE u8 HuC6280:: ReadInterruptRegister(u16 address)
 INLINE void HuC6280::WriteInterruptRegister(u16 address, u8 value)
 {
     if ((address & 1) == 0)
+    {
+        TraceSystemInterruptEvent(TRACE_SYSTEM_IRQ_MASK_WRITE, address, value);
         m_interrupt_disable_register = value & 0x07;
+    }
     else
     {
         // Acknowledge TIQ
+        TraceSystemInterruptEvent(TRACE_SYSTEM_IRQ_ACK, address, value);
         m_interrupt_request_register = UNSET_BIT(m_interrupt_request_register, 2);
     }
 }
@@ -252,7 +257,7 @@ INLINE void HuC6280::ClockTimer(u32 cycles)
         {
             m_timer_counter = m_timer_reload;
             m_interrupt_request_register = SET_BIT(m_interrupt_request_register, 2);
-            TraceEvent(TRACE_TIMER_IRQ_REQUEST, 0);
+            TraceTimerEvent(TRACE_TIMER_IRQ_REQUEST, 0);
         }
         else
             m_timer_counter--;
@@ -281,12 +286,12 @@ INLINE void HuC6280::WriteTimerRegister(u16 address, u8 value)
                 m_timer_cycles = k_huc6280_timer_divisor;
             }
         }
-        TraceEvent(TRACE_TIMER_CONTROL_WRITE, value);
+        TraceTimerEvent(TRACE_TIMER_CONTROL_WRITE, value);
     }
     else
     {
         m_timer_reload = value & 0x7F;
-        TraceEvent(TRACE_TIMER_RELOAD_WRITE, value);
+        TraceTimerEvent(TRACE_TIMER_RELOAD_WRITE, value);
     }
 }
 

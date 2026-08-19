@@ -26,21 +26,18 @@
 #include "huc6280.h"
 #include "trace_logger.h"
 
-INLINE void ScsiController::TraceEvent(u8 event, u8 command, u8 phase, u8 status,
+INLINE void ScsiController::TraceScsiEvent(u8 event, u8 command, u8 phase, u8 status,
     u32 param, const u8* data, u8 size)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
     if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_SCSI, event))
-        LogTraceEvent(event, command, phase, status, param, data, size);
-#else
-    UNUSED(event);
-    UNUSED(command);
-    UNUSED(phase);
-    UNUSED(status);
-    UNUSED(param);
-    UNUSED(data);
-    UNUSED(size);
-#endif
+        LogScsiEvent(event, command, phase, status, param, data, size);
+}
+
+INLINE void ScsiController::TraceScsiProblemEvent(u8 event, u8 problem, u8 command, u32 param,
+    u32 extra)
+{
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_SCSI, event))
+        LogScsiProblemEvent(event, problem, command, param, extra);
 }
 
 INLINE void ScsiController::Clock(u32 cycles)
@@ -184,8 +181,7 @@ INLINE void ScsiController::RunEvent()
             break;
         case SCSI_EVENT_SET_RESPONSE_REQ_SIGNAL:
             SetSignal(SCSI_SIGNAL_REQ);
-            TraceEvent(TRACE_SCSI_RESPONSE_BYTE, 0, (u8)m_phase, m_bus.db,
-                m_data_buffer_offset > 0 ? m_data_buffer_offset - 1 : 0);
+            TraceScsiEvent(TRACE_SCSI_RESPONSE_BYTE, 0, (u8)m_phase, m_bus.db, m_data_buffer_offset);
             break;
         default:
             break;

@@ -36,6 +36,7 @@ enum GG_Trace_Type : u8
     TRACE_ADPCM,
     TRACE_VCE,
     TRACE_SCSI,
+    TRACE_SYSTEM,
     TRACE_TYPE_COUNT,
 };
 
@@ -49,7 +50,10 @@ enum GG_Trace_Type : u8
 #define TRACE_FLAG_ADPCM        (1 << TRACE_ADPCM)
 #define TRACE_FLAG_VCE          (1 << TRACE_VCE)
 #define TRACE_FLAG_SCSI         (1 << TRACE_SCSI)
+#define TRACE_FLAG_SYSTEM       (1 << TRACE_SYSTEM)
 #define TRACE_FLAG_ALL          ((1U << TRACE_TYPE_COUNT) - 1)
+
+static_assert(TRACE_TYPE_COUNT < 32, "Trace category flags exceed u32 width");
 
 enum GG_Trace_VDC_Event : u8
 {
@@ -164,6 +168,20 @@ enum GG_Trace_PSG_Event : u8
     TRACE_PSG_LFO_CONTROL,
 };
 
+enum GG_Trace_System_Event : u8
+{
+    TRACE_SYSTEM_MPR_WRITE = 0,
+    TRACE_SYSTEM_SF2_MAPPER,
+    TRACE_SYSTEM_IRQ_MASK_WRITE,
+    TRACE_SYSTEM_IRQ_ACK,
+};
+
+static_assert(TRACE_VDC_VPC_REG_WRITE < 32 && TRACE_VCE_VSYNC_END < 32 &&
+    TRACE_INPUT_WRITE < 32 && TRACE_TIMER_CONTROL_WRITE < 32 &&
+    TRACE_ADPCM_END_IRQ < 32 && TRACE_CDROM_AUDIO_BOUNDARY < 32 &&
+    TRACE_SCSI_ERROR < 32 && TRACE_PSG_LFO_CONTROL < 32 &&
+    TRACE_SYSTEM_IRQ_ACK < 32, "Trace event filters exceed u32 width");
+
 #define TRACE_EVENT_FLAG(event)              (1U << (event))
 
 #define TRACE_VDC_FILTER_REGISTERS            \
@@ -240,6 +258,13 @@ enum GG_Trace_PSG_Event : u8
 #define TRACE_SCSI_FILTER_ALL                 \
     (TRACE_SCSI_FILTER_COMMANDS | TRACE_SCSI_FILTER_PHASES | TRACE_SCSI_FILTER_RESPONSES | \
      TRACE_SCSI_FILTER_RESPONSE_BYTES | TRACE_SCSI_FILTER_PROBLEMS)
+
+#define TRACE_SYSTEM_FILTER_MPR               TRACE_EVENT_FLAG(TRACE_SYSTEM_MPR_WRITE)
+#define TRACE_SYSTEM_FILTER_MAPPER            TRACE_EVENT_FLAG(TRACE_SYSTEM_SF2_MAPPER)
+#define TRACE_SYSTEM_FILTER_INTERRUPTS        \
+    (TRACE_EVENT_FLAG(TRACE_SYSTEM_IRQ_MASK_WRITE) | TRACE_EVENT_FLAG(TRACE_SYSTEM_IRQ_ACK))
+#define TRACE_SYSTEM_FILTER_ALL               \
+    (TRACE_SYSTEM_FILTER_MPR | TRACE_SYSTEM_FILTER_MAPPER | TRACE_SYSTEM_FILTER_INTERRUPTS)
 
 struct GG_Trace_Entry
 {
@@ -339,8 +364,24 @@ struct GG_Trace_Entry
             u8 data[16];
             u32 param;
         } scsi;
+
+        struct
+        {
+            u32 physical;
+            u16 address;
+            u8 event;
+            u8 index;
+            u8 mask;
+            u8 raw;
+            u8 old_value;
+            u8 new_value;
+            u8 request;
+            u8 state;
+        } system;
     };
 };
+
+static_assert(sizeof(GG_Trace_Entry) <= 48, "Trace entry exceeds memory budget");
 
 class TraceLogger
 {

@@ -25,15 +25,11 @@
 #include "cdrom_audio.h"
 #include "trace_logger.h"
 
-INLINE void Audio::TraceEvent(u8 reg, u8 value)
+INLINE void Audio::TracePsgEvent(u32 address, u8 value)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_trace_logger->IsEventEnabled(TRACE_PSG, reg))
-        LogTraceEvent(reg, value);
-#else
-    UNUSED(reg);
-    UNUSED(value);
-#endif
+    if (IsValidPointer(m_trace_logger) &&
+        m_trace_logger->IsEventEnabled(TRACE_PSG, (u8)(address & 0x0F)))
+        LogPsgEvent(address, value);
 }
 
 INLINE void Audio::Clock(u32 cycles)
@@ -91,8 +87,7 @@ INLINE void Audio::SampleSources()
 
 INLINE void Audio::WritePSG(u32 address, u8 value)
 {
-    u8 reg = (u8)(address & 0x0F);
-    TraceEvent(reg, value);
+    TracePsgEvent(address, value);
     m_psg->Write(address, value);
 #ifndef GG_DISABLE_VGMRECORDER
     if (m_vgm_recording_enabled)

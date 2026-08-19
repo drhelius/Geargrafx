@@ -54,8 +54,8 @@ public:
     void SetTraceLogger(TraceLogger* trace_logger);
 
 private:
-    void TraceEvent(u8 reg, u8 value);
-    void LogTraceEvent(u8 reg, u8 value);
+    void TracePsgEvent(u32 address, u8 value);
+    void LogPsgEvent(u32 address, u8 value);
     void ClockSources(u32 cycles);
     void SampleSources();
 

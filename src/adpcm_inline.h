@@ -90,8 +90,6 @@ INLINE u8 Adpcm::GetStatusRegisterSnapshot()
 
 INLINE void Adpcm::Write(u16 address, u8 value)
 {
-    TraceEvent(TRACE_ADPCM_REG_WRITE, (u8)(address & 0xFF), value);
-
     switch (address)
     {
         case 0x08:
@@ -105,10 +103,8 @@ INLINE void Adpcm::Write(u16 address, u8 value)
             m_write_value = value;
             break;
         case 0x0B:
-            if (!m_scsi_controller->IsDataReady())
-                value &= ~0x01;
-            m_dma = value;
-            TraceEvent(TRACE_ADPCM_DMA_STATE, 0x0B, m_dma);
+            m_dma = m_scsi_controller->IsDataReady() ? value : (value & ~0x01);
+            TraceAdpcmEvent(TRACE_ADPCM_DMA_STATE, 0x0B, m_dma);
             break;
         case 0x0D:
             WriteControl(value);
@@ -121,6 +117,8 @@ INLINE void Adpcm::Write(u16 address, u8 value)
             Debug("ADPCM Write Invalid address: %04X, value: %02X", address, value);
             break;
     }
+
+    TraceAdpcmEvent(TRACE_ADPCM_REG_WRITE, address, value);
 }
 
 INLINE u32 Adpcm::CalculateCyclesPerSample(u8 sample_rate)
@@ -145,10 +143,8 @@ inline void Adpcm::UpdateReadWriteEvents(u32 cycles)
         if (m_read_cycles <= 0)
         {
             m_read_cycles = 0;
-            u16 read_address = m_read_address;
             m_read_value = m_adpcm_ram[m_read_address];
             m_read_address++;
-            TraceEvent(TRACE_ADPCM_READ_COMPLETE, 0, m_read_value, read_address);
 
             if (!IS_SET_BIT(m_control, 4))
             {
@@ -163,6 +159,8 @@ inline void Adpcm::UpdateReadWriteEvents(u32 cycles)
                     SetEndIRQ(true);
                 }
             }
+
+            TraceAdpcmEvent(TRACE_ADPCM_READ_COMPLETE, 0, m_read_value);
         }
     }
 
@@ -172,10 +170,8 @@ inline void Adpcm::UpdateReadWriteEvents(u32 cycles)
         if (m_write_cycles <= 0)
         {
             m_write_cycles = 0;
-            u16 write_address = m_write_address;
             m_adpcm_ram[m_write_address] = m_write_value;
             m_write_address++;
-            TraceEvent(TRACE_ADPCM_WRITE_COMPLETE, 0, m_write_value, write_address);
 
             SetHalfIRQ(m_length < 0x8000);
             if (m_length == 0)
@@ -186,6 +182,8 @@ inline void Adpcm::UpdateReadWriteEvents(u32 cycles)
                 m_length++;
                 m_length &= 0x1FFFF;
             }
+
+            TraceAdpcmEvent(TRACE_ADPCM_WRITE_COMPLETE, 0, m_write_value);
         }
     }
 }
@@ -209,7 +207,7 @@ inline void Adpcm::UpdateDMA(u32 cycles)
                 if (!m_scsi_controller->IsDataReady())
                 {
                     m_dma &= ~0x01;
-                    TraceEvent(TRACE_ADPCM_DMA_STATE, 0x0B, m_dma);
+                    TraceAdpcmEvent(TRACE_ADPCM_DMA_STATE, 0x0B, m_dma);
                 }
             }
             else
@@ -231,14 +229,11 @@ inline void Adpcm::RunAdpcm(u32 cycles)
 {
     if (IS_SET_BIT(m_control, 7))
     {
-        bool was_playing = m_playing;
-        m_playing = IS_SET_BIT(m_control, 5);
+        bool playing = IS_SET_BIT(m_control, 5);
+        TraceAdpcmEvent(TRACE_ADPCM_PLAY_START, 0x0D, m_control, m_read_address);
+        TraceAdpcmEvent(TRACE_ADPCM_PLAY_STOP, 0x0D, m_control, m_read_address);
+        m_playing = playing;
         m_play_pending = false;
-        if (m_playing != was_playing)
-        {
-            TraceEvent(m_playing ? TRACE_ADPCM_PLAY_START : TRACE_ADPCM_PLAY_STOP,
-                       0x0D, m_control, m_read_address);
-        }
         return;
     }
 
@@ -247,11 +242,9 @@ inline void Adpcm::RunAdpcm(u32 cycles)
 
     if (!IS_SET_BIT(m_control, 5) || (IS_SET_BIT(m_control, 6) && (m_length == 0)))
     {
-        bool was_active = m_playing || m_play_pending;
+        TraceAdpcmEvent(TRACE_ADPCM_PLAY_STOP, 0x0D, m_control, m_read_address);
         m_play_pending = false;
         m_playing = false;
-        if (was_active)
-            TraceEvent(TRACE_ADPCM_PLAY_STOP, 0x0D, m_control, m_read_address);
         return;
     }
 
@@ -262,11 +255,11 @@ inline void Adpcm::RunAdpcm(u32 cycles)
 
         if (m_play_pending)
         {
+            TraceAdpcmEvent(TRACE_ADPCM_PLAY_START, 0x0D, m_control, m_read_address);
             m_play_pending = false;
             m_playing = true;
             m_sample = 2048;
             m_step_index = 0;
-            TraceEvent(TRACE_ADPCM_PLAY_START, 0x0D, m_control, m_read_address);
         }
 
         u8 ram_byte = m_adpcm_ram[m_read_address];
@@ -307,7 +300,7 @@ INLINE void Adpcm::WriteControl(u8 value)
     if (IS_SET_BIT(value, 5) && !m_playing)
     {
         m_play_pending = true;
-        TraceEvent(TRACE_ADPCM_PLAY_REQUEST, 0x0D, value, m_read_address);
+        TraceAdpcmEvent(TRACE_ADPCM_PLAY_REQUEST, 0x0D, value, m_read_address);
     }
 
     m_control = value;
@@ -315,39 +308,28 @@ INLINE void Adpcm::WriteControl(u8 value)
 
 INLINE void Adpcm::SetEndIRQ(bool asserted)
 {
-    bool changed = m_end_irq != asserted;
-    m_end_irq = asserted;
     if (asserted)
         m_cdrom->SetIRQ(CDROM_IRQ_ADPCM_END);
     else
         m_cdrom->ClearIRQ(CDROM_IRQ_ADPCM_END);
-    if (changed)
-        TraceEvent(TRACE_ADPCM_END_IRQ, 0, asserted ? 1 : 0, m_read_address);
+    TraceAdpcmEvent(TRACE_ADPCM_END_IRQ, 0, asserted, m_read_address);
+    m_end_irq = asserted;
 }
 
 INLINE void Adpcm::SetHalfIRQ(bool asserted)
 {
-    bool changed = m_half_irq != asserted;
-    m_half_irq = asserted;
     if (asserted)
         m_cdrom->SetIRQ(CDROM_IRQ_ADPCM_HALF);
     else
         m_cdrom->ClearIRQ(CDROM_IRQ_ADPCM_HALF);
-    if (changed)
-        TraceEvent(TRACE_ADPCM_HALF_IRQ, 0, asserted ? 1 : 0, m_read_address);
+    TraceAdpcmEvent(TRACE_ADPCM_HALF_IRQ, 0, asserted, m_read_address);
+    m_half_irq = asserted;
 }
 
-INLINE void Adpcm::TraceEvent(u8 event, u8 reg, u8 value, u16 address)
+INLINE void Adpcm::TraceAdpcmEvent(u8 event, u16 reg, u8 value, u16 address)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
     if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_ADPCM, event))
-        LogTraceEvent(event, reg, value, address);
-#else
-    UNUSED(event);
-    UNUSED(reg);
-    UNUSED(value);
-    UNUSED(address);
-#endif
+        LogAdpcmEvent(event, reg, value, address);
 }
 
 INLINE bool Adpcm::CheckReset()

@@ -59,9 +59,9 @@ void HuC6270::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-void HuC6270::LogTraceEvent(u8 event, u8 raw, bool msb)
+void HuC6270::LogVdcEvent(u8 event, u8 raw, bool msb)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
     GG_Trace_Entry e = {};
     e.type = TRACE_VDC;
     e.vdc.event = event;
@@ -92,8 +92,12 @@ void HuC6270::LogTraceEvent(u8 event, u8 raw, bool msb)
     }
 
     m_trace_logger->TraceLog(e);
-}
+#else
+    UNUSED(event);
+    UNUSED(raw);
+    UNUSED(msb);
 #endif
+}
 
 void HuC6270::Reset()
 {
@@ -284,7 +288,7 @@ void HuC6270::WriteRegister(u16 address, u8 value)
 
             m_register[m_address_register] &= k_register_mask[m_address_register];
 
-            TraceEvent(TRACE_VDC_REG_WRITE, value, msb);
+            TraceVdcEvent(TRACE_VDC_REG_WRITE, value, msb);
 
             switch (m_address_register)
             {
@@ -348,7 +352,7 @@ void HuC6270::WriteRegister(u16 address, u8 value)
                         m_vram_transfer_src = m_register[HUC6270_REG_SOUR];
                         m_vram_transfer_dest = m_register[HUC6270_REG_DESR];
 
-                        TraceEvent(TRACE_VDC_VRAM_DMA_START);
+                        TraceVdcEvent(TRACE_VDC_VRAM_DMA_START);
                     }
                     break;
                 // 0x13
@@ -534,7 +538,7 @@ void HuC6270::SATTransfer()
                 m_status_register |= HUC6270_STATUS_SAT_END;
                 m_huc6202->AssertIRQ1(this, true);
 
-                TraceEvent(TRACE_VDC_SATB_DMA_END_IRQ);
+                TraceVdcEvent(TRACE_VDC_SATB_DMA_END_IRQ);
             }
         }
     }
@@ -570,7 +574,7 @@ void HuC6270::VRAMTransfer()
                 m_status_register |= HUC6270_STATUS_VRAM_END;
                 m_huc6202->AssertIRQ1(this, true);
 
-                TraceEvent(TRACE_VDC_VRAM_DMA_END_IRQ);
+                TraceVdcEvent(TRACE_VDC_VRAM_DMA_END_IRQ);
             }
         }
     }
@@ -661,7 +665,7 @@ void HuC6270::VBlankIRQ()
         if(IsValidPointer(m_input_pump_fn))
             m_input_pump_fn();
 
-        TraceEvent(TRACE_VDC_VBLANK_IRQ);
+        TraceVdcEvent(TRACE_VDC_VBLANK_IRQ);
     }
 
     if (m_trigger_sat_transfer || (m_register[HUC6270_REG_DCR] & 0x10))
@@ -669,7 +673,7 @@ void HuC6270::VBlankIRQ()
         m_trigger_sat_transfer = false;
         m_sat_transfer_pending = 1024;
 
-        TraceEvent(TRACE_VDC_SATB_DMA_START);
+        TraceVdcEvent(TRACE_VDC_SATB_DMA_START);
     }
 }
 

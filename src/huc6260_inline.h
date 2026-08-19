@@ -25,14 +25,10 @@
 #include "huc6280.h"
 #include "trace_logger.h"
 
-INLINE void HuC6260::TraceEvent(u8 event)
+INLINE void HuC6260::TraceVceEvent(u8 event)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_trace_logger->IsEventEnabled(TRACE_VCE, event))
-        LogTraceEvent(event);
-#else
-    UNUSED(event);
-#endif
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_VCE, event))
+        LogVceEvent(event);
 }
 
 template <bool is_sgx>
@@ -127,7 +123,7 @@ INLINE bool HuC6260::Clock(u32 cycles)
                 m_vsync = false;
                 m_huc6202->SetVSyncLow();
 
-                TraceEvent(TRACE_VCE_VSYNC_START);
+                TraceVceEvent(TRACE_VCE_VSYNC_START);
             }
             // End of vertical sync
             else if (m_vpos == (k_huc6260_total_lines[m_blur] - 1))
@@ -137,7 +133,7 @@ INLINE bool HuC6260::Clock(u32 cycles)
                 m_pixel_index = 0;
                 frame_ready = true;
 
-                TraceEvent(TRACE_VCE_VSYNC_END);
+                TraceVceEvent(TRACE_VCE_VSYNC_END);
             }
 
             if(m_vpos >= 14 && m_vpos < 256)

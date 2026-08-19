@@ -26,16 +26,10 @@
 #include "huc6280.h"
 #include "trace_logger.h"
 
-INLINE void HuC6270::TraceEvent(u8 event, u8 raw, bool msb)
+INLINE void HuC6270::TraceVdcEvent(u8 event, u8 raw, bool msb)
 {
-#if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_trace_logger->IsEventEnabled(TRACE_VDC, event))
-        LogTraceEvent(event, raw, msb);
-#else
-    UNUSED(event);
-    UNUSED(raw);
-    UNUSED(msb);
-#endif
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_VDC, event))
+        LogVdcEvent(event, raw, msb);
 }
 
 INLINE u16 HuC6270::Clock()
@@ -360,7 +354,7 @@ INLINE void HuC6270::RCRIRQ()
             m_status_register |= HUC6270_STATUS_SCANLINE;
             m_huc6202->AssertIRQ1(this, true);
 
-            TraceEvent(TRACE_VDC_SCANLINE_IRQ);
+            TraceVdcEvent(TRACE_VDC_SCANLINE_IRQ);
         }
     }
 }
@@ -372,7 +366,7 @@ INLINE void HuC6270::OverflowIRQ()
         m_status_register |= HUC6270_STATUS_OVERFLOW;
         m_huc6202->AssertIRQ1(this, true);
 
-        TraceEvent(TRACE_VDC_OVERFLOW_IRQ);
+        TraceVdcEvent(TRACE_VDC_OVERFLOW_IRQ);
     }
 }
 
@@ -384,7 +378,7 @@ INLINE void HuC6270::SpriteCollisionIRQ()
         m_status_register |= HUC6270_STATUS_COLLISION;
         m_huc6202->AssertIRQ1(this, true);
 
-        TraceEvent(TRACE_VDC_SPRITE_COLLISION_IRQ);
+        TraceVdcEvent(TRACE_VDC_SPRITE_COLLISION_IRQ);
     }
 }
 

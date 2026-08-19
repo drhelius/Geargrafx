@@ -59,17 +59,20 @@ void Audio::SetTraceLogger(TraceLogger* trace_logger)
     m_trace_logger = trace_logger;
 }
 
-#if !defined(GG_DISABLE_DISASSEMBLER)
-void Audio::LogTraceEvent(u8 reg, u8 value)
+void Audio::LogPsgEvent(u32 address, u8 value)
 {
+#if !defined(GG_DISABLE_DISASSEMBLER)
     GG_Trace_Entry e = {};
     e.type = TRACE_PSG;
     e.psg.channel = *m_psg->GetState()->CHANNEL_SELECT;
-    e.psg.reg = reg;
+    e.psg.reg = (u8)(address & 0x0F);
     e.psg.value = value;
     m_trace_logger->TraceLog(e);
-}
+#else
+    UNUSED(address);
+    UNUSED(value);
 #endif
+}
 
 void Audio::Reset(bool cdrom)
 {
