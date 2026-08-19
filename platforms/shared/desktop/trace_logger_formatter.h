@@ -24,8 +24,6 @@
 
 #define GG_TRACE_FORMAT_BUFFER_SIZE 512
 
-class Memory;
-
 struct GG_Trace_Format_Options
 {
     bool bank;
@@ -37,11 +35,10 @@ struct GG_Trace_Format_Options
     u64 previous_cycle;
 };
 
-GG_Disassembler_Record* trace_log_get_cpu_record(Memory* memory, const GG_Trace_Entry& entry);
-void trace_log_format_cpu_bytes(const GG_Trace_Entry& entry, char* buf, int buf_size);
+void trace_log_format_cpu_bytes(const GG_Trace_Entry& entry, char* buffer, size_t buffer_size);
 void trace_log_format_cycle_prefix(const GG_Trace_Entry& entry, bool previous_cycle_valid,
-    u64 previous_cycle, char* buf, int buf_size);
-void trace_log_format_entry(Memory* memory, const GG_Trace_Entry& entry,
-    const GG_Trace_Format_Options& options, char* buf, int buf_size);
+    u64 previous_cycle, char* buffer, size_t buffer_size);
+void trace_logger_format_entry(const GG_Trace_Entry& entry,
+    const GG_Trace_Format_Options& options, char* buffer, size_t buffer_size);
 
 #endif /* TRACE_LOGGER_FORMATTER_H */

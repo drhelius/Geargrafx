@@ -110,6 +110,10 @@ void HuC6280::LogCpuEvent()
         }
     }
 
+    GG_Disassembler_Record* record = m_memory->GetDisassemblerRecord(e.cpu.pc, e.cpu.bank);
+    if (IsValidPointer(record))
+        strncpy_fit(e.cpu.name, record->name, sizeof(e.cpu.name));
+
     m_trace_logger->TraceLog(e);
 #endif
 }
