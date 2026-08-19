@@ -107,20 +107,6 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, m_audio, this);
     m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom, m_random);
 
-    m_trace_logger = new TraceLogger(&m_master_clock_cycles);
-    m_memory->SetTraceLogger(m_trace_logger);
-    m_huc6202->SetTraceLogger(m_trace_logger);
-    m_huc6280->SetTraceLogger(m_trace_logger);
-    m_huc6270_1->SetTraceLogger(m_trace_logger);
-    m_huc6270_2->SetTraceLogger(m_trace_logger);
-    m_huc6260->SetTraceLogger(m_trace_logger);
-    m_audio->SetTraceLogger(m_trace_logger);
-    m_input->SetTraceLogger(m_trace_logger);
-    m_cdrom->SetTraceLogger(m_trace_logger);
-    m_cdrom_audio->SetTraceLogger(m_trace_logger);
-    m_adpcm->SetTraceLogger(m_trace_logger);
-    m_scsi_controller->SetTraceLogger(m_trace_logger);
-
     m_audio->Init();
     m_input->Init();
     m_cdrom_media->Init();
@@ -135,6 +121,22 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_huc6280->Init(m_memory, m_huc6202);
     m_adpcm->Init(this, m_cdrom, m_scsi_controller);
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);
+
+#if !defined(GF_DISABLE_DISASSEMBLER)
+    m_trace_logger = new TraceLogger(&m_master_clock_cycles);
+    m_memory->SetTraceLogger(m_trace_logger);
+    m_huc6202->SetTraceLogger(m_trace_logger);
+    m_huc6280->SetTraceLogger(m_trace_logger);
+    m_huc6270_1->SetTraceLogger(m_trace_logger);
+    m_huc6270_2->SetTraceLogger(m_trace_logger);
+    m_huc6260->SetTraceLogger(m_trace_logger);
+    m_audio->SetTraceLogger(m_trace_logger);
+    m_input->SetTraceLogger(m_trace_logger);
+    m_cdrom->SetTraceLogger(m_trace_logger);
+    m_cdrom_audio->SetTraceLogger(m_trace_logger);
+    m_adpcm->SetTraceLogger(m_trace_logger);
+    m_scsi_controller->SetTraceLogger(m_trace_logger);
+#endif
 }
 
 bool GeargrafxCore::LoadMedia(const char* file_path)
