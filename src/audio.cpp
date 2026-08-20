@@ -125,6 +125,15 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 
         if (m_mute)
             memset(sample_buffer, 0, sizeof(s16) * samples);
+        else if ((m_master_volume == 1.0f) && (m_psg_volume == 1.0f) &&
+            (m_adpcm_volume == 1.0f) && (m_cdrom_volume == 1.0f))
+        {
+            for (int i = 0; i < samples; i++)
+            {
+                s32 mix = (s32)m_psg_buffer[i] + m_adpcm_buffer[i] + m_cdrom_buffer[i];
+                sample_buffer[i] = (s16)CLAMP(mix, -32768, 32767);
+            }
+        }
         else
         {
             for (int i = 0; i < samples; i++)
@@ -155,6 +164,8 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 
         if (m_mute || (m_master_volume <= 0.0f) || (m_psg_volume <= 0.0f))
             memset(sample_buffer, 0, sizeof(s16) * samples);
+        else if ((m_master_volume == 1.0f) && (m_psg_volume == 1.0f))
+            memcpy(sample_buffer, m_psg_buffer, sizeof(s16) * samples);
         else
         {
             for (int i = 0; i < samples; i++)
