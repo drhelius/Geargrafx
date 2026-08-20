@@ -34,6 +34,18 @@ INLINE void Audio::TracePsgEvent(u32 address, u8 value)
 
 INLINE void Audio::Clock(u32 cycles)
 {
+    if (cycles == 0)
+        return;
+
+    u64 sample_clock_counter = m_sample_clock_counter + (u64)cycles * GG_AUDIO_SAMPLE_RATE;
+
+    if (sample_clock_counter < GG_MASTER_CLOCK_RATE)
+    {
+        ClockSources(cycles);
+        m_sample_clock_counter = sample_clock_counter;
+        return;
+    }
+
     while (cycles > 0)
     {
         u32 step = cycles;
