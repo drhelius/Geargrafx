@@ -36,6 +36,8 @@ public:
         u8 vol;
         u8 vol_left;
         u8 vol_right;
+        u16 gain_left;
+        u16 gain_right;
         u8 wave;
         u8 wave_index;
         u8 wave_data[32];
@@ -81,6 +83,7 @@ public:
 private:
     void Sync();
     void ComputeVolumeLUT();
+    void UpdateChannelVolume(int channel);
 
 private:
     HuC6280PSG_State m_state;

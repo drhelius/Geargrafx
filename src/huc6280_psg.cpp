@@ -113,6 +113,8 @@ void HuC6280PSG::Reset()
         {
             m_channels[i].output[j] = 0;
         }
+
+        UpdateChannelVolume(i);
     }
 }
 
@@ -133,6 +135,10 @@ void HuC6280PSG::Write(u16 address, u8 value)
         m_main_vol = value;
         m_main_vol_left = (value >> 4) & 0x0F;
         m_main_vol_right = value & 0x0F;
+
+        for (int i = 0; i < 6; i++)
+            UpdateChannelVolume(i);
+
         break;
     // Channel frequency (low)
     case 2:
@@ -168,6 +174,8 @@ void HuC6280PSG::Write(u16 address, u8 value)
             m_ch->enabled = IS_SET_BIT(value, 7);
             m_ch->dda_enabled = IS_SET_BIT(value, 6);
             m_ch->vol = (value >> 1) & 0x0F;
+
+            UpdateChannelVolume(m_channel_select);
         }
         break;
     // Channel amplitude
@@ -177,6 +185,8 @@ void HuC6280PSG::Write(u16 address, u8 value)
             m_ch->amplitude = value;
             m_ch->vol_left = (value >> 4) & 0x0F;
             m_ch->vol_right = value & 0x0F;
+
+            UpdateChannelVolume(m_channel_select);
         }
         break;
     // Channel waveform data
@@ -277,12 +287,6 @@ void HuC6280PSG::Sync()
             if (!ch->enabled)
                 continue;
 
-            u8 temp_left_vol = MIN(0x0F, (0x0F - m_main_vol_left) + (0x0F - ch->vol_left) + (0x0F - ch->vol));
-            u8 temp_right_vol = MIN(0x0F, (0x0F - m_main_vol_right) + (0x0F - ch->vol_right) + (0x0F - ch->vol));
-
-            u16 final_left_vol = m_volume_lut[(temp_left_vol << 1) | (~ch->control & 0x01)];
-            u16 final_right_vol = m_volume_lut[(temp_right_vol << 1) | (~ch->control & 0x01)];
-
             s8 data = 0;
 
             // Noise
@@ -364,8 +368,8 @@ void HuC6280PSG::Sync()
 
             if (!ch->mute)
             {
-                ch->left_sample = (s16)((data - m_dc_offset) * final_left_vol);
-                ch->right_sample = (s16)((data - m_dc_offset) * final_right_vol);
+                ch->left_sample = (s16)((data - m_dc_offset) * ch->gain_left);
+                ch->right_sample = (s16)((data - m_dc_offset) * ch->gain_right);
             }
         }
 
@@ -437,6 +441,17 @@ void HuC6280PSG::ComputeVolumeLUT()
 
     m_volume_lut[30] = 0;
     m_volume_lut[31] = 0;
+}
+
+void HuC6280PSG::UpdateChannelVolume(int channel)
+{
+    HuC6280PSG_Channel* ch = &m_channels[channel];
+
+    u8 temp_left_vol = MIN(0x0F, (0x0F - m_main_vol_left) + (0x0F - ch->vol_left) + (0x0F - ch->vol));
+    u8 temp_right_vol = MIN(0x0F, (0x0F - m_main_vol_right) + (0x0F - ch->vol_right) + (0x0F - ch->vol));
+
+    ch->gain_left = m_volume_lut[(temp_left_vol << 1) | (~ch->control & 0x01)];
+    ch->gain_right = m_volume_lut[(temp_right_vol << 1) | (~ch->control & 0x01)];
 }
 
 void HuC6280PSG::SaveState(std::ostream& stream)
@@ -572,4 +587,7 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
         m_ch = &m_channels[m_channel_select];
     else
         m_ch = &m_channels[0];
+
+    for (int i = 0; i < 6; i++)
+        UpdateChannelVolume(i);
 }
