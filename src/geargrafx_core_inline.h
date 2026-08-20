@@ -93,7 +93,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
         {
             m_frame_ready = false;
             u32 cycles = m_huc6280->RunInstruction(&instruction_completed);
-            u32 clocked_cycles = m_huc6280->ConsumeClockedMasterCycles();
+            u32 clocked_cycles = m_huc6280->GetClockedMasterCycles();
             u32 remaining_cycles = (cycles > clocked_cycles) ? cycles - clocked_cycles : 0;
 
             stop = m_frame_ready;
@@ -135,7 +135,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
         {
             m_frame_ready = false;
             u32 cycles = m_huc6280->RunInstruction();
-            u32 clocked_cycles = m_huc6280->ConsumeClockedMasterCycles();
+            u32 clocked_cycles = m_huc6280->GetClockedMasterCycles();
             u32 remaining_cycles = (cycles > clocked_cycles) ? cycles - clocked_cycles : 0;
 
             stop = m_frame_ready;

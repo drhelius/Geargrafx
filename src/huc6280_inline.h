@@ -165,11 +165,9 @@ INLINE void HuC6280::SetHardwareClock(GG_Clock_Hardware_Fn clock_fn, void* conte
     m_clock_hardware_context = context;
 }
 
-INLINE u32 HuC6280::ConsumeClockedMasterCycles()
+INLINE u32 HuC6280::GetClockedMasterCycles() const
 {
-    u32 cycles = m_clocked_master_cycles;
-    m_clocked_master_cycles = 0;
-    return cycles;
+    return m_clocked_master_cycles;
 }
 
 INLINE void HuC6280::ClockHardwareCycles(u32 master_cycles)

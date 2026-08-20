@@ -122,7 +122,7 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_adpcm->Init(this, m_cdrom, m_scsi_controller);
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);
 
-#if !defined(GF_DISABLE_DISASSEMBLER)
+#if !defined(GG_DISABLE_DISASSEMBLER)
     m_trace_logger = new TraceLogger(&m_master_clock_cycles);
     m_memory->SetTraceLogger(m_trace_logger);
     m_huc6202->SetTraceLogger(m_trace_logger);

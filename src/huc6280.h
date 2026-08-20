@@ -122,7 +122,7 @@ public:
     void Reset();
     u32 RunInstruction(bool* completed = NULL);
     void SetHardwareClock(GG_Clock_Hardware_Fn clock_fn, void* context);
-    u32 ConsumeClockedMasterCycles();
+    u32 GetClockedMasterCycles() const;
     void ClockCountedCycles(unsigned int cycles);
     void StallFastCycle();
     void ClockTimer(u32 cycles);
