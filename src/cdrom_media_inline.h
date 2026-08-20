@@ -185,6 +185,11 @@ INLINE u32 CdRomMedia::GetCurrentSector()
     }
 }
 
+INLINE u32 CdRomMedia::GetMediaGeneration()
+{
+    return m_media_generation;
+}
+
 INLINE void CdRomMedia::SetCurrentSector(u32 sector)
 {
     if (IsValidPointer(m_current_image))

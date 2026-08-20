@@ -27,6 +27,7 @@
 CdRomMedia::CdRomMedia()
 {
     InitPointer(m_current_image);
+    m_media_generation = 0;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     InitPointer(m_physical_image);
 #endif
@@ -60,6 +61,7 @@ void CdRomMedia::Init()
 void CdRomMedia::Reset()
 {
     InitPointer(m_current_image);
+    m_media_generation++;
 
     m_cue_bin_image->Reset();
     m_chd_image->Reset();
@@ -79,6 +81,7 @@ bool CdRomMedia::LoadCueFromFile(const char* path, bool preload)
     if (m_cue_bin_image->LoadFromFile(path, preload))
     {
         m_current_image = m_cue_bin_image;
+        m_media_generation++;
         return true;
     }
     else
@@ -94,6 +97,7 @@ bool CdRomMedia::LoadChdFromFile(const char* path, bool preload)
     if (m_chd_image->LoadFromFile(path, preload))
     {
         m_current_image = m_chd_image;
+        m_media_generation++;
         return true;
     }
     else
@@ -110,6 +114,7 @@ bool CdRomMedia::LoadPhysicalDrive(const char* device_id, bool preload)
     if (m_physical_image->LoadFromDevice(device_id, preload))
     {
         m_current_image = m_physical_image;
+        m_media_generation++;
         return true;
     }
     else

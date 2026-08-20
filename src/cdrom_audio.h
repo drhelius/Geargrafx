@@ -84,6 +84,7 @@ public:
 
 private:
     void GenerateSamples();
+    void InvalidateSectorCache();
     void SyncMediaCurrentSector();
     void TraceCdRomAudioEvent(u8 event, u32 lba, u32 param = 0);
     void LogCdRomAudioEvent(u8 event, u32 lba, u32 param);
@@ -107,6 +108,11 @@ private:
     s32 m_seek_cycles;
     s16 m_left_sample;
     s16 m_right_sample;
+    s16 m_sector_cache[2352 / sizeof(s16)] = {};
+    u32 m_sector_cache_lba;
+    u32 m_sector_cache_generation;
+    bool m_sector_cache_attempted;
+    bool m_sector_cache_valid;
 };
 
 #include "cdrom_audio_inline.h"

@@ -113,6 +113,7 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_current_state = pause ? CD_AUDIO_STATE_PAUSED : CD_AUDIO_STATE_PLAYING;
     m_cdrom_media->SetCurrentSector(m_current_lba);
+    InvalidateSectorCache();
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_START, m_start_lba, (u32)m_seek_cycles);
 
     Debug("CD AUDIO: Start audio at LBA %d, track %d, current lba %d, seek cycles %d",
@@ -168,9 +169,39 @@ INLINE void CdRomAudio::SetStopLBA(u32 lba, CdAudioStopEvent event)
 INLINE void CdRomAudio::GenerateSamples()
 {
     s16 buffer[2] = { };
-    m_cdrom_media->ReadSamples(m_current_lba, m_current_sample * 4, buffer, 2);
-    m_left_sample = buffer[0];
-    m_right_sample = buffer[1];
+    u32 media_generation = m_cdrom_media->GetMediaGeneration();
+    bool cache_hit = false;
+
+    if (m_sector_cache_generation != media_generation)
+    {
+        InvalidateSectorCache();
+        m_sector_cache_generation = media_generation;
+    }
+
+    if (!m_sector_cache_attempted || (m_sector_cache_lba != m_current_lba))
+    {
+        m_sector_cache_lba = m_current_lba;
+        m_sector_cache_valid = m_cdrom_media->ReadSamples(m_current_lba, 0,
+            m_sector_cache, 2352 / sizeof(s16));
+        m_sector_cache_attempted = true;
+    }
+    else
+        cache_hit = m_sector_cache_valid;
+
+    if (m_sector_cache_valid)
+    {
+        u32 sample_offset = m_current_sample * 2;
+        m_left_sample = m_sector_cache[sample_offset + 0];
+        m_right_sample = m_sector_cache[sample_offset + 1];
+        if (cache_hit)
+            m_cdrom_media->SetCurrentSector(m_current_lba);
+    }
+    else
+    {
+        m_cdrom_media->ReadSamples(m_current_lba, m_current_sample * 4, buffer, 2);
+        m_left_sample = buffer[0];
+        m_right_sample = buffer[1];
+    }
 
     if (m_cdrom->IsFaderEnabled(false))
     {

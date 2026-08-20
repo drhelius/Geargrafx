@@ -51,6 +51,7 @@ public:
     GG_CdRomMSF GetCdRomLength();
     u32 GetSectorCount();
     u32 GetCurrentSector();
+    u32 GetMediaGeneration();
     void SetCurrentSector(u32 sector);
     bool LoadCueFromFile(const char* path, bool preload);
     bool LoadChdFromFile(const char* path, bool preload);
@@ -73,6 +74,7 @@ private:
 
 private:
     CdRomImage* m_current_image;
+    u32 m_media_generation;
     CdRomCueBinImage* m_cue_bin_image;
     CdRomChdImage* m_chd_image;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)

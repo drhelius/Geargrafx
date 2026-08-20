@@ -39,6 +39,10 @@ CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
     m_seek_cycles = 0;
     m_left_sample = 0;
     m_right_sample = 0;
+    m_sector_cache_lba = 0;
+    m_sector_cache_generation = 0;
+    m_sector_cache_attempted = false;
+    m_sector_cache_valid = false;
 
     m_state.CURRENT_STATE = &m_current_state;
     m_state.START_LBA = &m_start_lba;
@@ -99,6 +103,7 @@ void CdRomAudio::Reset()
     m_seek_cycles = 0;
     m_left_sample = 0;
     m_right_sample = 0;
+    InvalidateSectorCache();
 }
 
 int CdRomAudio::EndFrame(s16* sample_buffer)
@@ -181,7 +186,14 @@ void CdRomAudio::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_left_sample), sizeof(m_left_sample));
     stream.read(reinterpret_cast<char*> (&m_right_sample), sizeof(m_right_sample));
 
+    InvalidateSectorCache();
     SyncMediaCurrentSector();
+}
+
+void CdRomAudio::InvalidateSectorCache()
+{
+    m_sector_cache_attempted = false;
+    m_sector_cache_valid = false;
 }
 
 void CdRomAudio::SyncMediaCurrentSector()
