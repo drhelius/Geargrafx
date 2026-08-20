@@ -699,42 +699,50 @@ void HuC6270::RenderBackground(int width)
 {
     int screen_reg = (m_latched_mwr >> 4) & 0x07;
     int screen_size_x = k_huc6270_screen_size_x[screen_reg];
+    int screen_size_x_mask = k_huc6270_screen_size_x_pixels_mask[screen_reg];
     int bg_y = m_bg_offset_y;
     bg_y &= k_huc6270_screen_size_y_pixels_mask[screen_reg];
     int tile_y = (bg_y & 7);
     int bat_offset = (bg_y >> 3) * screen_size_x;
+    int bg_x = m_latched_bxr & screen_size_x_mask;
+    int i = 0;
 
-    u8 byte1 = 0, byte2 = 0, byte3 = 0, byte4 = 0;
-    int prev_tile_col = -1;
-    u16 bat_entry = 0;
-    int tile_index = 0;
-    int color_table = 0;
-    int tile_data = 0;
-
-    for (int i = 0; i < width; i++)
+    while (i < width)
     {
-        int bg_x = m_latched_bxr + i;
-        bg_x &= k_huc6270_screen_size_x_pixels_mask[screen_reg];
         int tile_col = bg_x >> 3;
+        int bat_address = bat_offset + tile_col;
+        assert(bat_address < HUC6270_VRAM_SIZE);
 
-        if (tile_col != prev_tile_col)
+        u16 bat_entry = m_vram[bat_address];
+        int tile_data = (bat_entry & 0x07FF) << 4;
+        int line_start_a = tile_data + tile_y;
+        int line_start_b = line_start_a + 8;
+        assert(line_start_b < HUC6270_VRAM_SIZE);
+
+        u16 word_a = m_vram[line_start_a];
+        u16 word_b = m_vram[line_start_b];
+        m_vram_openbus = word_b;
+        u8 byte1 = word_a & 0xFF;
+        u8 byte2 = word_a >> 8;
+        u8 byte3 = word_b & 0xFF;
+        u8 byte4 = word_b >> 8;
+
+        u16 color_table = (bat_entry >> 12) << 4;
+        int count = MIN(8 - (bg_x & 7), width - i);
+        int tile_x = 7 - (bg_x & 7);
+        int end = i + count;
+
+        for (; i < end; i++)
         {
-            bat_entry = ReadVRAM(bat_offset + tile_col);
-            tile_index = bat_entry & 0x07FF;
-            color_table = (bat_entry >> 12) & 0x0F;
-            tile_data = tile_index << 4;
-            int line_start_a = (tile_data + tile_y);
-            int line_start_b = (line_start_a + 8);
-            byte1 = ReadVRAM(line_start_a) & 0xFF;
-            byte2 = ReadVRAM(line_start_a) >> 8;
-            byte3 = ReadVRAM(line_start_b) & 0xFF;
-            byte4 = ReadVRAM(line_start_b) >> 8;
-            prev_tile_col = tile_col;
+            u16 color = ((byte1 >> tile_x) & 0x01) |
+                    (((byte2 >> tile_x) & 0x01) << 1) |
+                    (((byte3 >> tile_x) & 0x01) << 2) |
+                    (((byte4 >> tile_x) & 0x01) << 3);
+            m_line_buffer[i] = color_table | color;
+            tile_x--;
         }
 
-        int tile_x = 7 - (bg_x & 7);
-        m_line_buffer[i] = color_table << 4;
-        m_line_buffer[i] |= ((byte1 >> tile_x) & 0x01) | (((byte2 >> tile_x) & 0x01) << 1) | (((byte3 >> tile_x) & 0x01) << 2) | (((byte4 >> tile_x) & 0x01) << 3);
+        bg_x = (bg_x + count) & screen_size_x_mask;
     }
 }
 
