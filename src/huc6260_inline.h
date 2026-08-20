@@ -38,9 +38,17 @@ INLINE bool HuC6260::Clock(u32 cycles)
 
     while (cycles > 0)
     {
-        u32 cycles_to_next_pixel = m_clock_divider - (m_hpos % m_clock_divider);
-        if (cycles_to_next_pixel > cycles)
-            cycles_to_next_pixel = cycles;
+        u32 cycles_to_next_pixel;
+        if (m_clock_divider == 2)
+            cycles_to_next_pixel = 2 - (m_hpos & 1);
+        else if (m_clock_divider == 4)
+            cycles_to_next_pixel = 4 - (m_hpos & 3);
+        else
+            cycles_to_next_pixel = 3 - (m_hpos % 3);
+
+        u32 step = cycles_to_next_pixel;
+        if (step > cycles)
+            step = cycles;
 
         u32 cycles_to_line_end = HUC6260_LINE_LENGTH - m_hpos;
         if (cycles_to_line_end > cycles)
@@ -52,16 +60,16 @@ INLINE bool HuC6260::Clock(u32 cycles)
         if (cycles_to_hsync > cycles)
             cycles_to_hsync = cycles;
 
-        u32 step = cycles_to_next_pixel;
         if (cycles_to_line_end < step)
             step = cycles_to_line_end;
         if (cycles_to_hsync < step)
             step = cycles_to_hsync;
 
+        bool pixel_clock = (step == cycles_to_next_pixel);
         m_hpos += step;
         cycles -= step;
 
-        if ((m_hpos % m_clock_divider) == 0)
+        if (pixel_clock)
         {
             m_pixel_x++;
             if (m_pixel_x == k_huc6260_full_line_width[m_speed])
