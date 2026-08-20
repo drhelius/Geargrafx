@@ -30,7 +30,7 @@
 HuC6280::HuC6280(Random* random)
 {
     m_random = random;
-    InitOPCodeFunctors();
+    InitOPCodeTable();
     InitPointer(m_trace_logger);
     InitPointer(m_clock_hardware_fn);
     InitPointer(m_clock_hardware_context);

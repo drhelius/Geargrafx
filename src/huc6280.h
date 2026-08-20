@@ -172,7 +172,15 @@ public:
     void LoadState(std::istream& stream);
 
 private:
-    typedef void (HuC6280::*opcodeptr) (void);
+    typedef void (HuC6280::*opcode_member_ptr) (void);
+    typedef void (*opcodeptr) (HuC6280*);
+
+    template<opcode_member_ptr Opcode>
+    static void OPCodeThunk(HuC6280* cpu)
+    {
+        (cpu->*Opcode)();
+    }
+
     opcodeptr m_opcodes[256];
     SixteenBitRegister m_PC;
     EightBitRegister m_A;
@@ -338,7 +346,7 @@ private:
     void OPCodes_TransferStart();
     void OPCodes_TransferEnd();
 
-    void InitOPCodeFunctors();
+    void InitOPCodeTable();
 
     void OPCode0x00(); void OPCode0x01(); void OPCode0x02(); void OPCode0x03();
     void OPCode0x04(); void OPCode0x05(); void OPCode0x06(); void OPCode0x07();

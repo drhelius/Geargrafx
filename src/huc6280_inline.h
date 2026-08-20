@@ -77,7 +77,7 @@ INLINE u32 HuC6280::RunInstruction(bool* instruction_completed)
 
     CheckIRQs();
 
-    (this->*m_opcodes[opcode])();
+    m_opcodes[opcode](this);
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     if (IsValidPointer(instruction_completed))
