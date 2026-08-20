@@ -42,6 +42,9 @@ INLINE void ScsiController::TraceScsiProblemEvent(u8 event, u8 problem, u8 comma
 
 INLINE void ScsiController::Clock(u32 cycles)
 {
+    if (m_next_event == SCSI_EVENT_NONE && m_next_load_cycles <= 0 && !m_bus_changed && m_auto_ack_cycles <= 0)
+        return;
+
     UpdateEvents(cycles);
     UpdateSectorLoading(cycles);
     UpdateScsi();
