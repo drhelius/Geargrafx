@@ -137,6 +137,7 @@ public:
     void AutoAck();
     void StartSelection();
     void StartStatus(ScsiStatus status, u8 length = 1);
+    void AudioSeekCompleted();
     bool IsDataReady();
     Scsi_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);

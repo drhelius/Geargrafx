@@ -37,6 +37,8 @@ INLINE void CdRomAudio::Clock(u32 cycles)
             m_seek_cycles = 0;
             m_seek_start_lba = m_current_lba;
             TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_SEEK_END, m_current_lba);
+
+            m_scsi_controller->AudioSeekCompleted();
         }
     }
 
@@ -136,6 +138,7 @@ INLINE void CdRomAudio::PauseAudio()
 
 INLINE void CdRomAudio::SetIdle()
 {
+    m_seek_cycles = 0;
     m_current_state = CD_AUDIO_STATE_IDLE;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STATE, m_current_lba);
 }

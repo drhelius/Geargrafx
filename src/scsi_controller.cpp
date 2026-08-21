@@ -241,6 +241,12 @@ void ScsiController::StartStatus(ScsiStatus status, u8 length)
     SetPhase(SCSI_PHASE_STATUS);
 }
 
+void ScsiController::AudioSeekCompleted()
+{
+    if (m_phase == SCSI_PHASE_BUSY)
+        StartStatus(SCSI_STATUS_GOOD);
+}
+
 
 void ScsiController::SetPhase(ScsiPhase phase)
 {
@@ -557,7 +563,10 @@ void ScsiController::CommandAudioStartPosition()
 
     m_cdrom_audio->StartAudio(start_lba, mode == 0);
 
-    StartStatus(SCSI_STATUS_GOOD);
+    if (mode == 0)
+        StartStatus(SCSI_STATUS_GOOD);
+    else
+        SetPhase(SCSI_PHASE_BUSY);
 }
 
 void ScsiController::CommandAudioStopPosition()
