@@ -50,6 +50,7 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Debug", "HuC6270Info2", config_debug.show_huc6270_2_info, false);
     CONFIG_BOOL("Debug", "PSG", config_debug.show_psg, false);
     CONFIG_BOOL("Debug", "CDROM", config_debug.show_cdrom, false);
+    CONFIG_BOOL("Debug", "CDROMTOC", config_debug.show_cdrom_toc, false);
     CONFIG_BOOL("Debug", "CDROMAudio", config_debug.show_cdrom_audio, false);
     CONFIG_BOOL("Debug", "ADPCM", config_debug.show_adpcm, false);
     CONFIG_BOOL("Debug", "ArcadeCard", config_debug.show_arcade_card, false);

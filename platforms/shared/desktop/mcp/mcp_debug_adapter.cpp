@@ -41,6 +41,33 @@
 
 static const int k_mcp_mouse_motion_step = 4;
 
+static void format_cdrom_msf(u32 lba, char* buffer, size_t size)
+{
+    GG_CdRomMSF msf;
+    LbaToMsf(lba, &msf);
+    snprintf(buffer, size, "%02u:%02u:%02u", msf.minutes, msf.seconds, msf.frames);
+}
+
+static void format_cdrom_signed_msf(s32 lba, char* buffer, size_t size)
+{
+    if (lba < 0)
+    {
+        char msf[16];
+        format_cdrom_msf((u32)-lba, msf, sizeof(msf));
+        snprintf(buffer, size, "-%s", msf);
+    }
+    else
+        format_cdrom_msf((u32)lba, buffer, size);
+}
+
+static double cdrom_cycles_to_ms(s32 cycles)
+{
+    if (cycles <= 0)
+        return 0.0;
+
+    return (double)cycles * 1000.0 / (double)GG_MASTER_CLOCK_RATE;
+}
+
 static bool is_mouse_motion_button(const std::string& button)
 {
     return button == "up" || button == "down" || button == "left" || button == "right";
@@ -1183,6 +1210,10 @@ json DebugAdapter::ListCDROMTracks()
 
     CdRomMedia* cdrom_media = m_core->GetCDROMMedia();
     const std::vector<CdRomImage::Track>& tracks = cdrom_media->GetTracks();
+    u32 current_lba = cdrom_media->GetCurrentSector();
+    s32 current_track = cdrom_media->FindTrackFromLBA(current_lba, true);
+    int audio_tracks = 0;
+    int data_tracks = 0;
 
     json result;
     json track_list = json::array();
@@ -1194,6 +1225,8 @@ json DebugAdapter::ListCDROMTracks()
 
         track["number"] = (int)(i + 1);
         track["type"] = TrackTypeName(t.type);
+        track["is_audio"] = t.type == GG_CDROM_AUDIO_TRACK;
+        track["is_current"] = (s32)i == current_track;
         track["sector_size"] = t.sector_size;
         track["start_lba"] = t.start_lba;
         track["end_lba"] = t.end_lba;
@@ -1207,16 +1240,45 @@ json DebugAdapter::ListCDROMTracks()
         snprintf(end_msf, sizeof(end_msf), "%02d:%02d:%02d", t.end_msf.minutes, t.end_msf.seconds, t.end_msf.frames);
         track["end_msf"] = end_msf;
 
+        char duration_msf[16];
+        format_cdrom_msf(t.sector_count, duration_msf, sizeof(duration_msf));
+        track["duration_msf"] = duration_msf;
+
         track["has_lead_in"] = t.has_lead_in;
         if (t.has_lead_in)
+        {
+            u32 lead_in_sectors = t.start_lba - t.lead_in_lba;
+            char lead_in_msf[16];
+            format_cdrom_msf(lead_in_sectors, lead_in_msf, sizeof(lead_in_msf));
             track["lead_in_lba"] = t.lead_in_lba;
+            track["lead_in_sectors"] = lead_in_sectors;
+            track["lead_in_msf"] = lead_in_msf;
+        }
 
         track["file_offset"] = t.file_offset;
 
         track_list.push_back(track);
+
+        if (t.type == GG_CDROM_AUDIO_TRACK)
+            audio_tracks++;
+        else
+            data_tracks++;
     }
 
+    GG_CdRomMSF total_length = cdrom_media->GetCdRomLength();
+    char total_length_msf[16];
+    snprintf(total_length_msf, sizeof(total_length_msf), "%02u:%02u:%02u",
+        total_length.minutes, total_length.seconds, total_length.frames);
+
+    result["media_name"] = cdrom_media->GetFileName();
+    result["media_type"] = cdrom_media->GetFileExtension();
     result["track_count"] = (int)tracks.size();
+    result["audio_track_count"] = audio_tracks;
+    result["data_track_count"] = data_tracks;
+    result["total_length_msf"] = total_length_msf;
+    result["sector_count"] = cdrom_media->GetSectorCount();
+    result["current_lba"] = current_lba;
+    result["current_track"] = current_track >= 0 ? current_track + 1 : 0;
     result["tracks"] = track_list;
 
     return result;
@@ -1294,8 +1356,17 @@ json DebugAdapter::GetCDROMAudioStatus()
         return json::object();
 
     json status;
+    CdRom* cdrom = m_core->GetCDROM();
+    CdRomMedia* cdrom_media = m_core->GetCDROMMedia();
     CdRomAudio* cdrom_audio = m_core->GetCDROMAudio();
     CdRomAudio::CdRomAudio_State* cdrom_audio_state = cdrom_audio->GetState();
+    u32 current_lba = *cdrom_audio_state->CURRENT_LBA;
+    s32 current_track = cdrom_media->FindTrackFromLBA(current_lba, true);
+    const std::vector<CdRomImage::Track>& tracks = cdrom_media->GetTracks();
+    const CdRomImage::Track* track = NULL;
+
+    if ((current_track >= 0) && ((size_t)current_track < tracks.size()))
+        track = &tracks[(size_t)current_track];
 
     // State
     const char* state_names[] = { "PLAYING", "IDLE", "PAUSED", "STOPPED" };
@@ -1305,24 +1376,85 @@ json DebugAdapter::GetCDROMAudioStatus()
     const char* stop_event_names[] = { "STOP", "LOOP", "IRQ" };
     status["stop_event"] = stop_event_names[*cdrom_audio_state->STOP_EVENT];
 
+    bool audio_sector = cdrom_media->IsAudioSector(current_lba);
+    bool audible = (*cdrom_audio_state->CURRENT_STATE == CdRomAudio::CD_AUDIO_STATE_PLAYING) &&
+        (*cdrom_audio_state->SEEK_CYCLES <= 0) &&
+        (*cdrom_audio_state->PLAYBACK_DELAY_CYCLES <= 0) && audio_sector;
+    const char* output_state = "SILENT";
+
+    if (*cdrom_audio_state->CURRENT_STATE == CdRomAudio::CD_AUDIO_STATE_PLAYING)
+    {
+        if (*cdrom_audio_state->SEEK_CYCLES > 0)
+            output_state = "SEEKING";
+        else if (*cdrom_audio_state->PLAYBACK_DELAY_CYCLES > 0)
+            output_state = "DELAYED";
+        else if (audio_sector)
+            output_state = "AUDIBLE";
+        else
+            output_state = "MUTED";
+    }
+
+    status["output_state"] = output_state;
+    status["audible"] = audible;
+    status["audio_sector"] = audio_sector;
+
     // LBA positions
     status["start_lba"] = *cdrom_audio_state->START_LBA;
     status["stop_lba"] = *cdrom_audio_state->STOP_LBA;
-    status["current_lba"] = *cdrom_audio_state->CURRENT_LBA;
+    status["current_lba"] = current_lba;
 
-    // Convert current LBA to MSF for display
-    GG_CdRomMSF current_msf;
-    LbaToMsf(*cdrom_audio_state->CURRENT_LBA, &current_msf);
-    char pos_str[16];
-    snprintf(pos_str, sizeof(pos_str), "%02d:%02d:%02d", current_msf.minutes, current_msf.seconds, current_msf.frames);
-    status["current_position_msf"] = pos_str;
+    char start_msf[16];
+    char stop_msf[16];
+    char current_msf[16];
+    format_cdrom_msf(*cdrom_audio_state->START_LBA, start_msf, sizeof(start_msf));
+    format_cdrom_msf(*cdrom_audio_state->STOP_LBA, stop_msf, sizeof(stop_msf));
+    format_cdrom_msf(current_lba, current_msf, sizeof(current_msf));
+    status["start_position_msf"] = start_msf;
+    status["stop_position_msf"] = stop_msf;
+    status["current_position_msf"] = current_msf;
+
+    status["current_track"] = current_track >= 0 ? current_track + 1 : 0;
+    if (IsValidPointer(track))
+    {
+        s32 track_position_lba = (s32)current_lba - (s32)track->start_lba;
+        char track_position_msf[16];
+        char track_length_msf[16];
+        format_cdrom_signed_msf(track_position_lba, track_position_msf, sizeof(track_position_msf));
+        format_cdrom_msf(track->sector_count, track_length_msf, sizeof(track_length_msf));
+
+        status["current_track_type"] = TrackTypeName(track->type);
+        status["current_track_sector_size"] = track->sector_size;
+        status["current_track_start_lba"] = track->start_lba;
+        status["current_track_end_lba"] = track->end_lba;
+        status["current_track_position_lba"] = track_position_lba;
+        status["current_track_position_msf"] = track_position_msf;
+        status["current_track_length_msf"] = track_length_msf;
+    }
 
     // Seek info
     status["seek_cycles"] = *cdrom_audio_state->SEEK_CYCLES;
+    status["seek_ms"] = cdrom_cycles_to_ms(*cdrom_audio_state->SEEK_CYCLES);
     status["playback_delay_cycles"] = *cdrom_audio_state->PLAYBACK_DELAY_CYCLES;
+    status["playback_delay_ms"] = cdrom_cycles_to_ms(*cdrom_audio_state->PLAYBACK_DELAY_CYCLES);
 
     // Sample info
     status["frame_samples"] = *cdrom_audio_state->FRAME_SAMPLES;
+    status["frame_samples_per_channel"] = *cdrom_audio_state->FRAME_SAMPLES / 2;
+    status["current_sample"] = *cdrom_audio_state->CURRENT_SAMPLE;
+    status["samples_per_sector"] = 2352 / 4;
+    status["left_sample"] = cdrom_audio->GetLeftSample();
+    status["right_sample"] = cdrom_audio->GetRightSample();
+
+    u8 fader = *cdrom->GetState()->FADER;
+    bool fader_enabled = IS_SET_BIT(fader, 3);
+    bool fader_adpcm = IS_SET_BIT(fader, 1);
+    bool fader_cd_audio = cdrom->IsFaderEnabled(false);
+    status["fader_raw"] = fader;
+    status["fader_enabled"] = fader_enabled;
+    status["fader_applies_to_cd_audio"] = fader_cd_audio;
+    status["fader_target"] = fader_enabled ? (fader_adpcm ? "ADPCM" : "CD_AUDIO") : "NONE";
+    status["fader_speed"] = fader_enabled ? (IS_SET_BIT(fader, 2) ? "FAST" : "SLOW") : "NONE";
+    status["fader_gain"] = fader_cd_audio ? cdrom->GetFaderValue() : 1.0;
 
     return status;
 }

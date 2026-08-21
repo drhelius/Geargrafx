@@ -28,11 +28,13 @@
 #include "emu.h"
 #include "utils.h"
 
+static void format_cdrom_msf(u32 lba, char* buffer, size_t size);
+
 void gui_debug_window_cdrom(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(75, 80), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(210, 584), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(210, 620), ImGuiCond_FirstUseEver);
     ImGui::Begin("CD-ROM", &config_debug.show_cdrom);
 
     ImGui::PushFont(gui_default_font);
@@ -149,6 +151,151 @@ void gui_debug_window_cdrom(void)
     ImGui::TextColored(violet, "SECTOR COUNT"); ImGui::SameLine();
     ImGui::TextColored(white, "%d", cdrom_media->GetSectorCount());
 
+    u32 current_lba = cdrom_media->GetCurrentSector();
+    s32 current_track = cdrom_media->FindTrackFromLBA(current_lba, true);
+
+    ImGui::TextColored(violet, "HEAD LBA    "); ImGui::SameLine();
+    ImGui::TextColored(white, "%06u", current_lba);
+
+    ImGui::TextColored(violet, "HEAD TRACK  "); ImGui::SameLine();
+    if (current_track >= 0)
+        ImGui::TextColored(blue, "%02d", current_track + 1);
+    else
+        ImGui::TextColored(gray, "--");
+
+    ImGui::PopFont();
+
+    ImGui::End();
+    ImGui::PopStyleVar();
+}
+
+void gui_debug_window_cdrom_toc(void)
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::SetNextWindowPos(ImVec2(105, 95), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(950, 498), ImGuiCond_FirstUseEver);
+    ImGui::Begin("CD-ROM TOC", &config_debug.show_cdrom_toc);
+
+    ImGui::PushFont(gui_default_font);
+
+    CdRomMedia* cdrom_media = emu_get_core()->GetCDROMMedia();
+    const std::vector<CdRomImage::Track>& tracks = cdrom_media->GetTracks();
+    s32 current_track = cdrom_media->FindTrackFromLBA(cdrom_media->GetCurrentSector(), true);
+    int audio_tracks = 0;
+    int data_tracks = 0;
+
+    for (size_t i = 0; i < tracks.size(); i++)
+    {
+        if (tracks[i].type == GG_CDROM_AUDIO_TRACK)
+            audio_tracks++;
+        else
+            data_tracks++;
+    }
+
+    GG_CdRomMSF total_length = cdrom_media->GetCdRomLength();
+
+    ImGui::TextColored(violet, "MEDIA  "); ImGui::SameLine();
+    ImGui::TextColored(white, "%s (%s)", cdrom_media->GetFileName(), cdrom_media->GetFileExtension());
+
+    ImGui::TextColored(violet, "TRACKS "); ImGui::SameLine();
+    ImGui::TextColored(white, "%d", (int)tracks.size()); ImGui::SameLine();
+    ImGui::TextColored(green, " (AUDIO %d)", audio_tracks); ImGui::SameLine();
+    ImGui::TextColored(yellow, " (DATA %d)", data_tracks);
+
+    ImGui::TextColored(violet, "LENGTH "); ImGui::SameLine();
+    ImGui::TextColored(white, "%02u:%02u:%02u", total_length.minutes, total_length.seconds, total_length.frames);
+    ImGui::TextColored(violet, "SECTORS "); ImGui::SameLine();
+    ImGui::TextColored(white, "%u", cdrom_media->GetSectorCount());
+
+    ImGui::Separator();
+
+    ImGuiTableFlags flags = ImGuiTableFlags_ScrollX | ImGuiTableFlags_ScrollY |
+        ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV |
+        ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingFixedFit;
+
+    if (ImGui::BeginTable("cdrom_toc", 12, flags))
+    {
+        ImGui::TableSetupScrollFreeze(1, 1);
+        ImGui::TableSetupColumn("#", ImGuiTableColumnFlags_WidthFixed, 28.0f);
+        ImGui::TableSetupColumn("TYPE", ImGuiTableColumnFlags_WidthFixed, 80.0f);
+        ImGui::TableSetupColumn("BYTES", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+        ImGui::TableSetupColumn("START MSF", ImGuiTableColumnFlags_WidthFixed, 76.0f);
+        ImGui::TableSetupColumn("END MSF", ImGuiTableColumnFlags_WidthFixed, 76.0f);
+        ImGui::TableSetupColumn("DURATION", ImGuiTableColumnFlags_WidthFixed, 76.0f);
+        ImGui::TableSetupColumn("START LBA", ImGuiTableColumnFlags_WidthFixed, 72.0f);
+        ImGui::TableSetupColumn("END LBA", ImGuiTableColumnFlags_WidthFixed, 60.0f);
+        ImGui::TableSetupColumn("SECTORS", ImGuiTableColumnFlags_WidthFixed, 68.0f);
+        ImGui::TableSetupColumn("LEAD-IN LBA", ImGuiTableColumnFlags_WidthFixed, 84.0f);
+        ImGui::TableSetupColumn("LEAD-IN", ImGuiTableColumnFlags_WidthFixed, 68.0f);
+        ImGui::TableSetupColumn("FILE OFFSET", ImGuiTableColumnFlags_WidthFixed, 86.0f);
+        ImGui::TableHeadersRow();
+
+        for (size_t i = 0; i < tracks.size(); i++)
+        {
+            const CdRomImage::Track& track = tracks[i];
+            char start_msf[16];
+            char end_msf[16];
+            char duration_msf[16];
+            char lead_in_msf[16];
+            u32 lead_in_sectors = track.has_lead_in ? track.start_lba - track.lead_in_lba : 0;
+
+            format_cdrom_msf(track.start_lba, start_msf, sizeof(start_msf));
+            format_cdrom_msf(track.end_lba, end_msf, sizeof(end_msf));
+            format_cdrom_msf(track.sector_count, duration_msf, sizeof(duration_msf));
+            format_cdrom_msf(lead_in_sectors, lead_in_msf, sizeof(lead_in_msf));
+
+            ImGui::TableNextRow();
+
+            if ((s32)i == current_track)
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, ImGui::GetColorU32(dark_blue));
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored(((s32)i == current_track) ? orange : white, "%d", (int)i + 1);
+
+            ImGui::TableNextColumn();
+            ImGui::TextColored((track.type == GG_CDROM_AUDIO_TRACK) ? green : yellow,
+                "%s", TrackTypeName(track.type));
+
+            ImGui::TableNextColumn();
+            ImGui::Text("%u", track.sector_size);
+
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(start_msf);
+
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(end_msf);
+
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(duration_msf);
+
+            ImGui::TableNextColumn();
+            ImGui::Text("%u", track.start_lba);
+
+            ImGui::TableNextColumn();
+            ImGui::Text("%u", track.end_lba);
+
+            ImGui::TableNextColumn();
+            ImGui::Text("%u", track.sector_count);
+
+            ImGui::TableNextColumn();
+            if (track.has_lead_in)
+                ImGui::Text("%u", track.lead_in_lba);
+            else
+                ImGui::TextColored(gray, "--");
+
+            ImGui::TableNextColumn();
+            if (track.has_lead_in)
+                ImGui::Text("%s", lead_in_msf);
+            else
+                ImGui::TextColored(gray, "--");
+
+            ImGui::TableNextColumn();
+            ImGui::Text("%u", track.file_offset);
+        }
+
+        ImGui::EndTable();
+    }
+
     ImGui::PopFont();
 
     ImGui::End();
@@ -211,4 +358,11 @@ void gui_debug_window_arcade_card(void)
 
     ImGui::End();
     ImGui::PopStyleVar();
+}
+
+static void format_cdrom_msf(u32 lba, char* buffer, size_t size)
+{
+    GG_CdRomMSF msf;
+    LbaToMsf(lba, &msf);
+    snprintf(buffer, size, "%02u:%02u:%02u", msf.minutes, msf.seconds, msf.frames);
 }

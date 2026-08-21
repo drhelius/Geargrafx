@@ -834,7 +834,7 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "list_cdrom_tracks"},
         {"title", "List CD-ROM Tracks"},
-        {"description", "List CD-ROM tracks: type, LBA range, sectors, lead-in, file offset."},
+        {"description", "Read the CD-ROM TOC summary and tracks: type, MSF/LBA ranges, duration, sectors, lead-in, file offset, and current track."},
         {"annotations", {{"readOnlyHint", true}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
         {"inputSchema", {
             {"type", "object"},
@@ -858,7 +858,7 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "get_cdrom_audio_status"},
         {"title", "Get CD-ROM Audio Status"},
-        {"description", "Read CD-ROM audio playback state: track, LBA, status, volume, mode."},
+        {"description", "Read CD-ROM audio playback: output state, track-relative position, seek and playback timing, samples, and fader."},
         {"annotations", {{"readOnlyHint", true}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
         {"inputSchema", {
             {"type", "object"},

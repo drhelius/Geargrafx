@@ -49,6 +49,7 @@ CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
     m_state.START_LBA = &m_start_lba;
     m_state.STOP_LBA = &m_stop_lba;
     m_state.CURRENT_LBA = &m_current_lba;
+    m_state.CURRENT_SAMPLE = &m_current_sample;
     m_state.STOP_EVENT = &m_stop_event;
     m_state.SEEK_CYCLES = &m_seek_cycles;
     m_state.PLAYBACK_DELAY_CYCLES = &m_playback_delay_cycles;

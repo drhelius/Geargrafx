@@ -209,6 +209,14 @@ s32 CdRomMedia::GetTrackFromLBA(u32 lba)
     }
 }
 
+s32 CdRomMedia::FindTrackFromLBA(u32 lba, bool include_lead_in)
+{
+    if (IsValidPointer(m_current_image))
+        return m_current_image->FindTrackFromLBA(lba, include_lead_in);
+
+    return -1;
+}
+
 bool CdRomMedia::IsCdRomUriPath(const char* path)
 {
     return IsValidPointer(path) && (strncmp(path, "cdrom://", 8) == 0);

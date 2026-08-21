@@ -1917,6 +1917,7 @@ static void menu_debug(void)
         if (ImGui::BeginMenu("CD-ROM", config_debug.debug && emu_get_core()->GetMedia()->IsCDROM()))
         {
             ImGui::MenuItem("Show Status", "", &config_debug.show_cdrom);
+            ImGui::MenuItem("Show TOC", "", &config_debug.show_cdrom_toc);
             ImGui::MenuItem("Show Arcade Card", "", &config_debug.show_arcade_card, emu_get_core()->GetMedia()->IsArcadeCard());
             ImGui::Separator();
             ImGui::MenuItem("Show CD-ROM Audio", "", &config_debug.show_cdrom_audio);

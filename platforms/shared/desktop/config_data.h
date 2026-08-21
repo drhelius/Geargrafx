@@ -254,6 +254,7 @@ struct config_Debug
     bool show_huc6270_2_info;
     bool show_psg;
     bool show_cdrom;
+    bool show_cdrom_toc;
     bool show_cdrom_audio;
     bool show_adpcm;
     bool show_arcade_card;

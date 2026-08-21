@@ -134,6 +134,8 @@ void gui_debug_windows(void)
             gui_debug_window_psg();
         if (config_debug.show_cdrom && emu_get_core()->GetMedia()->IsCDROM())
             gui_debug_window_cdrom();
+        if (config_debug.show_cdrom_toc && emu_get_core()->GetMedia()->IsCDROM())
+            gui_debug_window_cdrom_toc();
         if (config_debug.show_cdrom_audio && emu_get_core()->GetMedia()->IsCDROM())
             gui_debug_window_cdrom_audio();
         if (config_debug.show_adpcm && emu_get_core()->GetMedia()->IsCDROM())

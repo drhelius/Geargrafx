@@ -53,6 +53,7 @@ public:
         u32* START_LBA;
         u32* STOP_LBA;
         u32* CURRENT_LBA;
+        u32* CURRENT_SAMPLE;
         CdAudioStopEvent* STOP_EVENT;
         s32* SEEK_CYCLES;
         s32* PLAYBACK_DELAY_CYCLES;
