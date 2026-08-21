@@ -624,7 +624,6 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 "INVALID_AUDIO_START_LBA",
                 "UNKNOWN_AUDIO_STOP_MODE",
                 "UNKNOWN_TOC_MODE",
-                "LOAD_SECTOR_BUFFER_BUSY",
                 "UNKNOWN_AUDIO_LBA_MODE",
                 "CLAMPED_COMMAND_SIZE",
                 "CLAMPED_DATA_SIZE",
@@ -739,6 +738,14 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                     }
                     break;
                 }
+                case TRACE_SCSI_SECTOR_RETRY:
+                {
+                    snprintf(buf, buf_size,
+                             "  [SCSI] TRANSFER SECTOR_RETRY  LBA:%u  Remaining:%u  Buffer:%u/2048  Delay:290ms",
+                             entry.scsi.param >> 11, entry.scsi.status,
+                             entry.scsi.param & 0x7FF);
+                    break;
+                }
                 case TRACE_SCSI_WARNING:
                 case TRACE_SCSI_ERROR:
                 {
@@ -783,11 +790,6 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                         case TRACE_SCSI_PROBLEM_UNKNOWN_AUDIO_LBA_MODE:
                             snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Mode:$%02X",
                                      severity, problem, entry.scsi.param & 0xFF);
-                            break;
-                        case TRACE_SCSI_PROBLEM_LOAD_SECTOR_BUFFER_BUSY:
-                            snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Size:%u  Offset:%u",
-                                     severity, problem, entry.scsi.param >> 16,
-                                     entry.scsi.param & 0xFFFF);
                             break;
                         case TRACE_SCSI_PROBLEM_CLAMPED_COMMAND_SIZE:
                             snprintf(buf, buf_size, "  [SCSI] %-5s    %s  Size:%u",

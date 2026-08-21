@@ -156,11 +156,6 @@ void ScsiController::LogScsiProblemEvent(u8 event, u8 problem, u8 command, u32 p
         case TRACE_SCSI_PROBLEM_INVALID_READ_REQUEST:
             e.scsi.param = (extra << 24) | param;
             break;
-        case TRACE_SCSI_PROBLEM_LOAD_SECTOR_BUFFER_BUSY:
-            e.scsi.command = SCSI_CMD_READ;
-            e.scsi.param = ((u32)m_data_buffer.size() << 16) |
-                MIN(m_data_buffer_offset, 0xFFFF);
-            break;
         case TRACE_SCSI_PROBLEM_UNKNOWN_AUDIO_LBA_MODE:
             e.scsi.command = m_command_buffer.empty() ? 0 : m_command_buffer[0];
             break;
@@ -795,7 +790,8 @@ void ScsiController::LoadSector()
     {
         Debug("**** SCSI Load sector: buffer not empty *******************");
         Debug("**** Data buffer size: %d, offset: %d", m_data_buffer.size(), m_data_buffer_offset);
-        TraceScsiProblemEvent(TRACE_SCSI_WARNING, TRACE_SCSI_PROBLEM_LOAD_SECTOR_BUFFER_BUSY);
+        TraceScsiEvent(TRACE_SCSI_SECTOR_RETRY, SCSI_CMD_READ, (u8)m_phase,
+            (u8)m_load_sector_count, (m_load_sector << 11) | m_data_buffer_offset);
 
         m_next_load_cycles = TimeToCycles(290000);
     }

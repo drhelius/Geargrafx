@@ -432,6 +432,7 @@ scsi.commands
 scsi.phases
 scsi.responses
 scsi.response_bytes
+scsi.transfers
 scsi.problems
 system.mpr
 system.mapper

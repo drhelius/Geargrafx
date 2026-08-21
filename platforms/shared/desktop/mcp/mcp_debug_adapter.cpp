@@ -3138,6 +3138,7 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& outpu
         if ((scsi & TRACE_SCSI_FILTER_PHASES) != 0) event_filter_list.push_back("scsi.phases");
         if ((scsi & TRACE_SCSI_FILTER_RESPONSES) == TRACE_SCSI_FILTER_RESPONSES) event_filter_list.push_back("scsi.responses");
         if ((scsi & TRACE_SCSI_FILTER_RESPONSE_BYTES) != 0) event_filter_list.push_back("scsi.response_bytes");
+        if ((scsi & TRACE_SCSI_FILTER_TRANSFERS) != 0) event_filter_list.push_back("scsi.transfers");
         if ((scsi & TRACE_SCSI_FILTER_PROBLEMS) == TRACE_SCSI_FILTER_PROBLEMS) event_filter_list.push_back("scsi.problems");
         if ((system & TRACE_SYSTEM_FILTER_MPR) != 0) event_filter_list.push_back("system.mpr");
         if ((system & TRACE_SYSTEM_FILTER_MAPPER) != 0) event_filter_list.push_back("system.mapper");

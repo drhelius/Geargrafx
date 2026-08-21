@@ -661,6 +661,7 @@ static void trace_logger_menu(void)
             trace_logger_menu_event_filter("Phase Changes", &config_debug.trace_scsi_events, TRACE_SCSI_FILTER_PHASES);
             trace_logger_menu_event_filter("Responses", &config_debug.trace_scsi_events, TRACE_SCSI_FILTER_RESPONSES);
             trace_logger_menu_event_filter("Response Bytes", &config_debug.trace_scsi_events, TRACE_SCSI_FILTER_RESPONSE_BYTES);
+            trace_logger_menu_event_filter("Transfers", &config_debug.trace_scsi_events, TRACE_SCSI_FILTER_TRANSFERS);
             trace_logger_menu_event_filter("Warnings / Errors", &config_debug.trace_scsi_events, TRACE_SCSI_FILTER_PROBLEMS);
             ImGui::EndDisabled();
             ImGui::EndMenu();

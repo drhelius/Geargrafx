@@ -1816,7 +1816,7 @@ json McpServer::BuildToolList()
                             "cdrom.irqs", "cdrom.control", "cdrom.audio",
                             "psg.global_lfo", "psg.frequency", "psg.channel", "psg.wave_dda", "psg.noise",
                             "adpcm.registers", "adpcm.dma", "adpcm.playback", "adpcm.transfers", "adpcm.irqs",
-                            "scsi.commands", "scsi.phases", "scsi.responses", "scsi.response_bytes", "scsi.problems",
+                            "scsi.commands", "scsi.phases", "scsi.responses", "scsi.response_bytes", "scsi.transfers", "scsi.problems",
                             "system.mpr", "system.mapper", "system.interrupts"
                         })}
                     }},
@@ -3142,6 +3142,8 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
                         add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_RESPONSES);
                     else if (filter == "scsi.response_bytes")
                         add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_RESPONSE_BYTES);
+                    else if (filter == "scsi.transfers")
+                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_TRANSFERS);
                     else if (filter == "scsi.problems")
                         add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_PROBLEMS);
                     else if (filter == "system.mpr")
