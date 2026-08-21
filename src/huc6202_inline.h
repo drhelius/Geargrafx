@@ -195,6 +195,11 @@ INLINE HuC6202::HuC6202_Window_Priority* HuC6202::GetWindowPriorities()
     return m_window_priority;
 }
 
+INLINE const u8* HuC6202::GetSourceSelection()
+{
+    return m_source_selection;
+}
+
 INLINE HuC6202::HuC6202_State* HuC6202::GetState()
 {
     return &m_state;

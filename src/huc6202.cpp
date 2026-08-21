@@ -119,6 +119,47 @@ void HuC6202::CalculatePriorityMode(HuC6202_Window_Mode window_mode, u8 value)
             m_window_priority[window_mode].priority_mode = HuC6270_PRIORITY_DEFAULT;
             break;
     }
+
+    CalculateSourceSelection(window_mode);
+}
+
+void HuC6202::CalculateSourceSelection(HuC6202_Window_Mode window_mode)
+{
+    HuC6202_Window_Priority* priority = &m_window_priority[window_mode];
+    int vdcs_enabled = priority->vdc_1_enabled | (priority->vdc_2_enabled << 1);
+    u8* selection = &m_source_selection[window_mode * 16];
+
+    for (int classification = 0; classification < 16; classification++)
+    {
+        u8 source = HuC6202_SOURCE_BLACK;
+
+        if (vdcs_enabled == 1)
+            source = HuC6202_SOURCE_VDC_1;
+        else if (vdcs_enabled == 2)
+            source = HuC6202_SOURCE_VDC_2;
+        else if (vdcs_enabled == 3)
+        {
+            bool is_vdc_1_sprite = (classification & 0x01);
+            bool is_pixel_1_transparent = (classification & 0x02);
+            bool is_vdc_2_sprite = (classification & 0x04);
+            bool is_pixel_2_transparent = (classification & 0x08);
+
+            switch (priority->priority_mode)
+            {
+                case HuC6270_PRIORITY_DEFAULT:
+                    source = is_pixel_1_transparent ? HuC6202_SOURCE_VDC_2 : HuC6202_SOURCE_VDC_1;
+                    break;
+                case HuC6270_PRIORITY_SPRITES_2_ABOVE_BG_1:
+                    source = (is_pixel_1_transparent || (is_vdc_2_sprite && !is_vdc_1_sprite && !is_pixel_2_transparent)) ? HuC6202_SOURCE_VDC_2 : HuC6202_SOURCE_VDC_1;
+                    break;
+                case HuC6270_PRIORITY_SPRITES_1_BELOW_BG_2:
+                    source = (is_pixel_1_transparent || (is_vdc_1_sprite && !is_vdc_2_sprite && !is_pixel_2_transparent)) ? HuC6202_SOURCE_VDC_2 : HuC6202_SOURCE_VDC_1;
+                    break;
+            }
+        }
+
+        selection[classification] = source;
+    }
 }
 
 void HuC6202::SaveState(std::ostream& stream)
@@ -154,5 +195,6 @@ void HuC6202::LoadState(std::istream& stream)
         stream.read(reinterpret_cast<char*> (&m_window_priority[i].vdc_1_enabled), sizeof(m_window_priority[i].vdc_1_enabled));
         stream.read(reinterpret_cast<char*> (&m_window_priority[i].vdc_2_enabled), sizeof(m_window_priority[i].vdc_2_enabled));
         stream.read(reinterpret_cast<char*> (&m_window_priority[i].priority_mode), sizeof(m_window_priority[i].priority_mode));
+        CalculateSourceSelection((HuC6202_Window_Mode)i);
     }
 }

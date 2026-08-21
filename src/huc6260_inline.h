@@ -207,55 +207,21 @@ void HuC6260::RenderFrameTemplate()
 
     if (is_sgx)
     {
-        HuC6202::HuC6202_Window_Priority* priorities = m_huc6202->GetWindowPriorities();
+        const u8* source_selection = m_huc6202->GetSourceSelection();
 
         for (int i = 0; i < m_pixel_index; i++)
         {
             u16 pixel_1 = m_vce_buffer_1[i];
             u16 pixel_2 = m_vce_buffer_2[i];
             int win_mode = (pixel_1 >> 14) & 0x0003;
+            int classification = ((pixel_1 >> 12) & 0x03) | ((pixel_2 >> 10) & 0x0C);
+            u8 source = source_selection[(win_mode * 16) | classification];
+            u16 final_pixel = 0x100;
 
-            HuC6202::HuC6202_Window_Priority* priority = &priorities[win_mode];
-            int vdc_1_enabled = priority->vdc_1_enabled;
-            int vdc_2_enabled = priority->vdc_2_enabled << 1;
-            int vdcs_enabled = vdc_1_enabled | vdc_2_enabled;
-
-            u16 final_pixel = 0;
-
-            if (vdcs_enabled == 0)
-                final_pixel = 0x100;
-            else if (vdcs_enabled == 1)
+            if (source == HuC6202::HuC6202_SOURCE_VDC_1)
                 final_pixel = pixel_1;
-            else if (vdcs_enabled == 2)
+            else if (source == HuC6202::HuC6202_SOURCE_VDC_2)
                 final_pixel = pixel_2;
-            else
-            {
-                bool is_pixel_1_transparent = (pixel_1 & 0x2000);
-                bool is_pixel_2_transparent = (pixel_2 & 0x2000);
-                bool is_vdc_1_sprite = (pixel_1 & 0x1000);
-                bool is_vdc_2_sprite = (pixel_2 & 0x1000);
-
-                switch (priority->priority_mode)
-                {
-                    case HuC6202::HuC6270_PRIORITY_DEFAULT:
-                        final_pixel = is_pixel_1_transparent ? pixel_2 : pixel_1;
-                        break;
-                    case HuC6202::HuC6270_PRIORITY_SPRITES_2_ABOVE_BG_1:
-                        if (is_pixel_1_transparent || (is_vdc_2_sprite && !is_vdc_1_sprite && !is_pixel_2_transparent))
-                            final_pixel = pixel_2;
-                        else
-                            final_pixel = pixel_1;
-                        break;
-                    case HuC6202::HuC6270_PRIORITY_SPRITES_1_BELOW_BG_2:
-                    {
-                        if (is_pixel_1_transparent || (is_vdc_1_sprite && !is_vdc_2_sprite && !is_pixel_2_transparent))
-                            final_pixel = pixel_2;
-                        else
-                            final_pixel = pixel_1;
-                        break;
-                    }
-                }
-            }
 
             if (final_pixel & HUC6270_PIXEL_BLACK)
             {
