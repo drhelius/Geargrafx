@@ -195,55 +195,47 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
         return false;
     }
 
-    size_t track_count = m_toc.tracks.size();
-
-    for (size_t i = 0; i < track_count; i++)
+    s32 track_index = FindTrackFromLBA(lba, false);
+    if (track_index < 0)
     {
-        const Track& track = m_toc.tracks[i];
-        const TrackFile& track_file = m_track_files[i];
-        u32 sector_size = track.sector_size;
-        u32 start = track.start_lba;
-        u32 end = start + track.sector_count;
-
-        if (lba >= start && lba < end)
-        {
-            u32 sector_offset = lba - start;
-            ImgFile* img_file = track_file.img_file;
-
-            if (img_file == NULL || img_file->file_size == 0)
-            {
-                Error("ReadSector failed - ImgFile is NULL or file size is 0");
-                return false;
-            }
-
-            u32 byte_offset = track.file_offset + (sector_offset * sector_size);
-
-            if (sector_size == 2352)
-            {
-                byte_offset += 16;
-                sector_size = 2048;
-            }
-
-            if (byte_offset + sector_size > img_file->file_size)
-            {
-                Error("ReadSector failed - Byte offset %u + sector size %u exceeds file size %u",
-                    byte_offset, sector_size, img_file->file_size);
-                return false;
-            }
-
-            m_current_sector = lba + 1;
-            if (m_current_sector >= m_toc.sector_count)
-                m_current_sector = m_toc.sector_count - 1;
-
-            Debug("Reading sector %d from track %d (offset: %d)", lba, i, byte_offset);
-
-            return ReadFromImgFile(img_file, byte_offset, buffer, sector_size);
-        }
+        Error("ReadSector failed - LBA %d not found in any track", lba);
+        return false;
     }
 
-    Error("ReadSector failed - LBA %d not found in any track", lba);
+    const Track& track = m_toc.tracks[(size_t)track_index];
+    const TrackFile& track_file = m_track_files[(size_t)track_index];
+    u32 sector_size = track.sector_size;
+    u32 sector_offset = lba - track.start_lba;
+    ImgFile* img_file = track_file.img_file;
 
-    return false;
+    if (img_file == NULL || img_file->file_size == 0)
+    {
+        Error("ReadSector failed - ImgFile is NULL or file size is 0");
+        return false;
+    }
+
+    u32 byte_offset = track.file_offset + (sector_offset * sector_size);
+
+    if (sector_size == 2352)
+    {
+        byte_offset += 16;
+        sector_size = 2048;
+    }
+
+    if (byte_offset + sector_size > img_file->file_size)
+    {
+        Error("ReadSector failed - Byte offset %u + sector size %u exceeds file size %u",
+            byte_offset, sector_size, img_file->file_size);
+        return false;
+    }
+
+    m_current_sector = lba + 1;
+    if (m_current_sector >= m_toc.sector_count)
+        m_current_sector = m_toc.sector_count - 1;
+
+    Debug("Reading sector %d from track %d (offset: %d)", lba, track_index, byte_offset);
+
+    return ReadFromImgFile(img_file, byte_offset, buffer, sector_size);
 }
 
 bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
@@ -260,56 +252,48 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
         return false;
     }
 
-    size_t track_count = m_toc.tracks.size();
-
-    for (size_t i = 0; i < track_count; i++)
+    s32 track_index = FindTrackFromLBA(lba, false);
+    if (track_index < 0)
     {
-        const Track& track = m_toc.tracks[i];
-        const TrackFile& track_file = m_track_files[i];
-        u32 sector_size = track.sector_size;
-        u32 start = track.start_lba;
-        u32 end = start + track.sector_count;
-
-        if (lba >= start && lba < end)
-        {
-            u32 sector_offset = lba - start;
-            ImgFile* img_file = track_file.img_file;
-
-            if (img_file == NULL || img_file->file_size == 0)
-            {
-                Error("ReadBytes failed - ImgFile is NULL or file size is 0");
-                return false;
-            }
-
-            u32 byte_offset = track.file_offset + (sector_offset * sector_size) + offset;
-            u32 size = count * 2;
-
-            if (byte_offset + size > img_file->file_size)
-            {
-                Error("ReadBytes failed - Byte offset %u + size %u exceeds file size %u",
-                    byte_offset, size, img_file->file_size);
-                return false;
-            }
-
-            m_current_sector = lba;
-
-            bool ret = ReadFromImgFile(img_file, byte_offset, (u8*)buffer, size);
-
-#ifdef GG_BIG_ENDIAN
-            for (u32 i = 0; i < count; i++)
-            {
-                u16 u = (u16)buffer[i];
-                buffer[i] = (s16)((u >> 8) | (u << 8));
-            }
-#endif
-
-            return ret;
-        }
+        Error("ReadBytes failed - LBA %d not found in any track", lba);
+        return false;
     }
 
-    Error("ReadBytes failed - LBA %d not found in any track", lba);
+    const Track& track = m_toc.tracks[(size_t)track_index];
+    const TrackFile& track_file = m_track_files[(size_t)track_index];
+    u32 sector_size = track.sector_size;
+    u32 sector_offset = lba - track.start_lba;
+    ImgFile* img_file = track_file.img_file;
 
-    return false;
+    if (img_file == NULL || img_file->file_size == 0)
+    {
+        Error("ReadBytes failed - ImgFile is NULL or file size is 0");
+        return false;
+    }
+
+    u32 byte_offset = track.file_offset + (sector_offset * sector_size) + offset;
+    u32 size = count * 2;
+
+    if (byte_offset + size > img_file->file_size)
+    {
+        Error("ReadBytes failed - Byte offset %u + size %u exceeds file size %u",
+            byte_offset, size, img_file->file_size);
+        return false;
+    }
+
+    m_current_sector = lba;
+
+    bool ret = ReadFromImgFile(img_file, byte_offset, (u8*)buffer, size);
+
+#ifdef GG_BIG_ENDIAN
+    for (u32 i = 0; i < count; i++)
+    {
+        u16 u = (u16)buffer[i];
+        buffer[i] = (s16)((u >> 8) | (u << 8));
+    }
+#endif
+
+    return ret;
 }
 
 bool CdRomCueBinImage::PreloadDisc()

@@ -87,18 +87,22 @@ s32 CdRomImage::GetTrackFromLBA(u32 lba)
         return -1;
     }
 
-    size_t track_count = m_toc.tracks.size();
+    s32 track = FindTrackFromLBA(lba, false);
 
-    for (size_t i = 0; i < track_count; i++)
-    {
-        if ((lba >= m_toc.tracks[i].start_lba) && (lba <= m_toc.tracks[i].end_lba))
-        {
-            return (s32)i;
-        }
-    }
+    if (track >= 0)
+        return track;
 
     Error("GetTrackNumber failed - LBA %d not found in any track", lba);
     return -1;
+}
+
+bool CdRomImage::IsAudioSector(u32 lba, bool include_lead_in)
+{
+    if (lba >= m_toc.sector_count)
+        return false;
+
+    s32 track = FindTrackFromLBA(lba, include_lead_in);
+    return (track >= 0) && (m_toc.tracks[(size_t)track].type == GG_CDROM_AUDIO_TRACK);
 }
 
 const char* CdRomImage::GetFilePath()
@@ -186,4 +190,21 @@ void CdRomImage::InitTrack(Track& track)
     track.has_lead_in = false;
     track.lead_in_lba = 0;
     track.file_offset = 0;
+}
+
+s32 CdRomImage::FindTrackFromLBA(u32 lba, bool include_lead_in)
+{
+    for (size_t i = 0; i < m_toc.tracks.size(); i++)
+    {
+        const Track& track = m_toc.tracks[i];
+
+        if ((lba >= track.start_lba) && (lba <= track.end_lba))
+            return (s32)i;
+
+        if (include_lead_in && track.has_lead_in &&
+            (lba >= track.lead_in_lba) && (lba < track.start_lba))
+            return (s32)i;
+    }
+
+    return -1;
 }

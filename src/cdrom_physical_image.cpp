@@ -1036,18 +1036,7 @@ bool CdRomPhysicalImage::IsBlockWithinTrack(u32 block_lba, const Track& track) c
 
 bool CdRomPhysicalImage::IsAudioSector(u32 lba)
 {
-    for (size_t i = 0; i < m_toc.tracks.size(); i++)
-    {
-        const Track& track = m_toc.tracks[i];
-
-        if ((lba >= track.start_lba) && (lba <= track.end_lba))
-            return track.type == GG_CDROM_AUDIO_TRACK;
-
-        if (track.has_lead_in && (lba >= track.lead_in_lba) && (lba < track.start_lba))
-            return track.type == GG_CDROM_AUDIO_TRACK;
-    }
-
-    return false;
+    return CdRomImage::IsAudioSector(lba, true);
 }
 
 #endif /* GG_ENABLE_PHYSICAL_CDROM */

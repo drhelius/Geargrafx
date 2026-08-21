@@ -52,6 +52,7 @@ public:
     u32 GetSectorCount();
     u32 GetCurrentSector();
     u32 GetMediaGeneration();
+    bool IsAudioSector(u32 lba);
     void SetCurrentSector(u32 sector);
     bool LoadCueFromFile(const char* path, bool preload);
     bool LoadChdFromFile(const char* path, bool preload);

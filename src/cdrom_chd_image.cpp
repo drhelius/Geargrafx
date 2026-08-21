@@ -164,54 +164,45 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
         return false;
     }
 
-    size_t track_count = m_toc.tracks.size();
-
-    for (size_t i = 0; i < track_count; i++)
+    s32 track_index = FindTrackFromLBA(lba, false);
+    if (track_index < 0)
     {
-        const Track& track = m_toc.tracks[i];
-
-        u32 start = track.start_lba;
-        u32 end = start + track.sector_count;
-
-        if (lba >= start && lba < end)
-        {
-            u32 sector_index = (lba - track.start_lba) + track.file_offset;
-            u32 hunk_index  = sector_index / m_sectors_per_hunk;
-            u32 hunk_offset = sector_index % m_sectors_per_hunk;
-            u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
-
-            if (!LoadHunk(hunk_index))
-                return false;
-
-            u32 sector_offset = 0;
-
-            if (track.sector_size == 2352)
-                sector_offset = 16;
-
-            u32 final_offset = byte_offset_in_hunk + sector_offset;
-
-            if (final_offset + 2048 > m_hunk_bytes)
-            {
-                Error("ReadSector failed - offset %u + 2048 exceeds hunk size %u", final_offset, m_hunk_bytes);
-                return false;
-            }
-
-            Debug("Reading LBA %d, sector_index %u, hunk_index %u, hunk_offset %u, byte_offset_in_hunk %d, sector_offset %d",
-                lba, sector_index, hunk_index, hunk_offset, byte_offset_in_hunk, sector_offset);
-
-            memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, 2048);
-
-            m_current_sector = lba + 1;
-            if (m_current_sector >= m_toc.sector_count)
-                m_current_sector = m_toc.sector_count - 1;
-
-            return true;
-        }
+        Error("ReadSector failed - LBA %d not found in any track", lba);
+        return false;
     }
 
-    Error("ReadSector failed - LBA %d not found in any track", lba);
+    const Track& track = m_toc.tracks[(size_t)track_index];
+    u32 sector_index = (lba - track.start_lba) + track.file_offset;
+    u32 hunk_index  = sector_index / m_sectors_per_hunk;
+    u32 hunk_offset = sector_index % m_sectors_per_hunk;
+    u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
 
-    return false;
+    if (!LoadHunk(hunk_index))
+        return false;
+
+    u32 sector_offset = 0;
+
+    if (track.sector_size == 2352)
+        sector_offset = 16;
+
+    u32 final_offset = byte_offset_in_hunk + sector_offset;
+
+    if (final_offset + 2048 > m_hunk_bytes)
+    {
+        Error("ReadSector failed - offset %u + 2048 exceeds hunk size %u", final_offset, m_hunk_bytes);
+        return false;
+    }
+
+    Debug("Reading LBA %d, sector_index %u, hunk_index %u, hunk_offset %u, byte_offset_in_hunk %d, sector_offset %d",
+        lba, sector_index, hunk_index, hunk_offset, byte_offset_in_hunk, sector_offset);
+
+    memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, 2048);
+
+    m_current_sector = lba + 1;
+    if (m_current_sector >= m_toc.sector_count)
+        m_current_sector = m_toc.sector_count - 1;
+
+    return true;
 }
 
 bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
@@ -228,53 +219,44 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
         return false;
     }
 
-    size_t track_count = m_toc.tracks.size();
-
-    for (size_t i = 0; i < track_count; i++)
+    s32 track_index = FindTrackFromLBA(lba, false);
+    if (track_index < 0)
     {
-        const Track& track = m_toc.tracks[i];
-
-        u32 start = track.start_lba;
-        u32 end = start + track.sector_count;
-
-        if (lba >= start && lba < end)
-        {
-            u32 sector_index = (lba - track.start_lba) + track.file_offset;
-            u32 hunk_index  = sector_index / m_sectors_per_hunk;
-            u32 hunk_offset = sector_index % m_sectors_per_hunk;
-            u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
-
-            if (!LoadHunk(hunk_index))
-                return false;
-
-            u32 size = count * 2;
-            u32 final_offset = byte_offset_in_hunk + offset;
-
-            if (final_offset + size > m_hunk_bytes)
-            {
-                Error("ReadSamples failed - offset %u + size %u exceeds hunk size %u", final_offset, size, m_hunk_bytes);
-                return false;
-            }
-
-            memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, size);
-
-            m_current_sector = lba;
-
-#ifdef GG_LITTLE_ENDIAN
-            for (u32 i = 0; i < count; i++)
-            {
-                u16 u = (u16)buffer[i];
-                buffer[i] = (s16)((u >> 8) | (u << 8));
-            }
-#endif
-
-            return true;
-        }
+        Error("ReadBytes failed - LBA %d not found in any track", lba);
+        return false;
     }
 
-    Error("ReadBytes failed - LBA %d not found in any track", lba);
+    const Track& track = m_toc.tracks[(size_t)track_index];
+    u32 sector_index = (lba - track.start_lba) + track.file_offset;
+    u32 hunk_index  = sector_index / m_sectors_per_hunk;
+    u32 hunk_offset = sector_index % m_sectors_per_hunk;
+    u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
 
-    return false;
+    if (!LoadHunk(hunk_index))
+        return false;
+
+    u32 size = count * 2;
+    u32 final_offset = byte_offset_in_hunk + offset;
+
+    if (final_offset + size > m_hunk_bytes)
+    {
+        Error("ReadSamples failed - offset %u + size %u exceeds hunk size %u", final_offset, size, m_hunk_bytes);
+        return false;
+    }
+
+    memcpy(buffer, m_hunk_cache[hunk_index] + final_offset, size);
+
+    m_current_sector = lba;
+
+#ifdef GG_LITTLE_ENDIAN
+    for (u32 i = 0; i < count; i++)
+    {
+        u16 u = (u16)buffer[i];
+        buffer[i] = (s16)((u >> 8) | (u << 8));
+    }
+#endif
+
+    return true;
 }
 
 bool CdRomChdImage::PreloadDisc()

@@ -170,7 +170,6 @@ INLINE void CdRomAudio::GenerateSamples()
 {
     s16 buffer[2] = { };
     u32 media_generation = m_cdrom_media->GetMediaGeneration();
-    bool cache_hit = false;
 
     if (m_sector_cache_generation != media_generation)
     {
@@ -181,20 +180,27 @@ INLINE void CdRomAudio::GenerateSamples()
     if (!m_sector_cache_attempted || (m_sector_cache_lba != m_current_lba))
     {
         m_sector_cache_lba = m_current_lba;
-        m_sector_cache_valid = m_cdrom_media->ReadSamples(m_current_lba, 0,
-            m_sector_cache, 2352 / sizeof(s16));
+
+        if (m_cdrom_media->IsAudioSector(m_current_lba))
+        {
+            m_sector_cache_valid = m_cdrom_media->ReadSamples(m_current_lba, 0,
+                m_sector_cache, 2352 / sizeof(s16));
+        }
+        else
+        {
+            memset(m_sector_cache, 0, sizeof(m_sector_cache));
+            m_sector_cache_valid = true;
+            m_cdrom_media->SetCurrentSector(m_current_lba);
+        }
+
         m_sector_cache_attempted = true;
     }
-    else
-        cache_hit = m_sector_cache_valid;
 
     if (m_sector_cache_valid)
     {
         u32 sample_offset = m_current_sample * 2;
         m_left_sample = m_sector_cache[sample_offset + 0];
         m_right_sample = m_sector_cache[sample_offset + 1];
-        if (cache_hit)
-            m_cdrom_media->SetCurrentSector(m_current_lba);
     }
     else
     {
