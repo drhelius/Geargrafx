@@ -109,7 +109,7 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
     if (m_seek_cycles == 0)
         m_seek_start_lba = m_current_lba;
     m_current_sample = 0;
-    m_stop_lba = m_cdrom_media->GetLastSectorOfTrack(track);
+    m_stop_lba = m_cdrom_media->GetSectorCount() - 1;
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_current_state = pause ? CD_AUDIO_STATE_PAUSED : CD_AUDIO_STATE_PLAYING;
     m_cdrom_media->SetCurrentSector(m_current_lba);
