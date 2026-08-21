@@ -159,7 +159,7 @@ void gui_debug_window_cdrom(void)
 
     ImGui::TextColored(violet, "HEAD TRACK  "); ImGui::SameLine();
     if (current_track >= 0)
-        ImGui::TextColored(blue, "%02d", current_track + 1);
+        ImGui::TextColored(orange, "%02d", current_track + 1);
     else
         ImGui::TextColored(gray, "--");
 
@@ -194,15 +194,15 @@ void gui_debug_window_cdrom_toc(void)
 
     GG_CdRomMSF total_length = cdrom_media->GetCdRomLength();
 
-    ImGui::TextColored(violet, "MEDIA  "); ImGui::SameLine();
+    ImGui::TextColored(violet, "MEDIA   "); ImGui::SameLine();
     ImGui::TextColored(white, "%s (%s)", cdrom_media->GetFileName(), cdrom_media->GetFileExtension());
 
-    ImGui::TextColored(violet, "TRACKS "); ImGui::SameLine();
+    ImGui::TextColored(violet, "TRACKS  "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", (int)tracks.size()); ImGui::SameLine();
     ImGui::TextColored(green, " (AUDIO %d)", audio_tracks); ImGui::SameLine();
     ImGui::TextColored(yellow, " (DATA %d)", data_tracks);
 
-    ImGui::TextColored(violet, "LENGTH "); ImGui::SameLine();
+    ImGui::TextColored(violet, "LENGTH  "); ImGui::SameLine();
     ImGui::TextColored(white, "%02u:%02u:%02u", total_length.minutes, total_length.seconds, total_length.frames);
     ImGui::TextColored(violet, "SECTORS "); ImGui::SameLine();
     ImGui::TextColored(white, "%u", cdrom_media->GetSectorCount());

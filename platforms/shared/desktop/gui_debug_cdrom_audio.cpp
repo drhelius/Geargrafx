@@ -208,7 +208,7 @@ void gui_debug_window_cdrom_audio(void)
     ImGui::TextColored(violet, "TRACK     "); ImGui::SameLine();
     if (IsValidPointer(track))
     {
-        ImGui::TextColored(white, "%02d", current_track + 1); ImGui::SameLine();
+        ImGui::TextColored(orange, "%02d", current_track + 1); ImGui::SameLine();
         ImGui::TextColored((track->type == GG_CDROM_AUDIO_TRACK) ? green : yellow,
             " %s / %u", TrackTypeName(track->type), track->sector_size);
     }
