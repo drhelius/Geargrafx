@@ -751,7 +751,28 @@ void HuC6270::RenderSprites(int width)
     static const u16 sprite_rendered_flag = 0x0200;
     static const u16 sprite_limit_flag = 0x0400;
 
-    for (int i = 0; i < width; i++)
+    if (m_sprite_count == 0)
+        return;
+
+    int min_x = width;
+    int max_x = -1;
+
+    for (int i = 0; i < m_sprite_count; i++)
+    {
+        int left = m_sprites[i].x - 0x20;
+        int right = left + 15;
+
+        if (right < 0 || left >= width)
+            continue;
+
+        min_x = MIN(min_x, MAX(left, 0));
+        max_x = MAX(max_x, MIN(right, width - 1));
+    }
+
+    if (max_x < min_x)
+        return;
+
+    for (int i = min_x; i <= max_x; i++)
     {
         m_line_buffer_sprites[i] = 0;
     }
@@ -805,7 +826,7 @@ void HuC6270::RenderSprites(int width)
         }
     }
 
-    for (int i = 0; i < width; i++)
+    for (int i = min_x; i <= max_x; i++)
     {
         if(m_line_buffer_sprites[i] & sprite_rendered_flag)
             m_line_buffer[i] = m_line_buffer_sprites[i] & ~(sprite_rendered_flag | sprite_limit_flag);
