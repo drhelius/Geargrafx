@@ -944,10 +944,13 @@ void ScsiController::LoadState(std::istream& stream, int version)
     u32 current_sector;
     stream.read(reinterpret_cast<char*> (&current_sector), sizeof(current_sector));
 
-    if (m_data_buffer_offset > m_data_buffer.size())
+    u32 max_data_buffer_offset = m_data_buffer.empty() ?
+        k_scsi_data_buffer_capacity : (u32)m_data_buffer.size();
+
+    if (m_data_buffer_offset > max_data_buffer_offset)
     {
         TraceScsiProblemEvent(TRACE_SCSI_WARNING, TRACE_SCSI_PROBLEM_CLAMPED_DATA_OFFSET);
-        m_data_buffer_offset = (u32)m_data_buffer.size();
+        m_data_buffer_offset = max_data_buffer_offset;
     }
 
     m_cdrom_media->SetCurrentSector(current_sector);

@@ -608,10 +608,6 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
         }
         case TRACE_SCSI:
         {
-            static const char* k_scsi_cmd_names[] = {
-                "TEST_UNIT_READY", NULL, NULL, "REQUEST_SENSE",
-                NULL, NULL, NULL, NULL, "READ"
-            };
             static const char* k_scsi_phase_names[] = {
                 "BUS FREE", "SELECTION", "MESSAGE OUT", "COMMAND", "DATA IN",
                 "DATA OUT", "MESSAGE IN", "STATUS", "BUSY"
@@ -643,13 +639,18 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                     const char* cmd_name = NULL;
                     char bytes[49] = "";
                     format_hex_bytes(entry.scsi.data, entry.scsi.size, bytes, sizeof(bytes));
-                    if (entry.scsi.command < 9)
-                        cmd_name = k_scsi_cmd_names[entry.scsi.command];
-                    else if (entry.scsi.command == 0xD8) cmd_name = "AUDIO_START";
-                    else if (entry.scsi.command == 0xD9) cmd_name = "AUDIO_STOP";
-                    else if (entry.scsi.command == 0xDA) cmd_name = "AUDIO_PAUSE";
-                    else if (entry.scsi.command == 0xDD) cmd_name = "READ_SUBCODE_Q";
-                    else if (entry.scsi.command == 0xDE) cmd_name = "READ_TOC";
+                    switch (entry.scsi.command)
+                    {
+                        case 0x00: cmd_name = "TEST_UNIT_READY"; break;
+                        case 0x03: cmd_name = "REQUEST_SENSE"; break;
+                        case 0x08: cmd_name = "READ"; break;
+                        case 0xD8: cmd_name = "AUDIO_START"; break;
+                        case 0xD9: cmd_name = "AUDIO_STOP"; break;
+                        case 0xDA: cmd_name = "AUDIO_PAUSE"; break;
+                        case 0xDD: cmd_name = "READ_SUBCODE_Q"; break;
+                        case 0xDE: cmd_name = "READ_TOC"; break;
+                        default: break;
+                    }
                     if (cmd_name)
                     {
                         if (entry.scsi.command == 0x08 && entry.scsi.size >= 5)
