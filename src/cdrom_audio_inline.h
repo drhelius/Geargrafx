@@ -28,20 +28,39 @@
 
 INLINE void CdRomAudio::Clock(u32 cycles)
 {
+    u32 remaining_cycles = cycles;
+
     if (m_seek_cycles > 0)
     {
-        m_seek_cycles -= cycles;
-
-        if (m_seek_cycles <= 0)
+        if (remaining_cycles >= (u32)m_seek_cycles)
         {
+            remaining_cycles -= (u32)m_seek_cycles;
             m_seek_cycles = 0;
             m_seek_start_lba = m_current_lba;
             TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_SEEK_END, m_current_lba);
 
             m_scsi_controller->AudioSeekCompleted();
+
+            if (m_playback_delay_cycles == 0)
+                TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_PLAYBACK_START, m_current_lba);
+        }
+        else
+        {
+            m_seek_cycles -= (s32)remaining_cycles;
+            remaining_cycles = 0;
         }
     }
 
+    if ((m_playback_delay_cycles > 0) && (remaining_cycles > 0))
+    {
+        if (remaining_cycles >= (u32)m_playback_delay_cycles)
+        {
+            m_playback_delay_cycles = 0;
+            TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_PLAYBACK_START, m_current_lba);
+        }
+        else
+            m_playback_delay_cycles -= (s32)remaining_cycles;
+    }
 }
 
 INLINE void CdRomAudio::Sample()
@@ -49,7 +68,7 @@ INLINE void CdRomAudio::Sample()
     m_left_sample = 0;
     m_right_sample = 0;
 
-    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0))
+    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0) && (m_playback_delay_cycles == 0))
         GenerateSamples();
 
     m_buffer[m_buffer_index + 0] = m_left_sample;
@@ -99,12 +118,24 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
 
     u32 current_lba = m_cdrom_media->GetCurrentSector();
     m_seek_start_lba = current_lba;
+    u32 total_seek_cycles = 0;
+    m_playback_delay_cycles = 0;
+
     if (pause)
         m_seek_cycles = 0;
     else
     {
         u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
-        m_seek_cycles = TimeToCycles(seek_time * 1000);
+        total_seek_cycles = TimeToCycles(seek_time * 1000);
+        u32 playback_delay_cycles = TimeToCycles(k_playback_delay_us);
+
+        if (total_seek_cycles > playback_delay_cycles)
+        {
+            m_seek_cycles = (s32)(total_seek_cycles - playback_delay_cycles);
+            m_playback_delay_cycles = (s32)playback_delay_cycles;
+        }
+        else
+            m_seek_cycles = (s32)total_seek_cycles;
     }
     m_start_lba = lba;
     m_current_lba = lba;
@@ -116,22 +147,24 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
     m_current_state = pause ? CD_AUDIO_STATE_PAUSED : CD_AUDIO_STATE_PLAYING;
     m_cdrom_media->SetCurrentSector(m_current_lba);
     InvalidateSectorCache();
-    TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_START, m_start_lba, (u32)m_seek_cycles);
+    TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_START, m_start_lba, total_seek_cycles);
 
-    Debug("CD AUDIO: Start audio at LBA %d, track %d, current lba %d, seek cycles %d",
-          lba, track, current_lba, m_seek_cycles);
+    Debug("CD AUDIO: Start audio at LBA %d, track %d, current lba %d, seek cycles %d, playback delay cycles %d",
+          lba, track, current_lba, m_seek_cycles, m_playback_delay_cycles);
 
     m_cdrom_media->PreloadTrack((u32)track);
 }
 
 INLINE void CdRomAudio::StopAudio()
 {
+    m_playback_delay_cycles = 0;
     m_current_state = CD_AUDIO_STATE_STOPPED;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STATE, m_current_lba);
 }
 
 INLINE void CdRomAudio::PauseAudio()
 {
+    m_playback_delay_cycles = 0;
     m_current_state = CD_AUDIO_STATE_PAUSED;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STATE, m_current_lba);
 }
@@ -139,6 +172,7 @@ INLINE void CdRomAudio::PauseAudio()
 INLINE void CdRomAudio::SetIdle()
 {
     m_seek_cycles = 0;
+    m_playback_delay_cycles = 0;
     m_current_state = CD_AUDIO_STATE_IDLE;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STATE, m_current_lba);
 }

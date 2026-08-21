@@ -37,6 +37,7 @@ CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
     m_current_sample = 0;
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_seek_cycles = 0;
+    m_playback_delay_cycles = 0;
     m_left_sample = 0;
     m_right_sample = 0;
     m_sector_cache_lba = 0;
@@ -50,6 +51,7 @@ CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
     m_state.CURRENT_LBA = &m_current_lba;
     m_state.STOP_EVENT = &m_stop_event;
     m_state.SEEK_CYCLES = &m_seek_cycles;
+    m_state.PLAYBACK_DELAY_CYCLES = &m_playback_delay_cycles;
     m_state.FRAME_SAMPLES = &m_frame_samples;
     m_state.BUFFER = m_buffer;
 }
@@ -101,6 +103,7 @@ void CdRomAudio::Reset()
     m_current_sample = 0;
     m_stop_event = CD_AUDIO_STOP_EVENT_STOP;
     m_seek_cycles = 0;
+    m_playback_delay_cycles = 0;
     m_left_sample = 0;
     m_right_sample = 0;
     InvalidateSectorCache();
@@ -137,6 +140,7 @@ void CdRomAudio::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_current_sample), sizeof(m_current_sample));
     stream.write(reinterpret_cast<const char*> (&m_stop_event), sizeof(m_stop_event));
     stream.write(reinterpret_cast<const char*> (&m_seek_cycles), sizeof(m_seek_cycles));
+    stream.write(reinterpret_cast<const char*> (&m_playback_delay_cycles), sizeof(m_playback_delay_cycles));
     stream.write(reinterpret_cast<const char*> (&m_left_sample), sizeof(m_left_sample));
     stream.write(reinterpret_cast<const char*> (&m_right_sample), sizeof(m_right_sample));
 }
@@ -183,6 +187,12 @@ void CdRomAudio::LoadState(std::istream& stream, int version)
         m_current_sample = 0;
     stream.read(reinterpret_cast<char*> (&m_stop_event), sizeof(m_stop_event));
     stream.read(reinterpret_cast<char*> (&m_seek_cycles), sizeof(m_seek_cycles));
+
+    if (version >= 34)
+        stream.read(reinterpret_cast<char*> (&m_playback_delay_cycles), sizeof(m_playback_delay_cycles));
+    else
+        m_playback_delay_cycles = 0;
+
     stream.read(reinterpret_cast<char*> (&m_left_sample), sizeof(m_left_sample));
     stream.read(reinterpret_cast<char*> (&m_right_sample), sizeof(m_right_sample));
 

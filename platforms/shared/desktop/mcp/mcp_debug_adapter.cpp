@@ -1319,6 +1319,7 @@ json DebugAdapter::GetCDROMAudioStatus()
 
     // Seek info
     status["seek_cycles"] = *cdrom_audio_state->SEEK_CYCLES;
+    status["playback_delay_cycles"] = *cdrom_audio_state->PLAYBACK_DELAY_CYCLES;
 
     // Sample info
     status["frame_samples"] = *cdrom_audio_state->FRAME_SAMPLES;

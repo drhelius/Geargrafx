@@ -49,7 +49,7 @@ void gui_debug_window_cdrom_audio(void)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
     ImGui::SetNextWindowPos(ImVec2(120, 100), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(222, 196), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(224, 214), ImGuiCond_FirstUseEver);
     ImGui::Begin("CD-ROM Audio", &config_debug.show_cdrom_audio);
 
     ImGui::PushFont(gui_default_font);
@@ -154,17 +154,20 @@ void gui_debug_window_cdrom_audio(void)
     ImGui::TextColored(violet, " END EVENT"); ImGui::SameLine();
     ImGui::TextColored(blue, "%s", k_stop_event_names[*cdrom_audio_state->STOP_EVENT]);
 
-    ImGui::TextColored(violet, "START LBA   "); ImGui::SameLine();
+    ImGui::TextColored(violet, "START LBA      "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", *cdrom_audio_state->START_LBA);
 
-    ImGui::TextColored(violet, "END LBA     "); ImGui::SameLine();
+    ImGui::TextColored(violet, "END LBA        "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", *cdrom_audio_state->STOP_LBA);
 
-    ImGui::TextColored(violet, "CURRENT LBA "); ImGui::SameLine();
+    ImGui::TextColored(violet, "CURRENT LBA    "); ImGui::SameLine();
     ImGui::TextColored(white, "%d", *cdrom_audio_state->CURRENT_LBA);
 
-    ImGui::TextColored(violet, "SEEK CYCLES "); ImGui::SameLine();
+    ImGui::TextColored(violet, "SEEK CYCLES    "); ImGui::SameLine();
     ImGui::TextColored((*cdrom_audio_state->SEEK_CYCLES <= 0) ? gray : white, "%d", *cdrom_audio_state->SEEK_CYCLES);
+
+    ImGui::TextColored(violet, "PLAYBACK DELAY "); ImGui::SameLine();
+    ImGui::TextColored((*cdrom_audio_state->PLAYBACK_DELAY_CYCLES <= 0) ? gray : white, "%d", *cdrom_audio_state->PLAYBACK_DELAY_CYCLES);
 
     ImGui::PopFont();
 

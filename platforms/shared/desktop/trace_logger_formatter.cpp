@@ -350,6 +350,7 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 case TRACE_CDROM_AUDIO_STATE:
                 case TRACE_CDROM_AUDIO_STOP_LBA:
                 case TRACE_CDROM_AUDIO_BOUNDARY:
+                case TRACE_CDROM_AUDIO_PLAYBACK_START:
                 {
                     static const char* k_audio_states[] = { "PLAYING", "IDLE", "PAUSED", "STOPPED" };
                     static const char* k_stop_events[] = { "STOP", "LOOP", "IRQ" };
@@ -380,6 +381,11 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                     else if (entry.cdrom.event == TRACE_CDROM_AUDIO_SEEK_END)
                     {
                         snprintf(buf, buf_size, "  [CDROM] AUDIO   SEEK END  LBA:%u  State:%s",
+                                 entry.cdrom.lba, state);
+                    }
+                    else if (entry.cdrom.event == TRACE_CDROM_AUDIO_PLAYBACK_START)
+                    {
+                        snprintf(buf, buf_size, "  [CDROM] AUDIO   PLAYBACK START  LBA:%u  State:%s",
                                  entry.cdrom.lba, state);
                     }
                     else if (entry.cdrom.event == TRACE_CDROM_AUDIO_STATE)

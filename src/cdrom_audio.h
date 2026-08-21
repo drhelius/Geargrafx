@@ -55,6 +55,7 @@ public:
         u32* CURRENT_LBA;
         CdAudioStopEvent* STOP_EVENT;
         s32* SEEK_CYCLES;
+        s32* PLAYBACK_DELAY_CYCLES;
         s32* FRAME_SAMPLES;
         s16* BUFFER;
     };
@@ -106,6 +107,7 @@ private:
     u32 m_current_sample;
     CdAudioStopEvent m_stop_event;
     s32 m_seek_cycles;
+    s32 m_playback_delay_cycles;
     s16 m_left_sample;
     s16 m_right_sample;
     s16 m_sector_cache[2352 / sizeof(s16)] = {};
@@ -113,6 +115,9 @@ private:
     u32 m_sector_cache_generation;
     bool m_sector_cache_attempted;
     bool m_sector_cache_valid;
+
+    // DShadof measured delay between seek completion status and audible CD-DA playback.
+    static const u32 k_playback_delay_us = 224000;
 };
 
 #include "cdrom_audio_inline.h"
