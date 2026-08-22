@@ -59,7 +59,7 @@ public:
     GeargrafxCore();
     ~GeargrafxCore();
     void Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
-    bool RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug = NULL);
+    bool RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug = NULL, bool render = true);
     bool LoadMedia(const char* file_path);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool LoadPhysicalCdRom(const char* device_id);
@@ -111,7 +111,7 @@ private:
     template<bool is_cdrom, bool is_sgx>
     static void ClockHardwareCallback(void* context, u32 cycles);
     template<bool debugger, bool is_cdrom, bool is_sgx>
-    bool RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug);
+    bool RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug, bool render);
     bool SaveState(std::ostream& stream, size_t& size, bool screenshot);
     bool LoadState(std::istream& stream);
     std::string GetSaveStatePath(const char* path, int index);

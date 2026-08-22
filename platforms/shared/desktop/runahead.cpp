@@ -85,7 +85,8 @@ void runahead_run(int frames, u8* frame_buffer, s16* sample_buffer, int* sample_
     for (int i = 0; i < frames; i++)
     {
         int discarded_samples = 0;
-        core->RunToVBlank(frame_buffer, runahead_audio, &discarded_samples);
+        bool render = (i == (frames - 1));
+        core->RunToVBlank(frame_buffer, runahead_audio, &discarded_samples, NULL, render);
     }
 
     // Roll back to the authoritative frame. If restoring ever fails, the

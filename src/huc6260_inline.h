@@ -164,38 +164,39 @@ INLINE bool HuC6260::Clock(u32 cycles)
 template <bool is_sgx>
 INLINE void HuC6260::RenderFrame()
 {
-    if (!IsValidPointer(m_frame_buffer))
-        return;
+    bool multiple_speeds = m_multiple_speeds;
 
-    if (is_sgx)
+    if (IsValidPointer(m_frame_buffer))
     {
-        if (m_pixel_format == GG_PIXEL_RGB565)
-            RenderFrameTemplate<true, 2>();
+        if (is_sgx)
+        {
+            if (m_pixel_format == GG_PIXEL_RGB565)
+                RenderFrameTemplate<true, 2>();
+            else
+                RenderFrameTemplate<true, 4>();
+        }
         else
-            RenderFrameTemplate<true, 4>();
-    }
-    else
-    {
-        if (m_pixel_format == GG_PIXEL_RGB565)
-            RenderFrameTemplate<false, 2>();
-        else
-            RenderFrameTemplate<false, 4>();
+        {
+            if (m_pixel_format == GG_PIXEL_RGB565)
+                RenderFrameTemplate<false, 2>();
+            else
+                RenderFrameTemplate<false, 4>();
+        }
+
+        if (multiple_speeds)
+            AdjustForMultipleDividers();
+
+        if (m_lowpass_enabled)
+        {
+            if (m_pixel_format == GG_PIXEL_RGB565)
+                ApplyLowPassFilter<2>();
+            else
+                ApplyLowPassFilter<4>();
+        }
     }
 
-    m_scaled_width = m_multiple_speeds;
-    if (m_multiple_speeds)
-    {
-        m_multiple_speeds = false;
-        AdjustForMultipleDividers();
-    }
-
-    if (m_lowpass_enabled)
-    {
-        if (m_pixel_format == GG_PIXEL_RGB565)
-            ApplyLowPassFilter<2>();
-        else
-            ApplyLowPassFilter<4>();
-    }
+    m_scaled_width = multiple_speeds;
+    m_multiple_speeds = false;
 }
 
 template <bool is_sgx, int bytes_per_pixel>

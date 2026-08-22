@@ -30,7 +30,7 @@
 #include "cdrom_audio.h"
 #include "adpcm.h"
 
-INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
+INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug, bool render)
 {
     if (m_paused || !m_media->IsReady())
         return false;
@@ -46,29 +46,29 @@ INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int
     if (debugger)
     {
         if (is_cdrom && is_sgx)
-            return RunToVBlankTemplate<true, true, true>(frame_buffer, sample_buffer, sample_count, debug);
+            return RunToVBlankTemplate<true, true, true>(frame_buffer, sample_buffer, sample_count, debug, render);
         else if (is_cdrom && !is_sgx)
-            return RunToVBlankTemplate<true, true, false>(frame_buffer, sample_buffer, sample_count, debug);
+            return RunToVBlankTemplate<true, true, false>(frame_buffer, sample_buffer, sample_count, debug, render);
         else if (!is_cdrom && is_sgx)
-            return RunToVBlankTemplate<true, false, true>(frame_buffer, sample_buffer, sample_count, debug);
+            return RunToVBlankTemplate<true, false, true>(frame_buffer, sample_buffer, sample_count, debug, render);
         else
-            return RunToVBlankTemplate<true, false, false>(frame_buffer, sample_buffer, sample_count, debug);
+            return RunToVBlankTemplate<true, false, false>(frame_buffer, sample_buffer, sample_count, debug, render);
     }
     else
     {
         if (is_cdrom && is_sgx)
-            return RunToVBlankTemplate<false, true, true>(frame_buffer, sample_buffer, sample_count, debug);
+            return RunToVBlankTemplate<false, true, true>(frame_buffer, sample_buffer, sample_count, debug, render);
         else if (is_cdrom && !is_sgx)
-            return RunToVBlankTemplate<false, true, false>(frame_buffer, sample_buffer, sample_count, debug);
+            return RunToVBlankTemplate<false, true, false>(frame_buffer, sample_buffer, sample_count, debug, render);
         else if (!is_cdrom && is_sgx)
-            return RunToVBlankTemplate<false, false, true>(frame_buffer, sample_buffer, sample_count, debug);
+            return RunToVBlankTemplate<false, false, true>(frame_buffer, sample_buffer, sample_count, debug, render);
         else
-            return RunToVBlankTemplate<false, false, false>(frame_buffer, sample_buffer, sample_count, debug);
+            return RunToVBlankTemplate<false, false, false>(frame_buffer, sample_buffer, sample_count, debug, render);
     }
 }
 
 template<bool debugger, bool is_cdrom, bool is_sgx>
-bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug)
+bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug, bool render)
 {
     m_huc6280->SetHardwareClock(&GeargrafxCore::ClockHardwareCallback<is_cdrom, is_sgx>, this);
 
@@ -86,7 +86,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             debug_enable ? debug->brk_value : 0,
             debug_enable && debug->brk_trigger_irq);
 
-        m_huc6260->SetBuffer(frame_buffer);
+        m_huc6260->SetBuffer(render ? frame_buffer : NULL);
         bool stop = false;
 
         do
@@ -128,7 +128,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
     else
     {
         UNUSED(debug);
-        m_huc6260->SetBuffer(frame_buffer);
+        m_huc6260->SetBuffer(render ? frame_buffer : NULL);
         bool stop = false;
 
         do
