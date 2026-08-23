@@ -32,6 +32,7 @@
 #include "gui_filedialogs.h"
 #include "config.h"
 #include "emu.h"
+#include "utils.h"
 
 struct DisassemblerLine
 {
@@ -40,6 +41,8 @@ struct DisassemblerLine
     GG_Disassembler_Record* record;
     char name_enhanced[64];
     char tooltip[128];
+    u16 tooltip_address;
+    bool tooltip_has_value;
     int name_real_length;
     DebugSymbol* symbol;
     bool is_auto_symbol;
@@ -104,6 +107,8 @@ static void add_breakpoint(int type);
 static bool breakpoint_type_supports_execute(int type);
 static void request_goto_address(u16 addr);
 static bool is_return_instruction(u8 opcode);
+static void draw_disassembler_tooltip(DisassemblerLine* line);
+static void set_disassembler_tooltip(DisassemblerLine* line, const char* color, const char* name, u16 address, bool has_value);
 static void replace_symbols(DisassemblerLine* line, const char* jump_color, const char* operand_color, const char* auto_color, const char* original_color);
 static bool replace_labels(DisassemblerLine* line, const char* color, const char* original_color);
 static bool collect_assembler_label_definition(DisassemblerLine* line, std::vector<AssemblerLabelDefinition>& definitions);
@@ -1010,6 +1015,8 @@ static void prepare_drawable_lines(void)
             line.record = record;
             snprintf(line.name_enhanced, 64, "%s", line.record->name);
             line.tooltip[0] = 0;
+            line.tooltip_address = 0;
+            line.tooltip_has_value = false;
 
             const std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
 
@@ -1186,9 +1193,7 @@ static void draw_disassembly(void)
 
                 if (line.tooltip[0] != 0 && ImGui::IsItemHovered())
                 {
-                    ImGui::BeginTooltip();
-                    TextColoredEx("%s", line.tooltip);
-                    ImGui::EndTooltip();
+                    draw_disassembler_tooltip(&line);
                 }
 
                 if (config_debug.dis_show_mem)
@@ -1463,6 +1468,40 @@ static bool is_return_instruction(u8 opcode)
     }
 }
 
+static void draw_disassembler_tooltip(DisassemblerLine* line)
+{
+    ImGui::BeginTooltip();
+    TextColoredEx("%s", line->tooltip);
+
+    u16 address = line->record->operand_is_zp ? (0x2000 | line->tooltip_address) : line->tooltip_address;
+    u8 value = 0;
+    if (line->tooltip_has_value && emu_get_core()->GetMemory()->TryPeek(address, &value))
+    {
+        ImGui::Separator();
+        ImGui::TextColored(orange, "Hex: ");
+        ImGui::SameLine(0, 0);
+        ImGui::TextColored(white, "$%02X", value);
+        ImGui::TextColored(orange, "Dec: ");
+        ImGui::SameLine(0, 0);
+        ImGui::TextColored(white, "%u (%d)", value, (s8)value);
+        ImGui::TextColored(orange, "Bin: ");
+        ImGui::SameLine(0, 0);
+        ImGui::TextColored(white, BYTE_TO_BINARY_PATTERN_SPACED, BYTE_TO_BINARY(value));
+        ImGui::TextColored(orange, "Ascii: ");
+        ImGui::SameLine(0, 0);
+        ImGui::TextColored(white, "%c", (value >= 32 && value < 127) ? value : '.');
+    }
+
+    ImGui::EndTooltip();
+}
+
+static void set_disassembler_tooltip(DisassemblerLine* line, const char* color, const char* name, u16 address, bool has_value)
+{
+    snprintf(line->tooltip, sizeof(line->tooltip), "%s%s%s = %s$%04X", color, name, c_white.c_str(), c_cyan.c_str(), address);
+    line->tooltip_address = address;
+    line->tooltip_has_value = has_value;
+}
+
 static bool replace_operand_in_string(GG_Disassembler_Record* record, std::string& instr, const char* replacement_text)
 {
     if (record->operand_length <= 0)
@@ -1618,7 +1657,7 @@ static void replace_symbols(DisassemblerLine* line, const char* jump_color, cons
     if (gui_debug_resolve_symbol(line->record, instr, color, original_color, &resolved_name, &resolved_address))
     {
         snprintf(line->name_enhanced, 64, "%s", instr.c_str());
-        snprintf(line->tooltip, 128, "%s%s%s = %s$%04X", color, resolved_name, c_white.c_str(), c_cyan.c_str(), resolved_address);
+        set_disassembler_tooltip(line, color, resolved_name, resolved_address, !line->record->jump);
         return;
     }
 
@@ -1654,7 +1693,7 @@ static void replace_symbols(DisassemblerLine* line, const char* jump_color, cons
         if (replace_operand_in_string(line->record, instr, replacement.c_str()))
         {
             snprintf(line->name_enhanced, 64, "%s", instr.c_str());
-            snprintf(line->tooltip, 128, "%s%s%s = %s$%04X", auto_color, auto_symbol_text, c_white.c_str(), c_cyan.c_str(), lookup_address);
+            set_disassembler_tooltip(line, auto_color, auto_symbol_text, lookup_address, false);
         }
     }
 }
@@ -1741,7 +1780,7 @@ static bool replace_labels(DisassemblerLine* line, const char* color, const char
     {
         snprintf(line->name_enhanced, 64, "%s", instr.c_str());
         if (line->tooltip[0] == 0)
-            snprintf(line->tooltip, 128, "%s%s%s = %s$%04X", color, resolved_name, c_white.c_str(), c_cyan.c_str(), resolved_address);
+            set_disassembler_tooltip(line, color, resolved_name, resolved_address, !line->record->jump);
         return true;
     }
 
