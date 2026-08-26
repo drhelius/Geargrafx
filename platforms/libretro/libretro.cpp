@@ -72,7 +72,7 @@ static float aspect_ratio = 0.0f;
 
 static bool allow_up_down = false;
 static bool allow_soft_reset = false;
-static int cdrom_bios = 0;
+static int cdrom_bios = 3;
 static bool deterministic_netplay = false;
 static bool lowpass_filter = false;
 static float lowpass_intensity = 1.0f;
@@ -592,9 +592,6 @@ static void load_bios(void)
             break;
         case 3:
             selected_bios = syscard3;
-            break;
-        case 4:
-            selected_bios = gameexpress;
             break;
         default:
             selected_bios = syscard3;
@@ -1361,16 +1358,25 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        if (strcmp(var.value, "Auto") == 0)
-            cdrom_bios = 0;
-        else if (strcmp(var.value, "System Card 1") == 0)
+        bool force_gameexpress = false;
+
+        if (strcmp(var.value, "System Card 1") == 0)
             cdrom_bios = 1;
         else if (strcmp(var.value, "System Card 2") == 0)
             cdrom_bios = 2;
-        else if (strcmp(var.value, "System Card 3") == 0)
+        else if ((strcmp(var.value, "System Card 3") == 0) ||
+                 (strcmp(var.value, "Auto") == 0))
             cdrom_bios = 3;
-        else if (strcmp(var.value, "Game Express") == 0)
-            cdrom_bios = 4;
+        else if ((strcmp(var.value, "Force Game Express") == 0) ||
+                 (strcmp(var.value, "Game Express") == 0))
+        {
+            cdrom_bios = 3;
+            force_gameexpress = true;
+        }
+        else
+            cdrom_bios = 3;
+
+        core->GetMedia()->ForceGameExpress(force_gameexpress);
     }
 
     var.key = "geargrafx_cdrom_preload";

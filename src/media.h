@@ -61,6 +61,7 @@ public:
     HuCardMapper GetMapper();
     void ForceBackupRAM(bool force);
     bool IsBackupRAMForced();
+    void ForceGameExpress(bool force);
     void PreloadCdRom(bool enable);
     bool IsPreloadCdRomEnabled();
     int GetROMSize();
@@ -140,6 +141,7 @@ private:
     GG_Console_Type m_console_type;
     GG_CDROM_Type m_cdrom_type;
     bool m_force_backup_ram;
+    bool m_force_gameexpress;
     bool m_preload_cdrom;
     bool m_softpatch_applied;
     char m_softpatch_path[4096];

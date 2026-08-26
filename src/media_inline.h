@@ -130,6 +130,11 @@ inline bool Media::IsBackupRAMForced()
     return m_force_backup_ram;
 }
 
+inline void Media::ForceGameExpress(bool force)
+{
+    m_force_gameexpress = force;
+}
+
 inline void Media::PreloadCdRom(bool enable)
 {
     m_preload_cdrom = enable;

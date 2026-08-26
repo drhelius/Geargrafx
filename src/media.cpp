@@ -65,6 +65,7 @@ Media::Media(CdRomMedia* cdrom_media)
     m_console_type = GG_CONSOLE_AUTO;
     m_cdrom_type = GG_CDROM_AUTO;
     m_force_backup_ram = false;
+    m_force_gameexpress = false;
     m_preload_cdrom = false;
     m_softpatch_applied = false;
     m_softpatch_path[0] = 0;
@@ -594,6 +595,12 @@ void Media::GatherMediaInfo()
 
     GatherMediaInfoFromDB();
 
+    if (m_force_gameexpress && m_is_cdrom)
+    {
+        m_is_gameexpress = true;
+        Log("Forcing Game Express because of user request");
+    }
+
     if (m_console_type == GG_CONSOLE_SGX)
     {
         m_is_sgx = true;
@@ -670,6 +677,7 @@ void Media::GatherMediaInfo()
 void Media::GatherMediaInfoFromDB()
 {
     m_card_ram_size = 0;
+    m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
