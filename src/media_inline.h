@@ -85,12 +85,27 @@ inline bool Media::IsMB128()
     return m_is_mb128;
 }
 
-inline bool Media::IsValidBios(bool syscard)
+inline bool Media::IsSyscardBiosLoaded()
 {
-    return syscard ? m_is_valid_bios_syscard : m_is_valid_bios_gameexpress;
+    return m_is_loaded_bios_syscard;
 }
 
-inline bool Media::IsLoadedBios()
+inline bool Media::IsGameExpressBiosLoaded()
+{
+    return m_is_loaded_bios_gameexpress;
+}
+
+inline bool Media::IsSyscardBiosValid()
+{
+    return m_is_valid_bios_syscard;
+}
+
+inline bool Media::IsGameExpressBiosValid()
+{
+    return m_is_valid_bios_gameexpress;
+}
+
+inline bool Media::IsBiosReady()
 {
     return m_is_gameexpress ? m_is_loaded_bios_gameexpress : m_is_loaded_bios_syscard;
 }

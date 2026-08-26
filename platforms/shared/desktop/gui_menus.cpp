@@ -54,6 +54,9 @@ static bool open_syscard_bios = false;
 static bool open_gameexpress_bios = false;
 static bool save_debug_settings = false;
 static bool load_debug_settings = false;
+static const ImVec4 service_turbolink_color(0.39f, 0.58f, 0.93f, 1.0f);
+static const ImVec4 service_mcp_http_color(0.10f, 0.90f, 0.10f, 1.0f);
+static const ImVec4 service_mcp_stdio_color(0.90f, 0.70f, 0.10f, 1.0f);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 static bool open_physical_cdrom = false;
 #endif
@@ -514,6 +517,8 @@ static void menu_emulator(void)
 
         if (ImGui::BeginMenu("BIOS"))
         {
+            Media* media = emu_get_core()->GetMedia();
+
             if (ImGui::BeginMenu("System Card"))
             {
                 if (ImGui::MenuItem("Load System Card BIOS..."))
@@ -529,14 +534,19 @@ static void menu_emulator(void)
                 ImGui::PopItemWidth();
 
                 ImGui::Separator();
-                if (emu_get_core()->GetMedia()->IsValidBios(true))
+                if (media->IsSyscardBiosValid())
                 {
-                    ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "Valid BIOS: %s", emu_get_core()->GetMedia()->GetBiosName(true));
+                    ImGui::TextColored(service_mcp_http_color, "Valid BIOS: %s", media->GetBiosName(true));
+                }
+                else if (media->IsSyscardBiosLoaded())
+                {
+                    ImGui::TextColored(service_turbolink_color, "Custom or unknown BIOS loaded.");
+                    ImGui::TextColored(service_turbolink_color, "CRC not found in BIOS database.");
                 }
                 else
                 {
-                    ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "System Card BIOS not loaded or invalid!");
-                    ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "System Card 3.0 recommended for most games.");
+                    ImGui::TextDisabled("System Card BIOS not loaded!");
+                    ImGui::TextDisabled("System Card 3.0 recommended for most games.");
                 }
 
                 ImGui::EndMenu();
@@ -557,13 +567,18 @@ static void menu_emulator(void)
                 ImGui::PopItemWidth();
 
                 ImGui::Separator();
-                if (emu_get_core()->GetMedia()->IsValidBios(false))
+                if (media->IsGameExpressBiosValid())
                 {
-                    ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "Valid BIOS: %s", emu_get_core()->GetMedia()->GetBiosName(false));
+                    ImGui::TextColored(service_mcp_http_color, "Valid BIOS: %s", media->GetBiosName(false));
+                }
+                else if (media->IsGameExpressBiosLoaded())
+                {
+                    ImGui::TextColored(service_turbolink_color, "Custom or unknown BIOS loaded.");
+                    ImGui::TextColored(service_turbolink_color, "CRC not found in BIOS database.");
                 }
                 else
                 {
-                    ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "Game Express BIOS not loaded or invalid!");
+                    ImGui::TextDisabled("Game Express BIOS not loaded!");
                 }
 
                 ImGui::EndMenu();
@@ -1729,9 +1744,9 @@ static void menu_debug(void)
             ImGui::Separator();
 
             if (stdio_running)
-                ImGui::TextColored(ImVec4(0.90f, 0.70f, 0.10f, 1.0f), "STDIO mode active");
+                ImGui::TextColored(service_mcp_stdio_color, "STDIO mode active");
             else if (http_running)
-                ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "Listening on %s:%d",
+                ImGui::TextColored(service_mcp_http_color, "Listening on %s:%d",
                     emu_mcp_get_http_address(), emu_mcp_get_http_port());
             else
                 ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "Stopped");
@@ -2003,7 +2018,6 @@ static void menu_turbolink(void)
     gui_in_use = true;
     TurboLinkStatus status = emu_turbolink_get_status();
     bool active = emu_turbolink_is_active();
-    const ImVec4 cornflower_blue(0.39f, 0.58f, 0.93f, 1.0f);
     const ImVec4 error_red(0.98f, 0.15f, 0.45f, 1.0f);
 
 #if defined(__APPLE__)
@@ -2026,7 +2040,7 @@ static void menu_turbolink(void)
     switch (status.mode)
     {
         case TurboLinkModeConnected:
-            ImGui::TextColored(cornflower_blue, "%s", status.endpoint);
+            ImGui::TextColored(service_turbolink_color, "%s", status.endpoint);
             ImGui::TextDisabled("Peer %d of %d", status.local_peer_id, status.peer_count);
 
             if (!status.local_hardware_ready)
@@ -2115,8 +2129,7 @@ static void draw_mcp_status(void)
     char mcp_status[128];
     bool show_turbolink = false;
     bool show_mcp = false;
-    ImVec4 turbolink_color(0.39f, 0.58f, 0.93f, 1.0f);
-    ImVec4 mcp_color(0.10f, 0.90f, 0.10f, 1.0f);
+    ImVec4 mcp_color = service_mcp_http_color;
 
     if (turbolink_active)
     {
@@ -2132,7 +2145,7 @@ static void draw_mcp_status(void)
         if (transport_mode == 0)
         {
             snprintf(mcp_status, sizeof(mcp_status), "MCP: STDIO");
-            mcp_color = ImVec4(0.90f, 0.70f, 0.10f, 1.0f);
+            mcp_color = service_mcp_stdio_color;
             show_mcp = true;
         }
         else if (transport_mode == 1)
@@ -2167,7 +2180,7 @@ static void draw_mcp_status(void)
     ImGui::AlignTextToFramePadding();
 
     if (show_turbolink)
-        ImGui::TextColored(turbolink_color, "%s", turbolink_status);
+        ImGui::TextColored(service_turbolink_color, "%s", turbolink_status);
 
     if (show_mcp)
     {

@@ -48,6 +48,7 @@ const GG_DB_Entry k_game_database[] =
     { 0x52520BC6, "CD-ROM System Card [2.0] (J)", GG_GAMEDB_BIOS_SYSCARD },
     { 0x283B74E0, "CD-ROM System Card [2.1] (J)", GG_GAMEDB_BIOS_SYSCARD },
     { 0x6D9A73EF, "Super CD-ROM System [3.0] (J)", GG_GAMEDB_BIOS_SYSCARD },
+    { 0x0ECEA1F3, "Super CD-ROM System [3.0] (J) [NuFont Hack]", GG_GAMEDB_BIOS_SYSCARD },
     { 0xFF2A5EC3, "TurboGrafx CD System Card [2.0] (USA)", GG_GAMEDB_BIOS_SYSCARD },
     { 0x2B5B75FE, "TurboGrafx CD Super System [3.0] (USA)", GG_GAMEDB_BIOS_SYSCARD },
     { 0x51A12D90, "Game Express Card [Blue Version] (J)", GG_GAMEDB_BIOS_GAME_EXPRESS },

@@ -693,11 +693,13 @@ json DebugAdapter::GetMediaInfo()
             break;
     }
 
-    info["loaded_bios"] = media->IsLoadedBios();
-    if (media->IsLoadedBios())
+    bool bios_ready = media->IsBiosReady();
+    info["loaded_bios"] = bios_ready;
+    if (bios_ready)
     {
-        info["bios_name"] = media->GetBiosName(true);
-        info["valid_bios"] = media->IsValidBios(true);
+        bool syscard = !media->IsGameExpress();
+        info["bios_name"] = media->GetBiosName(syscard);
+        info["valid_bios"] = syscard ? media->IsSyscardBiosValid() : media->IsGameExpressBiosValid();
     }
 
     info["backup_ram_forced"] = media->IsBackupRAMForced();
@@ -1634,10 +1636,12 @@ json DebugAdapter::LoadBios(const std::string& file_path, bool syscard)
     result["success"] = true;
     result["file_path"] = file_path;
     result["type"] = syscard ? "syscard" : "gameexpress";
-    result["valid_crc"] = m_core->GetMedia()->IsValidBios(syscard);
-    result["bios_name"] = m_core->GetMedia()->GetBiosName(syscard);
+    Media* media = m_core->GetMedia();
+    bool valid_crc = syscard ? media->IsSyscardBiosValid() : media->IsGameExpressBiosValid();
+    result["valid_crc"] = valid_crc;
+    result["bios_name"] = media->GetBiosName(syscard);
 
-    if (!m_core->GetMedia()->IsValidBios(syscard))
+    if (!valid_crc)
         result["warning"] = "CRC does not match any known BIOS";
 
     return result;

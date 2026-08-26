@@ -52,8 +52,11 @@ public:
     bool IsGameExpress();
     bool IsArcadeCard();
     bool IsMB128();
-    bool IsValidBios(bool syscard);
-    bool IsLoadedBios();
+    bool IsSyscardBiosLoaded();
+    bool IsGameExpressBiosLoaded();
+    bool IsSyscardBiosValid();
+    bool IsGameExpressBiosValid();
+    bool IsBiosReady();
     void SetConsoleType(GG_Console_Type console_type);
     GG_Console_Type GetConsoleType();
     void SetCDROMType(GG_CDROM_Type cdrom_type);

@@ -361,17 +361,17 @@ void gui_load_bios(const char* path, bool syscard)
         return;
     }
 
-    if (!emu_get_core()->GetMedia()->IsValidBios(syscard))
-    {
-        std::string message("Invalid BIOS file:\n");
-        message += filename;
-        message += "\n\nMake sure the file is a valid BIOS file.";
-        gui_set_error_message(message.c_str());
-        gui_action_reset();
-        return;
-    }
+    Media* media = emu_get_core()->GetMedia();
+    bool known_bios = syscard ? media->IsSyscardBiosValid() : media->IsGameExpressBiosValid();
 
     gui_action_reset();
+
+    if (!known_bios)
+    {
+        std::string message("Custom or unknown BIOS loaded: ");
+        message += filename;
+        gui_set_status_message(message.c_str(), 4000);
+    }
 }
 
 void gui_load_palette(const char* path)
@@ -843,7 +843,7 @@ static void show_loading_popup(void)
 
 static bool finish_loading_rom(void)
 {
-    if (emu_get_core()->GetMedia()->IsCDROM() && !emu_get_core()->GetMedia()->IsLoadedBios())
+    if (emu_get_core()->GetMedia()->IsCDROM() && !emu_get_core()->GetMedia()->IsBiosReady())
     {
         bool is_gameexpress = emu_get_core()->GetMedia()->IsGameExpress();
         std::string bios_name = is_gameexpress ? "Game Express BIOS" : "System Card BIOS";
