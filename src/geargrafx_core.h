@@ -23,6 +23,7 @@
 #include <iostream>
 #include <fstream>
 #include "common.h"
+#include "turbolink.h"
 
 class Audio;
 class Input;
@@ -102,6 +103,14 @@ public:
     Audio* GetAudio();
     Input* GetInput();
     u64 GetMasterClockCycles();
+    void SetTurboLinkCallbacks(
+        GG_TurboLink_Publish_Callback publish_callback, GG_TurboLink_Sample_Callback sample_callback,
+        GG_TurboLink_Sync_Callback sync_callback, void* user_data);
+    void SetTurboLinkCableConnected(bool connected);
+    void InvalidateTurboLinkSample();
+    bool IsTurboLinkCableConnected() const;
+    u64 GetTurboLinkCycle() const;
+    GG_TurboLink_Drive GetTurboLinkDrive() const;
     TraceLogger* GetTraceLogger();
 
 private:
@@ -135,6 +144,8 @@ private:
     bool m_paused;
     TraceLogger* m_trace_logger;
     u64 m_master_clock_cycles;
+    u64 m_turbolink_cycles;
+    u64 m_turbolink_next_sync_cycle;
     bool m_frame_ready;
     GG_MB128_Mode m_mb128_mode;
 };

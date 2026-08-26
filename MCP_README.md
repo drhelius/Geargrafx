@@ -50,7 +50,7 @@ This server provides tools for game development, rom hacking, reverse engineerin
 - **Full Debugger Access**: CPU registers, memory inspection, breakpoints, and execution control
 - **Multiple Memory Areas**: Access RAM, VRAM, ROM, CD-ROM RAM, Arcade Card RAM, and more
 - **Disassembly**: View disassembled code around PC or any address
-- **Hardware Inspection**: HuC6280 CPU, HuC6270 VDC, HuC6260 VCE, HuC6202 VPC, PSG, CD-ROM subsystems
+- **Hardware Inspection**: HuC6280 CPU, HuC6270 VDC, HuC6260 VCE, HuC6202 VPC, PSG, CD-ROM subsystems, TurboLink
 - **Sprite Viewer**: List and inspect all 64 sprites with images
 - **Symbol Support**: Add, remove, list, and look up debug symbols
 - **Input State**: Inspect effective pressed buttons and pending tap releases
@@ -413,6 +413,11 @@ vce.registers
 vce.timing
 input.reads
 input.writes
+input.turbolink
+input.turbolink.writes
+input.turbolink.drive
+input.turbolink.samples
+input.turbolink.cable
 timer.irqs
 timer.registers
 cdrom.irqs
@@ -438,6 +443,8 @@ system.mpr
 system.mapper
 system.interrupts
 ```
+
+`input.turbolink` enables all four TurboLink streams. `writes` records every `$1000` O-port access, `drive` records only changes to the BU5782K pull-low outputs, `samples` records physical LINK1/LINK2 levels and the actual K result with D0-D3, and `cable` records activation/deactivation of the local emulated hardware endpoint. Shared-memory heartbeats and barriers are intentionally not emulation trace events.
 
 The `system` streams cover TAM/MPR mappings, Street Fighter II mapper latch updates, and HuC6280 interrupt-controller mask/acknowledgement writes. ADPCM lines include playing, pending, half-IRQ, and end-IRQ state bits.
 
@@ -467,6 +474,8 @@ Storage changes while tracing is active cleanly stop and restart the logger. Rep
 - `get_cdrom_audio_status` - Get CD-ROM audio playback status
 - `get_adpcm_status` - Get ADPCM audio status
 - `get_arcade_card_status` - Get Arcade Card status
+- `get_turbolink_status` - Get BU5782K SEL/CLR and pull-low state, the last actual K/line sample with D0-D3 and event ticks, plus shared-memory membership, hardware readiness, pacing, progress, barrier, lease, generation, and recovery diagnostics
+- `reset_turbolink_metrics` - Reset TurboLink activity, synchronization, wait, and recovery counters
 
 ### Sprites
 - `list_sprites` - List all 64 sprites with position, size, pattern, palette
@@ -495,7 +504,7 @@ Storage changes while tracing is active cleanly stop and restart the logger. Rep
 ### Controller Input
 - `controller_button` - Control a button on a controller (player 1-5). Use action 'press' to hold the button, 'release' to let it go, or 'press_and_release' to simulate a quick tap. Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI
 - `controller_macro` - Run an ordered input macro. Top-level `player` defaults to 1, and each command may override it. Supported commands are `tap`, `press`, `release`, and `wait`; timing is explicit through `wait` frame counts
-- `get_input_state` - Get effective pressed buttons and pending tap releases
+- `get_input_state` - Get effective pressed buttons and current controller input state
 - `controller_set_type` - Set controller type for a player: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)
 - `controller_get_type` - Get the current controller type for a player (returns: standard, avenue_pad_3, or avenue_pad_6)
 - `controller_set_turbo_tap` - Enable or disable Turbo Tap (multitap) for 5-player support

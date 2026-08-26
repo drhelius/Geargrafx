@@ -45,6 +45,7 @@
     <ClCompile Include="..\..\src\huc6280_psg.cpp" />
     <ClCompile Include="..\..\src\huc6280.cpp" />
     <ClCompile Include="..\..\src\input.cpp" />
+    <ClCompile Include="..\..\src\turbolink.cpp" />
     <ClCompile Include="..\..\src\mapper.cpp" />
     <ClCompile Include="..\..\src\mb128.cpp" />
     <ClCompile Include="..\..\src\memory.cpp" />
@@ -89,6 +90,7 @@
     <ClCompile Include="..\shared\desktop\mcp\mcp_debug_adapter.cpp" />
     <ClCompile Include="..\shared\desktop\mcp\mcp_tool_registry.cpp" />
     <ClCompile Include="..\shared\desktop\mcp\mcp_server.cpp" />
+    <ClCompile Include="..\shared\desktop\turbolink\turbolink_manager.cpp" />
     <ClCompile Include="..\shared\desktop\single_instance.cpp" />
     <ClCompile Include="..\shared\desktop\gui_actions.cpp" />
     <ClCompile Include="..\shared\desktop\rewind.cpp" />
@@ -108,6 +110,7 @@
     <ClCompile Include="..\shared\desktop\gui_debug_cdrom_audio.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_adpcm.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_trace_logger.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_debug_turbolink.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_rewind.cpp" />
     <ClCompile Include="..\shared\desktop\trace_logger_formatter.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug.cpp" />
@@ -195,6 +198,7 @@
     <ClInclude Include="..\..\src\geargrafx_core_inline.h" />
     <ClInclude Include="..\..\src\input_inline.h" />
     <ClInclude Include="..\..\src\input.h" />
+    <ClInclude Include="..\..\src\turbolink.h" />
     <ClInclude Include="..\..\src\log.h" />
     <ClInclude Include="..\..\src\mapper.h" />
     <ClInclude Include="..\..\src\mb128.h" />
@@ -246,6 +250,8 @@
     <ClInclude Include="..\shared\desktop\config_macros.h" />
     <ClInclude Include="..\shared\desktop\console_utils.h" />
     <ClInclude Include="..\shared\desktop\emu.h" />
+    <ClInclude Include="..\shared\desktop\turbolink\turbolink_manager.h" />
+    <ClInclude Include="..\shared\desktop\turbolink\turbolink_signal.h" />
     <ClInclude Include="..\shared\dependencies\json\json.hpp" />
     <ClInclude Include="..\shared\desktop\mcp\mcp_debug_adapter.h" />
     <ClInclude Include="..\shared\desktop\mcp\mcp_manager.h" />
@@ -271,6 +277,7 @@
     <ClInclude Include="..\shared\desktop\gui_debug_adpcm.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_text.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_trace_logger.h" />
+    <ClInclude Include="..\shared\desktop\gui_debug_turbolink.h" />
     <ClInclude Include="..\shared\desktop\trace_logger_formatter.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_rewind.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_widgets.h" />

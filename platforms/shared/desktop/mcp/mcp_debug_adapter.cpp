@@ -1746,6 +1746,13 @@ json DebugAdapter::LoadState()
         return result;
     }
 
+    if (emu_turbolink_is_active())
+    {
+        result["error"] = "State loading is unavailable while TurboLink is active";
+        Log("[MCP] LoadState failed: TurboLink is active");
+        return result;
+    }
+
     int slot = config_emulator.save_slot + 1;
 
     update_savestates_data();
@@ -1807,6 +1814,13 @@ json DebugAdapter::LoadStateFile(const std::string& file_path)
         return result;
     }
 
+    if (emu_turbolink_is_active())
+    {
+        result["error"] = "State loading is unavailable while TurboLink is active";
+        Log("[MCP] LoadStateFile failed: TurboLink is active");
+        return result;
+    }
+
     if (!m_core || !m_core->GetMedia()->IsReady())
     {
         result["error"] = "No media loaded";
@@ -1834,6 +1848,12 @@ json DebugAdapter::SetFastForwardSpeed(int speed)
 {
     json result;
 
+    if (emu_turbolink_is_active())
+    {
+        result["error"] = "Fast-forward is unavailable while TurboLink is active";
+        return result;
+    }
+
     if (speed < 0 || speed > 4)
     {
         result["error"] = "Invalid speed (must be 0-4: 0=1.5x, 1=2x, 2=2.5x, 3=3x, 4=Unlimited)";
@@ -1855,6 +1875,12 @@ json DebugAdapter::SetFastForwardSpeed(int speed)
 json DebugAdapter::ToggleFastForward(bool enabled)
 {
     json result;
+
+    if (emu_turbolink_is_active() && enabled)
+    {
+        result["error"] = "Fast-forward is unavailable while TurboLink is active";
+        return result;
+    }
 
     config_emulator.ffwd = enabled;
     gui_action_ffwd();
@@ -1989,7 +2015,158 @@ json DebugAdapter::GetInputState()
         players.push_back({{"player", player + 1}, {"pressed", pressed}});
     }
 
-    return {{"players", players}};
+    json result;
+    result["players"] = players;
+
+    return result;
+}
+
+json DebugAdapter::GetTurboLinkStatus()
+{
+    if (!m_core)
+        return {{"error", "Core unavailable"}};
+
+    Input* input = m_core->GetInput();
+    TurboLinkStatus link = emu_turbolink_get_status();
+    GG_TurboLink_Drive drive = input->GetTurboLinkDrive();
+    u8 input_base = input->GetIORegister();
+    u8 o = (input->GetSel() ? 0x01 : 0x00) | (input->GetClr() ? 0x02 : 0x00);
+    bool sample_valid = input->HasTurboLinkSample();
+    u8 lines = input->GetTurboLinkLastSampledLines();
+    u8 port_result = input->GetTurboLinkLastPortResult();
+    bool mux_active = input->IsTurboLinkCableConnected() && input->GetClr();
+    u64 cycle = m_core->GetTurboLinkCycle();
+
+    const char* mode = "disabled";
+    if (link.mode == TurboLinkModeConnected)
+        mode = "connected";
+    else if (link.mode == TurboLinkModeFault)
+        mode = "fault";
+
+    std::ostringstream ss;
+    ss << std::hex << std::uppercase << std::setfill('0');
+
+    json io_port;
+    io_port["address"] = "1000";
+    ss << std::setw(2) << (int)input_base;
+    io_port["input_base"] = ss.str();
+    ss.str("");
+    ss << std::setw(2) << (int)o;
+    io_port["output_control"] = ss.str();
+
+    json control;
+    control["sel"] = input->GetSel();
+    control["clr"] = input->GetClr();
+    control["input_source"] = mux_active ? "turbolink" : "controller";
+    control["hardware_endpoint_active"] = input->IsTurboLinkCableConnected();
+    control["pull_low_mask"] = drive.drive_mask;
+    control["link1_driver"] = (drive.drive_mask & GG_TURBOLINK_LINE_1) ? "low" : "released";
+    control["link2_driver"] = (drive.drive_mask & GG_TURBOLINK_LINE_2) ? "low" : "released";
+
+    json last_sample;
+    last_sample["valid"] = sample_valid;
+
+    if (sample_valid)
+    {
+        last_sample["tick"] = input->GetTurboLinkLastSampleTick();
+        last_sample["sel"] = input->GetTurboLinkLastSampleSel();
+        last_sample["clr"] = input->GetTurboLinkLastSampleClr();
+        last_sample["local_pull_low_mask"] = input->GetTurboLinkLastSamplePullLowMask();
+        last_sample["physical_mask"] = lines;
+        last_sample["link1"] = (lines & GG_TURBOLINK_LINE_1) ? "high" : "low";
+        last_sample["link2"] = (lines & GG_TURBOLINK_LINE_2) ? "high" : "low";
+        last_sample["d0"] = (port_result & 0x01) != 0;
+        last_sample["d1"] = (port_result & 0x02) != 0;
+        last_sample["d2"] = (port_result & 0x04) != 0;
+        last_sample["d3"] = (port_result & 0x08) != 0;
+        ss.str("");
+        ss << std::setw(2) << (int)port_result;
+        last_sample["port_result"] = ss.str();
+    }
+
+    json timing;
+    timing["link_cycle"] = cycle;
+    timing["last_o_write_tick"] = input->GetTurboLinkLastControlTick();
+    timing["last_drive_tick"] = input->GetTurboLinkLastDriveTick();
+
+    json transport;
+    transport["type"] = "shared_memory";
+    transport["mode"] = mode;
+    transport["session_active"] = link.active;
+    transport["local_hardware_ready"] = link.local_hardware_ready;
+    transport["remote_member_active"] = link.remote_active;
+    transport["remote_hardware_ready"] = link.remote_hardware_ready;
+    transport["operational_cable"] = link.cable_connected;
+    transport["endpoint"] = link.endpoint;
+    transport["last_error"] = link.last_error;
+    transport["session"] = link.session;
+    transport["local_peer_id"] = link.local_peer_id;
+    transport["remote_peer_id"] = link.remote_peer_id;
+    transport["peer_count"] = link.peer_count;
+    transport["pacing_mode"] = !link.cable_connected ? "local" : (link.pacing_peer ? "leader" : "follower");
+    transport["local_generation"] = link.local_generation;
+    transport["remote_generation"] = link.remote_generation;
+    transport["local_anchor_tick"] = link.local_anchor_tick;
+    transport["bus_anchor_tick"] = link.bus_anchor_tick;
+    transport["local_tick"] = link.local_tick;
+    transport["bus_tick"] = link.bus_tick;
+    transport["max_lead_ticks"] = TURBOLINK_MAX_LEAD_TICKS;
+    if (link.remote_hardware_ready)
+        transport["remote_commit_tick"] = link.remote_tick;
+
+    if (link.cable_connected)
+    {
+        transport["lead_ticks"] = link.lead_ticks;
+    }
+    transport["remote_heartbeat_age_us"] = link.remote_heartbeat_age_us;
+    transport["published_pull_low_mask"] = link.local_pull_low_mask;
+
+    json shared_sample;
+    shared_sample["valid"] = link.sample_valid;
+    if (link.sample_valid)
+    {
+        shared_sample["local_tick"] = link.last_sample_local_tick;
+        shared_sample["bus_tick"] = link.last_sample_bus_tick;
+        shared_sample["remote_generation"] = link.last_sample_remote_generation;
+        shared_sample["local_pull_low_mask"] = link.last_sample_local_pull_low_mask;
+        shared_sample["remote_pull_low_mask"] = link.last_sample_remote_pull_low_mask;
+        shared_sample["physical_mask"] = link.last_sampled_lines;
+    }
+    transport["last_sample"] = shared_sample;
+    transport["drive_events_published"] = link.events_published;
+    transport["line_samples"] = link.line_samples;
+    transport["sync_calls"] = link.sync_calls;
+    transport["exact_waits"] = link.exact_waits;
+    transport["barrier_waits"] = link.barrier_waits;
+    transport["barrier_wait_us"] = link.barrier_wait_us;
+    transport["barrier_wait_max_us"] = link.barrier_wait_max_us;
+    transport["barrier_wait_over_1ms"] = link.barrier_wait_over_1ms;
+    transport["barrier_wait_over_10ms"] = link.barrier_wait_over_10ms;
+    transport["barrier_wait_over_50ms"] = link.barrier_wait_over_50ms;
+    transport["spin_iterations"] = link.spin_iterations;
+    transport["sleep_calls"] = link.sleep_calls;
+    transport["sync_gap_max_us"] = link.sync_gap_max_us;
+    transport["sync_gap_over_50ms"] = link.sync_gap_over_50ms;
+    transport["history_overflows"] = link.history_overflows;
+    transport["peer_detaches"] = link.peer_detaches;
+    transport["peer_detach_max_age_us"] = link.peer_detach_max_age_us;
+    transport["slot_reclaims"] = link.slot_reclaims;
+    transport["seqlock_retries"] = link.seqlock_retries;
+    transport["attachments"] = link.attachments;
+
+    json result;
+    result["io_port"] = io_port;
+    result["control"] = control;
+    result["last_sample"] = last_sample;
+    result["timing"] = timing;
+    result["transport"] = transport;
+    return result;
+}
+
+json DebugAdapter::ResetTurboLinkMetrics()
+{
+    emu_turbolink_reset_metrics();
+    return {{"success", true}};
 }
 
 bool DebugAdapter::IsMouseController(int player) const
@@ -2040,6 +2217,12 @@ json DebugAdapter::ControllerSetType(int player, const std::string& type)
         return result;
     }
 
+    if (emu_turbolink_is_active() && controller_type != GG_CONTROLLER_STANDARD)
+    {
+        result["error"] = "Controller topology is unavailable while TurboLink is active";
+        return result;
+    }
+
     emu_set_pad_type(controller, controller_type);
 
     result["success"] = true;
@@ -2052,6 +2235,12 @@ json DebugAdapter::ControllerSetType(int player, const std::string& type)
 json DebugAdapter::ControllerSetTurboTap(bool enabled)
 {
     json result;
+
+    if (emu_turbolink_is_active() && enabled)
+    {
+        result["error"] = "Turbo Tap is unavailable while TurboLink is active";
+        return result;
+    }
 
     emu_set_turbo_tap(enabled);
 
@@ -3252,6 +3441,21 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& outpu
         if ((vce & TRACE_VCE_FILTER_TIMING) == TRACE_VCE_FILTER_TIMING) event_filter_list.push_back("vce.timing");
         if ((input & TRACE_INPUT_FILTER_READS) != 0) event_filter_list.push_back("input.reads");
         if ((input & TRACE_INPUT_FILTER_WRITES) != 0) event_filter_list.push_back("input.writes");
+        if ((input & TRACE_INPUT_FILTER_TURBOLINK) == TRACE_INPUT_FILTER_TURBOLINK)
+        {
+            event_filter_list.push_back("input.turbolink");
+        }
+        else
+        {
+            if ((input & TRACE_INPUT_FILTER_TURBOLINK_WRITES) != 0)
+                event_filter_list.push_back("input.turbolink.writes");
+            if ((input & TRACE_INPUT_FILTER_TURBOLINK_DRIVE) != 0)
+                event_filter_list.push_back("input.turbolink.drive");
+            if ((input & TRACE_INPUT_FILTER_TURBOLINK_SAMPLES) != 0)
+                event_filter_list.push_back("input.turbolink.samples");
+            if ((input & TRACE_INPUT_FILTER_TURBOLINK_CABLE) != 0)
+                event_filter_list.push_back("input.turbolink.cable");
+        }
         if ((timer & TRACE_TIMER_FILTER_IRQS) != 0) event_filter_list.push_back("timer.irqs");
         if ((timer & TRACE_TIMER_FILTER_REGISTERS) == TRACE_TIMER_FILTER_REGISTERS) event_filter_list.push_back("timer.registers");
         if ((cdrom & TRACE_CDROM_FILTER_IRQS) == TRACE_CDROM_FILTER_IRQS) event_filter_list.push_back("cdrom.irqs");
@@ -3311,6 +3515,9 @@ json DebugAdapter::GetRewindStatus()
 
 json DebugAdapter::RewindSeek(int snapshot)
 {
+    if (emu_turbolink_is_active())
+        return {{"error", "Rewind is unavailable while TurboLink is active"}};
+
     bool paused = emu_is_paused() || emu_is_debug_idle();
 
     if (!paused)

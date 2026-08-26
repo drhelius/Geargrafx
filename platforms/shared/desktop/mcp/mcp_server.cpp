@@ -319,7 +319,7 @@ void McpServer::HandleInitialize(const json& request)
         {"serverInfo", {
             {"name", "geargrafx-mcp-server"},
             {"title", GG_TITLE " MCP Server"},
-            {"description", "Debug/control " GG_TITLE " PC Engine/TurboGrafx-16: execution, breakpoints, memory, HuC6280 CPU, HuC6270 VDC, HuC6260 VCE, PSG, CD-ROM/SCSI, ADPCM, Arcade Card, sprites, save states, rewind, input, screenshots."},
+            {"description", "Debug/control " GG_TITLE " PC Engine/TurboGrafx-16: execution, breakpoints, memory, HuC6280 CPU, HuC6270 VDC, HuC6260 VCE, PSG, CD-ROM/SCSI, ADPCM, Arcade Card, TurboLink, sprites, save states, rewind, input, screenshots."},
             {"version", GG_VERSION}
         }}
     };
@@ -327,7 +327,7 @@ void McpServer::HandleInitialize(const json& request)
     response["result"]["instructions"] =
         "Use this server for PC Engine and TurboGrafx-16 game debugging, reverse engineering, memory "
         "inspection, HuC6280 tracing, breakpoints, VDC, VCE, PSG, CD-ROM/SCSI, ADPCM, Arcade Card, "
-        "sprites, save states, rewind, input, and screenshots.";
+        "TurboLink, sprites, save states, rewind, input, and screenshots.";
 
     if (g_mcp_router_enabled)
     {
@@ -1195,11 +1195,34 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "get_input_state"},
         {"title", "Get Input State"},
-        {"description", "Get effective pressed buttons and pending tap releases."},
+        {"description", "Get effective pressed buttons and current controller input state."},
         {"annotations", {{"readOnlyHint", true}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
         {"inputSchema", {
             {"type", "object"},
             {"properties", json::object()},
+            {"additionalProperties", false}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "get_turbolink_status"},
+        {"title", "Get TurboLink Status"},
+        {"description", "Read PC Engine GT BU5782K control, actual sampled K/line state, "
+            "event timing, and TurboLink session, readiness, pacing, barrier, and recovery diagnostics."},
+        {"annotations", {{"readOnlyHint", true}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
+        {"inputSchema", {
+            {"type", "object"},
+            {"additionalProperties", false}
+        }}
+    });
+
+    tools.push_back({
+        {"name", "reset_turbolink_metrics"},
+        {"title", "Reset TurboLink Metrics"},
+        {"description", "Reset TurboLink transport and stall diagnostics."},
+        {"annotations", {{"readOnlyHint", false}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
+        {"inputSchema", {
+            {"type", "object"},
             {"additionalProperties", false}
         }}
     });
@@ -1811,7 +1834,9 @@ json McpServer::BuildToolList()
                             "cpu.instructions", "cpu.irqs",
                             "vdc.registers", "vdc.irqs", "vdc.dma",
                             "vce.registers", "vce.timing",
-                            "input.reads", "input.writes",
+                            "input.reads", "input.writes", "input.turbolink",
+                            "input.turbolink.writes", "input.turbolink.drive",
+                            "input.turbolink.samples", "input.turbolink.cable",
                             "timer.irqs", "timer.registers",
                             "cdrom.irqs", "cdrom.control", "cdrom.audio",
                             "psg.global_lfo", "psg.frequency", "psg.channel", "psg.wave_dda", "psg.noise",
@@ -2846,6 +2871,14 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     {
         return m_debugAdapter.GetInputState();
     }
+    else if (normalizedTool == "get_turbolink_status")
+    {
+        return m_debugAdapter.GetTurboLinkStatus();
+    }
+    else if (normalizedTool == "reset_turbolink_metrics")
+    {
+        return m_debugAdapter.ResetTurboLinkMetrics();
+    }
     else if (normalizedTool == "controller_macro")
     {
         return {{"error", "controller_macro must be handled by the MCP manager"}};
@@ -3104,6 +3137,20 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
                         add_trace_event_filter(&flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_READS);
                     else if (filter == "input.writes")
                         add_trace_event_filter(&flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_WRITES);
+                    else if (filter == "input.turbolink")
+                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_TURBOLINK);
+                    else if (filter == "input.turbolink.writes")
+                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT,
+                            TRACE_INPUT_FILTER_TURBOLINK_WRITES);
+                    else if (filter == "input.turbolink.drive")
+                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT,
+                            TRACE_INPUT_FILTER_TURBOLINK_DRIVE);
+                    else if (filter == "input.turbolink.samples")
+                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT,
+                            TRACE_INPUT_FILTER_TURBOLINK_SAMPLES);
+                    else if (filter == "input.turbolink.cable")
+                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT,
+                            TRACE_INPUT_FILTER_TURBOLINK_CABLE);
                     else if (filter == "timer.irqs")
                         add_trace_event_filter(&flags, event_filters, TRACE_TIMER, TRACE_TIMER_FILTER_IRQS);
                     else if (filter == "timer.registers")

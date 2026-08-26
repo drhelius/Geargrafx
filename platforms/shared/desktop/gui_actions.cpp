@@ -110,6 +110,12 @@ void gui_action_pause(void)
 
 void gui_action_ffwd(void)
 {
+    if (emu_turbolink_is_active())
+    {
+        config_emulator.ffwd = false;
+        return;
+    }
+
     config_audio.sync = !config_emulator.ffwd;
 
     if (config_emulator.ffwd)
@@ -127,7 +133,7 @@ void gui_action_ffwd(void)
 
 void gui_action_rewind_pressed(void)
 {
-    if (emu_is_empty() || !config_rewind.enabled)
+    if (emu_is_empty() || !config_rewind.enabled || emu_turbolink_is_active())
         return;
     if (rewind_get_snapshot_count() < 1)
         return;

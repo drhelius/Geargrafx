@@ -62,6 +62,8 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_trace_logger);
     m_paused = true;
     m_master_clock_cycles = 0;
+    m_turbolink_cycles = 0;
+    m_turbolink_next_sync_cycle = TURBOLINK_MAX_SYNC_CYCLES;
     m_frame_ready = false;
     m_mb128_mode = GG_MB128_AUTO;
 }
@@ -204,6 +206,35 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
 TraceLogger* GeargrafxCore::GetTraceLogger()
 {
     return m_trace_logger;
+}
+
+void GeargrafxCore::SetTurboLinkCallbacks(
+    GG_TurboLink_Publish_Callback publish_callback, GG_TurboLink_Sample_Callback sample_callback,
+    GG_TurboLink_Sync_Callback sync_callback, void* user_data)
+{
+    m_input->SetTurboLinkCallbacks(publish_callback, sample_callback,
+        sync_callback, user_data);
+}
+
+void GeargrafxCore::SetTurboLinkCableConnected(bool connected)
+{
+    m_input->SetTurboLinkCableConnected(connected);
+    m_turbolink_next_sync_cycle = m_turbolink_cycles + TURBOLINK_MAX_SYNC_CYCLES;
+}
+
+void GeargrafxCore::InvalidateTurboLinkSample()
+{
+    m_input->InvalidateTurboLinkSample();
+}
+
+bool GeargrafxCore::IsTurboLinkCableConnected() const
+{
+    return m_input->IsTurboLinkCableConnected();
+}
+
+GG_TurboLink_Drive GeargrafxCore::GetTurboLinkDrive() const
+{
+    return m_input->GetTurboLinkDrive();
 }
 
 void GeargrafxCore::KeyPressed(GG_Controllers controller, GG_Keys key)

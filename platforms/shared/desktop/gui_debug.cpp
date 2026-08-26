@@ -37,6 +37,7 @@
 #include "gui_debug_cdrom_audio.h"
 #include "gui_debug_adpcm.h"
 #include "gui_debug_trace_logger.h"
+#include "gui_debug_turbolink.h"
 #include "gui_debug_rewind.h"
 #include "emu.h"
 #include "config.h"
@@ -144,6 +145,10 @@ void gui_debug_windows(void)
             gui_debug_window_arcade_card();
         if (config_debug.show_trace_logger)
             gui_debug_window_trace_logger();
+        if (config_debug.show_turbolink)
+            gui_debug_window_turbolink();
+        if (config_debug.show_turbolink_transport)
+            gui_debug_window_turbolink_transport();
         if (config_debug.show_rewind)
             gui_debug_window_rewind();
 

@@ -64,6 +64,97 @@
 
 @end
 
+@interface GeargrafxApplicationDelegate : NSObject <NSApplicationDelegate>
+{
+    id m_delegate;
+    NSMenu* m_dock_menu;
+}
+
+- (instancetype)initWithDelegate:(id)delegate;
+- (id)originalDelegate;
+
+@end
+
+@implementation GeargrafxApplicationDelegate
+
+- (instancetype)initWithDelegate:(id)delegate
+{
+    self = [super init];
+    if (self)
+    {
+        m_delegate = [delegate retain];
+        m_dock_menu = [[NSMenu alloc] initWithTitle:@""];
+        NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:@"New Window"
+                                                     action:@selector(launchNewInstance:)
+                                              keyEquivalent:@""];
+        [item setTarget:self];
+        [m_dock_menu addItem:item];
+        [item release];
+    }
+    return self;
+}
+
+- (id)originalDelegate
+{
+    return m_delegate;
+}
+
+- (NSMenu*)applicationDockMenu:(NSApplication*)sender
+{
+    return m_dock_menu;
+}
+
+- (void)launchNewInstance:(id)sender
+{
+    NSURL* app_url = [[NSBundle mainBundle] bundleURL];
+    NSWorkspaceOpenConfiguration* config =
+        [NSWorkspaceOpenConfiguration configuration];
+    config.createsNewApplicationInstance = YES;
+    config.activates = YES;
+
+    [[NSWorkspace sharedWorkspace] openApplicationAtURL:app_url
+                                          configuration:config
+                                      completionHandler:^(NSRunningApplication*, NSError* error)
+    {
+        if (error)
+            NSLog(@"Failed to launch new Geargrafx window: %@", error);
+    }];
+}
+
+- (BOOL)respondsToSelector:(SEL)selector
+{
+    return [super respondsToSelector:selector] ||
+        [m_delegate respondsToSelector:selector];
+}
+
+- (NSMethodSignature*)methodSignatureForSelector:(SEL)selector
+{
+    NSMethodSignature* signature = [super methodSignatureForSelector:selector];
+    if (!signature)
+        signature = [m_delegate methodSignatureForSelector:selector];
+    return signature;
+}
+
+- (void)forwardInvocation:(NSInvocation*)invocation
+{
+    if ([m_delegate respondsToSelector:[invocation selector]])
+        [invocation invokeWithTarget:m_delegate];
+    else
+        [super forwardInvocation:invocation];
+}
+
+- (void)dealloc
+{
+    [m_dock_menu release];
+    [m_delegate release];
+    [super dealloc];
+}
+
+@end
+
+
+static GeargrafxApplicationDelegate* geargrafx_application_delegate = nil;
+
 // C bridge
 extern "C" void* macos_install_fullscreen_observer(void* nswindow,
                                              void(*enter_cb)(),
@@ -108,4 +199,40 @@ extern "C" void macos_refocus_window(void* nswindow)
     }
 
     [win makeKeyAndOrderFront:nil];
+}
+
+extern "C" void macos_install_dock_menu(void)
+{
+    if (geargrafx_application_delegate ||
+        ![[[[NSBundle mainBundle] bundleURL] pathExtension]
+            isEqualToString:@"app"])
+    {
+        return;
+    }
+
+    id delegate = [NSApp delegate];
+    if (!delegate)
+        return;
+
+    geargrafx_application_delegate =
+        [[GeargrafxApplicationDelegate alloc] initWithDelegate:delegate];
+    [NSApp setDelegate:geargrafx_application_delegate];
+}
+
+extern "C" void macos_remove_dock_menu(void)
+{
+    if (!geargrafx_application_delegate)
+        return;
+
+    if ([NSApp delegate] == geargrafx_application_delegate)
+        [NSApp setDelegate:[geargrafx_application_delegate originalDelegate]];
+
+    [geargrafx_application_delegate release];
+    geargrafx_application_delegate = nil;
+}
+
+extern "C" void macos_launch_new_instance(void)
+{
+    if (geargrafx_application_delegate)
+        [geargrafx_application_delegate launchNewInstance:nil];
 }

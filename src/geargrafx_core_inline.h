@@ -26,6 +26,7 @@
 #include "huc6280.h"
 #include "huc6280_inline.h"
 #include "audio.h"
+#include "input.h"
 #include "cdrom.h"
 #include "cdrom_audio.h"
 #include "adpcm.h"
@@ -154,36 +155,78 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
 template<bool is_cdrom, bool is_sgx>
 INLINE bool GeargrafxCore::ClockHardware(u32 cycles)
 {
+    if (cycles == 0)
+        return false;
+
     bool frame_ready = false;
 
-    while (cycles > 0)
+    if (likely(!m_input->IsTurboLinkCableConnected()))
     {
-        if (!m_huc6202->HasPendingCpuVramAccess())
+        while (cycles > 0)
         {
-            m_master_clock_cycles += cycles;
-            m_huc6280->ClockTimer(cycles);
-            if (m_huc6260->Clock<is_sgx>(cycles))
+            if (!m_huc6202->HasPendingCpuVramAccess())
+            {
+                m_master_clock_cycles += cycles;
+                m_turbolink_cycles += cycles;
+                m_huc6280->ClockTimer(cycles);
+                if (m_huc6260->Clock<is_sgx>(cycles))
+                    frame_ready = true;
+                if (is_cdrom)
+                {
+                    m_cdrom->Clock(cycles);
+                }
+                m_audio->Clock(cycles);
+                break;
+            }
+
+            u32 step = (cycles > 3) ? 3 : cycles;
+            m_master_clock_cycles += step;
+            m_turbolink_cycles += step;
+            m_huc6280->ClockTimer(step);
+            m_huc6202->ProcessCpuVramAccesses(step);
+            if (m_huc6260->Clock<is_sgx>(step))
                 frame_ready = true;
             if (is_cdrom)
             {
-                m_cdrom->Clock(cycles);
+                m_cdrom->Clock(step);
             }
-            m_audio->Clock(cycles);
-            break;
+            m_audio->Clock(step);
+            cycles -= step;
         }
 
-        u32 step = (cycles > 3) ? 3 : cycles;
+        return frame_ready;
+    }
+
+    while (cycles > 0)
+    {
+        u32 step = cycles;
+
+        if (m_huc6202->HasPendingCpuVramAccess() && step > 3)
+            step = 3;
+
+        u64 until_sync = m_turbolink_next_sync_cycle > m_turbolink_cycles ?
+            m_turbolink_next_sync_cycle - m_turbolink_cycles : 1;
+
+        if ((u64)step > until_sync)
+            step = (u32)until_sync;
+
         m_master_clock_cycles += step;
+        m_turbolink_cycles += step;
         m_huc6280->ClockTimer(step);
-        m_huc6202->ProcessCpuVramAccesses(step);
+        if (m_huc6202->HasPendingCpuVramAccess())
+            m_huc6202->ProcessCpuVramAccesses(step);
         if (m_huc6260->Clock<is_sgx>(step))
             frame_ready = true;
         if (is_cdrom)
-        {
             m_cdrom->Clock(step);
-        }
         m_audio->Clock(step);
         cycles -= step;
+
+        if (m_turbolink_cycles >= m_turbolink_next_sync_cycle)
+        {
+            m_input->SynchronizeTurboLink(m_turbolink_cycles);
+            m_turbolink_next_sync_cycle = m_turbolink_cycles + TURBOLINK_MAX_SYNC_CYCLES;
+        }
     }
 
     return frame_ready;
@@ -272,6 +315,11 @@ INLINE Input* GeargrafxCore::GetInput()
 INLINE u64 GeargrafxCore::GetMasterClockCycles()
 {
     return m_master_clock_cycles;
+}
+
+INLINE u64 GeargrafxCore::GetTurboLinkCycle() const
+{
+    return m_turbolink_cycles;
 }
 
 #endif /* GEARGRAFX_CORE_INLINE_H */
