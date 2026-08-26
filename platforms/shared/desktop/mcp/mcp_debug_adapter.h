@@ -157,6 +157,8 @@ public:
     // Controller input
     json ControllerButton(int player, const std::string& button, const std::string& action);
     json GetInputState();
+    json GetTurboLinkStatus();
+    json ResetTurboLinkMetrics();
     json ControllerSetType(int player, const std::string& type);
     json ControllerSetTurboTap(bool enabled);
     json ControllerGetType(int player);

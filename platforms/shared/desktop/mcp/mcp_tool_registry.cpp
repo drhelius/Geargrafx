@@ -206,12 +206,14 @@ static const McpToolCategory kMcpToolCategories[] =
     {"hardware_video", "Video Hardware", "Inspect HuC6270 VDC, HuC6260 VCE, HuC6202 priority, sprites, backgrounds, tiles, and display state."},
     {"hardware_audio", "Audio Hardware", "Inspect PC Engine PSG audio state, channels, waveform, noise, volume, and sound registers."},
     {"hardware_cdrom", "CD-ROM Hardware", "Inspect CD-ROM drive, tracks, CD audio, ADPCM, Arcade Card, and disc subsystem state."},
+    {"hardware_turbolink", "TurboLink Hardware",
+        "Inspect PC Engine GT BU5782K SEL/CLR, open-drain drivers, sampled K/line state, timing, and shared-memory endpoint readiness."},
     {"media", "Media", "Load ROMs or BIOS files, list recent media, load symbols, and inspect loaded HuCard/CD/media information."},
     {"capture", "Capture", "Capture current screenshots and PC Engine sprite images or sprite metadata."},
     {"state", "Save States", "List save slots, select a slot, save emulator state, and load emulator state."},
     {"rewind", "Rewind", "Inspect rewind buffer status and seek to rewind snapshots for time-travel debugging."},
     {"input", "Input", "Inspect or control gamepad, mouse, controller type, and TurboTap state."},
-    {"trace", "Trace", "Read trace log entries and configure CPU, interrupt, video, audio, memory, CD-ROM, and debug-message tracing."},
+    {"trace", "Trace", "Read trace log entries and configure CPU, interrupt, video, audio, input, TurboLink, memory, CD-ROM, and debug-message tracing."},
     {"tools", "Other Tools", "Additional emulator/debugger tools that do not fit another category."}
 };
 
@@ -269,6 +271,11 @@ static const char* const kMcpCdromTools[] =
     "get_adpcm_status"
 };
 
+static const char* const kMcpTurboLinkTools[] =
+{
+    "get_turbolink_status", "reset_turbolink_metrics"
+};
+
 static const char* const kMcpMediaTools[] =
 {
     "load_media", "get_media_info", "list_recent_media", "load_bios"
@@ -312,6 +319,7 @@ static const McpToolCategoryTools kMcpToolCategoryTools[] =
     {"hardware_video", kMcpVideoTools, MCP_ARRAY_COUNT(kMcpVideoTools)},
     {"hardware_audio", kMcpAudioTools, MCP_ARRAY_COUNT(kMcpAudioTools)},
     {"hardware_cdrom", kMcpCdromTools, MCP_ARRAY_COUNT(kMcpCdromTools)},
+    {"hardware_turbolink", kMcpTurboLinkTools, MCP_ARRAY_COUNT(kMcpTurboLinkTools)},
     {"media", kMcpMediaTools, MCP_ARRAY_COUNT(kMcpMediaTools)},
     {"capture", kMcpCaptureTools, MCP_ARRAY_COUNT(kMcpCaptureTools)},
     {"state", kMcpStateTools, MCP_ARRAY_COUNT(kMcpStateTools)},
@@ -706,9 +714,11 @@ std::string McpToolRegistry::AliasesForTool(const std::string& tool_name) const
     if (StringContains(name, "symbol"))
         aliases += " label labels names debug symbols";
     if (StringContains(name, "trace"))
-        aliases += " log logger events cpu irq debug output";
+        aliases += " log logger events cpu irq input turbolink link cable debug output";
     if (StringContains(name, "controller"))
         aliases += " input joypad gamepad button macro tap press release";
+    if (StringContains(name, "turbolink"))
+        aliases += " link cable bu5782k sel clr open drain pull low lines shared memory peer session";
     if (StringContains(name, "state") || StringContains(name, "rewind"))
         aliases += " save savestate slot snapshot time travel history";
     if (StringContains(name, "cart") || StringContains(name, "eeprom"))

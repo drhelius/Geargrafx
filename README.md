@@ -100,6 +100,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 - Save states with preview and rewind support.
 - Run-ahead support to reduce input latency.
 - Backup RAM and Memory Base 128 support.
+- TurboLink multiplayer for two emulator instances on the same machine.
 - Multi Tap (up to 5 players).
 - Standard Gamepad (2 buttons), Avenue Pad 3 (3 buttons, auto-configured based on game), Avenue Pad 6 (6 buttons) and Mouse.
 - Adjustable scanline count (224p, 240p or manual).
@@ -149,7 +150,8 @@ Options:
       --mcp-router            Enable compact MCP tool routing
       --mcp-http-address A    HTTP bind address (default: 127.0.0.1)
       --mcp-http-port N       HTTP port for MCP server (default: 7777)
-      --headless              Run without GUI (requires --mcp-stdio or --mcp-http)
+      --turbolink-join N      Join local TurboLink shared session 1-255
+      --headless              Run without GUI (requires MCP or TurboLink)
       --portable              Store configuration and user data beside the application
     -v, --version             Display version information
     -h, --help                Display this help message
@@ -160,6 +162,10 @@ Options:
 Geargrafx includes a [Model Context Protocol](https://modelcontextprotocol.io/introduction) (MCP) server that enables AI-assisted debugging through AI agents like GitHub Copilot, Claude, Codex and similar. The server provides tools for execution control, memory inspection, breakpoints, disassembly, hardware status, rewind and more. STDIO and HTTP transports are supported, with STDIO preferred.
 
 For complete setup instructions and tool documentation, see [MCP_README.md](MCP_README.md).
+
+### TurboLink Multiplayer
+
+Choose the same session number in the `TurboLink` menu on both instances and select `Connect`, or start each process with `--turbolink-join N`. Sessions use local shared memory and support exactly two peers on one computer. Independent instances should use separate application copies or `--portable` data directories so configuration, saves, and single-instance handling do not conflict.
 
 ### Agent Skills
 

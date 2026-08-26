@@ -24,6 +24,7 @@
 #include "gui_popups.h"
 #include "gui_actions.h"
 #include "gui_debug_disassembler.h"
+#include "gui_debug_widgets.h"
 #include "config.h"
 #include "application.h"
 #include "display.h"
@@ -69,6 +70,7 @@ static bool shader_parameter_is_integer(const ShaderPresetParameter* parameter);
 static int shader_parameter_round_to_int(float value);
 static void menu_input(void);
 static void menu_audio(void);
+static void menu_turbolink(void);
 static void menu_debug(void);
 static void menu_about(void);
 static void draw_background_color_menu(const char* label, int theme);
@@ -121,6 +123,7 @@ void gui_main_menu(void)
         menu_video();
         menu_input();
         menu_audio();
+        menu_turbolink();
         menu_debug();
         menu_about();
         draw_mcp_status();
@@ -139,6 +142,7 @@ static void menu_geargrafx(void)
     {
         gui_in_use = true;
         bool media_actions_enabled = media_menu_actions_enabled();
+        bool turbolink_active = emu_turbolink_is_active();
 
         if (ImGui::MenuItem("Open ROM/CD...", config_hotkeys[config_HotkeyIndex_OpenROM].str))
         {
@@ -200,12 +204,12 @@ static void menu_geargrafx(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Fast Forward", config_hotkeys[config_HotkeyIndex_FFWD].str, &config_emulator.ffwd, media_actions_enabled))
+        if (ImGui::MenuItem("Fast Forward", config_hotkeys[config_HotkeyIndex_FFWD].str, &config_emulator.ffwd, media_actions_enabled && !turbolink_active))
         {
             gui_action_ffwd();
         }
 
-        if (ImGui::BeginMenu("Fast Forward Speed"))
+        if (ImGui::BeginMenu("Fast Forward Speed", !turbolink_active))
         {
             ImGui::PushItemWidth(100.0f);
             ImGui::Combo("##fwd", &config_emulator.ffwd_speed, "X 1.5\0X 2\0X 2.5\0X 3\0Unlimited\0\0");
@@ -213,7 +217,7 @@ static void menu_geargrafx(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Rewind"))
+        if (ImGui::BeginMenu("Rewind", !turbolink_active))
         {
             if (ImGui::MenuItem("Enabled", config_hotkeys[config_HotkeyIndex_Rewind].str, &config_rewind.enabled))
                 rewind_reset();
@@ -225,7 +229,7 @@ static void menu_geargrafx(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Run-Ahead"))
+        if (ImGui::BeginMenu("Run-Ahead", !turbolink_active))
         {
             ImGui::PushItemWidth(140.0f);
             ImGui::Combo("##runahead", &config_emulator.runahead, "Disabled\0" "1 Frame\0" "2 Frames\0" "3 Frames\0\0");
@@ -262,7 +266,7 @@ static void menu_geargrafx(void)
             save_state = true;
         }
 
-        if (ImGui::MenuItem("Load State From...", "", false, media_actions_enabled))
+        if (ImGui::MenuItem("Load State From...", "", false, media_actions_enabled && !turbolink_active))
         {
             open_state = true;
         }
@@ -289,7 +293,7 @@ static void menu_geargrafx(void)
             emu_save_state_slot(config_emulator.save_slot + 1);
         }
 
-        if (ImGui::MenuItem("Load State", config_hotkeys[config_HotkeyIndex_LoadState].str, false, media_actions_enabled))
+        if (ImGui::MenuItem("Load State", config_hotkeys[config_HotkeyIndex_LoadState].str, false, media_actions_enabled && !turbolink_active))
         {
             std::string message("Loading state from slot ");
             message += std::to_string(config_emulator.save_slot + 1);
@@ -635,7 +639,7 @@ static void menu_emulator(void)
 
         ImGui::Separator();
 
-        if (ImGui::BeginMenu("Memory Base 128"))
+        if (ImGui::BeginMenu("Memory Base 128", !emu_turbolink_is_active()))
         {
             ImGui::PushItemWidth(100.0f);
             if (ImGui::Combo("##mb128_backup", &config_emulator.mb128_mode, "Auto\0Enabled\0Disabled\0\0"))
@@ -1207,7 +1211,7 @@ static void menu_input(void)
         gui_in_use = true;
 
 
-        if (ImGui::BeginMenu("Controller"))
+        if (ImGui::BeginMenu("Controller", !emu_turbolink_is_active()))
         {
             for (int i = 0; i < GG_MAX_GAMEPADS; i++)
             {
@@ -1470,7 +1474,7 @@ static void menu_input(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Enable Turbo Tap", "", &config_input.turbo_tap))
+        if (ImGui::MenuItem("Enable Turbo Tap", "", &config_input.turbo_tap, !emu_turbolink_is_active()))
         {
             emu_set_turbo_tap(config_input.turbo_tap);
         }
@@ -1937,6 +1941,13 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
+        ImGui::MenuItem("Show TurboLink", "", &config_debug.show_turbolink,
+            config_debug.debug);
+        ImGui::MenuItem("Show TurboLink Transport", "",
+            &config_debug.show_turbolink_transport, config_debug.debug);
+
+            ImGui::Separator();
+
         ImGui::MenuItem("Show Rewind", "", &config_debug.show_rewind, config_debug.debug);
 
 #if defined(__APPLE__) || defined(_WIN32)
@@ -1984,31 +1995,168 @@ static void menu_about(void)
     }
 }
 
+static void menu_turbolink(void)
+{
+    if (!ImGui::BeginMenu("TurboLink"))
+        return;
+
+    gui_in_use = true;
+    TurboLinkStatus status = emu_turbolink_get_status();
+    bool active = emu_turbolink_is_active();
+    const ImVec4 cornflower_blue(0.39f, 0.58f, 0.93f, 1.0f);
+    const ImVec4 error_red(0.98f, 0.15f, 0.45f, 1.0f);
+
+#if defined(__APPLE__)
+    if (ImGui::MenuItem("New " GG_TITLE " Window", "", false, application_can_launch_new_instance()))
+    {
+        application_launch_new_instance();
+    }
+    ImGui::Separator();
+#endif
+
+    if (ImGui::MenuItem("Connect", NULL, false, !active))
+        emu_turbolink_connect(config_emulator.turbolink_session);
+    if (ImGui::MenuItem("Disconnect", NULL, false, active || status.mode != TurboLinkModeDisabled))
+    {
+        emu_turbolink_stop();
+    }
+
+    ImGui::Separator();
+
+    switch (status.mode)
+    {
+        case TurboLinkModeConnected:
+            ImGui::TextColored(cornflower_blue, "%s", status.endpoint);
+            ImGui::TextDisabled("Peer %d of %d", status.local_peer_id, status.peer_count);
+
+            if (!status.local_hardware_ready)
+                ImGui::TextDisabled("Local TurboLink hardware inactive");
+            else if (!status.remote_hardware_ready)
+                ImGui::TextDisabled("Waiting for remote hardware");
+            else
+            {
+                ImGui::TextDisabled("TurboLink hardware connected");
+                ImGui::TextDisabled("%s", status.pacing_peer ? "Pacing peer" : "Following peer");
+            }
+            break;
+        case TurboLinkModeFault:
+            ImGui::TextColored(error_red, "%s", status.last_error);
+            break;
+        default:
+            ImGui::TextColored(error_red, "Disconnected");
+            break;
+    }
+
+    ImGui::Separator();
+    ImGui::BeginDisabled(active);
+    ImGui::Text("Session:");
+    ImGui::SameLine(110.0f);
+    ImGui::SetNextItemWidth(60.0f);
+
+    if (ImGui::InputInt("##turbolink_session", &config_emulator.turbolink_session, 0, 0))
+    {
+        config_emulator.turbolink_session = CLAMP(config_emulator.turbolink_session, 1, 255);
+    }
+    ImGui::EndDisabled();
+
+    ImGui::Separator();
+
+#if defined(_WIN32)
+    const int stall_min = 1000;
+    const int stall_max = 10000;
+    const int stall_step = 250;
+    const int stall_default = 5000;
+#elif defined(__APPLE__)
+    const int stall_min = 50;
+    const int stall_max = 1000;
+    const int stall_step = 50;
+    const int stall_default = 100;
+#else
+    const int stall_min = 50;
+    const int stall_max = 2000;
+    const int stall_step = 50;
+    const int stall_default = 250;
+#endif
+
+    if (ImGui::BeginMenu("Stall Threshold"))
+    {
+        ImGui::PushItemWidth(180.0f);
+        if (SliderIntWithSteps("##turbolink_stall", &config_emulator.turbolink_stall_us, stall_min, stall_max, stall_step, "%d us"))
+        {
+            emu_turbolink_set_normal_barrier_stall_us((u32)config_emulator.turbolink_stall_us);
+        }
+        ImGui::PopItemWidth();
+
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("Lower values reduce CPU usage but may cause stalls.");
+            ImGui::Text("Higher values tolerate scheduling delays but use more CPU.");
+            ImGui::NewLine();
+            ImGui::Text("Recommended: %d us", stall_default);
+            ImGui::EndTooltip();
+        }
+        ImGui::EndMenu();
+    }
+
+    ImGui::EndMenu();
+}
+
 static void draw_mcp_status(void)
 {
-    if (!emu_mcp_is_running())
+    bool mcp_running = emu_mcp_is_running();
+    TurboLinkStatus turbolink = emu_turbolink_get_status();
+    bool turbolink_active = turbolink.mode == TurboLinkModeConnected;
+
+    if (!mcp_running && !turbolink_active)
         return;
 
-    char status[128];
-    ImVec4 color(0.10f, 0.90f, 0.10f, 1.0f);
+    char turbolink_status[64];
+    char mcp_status[128];
+    bool show_turbolink = false;
+    bool show_mcp = false;
+    ImVec4 turbolink_color(0.39f, 0.58f, 0.93f, 1.0f);
+    ImVec4 mcp_color(0.10f, 0.90f, 0.10f, 1.0f);
 
-    int transport_mode = emu_mcp_get_transport_mode();
-    if (transport_mode == 0)
+    if (turbolink_active)
     {
-        snprintf(status, sizeof(status), "MCP: STDIO");
-        color = ImVec4(0.90f, 0.70f, 0.10f, 1.0f);
+        snprintf(turbolink_status, sizeof(turbolink_status),
+            "TURBOLINK: S%u P%d/%d", turbolink.session,
+            turbolink.local_peer_id, turbolink.peer_count);
+        show_turbolink = true;
     }
-    else if (transport_mode == 1)
+
+    if (mcp_running)
     {
-        snprintf(status, sizeof(status), "MCP: HTTP (%s:%d)", config_emulator.mcp_http_address.c_str(), config_emulator.mcp_tcp_port);
-    }
-    else
-    {
-        return;
+        int transport_mode = emu_mcp_get_transport_mode();
+        if (transport_mode == 0)
+        {
+            snprintf(mcp_status, sizeof(mcp_status), "MCP: STDIO");
+            mcp_color = ImVec4(0.90f, 0.70f, 0.10f, 1.0f);
+            show_mcp = true;
+        }
+        else if (transport_mode == 1)
+        {
+            snprintf(mcp_status, sizeof(mcp_status), "MCP: HTTP (%s:%d)",
+                config_emulator.mcp_http_address.c_str(),
+                config_emulator.mcp_tcp_port);
+            show_mcp = true;
+        }
     }
 
     ImGuiStyle& style = ImGui::GetStyle();
-    float text_width = ImGui::CalcTextSize(status).x;
+    float spacing = style.ItemSpacing.x * 2.0f;
+    float text_width = 0.0f;
+
+    if (show_turbolink)
+        text_width += ImGui::CalcTextSize(turbolink_status).x;
+    if (show_mcp)
+    {
+        if (text_width > 0.0f)
+            text_width += spacing;
+        text_width += ImGui::CalcTextSize(mcp_status).x;
+    }
+
     float status_x = ImGui::GetWindowWidth() - text_width - style.ItemSpacing.x - 10.0f;
     float cursor_x = ImGui::GetCursorPosX();
 
@@ -2017,7 +2165,17 @@ static void draw_mcp_status(void)
 
     ImGui::SameLine(status_x);
     ImGui::AlignTextToFramePadding();
-    ImGui::TextColored(color, "%s", status);
+
+    if (show_turbolink)
+        ImGui::TextColored(turbolink_color, "%s", turbolink_status);
+
+    if (show_mcp)
+    {
+        if (show_turbolink)
+            ImGui::SameLine(0.0f, spacing);
+
+        ImGui::TextColored(mcp_color, "%s", mcp_status);
+    }
 }
 
 static void file_dialogs(void)

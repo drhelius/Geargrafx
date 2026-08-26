@@ -90,6 +90,8 @@ struct config_Emulator
     bool preload_cdrom;
     int mcp_tcp_port;
     std::string mcp_http_address;
+    int turbolink_session;
+    int turbolink_stall_us;
     bool capture_mouse;
     int mouse_sensitivity;
 };
@@ -260,6 +262,8 @@ struct config_Debug
     bool show_adpcm;
     bool show_arcade_card;
     bool show_trace_logger;
+    bool show_turbolink;
+    bool show_turbolink_transport;
     bool show_rewind;
     bool trace_counter;
     bool trace_cycles;

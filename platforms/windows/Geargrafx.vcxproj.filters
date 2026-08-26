@@ -76,6 +76,9 @@
     <ClCompile Include="..\shared\desktop\gui_debug_trace_logger.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug_turbolink.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
     <ClCompile Include="..\shared\desktop\gui_debug_rewind.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
@@ -128,6 +131,9 @@
       <Filter>desktop</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\mcp\mcp_server.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\desktop\turbolink\turbolink_manager.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\single_instance.cpp">
@@ -185,6 +191,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\input.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\turbolink.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\mapper.cpp">
@@ -318,6 +327,12 @@
     <ClInclude Include="..\shared\desktop\emu.h">
       <Filter>desktop</Filter>
     </ClInclude>
+    <ClInclude Include="..\shared\desktop\turbolink\turbolink_manager.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\turbolink\turbolink_signal.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
     <ClInclude Include="..\shared\desktop\gui.h">
       <Filter>desktop</Filter>
     </ClInclude>
@@ -397,6 +412,9 @@
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\gui_debug_trace_logger.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_turbolink.h">
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\trace_logger_formatter.h">
@@ -565,6 +583,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\input.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\turbolink.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\input_inline.h">

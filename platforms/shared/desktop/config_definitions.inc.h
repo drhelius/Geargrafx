@@ -55,6 +55,8 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Debug", "ADPCM", config_debug.show_adpcm, false);
     CONFIG_BOOL("Debug", "ArcadeCard", config_debug.show_arcade_card, false);
     CONFIG_BOOL("Debug", "TraceLogger", config_debug.show_trace_logger, false);
+    CONFIG_BOOL("Debug", "TurboLink", config_debug.show_turbolink, false);
+    CONFIG_BOOL("Debug", "TurboLinkTransport", config_debug.show_turbolink_transport, false);
     CONFIG_BOOL("Debug", "Rewind", config_debug.show_rewind, false);
 
     // Trace logger
@@ -180,6 +182,14 @@ static inline void process(config_Operation operation)
     // Services
     CONFIG_INT("Emulator", "MCPTCPPort", config_emulator.mcp_tcp_port, 7777);
     CONFIG_STRING_NOT_EMPTY("Emulator", "MCPHTTPAddress", config_emulator.mcp_http_address, "127.0.0.1");
+    CONFIG_INT_RANGE("Emulator", "TurboLinkSession", config_emulator.turbolink_session, 1, 1, 255);
+#if defined(_WIN32)
+    CONFIG_INT_RANGE("Emulator", "TurboLinkStallUs", config_emulator.turbolink_stall_us, 5000, 1000, 10000);
+#elif defined(__APPLE__)
+    CONFIG_INT_RANGE("Emulator", "TurboLinkStallUs", config_emulator.turbolink_stall_us, 100, 50, 1000);
+#else
+    CONFIG_INT_RANGE("Emulator", "TurboLinkStallUs", config_emulator.turbolink_stall_us, 250, 50, 2000);
+#endif
 
     //**************************************
     // Video
@@ -515,6 +525,17 @@ static void migrate(int file_version)
         write_int("Debug", "TraceVceEvents", TRACE_VCE_FILTER_ALL);
         write_int("Debug", "TraceScsiEvents", TRACE_SCSI_FILTER_ALL);
         write_int("Debug", "TraceSystemEvents", TRACE_SYSTEM_FILTER_ALL);
+    }
+
+    if (file_version < 7)
+    {
+        const int old_input_filter_all = TRACE_INPUT_FILTER_READS | TRACE_INPUT_FILTER_WRITES;
+        int input_events = read_int("Debug", "TraceInputEvents", old_input_filter_all);
+
+        if ((input_events & old_input_filter_all) == old_input_filter_all)
+        {
+            write_int("Debug", "TraceInputEvents", input_events | TRACE_INPUT_FILTER_TURBOLINK);
+        }
     }
 
     int sync_mode = -1;

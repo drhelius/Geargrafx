@@ -24,6 +24,7 @@
 #include <fstream>
 #include "common.h"
 #include "mb128.h"
+#include "turbolink.h"
 
 class GeargrafxCore;
 class Media;
@@ -56,6 +57,22 @@ public:
     void SetAvenuePad3Button(GG_Controllers controller, GG_Keys button);
     void SetMouseDelta(s32 x, s32 y);
     void EnableMB128(bool enable);
+    void SetTurboLinkCallbacks(GG_TurboLink_Publish_Callback publish_callback, GG_TurboLink_Sample_Callback sample_callback,
+        GG_TurboLink_Sync_Callback sync_callback, void* user_data);
+    void SetTurboLinkCableConnected(bool connected);
+    void InvalidateTurboLinkSample();
+    bool IsTurboLinkCableConnected() const;
+    void SynchronizeTurboLink(u64 cycles);
+    GG_TurboLink_Drive GetTurboLinkDrive() const;
+    bool HasTurboLinkSample() const;
+    u8 GetTurboLinkLastSampledLines() const;
+    u8 GetTurboLinkLastPortResult() const;
+    u8 GetTurboLinkLastSamplePullLowMask() const;
+    bool GetTurboLinkLastSampleSel() const;
+    bool GetTurboLinkLastSampleClr() const;
+    u64 GetTurboLinkLastSampleTick() const;
+    u64 GetTurboLinkLastControlTick() const;
+    u64 GetTurboLinkLastDriveTick() const;
     void SetTraceLogger(TraceLogger* trace_logger);
     MB128* GetMB128();
     void SaveState(std::ostream& stream);
@@ -63,8 +80,11 @@ public:
 
 private:
     u64 GetMasterClockCycles();
+    u64 GetTurboLinkCycles();
     void TraceInputEvent(u8 event, u8 value);
+    void TraceTurboLinkEvent(u8 event, u8 value, u64 tick, u8 lines);
     void LogInputEvent(u8 event, u8 value);
+    void LogTurboLinkEvent(u8 event, u8 value, u64 tick, u8 lines);
 
 private:
     Media* m_media;
@@ -92,6 +112,7 @@ private:
     bool m_mouse_latched;
     u64 m_mouse_last_latch_cycles;
     MB128 m_mb128;
+    TurboLink m_turbolink;
 };
 
 #include "input_inline.h"

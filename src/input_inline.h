@@ -71,7 +71,15 @@ INLINE bool Input::IsKeyPressed(GG_Controllers controller, GG_Keys key) const
 INLINE u8 Input::ReadK()
 {
     u8 result;
-    if (m_mb128.IsConnected() && m_mb128.IsActive())
+    if (m_turbolink.IsCableConnected() && m_clr)
+    {
+        u64 cycles = GetTurboLinkCycles();
+        result = m_turbolink.ReadPort(m_register, cycles);
+        TraceTurboLinkEvent(TRACE_INPUT_TURBOLINK_SAMPLE, result,
+            turbolink_make_tick(cycles, GG_TURBOLINK_TICK_BEFORE_PORT_ACCESS),
+            m_turbolink.GetLastSampledLines());
+    }
+    else if (m_mb128.IsConnected() && m_mb128.IsActive())
     {
         u8 low  = m_mb128.Read() & 0x0F;
         u8 high = m_register & 0xF0;
@@ -98,6 +106,24 @@ INLINE void Input::WriteO(u8 value)
     bool prev_clr = m_clr;
     m_sel = IS_SET_BIT(value, 0);
     m_clr = IS_SET_BIT(value, 1);
+
+    u64 turbolink_cycles = GetTurboLinkCycles();
+    bool turbolink_connected = m_turbolink.IsCableConnected();
+    bool turbolink_drive_changed = m_turbolink.WriteControl(m_sel, m_clr, turbolink_cycles);
+
+    if (turbolink_connected)
+    {
+        TraceTurboLinkEvent(TRACE_INPUT_TURBOLINK_CONTROL_WRITE, value,
+            turbolink_make_tick(turbolink_cycles, GG_TURBOLINK_TICK_BEFORE_PORT_ACCESS),
+            GG_TURBOLINK_LINE_MASK);
+
+        if (turbolink_drive_changed)
+        {
+            TraceTurboLinkEvent(TRACE_INPUT_TURBOLINK_DRIVE_CHANGE, value,
+                turbolink_make_tick(turbolink_cycles, GG_TURBOLINK_TICK_AFTER_PORT_ACCESS),
+                GG_TURBOLINK_LINE_MASK);
+        }
+    }
     m_register = 0x30;
 
     if (m_pce_jap)
@@ -204,6 +230,14 @@ INLINE void Input::TraceInputEvent(u8 event, u8 value)
         LogInputEvent(event, value);
 }
 
+INLINE void Input::TraceTurboLinkEvent(u8 event, u8 value, u64 tick, u8 lines)
+{
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_INPUT, event))
+    {
+        LogTurboLinkEvent(event, value, tick, lines);
+    }
+}
+
 INLINE u8 Input::GetIORegister()
 {
     return m_register;
@@ -232,6 +266,93 @@ INLINE void Input::EnablePCEJap(bool enable)
 INLINE void Input::EnableCDROM(bool enable)
 {
     m_cdrom = enable;
+}
+
+INLINE void Input::SetTurboLinkCallbacks(
+    GG_TurboLink_Publish_Callback publish_callback, GG_TurboLink_Sample_Callback sample_callback,
+    GG_TurboLink_Sync_Callback sync_callback, void* user_data)
+{
+    m_turbolink.SetCallbacks(publish_callback, sample_callback, sync_callback, user_data);
+}
+
+INLINE void Input::SetTurboLinkCableConnected(bool connected)
+{
+    bool changed = m_turbolink.IsCableConnected() != connected;
+    u64 cycles = GetTurboLinkCycles();
+    m_turbolink.SetCableConnected(connected, cycles);
+
+    if (changed)
+    {
+        TraceTurboLinkEvent(TRACE_INPUT_TURBOLINK_CABLE,
+            connected ? 1 : 0,
+            turbolink_make_tick(cycles, GG_TURBOLINK_TICK_BEFORE_PORT_ACCESS),
+            m_turbolink.GetLastSampledLines());
+    }
+}
+
+INLINE bool Input::IsTurboLinkCableConnected() const
+{
+    return m_turbolink.IsCableConnected();
+}
+
+INLINE void Input::InvalidateTurboLinkSample()
+{
+    m_turbolink.InvalidateSample();
+}
+
+INLINE void Input::SynchronizeTurboLink(u64 cycles)
+{
+    m_turbolink.Synchronize(cycles);
+}
+
+INLINE GG_TurboLink_Drive Input::GetTurboLinkDrive() const
+{
+    return m_turbolink.GetDrive();
+}
+
+INLINE bool Input::HasTurboLinkSample() const
+{
+    return m_turbolink.HasLastSample();
+}
+
+INLINE u8 Input::GetTurboLinkLastSampledLines() const
+{
+    return m_turbolink.GetLastSampledLines();
+}
+
+INLINE u8 Input::GetTurboLinkLastPortResult() const
+{
+    return m_turbolink.GetLastPortResult();
+}
+
+INLINE u8 Input::GetTurboLinkLastSamplePullLowMask() const
+{
+    return m_turbolink.GetLastSamplePullLowMask();
+}
+
+INLINE bool Input::GetTurboLinkLastSampleSel() const
+{
+    return m_turbolink.GetLastSampleSel();
+}
+
+INLINE bool Input::GetTurboLinkLastSampleClr() const
+{
+    return m_turbolink.GetLastSampleClr();
+}
+
+INLINE u64 Input::GetTurboLinkLastSampleTick() const
+{
+    return m_turbolink.GetLastSampleTick();
+}
+
+INLINE u64 Input::GetTurboLinkLastControlTick() const
+{
+    return m_turbolink.GetLastControlTick();
+}
+
+INLINE u64 Input::GetTurboLinkLastDriveTick() const
+{
+    return m_turbolink.GetLastDriveTick();
 }
 
 INLINE void Input::EnableTurboTap(bool enabled)

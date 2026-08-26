@@ -237,13 +237,57 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
             if (entry.input.source == TRACE_INPUT_SOURCE_GAMEPAD) source = "GAMEPAD";
             else if (entry.input.source == TRACE_INPUT_SOURCE_MOUSE) source = "MOUSE";
             else if (entry.input.source == TRACE_INPUT_SOURCE_MB128) source = "MB128";
+            else if (entry.input.source == TRACE_INPUT_SOURCE_TURBOLINK) source = "TURBOLINK";
             else if (entry.input.source != TRACE_INPUT_SOURCE_NONE)
             {
                 snprintf(unknown_source, sizeof(unknown_source), "UNKNOWN($%02X)", entry.input.source);
                 source = unknown_source;
             }
 
-            if (entry.input.event == TRACE_INPUT_WRITE)
+            if (entry.input.event == TRACE_INPUT_TURBOLINK_CONTROL_WRITE)
+            {
+                snprintf(buf, buf_size,
+                    "  [INPUT] TURBOLINK WRITE    Tick:%llu  O:$%02X  SEL:%u  CLR:%u  PullLow:$%02X",
+                    (unsigned long long)entry.input.link_tick,
+                    entry.input.value, entry.input.state & 0x01,
+                    (entry.input.state >> 1) & 0x01,
+                    entry.input.pull_low_mask);
+            }
+            else if (entry.input.event == TRACE_INPUT_TURBOLINK_DRIVE_CHANGE)
+            {
+                snprintf(buf, buf_size,
+                    "  [INPUT] TURBOLINK DRIVE    Tick:%llu  SEL:%u  CLR:%u  PullLow:$%02X",
+                    (unsigned long long)entry.input.link_tick,
+                    entry.input.state & 0x01,
+                    (entry.input.state >> 1) & 0x01,
+                    entry.input.pull_low_mask);
+            }
+            else if (entry.input.event == TRACE_INPUT_TURBOLINK_SAMPLE)
+            {
+                snprintf(buf, buf_size,
+                    "  [INPUT] TURBOLINK SAMPLE   Tick:%llu  SEL:%u  CLR:%u  Lines:$%02X  D0:%u D1:%u D2:%u D3:%u  K:$%02X  PullLow:$%02X",
+                    (unsigned long long)entry.input.link_tick,
+                    entry.input.state & 0x01,
+                    (entry.input.state >> 1) & 0x01,
+                    entry.input.lines,
+                    entry.input.value & 0x01,
+                    (entry.input.value >> 1) & 0x01,
+                    (entry.input.value >> 2) & 0x01,
+                    (entry.input.value >> 3) & 0x01,
+                    entry.input.value,
+                    entry.input.pull_low_mask);
+            }
+            else if (entry.input.event == TRACE_INPUT_TURBOLINK_CABLE)
+            {
+                snprintf(buf, buf_size,
+                    "  [INPUT] TURBOLINK ENDPOINT Tick:%llu  %s  SEL:%u  CLR:%u  PullLow:$%02X",
+                    (unsigned long long)entry.input.link_tick,
+                    entry.input.value ? "ACTIVE" : "INACTIVE",
+                    entry.input.state & 0x01,
+                    (entry.input.state >> 1) & 0x01,
+                    entry.input.pull_low_mask);
+            }
+            else if (entry.input.event == TRACE_INPUT_WRITE)
             {
                 if (entry.input.port < GG_MAX_GAMEPADS)
                 {

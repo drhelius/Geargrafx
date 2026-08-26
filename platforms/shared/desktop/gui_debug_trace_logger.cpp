@@ -597,6 +597,14 @@ static void trace_logger_menu(void)
             ImGui::BeginDisabled(!config_debug.trace_input);
             trace_logger_menu_event_filter("Reads", &config_debug.trace_input_events, TRACE_INPUT_FILTER_READS);
             trace_logger_menu_event_filter("Writes", &config_debug.trace_input_events, TRACE_INPUT_FILTER_WRITES);
+            if (ImGui::BeginMenu("TurboLink"))
+            {
+                trace_logger_menu_event_filter("Port Writes", &config_debug.trace_input_events, TRACE_INPUT_FILTER_TURBOLINK_WRITES);
+                trace_logger_menu_event_filter("Drive Changes", &config_debug.trace_input_events, TRACE_INPUT_FILTER_TURBOLINK_DRIVE);
+                trace_logger_menu_event_filter("Samples", &config_debug.trace_input_events, TRACE_INPUT_FILTER_TURBOLINK_SAMPLES);
+                trace_logger_menu_event_filter("Cable", &config_debug.trace_input_events, TRACE_INPUT_FILTER_TURBOLINK_CABLE);
+                ImGui::EndMenu();
+            }
             ImGui::EndDisabled();
             ImGui::EndMenu();
         }
