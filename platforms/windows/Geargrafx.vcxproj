@@ -279,6 +279,7 @@
     <ClInclude Include="..\shared\desktop\gui_hes.h" />
     <ClInclude Include="..\shared\desktop\gui_menus.h" />
     <ClInclude Include="..\shared\desktop\gui_popups.h" />
+    <ClInclude Include="..\..\src\ips_patch.h" />
     <ClInclude Include="..\shared\desktop\gui.h" />
     <ClInclude Include="..\shared\dependencies\imgui\fonts\IconsMaterialDesign.h" />
     <ClInclude Include="..\shared\dependencies\imgui\fonts\MaterialIcons.h" />

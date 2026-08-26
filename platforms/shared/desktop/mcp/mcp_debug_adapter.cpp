@@ -702,6 +702,9 @@ json DebugAdapter::GetMediaInfo()
 
     info["backup_ram_forced"] = media->IsBackupRAMForced();
     info["preload_cdrom"] = media->IsPreloadCdRomEnabled();
+    info["softpatch_applied"] = media->IsSoftpatchApplied();
+    if (media->IsSoftpatchApplied())
+        info["softpatch_path"] = media->GetSoftpatchPath();
 
     return info;
 }
@@ -1601,6 +1604,9 @@ json DebugAdapter::FinishLoadMedia(const std::string& file_path)
     result["rom_name"] = m_core->GetMedia()->GetFileName();
     result["is_cdrom"] = m_core->GetMedia()->IsCDROM();
     result["is_sgx"] = m_core->GetMedia()->IsSGX();
+    result["softpatch_applied"] = m_core->GetMedia()->IsSoftpatchApplied();
+    if (m_core->GetMedia()->IsSoftpatchApplied())
+        result["softpatch_path"] = m_core->GetMedia()->GetSoftpatchPath();
 
     return result;
 }

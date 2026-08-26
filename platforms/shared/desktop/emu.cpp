@@ -65,6 +65,7 @@ static std::thread loading_thread;
 static bool loading_thread_active;
 static bool loading_result;
 static char loading_file_path[4096];
+static bool loading_softpatching;
 static Loading_Request_Type loading_request_type;
 
 static void save_ram(void);
@@ -156,7 +157,7 @@ static void load_media_thread_func(void)
     }
     else
 #endif
-        loading_result = geargrafx->LoadMedia(loading_file_path);
+        loading_result = geargrafx->LoadMedia(loading_file_path, loading_softpatching);
 
     loading_state.store(Loading_State_Finished);
 }
@@ -177,6 +178,7 @@ void emu_load_media_async(const char* file_path)
     loading_file_path[sizeof(loading_file_path) - 1] = '\0';
     loading_request_type = Loading_Request_File;
     loading_result = false;
+    loading_softpatching = config_emulator.softpatching;
     loading_state.store(Loading_State_Loading);
     if (loading_thread_active)
         loading_thread.join();

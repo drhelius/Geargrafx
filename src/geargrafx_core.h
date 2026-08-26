@@ -60,7 +60,7 @@ public:
     ~GeargrafxCore();
     void Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     bool RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug = NULL, bool render = true);
-    bool LoadMedia(const char* file_path);
+    bool LoadMedia(const char* file_path, bool softpatching = false);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool LoadPhysicalCdRom(const char* device_id);
 #endif

@@ -139,9 +139,9 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
 #endif
 }
 
-bool GeargrafxCore::LoadMedia(const char* file_path)
+bool GeargrafxCore::LoadMedia(const char* file_path, bool softpatching)
 {
-    if (m_media->LoadMedia(file_path))
+    if (m_media->LoadMedia(file_path, softpatching))
     {
         m_memory->ResetDisassemblerRecords();
         Reset();

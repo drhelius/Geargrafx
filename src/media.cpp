@@ -24,6 +24,7 @@
 #include "media.h"
 #include "game_db.h"
 #include "crc.h"
+#include "ips_patch.h"
 #include "media_file.h"
 #include "cdrom_media.h"
 
@@ -65,6 +66,8 @@ Media::Media(CdRomMedia* cdrom_media)
     m_cdrom_type = GG_CDROM_AUTO;
     m_force_backup_ram = false;
     m_preload_cdrom = false;
+    m_softpatch_applied = false;
+    m_softpatch_path[0] = 0;
 
     m_rom_map = new u8*[128];
     m_rom_bank_offset = new u32[128];
@@ -111,6 +114,8 @@ void Media::Reset()
     m_is_mb128 = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_SELECT;
+    m_softpatch_applied = false;
+    m_softpatch_path[0] = 0;
 
     for (int i = 0; i < 128; i++)
     {
@@ -133,7 +138,17 @@ void Media::SetTempPath(const char* path)
     }
 }
 
-bool Media::LoadMedia(const char* path)
+bool Media::IsSoftpatchApplied() const
+{
+    return m_softpatch_applied;
+}
+
+const char* Media::GetSoftpatchPath() const
+{
+    return m_softpatch_path;
+}
+
+bool Media::LoadMedia(const char* path, bool softpatching)
 {
     using namespace std;
 
@@ -147,7 +162,7 @@ bool Media::LoadMedia(const char* path)
 
     if (strcmp(m_file_extension, "zip") == 0)
     {
-        m_ready = LoadMediaFromZipFile(path);
+        m_ready = LoadMediaFromZipFile(path, softpatching);
     }
     else if (strcmp(m_file_extension, "cue") == 0)
     {
@@ -197,7 +212,7 @@ bool Media::LoadMedia(const char* path)
                     if (!is_empty)
                     {
                         m_is_cdrom = false;
-                        m_ready = LoadHuCardFromBuffer((u8*)(buffer), size, path);
+                        m_ready = LoadHuCardFromBufferWithSoftpatch((u8*)(buffer), size, path, softpatching);
                     }
                 }
                 else
@@ -223,10 +238,40 @@ bool Media::LoadMedia(const char* path)
         }
     }
 
-    if (!m_ready)
+    if (!m_ready && m_softpatch_applied)
+    {
+        Error("Media rejected after applying IPS patch %s. Loading unpatched media.", m_softpatch_path);
+        return LoadMedia(path, false);
+    }
+    else if (!m_ready)
         Reset();
 
     return m_ready;
+}
+
+bool Media::LoadHuCardFromBufferWithSoftpatch(const u8* buffer, int size, const char* path,
+    bool softpatching)
+{
+    u8* patched_buffer = NULL;
+    int patched_size = 0;
+    char patch_path[4096] = {};
+    bool patched = softpatching && ips_apply_patch(m_file_path, buffer, size,
+        &patched_buffer, &patched_size, patch_path, sizeof(patch_path));
+
+    bool loaded;
+    if (patched)
+        loaded = LoadHuCardFromBuffer(patched_buffer, patched_size, path);
+    else
+        loaded = LoadHuCardFromBuffer(buffer, size, path);
+
+    m_softpatch_applied = patched;
+    if (m_softpatch_applied)
+        strncpy_fit(m_softpatch_path, patch_path, sizeof(m_softpatch_path));
+    else
+        m_softpatch_path[0] = 0;
+
+    SafeDeleteArray(patched_buffer);
+    return loaded;
 }
 
 bool Media::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
@@ -437,7 +482,7 @@ bool Media::LoadBiosData(const u8* buffer, int size, bool syscard, const char* p
     return true;
 }
 
-bool Media::LoadMediaFromZipFile(const char* path)
+bool Media::LoadMediaFromZipFile(const char* path, bool softpatching)
 {
     Debug("Loading Media from ZIP file: %s", path);
 
@@ -484,7 +529,7 @@ bool Media::LoadMediaFromZipFile(const char* path)
                 return false;
             }
 
-            bool ok = LoadHuCardFromBuffer((const u8*) p, (int)uncomp_size, fn.c_str());
+            bool ok = LoadHuCardFromBufferWithSoftpatch((const u8*) p, (int)uncomp_size, fn.c_str(), softpatching);
 
             free(p);
             mz_zip_reader_end(&zip_archive);
