@@ -81,7 +81,7 @@ const GG_DB_Entry k_game_database[] =
     { 0xEB2466F9, "Darius Alpha (J) (SGX)", GG_GAMEDB_SGX_OPTIONAL },
 
     // SF2 MAPPER
-    { 0xD15CB6BB, "Street Fighter II' - Champion Edition (J)", GG_GAMEDB_SF2_MAPPER },
+    { 0xD15CB6BB, "Street Fighter II' - Champion Edition (J)", GG_GAMEDB_SF2_MAPPER | GG_GAMEDB_AVENUE_PAD_3_RUN },
 
     // CARD RAM SIZE = 0x8000
     { 0x083C956A, "Populous (J)", GG_GAMEDB_CARD_RAM_8000 },
@@ -111,8 +111,8 @@ const GG_DB_Entry k_game_database[] =
     { 0x654C5174, "Shin Nihon Pro Wrestling - '94 Battlefield in Tokyo Dome (J)" , GG_GAMEDB_ARCADE_CARD },
     { 0x9C980BF1, "Strider Hiryuu (J)" , GG_GAMEDB_ARCADE_CARD },
     { 0x9511585C, "Sorcery Saga I: The Fiery Kindergarten Graduation [Translation]" , GG_GAMEDB_ARCADE_CARD },
-    { 0x70F5F55B, "World Heroes 2 (J)" , GG_GAMEDB_ARCADE_CARD },
-    { 0xC55F9963, "World Heroes 2 (J) [Demo]" , GG_GAMEDB_ARCADE_CARD },
+    { 0x70F5F55B, "World Heroes 2 (J)" , GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0xC55F9963, "World Heroes 2 (J) [Demo]" , GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_AVENUE_PAD_3_RUN },
     { 0xB597F0A9, "Wrestling Universe - Fire Pro Joshi - Dome Choujo Taisen - Zenjo vs. JWP (J)" , GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
 
     // AVENUE PAD 3
@@ -143,12 +143,13 @@ const GG_DB_Entry k_game_database[] =
     { 0x6DBC6A0B, "Gradius II - Gofer no Yabou (J)", GG_GAMEDB_AVENUE_PAD_3_SELECT },
     { 0xA17D4D7E, "Gunhed (J)", GG_GAMEDB_AVENUE_PAD_3_SELECT },
     { 0x57F183AE, "Gunhed - Special Version (J)", GG_GAMEDB_AVENUE_PAD_3_SELECT },
-    { 0x609EAB27, "John Madden Duo CD Fooball (USA)", GG_GAMEDB_AVENUE_PAD_3_RUN },
+    { 0x609EAB27, "John Madden Duo CD Football (USA)", GG_GAMEDB_AVENUE_PAD_3_RUN },
     { 0x220EBF91, "Legendary Axe 2 (USA)", GG_GAMEDB_AVENUE_PAD_3_RUN },
     { 0x5CF2FE36, "Martial Champion (J)", GG_GAMEDB_AVENUE_PAD_3_RUN },
     { 0xE18748B1, "Metamor Jupiter (J)", GG_GAMEDB_AVENUE_PAD_3_SELECT },
     { 0xB01F70C2, "Narazumono Sento Butai - Bloody Wolf (J)", GG_GAMEDB_AVENUE_PAD_3_RUN },
     { 0x37E33F90, "Nekketsu Koukou Dodgeball-bu CD - Soccer-hen (J)", GG_GAMEDB_AVENUE_PAD_3_SELECT },
+    { 0xF2285C6D, "Nekketsu Koukou Dodgeball-bu - PC Soccer Hen (J)", GG_GAMEDB_AVENUE_PAD_3_SELECT },
     { 0xDE8AF1C1, "Ninja Spirit (USA)", GG_GAMEDB_AVENUE_PAD_3_SELECT },
     { 0x85D1E33B, "Ninja Spirit (USA) [Wii U]", GG_GAMEDB_AVENUE_PAD_3_SELECT },
     { 0x61B5B8D9, "Ookami-teki Monshou - Crest of Wolf (J)", GG_GAMEDB_AVENUE_PAD_3_RUN },
@@ -174,8 +175,6 @@ const GG_DB_Entry k_game_database[] =
     { 0xEB045EDF, "Turrican (USA)", GG_GAMEDB_AVENUE_PAD_3_SELECT },
     { 0x30D42007, "Valis III (J)", GG_GAMEDB_AVENUE_PAD_3_RUN },
     { 0xD77DACCE, "Valis III (USA)", GG_GAMEDB_AVENUE_PAD_3_RUN },
-    { 0x70F5F55B, "World Heroes 2 (J)", GG_GAMEDB_AVENUE_PAD_3_RUN },
-    { 0xC55F9963, "World Heroes 2 (J) [Demo]", GG_GAMEDB_AVENUE_PAD_3_RUN },
 
     // MB128 REQUIRED
     { 0xF12521E2, "A.III. - A Ressha de Ikou III (J)", GG_GAMEDB_MB128 },
