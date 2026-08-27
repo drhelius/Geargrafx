@@ -24,6 +24,7 @@
 #include "../emu.h"
 #include "../gui.h"
 #include "../gui_actions.h"
+#include "../gui_debug_constants.h"
 #include "../gui_debug_disassembler.h"
 #include "../gui_debug_memory.h"
 #include "../gui_debug_memeditor.h"
@@ -40,6 +41,69 @@
 #include <algorithm>
 
 static const int k_mcp_mouse_motion_step = 4;
+
+static bool replace_mcp_disassembly_operand(GG_Disassembler_Record* record,
+    std::string& instruction, const char* replacement)
+{
+    if (record->operand_length <= 0 || record->operand_offset < 0 ||
+        (record->operand_offset + record->operand_length) > (int)instruction.length())
+        return false;
+
+    instruction.replace(record->operand_offset, record->operand_length, replacement);
+    return true;
+}
+
+static int get_mcp_relative_displacement_index(GG_Disassembler_Record* record)
+{
+    GG_OPCode_Type type = k_huc6280_opcode_names[record->opcodes[0]].type;
+    if (type == GG_OPCode_Type_1b_Relative)
+        return 1;
+    if (type == GG_OPCode_Type_1b_1b_Relative)
+        return 2;
+    return -1;
+}
+
+static u8 get_mcp_disassembly_bank(Memory* memory, u16 address,
+    bool use_explicit_bank, u8 explicit_bank, u8 source_window)
+{
+    if (use_explicit_bank && (address >> 13) == source_window)
+        return explicit_bank;
+    return memory->GetBank(address);
+}
+
+static bool resolve_mcp_disassembly_symbol(GG_Disassembler_Record* record,
+    std::string& instruction, u16 address, bool is_zp, u8 bank)
+{
+    u16 bank_address = is_zp ? (0x2000 | address) : address;
+    DebugSymbol* symbol = gui_debug_get_symbol(bank, bank_address);
+    if (!IsValidPointer(symbol))
+        return false;
+
+    return replace_mcp_disassembly_operand(record, instruction, symbol->text);
+}
+
+static bool resolve_mcp_disassembly_label(GG_Disassembler_Record* record,
+    std::string& instruction, u16 address, bool is_zp, u8 bank)
+{
+    if (bank != 0xFF)
+        return false;
+
+    u16 label_lookup = is_zp ? (0x2000 | address) : address;
+    u16 hardware_offset = label_lookup & 0xE000;
+
+    for (int i = 0; i < k_debug_label_count; i++)
+    {
+        if (k_debug_labels[i].address + hardware_offset == label_lookup)
+        {
+            char replacement[64];
+            snprintf(replacement, sizeof(replacement), "%s_%04X",
+                k_debug_labels[i].label, address);
+            return replace_mcp_disassembly_operand(record, instruction, replacement);
+        }
+    }
+
+    return false;
+}
 
 static void format_cdrom_msf(u32 lba, char* buffer, size_t size)
 {
@@ -341,6 +405,7 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
     Memory* memory = m_core->GetMemory();
 
     bool use_explicit_bank = (bank >= 0 && bank <= 0xFF);
+    u8 explicit_bank = use_explicit_bank ? (u8)bank : 0;
 
     // Scan backwards from to find any instruction that might span into our range
     u16 scan_start = start_address;
@@ -399,7 +464,6 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
             line.address = (u16)addr;
             line.bank = record->bank;
             line.name = record->name;
-            strip_color_tags(line.name);
             line.bytes = record->bytes;
             line.segment = record->segment;
             line.size = record->size;
@@ -412,14 +476,89 @@ std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_
             line.subroutine = record->subroutine;
             line.irq = record->irq;
 
-            if (resolve_symbols)
+            u8 source_window = (u16)addr >> 13;
+
+            if (line.jump)
             {
-                std::string instr = line.name;
-                if (!gui_debug_resolve_symbol(record, instr, "", ""))
-                    gui_debug_resolve_label(record, instr, "", "");
-                line.name = instr;
+                int relative_index = get_mcp_relative_displacement_index(record);
+                bool project_context = use_explicit_bank;
+                if (!use_explicit_bank && relative_index >= 0)
+                {
+                    u16 recorded_source = (u16)(record->jump_address - record->size -
+                        (s8)record->opcodes[relative_index]);
+                    project_context = line.address != recorded_source;
+                }
+
+                if (project_context && relative_index >= 0)
+                {
+                    line.jump_address = (u16)(line.address + record->size +
+                        (s8)record->opcodes[relative_index]);
+
+                    if (config_debug.dis_syntax != GG_Disassembler_Syntax_WLADX)
+                    {
+                        char target[8];
+                        snprintf(target, sizeof(target), "$%04X", line.jump_address);
+                        replace_mcp_disassembly_operand(record, line.name, target);
+                    }
+                }
+
+                if (project_context)
+                {
+                    line.jump_bank = get_mcp_disassembly_bank(memory, line.jump_address,
+                        use_explicit_bank, explicit_bank, source_window);
+                }
             }
 
+            if (resolve_symbols)
+            {
+                u16 operand_address = 0;
+                bool operand_is_zp = false;
+                u8 operand_bank = 0;
+                bool has_operand = false;
+
+                if (line.jump)
+                {
+                    operand_address = line.jump_address;
+                    operand_bank = line.jump_bank;
+                    has_operand = true;
+                }
+                else if (line.has_operand_address)
+                {
+                    operand_address = line.operand_address;
+                    operand_is_zp = line.operand_is_zp;
+                    u16 bank_address = operand_is_zp ?
+                        (0x2000 | operand_address) : operand_address;
+                    operand_bank = use_explicit_bank ?
+                        get_mcp_disassembly_bank(memory, bank_address, true,
+                            explicit_bank, source_window) : record->operand_bank;
+                    has_operand = true;
+                }
+
+                if (has_operand)
+                {
+                    bool resolved = resolve_mcp_disassembly_symbol(record, line.name,
+                        operand_address, operand_is_zp, operand_bank);
+
+                    if (!resolved)
+                    {
+                        resolved = resolve_mcp_disassembly_label(record, line.name,
+                            operand_address, operand_is_zp, operand_bank);
+                    }
+
+                    if (!resolved && line.jump)
+                    {
+                        char auto_symbol[64];
+                        if (gui_debug_get_auto_symbol(operand_bank, operand_address,
+                            line.subroutine, auto_symbol, sizeof(auto_symbol)))
+                        {
+                            resolved = replace_mcp_disassembly_operand(record,
+                                line.name, auto_symbol);
+                        }
+                    }
+                }
+            }
+
+            strip_color_tags(line.name);
             result.push_back(line);
 
             u32 next_addr;

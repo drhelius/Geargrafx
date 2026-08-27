@@ -40,12 +40,16 @@ struct DisassemblerLine
     bool is_breakpoint;
     GG_Disassembler_Record* record;
     char name_enhanced[64];
+    char name_context[64];
     char tooltip[128];
     u16 tooltip_address;
     bool tooltip_has_value;
     int name_real_length;
     DebugSymbol* symbol;
     bool is_auto_symbol;
+    u16 jump_address;
+    u8 jump_bank;
+    u8 operand_bank;
 };
 
 struct DisassemblerBookmark
@@ -61,10 +65,18 @@ struct SymbolEntry
     int bank;
 };
 
-struct AssemblerLabelDefinition
+struct AssemblerDefinition
 {
     char name[64];
-    u16 address;
+    u32 value;
+    u32 conflicting_value;
+    bool conflict;
+};
+
+enum DisassemblerViewMode
+{
+    DisassemblerViewMode_Live,
+    DisassemblerViewMode_PhysicalBank
 };
 
 static bool symbols_dirty = true;
@@ -73,10 +85,14 @@ static DebugSymbol*** fixed_symbols = NULL;
 static DebugSymbol*** dynamic_symbols = NULL;
 static std::vector<SymbolEntry> fixed_symbol_list;
 static std::vector<SymbolEntry> dynamic_symbol_list;
+static std::vector<AssemblerDefinition> fixed_symbol_definitions;
 static std::vector<DisassemblerLine> disassembler_lines(0x10000);
 static std::vector<DisassemblerBookmark> bookmarks;
 static int selected_address = -1;
 static int selected_bank = -1;
+static int disassembler_view_mode = DisassemblerViewMode_Live;
+static u8 disassembler_physical_bank = 0;
+static u8 disassembler_physical_slot = 0;
 static int new_breakpoint_type = HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS;
 static char new_breakpoint_buffer[32] = "";
 static bool new_breakpoint_read = false;
@@ -88,6 +104,9 @@ static bool goto_address_requested = false;
 static u16 goto_address_target = 0;
 static bool goto_back_requested = false;
 static int goto_back = 0;
+static int goto_back_view_mode = DisassemblerViewMode_Live;
+static u8 goto_back_physical_bank = 0;
+static u8 goto_back_physical_slot = 0;
 static int pc_pos = 0;
 static int goto_address_pos = 0;
 static bool add_bookmark_open = false;
@@ -96,6 +115,7 @@ static const int k_symbol_bank_count = 0x100;
 static const int k_symbol_address_count = 0x10000;
 
 static void draw_controls(void);
+static void draw_disassembler_view_controls(void);
 static void draw_breakpoints(void);
 static void draw_breakpoints_content(void);
 static void prepare_drawable_lines(void);
@@ -103,17 +123,44 @@ static void draw_disassembly(void);
 static void draw_context_menu(DisassemblerLine* line);
 static void add_cdrom_symbols();
 static void add_symbol(const char* line);
+static void add_symbol_definition(const char* line, bool pceas_format);
 static void add_breakpoint(int type);
 static bool breakpoint_type_supports_execute(int type);
-static void request_goto_address(u16 addr);
+static void request_goto_live_address(u16 address);
+static void request_goto_bank_address(u16 address, u8 bank);
+static void request_goto_physical_address(u16 address, u8 bank);
 static bool is_return_instruction(u8 opcode);
+static bool replace_operand_in_string(GG_Disassembler_Record* record, std::string& instr, const char* replacement_text);
+static void initialize_disassembler_line(DisassemblerLine* line, GG_Disassembler_Record* record, u16 address);
+static int get_relative_displacement_index(GG_Disassembler_Record* record);
+static void set_disassembler_line_view_context(DisassemblerLine* line, bool live_view);
+static void format_data_statement(const u8* data, int count, char* output, int output_size);
+static bool format_assembler_relative_instruction(GG_Disassembler_Record* record, char* output, int output_size);
+static void remove_disassembler_visual_aid(char* instruction);
+static void format_wla_direct_page_operand(GG_Disassembler_Record* record, char* instruction, int instruction_size);
+static bool full_disassembler_record_is_code(GG_Disassembler_Record* record, int bank_offset, bool assembler_syntax);
+static bool full_disassembler_bank_is_assembleable(Memory* memory, u8 bank);
+static const char* get_memory_bank_type_name(Memory::MemoryBankType type);
+static void write_full_disassembler_header(FILE* file, int highest_assembleable_bank);
+static void write_full_disassembler_bank_header(FILE* file, Memory* memory, u8 bank, bool assembleable);
+static void write_full_disassembler_line(FILE* file, bool assembler_syntax, bool commented_out,
+    int physical_address, u8 bank, const char* name, const char* bytes, const char* note);
 static void draw_disassembler_tooltip(DisassemblerLine* line);
 static void set_disassembler_tooltip(DisassemblerLine* line, const char* color, const char* name, u16 address, bool has_value);
+static bool resolve_line_symbol(DisassemblerLine* line, std::string& instr,
+    const char* color, const char* original_color, const char** out_name, u16* out_address);
+static bool resolve_line_label(DisassemblerLine* line, std::string& instr,
+    const char* color, const char* original_color, const char** out_name, u16* out_address);
 static void replace_symbols(DisassemblerLine* line, const char* jump_color, const char* operand_color, const char* auto_color, const char* original_color);
 static bool replace_labels(DisassemblerLine* line, const char* color, const char* original_color);
-static bool collect_assembler_label_definition(DisassemblerLine* line, std::vector<AssemblerLabelDefinition>& definitions);
-static void add_assembler_label_definition(std::vector<AssemblerLabelDefinition>& definitions, const char* label, u16 address);
-static void write_assembler_label_definitions(FILE* file, const std::vector<AssemblerLabelDefinition>& definitions);
+static bool collect_assembler_symbol_definition(DisassemblerLine* line,
+    std::vector<AssemblerDefinition>& definitions, bool check_exported_label = true);
+static bool collect_assembler_label_definition(DisassemblerLine* line, std::vector<AssemblerDefinition>& definitions);
+static void add_assembler_definition(std::vector<AssemblerDefinition>& definitions, const char* name, u32 value);
+static void add_assembler_label_definition(std::vector<AssemblerDefinition>& definitions, const char* label, u16 address);
+static bool format_auto_symbol_context(const char* symbol, u8 bank, u16 address,
+    char* output, int output_size);
+static void write_assembler_definitions(FILE* file, const std::vector<AssemblerDefinition>& definitions);
 static void draw_instruction_name(DisassemblerLine* line, bool is_pc);
 static void disassembler_menu(void);
 static void add_bookmark_popup(void);
@@ -174,6 +221,12 @@ void gui_debug_disassembler_reset(void)
 {
     selected_address = -1;
     selected_bank = -1;
+    disassembler_view_mode = DisassemblerViewMode_Live;
+    disassembler_physical_bank = 0;
+    disassembler_physical_slot = 0;
+    goto_back_view_mode = DisassemblerViewMode_Live;
+    goto_back_physical_bank = 0;
+    goto_back_physical_slot = 0;
 }
 
 void gui_debug_reset_symbols(void)
@@ -192,6 +245,7 @@ void gui_debug_reset_symbols(void)
 
     fixed_symbol_list.clear();
     dynamic_symbol_list.clear();
+    fixed_symbol_definitions.clear();
     symbols_dirty = true;
 
     if (emu_get_core()->GetMedia()->IsCDROM())
@@ -215,8 +269,16 @@ bool gui_debug_load_symbols_file(const char* file_path)
     {
         Log("Loading symbol file %s", file_path);
 
+        enum SymbolFileSection
+        {
+            SymbolFileSection_Symbols,
+            SymbolFileSection_Definitions,
+            SymbolFileSection_Ignore
+        };
+
         std::string line;
-        bool valid_section = true;
+        SymbolFileSection section = SymbolFileSection_Symbols;
+        bool wla_symbol_file = false;
 
         while (std::getline(file, line))
         {
@@ -230,48 +292,60 @@ bool gui_debug_load_symbols_file(const char* file_path)
                 continue;
 
             if (line.find("-") == 0)
+            {
+                add_symbol_definition(line.c_str(), true);
                 continue;
+            }
 
             if (line.empty())
                 continue;
 
             if (line.find("[") != std::string::npos)
             {
-                valid_section = false;
-                if (line.find("[symbols]") != std::string::npos)
-                    valid_section = true;
-                else if (line.find("[labels]") != std::string::npos)
-                    valid_section = true;
+                section = SymbolFileSection_Ignore;
+                if (line.find("[symbols]") != std::string::npos ||
+                    line.find("[labels]") != std::string::npos)
+                    section = SymbolFileSection_Symbols;
+                else if (line.find("[definitions]") != std::string::npos)
+                    section = SymbolFileSection_Definitions;
 
                 continue;
             }
 
             if (line.find("Sections:") != std::string::npos)
             {
-                valid_section = false;
+                section = SymbolFileSection_Ignore;
                 continue;
             }
 
             if (line.find("Source:") != std::string::npos)
             {
-                valid_section = false;
+                section = SymbolFileSection_Ignore;
                 continue;
             }
 
             if (line.find("Symbols by name:") != std::string::npos)
             {
-                valid_section = false;
+                section = SymbolFileSection_Ignore;
                 continue;
             }
 
             if (line.find("Symbols by value:") != std::string::npos)
             {
-                valid_section = true;
+                section = SymbolFileSection_Symbols;
                 continue;
             }
 
-            if (valid_section)
+            if (line.find("wlasymbol true") != std::string::npos)
+            {
+                wla_symbol_file = true;
+                continue;
+            }
+
+            if (section == SymbolFileSection_Symbols)
                 add_symbol(line.c_str());
+            else if (section == SymbolFileSection_Definitions)
+                add_symbol_definition(line.c_str(), !wla_symbol_file);
         }
 
         file.close();
@@ -286,6 +360,9 @@ bool gui_debug_load_symbols_file(const char* file_path)
 
 void gui_debug_toggle_breakpoint(void)
 {
+    if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+        return;
+
     if (selected_address >= 0)
     {
         if (emu_get_core()->GetHuC6280()->IsBreakpoint(HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS, selected_address))
@@ -297,6 +374,9 @@ void gui_debug_toggle_breakpoint(void)
 
 void gui_debug_add_bookmark(void)
 {
+    if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+        return;
+
     add_bookmark_open = true;
 }
 
@@ -307,6 +387,9 @@ void gui_debug_add_symbol(void)
 
 void gui_debug_runtocursor(void)
 {
+    if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+        return;
+
     if (selected_address >= 0)
     {
         gui_debug_runto_address(selected_address);
@@ -321,6 +404,15 @@ void gui_debug_runto_address(u16 address)
 
 void gui_debug_go_back(void)
 {
+    int view_mode = disassembler_view_mode;
+    u8 bank = disassembler_physical_bank;
+    u8 slot = disassembler_physical_slot;
+    disassembler_view_mode = goto_back_view_mode;
+    disassembler_physical_bank = goto_back_physical_bank;
+    disassembler_physical_slot = goto_back_physical_slot;
+    goto_back_view_mode = view_mode;
+    goto_back_physical_bank = bank;
+    goto_back_physical_slot = slot;
     goto_back_requested = true;
 }
 
@@ -338,6 +430,11 @@ void gui_debug_window_disassembler(void)
     ImGui::Separator();
 
     draw_breakpoints();
+
+    ImGui::Separator();
+
+    draw_disassembler_view_controls();
+
     draw_disassembly();
 
     add_bookmark_popup();
@@ -427,14 +524,22 @@ static void draw_controls(void)
     }
 
     ImGui::SameLine();
+    if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+        ImGui::BeginDisabled();
+
     if (ImGui::Button(ICON_MD_KEYBOARD_TAB))
     {
         gui_debug_runtocursor();
     }
     if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
     {
-        ImGui::SetTooltip("Run to Cursor (%s)", config_hotkeys[config_HotkeyIndex_DebugRunToCursor].str);
+        if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+            ImGui::SetTooltip("Unavailable in Physical Bank view");
+        else
+            ImGui::SetTooltip("Run to Cursor (%s)", config_hotkeys[config_HotkeyIndex_DebugRunToCursor].str);
     }
+    if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+        ImGui::EndDisabled();
 
     ImGui::SameLine();
     if (ImGui::Button(ICON_MD_REPLAY))
@@ -450,6 +555,165 @@ static void draw_controls(void)
 
     ImGui::SameLine();
     ImGui::TextColored(emu_is_debug_idle() ? red : green, emu_is_debug_idle() ? "   PAUSED" : "   RUNNING");
+}
+
+static void draw_disassembler_view_controls(void)
+{
+    Memory* memory = emu_get_core()->GetMemory();
+    HuC6280::HuC6280_State* state = emu_get_core()->GetHuC6280()->GetState();
+    u16 pc = state->PC->GetValue();
+    bool live_view = disassembler_view_mode == DisassemblerViewMode_Live;
+    static const char* view_names[] = { "Live MPRs", "Physical Bank" };
+
+    ImGui::SetNextItemWidth(122.0f);
+    if (ImGui::BeginCombo("##disassembler_view", view_names[disassembler_view_mode]))
+    {
+        for (int mode = 0; mode < 2; mode++)
+        {
+            bool selected = disassembler_view_mode == mode;
+            if (ImGui::Selectable(view_names[mode], selected))
+            {
+                if (mode == DisassemblerViewMode_Live)
+                    request_goto_live_address(pc);
+                else
+                    request_goto_physical_address(pc, memory->GetBank(pc));
+                live_view = mode == DisassemblerViewMode_Live;
+            }
+            if (selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip(
+            "Live MPRs: Current 64 KB CPU view using the eight real MPR mappings.\n"
+            "Physical Bank: One decoded 8 KB bank in a selected CPU window.");
+    }
+
+    ImGui::SameLine();
+    if (live_view)
+        ImGui::BeginDisabled();
+
+    u8 displayed_slot = live_view ? pc >> 13 : disassembler_physical_slot;
+    u8 displayed_bank = live_view ? memory->GetBank(pc) : disassembler_physical_bank;
+
+    ImGui::TextColored(violet, "Bank");
+    ImGui::SameLine();
+
+    char bank_name[3];
+    snprintf(bank_name, sizeof(bank_name), "%02X", displayed_bank);
+
+    ImGui::SetNextItemWidth(48.0f);
+
+    static u8 disassembled_banks[0x100];
+    static int disassembled_bank_count = 0;
+    static bool refresh_disassembled_banks = true;
+
+    ImGui::PushStyleColor(ImGuiCol_Text, violet);
+
+    bool bank_combo_open = ImGui::BeginCombo("##physical_bank", bank_name);
+
+    if (bank_combo_open)
+    {
+        if (refresh_disassembled_banks)
+        {
+            GG_Disassembler_Record** records = memory->GetAllDisassemblerRecords();
+            disassembled_bank_count = 0;
+
+            for (int bank = 0; bank < 0x100; bank++)
+            {
+                int first_address = bank << 13;
+                for (int offset = 0; offset < 0x2000; offset++)
+                {
+                    GG_Disassembler_Record* record = records[first_address + offset];
+                    if (IsValidPointer(record) && record->size > 0 && record->name[0] != 0 && record->name[0] != '?')
+                    {
+                        disassembled_banks[disassembled_bank_count++] = (u8)bank;
+                        break;
+                    }
+                }
+            }
+
+            refresh_disassembled_banks = false;
+        }
+
+        if (disassembled_bank_count == 0)
+            ImGui::TextDisabled("No disassembled banks");
+
+        for (int i = 0; i < disassembled_bank_count; i++)
+        {
+            u8 bank = disassembled_banks[i];
+            char name[3];
+            snprintf(name, sizeof(name), "%02X", bank);
+            bool selected = disassembler_physical_bank == bank;
+
+            if (ImGui::Selectable(name, selected))
+            {
+                disassembler_physical_bank = (u8)bank;
+                selected_address = -1;
+                selected_bank = -1;
+                goto_address_requested = true;
+                goto_address_target = (u16)(disassembler_physical_slot << 13);
+            }
+
+            if (selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    else
+        refresh_disassembled_banks = true;
+
+    ImGui::PopStyleColor();
+
+    ImGui::SameLine();
+    ImGui::TextColored(cyan, "Window");
+    ImGui::SameLine();
+
+    char window[16];
+    snprintf(window, sizeof(window), "$%04X-$%04X", displayed_slot << 13, (displayed_slot << 13) | 0x1FFF);
+
+    ImGui::SetNextItemWidth(122.0f);
+    ImGui::PushStyleColor(ImGuiCol_Text, cyan);
+
+    if (ImGui::BeginCombo("##physical_window", window))
+    {
+        for (int slot = 0; slot < 8; slot++)
+        {
+            char name[16];
+            snprintf(name, sizeof(name), "$%04X-$%04X", slot << 13, (slot << 13) | 0x1FFF);
+            bool selected = disassembler_physical_slot == slot;
+            if (ImGui::Selectable(name, selected))
+            {
+                disassembler_physical_slot = (u8)slot;
+                selected_address = -1;
+                selected_bank = -1;
+                goto_address_requested = true;
+                goto_address_target = (u16)(slot << 13);
+            }
+            if (selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::PopStyleColor();
+
+    ImGui::SameLine();
+    ImGui::TextColored(violet, "MPR%d", displayed_slot);
+    if (ImGui::IsItemHovered())
+    {
+        if (live_view)
+            ImGui::SetTooltip("PC $%04X uses MPR%d, currently mapped to bank %02X",
+                pc, displayed_slot, displayed_bank);
+        else
+            ImGui::SetTooltip("Real MPR%d bank: %02X\nThe physical bank view does not modify it",
+                displayed_slot, memory->GetMpr(displayed_slot));
+    }
+
+    if (live_view)
+        ImGui::EndDisabled();
+
 }
 
 struct BreakpointTypeInfo
@@ -930,6 +1194,101 @@ void gui_debug_window_breakpoints(void)
     ImGui::PopStyleVar();
 }
 
+static void format_data_statement(const u8* data, int count, char* output, int output_size)
+{
+    int position = snprintf(output, output_size, ".db ");
+
+    for (int i = 0; i < count && position < output_size - 1; i++)
+    {
+        int written = snprintf(output + position, output_size - position, "%s$%02X", i > 0 ? "," : "", data[i]);
+
+        if (written < 0)
+            break;
+        position += written;
+    }
+}
+
+static void initialize_disassembler_line(DisassemblerLine* line,
+    GG_Disassembler_Record* record, u16 address)
+{
+    line->address = address;
+    line->symbol = NULL;
+    line->is_breakpoint = false;
+    line->record = record;
+    snprintf(line->name_enhanced, sizeof(line->name_enhanced), "%s", record->name);
+    snprintf(line->name_context, sizeof(line->name_context), "%s", record->name);
+    line->tooltip[0] = 0;
+    line->tooltip_address = 0;
+    line->tooltip_has_value = false;
+    line->jump_address = record->jump_address;
+    line->jump_bank = record->jump_bank;
+    line->operand_bank = record->operand_bank;
+}
+
+static int get_relative_displacement_index(GG_Disassembler_Record* record)
+{
+    GG_OPCode_Type type = k_huc6280_opcode_names[record->opcodes[0]].type;
+    if (type == GG_OPCode_Type_1b_Relative)
+        return 1;
+    if (type == GG_OPCode_Type_1b_1b_Relative)
+        return 2;
+    return -1;
+}
+
+static u8 get_disassembler_line_view_bank(u16 address, bool live_view)
+{
+    if (!live_view && (address >> 13) == disassembler_physical_slot)
+        return disassembler_physical_bank;
+    return emu_get_core()->GetMemory()->GetBank(address);
+}
+
+static void set_disassembler_line_view_context(DisassemblerLine* line, bool live_view)
+{
+    GG_Disassembler_Record* record = line->record;
+
+    if (!live_view && record->has_operand_address)
+    {
+        u16 operand_address = record->operand_is_zp ?
+            (0x2000 | record->operand_address) : record->operand_address;
+        line->operand_bank = get_disassembler_line_view_bank(operand_address, live_view);
+    }
+
+    if (!record->jump)
+    {
+        snprintf(line->name_context, sizeof(line->name_context), "%s", line->name_enhanced);
+        return;
+    }
+
+    int relative_index = get_relative_displacement_index(record);
+    bool project_context = !live_view;
+    if (live_view && relative_index >= 0)
+    {
+        u16 recorded_source = (u16)(record->jump_address - record->size -
+            (s8)record->opcodes[relative_index]);
+        project_context = line->address != recorded_source;
+    }
+
+    if (project_context && relative_index >= 0)
+    {
+        line->jump_address = line->address + record->size +
+            (s8)record->opcodes[relative_index];
+
+        if (config_debug.dis_syntax != GG_Disassembler_Syntax_WLADX)
+        {
+            char target[8];
+            snprintf(target, sizeof(target), "$%04X", line->jump_address);
+            std::string instruction = line->name_enhanced;
+            if (replace_operand_in_string(record, instruction, target))
+                snprintf(line->name_enhanced, sizeof(line->name_enhanced),
+                    "%s", instruction.c_str());
+        }
+    }
+
+    if (project_context)
+        line->jump_bank = get_disassembler_line_view_bank(line->jump_address, live_view);
+    snprintf(line->name_context, sizeof(line->name_context), "%s", line->name_enhanced);
+}
+
 static void prepare_drawable_lines(void)
 {
     Memory* memory = emu_get_core()->GetMemory();
@@ -939,26 +1298,41 @@ static void prepare_drawable_lines(void)
     u16 hit_address = 0;
     bool breakpoint_hit = processor->GetBreakpointHitAddress(&hit_address);
     u16 focus_address = breakpoint_hit ? hit_address : pc;
+    u8 focus_bank = memory->GetBank(focus_address);
 
     disassembler_lines.clear();
     pc_pos = 0;
     goto_address_pos = 0;
 
-    for (int i = 0; i < 0x10000; i++)
+    bool live_view = disassembler_view_mode == DisassemblerViewMode_Live;
+    int first_address = live_view ? 0 : disassembler_physical_slot << 13;
+    int last_address = live_view ? 0x10000 : first_address + 0x2000;
+
+    for (int i = first_address; i < last_address; i++)
     {
-        GG_Disassembler_Record* record = memory->GetDisassemblerRecord(i);
+        GG_Disassembler_Record* record = live_view ? memory->GetDisassemblerRecord(i) :
+            memory->GetDisassemblerRecord((u16)i, disassembler_physical_bank);
 
         if (IsValidPointer(record) && (record->name[0] != 0))
         {
             if (record->auto_symbol[0] != 0)
             {
+                char contextual_auto_symbol[64];
+                const char* auto_symbol = record->auto_symbol;
+                if (format_auto_symbol_context(record->auto_symbol, record->bank,
+                    (u16)i, contextual_auto_symbol, sizeof(contextual_auto_symbol)))
+                {
+                    auto_symbol = contextual_auto_symbol;
+                }
+
                 DebugSymbol* existing = dynamic_symbols[record->bank][i];
+
                 if (!IsValidPointer(existing))
                 {
                     existing = new DebugSymbol;
                     existing->address = (u16)i;
                     existing->bank = record->bank;
-                    snprintf(existing->text, 64, "%s", record->auto_symbol);
+                    snprintf(existing->text, 64, "%s", auto_symbol);
                     dynamic_symbols[record->bank][i] = existing;
 
                     SymbolEntry entry;
@@ -970,9 +1344,9 @@ static void prepare_drawable_lines(void)
                     if (show_auto_symbols)
                         symbols_dirty = true;
                 }
-                else if (strcmp(existing->text, record->auto_symbol) != 0)
+                else if (strcmp(existing->text, auto_symbol) != 0)
                 {
-                    snprintf(existing->text, 64, "%s", record->auto_symbol);
+                    snprintf(existing->text, 64, "%s", auto_symbol);
                     if (show_auto_symbols)
                         symbols_dirty = true;
                 }
@@ -1009,34 +1383,31 @@ static void prepare_drawable_lines(void)
             }
 
             DisassemblerLine line;
-            line.address = (u16)i;
-            line.symbol = NULL;
-            line.is_breakpoint = false;
-            line.record = record;
-            snprintf(line.name_enhanced, 64, "%s", line.record->name);
-            line.tooltip[0] = 0;
-            line.tooltip_address = 0;
-            line.tooltip_has_value = false;
+            initialize_disassembler_line(&line, record, (u16)i);
+            set_disassembler_line_view_context(&line, live_view);
 
             const std::vector<HuC6280::GG_Breakpoint>* breakpoints = emu_get_core()->GetHuC6280()->GetBreakpoints();
 
-            for (long unsigned int b = 0; b < breakpoints->size(); b++)
+            if (live_view)
             {
-                const HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
-
-                if (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS &&
-                    brk->execute &&
-                    brk->address1 == (u32)i)
+                for (long unsigned int b = 0; b < breakpoints->size(); b++)
                 {
-                    line.is_breakpoint = true;
-                    break;
+                    const HuC6280::GG_Breakpoint* brk = &(*breakpoints)[b];
+
+                    if (brk->type == HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS &&
+                        brk->execute &&
+                        brk->address1 == (u32)i)
+                    {
+                        line.is_breakpoint = true;
+                        break;
+                    }
                 }
             }
 
-            if (breakpoint_hit && hit_address == i)
+            if (live_view && breakpoint_hit && hit_address == i)
                 line.is_breakpoint = true;
 
-            if ((u16)i == focus_address)
+            if (live_view && (u16)i == focus_address && record->bank == focus_bank)
                 pc_pos = (int)disassembler_lines.size();
 
             if (goto_address_requested && (i <= goto_address_target))
@@ -1066,15 +1437,21 @@ static void draw_disassembly(void)
         HuC6280* processor = emu_get_core()->GetHuC6280();
         HuC6280::HuC6280_State* proc_state = processor->GetState();
         u16 pc = proc_state->PC->GetValue();
+        bool live_view = disassembler_view_mode == DisassemblerViewMode_Live;
 
         prepare_drawable_lines();
+
+        u8 pc_bank = emu_get_core()->GetMemory()->GetBank(pc);
 
         if (emu_debug_pc_changed)
         {
             emu_debug_pc_changed = false;
-            float window_offset = ImGui::GetWindowHeight() / 2.0f;
-            float offset = window_offset - (ImGui::GetTextLineHeightWithSpacing() - 2.0f);
-            ImGui::SetScrollY((pc_pos * ImGui::GetTextLineHeightWithSpacing()) - offset);
+            if (live_view)
+            {
+                float window_offset = ImGui::GetWindowHeight() / 2.0f;
+                float offset = window_offset - (ImGui::GetTextLineHeightWithSpacing() - 2.0f);
+                ImGui::SetScrollY((pc_pos * ImGui::GetTextLineHeightWithSpacing()) - offset);
+            }
         }
 
         if (goto_address_requested)
@@ -1108,13 +1485,14 @@ static void draw_disassembly(void)
 
                 ImGui::PushID(item);
 
-                bool is_selected = (selected_address == line.address);
+                bool is_selected = (selected_address == line.address) && (selected_bank == line.record->bank);
+                bool is_pc = live_view && (line.address == pc) && (line.record->bank == pc_bank);
 
                 if (ImGui::Selectable("", is_selected, ImGuiSelectableFlags_AllowDoubleClick))
                 {
                     if (ImGui::IsMouseDoubleClicked(0) && line.record->jump)
                     {
-                        request_goto_address(line.record->jump_address);
+                        request_goto_bank_address(line.jump_address, line.jump_bank);
                     }
                     else if (is_selected)
                     {
@@ -1141,7 +1519,7 @@ static void draw_disassembly(void)
                     enable_bg_color = true;
                     bg_color = dark_red;
                 }
-                else if ((line.address == pc) && !ImGui::IsItemHovered())
+                else if (is_pc && !ImGui::IsItemHovered())
                 {
                     enable_bg_color = true;
                     bg_color = dark_yellow;
@@ -1185,7 +1563,7 @@ static void draw_disassembly(void)
                 ImGui::TextColored(color_addr, "%04X", line.address);
 
                 ImGui::SameLine();
-                if (line.address == pc)
+                if (is_pc)
                 {
                     ImGui::TextColored(yellow, " ->");
                 }
@@ -1195,7 +1573,7 @@ static void draw_disassembly(void)
                 }
 
                 ImGui::SameLine();
-                draw_instruction_name(&line, line.address == pc);
+                draw_instruction_name(&line, is_pc);
 
                 if (line.tooltip[0] != 0 && ImGui::IsItemHovered())
                 {
@@ -1248,6 +1626,9 @@ static void draw_context_menu(DisassemblerLine* line)
         selected_address = line->address;
         selected_bank = line->record->bank;
 
+        if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+            ImGui::BeginDisabled();
+
         if (ImGui::Selectable("Run To Cursor"))
         {
             gui_debug_runtocursor();
@@ -1258,15 +1639,24 @@ static void draw_context_menu(DisassemblerLine* line)
             gui_debug_add_bookmark();
         }
 
+        if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+            ImGui::EndDisabled();
+
         if (ImGui::Selectable("Add Symbol..."))
         {
             gui_debug_add_symbol();
         }
 
+        if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+            ImGui::BeginDisabled();
+
         if (ImGui::Selectable("Toggle Breakpoint"))
         {
             gui_debug_toggle_breakpoint();
         }
+
+        if (disassembler_view_mode == DisassemblerViewMode_PhysicalBank)
+            ImGui::EndDisabled();
 
         ImGui::EndPopup();
     }
@@ -1429,6 +1819,56 @@ static void add_symbol(const char* line)
     }
 }
 
+static void add_symbol_definition(const char* line, bool pceas_format)
+{
+    std::istringstream stream(line);
+    std::string value_text;
+    std::string name;
+
+    if (!(stream >> value_text))
+        return;
+
+    if (value_text.find_first_not_of('-') == std::string::npos)
+    {
+        if (!(stream >> value_text >> name))
+            return;
+    }
+    else if (!(stream >> name))
+        return;
+
+    if (pceas_format)
+    {
+        // PCEAS writes these reserved built-ins alongside user definitions.
+        static const char* k_pceas_reserved_definitions[] = {
+            "MAGICKIT", "DEVELO", "CDROM", "USING_NEWPROC",
+            "_bss_end", "_bank_base", "_nb_bank", "_call_bank"
+        };
+
+        size_t reserved_count = sizeof(k_pceas_reserved_definitions) / sizeof(k_pceas_reserved_definitions[0]);
+
+        for (size_t i = 0; i < reserved_count; i++)
+        {
+            if (strcmp(name.c_str(), k_pceas_reserved_definitions[i]) == 0)
+                return;
+        }
+    }
+
+    u32 value = 0;
+    if (!parse_hex_string(value_text.c_str(), value_text.length(), &value))
+        return;
+
+    for (size_t i = 0; i < fixed_symbol_definitions.size(); i++)
+    {
+        if (strcmp(fixed_symbol_definitions[i].name, name.c_str()) == 0)
+        {
+            fixed_symbol_definitions[i].value = value;
+            return;
+        }
+    }
+
+    add_assembler_definition(fixed_symbol_definitions, name.c_str(), value);
+}
+
 static bool breakpoint_type_supports_execute(int type)
 {
     return type == HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS ||
@@ -1460,10 +1900,54 @@ static void add_breakpoint(int type)
         new_breakpoint_buffer[0] = 0;
 }
 
-static void request_goto_address(u16 address)
+static void save_disassembler_view_for_back(void)
+{
+    goto_back_view_mode = disassembler_view_mode;
+    goto_back_physical_bank = disassembler_physical_bank;
+    goto_back_physical_slot = disassembler_physical_slot;
+}
+
+static void request_goto_position(u16 address)
 {
     goto_address_requested = true;
     goto_address_target = address;
+}
+
+static void request_goto_live_address(u16 address)
+{
+    save_disassembler_view_for_back();
+    disassembler_view_mode = DisassemblerViewMode_Live;
+    selected_address = -1;
+    selected_bank = -1;
+    request_goto_position(address);
+}
+
+static void request_goto_physical_address(u16 address, u8 bank)
+{
+    save_disassembler_view_for_back();
+    disassembler_view_mode = DisassemblerViewMode_PhysicalBank;
+    disassembler_physical_bank = bank;
+    disassembler_physical_slot = address >> 13;
+    selected_address = -1;
+    selected_bank = -1;
+    request_goto_position(address);
+
+    GG_Disassembler_Record* record = emu_get_core()->GetMemory()->GetDisassemblerRecord(address, bank);
+    if (!IsValidPointer(record) || record->name[0] == 0)
+    {
+        char message[96];
+        snprintf(message, sizeof(message),
+            "No decoded code at bank %02X, address $%04X", bank, address);
+        gui_set_status_message(message, 3000);
+    }
+}
+
+static void request_goto_bank_address(u16 address, u8 bank)
+{
+    if (emu_get_core()->GetMemory()->GetBank(address) == bank)
+        request_goto_live_address(address);
+    else
+        request_goto_physical_address(address, bank);
 }
 
 static bool is_return_instruction(u8 opcode)
@@ -1485,7 +1969,7 @@ static void draw_disassembler_tooltip(DisassemblerLine* line)
 
     u16 address = line->record->operand_is_zp ? (0x2000 | line->tooltip_address) : line->tooltip_address;
     u8 value = 0;
-    if (line->tooltip_has_value && emu_get_core()->GetMemory()->TryPeek(address, &value))
+    if (line->tooltip_has_value && emu_get_core()->GetMemory()->TryPeek(address, line->operand_bank, &value))
     {
         ImGui::Separator();
         ImGui::TextColored(orange, "Hex: ");
@@ -1524,24 +2008,33 @@ static bool replace_operand_in_string(GG_Disassembler_Record* record, std::strin
     return true;
 }
 
-static void add_assembler_definition(std::vector<AssemblerLabelDefinition>& definitions, const char* name, u16 address)
+static void add_assembler_definition(std::vector<AssemblerDefinition>& definitions, const char* name, u32 value)
 {
     if (name == NULL)
         return;
 
     for (size_t i = 0; i < definitions.size(); i++)
     {
-        if (definitions[i].address == address && strcmp(definitions[i].name, name) == 0)
+        if (strcmp(definitions[i].name, name) == 0)
+        {
+            if (definitions[i].value != value)
+            {
+                definitions[i].conflict = true;
+                definitions[i].conflicting_value = value;
+            }
             return;
+        }
     }
 
-    AssemblerLabelDefinition definition;
+    AssemblerDefinition definition;
     strncpy_fit(definition.name, name, sizeof(definition.name));
-    definition.address = address;
+    definition.value = value;
+    definition.conflicting_value = 0;
+    definition.conflict = false;
     definitions.push_back(definition);
 }
 
-static void add_assembler_label_definition(std::vector<AssemblerLabelDefinition>& definitions, const char* label, u16 address)
+static void add_assembler_label_definition(std::vector<AssemblerDefinition>& definitions, const char* label, u16 address)
 {
     if (label == NULL)
         return;
@@ -1566,10 +2059,90 @@ static bool symbol_label_is_exported(const char* name, u16 address, u8 bank)
     return false;
 }
 
-static void write_assembler_label_definitions(FILE* file, const std::vector<AssemblerLabelDefinition>& definitions)
+static bool format_auto_symbol_context(const char* symbol, u8 bank, u16 address,
+    char* output, int output_size)
+{
+    if (symbol == NULL || output == NULL || output_size <= 0)
+        return false;
+
+    size_t length = strlen(symbol);
+    if (length < 8 || symbol[length - 8] != '_' || symbol[length - 5] != '_')
+        return false;
+
+    u16 symbol_bank = 0;
+    u16 symbol_address = 0;
+    if (!parse_hex_string(symbol + length - 7, 2, &symbol_bank) ||
+        !parse_hex_string(symbol + length - 4, 4, &symbol_address))
+        return false;
+
+    snprintf(output, output_size, "%.*s%02X_%04X",
+        (int)(length - 7), symbol, bank, address);
+    return true;
+}
+
+bool gui_debug_get_auto_symbol(u8 bank, u16 address, bool subroutine,
+    char* output, int output_size)
+{
+    if (output == NULL || output_size <= 0)
+        return false;
+
+    output[0] = 0;
+    bool generated_dynamic_symbol = false;
+    if (IsValidPointer(dynamic_symbols) && IsValidPointer(dynamic_symbols[bank]))
+    {
+        DebugSymbol* dynamic_symbol = dynamic_symbols[bank][address];
+        if (IsValidPointer(dynamic_symbol))
+        {
+            generated_dynamic_symbol = format_auto_symbol_context(dynamic_symbol->text,
+                bank, address, output, output_size);
+            if (!generated_dynamic_symbol)
+            {
+                snprintf(output, output_size, "%s", dynamic_symbol->text);
+                return output[0] != 0;
+            }
+        }
+    }
+
+    GG_Disassembler_Record* target = emu_get_core()->GetMemory()->GetDisassemblerRecord(
+        address, bank);
+    if (IsValidPointer(target) && target->auto_symbol[0] != 0)
+    {
+        if (!format_auto_symbol_context(target->auto_symbol, bank, address,
+            output, output_size))
+        {
+            snprintf(output, output_size, "%s", target->auto_symbol);
+        }
+        return output[0] != 0;
+    }
+
+    if (generated_dynamic_symbol)
+        return true;
+
+    snprintf(output, output_size, subroutine ? "SUB_%02X_%04X" : "TAG_%02X_%04X",
+        bank, address);
+
+    return output[0] != 0;
+}
+
+static void write_assembler_definitions(FILE* file, const std::vector<AssemblerDefinition>& definitions)
 {
     for (size_t i = 0; i < definitions.size(); i++)
-        fprintf(file, "%s = $%04X\n", definitions[i].name, definitions[i].address);
+    {
+        if (definitions[i].value <= 0xFFFF)
+            fprintf(file, "%s = $%04X\n", definitions[i].name, definitions[i].value);
+        else
+            fprintf(file, "%s = $%08X\n", definitions[i].name, definitions[i].value);
+
+        if (definitions[i].conflict)
+        {
+            if (definitions[i].conflicting_value <= 0xFFFF)
+                fprintf(file, "; WARNING: %s also resolves to $%04X; first value retained\n",
+                    definitions[i].name, definitions[i].conflicting_value);
+            else
+                fprintf(file, "; WARNING: %s also resolves to $%08X; first value retained\n",
+                    definitions[i].name, definitions[i].conflicting_value);
+        }
+    }
 
     if (!definitions.empty())
         fprintf(file, "\n");
@@ -1592,17 +2165,24 @@ static bool get_record_operand(GG_Disassembler_Record* record, u16* out_address,
     return false;
 }
 
-bool gui_debug_resolve_symbol(GG_Disassembler_Record* record, std::string& instr, const char* color, const char* original_color, const char** out_name, u16* out_address)
+static bool get_line_operand(DisassemblerLine* line, u16* out_address, bool* out_is_zp)
 {
-    u16 lookup_address = 0;
-    bool is_zp = false;
+    if (line->record->jump)
+    {
+        *out_address = line->jump_address;
+        *out_is_zp = false;
+        return true;
+    }
+    return get_record_operand(line->record, out_address, out_is_zp);
+}
 
-    if (!get_record_operand(record, &lookup_address, &is_zp))
-        return false;
-
+static bool resolve_symbol_with_context(GG_Disassembler_Record* record, std::string& instr,
+    const char* color, const char* original_color, u16 lookup_address, bool is_zp,
+    u8 bank, const char** out_name, u16* out_address)
+{
     u16 bank_address = is_zp ? (0x2000 | lookup_address) : lookup_address;
-    u8 bank = record->jump ? record->jump_bank : emu_get_core()->GetMemory()->GetBank(bank_address);
     DebugSymbol* symbol = fixed_symbols[bank][bank_address];
+
     if (IsValidPointer(symbol))
     {
         std::string replacement = std::string(color) + symbol->text + original_color;
@@ -1617,15 +2197,47 @@ bool gui_debug_resolve_symbol(GG_Disassembler_Record* record, std::string& instr
     return false;
 }
 
-bool gui_debug_resolve_label(GG_Disassembler_Record* record, std::string& instr, const char* color, const char* original_color, const char** out_name, u16* out_address)
+bool gui_debug_resolve_symbol(GG_Disassembler_Record* record, std::string& instr,
+    const char* color, const char* original_color, const char** out_name, u16* out_address)
 {
     u16 lookup_address = 0;
     bool is_zp = false;
 
-    if (get_record_operand(record, &lookup_address, &is_zp))
-    {
-        u16 hardware_offset = 0x0000;
+    if (!get_record_operand(record, &lookup_address, &is_zp))
+        return false;
 
+    u16 bank_address = is_zp ? (0x2000 | lookup_address) : lookup_address;
+    u8 bank = record->jump ? record->jump_bank : emu_get_core()->GetMemory()->GetBank(bank_address);
+
+    return resolve_symbol_with_context(record, instr, color, original_color,
+        lookup_address, is_zp, bank, out_name, out_address);
+}
+
+static bool resolve_line_symbol(DisassemblerLine* line, std::string& instr,
+    const char* color, const char* original_color, const char** out_name, u16* out_address)
+{
+    u16 lookup_address = 0;
+    bool is_zp = false;
+
+    if (!get_line_operand(line, &lookup_address, &is_zp))
+        return false;
+
+    u8 bank = line->record->jump ? line->jump_bank : line->operand_bank;
+
+    return resolve_symbol_with_context(line->record, instr, color, original_color,
+        lookup_address, is_zp, bank, out_name, out_address);
+}
+
+static bool resolve_label_with_context(GG_Disassembler_Record* record, std::string& instr,
+    const char* color, const char* original_color, u16 lookup_address, bool is_zp,
+    u8 operand_bank, const char** out_name, u16* out_address)
+{
+    u16 label_lookup = is_zp ? (0x2000 | lookup_address) : lookup_address;
+    u16 hardware_offset = label_lookup & 0xE000;
+
+    if (record->jump || !record->has_operand_address || operand_bank != 0xFF)
+    {
+        hardware_offset = 0x0000;
         for (int i = 0; i < 8; i++)
         {
             if (emu_get_core()->GetMemory()->GetMpr(i) == 0xFF)
@@ -1634,22 +2246,21 @@ bool gui_debug_resolve_label(GG_Disassembler_Record* record, std::string& instr,
                 break;
             }
         }
+    }
 
-        u16 label_lookup = is_zp ? (0x2000 | lookup_address) : lookup_address;
-
-        for (int i = 0; i < k_debug_label_count; i++)
+    for (int i = 0; i < k_debug_label_count; i++)
+    {
+        if (k_debug_labels[i].address + hardware_offset == label_lookup)
         {
-            if (k_debug_labels[i].address + hardware_offset == label_lookup)
+            char label_address[5];
+            snprintf(label_address, 5, "%04X", lookup_address);
+            std::string replacement = std::string(color) + k_debug_labels[i].label + "_" + label_address + original_color;
+
+            if (replace_operand_in_string(record, instr, replacement.c_str()))
             {
-                char label_address[5];
-                snprintf(label_address, 5, "%04X", lookup_address);
-                std::string replacement = std::string(color) + k_debug_labels[i].label + "_" + label_address + original_color;
-                if (replace_operand_in_string(record, instr, replacement.c_str()))
-                {
-                    if (out_name) *out_name = k_debug_labels[i].label;
-                    if (out_address) *out_address = lookup_address;
-                    return true;
-                }
+                if (out_name) *out_name = k_debug_labels[i].label;
+                if (out_address) *out_address = lookup_address;
+                return true;
             }
         }
     }
@@ -1657,14 +2268,43 @@ bool gui_debug_resolve_label(GG_Disassembler_Record* record, std::string& instr,
     return false;
 }
 
+bool gui_debug_resolve_label(GG_Disassembler_Record* record, std::string& instr,
+    const char* color, const char* original_color, const char** out_name, u16* out_address)
+{
+    u16 lookup_address = 0;
+    bool is_zp = false;
+
+    if (!get_record_operand(record, &lookup_address, &is_zp))
+        return false;
+
+    u16 bank_address = is_zp ? (0x2000 | lookup_address) : lookup_address;
+    u8 operand_bank = record->jump ? record->jump_bank : emu_get_core()->GetMemory()->GetBank(bank_address);
+
+    return resolve_label_with_context(record, instr, color, original_color,
+        lookup_address, is_zp, operand_bank, out_name, out_address);
+}
+
+static bool resolve_line_label(DisassemblerLine* line, std::string& instr,
+    const char* color, const char* original_color, const char** out_name, u16* out_address)
+{
+    u16 lookup_address = 0;
+    bool is_zp = false;
+
+    if (!get_line_operand(line, &lookup_address, &is_zp))
+        return false;
+
+    return resolve_label_with_context(line->record, instr, color, original_color,
+        lookup_address, is_zp, line->operand_bank, out_name, out_address);
+}
+
 static void replace_symbols(DisassemblerLine* line, const char* jump_color, const char* operand_color, const char* auto_color, const char* original_color)
 {
-    std::string instr = line->record->name;
+    std::string instr = line->name_context;
     const char* color = line->record->jump ? jump_color : operand_color;
     const char* resolved_name = NULL;
     u16 resolved_address = 0;
 
-    if (gui_debug_resolve_symbol(line->record, instr, color, original_color, &resolved_name, &resolved_address))
+    if (resolve_line_symbol(line, instr, color, original_color, &resolved_name, &resolved_address))
     {
         snprintf(line->name_enhanced, 64, "%s", instr.c_str());
         set_disassembler_tooltip(line, color, resolved_name, resolved_address, !line->record->jump);
@@ -1680,24 +2320,12 @@ static void replace_symbols(DisassemblerLine* line, const char* jump_color, cons
     u16 lookup_address = 0;
     bool is_zp = false;
 
-    if (!get_record_operand(line->record, &lookup_address, &is_zp))
+    if (!get_line_operand(line, &lookup_address, &is_zp))
         return;
 
-    DebugSymbol* dynamic_symbol = dynamic_symbols[line->record->jump_bank][lookup_address];
-
-    const char* auto_symbol_text = NULL;
-    if (IsValidPointer(dynamic_symbol))
-    {
-        auto_symbol_text = dynamic_symbol->text;
-    }
-    else
-    {
-        GG_Disassembler_Record* target = emu_get_core()->GetMemory()->GetDisassemblerRecord(lookup_address, line->record->jump_bank);
-        if (IsValidPointer(target) && target->auto_symbol[0] != 0)
-            auto_symbol_text = target->auto_symbol;
-    }
-
-    if (auto_symbol_text != NULL)
+    char auto_symbol_text[64];
+    if (gui_debug_get_auto_symbol(line->jump_bank, lookup_address,
+        line->record->subroutine, auto_symbol_text, sizeof(auto_symbol_text)))
     {
         std::string replacement = std::string(auto_color) + auto_symbol_text + original_color;
         if (replace_operand_in_string(line->record, instr, replacement.c_str()))
@@ -1708,21 +2336,21 @@ static void replace_symbols(DisassemblerLine* line, const char* jump_color, cons
     }
 }
 
-static bool collect_assembler_symbol_definition(DisassemblerLine* line, std::vector<AssemblerLabelDefinition>& definitions)
+static bool collect_assembler_symbol_definition(DisassemblerLine* line,
+    std::vector<AssemblerDefinition>& definitions, bool check_exported_label)
 {
-    std::string instr = line->record->name;
+    std::string instr = line->name_context;
     const char* resolved_name = NULL;
     u16 resolved_address = 0;
 
-    if (gui_debug_resolve_symbol(line->record, instr, "", "", &resolved_name, &resolved_address))
+    if (resolve_line_symbol(line, instr, "", "", &resolved_name, &resolved_address))
     {
-        u16 lookup_address = 0;
-        bool is_zp = false;
-        get_record_operand(line->record, &lookup_address, &is_zp);
-        u16 bank_address = is_zp ? (0x2000 | lookup_address) : lookup_address;
-        u8 bank = line->record->jump ? line->record->jump_bank : emu_get_core()->GetMemory()->GetBank(bank_address);
-        if (!symbol_label_is_exported(resolved_name, resolved_address, bank))
-            add_assembler_definition(definitions, resolved_name, resolved_address);
+        u8 bank = line->record->jump ? line->jump_bank : line->operand_bank;
+        u16 definition_address = line->record->operand_is_zp ? (0x2000 | resolved_address) : resolved_address;
+
+        if (!check_exported_label ||
+            !symbol_label_is_exported(resolved_name, definition_address, bank))
+            add_assembler_definition(definitions, resolved_name, definition_address);
         return true;
     }
 
@@ -1735,28 +2363,17 @@ static bool collect_assembler_symbol_definition(DisassemblerLine* line, std::vec
     u16 lookup_address = 0;
     bool is_zp = false;
 
-    if (!get_record_operand(line->record, &lookup_address, &is_zp))
+    if (!get_line_operand(line, &lookup_address, &is_zp))
         return false;
 
-    DebugSymbol* dynamic_symbol = dynamic_symbols[line->record->jump_bank][lookup_address];
-    const char* auto_symbol_text = NULL;
-
-    if (IsValidPointer(dynamic_symbol))
-    {
-        auto_symbol_text = dynamic_symbol->text;
-    }
-    else
-    {
-        GG_Disassembler_Record* target = emu_get_core()->GetMemory()->GetDisassemblerRecord(lookup_address, line->record->jump_bank);
-        if (IsValidPointer(target) && target->auto_symbol[0] != 0)
-            auto_symbol_text = target->auto_symbol;
-    }
-
-    if (auto_symbol_text != NULL)
+    char auto_symbol_text[64];
+    if (gui_debug_get_auto_symbol(line->jump_bank, lookup_address,
+        line->record->subroutine, auto_symbol_text, sizeof(auto_symbol_text)))
     {
         if (replace_operand_in_string(line->record, instr, auto_symbol_text))
         {
-            if (!symbol_label_is_exported(auto_symbol_text, lookup_address, line->record->jump_bank))
+            if (!check_exported_label ||
+                !symbol_label_is_exported(auto_symbol_text, lookup_address, line->jump_bank))
                 add_assembler_definition(definitions, auto_symbol_text, lookup_address);
             return true;
         }
@@ -1765,13 +2382,13 @@ static bool collect_assembler_symbol_definition(DisassemblerLine* line, std::vec
     return false;
 }
 
-static bool collect_assembler_label_definition(DisassemblerLine* line, std::vector<AssemblerLabelDefinition>& definitions)
+static bool collect_assembler_label_definition(DisassemblerLine* line, std::vector<AssemblerDefinition>& definitions)
 {
-    std::string instr = line->record->name;
+    std::string instr = line->name_context;
     const char* resolved_name = NULL;
     u16 resolved_address = 0;
 
-    if (gui_debug_resolve_label(line->record, instr, "", "", &resolved_name, &resolved_address))
+    if (resolve_line_label(line, instr, "", "", &resolved_name, &resolved_address))
     {
         add_assembler_label_definition(definitions, resolved_name, resolved_address);
         return true;
@@ -1782,11 +2399,11 @@ static bool collect_assembler_label_definition(DisassemblerLine* line, std::vect
 
 static bool replace_labels(DisassemblerLine* line, const char* color, const char* original_color)
 {
-    std::string instr = line->record->name;
+    std::string instr = line->name_context;
     const char* resolved_name = NULL;
     u16 resolved_address = 0;
 
-    if (gui_debug_resolve_label(line->record, instr, color, original_color, &resolved_name, &resolved_address))
+    if (resolve_line_label(line, instr, color, original_color, &resolved_name, &resolved_address))
     {
         snprintf(line->name_enhanced, 64, "%s", instr.c_str());
         if (line->tooltip[0] == 0)
@@ -1928,7 +2545,7 @@ static void disassembler_menu(void)
             HuC6280* processor = emu_get_core()->GetHuC6280();
             HuC6280::HuC6280_State* proc_state = processor->GetState();
             u16 pc = proc_state->PC->GetValue();
-            request_goto_address(pc);
+            request_goto_live_address(pc);
         }
 
         if (ImGui::BeginMenu("Go To Address..."))
@@ -1948,7 +2565,7 @@ static void disassembler_menu(void)
                 u16 address_value = 0;
                 if (parse_hex_string(goto_address, strlen(goto_address), &address_value))
                 {
-                    request_goto_address(address_value);
+                    request_goto_live_address(address_value);
                 }
                 goto_address[0] = 0;
             }
@@ -1993,7 +2610,8 @@ static void disassembler_menu(void)
             gui_debug_memory_step_frame();
         }
 
-        if (ImGui::MenuItem("Run to Cursor", config_hotkeys[config_HotkeyIndex_DebugRunToCursor].str))
+        bool live_view = disassembler_view_mode == DisassemblerViewMode_Live;
+        if (ImGui::MenuItem("Run to Cursor", config_hotkeys[config_HotkeyIndex_DebugRunToCursor].str, false, live_view))
         {
             gui_debug_runtocursor();
         }
@@ -2039,7 +2657,8 @@ static void disassembler_menu(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Toggle Selected Line", config_hotkeys[config_HotkeyIndex_DebugBreakpoint].str))
+        bool live_view = disassembler_view_mode == DisassemblerViewMode_Live;
+        if (ImGui::MenuItem("Toggle Selected Line", config_hotkeys[config_HotkeyIndex_DebugBreakpoint].str, false, live_view))
         {
             gui_debug_toggle_breakpoint();
         }
@@ -2083,7 +2702,8 @@ static void disassembler_menu(void)
 
     if (ImGui::BeginMenu("Bookmarks"))
     {
-        if (ImGui::MenuItem("Add Bookmark..."))
+        bool live_view = disassembler_view_mode == DisassemblerViewMode_Live;
+        if (ImGui::MenuItem("Add Bookmark...", NULL, false, live_view))
         {
             gui_debug_add_bookmark();
         }
@@ -2102,7 +2722,7 @@ static void disassembler_menu(void)
             snprintf(label, 80, "$%04X: %s", bookmarks[i].address, bookmarks[i].name);
             if (ImGui::MenuItem(label))
             {
-                request_goto_address(bookmarks[i].address);
+                request_goto_live_address(bookmarks[i].address);
             }
         }
 
@@ -2345,7 +2965,7 @@ void gui_debug_window_call_stack(void)
             snprintf(selectable_id, sizeof(selectable_id), "##cs%d", row_index);
             if (ImGui::Selectable(selectable_id, false, ImGuiSelectableFlags_SpanAllColumns))
             {
-                request_goto_address(entry.dest);
+                request_goto_bank_address(entry.dest, entry.bank);
             }
 
             ImGui::PopFont();
@@ -2534,7 +3154,7 @@ void gui_debug_window_symbols(void)
                 snprintf(selectable_id, sizeof(selectable_id), "##sym%d", (int)idx);
                 if (ImGui::Selectable(selectable_id, false, ImGuiSelectableFlags_SpanAllColumns))
                 {
-                    request_goto_address(symbol->address);
+                    request_goto_bank_address(symbol->address, (u8)b);
                 }
 
                 ImGui::PopFont();
@@ -2689,41 +3309,399 @@ void gui_debug_find_symbols(const char* name, std::vector<DebugSymbol*>& symbols
     }
 }
 
+static bool format_assembler_relative_instruction(GG_Disassembler_Record* record, char* output, int output_size)
+{
+    GG_OPCode_Type type = k_huc6280_opcode_names[record->opcodes[0]].type;
+    const char* format = k_huc6280_opcode_names[record->opcodes[0]].name[config_debug.dis_syntax];
+
+    if (type != GG_OPCode_Type_1b_Relative && type != GG_OPCode_Type_1b_1b_Relative)
+        return false;
+
+    if (config_debug.dis_syntax == GG_Disassembler_Syntax_WLADX)
+    {
+        if (type == GG_OPCode_Type_1b_Relative)
+            snprintf(output, output_size, format, record->opcodes[1]);
+        else
+            snprintf(output, output_size, format, record->opcodes[1], record->opcodes[2]);
+        return true;
+    }
+
+    if (config_debug.dis_syntax != GG_Disassembler_Syntax_PCEAS)
+        return false;
+
+    static const char* target_marker = "$A55A";
+    char formatted_instruction[64];
+    if (type == GG_OPCode_Type_1b_Relative)
+        snprintf(formatted_instruction, sizeof(formatted_instruction), format, 0xA55A);
+    else
+        snprintf(formatted_instruction, sizeof(formatted_instruction), format, record->opcodes[1], 0xA55A);
+
+    std::string instruction = formatted_instruction;
+    size_t target_position = instruction.rfind(target_marker);
+    if (target_position == std::string::npos)
+        return false;
+
+    int relative_index = type == GG_OPCode_Type_1b_Relative ? 1 : 2;
+    int target_delta = record->size + (s8)record->opcodes[relative_index];
+    char target[16];
+    if (target_delta >= 0)
+        snprintf(target, sizeof(target), "*+%d", target_delta);
+    else
+        snprintf(target, sizeof(target), "*-%d", -target_delta);
+
+    instruction.replace(target_position, strlen(target_marker), target);
+    snprintf(output, output_size, "%s", instruction.c_str());
+    return true;
+}
+
+static void remove_disassembler_visual_aid(char* instruction)
+{
+    char* visual_aid = strstr(instruction, "  [");
+    if (visual_aid != NULL && strchr(visual_aid, ']') != NULL)
+        *visual_aid = 0;
+}
+
+static void format_wla_direct_page_operand(GG_Disassembler_Record* record, char* instruction, int instruction_size)
+{
+    if (config_debug.dis_syntax != GG_Disassembler_Syntax_WLADX ||
+        !record->has_operand_address || !record->operand_is_zp)
+        return;
+
+    std::string original = record->name;
+    std::string formatted = instruction;
+    if (formatted == original)
+        return;
+
+    int suffix_length = (int)original.length() - record->operand_offset - record->operand_length;
+    if (record->operand_offset < 0 || suffix_length < 0 ||
+        record->operand_offset > (int)formatted.length() ||
+        suffix_length > (int)formatted.length() - record->operand_offset)
+        return;
+
+    formatted.insert(record->operand_offset, "<");
+    snprintf(instruction, instruction_size, "%s", formatted.c_str());
+}
+
+static bool full_disassembler_record_is_code(GG_Disassembler_Record* record, int bank_offset, bool assembler_syntax)
+{
+    if (!IsValidPointer(record) || record->size <= 0 ||
+        record->name[0] == 0 || record->name[0] == '?')
+        return false;
+
+    if (!assembler_syntax)
+        return true;
+
+    if ((bank_offset + record->size) > 0x2000)
+        return false;
+
+    if (config_debug.dis_syntax == GG_Disassembler_Syntax_PCEAS ||
+        config_debug.dis_syntax == GG_Disassembler_Syntax_WLADX)
+    {
+        GG_OPCode_Type type = k_huc6280_opcode_names[record->opcodes[0]].type;
+        if (type == GG_OPCode_Type_1b_Relative || type == GG_OPCode_Type_1b_1b_Relative)
+        {
+            char instruction[64];
+            if (!format_assembler_relative_instruction(record, instruction, sizeof(instruction)))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+static bool full_disassembler_bank_is_assembleable(Memory* memory, u8 bank)
+{
+    Memory::MemoryBankType type = memory->GetBankType(bank);
+    return type == Memory::MEMORY_BANK_TYPE_ROM || type == Memory::MEMORY_BANK_TYPE_BIOS;
+}
+
+static const char* get_memory_bank_type_name(Memory::MemoryBankType type)
+{
+    switch (type)
+    {
+        case Memory::MEMORY_BANK_TYPE_ROM:        return "ROM";
+        case Memory::MEMORY_BANK_TYPE_BIOS:       return "BIOS";
+        case Memory::MEMORY_BANK_TYPE_CARD_RAM:   return "Card RAM";
+        case Memory::MEMORY_BANK_TYPE_BACKUP_RAM: return "Backup RAM";
+        case Memory::MEMORY_BANK_TYPE_WRAM:       return "WRAM";
+        case Memory::MEMORY_BANK_TYPE_CDROM_RAM:  return "CD-ROM RAM";
+        case Memory::MEMORY_BANK_TYPE_HARDWARE:   return "Hardware";
+        case Memory::MEMORY_BANK_TYPE_UNUSED:     return "Unused";
+        default:                                  return "Unknown";
+    }
+}
+
+static void write_full_disassembler_header(FILE* file, int highest_assembleable_bank)
+{
+    fprintf(file, "; Geargrafx Save All disassembly\n");
+
+    if (config_debug.dis_syntax == GG_Disassembler_Syntax_PCEAS)
+    {
+        fprintf(file, "; Assemble with: pceas --raw --trim -o output.pce export.asm\n");
+        fprintf(file, "; ROM and BIOS banks use the canonical CPU window $E000-$FFFF.\n");
+        fprintf(file, "; Runtime-memory banks are retained below as commented listings.\n\n");
+    }
+    else if (config_debug.dis_syntax == GG_Disassembler_Syntax_WLADX)
+    {
+        int bank_count = highest_assembleable_bank >= 0 ? highest_assembleable_bank + 1 : 1;
+        fprintf(file, "; Assemble with: wla-huc6280 -o output.o export.asm\n");
+        fprintf(file, "; Link with: wlalink -b export.link output.pce\n");
+        fprintf(file, "; export.link must contain:\n");
+        fprintf(file, "; [objects]\n");
+        fprintf(file, "; output.o\n");
+        fprintf(file, "; ROM and BIOS banks use the canonical CPU window $E000-$FFFF.\n");
+        fprintf(file, "; Runtime-memory banks are retained below as commented listings.\n\n");
+        fprintf(file, ".MEMORYMAP\n");
+        fprintf(file, "    DEFAULTSLOT 0\n");
+        fprintf(file, "    SLOTSIZE $2000\n");
+        fprintf(file, "    SLOT 0 $E000\n");
+        fprintf(file, ".ENDME\n\n");
+        fprintf(file, ".ROMBANKMAP\n");
+        fprintf(file, "    BANKSTOTAL %d\n", bank_count);
+        fprintf(file, "    BANKSIZE $2000\n");
+        fprintf(file, "    BANKS %d\n", bank_count);
+        fprintf(file, ".ENDRO\n\n");
+    }
+}
+
+static void write_full_disassembler_bank_header(FILE* file, Memory* memory, u8 bank, bool assembleable)
+{
+    if (!assembleable)
+    {
+        fprintf(file, "; Physical bank $%02X (%s) is runtime memory and is not assembled.\n",
+            bank, get_memory_bank_type_name(memory->GetBankType(bank)));
+        return;
+    }
+
+    if (config_debug.dis_syntax == GG_Disassembler_Syntax_PCEAS)
+    {
+        fprintf(file, "    .bank $%02X\n", bank);
+        fprintf(file, "    .org $E000\n");
+    }
+    else if (config_debug.dis_syntax == GG_Disassembler_Syntax_WLADX)
+    {
+        fprintf(file, ".BANK $%02X SLOT 0\n", bank);
+        fprintf(file, ".ORG 0\n");
+    }
+}
+
+static void write_full_disassembler_line(FILE* file, bool assembler_syntax, bool commented_out,
+    int physical_address, u8 bank, const char* line_name, const char* bytes, const char* line_note)
+{
+    char name[64];
+    snprintf(name, sizeof(name), "%s", line_name);
+    RemoveColorFromString(name);
+    if (assembler_syntax)
+        remove_disassembler_visual_aid(name);
+
+    char note[96];
+    note[0] = 0;
+    if (line_note != NULL)
+    {
+        snprintf(note, sizeof(note), "%s", line_note);
+        RemoveColorFromString(note);
+        remove_disassembler_visual_aid(note);
+    }
+
+    int len = (int)strlen(name);
+    char spaces[32];
+    int offset = 28 - len;
+    if (offset < 0)
+        offset = 0;
+    for (int i = 0; i < offset; i++)
+        spaces[i] = ' ';
+    spaces[offset] = 0;
+
+    if (assembler_syntax && note[0] != 0)
+        fprintf(file, "%s    %s%s; %s | %06X-%02X: %s\n", commented_out ? "; " : "",
+            name, spaces, note, physical_address, bank, bytes);
+    else if (assembler_syntax)
+        fprintf(file, "%s    %s%s; %06X-%02X: %s\n", commented_out ? "; " : "",
+            name, spaces, physical_address, bank, bytes);
+    else
+        fprintf(file, "%06X-%02X:    %s%s;%s\n", physical_address, bank, name, spaces, bytes);
+}
+
 static void save_full_disassembler(FILE* file)
 {
     Memory* memory = emu_get_core()->GetMemory();
     GG_Disassembler_Record** records = memory->GetAllDisassemblerRecords();
     bool assembler_syntax = disassembler_uses_assembler_syntax();
+    std::vector<AssemblerDefinition> definitions;
+    bool active_banks[k_symbol_bank_count] = {};
+    bool assembleable_banks[k_symbol_bank_count] = {};
+    int highest_assembleable_bank = -1;
 
     for (int i = 0; i < 0x200000; i++)
     {
         GG_Disassembler_Record* record = records[i];
-
-        if (IsValidPointer(record) && (record->name[0] != 0))
+        int bank = i >> 13;
+        if (full_disassembler_record_is_code(record, i & 0x1FFF, false))
         {
-            if (record->subroutine || record->irq)
-                fprintf(file, "\n");
+            active_banks[bank] = true;
+            assembleable_banks[bank] = full_disassembler_bank_is_assembleable(memory, (u8)bank);
+            if (assembleable_banks[bank])
+                highest_assembleable_bank = bank;
+        }
+    }
+
+    if (assembler_syntax)
+        write_full_disassembler_header(file, highest_assembleable_bank);
+
+    for (size_t i = 0; i < fixed_symbol_list.size(); i++)
+    {
+        DebugSymbol* symbol = fixed_symbol_list[i].symbol;
+        if (IsValidPointer(symbol))
+            add_assembler_definition(definitions, symbol->text, symbol->address);
+    }
+
+    for (size_t i = 0; i < fixed_symbol_definitions.size(); i++)
+        add_assembler_definition(definitions, fixed_symbol_definitions[i].name,
+            fixed_symbol_definitions[i].value);
+
+    if (config_debug.dis_replace_symbols || config_debug.dis_replace_labels)
+    {
+        for (int i = 0; i < 0x200000; i++)
+        {
+            GG_Disassembler_Record* record = records[i];
+            if (!full_disassembler_record_is_code(record, i & 0x1FFF, false))
+                continue;
+
+            DisassemblerLine line;
+            initialize_disassembler_line(&line, record, (u16)i);
+            if (config_debug.dis_replace_symbols)
+                collect_assembler_symbol_definition(&line, definitions, false);
+            if (config_debug.dis_replace_labels)
+                collect_assembler_label_definition(&line, definitions);
+        }
+    }
+
+    write_assembler_definitions(file, definitions);
+
+    bool first_bank = true;
+    for (int bank = 0; bank < k_symbol_bank_count; bank++)
+    {
+        if (!active_banks[bank])
+            continue;
+
+        if (!first_bank)
+            fprintf(file, "\n");
+        first_bank = false;
+
+        bool commented_out = assembler_syntax && !assembleable_banks[bank];
+        if (assembler_syntax)
+        {
+            write_full_disassembler_bank_header(file, memory, (u8)bank, assembleable_banks[bank]);
+            fprintf(file, "\n");
+        }
+
+        int offset = 0;
+        bool has_output = false;
+        bool previous_was_data = false;
+        bool blank_line_written = false;
+        while (offset < 0x2000)
+        {
+            int physical_address = (bank << 13) | offset;
+            GG_Disassembler_Record* record = records[physical_address];
+
+            if (full_disassembler_record_is_code(record, offset, assembler_syntax))
+            {
+                if (has_output && !blank_line_written &&
+                    (previous_was_data || record->subroutine || record->irq))
+                {
+                    fprintf(file, "\n");
+                    blank_line_written = true;
+                }
+
+                DisassemblerLine line;
+                initialize_disassembler_line(&line, record, (u16)physical_address);
+
+                if (config_debug.dis_replace_symbols)
+                    replace_symbols(&line, "", "", "", "");
+                if (config_debug.dis_replace_labels)
+                    replace_labels(&line, "", "");
+
+                if (assembler_syntax)
+                    format_wla_direct_page_operand(record, line.name_enhanced,
+                        sizeof(line.name_enhanced));
+
+                char note[96];
+                note[0] = 0;
+                char decoded_name[64];
+                snprintf(decoded_name, sizeof(decoded_name), "%s", line.name_enhanced);
+                if (assembler_syntax &&
+                    format_assembler_relative_instruction(record, line.name_enhanced, sizeof(line.name_enhanced)))
+                {
+                    RemoveColorFromString(decoded_name);
+                    char exported_name[64];
+                    snprintf(exported_name, sizeof(exported_name), "%s", line.name_enhanced);
+                    RemoveColorFromString(exported_name);
+                    if (strcmp(decoded_name, exported_name) != 0)
+                        snprintf(note, sizeof(note), "decoded as %s", decoded_name);
+                }
+
+                write_full_disassembler_line(file, assembler_syntax, commented_out,
+                    physical_address, record->bank, line.name_enhanced, record->bytes,
+                    note[0] != 0 ? note : NULL);
+
+                has_output = true;
+                previous_was_data = false;
+                blank_line_written = false;
+
+                if (is_return_instruction(record->opcodes[0]))
+                {
+                    fprintf(file, "\n");
+                    blank_line_written = true;
+                }
+
+                offset += record->size > 0 ? record->size : 1;
+                continue;
+            }
+
+            u8 data[8];
+            int count = 0;
+            while (count < 8 && (offset + count) < 0x2000)
+            {
+                int data_address = physical_address + count;
+                GG_Disassembler_Record* data_record = records[data_address];
+                if (full_disassembler_record_is_code(data_record, offset + count, assembler_syntax))
+                    break;
+
+                if (!memory->TryPeek((u16)(offset + count), (u8)bank, &data[count]))
+                    break;
+
+                count++;
+            }
+
+            if (count == 0)
+            {
+                offset++;
+                continue;
+            }
 
             char name[64];
-            strcpy(name, record->name);
-            RemoveColorFromString(name);
+            format_data_statement(data, count, name, sizeof(name));
 
-            int len = (int)strlen(name);
-            char spaces[32];
-            int offset = 28 - len;
-            if (offset < 0)
-                offset = 0;
-            for (int i = 0; i < offset; i++)
-                spaces[i] = ' ';
-            spaces[offset] = 0;
+            char bytes[25];
+            int bytes_position = 0;
+            for (int i = 0; i < count; i++)
+            {
+                int written = snprintf(bytes + bytes_position, sizeof(bytes) - bytes_position,
+                    "%02X ", data[i]);
+                if (written < 0)
+                    break;
+                bytes_position += written;
+            }
 
-            if (assembler_syntax)
-                fprintf(file, "    %s%s; %06X-%02X: %s\n", name, spaces, i, record->bank, record->bytes);
-            else
-                fprintf(file, "%06X-%02X:    %s%s;%s\n", i, record->bank, name, spaces, record->bytes);
-
-            if (is_return_instruction(record->opcodes[0]))
+            if (has_output && !previous_was_data && !blank_line_written)
                 fprintf(file, "\n");
+
+            write_full_disassembler_line(file, assembler_syntax, commented_out,
+                physical_address, (u8)bank, name, bytes, NULL);
+            has_output = true;
+            previous_was_data = true;
+            blank_line_written = false;
+            offset += count;
         }
     }
 }
@@ -2732,7 +3710,7 @@ static void save_current_disassembler(FILE* file)
 {
     int total_lines = (int)disassembler_lines.size();
     bool assembler_syntax = disassembler_uses_assembler_syntax();
-    std::vector<AssemblerLabelDefinition> definitions;
+    std::vector<AssemblerDefinition> definitions;
 
     if (assembler_syntax && (config_debug.dis_replace_symbols || config_debug.dis_replace_labels))
     {
@@ -2748,7 +3726,7 @@ static void save_current_disassembler(FILE* file)
             }
         }
 
-        write_assembler_label_definitions(file, definitions);
+        write_assembler_definitions(file, definitions);
     }
 
     for (int i = 0; i < total_lines; i++)

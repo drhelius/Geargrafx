@@ -376,6 +376,7 @@ GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
         record->has_operand_address = false;
         record->operand_address = 0;
         record->operand_is_zp = false;
+        record->operand_bank = 0;
         record->operand_offset = 0;
         record->operand_length = 0;
         record->auto_symbol[0] = 0;

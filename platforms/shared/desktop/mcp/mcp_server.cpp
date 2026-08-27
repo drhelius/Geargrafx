@@ -671,15 +671,21 @@ json McpServer::BuildToolList()
                 }},
                 {"bank", {
                     {"type", "string"},
-                    {"description", "Optional bank 00-FF; overrides MPR mapping: (bank << 13) | (address & 0x1FFF)."}
+                    {"description",
+                        "Optional physical bank 00-FF for the requested 8KB CPU window; "
+                        "other windows use current MPR mappings."}
                 }},
                 {"resolve_symbols", {
                     {"type", "boolean"},
-                    {"description", "Resolve operands to symbols/hardware labels; non-jump operands use current MPR map. Default false."}
+                    {"description",
+                        "Resolve operands to symbols, automatic symbols, and hardware labels "
+                        "using the request's effective bank context. Default false."}
                 }},
                 {"detailed", {
                     {"type", "boolean"},
-                    {"description", "Include opcode bytes, jump targets, IRQ metadata. Default false compact output."}
+                    {"description",
+                        "Include opcode bytes, jump targets and banks, IRQ metadata. "
+                        "Default false compact output."}
                 }}
             }},
             {"required", json::array({"start_address", "end_address"})}
@@ -2657,7 +2663,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
             for (const DisasmLine& line : lines)
             {
                 json instr;
-                std::ostringstream addr_ss, bank_ss, jump_ss;
+                std::ostringstream addr_ss, bank_ss, jump_ss, jump_bank_ss;
 
                 addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << line.address;
                 bank_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(2) << (int)line.bank;
@@ -2671,8 +2677,12 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
 
                 if (line.jump)
                 {
-                    jump_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << line.jump_address;
+                    jump_ss << std::hex << std::uppercase << std::setfill('0') <<
+                        std::setw(4) << line.jump_address;
+                    jump_bank_ss << std::hex << std::uppercase << std::setfill('0') <<
+                        std::setw(2) << (int)line.jump_bank;
                     instr["jump_target"] = jump_ss.str();
+                    instr["jump_bank"] = jump_bank_ss.str();
                     instr["is_subroutine"] = line.subroutine;
                 }
 
