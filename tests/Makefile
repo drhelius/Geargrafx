@@ -11,6 +11,8 @@ INCLUDES += -I$(SRC_DIR)
 INCLUDES += -I$(DEPS_DIR)/libchdr/include
 INCLUDES += -I$(DEPS_DIR)/lzma/include
 INCLUDES += -I$(DEPS_DIR)/miniz
+INCLUDES += -I$(DEPS_DIR)/json
+INCLUDES += -I$(DEPS_DIR)/qon
 INCLUDES += -I$(DEPS_DIR)/zstd
 
 USE_CLANG ?= 0

@@ -131,6 +131,7 @@ EXTERN bool gui_is_rom_loading(void);
 EXTERN bool gui_finish_loading_rom(void);
 EXTERN void gui_load_physical_cdrom(const char* device_id);
 EXTERN void gui_load_bios(const char* path, bool syscard);
+EXTERN void gui_load_pac_bios(const char* path, GG_LaserActive_Region region);
 EXTERN void gui_load_palette(const char* path);
 EXTERN void gui_set_style(void);
 EXTERN void gui_set_status_message(const char* message, Uint64 milliseconds);

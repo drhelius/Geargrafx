@@ -25,8 +25,11 @@
     <ClCompile Include="..\..\src\cdrom_chd_file_adapter.cpp" />
     <ClCompile Include="..\..\src\cdrom_chd_image.cpp" />
     <ClCompile Include="..\..\src\cdrom_cuebin_image.cpp" />
+    <ClCompile Include="..\..\src\cdrom_mmi_image.cpp" />
     <ClCompile Include="..\..\src\media_file.cpp" />
     <ClCompile Include="..\..\src\media_file_native.cpp" />
+    <ClCompile Include="..\..\src\media_file_slice.cpp" />
+    <ClCompile Include="..\..\src\mmi_archive.cpp" />
     <ClCompile Include="..\..\src\cdrom_image.cpp" />
     <ClCompile Include="..\..\src\media.cpp" />
     <ClCompile Include="..\..\src\cdrom_audio.cpp" />
@@ -45,6 +48,7 @@
     <ClCompile Include="..\..\src\huc6280_psg.cpp" />
     <ClCompile Include="..\..\src\huc6280.cpp" />
     <ClCompile Include="..\..\src\input.cpp" />
+    <ClCompile Include="..\..\src\laseractive.cpp" />
     <ClCompile Include="..\..\src\turbolink.cpp" />
     <ClCompile Include="..\..\src\mapper.cpp" />
     <ClCompile Include="..\..\src\mb128.cpp" />
@@ -80,6 +84,9 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\shared\dependencies\miniz\miniz.c">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\qon\qon.cpp">
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\sound_queue.cpp" />
@@ -163,8 +170,11 @@
     <ClInclude Include="..\..\src\cdrom_chd_file_adapter.h" />
     <ClInclude Include="..\..\src\cdrom_chd_image.h" />
     <ClInclude Include="..\..\src\cdrom_cuebin_image.h" />
+    <ClInclude Include="..\..\src\cdrom_mmi_image.h" />
     <ClInclude Include="..\..\src\media_file.h" />
     <ClInclude Include="..\..\src\media_file_native.h" />
+    <ClInclude Include="..\..\src\media_file_slice.h" />
+    <ClInclude Include="..\..\src\mmi_archive.h" />
     <ClInclude Include="..\..\src\cdrom_image.h" />
     <ClInclude Include="..\..\src\crc.h" />
     <ClInclude Include="..\..\src\huc6202_inline.h" />
@@ -222,6 +232,7 @@
     <ClInclude Include="..\..\src\sf2_mapper.h" />
     <ClInclude Include="..\..\src\vgm_recorder.h" />
     <ClInclude Include="..\..\src\trace_logger.h" />
+    <ClInclude Include="..\..\src\laseractive.h" />
     <ClInclude Include="..\..\src\types.h" />
     <ClInclude Include="..\shared\dependencies\glad\glad.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\bitstream.h" />
@@ -236,6 +247,8 @@
     <ClInclude Include="..\shared\dependencies\lzma\include\LzmaDec.h" />
     <ClInclude Include="..\shared\dependencies\lzma\include\LzmaEnc.h" />
     <ClInclude Include="..\shared\dependencies\miniz\miniz.h" />
+    <ClInclude Include="..\shared\dependencies\qon\qon.h" />
+    <ClInclude Include="..\shared\dependencies\qon\qoi2.h" />
     <ClInclude Include="..\shared\dependencies\zstd\zstddeclib.c" />
     <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl3.h" />
     <ClInclude Include="..\shared\desktop\keyboard.h" />

@@ -17,17 +17,19 @@
  *
  */
 
-#ifndef MEDIA_FILE_NATIVE_H
-#define MEDIA_FILE_NATIVE_H
 
-#include <fstream>
+#ifndef MEDIA_FILE_SLICE_H
+#define MEDIA_FILE_SLICE_H
+
 #include "media_file.h"
 
-class MediaFileNative : public MediaFile
+class MediaFileSlice : public MediaFile
 {
 public:
-    MediaFileNative();
-    virtual ~MediaFileNative();
+    MediaFileSlice();
+    virtual ~MediaFileSlice();
+
+    bool OpenSlice(const char* path, u64 base_offset, u64 length);
 
     virtual bool Open(const char* path) override;
     virtual void Close() override;
@@ -40,7 +42,10 @@ public:
     virtual s64 Read(void* buffer, u64 size) override;
 
 private:
-    std::ifstream m_file;
+    MediaFile* m_file;
+    u64 m_base_offset;
+    u64 m_length;
+    u64 m_position;
 };
 
-#endif /* MEDIA_FILE_NATIVE_H */
+#endif /* MEDIA_FILE_SLICE_H */

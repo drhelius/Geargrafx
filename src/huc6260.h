@@ -30,11 +30,13 @@
 #define HUC6260_HSYNC_START_HPOS (HUC6260_LINE_LENGTH - HUC6260_HSYNC_LENGTH)
 #define HUC6260_HSYNC_END_HPOS 0
 #define HUC6260_VSYNC_HPOS (HUC6260_HSYNC_START_HPOS + 30)
+#define HUC6260_LASERACTIVE_WIDTH 1176
 
 class HuC6202;
 class HuC6280;
 class Random;
 class TraceLogger;
+class LaserActive;
 
 class HuC6260
 {
@@ -90,6 +92,7 @@ public:
     GG_Pixel_Format GetPixelFormat();
     void SetResetValue(int value);
     void SetTraceLogger(TraceLogger* trace_logger);
+    void SetLaserActive(LaserActive* laseractive);
     void SetPalette(int palette);
     void SetCustomPalette(const u8* data);
     void SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8);
@@ -109,6 +112,8 @@ private:
     void SanitizeState();
     template <int BPP>
     void ApplyLowPassFilter();
+    template <int BPP>
+    void RenderLaserActiveFrame();
     u8 RGB565Component(u8 value, u16 max);
     u16 PackRGB565(u8 red, u8 green, u8 blue);
     u8 RoundToByte(float value);
@@ -118,6 +123,7 @@ private:
     HuC6280* m_huc6280;
     Random* m_random;
     TraceLogger* m_trace_logger;
+    LaserActive* m_laseractive;
     HuC6260_State m_state;
     u8 m_control_register;
     u16 m_color_table_address;
@@ -125,10 +131,13 @@ private:
     s32 m_clock_divider;
     u16 m_color_table[512] = {};
     u8* m_frame_buffer;
-    u8 m_scale_buffer[2048 * 512 * 4] = {};
+    alignas(u16) u8 m_scale_buffer[2048 * 512 * 4] = {};
     u16 m_vce_buffer_1[1024 * 512] = {};
     u16 m_vce_buffer_2[1024 * 512] = {};
-    s32 m_line_speed[242] = {};
+    s32 m_line_speed[HUC6260_LINES] = {};
+    u8 m_laseractive_classification[683 * HUC6260_LINES] = {};
+    u8 m_laseractive_output_classification[HUC6260_LASERACTIVE_WIDTH * HUC6260_LINES] = {};
+    u8 m_laseractive_line_state[HUC6260_LINES * 8] = {};
     bool m_multiple_speeds;
     bool m_scaled_width;
     bool m_active_line;

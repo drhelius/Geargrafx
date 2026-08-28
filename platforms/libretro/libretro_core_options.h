@@ -552,6 +552,21 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         },
         "Disabled"
     },
+    {
+        "geargrafx_laseractive_region",
+        "LaserActive Region (restart)",
+        NULL,
+        "Select the NEC PAC firmware region for MMI media. Japanese firmware files are pac-n1.bin or pce-lp1.bin; US firmware is pac-n10.bin.",
+        NULL,
+        "cdrom",
+        {
+            { "Auto",  NULL },
+            { "Japan", NULL },
+            { "US",    NULL },
+            { NULL, NULL },
+        },
+        "Auto"
+    },
 
     /* Input */
 

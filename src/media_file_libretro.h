@@ -39,6 +39,7 @@ public:
     virtual void Close() override;
     virtual bool IsOpen() const override;
     virtual bool IsValid() const override;
+    virtual bool CanSeek() const override;
     virtual s64 GetSize() override;
     virtual s64 Tell() override;
     virtual bool Seek(s64 offset) override;

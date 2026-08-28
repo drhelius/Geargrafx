@@ -136,6 +136,8 @@ EXTERN int emu_get_sprite_png(int vdc, int sprite_index, unsigned char** out_buf
 EXTERN void emu_save_sprite(const char* file_path, int vdc, int index);
 EXTERN void emu_save_background(const char* file_path, int vdc);
 EXTERN bool emu_load_bios(const char* file_path, bool syscard);
+EXTERN bool emu_load_pac_bios(const char* file_path, GG_LaserActive_Region region);
+EXTERN void emu_set_laseractive_region(GG_LaserActive_Region region);
 EXTERN void emu_start_vgm_recording(const char* file_path);
 EXTERN void emu_stop_vgm_recording(void);
 EXTERN bool emu_is_vgm_recording(void);

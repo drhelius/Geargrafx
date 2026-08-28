@@ -51,6 +51,9 @@ int runahead_get_frames(void)
     if ((frames <= 0) || config_emulator.ffwd || config_debug.debug)
         return 0;
 
+    if (emu_get_core()->GetMedia()->IsLaserActive())
+        return 0;
+
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     // A physical CD-ROM drive cannot be rolled back through save states.
     if (emu_get_core()->GetMedia()->IsPhysicalCdRom())

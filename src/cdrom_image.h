@@ -39,7 +39,7 @@ public:
         GG_CdRomMSF end_msf;
         bool has_lead_in;
         u32 lead_in_lba;
-        u32 file_offset;
+        u64 file_offset;
     };
 
     struct TableOfContents
@@ -57,6 +57,7 @@ public:
     virtual bool LoadFromFile(const char* path, bool preload) = 0;
     virtual bool ReadSector(u32 lba, u8* buffer) = 0;
     virtual bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count) = 0;
+    virtual bool ReadSubchannelQ(s32 lba, u8* buffer);
     virtual bool PreloadDisc() = 0;
     virtual bool PreloadTrack(u32 track_number) = 0;
     bool IsReady();

@@ -32,6 +32,7 @@ class CdRomAudio;
 class HuC6280;
 class Random;
 class TraceLogger;
+class LaserActive;
 
 class ScsiController
 {
@@ -141,6 +142,7 @@ public:
     bool IsDataReady();
     Scsi_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);
+    void SetLaserActive(LaserActive* laseractive);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
@@ -200,6 +202,7 @@ private:
     bool m_bus_changed;
     u16 m_previous_signals;
     u8 m_data_bus_latch;
+    LaserActive* m_laseractive;
 };
 
 static const char* const k_scsi_phase_names[] = {

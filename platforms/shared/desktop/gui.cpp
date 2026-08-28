@@ -29,6 +29,7 @@
 #include "ogl_renderer.h"
 #include "utils.h"
 #include "geargrafx.h"
+#include "mmi_archive.h"
 
 #define GUI_IMPORT
 #include "gui.h"
@@ -136,6 +137,7 @@ bool gui_init(void)
     emu_set_huc6280_registers_reset_value(get_reset_value(config_debug.reset_registers));
     emu_set_console_type((GG_Console_Type)config_emulator.console_type);
     emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
+    emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
     emu_set_preload_cdrom(config_emulator.preload_cdrom);
     emu_set_backup_ram(config_emulator.backup_ram);
     emu_set_mb128_mode((GG_MB128_Mode)config_emulator.mb128_mode);
@@ -165,11 +167,17 @@ bool gui_init(void)
     strncpy_fit(gui_mb128_path, config_emulator.mb128_path.c_str(), sizeof(gui_mb128_path));
     strncpy_fit(gui_syscard_bios_path, config_emulator.syscard_bios_path.c_str(), sizeof(gui_syscard_bios_path));
     strncpy_fit(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str(), sizeof(gui_gameexpress_bios_path));
+    strncpy_fit(gui_pac_japan_bios_path, config_emulator.pac_japan_bios_path.c_str(), sizeof(gui_pac_japan_bios_path));
+    strncpy_fit(gui_pac_us_bios_path, config_emulator.pac_us_bios_path.c_str(), sizeof(gui_pac_us_bios_path));
     strncpy_fit(gui_mcp_http_address, config_emulator.mcp_http_address.c_str(), sizeof(gui_mcp_http_address));
     if (strlen(gui_syscard_bios_path) > 0)
         gui_load_bios(gui_syscard_bios_path, true);
     if (strlen(gui_gameexpress_bios_path) > 0)
         gui_load_bios(gui_gameexpress_bios_path, false);
+    if (strlen(gui_pac_japan_bios_path) > 0)
+        gui_load_pac_bios(gui_pac_japan_bios_path, GG_LASERACTIVE_REGION_JAPAN);
+    if (strlen(gui_pac_us_bios_path) > 0)
+        gui_load_pac_bios(gui_pac_us_bios_path, GG_LASERACTIVE_REGION_US);
 
     load_custom_palette_from_settings();
 
@@ -372,6 +380,22 @@ void gui_load_bios(const char* path, bool syscard)
         message += filename;
         gui_set_status_message(message.c_str(), 4000);
     }
+}
+
+void gui_load_pac_bios(const char* path, GG_LaserActive_Region region)
+{
+    std::string fullpath(path);
+    size_t position = fullpath.find_last_of("/\\");
+    std::string filename = position == std::string::npos ? fullpath : fullpath.substr(position + 1);
+    if (!emu_load_pac_bios(path, region))
+    {
+        std::string message("Error loading LaserActive BIOS:\n");
+        message += filename;
+        gui_set_error_message(message.c_str());
+        return;
+    }
+
+    gui_action_reset();
 }
 
 void gui_load_palette(const char* path)
@@ -612,7 +636,8 @@ static void main_window(void)
             ratio = 6.0f / 5.0f;
             break;
         default:
-            ratio = ((float)runtime.screen_width / (float)runtime.width_scale) / (float)runtime.screen_height;
+            ratio = runtime.aspect_ratio > 0.0f ? runtime.aspect_ratio :
+                ((float)runtime.screen_width / (float)runtime.width_scale) / (float)runtime.screen_height;
     }
 
     if (!config_debug.debug && config_video.scale == 3)
@@ -845,8 +870,21 @@ static bool finish_loading_rom(void)
 {
     if (emu_get_core()->GetMedia()->IsCDROM() && !emu_get_core()->GetMedia()->IsBiosReady())
     {
-        bool is_gameexpress = emu_get_core()->GetMedia()->IsGameExpress();
-        std::string bios_name = is_gameexpress ? "Game Express BIOS" : "System Card BIOS";
+        Media* media = emu_get_core()->GetMedia();
+        bool is_gameexpress = media->IsGameExpress();
+        std::string bios_name;
+        if (media->IsLaserActive())
+        {
+            const GG_MmiInfo* info = emu_get_core()->GetCDROMMedia()->GetMmiInfo();
+            if (info && (info->card == "System Card 1.0"))
+                bios_name = "The Japanese System Card 1.0 BIOS";
+            else if (info && (info->card == "Games Express"))
+                bios_name = "A recognized Game Express BIOS";
+            else
+                bios_name = "A recognized LaserActive NEC PAC BIOS";
+        }
+        else
+            bios_name = is_gameexpress ? "Game Express BIOS" : "System Card BIOS";
 
         std::string message;
         message += bios_name;

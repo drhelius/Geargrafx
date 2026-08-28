@@ -72,3 +72,34 @@ bool MediaFile::HasVfsInterface()
     return false;
 #endif
 }
+
+bool MediaFile::ReadExact(void* buffer, u64 size)
+{
+    if ((size > (u64)SIZE_MAX) || (!IsValidPointer(buffer) && (size != 0)))
+        return false;
+
+    u8* destination = reinterpret_cast<u8*>(buffer);
+    u64 total = 0;
+
+    while (total < size)
+    {
+        s64 read = Read(destination + total, size - total);
+        if ((read <= 0) || ((u64)read > (size - total)))
+            return false;
+
+        total += (u64)read;
+    }
+
+    return true;
+}
+
+bool MediaFile::ReadAt(u64 offset, void* buffer, u64 size)
+{
+    if (!CanSeek() || (offset > (u64)INT64_MAX))
+        return false;
+
+    if (!Seek((s64)offset))
+        return false;
+
+    return ReadExact(buffer, size);
+}

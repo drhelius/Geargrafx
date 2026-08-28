@@ -232,6 +232,8 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Emulator", "BackupRAM", config_emulator.backup_ram, true);
     CONFIG_INT("Emulator", "ConsoleType", config_emulator.console_type, 0);
     CONFIG_INT("Emulator", "CDROMType", config_emulator.cdrom_type, 0);
+    CONFIG_INT_RANGE("Emulator", "LaserActiveRegion", config_emulator.laseractive_region,
+        GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_JAPAN, GG_LASERACTIVE_REGION_US);
     CONFIG_BOOL("Emulator", "PreloadCDROM", config_emulator.preload_cdrom, false);
 
     // Files and paths
@@ -249,6 +251,8 @@ static inline void process(config_Operation operation)
     CONFIG_STRING("Emulator", "LastOpenPath", config_emulator.last_open_path, "");
     CONFIG_STRING("Emulator", "SysCardBiosPath", config_emulator.syscard_bios_path, "");
     CONFIG_STRING("Emulator", "GameExpressBiosPath", config_emulator.gameexpress_bios_path, "");
+    CONFIG_STRING("Emulator", "PacJapanBiosPath", config_emulator.pac_japan_bios_path, "");
+    CONFIG_STRING("Emulator", "PacUsBiosPath", config_emulator.pac_us_bios_path, "");
     CONFIG_STRING_ARRAY("Emulator", "RecentROM%d", config_emulator.recent_roms, config_max_recent_roms, "");
 
     // Services

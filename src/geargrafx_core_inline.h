@@ -30,6 +30,7 @@
 #include "cdrom.h"
 #include "cdrom_audio.h"
 #include "adpcm.h"
+#include "laseractive.h"
 
 INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug, bool render)
 {
@@ -310,6 +311,11 @@ INLINE Audio* GeargrafxCore::GetAudio()
 INLINE Input* GeargrafxCore::GetInput()
 {
     return m_input;
+}
+
+INLINE LaserActive* GeargrafxCore::GetLaserActive()
+{
+    return m_laseractive;
 }
 
 INLINE u64 GeargrafxCore::GetMasterClockCycles()

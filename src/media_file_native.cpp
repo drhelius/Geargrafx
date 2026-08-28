@@ -19,6 +19,7 @@
 
 #include "media_file_native.h"
 #include "common.h"
+#include <limits>
 
 MediaFileNative::MediaFileNative()
 {
@@ -55,6 +56,11 @@ bool MediaFileNative::IsOpen() const
 bool MediaFileNative::IsValid() const
 {
     return m_file.is_open() && !m_file.bad() && !m_file.fail() && m_file.good() && !m_file.eof();
+}
+
+bool MediaFileNative::CanSeek() const
+{
+    return m_file.is_open();
 }
 
 s64 MediaFileNative::GetSize()
@@ -112,6 +118,9 @@ s64 MediaFileNative::Read(void* buffer, u64 size)
         return -1;
 
     if (!m_file.is_open())
+        return -1;
+
+    if (size > (u64)std::numeric_limits<std::streamsize>::max())
         return -1;
 
     m_file.read(reinterpret_cast<char*>(buffer), (std::streamsize)size);

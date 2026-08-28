@@ -44,6 +44,7 @@ public:
     bool IsHES();
     bool IsSGX();
     bool IsCDROM();
+    bool IsLaserActive();
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool IsPhysicalCdRom();
 #endif
@@ -57,10 +58,15 @@ public:
     bool IsSyscardBiosValid();
     bool IsGameExpressBiosValid();
     bool IsBiosReady();
+    bool IsPacBiosLoaded(GG_LaserActive_Region region);
+    bool IsPacBiosValid(GG_LaserActive_Region region);
     void SetConsoleType(GG_Console_Type console_type);
     GG_Console_Type GetConsoleType();
     void SetCDROMType(GG_CDROM_Type cdrom_type);
     GG_CDROM_Type GetCDROMType();
+    void SetLaserActiveRegion(GG_LaserActive_Region region);
+    GG_LaserActive_Region GetLaserActiveRegion();
+    GG_LaserActive_Region GetSelectedLaserActiveRegion();
     HuCardMapper GetMapper();
     void ForceBackupRAM(bool force);
     bool IsBackupRAMForced();
@@ -75,6 +81,8 @@ public:
     const char* GetFileName();
     const char* GetFileExtension();
     const char* GetBiosName(bool syscard);
+    const char* GetPacBiosName(GG_LaserActive_Region region);
+    u32 GetPacBiosCRC(GG_LaserActive_Region region);
     u8* GetROM();
     u8** GetROMMap();
     u32* GetROMBankOffset();
@@ -82,6 +90,7 @@ public:
     bool LoadHuCardFromBuffer(const u8* buffer, int size, const char* path);
     bool LoadCueFromFile(const char* path);
     bool LoadChdFromFile(const char* path);
+    bool LoadMmiFromFile(const char* path);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool LoadPhysicalCdRom(const char* device_id);
     const char* GetPhysicalCdRomDeviceId();
@@ -89,7 +98,10 @@ public:
 #endif
     bool LoadBios(const char* file_path, bool syscard);
     bool LoadBiosFromBuffer(const u8* buffer, int size, bool syscard);
+    bool LoadPacBios(const char* file_path, GG_LaserActive_Region region);
+    bool LoadPacBiosFromBuffer(const u8* buffer, int size, GG_LaserActive_Region region);
     void UnloadBios(bool syscard);
+    void UnloadPacBios(GG_LaserActive_Region region);
     void SetTempPath(const char* path);
     void GatherMediaInfo();
     bool IsSoftpatchApplied() const;
@@ -100,6 +112,8 @@ private:
     bool LoadHuCardFromBufferWithSoftpatch(const u8* buffer, int size, const char* path,
         bool softpatching);
     bool LoadBiosData(const u8* buffer, int size, bool syscard, const char* path);
+    bool LoadPacBiosData(const u8* buffer, int size, GG_LaserActive_Region region, const char* path);
+    void SelectPacBios();
     void GatherMediaInfoFromDB();
     void GatherBIOSInfoFromDB(bool syscard);
     void GatherDataFromPath(const char* path);
@@ -122,10 +136,13 @@ private:
     u32 m_crc;
     u32 m_bios_crc_syscard;
     u32 m_bios_crc_gameexpress;
+    u32 m_bios_crc_pac_japan;
+    u32 m_bios_crc_pac_us;
     bool m_is_hes;
     bool m_is_gameexpress;
     bool m_is_sgx;
     bool m_is_cdrom;
+    bool m_is_laseractive;
     bool m_is_in_game_database;
     const char* m_game_database_name;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
@@ -137,12 +154,20 @@ private:
     bool m_is_loaded_bios_gameexpress;
     bool m_is_valid_bios_syscard;
     bool m_is_valid_bios_gameexpress;
+    bool m_is_loaded_bios_pac_japan;
+    bool m_is_loaded_bios_pac_us;
+    bool m_is_valid_bios_pac_japan;
+    bool m_is_valid_bios_pac_us;
     char m_bios_name_syscard[64];
     char m_bios_name_gameexpress[64];
+    char m_bios_name_pac_japan[64];
+    char m_bios_name_pac_us[64];
     HuCardMapper m_mapper;
     GG_Keys m_avenue_pad_3_button;
     GG_Console_Type m_console_type;
     GG_CDROM_Type m_cdrom_type;
+    GG_LaserActive_Region m_laseractive_region;
+    GG_LaserActive_Region m_selected_laseractive_region;
     bool m_force_backup_ram;
     bool m_force_gameexpress;
     bool m_preload_cdrom;
@@ -150,6 +175,8 @@ private:
     char m_softpatch_path[4096];
     u8 m_syscard_bios[GG_BIOS_SYSCARD_SIZE] = {};
     u8 m_gameexpress_bios[GG_BIOS_GAME_EXPRESS_SIZE] = {};
+    u8 m_pac_bios_japan[GG_BIOS_LASERACTIVE_SIZE] = {};
+    u8 m_pac_bios_us[GG_BIOS_LASERACTIVE_SIZE] = {};
 };
 
 #include "media_inline.h"

@@ -187,7 +187,8 @@ int main(int argc, char* argv[])
     {
         printf("Usage: %s [options] [game_file] [symbol_file]\n", argv[0]);
         printf("\nArguments:\n");
-        printf("  [game_file]                 Game file: accepts ROMs (.pce, .sgx, .hes), CUE (.cue) or ZIP (.zip)\n");
+        printf("  [game_file]                 Game file: accepts ROMs (.pce, .sgx, .hes), "
+            "CD images (.cue, .chd), MMI (.mmi) or ZIP (.zip)\n");
         printf("  [symbol_file]               Optional symbol file for debugging\n");
         printf("\nOptions:\n");
         printf("  -f, --fullscreen            Start in fullscreen mode\n");

@@ -38,6 +38,7 @@ struct GG_Runtime_Info
     int screen_width;
     int screen_height;
     int width_scale;
+    float aspect_ratio;
 };
 
 enum GG_Console_Type
@@ -54,6 +55,13 @@ enum GG_CDROM_Type
     GG_CDROM_STANDARD,
     GG_CDROM_SUPER_CDROM,
     GG_CDROM_ARCADE_CARD
+};
+
+enum GG_LaserActive_Region
+{
+    GG_LASERACTIVE_REGION_AUTO = 0,
+    GG_LASERACTIVE_REGION_JAPAN,
+    GG_LASERACTIVE_REGION_US
 };
 
 struct GG_Color

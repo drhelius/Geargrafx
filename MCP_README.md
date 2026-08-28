@@ -469,7 +469,7 @@ Storage changes while tracing is active cleanly stop and restart the logger. Rep
 - `get_huc6260_status` - Get VCE status (position, sync signals, control)
 - `get_huc6202_status` - Get VPC status (SuperGrafx only)
 - `get_psg_status` - Get PSG status for all 6 channels
-- `get_cdrom_status` - Get CD-ROM drive status (CD games only)
+- `get_cdrom_status` - Get CD-ROM or LaserActive drive status, including read-only PD6103A transport/register data for MMI media
 - `list_cdrom_tracks` - List CD-ROM track types and LBA ranges
 - `get_cdrom_audio_status` - Get CD-ROM audio playback status
 - `get_adpcm_status` - Get ADPCM audio status
@@ -485,10 +485,14 @@ Storage changes while tracing is active cleanly stop and restart the logger. Rep
 - `get_screenshot` - Capture current screen frame as base64 PNG
 
 ### Media & State Management
-- `get_media_info` - Get loaded ROM/CD info
+- `get_media_info` - Get loaded ROM/CD info, including native MMI catalog, selected side, format and eject state fields
 - `list_recent_media` - List the 10 most recent ROM files or CD-ROM images opened by Geargrafx
-- `load_media` - Load ROM file or CD-ROM image (.pce, .sgx, .hes, .cue, .zip). Automatically loads .sym symbol file if present
-- `load_bios` - Load a BIOS file for CD-ROM emulation. Two types: 'syscard' (System Card, 256KB) and 'gameexpress' (Game Express, 32KB)
+- `load_media` - Load ROM or disc media (.pce, .sgx, .hes, .cue, .chd, .mmi, .zip). Automatically loads .sym symbol file if present
+- `load_bios` - Load a CD-ROM or LaserActive BIOS. Types: `syscard`, `gameexpress`, `pac_japan`, and `pac_us`
+- `list_mmi_media` - List the media/sides in the loaded MMI in sequence order
+- `eject_mmi_media` - Eject the virtual LaserDisc without resetting the machine
+- `insert_mmi_media` - Insert the selected virtual LaserDisc medium
+- `select_mmi_media` - Select an MMI media index while the virtual LaserDisc is ejected
 - `load_symbols` - Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries)
 - `list_save_state_slots` - List all 5 save state slots with information (rom name, timestamp, validity)
 - `select_save_state_slot` - Select active save state slot (1-5) for save/load operations

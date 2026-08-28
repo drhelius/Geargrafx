@@ -40,6 +40,7 @@ class Audio;
 class Adpcm;
 class GeargrafxCore;
 class TraceLogger;
+class LaserActive;
 
 class CdRom
 {
@@ -67,6 +68,7 @@ public:
     double GetFaderValue();
     CdRom_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);
+    void SetLaserActive(LaserActive* laseractive);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
@@ -100,6 +102,7 @@ private:
     bool m_fader_fast;
     u64 m_fader_start_cycles;
     u64 m_fader_cycles;
+    LaserActive* m_laseractive;
 };
 
 static const u8 k_super_cdrom_signature[4] = { 0x00, 0xAA, 0x55, 0x03 };

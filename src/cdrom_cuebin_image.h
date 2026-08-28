@@ -40,12 +40,16 @@ struct GG_CdRomCueBinLoadOptions
     u32 chunk_size;
     u32 max_preload_chunks;
     u32 read_ahead_chunks;
+    u32 max_cached_chunks;
     bool allow_disc_preload;
     bool enable_read_ahead;
     bool track_files_start_at_index1;
 };
 
 class MediaFile;
+
+typedef MediaFile* (*GG_CdRomCueFileResolver)(const char* reference, char* resolved_path,
+    size_t resolved_path_size, void* user_data);
 
 class CdRomCueBinImage : public CdRomImage
 {
@@ -55,13 +59,15 @@ private:
     {
         char file_name[256];
         char file_path[1024];
-        u32 file_size;
+        u64 file_size;
         u32 chunk_size;
-        u32 chunk_count;
+        u64 chunk_count;
+        u64 chunk_cache_count;
         u8** chunks;
+        u64* cached_chunk_indices;
         MediaFile* file;
         bool is_wav;
-        u32 wav_data_offset;
+        u64 wav_data_offset;
     };
 
     struct ParsedCueTrack
@@ -90,7 +96,7 @@ private:
     struct ReadAheadRequest
     {
         ImgFile* img_file;
-        u32 chunk_index;
+        u64 chunk_index;
     };
 #endif
 
@@ -106,7 +112,13 @@ public:
     virtual bool PreloadTrack(u32 track_number) override;
     void SetLoadOptions(const GG_CdRomCueBinLoadOptions& options);
 
+protected:
+    bool LoadFromCueData(const char* source_path, const u8* cue_data, size_t cue_size,
+        bool preload, GG_CdRomCueFileResolver resolver, void* resolver_user_data);
+
 private:
+    static MediaFile* ResolveNormalFile(const char* reference, char* resolved_path,
+        size_t resolved_path_size, void* user_data);
     void InitImgFile(ImgFile* img_file);
     void InitParsedCueTrack(ParsedCueTrack& track);
     void InitParsedCueFile(ParsedCueFile& cue_file);
@@ -118,16 +130,20 @@ private:
     bool ProcessWavFormat(ImgFile* img_file);
     bool FindWavDataChunk(ImgFile* img_file, MediaFile& file);
     bool SetupFileChunks(ImgFile* img_file);
-    u32 CalculateFileOffset(ImgFile* img_file, u32 chunk_index);
-    u32 CalculateReadSize(ImgFile* img_file, u32 file_offset);
+    u64 CalculateFileOffset(ImgFile* img_file, u64 chunk_index);
+    u32 CalculateReadSize(ImgFile* img_file, u64 file_offset);
     bool IsUriPath(const char* path);
     bool ParseCueFile(const char* cue_content);
-    bool ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer, u32 size);
-    bool LoadChunk(ImgFile* img_file, u32 chunk_index);
-    bool PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count);
+    bool ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size);
+    bool LoadChunk(ImgFile* img_file, u64 chunk_index);
+    bool LoadChunkUnlocked(ImgFile* img_file, u64 chunk_index);
+    u64 GetChunkSlot(const ImgFile* img_file, u64 chunk_index) const;
+    bool IsChunkLoaded(const ImgFile* img_file, u64 chunk_index) const;
+    u8* GetChunkData(const ImgFile* img_file, u64 chunk_index) const;
+    bool PreloadChunks(ImgFile* img_file, u64 start_chunk, u64 count);
 #if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
-    void QueueReadAhead(ImgFile* img_file, u32 start_chunk);
-    void QueueChunk(ImgFile* img_file, u32 chunk_index);
+    void QueueReadAhead(ImgFile* img_file, u64 start_chunk);
+    void QueueChunk(ImgFile* img_file, u64 chunk_index);
     void StartReadAheadWorker();
     void StopReadAheadWorker();
     void ReadAheadThread();
@@ -140,6 +156,8 @@ private:
     std::vector<ImgFile*> m_img_files;
     std::vector<TrackFile> m_track_files;
     GG_CdRomCueBinLoadOptions m_load_options;
+    GG_CdRomCueFileResolver m_file_resolver;
+    void* m_file_resolver_user_data;
 #if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
     std::mutex m_chunk_mutex;
     std::mutex m_queue_mutex;
@@ -161,6 +179,7 @@ INLINE GG_CdRomCueBinLoadOptions GG_CdRomCueBinDefaultLoadOptions()
     options.chunk_size = (2352 * 128);
     options.max_preload_chunks = GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK;
     options.read_ahead_chunks = 0;
+    options.max_cached_chunks = 0;
     options.allow_disc_preload = true;
     options.enable_read_ahead = false;
     options.track_files_start_at_index1 = false;
@@ -176,6 +195,7 @@ INLINE GG_CdRomCueBinLoadOptions GG_CdRomCueBinStreamingLoadOptions()
     options.chunk_size = (2352 * 1);
     options.max_preload_chunks = 8;
     options.read_ahead_chunks = 2;
+    options.max_cached_chunks = 64;
     options.allow_disc_preload = false;
     options.enable_read_ahead = true;
     options.track_files_start_at_index1 = true;
@@ -183,6 +203,7 @@ INLINE GG_CdRomCueBinLoadOptions GG_CdRomCueBinStreamingLoadOptions()
     options.chunk_size = (2352 * 128);
     options.max_preload_chunks = GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK;
     options.read_ahead_chunks = 0;
+    options.max_cached_chunks = 64;
     options.allow_disc_preload = false;
     options.enable_read_ahead = false;
     options.track_files_start_at_index1 = true;

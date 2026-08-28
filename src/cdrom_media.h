@@ -28,6 +28,12 @@
 
 class CdRomCueBinImage;
 class CdRomChdImage;
+class CdRomMmiImage;
+class MediaFile;
+class LaserActive;
+struct GG_MmiInfo;
+struct GG_MmiMediaInfo;
+struct GG_QonInfo;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 class CdRomPhysicalImage;
 #endif
@@ -39,6 +45,7 @@ public:
     ~CdRomMedia();
     void Init();
     void Reset();
+    void SetLaserActive(LaserActive* laseractive);
     bool IsReady();
     u32 GetCRC();
     const char* GetFilePath();
@@ -56,12 +63,14 @@ public:
     void SetCurrentSector(u32 sector);
     bool LoadCueFromFile(const char* path, bool preload);
     bool LoadChdFromFile(const char* path, bool preload);
+    bool LoadMmiFromFile(const char* path);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool LoadPhysicalDrive(const char* device_id, bool preload);
     bool HasPhysicalDriveError();
 #endif
     bool ReadSector(u32 lba, u8* buffer);
     bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count);
+    bool ReadSubchannelQ(s32 lba, u8* buffer);
     u32 SeekTime(u32 start_lba, u32 end_lba);
     u32 SectorTransferCycles();
     u32 GetFirstSectorOfTrack(u8 track);
@@ -69,6 +78,20 @@ public:
     s32 GetTrackFromLBA(u32 lba);
     s32 FindTrackFromLBA(u32 lba, bool include_lead_in = false);
     bool PreloadTrack(u32 track_number);
+    bool IsMmi() const;
+    bool IsLaserDisc() const;
+    bool IsMmiEjected() const;
+    bool EjectMmi();
+    bool InsertMmi();
+    bool SelectMmiMedia(u32 index);
+    u32 GetSelectedMmiMediaIndex() const;
+    const GG_MmiInfo* GetMmiInfo() const;
+    const GG_MmiMediaInfo* GetSelectedMmiMedia() const;
+    const GG_QonInfo* GetQonInfo() const;
+    bool ReadMmiAnalogAudio(u64 offset, void* buffer, u32 size);
+    u64 GetMmiAnalogAudioSize() const;
+    bool ReadMmiVideoData(u64 offset, void* buffer, u32 size);
+    MediaFile* OpenMmiVideoStream() const;
 
 private:
     bool IsCdRomUriPath(const char* path);
@@ -79,6 +102,8 @@ private:
     u32 m_media_generation;
     CdRomCueBinImage* m_cue_bin_image;
     CdRomChdImage* m_chd_image;
+    CdRomMmiImage* m_mmi_image;
+    LaserActive* m_laseractive;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     CdRomPhysicalImage* m_physical_image;
 #endif

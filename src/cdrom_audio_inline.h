@@ -25,6 +25,7 @@
 #include "cdrom_media.h"
 #include "scsi_controller.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
 INLINE void CdRomAudio::Clock(u32 cycles)
 {
@@ -67,6 +68,20 @@ INLINE void CdRomAudio::Sample()
 {
     m_left_sample = 0;
     m_right_sample = 0;
+
+    if (m_cdrom_media->IsLaserDisc() && IsValidPointer(m_laseractive))
+    {
+        m_laseractive->Sample(m_left_sample, m_right_sample);
+        m_buffer[m_buffer_index + 0] = m_left_sample;
+        m_buffer[m_buffer_index + 1] = m_right_sample;
+        m_buffer_index += 2;
+        if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
+        {
+            Error("CD AUDIO buffer overflow");
+            m_buffer_index = 0;
+        }
+        return;
+    }
 
     if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0) && (m_playback_delay_cycles == 0))
         GenerateSamples();
@@ -153,6 +168,9 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
           lba, track, current_lba, m_seek_cycles, m_playback_delay_cycles);
 
     m_cdrom_media->PreloadTrack((u32)track);
+
+    if (IsValidPointer(m_laseractive))
+        m_laseractive->NotifyAudioStart(lba, pause);
 }
 
 INLINE void CdRomAudio::StopAudio()
@@ -160,6 +178,8 @@ INLINE void CdRomAudio::StopAudio()
     m_playback_delay_cycles = 0;
     m_current_state = CD_AUDIO_STATE_STOPPED;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STATE, m_current_lba);
+    if (IsValidPointer(m_laseractive))
+        m_laseractive->NotifyAudioStop(false);
 }
 
 INLINE void CdRomAudio::PauseAudio()
@@ -167,6 +187,8 @@ INLINE void CdRomAudio::PauseAudio()
     m_playback_delay_cycles = 0;
     m_current_state = CD_AUDIO_STATE_PAUSED;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STATE, m_current_lba);
+    if (IsValidPointer(m_laseractive))
+        m_laseractive->NotifyAudioStop(true);
 }
 
 INLINE void CdRomAudio::SetIdle()

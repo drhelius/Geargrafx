@@ -141,10 +141,15 @@ public:
     // Media and state management
     json GetMediaInfo();
     json ListRecentMedia();
+    json ListMmiMedia();
+    json EjectMmiMedia();
+    json InsertMmiMedia();
+    json SelectMmiMedia(u32 index);
     json StartLoadMedia(const std::string& file_path);
     bool IsMediaLoading() const;
     json FinishLoadMedia(const std::string& file_path);
     json LoadBios(const std::string& file_path, bool syscard);
+    json LoadPacBios(const std::string& file_path, GG_LaserActive_Region region);
     json ListSaveStateSlots();
     json SelectSaveStateSlot(int slot);
     json SaveState();

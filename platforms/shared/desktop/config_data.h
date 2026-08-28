@@ -24,7 +24,7 @@
 #include <string>
 #include "geargrafx.h"
 
-static const int config_version = 8;
+static const int config_version = 9;
 static const int config_minimum_version = 2;
 static const int config_max_recent_roms = 15;
 static const int config_memory_editor_count = 14;
@@ -78,6 +78,8 @@ struct config_Emulator
     int mb128_mode;
     std::string syscard_bios_path;
     std::string gameexpress_bios_path;
+    std::string pac_japan_bios_path;
+    std::string pac_us_bios_path;
     std::string screenshots_path;
     std::string last_open_path;
     int window_width;
@@ -87,6 +89,7 @@ struct config_Emulator
     bool backup_ram;
     int console_type;
     int cdrom_type;
+    int laseractive_region;
     bool preload_cdrom;
     int mcp_tcp_port;
     std::string mcp_http_address;

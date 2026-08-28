@@ -25,6 +25,7 @@
 #include "huc6280.h"
 #include "cdrom_audio.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
 INLINE void CdRom::TraceCdRomEvent(u8 event, u8 value)
 {
@@ -35,6 +36,8 @@ INLINE void CdRom::TraceCdRomEvent(u8 event, u8 value)
 INLINE void CdRom::Clock(u32 cycles)
 {
     m_scsi_controller->Clock(cycles);
+    if (IsValidPointer(m_laseractive))
+        m_laseractive->Clock(cycles);
 }
 
 INLINE void CdRom::SetIRQ(u8 value)

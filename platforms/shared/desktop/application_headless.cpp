@@ -77,6 +77,18 @@ int application_headless_init(const ApplicationParams& params)
         emu_load_bios(config_emulator.gameexpress_bios_path.c_str(), false);
     }
 
+    emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
+    if (!config_emulator.pac_japan_bios_path.empty())
+    {
+        Log("Loading Japanese LaserActive BIOS: %s", config_emulator.pac_japan_bios_path.c_str());
+        emu_load_pac_bios(config_emulator.pac_japan_bios_path.c_str(), GG_LASERACTIVE_REGION_JAPAN);
+    }
+    if (!config_emulator.pac_us_bios_path.empty())
+    {
+        Log("Loading US LaserActive BIOS: %s", config_emulator.pac_us_bios_path.c_str());
+        emu_load_pac_bios(config_emulator.pac_us_bios_path.c_str(), GG_LASERACTIVE_REGION_US);
+    }
+
     bool rom_file_argument = IsValidPointer(params.rom_file) && (strlen(params.rom_file) > 0);
     bool symbol_file_argument = IsValidPointer(params.symbol_file) && (strlen(params.symbol_file) > 0);
 

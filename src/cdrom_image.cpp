@@ -30,6 +30,13 @@ CdRomImage::~CdRomImage()
 {
 }
 
+bool CdRomImage::ReadSubchannelQ(s32 lba, u8* buffer)
+{
+    UNUSED(lba);
+    UNUSED(buffer);
+    return false;
+}
+
 void CdRomImage::Init()
 {
 }

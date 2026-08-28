@@ -332,6 +332,8 @@ endif
 
 ifneq (,$(filter $(platform),unix osx win))
 	CXXFLAGS += -DGG_ENABLE_CDROM_CUEBIN_READAHEAD
+else
+	CXXFLAGS += -DGG_DISABLE_MMI_THREADS
 endif
 
 ifneq (,$(filter $(platform),unix win))
@@ -369,6 +371,8 @@ OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
 INCLUDES += -I$(CORE_DIR) -I$(SOURCE_DIR)
 INCLUDES += -I$(DEPS_DIR)/miniz
+INCLUDES += -I$(DEPS_DIR)/json
+INCLUDES += -I$(DEPS_DIR)/qon
 INCLUDES += -I$(DEPS_DIR)/libchdr/include
 INCLUDES += -I$(DEPS_DIR)/zstd
 INCLUDES += -I$(DEPS_DIR)/lzma/include

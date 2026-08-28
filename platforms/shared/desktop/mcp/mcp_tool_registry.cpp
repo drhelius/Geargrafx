@@ -278,7 +278,8 @@ static const char* const kMcpTurboLinkTools[] =
 
 static const char* const kMcpMediaTools[] =
 {
-    "load_media", "get_media_info", "list_recent_media", "load_bios"
+    "load_media", "get_media_info", "list_recent_media", "load_bios",
+    "list_mmi_media", "eject_mmi_media", "insert_mmi_media", "select_mmi_media"
 };
 
 static const char* const kMcpCaptureTools[] =

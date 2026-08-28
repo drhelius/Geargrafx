@@ -22,6 +22,7 @@
 #include "huc6260.h"
 #include "random.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
 HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random)
 {
@@ -29,6 +30,7 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random)
     m_huc6202 = huc6202;
     m_random = random;
     InitPointer(m_trace_logger);
+    InitPointer(m_laseractive);
     m_pixel_format = GG_PIXEL_RGBA8888;
     m_state.CR = &m_control_register;
     m_state.CTA = &m_color_table_address;
@@ -67,6 +69,11 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
 void HuC6260::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
+}
+
+void HuC6260::SetLaserActive(LaserActive* laseractive)
+{
+    m_laseractive = laseractive;
 }
 
 void HuC6260::LogVceEvent(u8 event)
@@ -162,6 +169,15 @@ void HuC6260::Reset()
     m_blur = 0;
     m_black_and_white = 0;
     m_active_line = false;
+
+    memset(m_laseractive_line_state, 0, sizeof(m_laseractive_line_state));
+    for (int line = 0; line < HUC6260_LINES; line++)
+    {
+        m_laseractive_line_state[line * 8 + 3] = 0xFF;
+        m_laseractive_line_state[line * 8 + 4] = 0xFF;
+        m_laseractive_line_state[line * 8 + 5] = 0xFF;
+        m_laseractive_line_state[line * 8 + 6] = 0xFF;
+    }
 
     for (int i = 0; i < 256; i++)
     {

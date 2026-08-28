@@ -15,15 +15,22 @@ SOURCES_C := \
     $(DEPS_DIR)/miniz/miniz.c \
 
 SOURCES_CXX := \
+    $(DEPS_DIR)/qon/qon.cpp \
     $(TEST_SRC_DIR)/main.cpp \
+    $(TEST_SRC_DIR)/mmi_tests.cpp \
     $(SRC_DIR)/geargrafx_core.cpp \
     $(SRC_DIR)/adpcm.cpp \
     $(SRC_DIR)/audio.cpp \
     $(SRC_DIR)/arcade_card_mapper.cpp \
     $(SRC_DIR)/cdrom_audio.cpp \
     $(SRC_DIR)/cdrom_chd_image.cpp \
+    $(SRC_DIR)/cdrom_chd_file_adapter.cpp \
     $(SRC_DIR)/cdrom_cuebin_image.cpp \
+    $(SRC_DIR)/cdrom_mmi_image.cpp \
     $(SRC_DIR)/media_file.cpp \
+    $(SRC_DIR)/media_file_native.cpp \
+    $(SRC_DIR)/media_file_slice.cpp \
+    $(SRC_DIR)/mmi_archive.cpp \
     $(SRC_DIR)/cdrom_image.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
     $(SRC_DIR)/cdrom.cpp \
@@ -35,6 +42,7 @@ SOURCES_CXX := \
     $(SRC_DIR)/huc6280_opcodes.cpp \
     $(SRC_DIR)/huc6280_psg.cpp \
     $(SRC_DIR)/input.cpp \
+    $(SRC_DIR)/laseractive.cpp \
     $(SRC_DIR)/mapper.cpp \
     $(SRC_DIR)/mb128.cpp \
     $(SRC_DIR)/media.cpp \
@@ -42,4 +50,5 @@ SOURCES_CXX := \
     $(SRC_DIR)/scsi_controller.cpp \
     $(SRC_DIR)/sf2_mapper.cpp \
     $(SRC_DIR)/trace_logger.cpp \
+    $(SRC_DIR)/turbolink.cpp \
     $(SRC_DIR)/vgm_recorder.cpp

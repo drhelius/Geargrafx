@@ -23,6 +23,9 @@
 #include "memory.h"
 #include "audio.h"
 #include "trace_logger.h"
+#include "geargrafx_core.h"
+#include "media.h"
+#include "laseractive.h"
 
 CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* audio, GeargrafxCore* core)
 {
@@ -34,6 +37,7 @@ CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* au
     InitPointer(m_adpcm);
     InitPointer(m_huc6280);
     InitPointer(m_memory);
+    InitPointer(m_laseractive);
     m_reset = 0;
     m_bram_enabled = false;
     m_active_irqs = 0;
@@ -70,6 +74,11 @@ void CdRom::Init(HuC6280* huc6280, Memory* memory, Adpcm* adpcm)
 void CdRom::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
+}
+
+void CdRom::SetLaserActive(LaserActive* laseractive)
+{
+    m_laseractive = laseractive;
 }
 
 void CdRom::LogCdRomEvent(u8 event, u8 value)
@@ -123,6 +132,21 @@ void CdRom::Reset()
 
 u8 CdRom::ReadRegister(u16 address)
 {
+    u16 hardware_address = address & 0x1FFF;
+    if (m_core->GetMedia()->IsLaserActive() && IsValidPointer(m_laseractive))
+    {
+        if ((hardware_address >= 0x18C0) && (hardware_address <= 0x18C3))
+            return m_laseractive->ReadSramControl(hardware_address);
+        if ((hardware_address >= 0x1920) && (hardware_address <= 0x193F))
+            return m_laseractive->ReadRegister((u8)(hardware_address - 0x1920), false);
+        if ((hardware_address >= 0x1940) && (hardware_address <= 0x195F))
+            return m_laseractive->ReadRegister((u8)(hardware_address - 0x1940), true);
+        if (hardware_address >= 0x1960)
+            return 0xFF;
+        if ((hardware_address >= 0x18C4) || (hardware_address <= 0x18BF))
+            address = (u16)(0x1800 | (hardware_address & 0x0F));
+    }
+
     u16 reg = address & 0x3FF;
     switch (reg)
     {
@@ -204,6 +228,32 @@ u8 CdRom::ReadRegister(u16 address)
 
 void CdRom::WriteRegister(u16 address, u8 value)
 {
+    u16 hardware_address = address & 0x1FFF;
+    if (m_core->GetMedia()->IsLaserActive() && IsValidPointer(m_laseractive))
+    {
+        if (hardware_address == 0x18C0)
+        {
+            m_laseractive->WriteSramControl(value);
+            return;
+        }
+        if ((hardware_address >= 0x18C1) && (hardware_address <= 0x18C3))
+            return;
+        if ((hardware_address >= 0x1920) && (hardware_address <= 0x193F))
+        {
+            m_laseractive->WriteRegister((u8)(hardware_address - 0x1920), false, value);
+            return;
+        }
+        if ((hardware_address >= 0x1940) && (hardware_address <= 0x195F))
+        {
+            m_laseractive->WriteRegister((u8)(hardware_address - 0x1940), true, value);
+            return;
+        }
+        if (hardware_address >= 0x1960)
+            return;
+        if ((hardware_address >= 0x18C4) || (hardware_address <= 0x18BF))
+            address = (u16)(0x1800 | (hardware_address & 0x0F));
+    }
+
     u16 reg = address & 0x3FF;
     switch (reg)
     {

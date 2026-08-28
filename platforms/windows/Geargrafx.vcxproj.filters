@@ -229,6 +229,21 @@
     <ClCompile Include="..\..\src\cdrom_cuebin_image.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cdrom_mmi_image.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\media_file_slice.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mmi_archive.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\laseractive.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\qon\qon.cpp">
+      <Filter>dependencies\qon</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\media_file.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -648,6 +663,24 @@
     <ClInclude Include="..\..\src\cdrom_cuebin_image.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\cdrom_mmi_image.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\media_file_slice.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mmi_archive.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\laseractive.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\qon\qon.h">
+      <Filter>dependencies\qon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\qon\qoi2.h">
+      <Filter>dependencies\qon</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\media_file.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -771,6 +804,9 @@
     </Filter>
     <Filter Include="dependencies\miniz">
       <UniqueIdentifier>{466b2296-06dc-4afd-a898-3c4ed168681e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\qon">
+      <UniqueIdentifier>{c189677c-9f75-4f90-872e-6f54d06f9408}</UniqueIdentifier>
     </Filter>
     <Filter Include="dependencies\libchdr">
       <UniqueIdentifier>{07f35376-ef00-42d5-8aa3-0b504beb1396}</UniqueIdentifier>

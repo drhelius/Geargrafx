@@ -102,7 +102,7 @@ static void stop_physical_cdrom_after_error(void);
 
 bool emu_init(GG_Input_Pump_Fn input_pump_fn)
 {
-    emu_frame_buffer = new u8[2048 * 256 * 4];
+    emu_frame_buffer = new u8[2048 * 512 * 4];
     audio_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
 
     init_debug();
@@ -1073,6 +1073,16 @@ void emu_save_background(const char* file_path, int vdc)
 bool emu_load_bios(const char* file_path, bool syscard)
 {
     return geargrafx->LoadBios(file_path, syscard);
+}
+
+bool emu_load_pac_bios(const char* file_path, GG_LaserActive_Region region)
+{
+    return geargrafx->LoadPacBios(file_path, region);
+}
+
+void emu_set_laseractive_region(GG_LaserActive_Region region)
+{
+    geargrafx->SetLaserActiveRegion(region);
 }
 
 static void save_ram(void)

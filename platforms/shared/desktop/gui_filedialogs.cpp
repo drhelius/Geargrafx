@@ -50,6 +50,8 @@ enum FileDialogID
     FileDialog_ChooseMB128Path,
     FileDialog_LoadBIOSSyscard,
     FileDialog_LoadBIOSGameExpress,
+    FileDialog_LoadBIOSPacJapan,
+    FileDialog_LoadBIOSPacUs,
     FileDialog_LoadSymbols,
     FileDialog_SaveScreenshot,
     FileDialog_SaveVGM,
@@ -131,7 +133,7 @@ void gui_file_dialog_open_rom(void)
     if (!begin_dialog())
         return;
 
-    SDL_DialogFileFilter filters[] = { { "ROM/CD Files", "pce;sgx;hes;cue;chd;zip" } };
+    SDL_DialogFileFilter filters[] = { { "ROM/CD/MMI Files", "pce;sgx;hes;cue;chd;mmi;zip" } };
     const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
     SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)FileDialog_OpenROM, application_sdl_window, filters, 1, default_path, false);
 }
@@ -230,6 +232,18 @@ void gui_file_dialog_load_bios(bool syscard)
     SDL_DialogFileFilter filters[] = { { "BIOS Files", "pce;rom;bios" } };
     const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
     SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)id, application_sdl_window, filters, 1, default_path, false);
+}
+
+void gui_file_dialog_load_pac_bios(bool us_region)
+{
+    if (!begin_dialog())
+        return;
+
+    FileDialogID id = us_region ? FileDialog_LoadBIOSPacUs : FileDialog_LoadBIOSPacJapan;
+    SDL_DialogFileFilter filters[] = { { "LaserActive BIOS Files", "bin;rom;bios" } };
+    const char* default_path = config_emulator.last_open_path.empty() ? NULL : config_emulator.last_open_path.c_str();
+    SDL_ShowOpenFileDialog(file_dialog_callback, (void*)(intptr_t)id, application_sdl_window,
+        filters, 1, default_path, false);
 }
 
 void gui_file_dialog_load_symbols(void)
@@ -488,6 +502,20 @@ static void process_dialog_result(FileDialogID id, const char* path)
             config_emulator.gameexpress_bios_path.assign(path);
             strncpy_fit(gui_gameexpress_bios_path, config_emulator.gameexpress_bios_path.c_str(), sizeof(gui_gameexpress_bios_path));
             gui_load_bios(path, false);
+            break;
+        }
+        case FileDialog_LoadBIOSPacJapan:
+        {
+            config_emulator.pac_japan_bios_path.assign(path);
+            strncpy_fit(gui_pac_japan_bios_path, path, sizeof(gui_pac_japan_bios_path));
+            gui_load_pac_bios(path, GG_LASERACTIVE_REGION_JAPAN);
+            break;
+        }
+        case FileDialog_LoadBIOSPacUs:
+        {
+            config_emulator.pac_us_bios_path.assign(path);
+            strncpy_fit(gui_pac_us_bios_path, path, sizeof(gui_pac_us_bios_path));
+            gui_load_pac_bios(path, GG_LASERACTIVE_REGION_US);
             break;
         }
         case FileDialog_LoadSymbols:

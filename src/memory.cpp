@@ -30,6 +30,7 @@
 #include "arcade_card_mapper.h"
 #include "random.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
 Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random)
 {
@@ -42,6 +43,7 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* medi
     m_cdrom = cdrom;
     m_random = random;
     InitPointer(m_trace_logger);
+    InitPointer(m_laseractive);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
@@ -201,6 +203,15 @@ void Memory::ReloadMemoryMap()
     // 0x00 - 0x7F
     for (int i = 0x00; i <= 0x7F; i++)
     {
+        if (m_media->IsLaserActive() && (i >= 0x40))
+        {
+            bool sram = (i >= 0x68) && IsValidPointer(m_laseractive) &&
+                m_laseractive->IsSramEnabled();
+            m_memory_map_write[i] = sram;
+            m_memory_map[i] = sram ? &m_card_ram[(i - 0x68) * 0x2000] : m_unused_memory;
+            continue;
+        }
+
         // Card RAM
         if ((m_card_ram_size > 0) && (i >= m_card_ram_start) && (i <= m_card_ram_end))
         {
@@ -248,6 +259,24 @@ void Memory::ReloadMemoryMap()
             m_memory_map[i] = &m_wram[(i - 0xF8) * 0x2000];
         else
             m_memory_map[i] = &m_wram[0];
+    }
+}
+
+void Memory::SetLaserActive(LaserActive* laseractive)
+{
+    m_laseractive = laseractive;
+}
+
+void Memory::UpdateLaserActiveSram()
+{
+    if (!m_media->IsLaserActive())
+        return;
+
+    bool enabled = IsValidPointer(m_laseractive) && m_laseractive->IsSramEnabled();
+    for (int i = 0x68; i <= 0x7F; i++)
+    {
+        m_memory_map_write[i] = enabled;
+        m_memory_map[i] = enabled ? &m_card_ram[(i - 0x68) * 0x2000] : m_unused_memory;
     }
 }
 
