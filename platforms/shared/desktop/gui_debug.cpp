@@ -133,13 +133,14 @@ void gui_debug_windows(void)
         }
         if (config_debug.show_psg)
             gui_debug_window_psg();
-        if (config_debug.show_cdrom && emu_get_core()->GetMedia()->IsCDROM())
+        bool cdrom_available = !emu_is_empty() && emu_get_core()->GetMedia()->IsCDROM();
+        if (config_debug.show_cdrom && cdrom_available)
             gui_debug_window_cdrom();
-        if (config_debug.show_cdrom_toc && emu_get_core()->GetMedia()->IsCDROM())
+        if (config_debug.show_cdrom_toc && cdrom_available)
             gui_debug_window_cdrom_toc();
-        if (config_debug.show_cdrom_audio && emu_get_core()->GetMedia()->IsCDROM())
+        if (config_debug.show_cdrom_audio && cdrom_available)
             gui_debug_window_cdrom_audio();
-        if (config_debug.show_adpcm && emu_get_core()->GetMedia()->IsCDROM())
+        if (config_debug.show_adpcm && cdrom_available)
             gui_debug_window_adpcm();
         if (config_debug.show_arcade_card && emu_get_core()->GetMedia()->IsArcadeCard())
             gui_debug_window_arcade_card();
