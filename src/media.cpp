@@ -61,7 +61,7 @@ Media::Media(CdRomMedia* cdrom_media)
     m_is_loaded_bios_syscard = false;
     m_is_loaded_bios_gameexpress = false;
     m_mapper = STANDARD_MAPPER;
-    m_avenue_pad_3_button = GG_KEY_SELECT;
+    m_avenue_pad_3_button = GG_KEY_RUN;
     m_console_type = GG_CONSOLE_AUTO;
     m_cdrom_type = GG_CDROM_AUTO;
     m_force_backup_ram = false;
@@ -114,7 +114,7 @@ void Media::Reset()
 #endif
     m_is_mb128 = false;
     m_mapper = STANDARD_MAPPER;
-    m_avenue_pad_3_button = GG_KEY_SELECT;
+    m_avenue_pad_3_button = GG_KEY_RUN;
     m_softpatch_applied = false;
     m_softpatch_path[0] = 0;
 

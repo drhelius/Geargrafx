@@ -20,6 +20,78 @@
 #include "config_macros.h"
 #include "shader_preset.h"
 
+static const char* k_input_profile_names[config_InputProfile_COUNT] =
+{
+    "2Button", "3Button", "6Button"
+};
+
+static const char* k_keyboard_keys[14] =
+{
+    "KeyLeft", "KeyRight", "KeyUp", "KeyDown", "KeySelect", "KeyRun", "KeyI",
+    "KeyII", "KeyIII", "KeyIV", "KeyV", "KeyVI", "KeyToogleTurboI", "KeyToogleTurboII"
+};
+
+static const char* k_gamepad_setting_keys[5] =
+{
+    "GamepadDirectional", "GamepadInvertX", "GamepadInvertY", "GamepadX", "GamepadY"
+};
+
+static const char* k_gamepad_binding_keys[10] =
+{
+    "GamepadSelect", "GamepadRun", "GamepadI", "GamepadII", "GamepadIII", "GamepadIV",
+    "GamepadV", "GamepadVI", "GamepadToogleTurboI", "GamepadToogleTurboII"
+};
+
+static const SDL_Scancode k_keyboard_defaults[3][14] =
+{
+    { SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_UP, SDL_SCANCODE_DOWN,
+      SDL_SCANCODE_A, SDL_SCANCODE_S, SDL_SCANCODE_X, SDL_SCANCODE_Z,
+      SDL_SCANCODE_C, SDL_SCANCODE_V, SDL_SCANCODE_B, SDL_SCANCODE_N,
+      SDL_SCANCODE_W, SDL_SCANCODE_Q },
+    { SDL_SCANCODE_J, SDL_SCANCODE_L, SDL_SCANCODE_I, SDL_SCANCODE_K,
+      SDL_SCANCODE_G, SDL_SCANCODE_H, SDL_SCANCODE_Y, SDL_SCANCODE_T,
+      SDL_SCANCODE_5, SDL_SCANCODE_6, SDL_SCANCODE_7, SDL_SCANCODE_8,
+      SDL_SCANCODE_P, SDL_SCANCODE_O },
+    { SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN,
+      SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN,
+      SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN,
+      SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN,
+      SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN }
+};
+
+static void process_keyboard_binding(config_Operation operation, const char* section,
+    const char* key, SDL_Scancode* value, SDL_Scancode default_value, int binding)
+{
+    char binding_key[32];
+    snprintf(binding_key, sizeof(binding_key), "%s%d", key, binding + 1);
+    process_scancode(operation, section, binding_key, value, binding == 0 ? default_value : SDL_SCANCODE_UNKNOWN);
+}
+
+static void process_gamepad_binding(config_Operation operation, const char* section,
+    const char* key, int* value, int default_value, int binding)
+{
+    char binding_key[32];
+    snprintf(binding_key, sizeof(binding_key), "%s%d", key, binding + 1);
+    process_int(operation, section, binding_key, value,
+        binding == 0 ? default_value : SDL_GAMEPAD_BUTTON_INVALID,
+        false, 0, false, 0);
+}
+
+static void sync_gamepad_binding_settings(config_Input_Gamepad* primary, config_Input_Gamepad* secondary)
+{
+    secondary->gamepad_directional = primary->gamepad_directional;
+    secondary->gamepad_invert_x_axis = primary->gamepad_invert_x_axis;
+    secondary->gamepad_invert_y_axis = primary->gamepad_invert_y_axis;
+    secondary->gamepad_x_axis = primary->gamepad_x_axis;
+    secondary->gamepad_y_axis = primary->gamepad_y_axis;
+}
+
+static void input_profile_section(char* section, size_t size, bool keyboard,
+    config_InputProfile profile, int player)
+{
+    snprintf(section, size, "Input%s%s%d", keyboard ? "Keyboard" : "Gamepad", k_input_profile_names[profile], player + 1);
+}
+
 static inline void process(config_Operation operation)
 {
     //**************************************
@@ -298,63 +370,59 @@ static inline void process(config_Operation operation)
         }
     }
 
-    // Keyboard
-    const SDL_Scancode keyboard_defaults[3][14] = {
-        { SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_UP, SDL_SCANCODE_DOWN,
-          SDL_SCANCODE_A, SDL_SCANCODE_S, SDL_SCANCODE_X, SDL_SCANCODE_Z,
-          SDL_SCANCODE_C, SDL_SCANCODE_V, SDL_SCANCODE_B, SDL_SCANCODE_N,
-          SDL_SCANCODE_W, SDL_SCANCODE_Q },
-        { SDL_SCANCODE_J, SDL_SCANCODE_L, SDL_SCANCODE_I, SDL_SCANCODE_K,
-          SDL_SCANCODE_G, SDL_SCANCODE_H, SDL_SCANCODE_Y, SDL_SCANCODE_T,
-          SDL_SCANCODE_5, SDL_SCANCODE_6, SDL_SCANCODE_7, SDL_SCANCODE_8,
-          SDL_SCANCODE_P, SDL_SCANCODE_O },
-        { SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN,
-          SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN,
-          SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN,
-          SDL_SCANCODE_UNKNOWN, SDL_SCANCODE_UNKNOWN }
-    };
-
+    // Controller profiles
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
-        char section[32];
-        snprintf(section, sizeof(section), "InputKeyboard%d", i + 1);
-        const SDL_Scancode* defaults = keyboard_defaults[i < 2 ? i : 2];
-        CONFIG_SCANCODE(section, "KeyLeft", config_input_keyboard[i].key_left, defaults[0]);
-        CONFIG_SCANCODE(section, "KeyRight", config_input_keyboard[i].key_right, defaults[1]);
-        CONFIG_SCANCODE(section, "KeyUp", config_input_keyboard[i].key_up, defaults[2]);
-        CONFIG_SCANCODE(section, "KeyDown", config_input_keyboard[i].key_down, defaults[3]);
-        CONFIG_SCANCODE(section, "KeySelect", config_input_keyboard[i].key_select, defaults[4]);
-        CONFIG_SCANCODE(section, "KeyRun", config_input_keyboard[i].key_run, defaults[5]);
-        CONFIG_SCANCODE(section, "KeyI", config_input_keyboard[i].key_I, defaults[6]);
-        CONFIG_SCANCODE(section, "KeyII", config_input_keyboard[i].key_II, defaults[7]);
-        CONFIG_SCANCODE(section, "KeyIII", config_input_keyboard[i].key_III, defaults[8]);
-        CONFIG_SCANCODE(section, "KeyIV", config_input_keyboard[i].key_IV, defaults[9]);
-        CONFIG_SCANCODE(section, "KeyV", config_input_keyboard[i].key_V, defaults[10]);
-        CONFIG_SCANCODE(section, "KeyVI", config_input_keyboard[i].key_VI, defaults[11]);
-        CONFIG_SCANCODE(section, "KeyToogleTurboI", config_input_keyboard[i].key_toggle_turbo_I, defaults[12]);
-        CONFIG_SCANCODE(section, "KeyToogleTurboII", config_input_keyboard[i].key_toggle_turbo_II, defaults[13]);
-    }
+        for (int profile = 0; profile < config_InputProfile_COUNT; profile++)
+        {
+            char keyboard_section[32];
+            char gamepad_section[32];
+            input_profile_section(keyboard_section, sizeof(keyboard_section), true, (config_InputProfile)profile, i);
+            input_profile_section(gamepad_section, sizeof(gamepad_section), false, (config_InputProfile)profile, i);
+            const SDL_Scancode* defaults = k_keyboard_defaults[i < 2 ? i : 2];
+            bool has_3_buttons = profile != config_InputProfile_2Button;
+            bool has_6_buttons = profile == config_InputProfile_6Button;
 
-    // Gamepads
-    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
-    {
-        char section[32];
-        snprintf(section, sizeof(section), "InputGamepad%d", i + 1);
-        CONFIG_INT(section, "GamepadDirectional", config_input_gamepad[i].gamepad_directional, 0);
-        CONFIG_BOOL(section, "GamepadInvertX", config_input_gamepad[i].gamepad_invert_x_axis, false);
-        CONFIG_BOOL(section, "GamepadInvertY", config_input_gamepad[i].gamepad_invert_y_axis, false);
-        CONFIG_INT(section, "GamepadSelect", config_input_gamepad[i].gamepad_select, SDL_GAMEPAD_BUTTON_BACK);
-        CONFIG_INT(section, "GamepadRun", config_input_gamepad[i].gamepad_run, SDL_GAMEPAD_BUTTON_START);
-        CONFIG_INT(section, "GamepadX", config_input_gamepad[i].gamepad_x_axis, SDL_GAMEPAD_AXIS_LEFTX);
-        CONFIG_INT(section, "GamepadY", config_input_gamepad[i].gamepad_y_axis, SDL_GAMEPAD_AXIS_LEFTY);
-        CONFIG_INT(section, "GamepadI", config_input_gamepad[i].gamepad_I, SDL_GAMEPAD_BUTTON_SOUTH);
-        CONFIG_INT(section, "GamepadII", config_input_gamepad[i].gamepad_II, SDL_GAMEPAD_BUTTON_EAST);
-        CONFIG_INT(section, "GamepadIII", config_input_gamepad[i].gamepad_III, SDL_GAMEPAD_BUTTON_WEST);
-        CONFIG_INT(section, "GamepadIV", config_input_gamepad[i].gamepad_IV, SDL_GAMEPAD_BUTTON_NORTH);
-        CONFIG_INT(section, "GamepadV", config_input_gamepad[i].gamepad_V, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER);
-        CONFIG_INT(section, "GamepadVI", config_input_gamepad[i].gamepad_VI, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER);
-        CONFIG_INT(section, "GamepadToogleTurboI", config_input_gamepad[i].gamepad_toggle_turbo_I, SDL_GAMEPAD_BUTTON_RIGHT_STICK);
-        CONFIG_INT(section, "GamepadToogleTurboII", config_input_gamepad[i].gamepad_toggle_turbo_II, SDL_GAMEPAD_BUTTON_LEFT_STICK);
+            for (int binding = 0; binding < config_InputBindingCount; binding++)
+            {
+                config_Input_Keyboard* keyboard = &config_input_keyboard[i][profile][binding];
+                process_keyboard_binding(operation, keyboard_section, "KeyLeft", &keyboard->key_left, defaults[0], binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyRight", &keyboard->key_right, defaults[1], binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyUp", &keyboard->key_up, defaults[2], binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyDown", &keyboard->key_down, defaults[3], binding);
+                process_keyboard_binding(operation, keyboard_section, "KeySelect", &keyboard->key_select, defaults[4], binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyRun", &keyboard->key_run, defaults[5], binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyI", &keyboard->key_I, defaults[6], binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyII", &keyboard->key_II, defaults[7], binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyIII", &keyboard->key_III, has_3_buttons ? defaults[8] : SDL_SCANCODE_UNKNOWN, binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyIV", &keyboard->key_IV, has_3_buttons ? defaults[9] : SDL_SCANCODE_UNKNOWN, binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyV", &keyboard->key_V, has_6_buttons ? defaults[10] : SDL_SCANCODE_UNKNOWN, binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyVI", &keyboard->key_VI, has_6_buttons ? defaults[11] : SDL_SCANCODE_UNKNOWN, binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyToogleTurboI", &keyboard->key_toggle_turbo_I, defaults[12], binding);
+                process_keyboard_binding(operation, keyboard_section, "KeyToogleTurboII", &keyboard->key_toggle_turbo_II, defaults[13], binding);
+
+                config_Input_Gamepad* gamepad = &config_input_gamepad[i][profile][binding];
+                process_gamepad_binding(operation, gamepad_section, "GamepadSelect", &gamepad->gamepad_select, SDL_GAMEPAD_BUTTON_BACK, binding);
+                process_gamepad_binding(operation, gamepad_section, "GamepadRun", &gamepad->gamepad_run, SDL_GAMEPAD_BUTTON_START, binding);
+                process_gamepad_binding(operation, gamepad_section, "GamepadI", &gamepad->gamepad_I, SDL_GAMEPAD_BUTTON_SOUTH, binding);
+                process_gamepad_binding(operation, gamepad_section, "GamepadII", &gamepad->gamepad_II, SDL_GAMEPAD_BUTTON_EAST, binding);
+                process_gamepad_binding(operation, gamepad_section, "GamepadIII", &gamepad->gamepad_III, has_3_buttons ? SDL_GAMEPAD_BUTTON_WEST : SDL_GAMEPAD_BUTTON_INVALID, binding);
+                process_gamepad_binding(operation, gamepad_section, "GamepadIV", &gamepad->gamepad_IV, has_3_buttons ? SDL_GAMEPAD_BUTTON_NORTH : SDL_GAMEPAD_BUTTON_INVALID, binding);
+                process_gamepad_binding(operation, gamepad_section, "GamepadV", &gamepad->gamepad_V, has_6_buttons ? SDL_GAMEPAD_BUTTON_LEFT_SHOULDER : SDL_GAMEPAD_BUTTON_INVALID, binding);
+                process_gamepad_binding(operation, gamepad_section, "GamepadVI", &gamepad->gamepad_VI, has_6_buttons ? SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER : SDL_GAMEPAD_BUTTON_INVALID, binding);
+                process_gamepad_binding(operation, gamepad_section, "GamepadToogleTurboI", &gamepad->gamepad_toggle_turbo_I, SDL_GAMEPAD_BUTTON_RIGHT_STICK, binding);
+                process_gamepad_binding(operation, gamepad_section, "GamepadToogleTurboII", &gamepad->gamepad_toggle_turbo_II, SDL_GAMEPAD_BUTTON_LEFT_STICK, binding);
+            }
+
+            config_Input_Gamepad* primary = &config_input_gamepad[i][profile][0];
+            config_Input_Gamepad* secondary = &config_input_gamepad[i][profile][1];
+            CONFIG_INT(gamepad_section, "GamepadDirectional", primary->gamepad_directional, 0);
+            CONFIG_BOOL(gamepad_section, "GamepadInvertX", primary->gamepad_invert_x_axis, false);
+            CONFIG_BOOL(gamepad_section, "GamepadInvertY", primary->gamepad_invert_y_axis, false);
+            CONFIG_INT(gamepad_section, "GamepadX", primary->gamepad_x_axis, SDL_GAMEPAD_AXIS_LEFTX);
+            CONFIG_INT(gamepad_section, "GamepadY", primary->gamepad_y_axis, SDL_GAMEPAD_AXIS_LEFTY);
+            sync_gamepad_binding_settings(primary, secondary);
+        }
     }
 
     // Gamepad shortcuts
@@ -425,6 +493,28 @@ static void before_write(void)
     config_ini_data["Hotkeys"].remove("CaptureMouseScancode");
     config_ini_data["Hotkeys"].remove("CaptureMouseMod");
 
+    for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+    {
+        char keyboard_section[32];
+        char gamepad_section[32];
+        snprintf(keyboard_section, sizeof(keyboard_section), "InputKeyboard%d", i + 1);
+        snprintf(gamepad_section, sizeof(gamepad_section), "InputGamepad%d", i + 1);
+
+        if (config_ini_data.has(keyboard_section))
+        {
+            for (int key = 0; key < 14; key++)
+                config_ini_data[keyboard_section].remove(k_keyboard_keys[key]);
+        }
+
+        if (config_ini_data.has(gamepad_section))
+        {
+            for (int key = 0; key < 5; key++)
+                config_ini_data[gamepad_section].remove(k_gamepad_setting_keys[key]);
+            for (int key = 0; key < 10; key++)
+                config_ini_data[gamepad_section].remove(k_gamepad_binding_keys[key]);
+        }
+    }
+
     if (config_emulator.ffwd)
         config_audio.sync = true;
 }
@@ -462,6 +552,56 @@ static void normalize(void)
 static void migrate(int file_version)
 {
     std::string stored;
+
+    if (file_version < 8)
+    {
+        for (int i = 0; i < GG_MAX_GAMEPADS; i++)
+        {
+            char old_keyboard_section[32];
+            char old_gamepad_section[32];
+            snprintf(old_keyboard_section, sizeof(old_keyboard_section), "InputKeyboard%d", i + 1);
+            snprintf(old_gamepad_section, sizeof(old_gamepad_section), "InputGamepad%d", i + 1);
+
+            for (int profile = 0; profile < config_InputProfile_COUNT; profile++)
+            {
+                char keyboard_section[32];
+                char gamepad_section[32];
+                input_profile_section(keyboard_section, sizeof(keyboard_section), true, (config_InputProfile)profile, i);
+                input_profile_section(gamepad_section, sizeof(gamepad_section), false, (config_InputProfile)profile, i);
+
+                for (int key = 0; key < 14; key++)
+                {
+                    std::string value;
+                    if (get_setting(old_keyboard_section, k_keyboard_keys[key], &value))
+                    {
+                        char binding_key[32];
+                        snprintf(binding_key, sizeof(binding_key), "%s1", k_keyboard_keys[key]);
+                        write_string(keyboard_section, binding_key, value);
+                    }
+                }
+
+                for (int key = 0; key < 5; key++)
+                {
+                    std::string value;
+                    if (get_setting(old_gamepad_section, k_gamepad_setting_keys[key], &value))
+                    {
+                        write_string(gamepad_section, k_gamepad_setting_keys[key], value);
+                    }
+                }
+
+                for (int key = 0; key < 10; key++)
+                {
+                    std::string value;
+                    if (get_setting(old_gamepad_section, k_gamepad_binding_keys[key], &value))
+                    {
+                        char binding_key[32];
+                        snprintf(binding_key, sizeof(binding_key), "%s1", k_gamepad_binding_keys[key]);
+                        write_string(gamepad_section, binding_key, value);
+                    }
+                }
+            }
+        }
+    }
 
     if (file_version < 7)
     {

@@ -37,6 +37,10 @@ static bool events_check_hotkey(const SDL_Event* event, const config_Hotkey& hot
 static bool events_match_hotkey_scancode(const SDL_Event* event, const config_Hotkey& hotkey);
 static bool events_is_mouse_controller(int controller);
 static int events_get_mouse_controller(void);
+static config_InputProfile input_get_profile(int controller);
+static GG_Keys input_get_avenue_pad_3_button(int controller);
+static bool input_keyboard_pressed(const bool* keyboard_state, SDL_Scancode primary, SDL_Scancode secondary);
+static bool input_gamepad_pressed(SDL_Gamepad* gamepad, int primary, int secondary);
 static Uint16 input_build_state(int controller, bool update_turbo = true);
 static Uint16 input_filter_opposing_directions(int controller, Uint16 state);
 static void input_apply_state(int controller, Uint16 before, Uint16 now);
@@ -227,6 +231,41 @@ bool events_input_updated(void)
     return input_updated;
 }
 
+static config_InputProfile input_get_profile(int controller)
+{
+    if (config_input.controller_type[controller] == GG_CONTROLLER_AVENUE_PAD_3)
+        return config_InputProfile_3Button;
+    if (config_input.controller_type[controller] == GG_CONTROLLER_AVENUE_PAD_6)
+        return config_InputProfile_6Button;
+    return config_InputProfile_2Button;
+}
+
+static GG_Keys input_get_avenue_pad_3_button(int controller)
+{
+    if (config_input.avenue_pad_3_button[controller] == 1)
+        return GG_KEY_SELECT;
+    if (config_input.avenue_pad_3_button[controller] == 2)
+        return GG_KEY_RUN;
+    if (!emu_is_empty())
+        return emu_get_core()->GetMedia()->GetAvenuePad3Button();
+    return GG_KEY_RUN;
+}
+
+static bool input_keyboard_pressed(const bool* keyboard_state,
+    SDL_Scancode primary, SDL_Scancode secondary)
+{
+    bool primary_pressed = primary > SDL_SCANCODE_UNKNOWN && primary < SDL_SCANCODE_COUNT &&
+        keyboard_state[primary];
+    bool secondary_pressed = secondary > SDL_SCANCODE_UNKNOWN &&
+        secondary < SDL_SCANCODE_COUNT && keyboard_state[secondary];
+    return primary_pressed || secondary_pressed;
+}
+
+static bool input_gamepad_pressed(SDL_Gamepad* gamepad, int primary, int secondary)
+{
+    return gamepad_get_button(gamepad, primary) || gamepad_get_button(gamepad, secondary);
+}
+
 static Uint16 input_build_state(int controller, bool update_turbo)
 {
     const bool is_mouse_controller = events_is_mouse_controller(controller);
@@ -238,63 +277,98 @@ static Uint16 input_build_state(int controller, bool update_turbo)
 
     const bool* keyboard_state = SDL_GetKeyboardState(NULL);
     Uint16 ret = 0;
+    config_InputProfile profile = input_get_profile(controller);
 
-    if (keyboard_state[config_input_keyboard[controller].key_left])
-        ret |= GG_KEY_LEFT;
-    if (keyboard_state[config_input_keyboard[controller].key_right])
-        ret |= GG_KEY_RIGHT;
-    if (keyboard_state[config_input_keyboard[controller].key_up])
-        ret |= GG_KEY_UP;
-    if (keyboard_state[config_input_keyboard[controller].key_down])
-        ret |= GG_KEY_DOWN;
-    if (keyboard_state[config_input_keyboard[controller].key_I])
-        ret |= GG_KEY_I;
-    if (keyboard_state[config_input_keyboard[controller].key_II])
-        ret |= GG_KEY_II;
-    if (keyboard_state[config_input_keyboard[controller].key_III])
-        ret |= GG_KEY_III;
-    if (keyboard_state[config_input_keyboard[controller].key_IV])
-        ret |= GG_KEY_IV;
-    if (keyboard_state[config_input_keyboard[controller].key_V])
-        ret |= GG_KEY_V;
-    if (keyboard_state[config_input_keyboard[controller].key_VI])
-        ret |= GG_KEY_VI;
-    if (keyboard_state[config_input_keyboard[controller].key_run])
-        ret |= GG_KEY_RUN;
-    if (keyboard_state[config_input_keyboard[controller].key_select])
-        ret |= GG_KEY_SELECT;
-
-    bool kb_turbo_I  = keyboard_state[config_input_keyboard[controller].key_toggle_turbo_I] != 0;
-    bool kb_turbo_II = keyboard_state[config_input_keyboard[controller].key_toggle_turbo_II] != 0;
-    bool gp_turbo_I = false;
-    bool gp_turbo_II = false;
+    const config_Input_Keyboard* keyboard_primary = &config_input_keyboard[controller][profile][0];
+    const config_Input_Keyboard* keyboard_secondary = &config_input_keyboard[controller][profile][1];
+    const config_Input_Gamepad* gamepad_primary = &config_input_gamepad[controller][profile][0];
+    const config_Input_Gamepad* gamepad_secondary = &config_input_gamepad[controller][profile][1];
 
     SDL_Gamepad* sdl_controller = gamepad_controller[controller];
 
+    if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_left, keyboard_secondary->key_left))
+        ret |= GG_KEY_LEFT;
+    if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_right, keyboard_secondary->key_right))
+        ret |= GG_KEY_RIGHT;
+    if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_up, keyboard_secondary->key_up))
+        ret |= GG_KEY_UP;
+    if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_down, keyboard_secondary->key_down))
+        ret |= GG_KEY_DOWN;
+
+    if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_select, keyboard_secondary->key_select) ||
+        input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_select, gamepad_secondary->gamepad_select))
+    {
+        ret |= GG_KEY_SELECT;
+    }
+    if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_run, keyboard_secondary->key_run) ||
+        input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_run, gamepad_secondary->gamepad_run))
+    {
+        ret |= GG_KEY_RUN;
+    }
+    if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_I, keyboard_secondary->key_I) ||
+        input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_I, gamepad_secondary->gamepad_I))
+    {
+        ret |= GG_KEY_I;
+    }
+    if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_II, keyboard_secondary->key_II) ||
+        input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_II, gamepad_secondary->gamepad_II))
+    {
+        ret |= GG_KEY_II;
+    }
+
+    if (profile == config_InputProfile_3Button)
+    {
+        GG_Keys preferred = input_get_avenue_pad_3_button(controller);
+        GG_Keys alternate = preferred == GG_KEY_SELECT ? GG_KEY_RUN : GG_KEY_SELECT;
+
+        if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_III, keyboard_secondary->key_III) ||
+            input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_III, gamepad_secondary->gamepad_III))
+        {
+            ret |= preferred;
+        }
+        if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_IV, keyboard_secondary->key_IV) ||
+            input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_IV, gamepad_secondary->gamepad_IV))
+        {
+            ret |= alternate;
+        }
+    }
+    else if (profile == config_InputProfile_6Button)
+    {
+        if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_III, keyboard_secondary->key_III) ||
+            input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_III, gamepad_secondary->gamepad_III))
+        {
+            ret |= GG_KEY_III;
+        }
+        if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_IV, keyboard_secondary->key_IV) ||
+            input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_IV, gamepad_secondary->gamepad_IV))
+        {
+            ret |= GG_KEY_IV;
+        }
+        if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_V, keyboard_secondary->key_V) ||
+            input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_V, gamepad_secondary->gamepad_V))
+        {
+            ret |= GG_KEY_V;
+        }
+        if (input_keyboard_pressed(keyboard_state, keyboard_primary->key_VI, keyboard_secondary->key_VI) ||
+            input_gamepad_pressed(sdl_controller, gamepad_primary->gamepad_VI, gamepad_secondary->gamepad_VI))
+        {
+            ret |= GG_KEY_VI;
+        }
+    }
+
+    bool kb_turbo_I = input_keyboard_pressed(keyboard_state,
+        keyboard_primary->key_toggle_turbo_I, keyboard_secondary->key_toggle_turbo_I);
+    bool kb_turbo_II = input_keyboard_pressed(keyboard_state,
+        keyboard_primary->key_toggle_turbo_II, keyboard_secondary->key_toggle_turbo_II);
+    bool gp_turbo_I = input_gamepad_pressed(sdl_controller,
+        gamepad_primary->gamepad_toggle_turbo_I, gamepad_secondary->gamepad_toggle_turbo_I);
+    bool gp_turbo_II = input_gamepad_pressed(sdl_controller,
+        gamepad_primary->gamepad_toggle_turbo_II, gamepad_secondary->gamepad_toggle_turbo_II);
+
     if (IsValidPointer(sdl_controller))
     {
-        if (gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_I))
-            ret |= GG_KEY_I;
-        if (gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_II))
-            ret |= GG_KEY_II;
-        if (gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_III))
-            ret |= GG_KEY_III;
-        if (gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_IV))
-            ret |= GG_KEY_IV;
-        if (gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_V))
-            ret |= GG_KEY_V;
-        if (gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_VI))
-            ret |= GG_KEY_VI;
-        if (gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_run))
-            ret |= GG_KEY_RUN;
-        if (gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_select))
-            ret |= GG_KEY_SELECT;
-
-        gp_turbo_I  = gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_toggle_turbo_I);
-        gp_turbo_II = gamepad_get_button(sdl_controller, config_input_gamepad[controller].gamepad_toggle_turbo_II);
-
         // Use D-Pad
-        if (config_input_gamepad[controller].gamepad_directional == 0)
+        if (gamepad_primary->gamepad_directional == 0)
         {
             if (SDL_GetGamepadButton(sdl_controller, SDL_GAMEPAD_BUTTON_DPAD_LEFT))
                 ret |= GG_KEY_LEFT;
@@ -309,11 +383,11 @@ static Uint16 input_build_state(int controller, bool update_turbo)
         else
         {
             const int STICK_DEAD_ZONE = 8000;
-            const int rawx = SDL_GetGamepadAxis(sdl_controller, (SDL_GamepadAxis)config_input_gamepad[controller].gamepad_x_axis);
-            const int rawy = SDL_GetGamepadAxis(sdl_controller, (SDL_GamepadAxis)config_input_gamepad[controller].gamepad_y_axis);
+            const int rawx = SDL_GetGamepadAxis(sdl_controller, (SDL_GamepadAxis)gamepad_primary->gamepad_x_axis);
+            const int rawy = SDL_GetGamepadAxis(sdl_controller, (SDL_GamepadAxis)gamepad_primary->gamepad_y_axis);
 
-            const int x = config_input_gamepad[controller].gamepad_invert_x_axis ? -rawx : rawx;
-            const int y = config_input_gamepad[controller].gamepad_invert_y_axis ? -rawy : rawy;
+            const int x = gamepad_primary->gamepad_invert_x_axis ? -rawx : rawx;
+            const int y = gamepad_primary->gamepad_invert_y_axis ? -rawy : rawy;
 
             if (x < -STICK_DEAD_ZONE)
                 ret |= GG_KEY_LEFT;

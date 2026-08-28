@@ -24,7 +24,7 @@
 #include <string>
 #include "geargrafx.h"
 
-static const int config_version = 7;
+static const int config_version = 8;
 static const int config_minimum_version = 2;
 static const int config_max_recent_roms = 15;
 static const int config_memory_editor_count = 14;
@@ -149,6 +149,16 @@ struct config_Input
     bool turbo_enabled[GG_MAX_GAMEPADS][2];
     int turbo_speed[GG_MAX_GAMEPADS][2];
 };
+
+enum config_InputProfile
+{
+    config_InputProfile_2Button = 0,
+    config_InputProfile_3Button,
+    config_InputProfile_6Button,
+    config_InputProfile_COUNT
+};
+
+static const int config_InputBindingCount = 2;
 
 struct config_Input_Keyboard
 {
@@ -333,8 +343,8 @@ EXTERN config_Video config_video;
 EXTERN config_Audio config_audio;
 EXTERN config_Rewind config_rewind;
 EXTERN config_Input config_input;
-EXTERN config_Input_Keyboard config_input_keyboard[GG_MAX_GAMEPADS];
-EXTERN config_Input_Gamepad config_input_gamepad[GG_MAX_GAMEPADS];
+EXTERN config_Input_Keyboard config_input_keyboard[GG_MAX_GAMEPADS][config_InputProfile_COUNT][config_InputBindingCount];
+EXTERN config_Input_Gamepad config_input_gamepad[GG_MAX_GAMEPADS][config_InputProfile_COUNT][config_InputBindingCount];
 EXTERN config_Input_Gamepad_Shortcuts config_input_gamepad_shortcuts[GG_MAX_GAMEPADS];
 EXTERN config_Hotkey config_hotkeys[config_HotkeyIndex_COUNT];
 EXTERN config_Debug config_debug;
