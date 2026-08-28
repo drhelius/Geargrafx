@@ -631,7 +631,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         "geargrafx_avenue_pad_3_switch",
         "Avenue Pad 3 Switch",
         NULL,
-        "Configure the button mapping for the Avenue Pad 3 controller's third button (III). 'Auto' automatically selects the appropriate mapping based on the game.",
+        "Configure whether Button III maps to SELECT or RUN for the Avenue Pad 3. Button IV maps to the other action. 'Auto' uses the game database and defaults to RUN.",
         NULL,
         "input",
         {

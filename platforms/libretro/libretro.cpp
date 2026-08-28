@@ -84,6 +84,7 @@ static bool lowpass_speed_108 = true;
 static bool turbo_toggle_hotkey = false;
 static int mouse_sensitivity = 5;
 static bool libretro_supports_bitmasks = false;
+static GG_Keys avenue_pad_3_button = GG_KEY_NONE;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
 static int joypad_old[MAX_PADS][MAX_BUTTONS];
 struct MouseState
@@ -161,6 +162,17 @@ static bool IsJoypadDevice(unsigned device)
 {
     return ((device == RETRO_DEVICE_JOYPAD) || (device == RETRO_DEVICE_PCE_PAD) ||
             (device == RETRO_DEVICE_PCE_AVENUE_PAD_3) || (device == RETRO_DEVICE_PCE_AVENUE_PAD_6));
+}
+
+static GG_Keys get_avenue_pad_3_button(void)
+{
+    if (avenue_pad_3_button != GG_KEY_NONE)
+        return avenue_pad_3_button;
+
+    if (core)
+        return core->GetMedia()->GetAvenuePad3Button();
+
+    return GG_KEY_RUN;
 }
 
 unsigned retro_api_version(void)
@@ -276,6 +288,7 @@ void retro_deinit(void)
     current_aspect_ratio = 0.0f;
     aspect_ratio = 0.0f;
     libretro_supports_bitmasks = false;
+    avenue_pad_3_button = GG_KEY_NONE;
 
     reset_controller_devices();
     clear_input_state();
@@ -990,6 +1003,25 @@ static void poll_input(void)
 
         int select_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_SELECT);
         int start_pressed  = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_START);
+        int third_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_Y);
+        int fourth_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_X);
+
+        if (input_device[j] == RETRO_DEVICE_PCE_AVENUE_PAD_3)
+        {
+            if (get_avenue_pad_3_button() == GG_KEY_SELECT)
+            {
+                select_pressed |= third_pressed;
+                start_pressed |= fourth_pressed;
+            }
+            else
+            {
+                start_pressed |= third_pressed;
+                select_pressed |= fourth_pressed;
+            }
+
+            third_pressed = 0;
+            fourth_pressed = 0;
+        }
 
         if (allow_soft_reset)
         {
@@ -1004,8 +1036,8 @@ static void poll_input(void)
 
         joypad_current[j][4] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_A);
         joypad_current[j][5] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_B);
-        joypad_current[j][8] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_Y);
-        joypad_current[j][9] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_X);
+        joypad_current[j][8] = third_pressed;
+        joypad_current[j][9] = fourth_pressed;
         joypad_current[j][10] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_L);
         joypad_current[j][11] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_R);
         joypad_current[j][12] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_L2);
@@ -1420,18 +1452,17 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        GG_Keys button;
         if (strcmp(var.value, "Auto") == 0)
-            button = GG_KEY_NONE;
+            avenue_pad_3_button = GG_KEY_NONE;
         else if (strcmp(var.value, "SELECT") == 0)
-            button = GG_KEY_SELECT;
+            avenue_pad_3_button = GG_KEY_SELECT;
         else if (strcmp(var.value, "RUN") == 0)
-            button = GG_KEY_RUN;
+            avenue_pad_3_button = GG_KEY_RUN;
         else
-            button = GG_KEY_NONE;
+            avenue_pad_3_button = GG_KEY_NONE;
 
         for (int i = 0; i < MAX_PADS; i++)
-            core->GetInput()->SetAvenuePad3Button((GG_Controllers)i, button);
+            core->GetInput()->SetAvenuePad3Button((GG_Controllers)i, avenue_pad_3_button);
     }
 
     var.key = "geargrafx_soft_reset";
