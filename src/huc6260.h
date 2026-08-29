@@ -158,6 +158,11 @@ private:
     bool m_lowpass_speed[3];
 };
 
+INLINE double huc6260_get_frame_rate(int total_lines)
+{
+    return (double)GG_MASTER_CLOCK_RATE / ((double)HUC6260_LINE_LENGTH * total_lines);
+}
+
 static const HuC6260::HuC6260_Speed k_huc6260_speed[4] = {
     HuC6260::HuC6260_SPEED_5_36_MHZ, HuC6260::HuC6260_SPEED_7_16_MHZ,
     HuC6260::HuC6260_SPEED_10_8_MHZ, HuC6260::HuC6260_SPEED_10_8_MHZ };

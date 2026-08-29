@@ -69,6 +69,7 @@ static int current_screen_height = 0;
 static int current_width_scale = 1;
 static float current_aspect_ratio = 0.0f;
 static float aspect_ratio = 0.0f;
+static double current_fps = 0.0;
 
 static bool allow_up_down = false;
 static bool allow_soft_reset = false;
@@ -287,6 +288,7 @@ void retro_deinit(void)
     current_width_scale = 1;
     current_aspect_ratio = 0.0f;
     aspect_ratio = 0.0f;
+    current_fps = 0.0;
     libretro_supports_bitmasks = false;
     avenue_pad_3_button = GG_KEY_NONE;
 
@@ -332,12 +334,15 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
+    core->GetRuntimeInfo(runtime_info);
+    current_fps = runtime_info.fps;
+
     info->geometry.base_width   = runtime_info.screen_width;
     info->geometry.base_height  = runtime_info.screen_height;
     info->geometry.max_width    = MAX_SCREEN_WIDTH;
     info->geometry.max_height   = MAX_SCREEN_HEIGHT;
     info->geometry.aspect_ratio = aspect_ratio == 0.0f ? (float)runtime_info.screen_width / (float)runtime_info.screen_height / (float)runtime_info.width_scale : aspect_ratio;
-    info->timing.fps            = 59.82;
+    info->timing.fps            = current_fps;
     info->timing.sample_rate    = 44100.0;
 }
 
@@ -355,15 +360,19 @@ void retro_run(void)
 
     core->GetRuntimeInfo(runtime_info);
 
-    if ((runtime_info.screen_width != current_screen_width) ||
-        (runtime_info.screen_height != current_screen_height) ||
-        (runtime_info.width_scale != current_width_scale) ||
-        (aspect_ratio != current_aspect_ratio))
+    bool fps_changed = runtime_info.fps < current_fps - 0.000001 || runtime_info.fps > current_fps + 0.000001;
+    bool geometry_changed = (runtime_info.screen_width != current_screen_width) ||
+                            (runtime_info.screen_height != current_screen_height) ||
+                            (runtime_info.width_scale != current_width_scale) ||
+                            (aspect_ratio != current_aspect_ratio);
+
+    if (fps_changed || geometry_changed)
     {
         current_screen_width = runtime_info.screen_width;
         current_screen_height = runtime_info.screen_height;
         current_width_scale = runtime_info.width_scale;
         current_aspect_ratio = aspect_ratio;
+        current_fps = runtime_info.fps;
 
         retro_system_av_info info;
         info.geometry.base_width   = runtime_info.screen_width;
@@ -371,8 +380,13 @@ void retro_run(void)
         info.geometry.max_width    = MAX_SCREEN_WIDTH;
         info.geometry.max_height   = MAX_SCREEN_HEIGHT;
         info.geometry.aspect_ratio = (aspect_ratio == 0.0f ? ((float)runtime_info.screen_width / (float)runtime_info.width_scale) / (float)runtime_info.screen_height : aspect_ratio);
+        info.timing.fps            = current_fps;
+        info.timing.sample_rate    = 44100.0;
 
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
+        if (fps_changed)
+            environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+        else
+            environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
     }
 
     video_cb((uint8_t*)frame_buffer, runtime_info.screen_width, runtime_info.screen_height, runtime_info.screen_width * sizeof(u8) * 2);

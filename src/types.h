@@ -38,6 +38,7 @@ struct GG_Runtime_Info
     int screen_width;
     int screen_height;
     int width_scale;
+    double fps;
 };
 
 enum GG_Console_Type
