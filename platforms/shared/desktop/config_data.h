@@ -27,7 +27,7 @@
 static const int config_version = 8;
 static const int config_minimum_version = 2;
 static const int config_max_recent_roms = 15;
-static const int config_memory_editor_count = 14;
+static const int config_memory_editor_count = 16;
 
 enum config_ShaderMode
 {

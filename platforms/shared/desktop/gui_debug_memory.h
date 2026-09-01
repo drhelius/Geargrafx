@@ -45,6 +45,8 @@ enum Memory_Editor_Tabs
     MEMORY_EDITOR_ADPCM_RAM,
     MEMORY_EDITOR_ARCADE_RAM,
     MEMORY_EDITOR_MB128,
+    MEMORY_EDITOR_LOGICAL,
+    MEMORY_EDITOR_PHYSICAL,
     MEMORY_EDITOR_MAX
 };
 
@@ -63,7 +65,7 @@ EXTERN void gui_debug_memory_goto(int editor, int address);
 EXTERN void gui_debug_memory_save_dump(const char* file_path, bool binary);
 EXTERN void gui_debug_memory_load_dump(const char* file_path);
 EXTERN bool gui_debug_memory_select_range(int editor, int start_address, int end_address);
-EXTERN void gui_debug_memory_set_selection_value(int editor, u8 value);
+EXTERN int gui_debug_memory_set_selection_value(int editor, u8 value);
 EXTERN void gui_debug_memory_add_bookmark(int editor, int address, const char* name);
 EXTERN void gui_debug_memory_remove_bookmark(int editor, int address);
 EXTERN bool gui_debug_memory_add_watch(int editor, int address, const char* notes, int size);
@@ -76,7 +78,7 @@ EXTERN void gui_debug_memory_search_capture(int editor);
 EXTERN int gui_debug_memory_search(int editor, int op, int compare_type, int compare_value, int data_type, void** results_ptr);
 EXTERN int gui_debug_memory_find(int editor, const char* value, bool text, bool case_sensitive, int* out_addresses, int max_results);
 EXTERN void gui_debug_memory_save_settings(std::ostream& stream);
-EXTERN bool gui_debug_memory_load_settings(std::istream& stream);
+EXTERN bool gui_debug_memory_load_settings(std::istream& stream, int editor_count = MEMORY_EDITOR_MAX);
 
 #undef GUI_DEBUG_MEMORY_IMPORT
 #undef EXTERN

@@ -210,6 +210,60 @@ INLINE bool Memory::TryPeek(u16 address, u8 bank, u8* value)
 #endif
 }
 
+INLINE bool Memory::CanPoke(u16 address)
+{
+#if defined(GG_TESTING)
+    UNUSED(address);
+    return true;
+#else
+    return CanPoke(address, m_mpr[address >> 13]);
+#endif
+}
+
+INLINE bool Memory::CanPoke(u16 address, u8 bank)
+{
+#if defined(GG_TESTING)
+    UNUSED(address);
+    UNUSED(bank);
+    return true;
+#else
+    u16 offset = address & 0x1FFF;
+
+    if (bank == 0xFF || !IsValidPointer(m_memory_map[bank]) || !m_memory_map_write[bank])
+        return false;
+
+    if (bank == 0xF7 && offset >= 0x800)
+        return false;
+
+    return true;
+#endif
+}
+
+INLINE bool Memory::TryPoke(u16 address, u8 value)
+{
+#if defined(GG_TESTING)
+    m_test_memory[address] = value;
+    return true;
+#else
+    return TryPoke(address, m_mpr[address >> 13], value);
+#endif
+}
+
+INLINE bool Memory::TryPoke(u16 address, u8 bank, u8 value)
+{
+    if (!CanPoke(address, bank))
+        return false;
+
+#if defined(GG_TESTING)
+    UNUSED(bank);
+    m_test_memory[address] = value;
+#else
+    m_memory_map[bank][address & 0x1FFF] = value;
+#endif
+
+    return true;
+}
+
 INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
 {
 #if defined(GG_TESTING)

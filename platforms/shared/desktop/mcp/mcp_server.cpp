@@ -460,7 +460,7 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "set_breakpoint"},
         {"title", "Set Breakpoint"},
-        {"description", "Add execute/read/write breakpoint at CPU address (logical ROM/RAM), VRAM, palette, VDC, VCE, WRAM, ROM, Card RAM or CD RAM address."},
+        {"description", "Add execute/read/write breakpoint at CPU address (logical ROM/RAM), VRAM, palette, VDC, VCE, SYSTEM RAM, ROM, Card RAM or CD RAM address."},
         {"annotations", {{"readOnlyHint", false}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
         {"inputSchema", {
             {"type", "object"},
@@ -471,8 +471,8 @@ json McpServer::BuildToolList()
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, wram, rom, zp, card_ram, cd_ram, backup_ram"},
-                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "zp", "palette", "huc6270_reg", "huc6260_reg", "wram", "rom", "card_ram", "cd_ram", "backup_ram"})}
+                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, system_ram, rom, zp, card_ram, cd_ram, backup_ram"},
+                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "zp", "palette", "huc6270_reg", "huc6260_reg", "system_ram", "rom", "card_ram", "cd_ram", "backup_ram"})}
                 }},
                 {"read", {
                     {"type", "boolean"},
@@ -509,8 +509,8 @@ json McpServer::BuildToolList()
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: cpu_addr, rom_ram, vram, palette, huc6270_reg, huc6260_reg, wram, zp, rom, card_ram, cd_ram, backup_ram"},
-                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "wram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
+                    {"description", "Memory area: cpu_addr, rom_ram, vram, palette, huc6270_reg, huc6260_reg, system_ram, zp, rom, card_ram, cd_ram, backup_ram"},
+                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "system_ram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
                 }},
                 {"read", {
                     {"type", "boolean"},
@@ -547,8 +547,8 @@ json McpServer::BuildToolList()
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, wram, zp, rom, card_ram, cd_ram, backup_ram"},
-                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "wram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
+                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, system_ram, zp, rom, card_ram, cd_ram, backup_ram"},
+                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "system_ram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -571,7 +571,8 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "list_memory_areas"},
         {"title", "List Memory Areas"},
-        {"description", "List memory spaces/tabs: WRAM, VRAM, palette, ROM banks; returns area IDs, sizes in addressable units, unit sizes, and byte sizes."},
+        {"description", "List memory spaces/tabs, including logical CPU and physical bus views; "
+            "returns area IDs, sizes in addressable units, unit sizes, and byte sizes."},
         {"annotations", {{"readOnlyHint", true}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
         {"inputSchema", {
             {"type", "object"},
@@ -2232,7 +2233,7 @@ static bool GetBreakpointTypeFromString(const std::string& memory_area, int& typ
         return true;
     }
 
-    if (memory_area == "wram")
+    if (memory_area == "system_ram")
     {
         type = HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM;
         return true;
@@ -2612,8 +2613,9 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
             data.push_back(byte);
         }
 
-        m_debugAdapter.WriteMemoryArea(area, offset, data);
-        return {{"success", true}, {"area", area}, {"offset", offsetStr}, {"bytes_written", data.size()}};
+        size_t bytes_written = m_debugAdapter.WriteMemoryArea(area, offset, data);
+        return {{"success", bytes_written > 0}, {"area", area}, {"offset", offsetStr},
+            {"bytes_written", bytes_written}};
     }
     // Registers
     else if (normalizedTool == "write_huc6280_register")

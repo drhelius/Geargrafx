@@ -42,9 +42,11 @@
 #include "emu.h"
 #include "config.h"
 
-static const char* GGDEBUG_MAGIC = "GGDEBUG3";
+static const char* GGDEBUG_MAGIC = "GGDEBUG4";
+static const char* GGDEBUG_LEGACY_MAGIC = "GGDEBUG3";
 static const int GGDEBUG_MAGIC_LEN = 8;
 static const int GGDEBUG_MAX_RECORDS = 0x10000;
+static const int GGDEBUG_LEGACY_MEMORY_EDITOR_COUNT = MEMORY_EDITOR_LOGICAL;
 
 static bool read_settings_data(std::istream& stream, void* data, size_t size);
 static bool read_settings_bool(std::istream& stream, bool& value);
@@ -222,8 +224,14 @@ void gui_debug_load_settings(const char* file_path)
     }
 
     char magic[8] = {};
-    if (!read_settings_data(file, magic, GGDEBUG_MAGIC_LEN) ||
-        memcmp(magic, GGDEBUG_MAGIC, GGDEBUG_MAGIC_LEN) != 0)
+    if (!read_settings_data(file, magic, GGDEBUG_MAGIC_LEN))
+    {
+        Log("Invalid debug settings file: %s", file_path);
+        return;
+    }
+
+    bool legacy_settings = memcmp(magic, GGDEBUG_LEGACY_MAGIC, GGDEBUG_MAGIC_LEN) == 0;
+    if (!legacy_settings && memcmp(magic, GGDEBUG_MAGIC, GGDEBUG_MAGIC_LEN) != 0)
     {
         Log("Invalid debug settings file: %s", file_path);
         return;
@@ -295,7 +303,8 @@ void gui_debug_load_settings(const char* file_path)
         bookmarks.push_back(item);
     }
 
-    if (!gui_debug_memory_load_settings(file))
+    int memory_editor_count = legacy_settings ? GGDEBUG_LEGACY_MEMORY_EDITOR_COUNT : MEMORY_EDITOR_MAX;
+    if (!gui_debug_memory_load_settings(file, memory_editor_count))
     {
         Log("Invalid debug settings file: %s", file_path);
         return;

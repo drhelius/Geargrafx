@@ -1788,7 +1788,7 @@ static void menu_debug(void)
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("WRAM & CD-ROM RAM"))
+            if (ImGui::BeginMenu("SYSTEM RAM & CD-ROM RAM"))
             {
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_ram", &config_debug.reset_ram, "Random\0 0x00\0 0xFF\0\0"))

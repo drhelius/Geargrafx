@@ -731,7 +731,7 @@ static const BreakpointTypeInfo k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOI
     { HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM,      "PALETTE  ", "Palette RAM", 3 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, "6270     ", "HuC6270 Reg", 2 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER, "6260     ", "HuC6260 Reg", 2 },
-    { HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM,             "WRAM     ", "WRAM",        4 },
+    { HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM,             "SYSTEM RAM", "SYSTEM RAM",  4 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE,        "ZP       ", "Zero Page",   2 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_ROM,              "ROM      ", "ROM",         6 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM,         "CARD RAM ", "CARD RAM",    5 },
@@ -3423,7 +3423,7 @@ static const char* get_memory_bank_type_name(Memory::MemoryBankType type)
         case Memory::MEMORY_BANK_TYPE_BIOS:       return "BIOS";
         case Memory::MEMORY_BANK_TYPE_CARD_RAM:   return "Card RAM";
         case Memory::MEMORY_BANK_TYPE_BACKUP_RAM: return "Backup RAM";
-        case Memory::MEMORY_BANK_TYPE_WRAM:       return "WRAM";
+        case Memory::MEMORY_BANK_TYPE_WRAM:       return "SYSTEM RAM";
         case Memory::MEMORY_BANK_TYPE_CDROM_RAM:  return "CD-ROM RAM";
         case Memory::MEMORY_BANK_TYPE_HARDWARE:   return "Hardware";
         case Memory::MEMORY_BANK_TYPE_UNUSED:     return "Unused";

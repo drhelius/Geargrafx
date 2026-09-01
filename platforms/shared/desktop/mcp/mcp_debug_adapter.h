@@ -116,7 +116,7 @@ public:
     // Memory areas (matching debugger memory editor)
     std::vector<MemoryAreaInfo> ListMemoryAreas();
     std::vector<u8> ReadMemoryArea(int area, u32 offset, size_t size);
-    void WriteMemoryArea(int area, u32 offset, const std::vector<u8>& data);
+    size_t WriteMemoryArea(int area, u32 offset, const std::vector<u8>& data);
 
     // Disassembly (using existing disassembler records)
     std::vector<DisasmLine> GetDisassembly(u16 start_address, u16 end_address, int bank = -1, bool resolve_symbols = false);
