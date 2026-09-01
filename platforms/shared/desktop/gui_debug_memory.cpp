@@ -84,7 +84,7 @@ void gui_debug_memory_reset(void)
     Adpcm* adpcm = core->GetAdpcm();
     bool is_sgx = media->IsSGX();
 
-    mem_edit[MEMORY_EDITOR_RAM].Reset("WRAM", memory->GetWorkingRAM(), 0x2000 * (is_sgx ? 4 : 1));
+    mem_edit[MEMORY_EDITOR_RAM].Reset("SYSTEM RAM", memory->GetWorkingRAM(), 0x2000 * (is_sgx ? 4 : 1));
     mem_edit[MEMORY_EDITOR_ZERO_PAGE].Reset("ZP", memory->GetWorkingRAM(), 0x100);
     mem_edit[MEMORY_EDITOR_ROM].Reset("ROM", media->GetROM(), media->GetROMSize());
     mem_edit[MEMORY_EDITOR_CARD_RAM].Reset("CARD RAM", memory->GetCardRAM(), memory->GetCardRAMSize());
