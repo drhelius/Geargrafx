@@ -2614,8 +2614,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         }
 
         size_t bytes_written = m_debugAdapter.WriteMemoryArea(area, offset, data);
-        return {{"success", bytes_written > 0}, {"area", area}, {"offset", offsetStr},
-            {"bytes_written", bytes_written}};
+        return {{"success", bytes_written > 0}, {"area", area}, {"offset", offsetStr}, {"bytes_written", bytes_written}};
     }
     // Registers
     else if (normalizedTool == "write_huc6280_register")

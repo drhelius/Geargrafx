@@ -30,8 +30,7 @@ typedef void (*ContextMenuBreakpointCallback)(int editor, int start, int end);
 typedef bool (*MemEditorReadCallback)(int address, uint8_t* value, void* user_data);
 typedef bool (*MemEditorWriteCallback)(int address, uint8_t value, void* user_data);
 typedef bool (*MemEditorCanWriteCallback)(int address, void* user_data);
-typedef void (*MemEditorFormatAddressCallback)(int address, char* buffer, int buffer_size,
-    void* user_data);
+typedef void (*MemEditorFormatAddressCallback)(int address, char* buffer, int buffer_size, void* user_data);
 
 class MemEditor
 {

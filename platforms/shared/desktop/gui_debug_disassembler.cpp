@@ -731,7 +731,7 @@ static const BreakpointTypeInfo k_breakpoint_type_info[HuC6280::HuC6280_BREAKPOI
     { HuC6280::HuC6280_BREAKPOINT_TYPE_PALETTE_RAM,      "PALETTE  ", "Palette RAM", 3 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6270_REGISTER, "6270     ", "HuC6270 Reg", 2 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER, "6260     ", "HuC6260 Reg", 2 },
-    { HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM,             "SYSTEM RAM", "SYSTEM RAM",  4 },
+    { HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM,             "SYS RAM  ", "System RAM",  4 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE,        "ZP       ", "Zero Page",   2 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_ROM,              "ROM      ", "ROM",         6 },
     { HuC6280::HuC6280_BREAKPOINT_TYPE_CARD_RAM,         "CARD RAM ", "CARD RAM",    5 },

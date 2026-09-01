@@ -21,9 +21,11 @@ SOURCES_CXX := \
     $(SRC_DIR)/audio.cpp \
     $(SRC_DIR)/arcade_card_mapper.cpp \
     $(SRC_DIR)/cdrom_audio.cpp \
+    $(SRC_DIR)/cdrom_chd_file_adapter.cpp \
     $(SRC_DIR)/cdrom_chd_image.cpp \
     $(SRC_DIR)/cdrom_cuebin_image.cpp \
     $(SRC_DIR)/media_file.cpp \
+    $(SRC_DIR)/media_file_native.cpp \
     $(SRC_DIR)/cdrom_image.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
     $(SRC_DIR)/cdrom.cpp \
@@ -42,4 +44,5 @@ SOURCES_CXX := \
     $(SRC_DIR)/scsi_controller.cpp \
     $(SRC_DIR)/sf2_mapper.cpp \
     $(SRC_DIR)/trace_logger.cpp \
+    $(SRC_DIR)/turbolink.cpp \
     $(SRC_DIR)/vgm_recorder.cpp

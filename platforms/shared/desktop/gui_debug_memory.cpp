@@ -94,11 +94,9 @@ void gui_debug_memory_reset(void)
     Adpcm* adpcm = core->GetAdpcm();
     bool is_sgx = media->IsSGX();
 
-    mem_edit[MEMORY_EDITOR_LOGICAL].Reset("LOGICAL", 0x10000, logical_memory_read,
-        logical_memory_write, logical_memory_can_write, memory);
+    mem_edit[MEMORY_EDITOR_LOGICAL].Reset("LOGICAL", 0x10000, logical_memory_read, logical_memory_write, logical_memory_can_write, memory);
     mem_edit[MEMORY_EDITOR_LOGICAL].SetAddressFormatter(logical_memory_format_address, 7);
-    mem_edit[MEMORY_EDITOR_PHYSICAL].Reset("PHYSICAL", 0x200000, physical_memory_read,
-        physical_memory_write, physical_memory_can_write, memory);
+    mem_edit[MEMORY_EDITOR_PHYSICAL].Reset("PHYSICAL", 0x200000, physical_memory_read, physical_memory_write, physical_memory_can_write, memory);
     mem_edit[MEMORY_EDITOR_RAM].Reset("SYSTEM RAM", memory->GetWorkingRAM(), 0x2000 * (is_sgx ? 4 : 1));
     mem_edit[MEMORY_EDITOR_ZERO_PAGE].Reset("ZP", memory->GetWorkingRAM(), 0x100);
     mem_edit[MEMORY_EDITOR_ROM].Reset("ROM", media->GetROM(), media->GetROMSize());
@@ -533,8 +531,7 @@ void gui_debug_memory_add_bookmark(int editor, int address, const char* name)
     }
     else
     {
-        snprintf(bookmark.name, sizeof(bookmark.name), "Bookmark_%0*X",
-            mem_edit[editor].GetAddressDigits(), address);
+        snprintf(bookmark.name, sizeof(bookmark.name), "Bookmark_%0*X", mem_edit[editor].GetAddressDigits(), address);
     }
 
     bookmarks->push_back(bookmark);
