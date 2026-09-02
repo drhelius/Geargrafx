@@ -149,9 +149,17 @@ EOF
 
 cat "$VORBIS_DIR/lib/misc.h" >> "$TEMP_OUTPUT"
 cat "$VORBIS_DIR/lib/os.h" >> "$TEMP_OUTPUT"
+cat >> "$TEMP_OUTPUT" <<'EOF'
+/* Configure normally detects alloca support before compiling libvorbis. */
+#if !defined(alloca) && (defined(__GNUC__) || defined(__clang__))
+#  define alloca __builtin_alloca
+#endif
+EOF
 cat "$VORBIS_DIR/lib/mdct.h" >> "$TEMP_OUTPUT"
 cat "$VORBIS_DIR/lib/envelope.h" >> "$TEMP_OUTPUT"
 cat "$VORBIS_DIR/lib/codebook.h" >> "$TEMP_OUTPUT"
+# Match the definition on targets where int32_t is not an int.
+transform_output 's/const dec_codebook \*b,int n,/const dec_codebook *b,ogg_int32_t n,/'
 cat "$VORBIS_DIR/lib/smallft.h" >> "$TEMP_OUTPUT"
 cat "$VORBIS_DIR/lib/codec_internal.h" >> "$TEMP_OUTPUT"
 transform_output "/#include \"psy.h\"/r $VORBIS_DIR/lib/psy.h"

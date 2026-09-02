@@ -4605,6 +4605,10 @@ STIN int vorbis_ftoi(double f){
 #endif /* default implementation */
 
 #endif /* _OS_H */
+/* Configure normally detects alloca support before compiling libvorbis. */
+#if !defined(alloca) && (defined(__GNUC__) || defined(__clang__))
+#  define alloca __builtin_alloca
+#endif
 /********************************************************************
  *                                                                  *
  * THIS FILE IS PART OF THE OggVorbis SOFTWARE CODEC SOURCE CODE.   *
@@ -4871,7 +4875,7 @@ extern int vorbis_book_init_decode(dec_codebook *c);
 extern void vorbis_book_clear(codebook *b);
 extern void vorbis_decbook_clear(dec_codebook *c);
 
-extern void _book_unquantize(float *r,const dec_codebook *b,int n,
+extern void _book_unquantize(float *r,const dec_codebook *b,ogg_int32_t n,
                              ogg_int64_t *map);
 extern float *_book_logdist(const static_codebook *b,float *vals);
 extern float _float32_unpack(long val);

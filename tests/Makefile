@@ -10,6 +10,7 @@ OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 INCLUDES += -I$(SRC_DIR)
 INCLUDES += -I$(DEPS_DIR)/libchdr/include
 INCLUDES += -I$(DEPS_DIR)/lzma/include
+INCLUDES += -I$(DEPS_DIR)/minivorbis
 INCLUDES += -I$(DEPS_DIR)/miniz
 INCLUDES += -I$(DEPS_DIR)/zstd
 
