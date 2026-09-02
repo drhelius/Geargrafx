@@ -29,6 +29,7 @@ INCLUDES += -I$(DEPS_DIR)/json
 INCLUDES += -I$(DEPS_DIR)/libchdr/include
 INCLUDES += -I$(DEPS_DIR)/lzma/include
 INCLUDES += -I$(DEPS_DIR)/mINI
+INCLUDES += -I$(DEPS_DIR)/minivorbis
 INCLUDES += -I$(DEPS_DIR)/miniz
 INCLUDES += -I$(DEPS_DIR)/stb
 INCLUDES += -I$(DEPS_DIR)/zstd

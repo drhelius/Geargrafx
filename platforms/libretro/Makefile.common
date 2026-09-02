@@ -8,6 +8,7 @@ SOURCES_C   :=  $(DEPS_DIR)/miniz/miniz.c \
                 $(DEPS_DIR)/lzma/src/LzmaEnc.c \
                 $(DEPS_DIR)/lzma/src/LzmaDec.c \
                 $(DEPS_DIR)/lzma/src/CpuArch.c \
+                $(DEPS_DIR)/minivorbis/minivorbis.c \
 
 SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
                 $(CORE_DIR)/libretro_vfs_file.cpp \
@@ -22,6 +23,7 @@ SOURCES_CXX :=  $(CORE_DIR)/libretro.cpp \
                 $(SOURCE_DIR)/media_file.cpp \
                 $(SOURCE_DIR)/media_file_libretro.cpp \
                 $(SOURCE_DIR)/media_file_native.cpp \
+                $(SOURCE_DIR)/ogg_vorbis_decoder.cpp \
                 $(SOURCE_DIR)/cdrom_image.cpp \
                 $(SOURCE_DIR)/cdrom_media.cpp \
                 $(SOURCE_DIR)/cdrom.cpp \

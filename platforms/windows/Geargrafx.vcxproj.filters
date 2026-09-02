@@ -235,11 +235,17 @@
     <ClCompile Include="..\..\src\media_file_native.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\ogg_vorbis_decoder.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\cdrom_image.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\dependencies\miniz\miniz.c">
       <Filter>dependencies\miniz</Filter>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\minivorbis\minivorbis.c">
+      <Filter>dependencies\minivorbis</Filter>
     </ClCompile>
     <ClCompile Include="..\shared\dependencies\lzma\src\CpuArch.c">
       <Filter>dependencies\lzma\src</Filter>
@@ -654,6 +660,9 @@
     <ClInclude Include="..\..\src\media_file_native.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ogg_vorbis_decoder.h">
+      <Filter>src</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\cdrom_image.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -671,6 +680,9 @@
     </ClInclude>
     <ClInclude Include="..\shared\dependencies\miniz\miniz.h">
       <Filter>dependencies\miniz</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\dependencies\minivorbis\minivorbis.h">
+      <Filter>dependencies\minivorbis</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\dependencies\lzma\include\CpuArch.h">
       <Filter>dependencies\lzma\include</Filter>
@@ -771,6 +783,9 @@
     </Filter>
     <Filter Include="dependencies\miniz">
       <UniqueIdentifier>{466b2296-06dc-4afd-a898-3c4ed168681e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="dependencies\minivorbis">
+      <UniqueIdentifier>{68e69cae-2d2c-4c4f-bfc5-2e01db79d9d8}</UniqueIdentifier>
     </Filter>
     <Filter Include="dependencies\libchdr">
       <UniqueIdentifier>{07f35376-ef00-42d5-8aa3-0b504beb1396}</UniqueIdentifier>

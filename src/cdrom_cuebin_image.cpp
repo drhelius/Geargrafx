@@ -26,6 +26,7 @@
 #endif
 #include "cdrom_common.h"
 #include "media_file.h"
+#include "ogg_vorbis_decoder.h"
 #include "crc.h"
 
 CdRomCueBinImage::CdRomCueBinImage() : CdRomImage()
@@ -387,6 +388,9 @@ void CdRomCueBinImage::InitImgFile(ImgFile* img_file)
     img_file->chunk_count = 0;
     img_file->chunks = NULL;
     InitPointer(img_file->file);
+    InitPointer(img_file->ogg_decoder);
+    img_file->decoded_pcm_size = 0;
+    img_file->is_ogg = false;
     img_file->is_wav = false;
     img_file->wav_data_offset = 0;
 }
@@ -413,25 +417,30 @@ void CdRomCueBinImage::InitTrackFile(TrackFile& track_file)
     track_file.img_file = NULL;
 }
 
+void CdRomCueBinImage::DestroyImgFile(ImgFile* img_file)
+{
+    if (!IsValidPointer(img_file))
+        return;
+
+    SafeDelete(img_file->ogg_decoder);
+    SafeDelete(img_file->file);
+
+    if (IsValidPointer(img_file->chunks))
+    {
+        for (u32 i = 0; i < img_file->chunk_count; i++)
+            SafeDeleteArray(img_file->chunks[i]);
+        SafeDeleteArray(img_file->chunks);
+    }
+
+    SafeDelete(img_file);
+}
+
 void CdRomCueBinImage::DestroyImgFiles()
 {
     int img_file_count = (int)(m_img_files.size());
     for (int i = 0; i < img_file_count; i++)
-    {
-        ImgFile* img_file = m_img_files[i];
-        if (IsValidPointer(img_file))
-        {
-            SafeDelete(img_file->file);
+        DestroyImgFile(m_img_files[i]);
 
-            if (IsValidPointer(img_file->chunks))
-            {
-                for (u32 j = 0; j < img_file->chunk_count; j++)
-                    SafeDeleteArray(img_file->chunks[j]);
-                SafeDeleteArray(img_file->chunks);
-            }
-            SafeDelete(img_file);
-        }
-    }
     m_img_files.clear();
     m_track_files.clear();
 }
@@ -454,16 +463,10 @@ bool CdRomCueBinImage::GatherImgInfo(ImgFile* img_file)
         return false;
 
     if (!ProcessFileFormat(img_file))
-    {
-        SafeDelete(img_file->file);
         return false;
-    }
 
     if (!SetupFileChunks(img_file))
-    {
-        SafeDelete(img_file->file);
         return false;
-    }
 
     Debug("Gathered ImgFile info: %s", img_file->file_path);
     Debug("ImgFile info Size: %d, Chunk size: %d, Chunk count: %d", 
@@ -477,7 +480,12 @@ bool CdRomCueBinImage::OpenImgFile(ImgFile* img_file)
     if (!IsValidPointer(img_file) || !IsValidPointer(img_file->file_path))
         return false;
 
+    SafeDelete(img_file->ogg_decoder);
     SafeDelete(img_file->file);
+    img_file->decoded_pcm_size = 0;
+    img_file->is_ogg = false;
+    img_file->is_wav = false;
+    img_file->wav_data_offset = 0;
     img_file->file = MediaFile::OpenFile(img_file->file_path);
 
     if (img_file->file)
@@ -529,8 +537,50 @@ bool CdRomCueBinImage::ProcessFileFormat(ImgFile* img_file)
         return false;
     }
 
-    if (extension == "wav")
+    if ((extension == "ogg") || (extension == "oga"))
+        return ProcessOggFormat(img_file);
+    else if (extension == "wav")
         return ProcessWavFormat(img_file);
+
+    return true;
+}
+
+bool CdRomCueBinImage::ProcessOggFormat(ImgFile* img_file)
+{
+    Debug("Ogg Vorbis file detected: %s", img_file->file_path);
+
+    if (!IsValidPointer(img_file->file))
+        return false;
+
+    OggVorbisDecoder* decoder = new OggVorbisDecoder;
+
+    if (!decoder->Open(img_file->file, img_file->file_path))
+    {
+        SafeDelete(decoder);
+        return false;
+    }
+
+    u64 frame_count = decoder->GetFrameCount();
+    u64 decoded_pcm_size = frame_count * 4;
+    u64 sector_count = decoded_pcm_size / 2352;
+
+    if ((decoded_pcm_size % 2352) != 0)
+        sector_count++;
+
+    if ((sector_count == 0) || (sector_count > (0xFFFFFFFFULL / 2352)))
+    {
+        Error("Decoded Ogg Vorbis file %s is too large", img_file->file_path);
+        SafeDelete(decoder);
+        return false;
+    }
+
+    img_file->ogg_decoder = decoder;
+    img_file->decoded_pcm_size = decoded_pcm_size;
+    img_file->file_size = (u32)(sector_count * 2352);
+    img_file->is_ogg = true;
+
+    Debug("Ogg Vorbis virtual PCM size: %llu bytes, %llu sector(s)",
+        (unsigned long long)decoded_pcm_size, (unsigned long long)sector_count);
 
     return true;
 }
@@ -640,6 +690,12 @@ bool CdRomCueBinImage::SetupFileChunks(ImgFile* img_file)
     if (img_file->chunk_size == 0)
     {
         Error("Invalid chunk size for %s", img_file->file_path);
+        return false;
+    }
+
+    if (img_file->is_ogg && ((img_file->chunk_size & 3) != 0))
+    {
+        Error("Ogg Vorbis chunk size must be aligned to 4 bytes: %u", img_file->chunk_size);
         return false;
     }
 
@@ -769,7 +825,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
             if (!GatherImgInfo(img_file))
             {
                 Error("Failed to gather ImgFile info for %s", current_file_path.c_str());
-                SafeDelete(img_file);
+                DestroyImgFile(img_file);
                 return false;
             }
 
@@ -915,6 +971,18 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
         {
             Error("Invalid ImgFile pointer for file %s", f.img_file->file_path);
             continue;
+        }
+
+        if (f.img_file->is_ogg)
+        {
+            for (size_t j = 0; j < f.tracks.size(); j++)
+            {
+                if (f.tracks[j].type != GG_CDROM_AUDIO_TRACK)
+                {
+                    Error("Ogg Vorbis file %s cannot be used by data track %u", f.img_file->file_path, f.tracks[j].number);
+                    return false;
+                }
+            }
         }
 
         u32 start_sector = (m_toc.tracks.empty() ? 0 : m_toc.tracks.back().end_lba + 1);
@@ -1131,6 +1199,39 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
         u32 file_offset = CalculateFileOffset(img_file, chunk_index);
 
+        if (img_file->is_ogg)
+        {
+            if (!IsValidPointer(img_file->ogg_decoder))
+            {
+                Error("Cannot load Ogg Vorbis chunk - Decoder is not open for %s", img_file->file_path);
+                SafeDeleteArray(img_file->chunks[chunk_index]);
+                return false;
+            }
+
+            img_file->chunks[chunk_index] = new u8[img_file->chunk_size];
+            memset(img_file->chunks[chunk_index], 0, img_file->chunk_size);
+
+            u32 to_read = CalculateReadSize(img_file, file_offset);
+            u32 decode_size = 0;
+
+            if ((u64)file_offset < img_file->decoded_pcm_size)
+            {
+                u64 remaining = img_file->decoded_pcm_size - file_offset;
+                decode_size = (remaining < to_read) ? (u32)remaining : to_read;
+            }
+
+            Debug("Decoding chunk %d from %s", chunk_index, img_file->file_path);
+
+            if ((decode_size != 0) && !img_file->ogg_decoder->ReadPcm(file_offset, img_file->chunks[chunk_index], decode_size))
+            {
+                Error("Failed to decode Ogg Vorbis chunk %d from %s", chunk_index, img_file->file_path);
+                SafeDeleteArray(img_file->chunks[chunk_index]);
+                return false;
+            }
+
+            return true;
+        }
+
         if (!img_file->file->Seek(file_offset))
         {
             Error("Cannot load chunk - Failed to seek to offset %u in file %s (tell after failure: %lld)",
@@ -1328,8 +1429,23 @@ bool CdRomCueBinImage::KeepAliveFile()
 
     ImgFile* img_file = m_keep_alive_file;
 
-    if (!IsValidPointer(img_file) && !m_img_files.empty())
-        img_file = m_img_files[0];
+    if (IsValidPointer(img_file) && img_file->is_ogg)
+        img_file = NULL;
+
+    if (!IsValidPointer(img_file))
+    {
+        for (size_t i = 0; i < m_img_files.size(); i++)
+        {
+            if (IsValidPointer(m_img_files[i]) && !m_img_files[i]->is_ogg)
+            {
+                img_file = m_img_files[i];
+                break;
+            }
+        }
+    }
+
+    if (!IsValidPointer(img_file))
+        return true;
 
     if (!IsValidPointer(img_file) || !IsValidPointer(img_file->file) || (img_file->file_size == 0))
         return false;

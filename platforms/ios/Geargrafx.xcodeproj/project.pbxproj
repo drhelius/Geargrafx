@@ -17,6 +17,7 @@
 		B30000000000000000000007 /* LzmaEnc.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000007 /* LzmaEnc.c */; };
 		B30000000000000000000008 /* LzmaDec.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000008 /* LzmaDec.c */; };
 		B30000000000000000000009 /* CpuArch.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000009 /* CpuArch.c */; };
+		C40000000000000000000001 /* minivorbis.c in Sources */ = {isa = PBXBuildFile; fileRef = C40100000000000000000001 /* minivorbis.c */; settings = {COMPILER_FLAGS = "-w"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,8 @@
 		B30100000000000000000007 /* LzmaEnc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = LzmaEnc.c; path = ../shared/dependencies/lzma/src/LzmaEnc.c; sourceTree = SOURCE_ROOT; };
 		B30100000000000000000008 /* LzmaDec.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = LzmaDec.c; path = ../shared/dependencies/lzma/src/LzmaDec.c; sourceTree = SOURCE_ROOT; };
 		B30100000000000000000009 /* CpuArch.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = CpuArch.c; path = ../shared/dependencies/lzma/src/CpuArch.c; sourceTree = SOURCE_ROOT; };
+		C40100000000000000000001 /* minivorbis.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = minivorbis.c; path = ../shared/dependencies/minivorbis/minivorbis.c; sourceTree = SOURCE_ROOT; };
+		C40100000000000000000002 /* minivorbis.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = minivorbis.h; path = ../shared/dependencies/minivorbis/minivorbis.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -76,6 +79,7 @@
 				A10000000000000000000002 /* Core */,
 				A10000000000000000000008 /* Miniz */,
 				B30200000000000000000001 /* CHD Dependencies */,
+				C40200000000000000000001 /* MiniVorbis */,
 				A10000000000000000000005 /* Support */,
 				A10000000000000000000007 /* LICENSE */,
 				A20000000000000000000003 /* Frameworks */,
@@ -131,6 +135,15 @@
 				B30100000000000000000009 /* CpuArch.c */,
 			);
 			name = "CHD Dependencies";
+			sourceTree = "<group>";
+		};
+		C40200000000000000000001 /* MiniVorbis */ = {
+			isa = PBXGroup;
+			children = (
+				C40100000000000000000001 /* minivorbis.c */,
+				C40100000000000000000002 /* minivorbis.h */,
+			);
+			name = MiniVorbis;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -224,6 +237,7 @@
 				B30000000000000000000007 /* LzmaEnc.c in Sources */,
 				B30000000000000000000008 /* LzmaDec.c in Sources */,
 				B30000000000000000000009 /* CpuArch.c in Sources */,
+				C40000000000000000000001 /* minivorbis.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -382,6 +396,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../src",
 					"$(SRCROOT)/../../src/audio",
+					"$(SRCROOT)/../shared/dependencies/minivorbis",
 					"$(SRCROOT)/../shared/dependencies/miniz",
 					"$(SRCROOT)/../shared/dependencies/libchdr/include",
 					"$(SRCROOT)/../shared/dependencies/lzma/include",
@@ -438,6 +453,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)/../../src",
 					"$(SRCROOT)/../../src/audio",
+					"$(SRCROOT)/../shared/dependencies/minivorbis",
 					"$(SRCROOT)/../shared/dependencies/miniz",
 					"$(SRCROOT)/../shared/dependencies/libchdr/include",
 					"$(SRCROOT)/../shared/dependencies/lzma/include",

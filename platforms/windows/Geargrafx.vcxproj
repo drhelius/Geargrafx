@@ -27,6 +27,7 @@
     <ClCompile Include="..\..\src\cdrom_cuebin_image.cpp" />
     <ClCompile Include="..\..\src\media_file.cpp" />
     <ClCompile Include="..\..\src\media_file_native.cpp" />
+    <ClCompile Include="..\..\src\ogg_vorbis_decoder.cpp" />
     <ClCompile Include="..\..\src\cdrom_image.cpp" />
     <ClCompile Include="..\..\src\media.cpp" />
     <ClCompile Include="..\..\src\cdrom_audio.cpp" />
@@ -80,6 +81,10 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\shared\dependencies\miniz\miniz.c">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\minivorbis\minivorbis.c">
+      <CompileAs>CompileAsC</CompileAs>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\sound_queue.cpp" />
@@ -165,6 +170,7 @@
     <ClInclude Include="..\..\src\cdrom_cuebin_image.h" />
     <ClInclude Include="..\..\src\media_file.h" />
     <ClInclude Include="..\..\src\media_file_native.h" />
+    <ClInclude Include="..\..\src\ogg_vorbis_decoder.h" />
     <ClInclude Include="..\..\src\cdrom_image.h" />
     <ClInclude Include="..\..\src\crc.h" />
     <ClInclude Include="..\..\src\huc6202_inline.h" />
@@ -224,6 +230,7 @@
     <ClInclude Include="..\..\src\trace_logger.h" />
     <ClInclude Include="..\..\src\types.h" />
     <ClInclude Include="..\shared\dependencies\glad\glad.h" />
+    <ClInclude Include="..\shared\dependencies\minivorbis\minivorbis.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\bitstream.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\cdrom.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\chd.h" />
@@ -413,7 +420,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/minivorbis;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -455,7 +462,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/minivorbis;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -497,7 +504,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/minivorbis;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -537,7 +544,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/minivorbis;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>

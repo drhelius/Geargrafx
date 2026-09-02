@@ -12,6 +12,7 @@ SOURCES_C := \
     $(DEPS_DIR)/lzma/src/LzmaEnc.c \
     $(DEPS_DIR)/lzma/src/LzmaDec.c \
     $(DEPS_DIR)/lzma/src/CpuArch.c \
+    $(DEPS_DIR)/minivorbis/minivorbis.c \
     $(DEPS_DIR)/miniz/miniz.c \
 
 SOURCES_CXX := \
@@ -80,6 +81,7 @@ SOURCES_CXX := \
     $(SRC_DIR)/cdrom_cuebin_image.cpp \
     $(SRC_DIR)/media_file.cpp \
     $(SRC_DIR)/media_file_native.cpp \
+    $(SRC_DIR)/ogg_vorbis_decoder.cpp \
     $(SRC_DIR)/cdrom_image.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
     $(SRC_DIR)/cdrom.cpp \
