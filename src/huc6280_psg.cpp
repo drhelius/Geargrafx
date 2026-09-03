@@ -302,7 +302,7 @@ void HuC6280PSG::Sync()
                     continue;
 
                 u16 lfo_freq = m_lfo_src->frequency ? m_lfo_src->frequency : 0x1000;
-                s32 freq = m_lfo_dest->frequency ? m_lfo_dest->frequency : 0x1000;
+                u16 freq = m_lfo_dest->frequency ? m_lfo_dest->frequency : 0x1000;
 
                 if (m_lfo_control & 0x80)
                 {
@@ -324,9 +324,8 @@ void HuC6280PSG::Sync()
                         m_lfo_src->counter = lfo_counter_new;
                     }
 
-                    s16 lfo_data = m_lfo_src->wave_data[m_lfo_src->wave_index];
-                    freq += ((lfo_data - 16) << (((m_lfo_control & 3) - 1) << 1));
-                    freq = MAX(freq, 1);
+                    u8 lfo_data = m_lfo_src->wave_data[m_lfo_src->wave_index];
+                    freq = CalculateLfoPeriod(freq, lfo_data);
                 }
 
                 int dest_counter_new = m_lfo_dest->counter - batch_size;

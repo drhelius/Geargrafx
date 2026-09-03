@@ -41,4 +41,12 @@ INLINE HuC6280PSG::HuC6280PSG_State* HuC6280PSG::GetState()
     return &m_state;
 }
 
+INLINE u16 HuC6280PSG::CalculateLfoPeriod(u16 frequency, u8 data) const
+{
+    s32 modulation = ((s32)data - 16) * k_huc6280_psg_lfo_depth[m_lfo_control & 0x03];
+    u16 period = (u16)((u32)((s32)frequency + modulation) & 0x0FFF);
+
+    return period ? period : 0x1000;
+}
+
 #endif /* HUC6280_PSG_INLINE_H */

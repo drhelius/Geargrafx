@@ -81,6 +81,7 @@ public:
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
 private:
+    u16 CalculateLfoPeriod(u16 frequency, u8 data) const;
     void Sync();
     void ComputeVolumeLUT();
     void UpdateChannelVolume(int channel);
@@ -106,6 +107,8 @@ private:
     float m_hpf_prev_input[2];
     float m_hpf_prev_output[2];
 };
+
+static const s16 k_huc6280_psg_lfo_depth[4] = { 0, 1, 4, 16 };
 
 #include "huc6280_psg_inline.h"
 
