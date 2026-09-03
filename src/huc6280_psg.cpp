@@ -435,7 +435,7 @@ int HuC6280PSG::EndFrame(s16* sample_buffer)
             m_hpf_prev_input[channel] = raw;
             m_hpf_prev_output[channel] = outSample;
 
-            sample_buffer[s] = (s16)outSample;
+            sample_buffer[s] = (s16)CLAMP(outSample, -32768.0f, 32767.0f);
         }
     }
 
