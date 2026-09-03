@@ -205,20 +205,30 @@ void HuC6280PSG::Write(u16 address, u8 value)
     case 6:
         if (m_channel_select < 6)
         {
-            m_ch->wave = value & 0x1F;
+            u8 data = value & 0x1F;
+            m_ch->wave = data;
 
             // DDA on
             if (IS_SET_BIT(m_ch->control, 6))
             {
-                m_ch->dda = value & 0x1F;
+                m_ch->dda = data;
             }
-            // DDA off, Channel off
-            else if(IS_NOT_SET_BIT(m_ch->control, 7))
+            // DDA off
+            else
             {
                 m_wave_sum[m_channel_select] -= m_ch->wave_data[m_ch->wave_index] & 0x1F;
-                m_ch->wave_data[m_ch->wave_index] = value & 0x1F;
+                m_ch->wave_data[m_ch->wave_index] = data;
                 m_wave_sum[m_channel_select] += m_ch->wave_data[m_ch->wave_index];
-                m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
+
+                if (!m_ch->enabled)
+                {
+                    m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
+                }
+                else if (!m_ch->noise_enabled && !m_ch->mute)
+                {
+                    m_ch->left_sample = (s16)(((s32)data - m_dc_offset) * m_ch->gain_left);
+                    m_ch->right_sample = (s16)(((s32)data - m_dc_offset) * m_ch->gain_right);
+                }
             }
         }
         break;
