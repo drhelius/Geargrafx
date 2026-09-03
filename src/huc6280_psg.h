@@ -85,6 +85,7 @@ private:
     bool IsLfoConfigured() const;
     bool IsLfoRunning() const;
     u16 CalculateLfoPeriod(u16 frequency, u8 data) const;
+    void UpdateWaveformOutput(u8 data);
     s16 GetWaveformSample(int channel, u16 frequency, u16 gain) const;
     s64 DivideRounded(s64 value, s64 divisor) const;
     void RebuildWaveSums();

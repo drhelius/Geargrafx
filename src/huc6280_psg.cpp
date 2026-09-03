@@ -170,24 +170,38 @@ void HuC6280PSG::Write(u16 address, u8 value)
     case 4:
         if (m_channel_select < 6)
         {
+            bool enabled = IS_SET_BIT(value, 7);
+            bool dda_enabled = IS_SET_BIT(value, 6);
+            bool dda_falling = m_ch->dda_enabled && !dda_enabled;
+
             // Channel enable/disable
-            if (IS_SET_BIT(m_ch->control, 7) != IS_SET_BIT(value, 7))
+            if (m_ch->enabled != enabled)
             {
                 m_ch->counter = m_ch->frequency;
             }
 
-            // DDA on, channel off
-            if (IS_SET_BIT(m_ch->control, 6) && IS_NOT_SET_BIT(value, 7))
+            // DDA holds the waveform address reset
+            if (m_ch->dda_enabled || dda_enabled)
             {
                 m_ch->wave_index = 0;
             }
 
+            if (dda_falling)
+            {
+                m_ch->counter = m_ch->frequency ? m_ch->frequency : 0x1000;
+            }
+
             m_ch->control = value;
-            m_ch->enabled = IS_SET_BIT(value, 7);
-            m_ch->dda_enabled = IS_SET_BIT(value, 6);
+            m_ch->enabled = enabled;
+            m_ch->dda_enabled = dda_enabled;
             m_ch->vol = (value >> 1) & 0x0F;
 
             UpdateChannelVolume(m_channel_select);
+
+            if (dda_falling)
+            {
+                UpdateWaveformOutput(m_ch->wave_data[0]);
+            }
         }
         break;
     // Channel amplitude
@@ -224,11 +238,8 @@ void HuC6280PSG::Write(u16 address, u8 value)
                 {
                     m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
                 }
-                else if (!m_ch->noise_enabled && !m_ch->mute)
-                {
-                    m_ch->left_sample = (s16)(((s32)data - m_dc_offset) * m_ch->gain_left);
-                    m_ch->right_sample = (s16)(((s32)data - m_dc_offset) * m_ch->gain_right);
-                }
+
+                UpdateWaveformOutput(data);
             }
         }
         break;
