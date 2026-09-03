@@ -103,6 +103,7 @@ void HuC6280PSG::Reset()
         m_channels[i].dda_enabled = 0;
         m_channels[i].left_sample = 0;
         m_channels[i].right_sample = 0;
+        m_wave_sum[i] = 0;
 
         for (int j = 0; j < 32; j++)
         {
@@ -115,6 +116,17 @@ void HuC6280PSG::Reset()
         }
 
         UpdateChannelVolume(i);
+    }
+}
+
+void HuC6280PSG::RebuildWaveSums()
+{
+    for (int channel = 0; channel < 6; channel++)
+    {
+        m_wave_sum[channel] = 0;
+
+        for (int i = 0; i < 32; i++)
+            m_wave_sum[channel] += m_channels[channel].wave_data[i] & 0x1F;
     }
 }
 
@@ -203,7 +215,9 @@ void HuC6280PSG::Write(u16 address, u8 value)
             // DDA off, Channel off
             else if(IS_NOT_SET_BIT(m_ch->control, 7))
             {
+                m_wave_sum[m_channel_select] -= m_ch->wave_data[m_ch->wave_index] & 0x1F;
                 m_ch->wave_data[m_ch->wave_index] = value & 0x1F;
+                m_wave_sum[m_channel_select] += m_ch->wave_data[m_ch->wave_index];
                 m_ch->wave_index = ((m_ch->wave_index + 1) & 0x1F);
             }
         }
@@ -359,8 +373,13 @@ void HuC6280PSG::Sync()
                     ch->counter = wave_counter_new;
                 }
 
-                if (freq > 7)
-                    data = ch->wave_data[ch->wave_index];
+                if (!ch->mute)
+                {
+                    ch->left_sample = GetWaveformSample(i, freq, ch->gain_left);
+                    ch->right_sample = GetWaveformSample(i, freq, ch->gain_right);
+                }
+
+                continue;
             }
 
             if (!ch->mute)
@@ -579,6 +598,8 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
         m_hpf_prev_output[0] = 0.0f;
         m_hpf_prev_output[1] = 0.0f;
     }
+
+    RebuildWaveSums();
 
     m_channel_select &= 0x07;
     if (m_channel_select < 6)

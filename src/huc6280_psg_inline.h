@@ -64,4 +64,26 @@ INLINE u16 HuC6280PSG::CalculateLfoPeriod(u16 frequency, u8 data) const
     return period ? period : 0x1000;
 }
 
+INLINE s16 HuC6280PSG::GetWaveformSample(int channel, u16 frequency, u16 gain) const
+{
+    const HuC6280PSG_Channel* ch = &m_channels[channel];
+
+    if (frequency <= k_huc6280_psg_analytic_max_period)
+    {
+        s32 numerator = (s32)m_wave_sum[channel] - ((s32)m_dc_offset * k_huc6280_psg_waveform_samples);
+
+        return (s16)DivideRounded((s64)numerator * gain, k_huc6280_psg_waveform_samples);
+    }
+
+    return (s16)(((s32)ch->wave_data[ch->wave_index] - m_dc_offset) * gain);
+}
+
+INLINE s64 HuC6280PSG::DivideRounded(s64 value, s64 divisor) const
+{
+    if (value >= 0)
+        return (value + (divisor >> 1)) / divisor;
+
+    return (value - (divisor >> 1)) / divisor;
+}
+
 #endif /* HUC6280_PSG_INLINE_H */

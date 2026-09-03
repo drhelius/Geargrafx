@@ -85,6 +85,9 @@ private:
     bool IsLfoConfigured() const;
     bool IsLfoRunning() const;
     u16 CalculateLfoPeriod(u16 frequency, u8 data) const;
+    s16 GetWaveformSample(int channel, u16 frequency, u16 gain) const;
+    s64 DivideRounded(s64 value, s64 divisor) const;
+    void RebuildWaveSums();
     void Sync();
     void ComputeVolumeLUT();
     void UpdateChannelVolume(int channel);
@@ -106,6 +109,7 @@ private:
     s32 m_frame_samples;
     s32 m_buffer_index;
     u16 m_volume_lut[32];
+    u16 m_wave_sum[6];
     u8 m_dc_offset;
     float m_hpf_prev_input[2];
     float m_hpf_prev_output[2];
@@ -113,6 +117,8 @@ private:
 
 static const u16 k_huc6280_psg_lfo_zero_divider = 0x100;
 static const s16 k_huc6280_psg_lfo_depth[4] = { 0, 1, 4, 16 };
+static const u16 k_huc6280_psg_analytic_max_period = 5;
+static const int k_huc6280_psg_waveform_samples = 32;
 
 #include "huc6280_psg_inline.h"
 
