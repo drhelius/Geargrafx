@@ -345,10 +345,16 @@ void HuC6280PSG::Sync()
                 continue;
 
             s8 data = 0;
+            bool noise_enabled = ch->noise_enabled && (i >= 4);
 
             // Noise
-            if ((ch->noise_enabled) && (i >= 4))
+            if (noise_enabled)
+            {
+                if (!ch->dda_enabled)
+                    AdvanceWaveform(ch, batch_size);
+
                 data = noise_data;
+            }
             // DDA
             else if (ch->dda_enabled)
                 data = ch->dda;
@@ -379,20 +385,7 @@ void HuC6280PSG::Sync()
             // Waveform without LFO
             else
             {
-                u16 freq = ch->frequency ? ch->frequency : 0x1000;
-
-                int wave_counter_new = ch->counter - batch_size;
-                if (wave_counter_new <= 0)
-                {
-                    int wave_steps = 1 + ((-wave_counter_new) / freq);
-                    ch->counter = wave_counter_new + (wave_steps * freq);
-
-                    ch->wave_index = (ch->wave_index + wave_steps) & 0x1F;
-                }
-                else
-                {
-                    ch->counter = wave_counter_new;
-                }
+                u16 freq = AdvanceWaveform(ch, batch_size);
 
                 if (!ch->mute)
                 {

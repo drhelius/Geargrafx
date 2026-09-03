@@ -86,6 +86,7 @@ private:
     bool IsLfoRunning() const;
     u16 CalculateLfoPeriod(u16 frequency, u8 data) const;
     void UpdateWaveformOutput(u8 data);
+    u16 AdvanceWaveform(HuC6280PSG_Channel* channel, int cycles);
     s16 GetWaveformSample(int channel, u16 frequency, u16 gain) const;
     s64 DivideRounded(s64 value, s64 divisor) const;
     void RebuildWaveSums();

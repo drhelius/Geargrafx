@@ -73,6 +73,25 @@ INLINE void HuC6280PSG::UpdateWaveformOutput(u8 data)
     }
 }
 
+INLINE u16 HuC6280PSG::AdvanceWaveform(HuC6280PSG_Channel* channel, int cycles)
+{
+    u16 frequency = channel->frequency ? channel->frequency : 0x1000;
+    int counter = channel->counter - cycles;
+
+    if (counter <= 0)
+    {
+        int steps = 1 + ((-counter) / frequency);
+        channel->counter = counter + (steps * frequency);
+        channel->wave_index = (channel->wave_index + steps) & 0x1F;
+    }
+    else
+    {
+        channel->counter = counter;
+    }
+
+    return frequency;
+}
+
 INLINE s16 HuC6280PSG::GetWaveformSample(int channel, u16 frequency, u16 gain) const
 {
     const HuC6280PSG_Channel* ch = &m_channels[channel];
