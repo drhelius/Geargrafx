@@ -18,29 +18,29 @@ This server provides tools for game development, rom hacking, reverse engineerin
     <tr>
       <td rowspan="2"><strong>Windows</strong></td>
       <td>x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.20/Geargrafx-1.7.20-mcpb-windows-x64.mcpb">Geargrafx-1.7.20-mcpb-windows-x64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.21/Geargrafx-1.7.21-mcpb-windows-x64.mcpb">Geargrafx-1.7.21-mcpb-windows-x64.mcpb</a></td>
     </tr>
     <tr>
       <td>ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.20/Geargrafx-1.7.20-mcpb-windows-arm64.mcpb">Geargrafx-1.7.20-mcpb-windows-arm64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.21/Geargrafx-1.7.21-mcpb-windows-arm64.mcpb">Geargrafx-1.7.21-mcpb-windows-arm64.mcpb</a></td>
     </tr>
     <tr>
       <td rowspan="2"><strong>macOS</strong></td>
       <td>x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.20/Geargrafx-1.7.20-mcpb-macos-x64.mcpb">Geargrafx-1.7.20-mcpb-macos-x64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.21/Geargrafx-1.7.21-mcpb-macos-x64.mcpb">Geargrafx-1.7.21-mcpb-macos-x64.mcpb</a></td>
     </tr>
     <tr>
       <td>ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.20/Geargrafx-1.7.20-mcpb-macos-arm64.mcpb">Geargrafx-1.7.20-mcpb-macos-arm64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.21/Geargrafx-1.7.21-mcpb-macos-arm64.mcpb">Geargrafx-1.7.21-mcpb-macos-arm64.mcpb</a></td>
     </tr>
     <tr>
       <td rowspan="2"><strong>Linux</strong></td>
       <td>x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.20/Geargrafx-1.7.20-mcpb-linux-x64.mcpb">Geargrafx-1.7.20-mcpb-linux-x64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.21/Geargrafx-1.7.21-mcpb-linux-x64.mcpb">Geargrafx-1.7.21-mcpb-linux-x64.mcpb</a></td>
     </tr>
     <tr>
       <td>ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.20/Geargrafx-1.7.20-mcpb-linux-arm64.mcpb">Geargrafx-1.7.20-mcpb-linux-arm64.mcpb</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.21/Geargrafx-1.7.21-mcpb-linux-arm64.mcpb">Geargrafx-1.7.21-mcpb-linux-arm64.mcpb</a></td>
     </tr>
   </tbody>
 </table>
