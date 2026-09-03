@@ -41,6 +41,21 @@ INLINE HuC6280PSG::HuC6280PSG_State* HuC6280PSG::GetState()
     return &m_state;
 }
 
+INLINE u16 HuC6280PSG::GetLfoFrequency() const
+{
+    return m_lfo_frequency ? m_lfo_frequency : k_huc6280_psg_lfo_zero_divider;
+}
+
+INLINE bool HuC6280PSG::IsLfoConfigured() const
+{
+    return m_lfo_enabled && m_lfo_dest->enabled && m_lfo_src->enabled;
+}
+
+INLINE bool HuC6280PSG::IsLfoRunning() const
+{
+    return IsLfoConfigured() && IS_NOT_SET_BIT(m_lfo_control, 7);
+}
+
 INLINE u16 HuC6280PSG::CalculateLfoPeriod(u16 frequency, u8 data) const
 {
     s32 modulation = ((s32)data - 16) * k_huc6280_psg_lfo_depth[m_lfo_control & 0x03];

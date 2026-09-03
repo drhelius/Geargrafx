@@ -81,6 +81,9 @@ public:
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
 private:
+    u16 GetLfoFrequency() const;
+    bool IsLfoConfigured() const;
+    bool IsLfoRunning() const;
     u16 CalculateLfoPeriod(u16 frequency, u8 data) const;
     void Sync();
     void ComputeVolumeLUT();
@@ -108,6 +111,7 @@ private:
     float m_hpf_prev_output[2];
 };
 
+static const u16 k_huc6280_psg_lfo_zero_divider = 0x100;
 static const s16 k_huc6280_psg_lfo_depth[4] = { 0, 1, 4, 16 };
 
 #include "huc6280_psg_inline.h"

@@ -223,17 +223,18 @@ void HuC6280PSG::Write(u16 address, u8 value)
         break;
     // LFO frequency
     case 8:
-        m_lfo_frequency = value ? value : 0x100;
-
-        if (IS_SET_BIT(value, 7))
-        {
-            u16 lfo_freq = m_lfo_src->frequency ? m_lfo_src->frequency : 0x1000;
-            m_lfo_src->counter = lfo_freq * m_lfo_frequency;
-            m_lfo_src->wave_index = 0;
-        }
+        m_lfo_frequency = value;
         break;
     // LFO control
     case 9:
+        if (IS_SET_BIT(value, 7))
+        {
+            u16 lfo_freq = m_lfo_src->frequency ? m_lfo_src->frequency : 0x1000;
+            m_lfo_src->counter = lfo_freq * GetLfoFrequency();
+            m_lfo_src->wave_index = 0;
+            m_lfo_src->dda = m_lfo_src->wave_data[0];
+        }
+
         m_lfo_control = value;
         m_lfo_enabled = (value & 0x03);
         break;
@@ -249,6 +250,27 @@ void HuC6280PSG::Sync()
     {
         int batch_size = remaining_cycles;
         remaining_cycles -= batch_size;
+
+        bool lfo_configured = IsLfoConfigured();
+        bool lfo_running = IsLfoRunning();
+
+        if (lfo_running && !m_lfo_src->dda_enabled)
+        {
+            u16 lfo_freq = m_lfo_src->frequency ? m_lfo_src->frequency : 0x1000;
+            s32 lfo_period = lfo_freq * GetLfoFrequency();
+            int lfo_counter_new = m_lfo_src->counter - batch_size;
+
+            if (lfo_counter_new <= 0)
+            {
+                int lfo_steps = 1 + ((-lfo_counter_new) / lfo_period);
+                m_lfo_src->counter = lfo_counter_new + (lfo_steps * lfo_period);
+                m_lfo_src->wave_index = (m_lfo_src->wave_index + lfo_steps) & 0x1F;
+            }
+            else
+            {
+                m_lfo_src->counter = lfo_counter_new;
+            }
+        }
 
         for (int i = 0; i < 6; i++)
         {
@@ -295,46 +317,19 @@ void HuC6280PSG::Sync()
             // DDA
             else if (ch->dda_enabled)
                 data = ch->dda;
-            // Waveform with LFO
-            else if (m_lfo_enabled && (i < 2))
+            // LFO destination
+            else if (lfo_configured && (i == 0))
             {
-                if (i == 1)
-                    continue;
-
-                u16 lfo_freq = m_lfo_src->frequency ? m_lfo_src->frequency : 0x1000;
                 u16 freq = m_lfo_dest->frequency ? m_lfo_dest->frequency : 0x1000;
-
-                if (m_lfo_control & 0x80)
-                {
-                    m_lfo_src->counter = lfo_freq * m_lfo_frequency;
-                    m_lfo_src->wave_index = 0;
-                }
-                else
-                {
-                    int lfo_counter_new = m_lfo_src->counter - batch_size;
-                    if (lfo_counter_new <= 0)
-                    {
-                        int lfo_steps = 1 + ((-lfo_counter_new) / (lfo_freq * m_lfo_frequency));
-                        m_lfo_src->counter = lfo_counter_new + (lfo_steps * lfo_freq * m_lfo_frequency);
-
-                        m_lfo_src->wave_index = (m_lfo_src->wave_index + lfo_steps) & 0x1f;
-                    }
-                    else
-                    {
-                        m_lfo_src->counter = lfo_counter_new;
-                    }
-
-                    u8 lfo_data = m_lfo_src->wave_data[m_lfo_src->wave_index];
-                    freq = CalculateLfoPeriod(freq, lfo_data);
-                }
+                u8 lfo_data = m_lfo_src->wave_data[m_lfo_src->wave_index];
+                freq = CalculateLfoPeriod(freq, lfo_data);
 
                 int dest_counter_new = m_lfo_dest->counter - batch_size;
                 if (dest_counter_new <= 0)
                 {
                     int dest_steps = 1 + ((-dest_counter_new) / freq);
                     m_lfo_dest->counter = dest_counter_new + (dest_steps * freq);
-
-                    m_lfo_dest->wave_index = (m_lfo_dest->wave_index + dest_steps) & 0x1f;
+                    m_lfo_dest->wave_index = (m_lfo_dest->wave_index + dest_steps) & 0x1F;
                 }
                 else
                 {
@@ -343,6 +338,9 @@ void HuC6280PSG::Sync()
 
                 data = m_lfo_dest->wave_data[m_lfo_dest->wave_index];
             }
+            // LFO source
+            else if (lfo_configured && (i == 1))
+                data = m_lfo_src->wave_data[m_lfo_src->wave_index];
             // Waveform without LFO
             else
             {
@@ -503,6 +501,7 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_main_vol_right), sizeof(m_main_vol_right));
     stream.read(reinterpret_cast<char*> (&m_lfo_enabled), sizeof(m_lfo_enabled));
     stream.read(reinterpret_cast<char*> (&m_lfo_frequency), sizeof(m_lfo_frequency));
+    m_lfo_frequency &= 0xFF;
     stream.read(reinterpret_cast<char*> (&m_lfo_control), sizeof(m_lfo_control));
     stream.read(reinterpret_cast<char*> (&m_elapsed_cycles), sizeof(m_elapsed_cycles));
 
