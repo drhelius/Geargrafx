@@ -25,6 +25,20 @@ enum GeargrafxConsoleOption: Int, CaseIterable {
     }
 }
 
+enum GeargrafxPSGRevisionOption: Int, CaseIterable {
+    case automatic
+    case huc6280
+    case huc6280A
+
+    var title: String {
+        switch self {
+        case .automatic: return L10n("Settings::Automatic")
+        case .huc6280: return "HuC6280"
+        case .huc6280A: return "HuC6280A"
+        }
+    }
+}
+
 enum GeargrafxPaletteOption: Int, CaseIterable {
     case standardRGB
     case turboxray
@@ -164,6 +178,7 @@ enum AppSettings {
         static let turboIIEnabled = "settings.turboIIEnabled"
         static let turboIISpeed = "settings.turboIISpeed"
         static let huc6280AEnabled = "settings.huc6280AEnabled"
+        static let psgRevision = "settings.psgRevision"
         static let psgVolume = "settings.psgVolume"
         static let cdromVolume = "settings.cdromVolume"
         static let adpcmVolume = "settings.adpcmVolume"
@@ -174,7 +189,16 @@ enum AppSettings {
     }
 
     static func registerDefaults() {
-        UserDefaults.standard.register(defaults: [
+        let defaults = UserDefaults.standard
+
+        if defaults.object(forKey: Key.psgRevision) == nil,
+           defaults.object(forKey: Key.huc6280AEnabled) != nil {
+            let revision: GeargrafxPSGRevisionOption = defaults.bool(forKey: Key.huc6280AEnabled) ?
+                .huc6280A : .huc6280
+            defaults.set(revision.rawValue, forKey: Key.psgRevision)
+        }
+
+        defaults.register(defaults: [
             Key.audioEnabled: true,
             Key.hapticsEnabled: true,
             Key.smoothingEnabled: false,
@@ -197,7 +221,7 @@ enum AppSettings {
             Key.turboISpeed: 4,
             Key.turboIIEnabled: false,
             Key.turboIISpeed: 4,
-            Key.huc6280AEnabled: true,
+            Key.psgRevision: GeargrafxPSGRevisionOption.automatic.rawValue,
             Key.psgVolume: 100,
             Key.cdromVolume: 100,
             Key.adpcmVolume: 100,
@@ -339,9 +363,11 @@ enum AppSettings {
         set { UserDefaults.standard.set(min(max(newValue, 1), 20), forKey: Key.turboIISpeed) }
     }
 
-    static var huc6280AEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: Key.huc6280AEnabled) }
-        set { UserDefaults.standard.set(newValue, forKey: Key.huc6280AEnabled) }
+    static var psgRevision: GeargrafxPSGRevisionOption {
+        get {
+            GeargrafxPSGRevisionOption(rawValue: UserDefaults.standard.integer(forKey: Key.psgRevision)) ?? .automatic
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: Key.psgRevision) }
     }
 
     static var psgVolume: Int {

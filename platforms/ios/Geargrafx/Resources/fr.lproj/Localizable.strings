@@ -44,8 +44,7 @@
 "Settings::TurboII" = "Turbo II";
 "Settings::TurboIIDetail" = "Répète automatiquement le bouton II tant qu’il est maintenu.";
 "Settings::TurboIISpeed" = "Vitesse du Turbo II";
-"Settings::HuC6280A" = "Puce audio HuC6280A";
-"Settings::HuC6280ADetail" = "Réduit les clics et parasites en reproduisant le comportement du HuC6280A.";
+"Settings::PSGRevision" = "Révision du PSG";
 "Settings::PSGVolume" = "Volume PSG";
 "Settings::CDROMVolume" = "Volume CD-ROM";
 "Settings::ADPCMVolume" = "Volume ADPCM";

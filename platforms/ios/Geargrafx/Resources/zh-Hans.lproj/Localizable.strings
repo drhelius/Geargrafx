@@ -44,8 +44,7 @@
 "Settings::TurboII" = "连发 II";
 "Settings::TurboIIDetail" = "按住 II 键时自动连发。";
 "Settings::TurboIISpeed" = "连发 II 速度";
-"Settings::HuC6280A" = "HuC6280A音频芯片";
-"Settings::HuC6280ADetail" = "使用HuC6280A特性减少咔嗒声和爆音。";
+"Settings::PSGRevision" = "PSG 版本";
 "Settings::PSGVolume" = "PSG音量";
 "Settings::CDROMVolume" = "CD-ROM音量";
 "Settings::ADPCMVolume" = "ADPCM音量";

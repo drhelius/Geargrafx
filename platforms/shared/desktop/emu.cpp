@@ -599,9 +599,9 @@ bool emu_eject_physical_cdrom(void)
     #endif
 }
 
-void emu_audio_huc6280a(bool enabled)
+void emu_audio_psg_revision(int revision)
 {
-    geargrafx->GetAudio()->GetPSG()->EnableHuC6280A(enabled);
+    geargrafx->SetPSGRevision((GG_PSG_Revision)revision);
 }
 
 void emu_audio_mute(bool mute)

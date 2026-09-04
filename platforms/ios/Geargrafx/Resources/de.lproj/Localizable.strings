@@ -44,8 +44,7 @@
 "Settings::TurboII" = "Turbo II";
 "Settings::TurboIIDetail" = "Wiederholt Taste II automatisch, solange sie gehalten wird.";
 "Settings::TurboIISpeed" = "Turbo-II-Geschwindigkeit";
-"Settings::HuC6280A" = "HuC6280A-Audiochip";
-"Settings::HuC6280ADetail" = "Reduziert Klick- und Knackgeräusche mit dem Verhalten des HuC6280A.";
+"Settings::PSGRevision" = "PSG-Revision";
 "Settings::PSGVolume" = "PSG-Lautstärke";
 "Settings::CDROMVolume" = "CD-ROM-Lautstärke";
 "Settings::ADPCMVolume" = "ADPCM-Lautstärke";

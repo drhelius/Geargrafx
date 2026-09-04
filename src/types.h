@@ -102,6 +102,13 @@ enum GG_MB128_Mode
     GG_MB128_DISABLED
 };
 
+enum GG_PSG_Revision
+{
+    GG_PSG_REVISION_AUTO = 0,
+    GG_PSG_REVISION_HUC6280,
+    GG_PSG_REVISION_HUC6280A
+};
+
 enum GG_Controllers
 {
     GG_CONTROLLER_1 = 0,

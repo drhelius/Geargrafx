@@ -44,8 +44,7 @@
 "Settings::TurboII" = "ターボII";
 "Settings::TurboIIDetail" = "IIボタンを押している間、自動連射します。";
 "Settings::TurboIISpeed" = "ターボII速度";
-"Settings::HuC6280A" = "HuC6280Aオーディオチップ";
-"Settings::HuC6280ADetail" = "HuC6280Aの特性を使用してクリック音やポップノイズを低減します。";
+"Settings::PSGRevision" = "PSGリビジョン";
 "Settings::PSGVolume" = "PSG音量";
 "Settings::CDROMVolume" = "CD-ROM音量";
 "Settings::ADPCMVolume" = "ADPCM音量";

@@ -1439,8 +1439,14 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        bool huc6280a = (strcmp(var.value, "Enabled") == 0);
-        core->GetAudio()->GetPSG()->EnableHuC6280A(huc6280a);
+        GG_PSG_Revision revision = GG_PSG_REVISION_AUTO;
+
+        if ((strcmp(var.value, "HuC6280") == 0) || (strcmp(var.value, "Disabled") == 0))
+            revision = GG_PSG_REVISION_HUC6280;
+        else if ((strcmp(var.value, "HuC6280A") == 0) || (strcmp(var.value, "Enabled") == 0))
+            revision = GG_PSG_REVISION_HUC6280A;
+
+        core->SetPSGRevision(revision);
     }
 
     var.key = "geargrafx_no_sprite_limit";

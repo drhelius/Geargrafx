@@ -58,7 +58,7 @@ typedef NS_ENUM(NSInteger, GeargrafxButton)
                 turboISpeed:(NSInteger)turboISpeed
              turboIIEnabled:(BOOL)turboIIEnabled
                turboIISpeed:(NSInteger)turboIISpeed
-            huc6280AEnabled:(BOOL)huc6280AEnabled
+                psgRevision:(NSInteger)psgRevision
                   psgVolume:(NSInteger)psgVolume
                 cdromVolume:(NSInteger)cdromVolume
                 adpcmVolume:(NSInteger)adpcmVolume
@@ -67,7 +67,7 @@ typedef NS_ENUM(NSInteger, GeargrafxButton)
                preloadCDROM:(BOOL)preloadCDROM
               saveStateSlot:(NSInteger)saveStateSlot
           firmwareDirectory:(NSURL*)firmwareDirectory
-    NS_SWIFT_NAME(configure(console:palette:overscan:scanlineMode:scanlineStart:scanlineEnd:noSpriteLimit:safeVDCDefaults:lowpassFilter:lowpassIntensity:lowpassCutoff:controllerType:avenuePad3MainButton:softResetEnabled:turboIEnabled:turboISpeed:turboIIEnabled:turboIISpeed:huc6280AEnabled:psgVolume:cdromVolume:adpcmVolume:cdromType:cdromBIOS:preloadCDROM:saveStateSlot:firmwareDirectory:));
+    NS_SWIFT_NAME(configure(console:palette:overscan:scanlineMode:scanlineStart:scanlineEnd:noSpriteLimit:safeVDCDefaults:lowpassFilter:lowpassIntensity:lowpassCutoff:controllerType:avenuePad3MainButton:softResetEnabled:turboIEnabled:turboISpeed:turboIIEnabled:turboIISpeed:psgRevision:psgVolume:cdromVolume:adpcmVolume:cdromType:cdromBIOS:preloadCDROM:saveStateSlot:firmwareDirectory:));
 - (BOOL)loadROMAtURL:(NSURL*)url error:(NSError* _Nullable* _Nullable)error NS_SWIFT_NAME(loadROM(at:));
 - (void)runFrame;
 - (void)setButton:(GeargrafxButton)button pressed:(BOOL)pressed;

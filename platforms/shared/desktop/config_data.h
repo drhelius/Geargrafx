@@ -24,7 +24,7 @@
 #include <string>
 #include "geargrafx.h"
 
-static const int config_version = 8;
+static const int config_version = 9;
 static const int config_minimum_version = 2;
 static const int config_max_recent_roms = 15;
 static const int config_memory_editor_count = 16;
@@ -124,7 +124,7 @@ struct config_Audio
 {
     bool enable;
     bool sync;
-    bool huc6280a;
+    int psg_revision;
     float master_volume;
     float psg_volume;
     float cdrom_volume;

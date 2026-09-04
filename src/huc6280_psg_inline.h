@@ -29,7 +29,7 @@ INLINE void HuC6280PSG::Clock(u32 cycles)
 
 INLINE void HuC6280PSG::EnableHuC6280A(bool enabled)
 {
-    m_dc_offset = enabled ? 16 : 0;
+    m_dac_offset = enabled ? k_huc6280_psg_huc6280a_dac_offset : k_huc6280_psg_huc6280_dac_offset;
     m_hpf_prev_input[0] = 0.0f;
     m_hpf_prev_input[1] = 0.0f;
     m_hpf_prev_output[0] = 0.0f;
@@ -68,8 +68,8 @@ INLINE void HuC6280PSG::UpdateWaveformOutput(u8 data)
 {
     if (m_ch->enabled && !m_ch->noise_enabled && !m_ch->mute)
     {
-        m_ch->left_sample = (s16)(((s32)data - m_dc_offset) * m_ch->gain_left);
-        m_ch->right_sample = (s16)(((s32)data - m_dc_offset) * m_ch->gain_right);
+        m_ch->left_sample = ScaleSample(data, m_ch->gain_left);
+        m_ch->right_sample = ScaleSample(data, m_ch->gain_right);
     }
 }
 
@@ -92,18 +92,24 @@ INLINE u16 HuC6280PSG::AdvanceWaveform(HuC6280PSG_Channel* channel, int cycles)
     return frequency;
 }
 
+INLINE s16 HuC6280PSG::ScaleSample(u8 data, u16 gain) const
+{
+    return (s16)((((s32)data * k_huc6280_psg_sample_scale) - m_dac_offset) * gain);
+}
+
 INLINE s16 HuC6280PSG::GetWaveformSample(int channel, u16 frequency, u16 gain) const
 {
     const HuC6280PSG_Channel* ch = &m_channels[channel];
 
     if (frequency <= k_huc6280_psg_analytic_max_period)
     {
-        s32 numerator = (s32)m_wave_sum[channel] - ((s32)m_dc_offset * k_huc6280_psg_waveform_samples);
+        s32 numerator = ((s32)m_wave_sum[channel] * k_huc6280_psg_sample_scale) -
+            ((s32)m_dac_offset * k_huc6280_psg_waveform_samples);
 
         return (s16)DivideRounded((s64)numerator * gain, k_huc6280_psg_waveform_samples);
     }
 
-    return (s16)(((s32)ch->wave_data[ch->wave_index] - m_dc_offset) * gain);
+    return ScaleSample(ch->wave_data[ch->wave_index], gain);
 }
 
 INLINE s64 HuC6280PSG::DivideRounded(s64 value, s64 divisor) const

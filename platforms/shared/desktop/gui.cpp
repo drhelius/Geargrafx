@@ -113,7 +113,7 @@ bool gui_init(void)
     gui_custom_palette_loaded = false;
 
     emu_audio_mute(!config_audio.enable);
-    emu_audio_huc6280a(config_audio.huc6280a);
+    emu_audio_psg_revision(config_audio.psg_revision);
     emu_audio_set_master_volume(config_audio.master_volume);
     emu_audio_psg_volume(config_audio.psg_volume);
     emu_audio_cdrom_volume(config_audio.cdrom_volume);

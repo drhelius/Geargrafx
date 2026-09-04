@@ -102,7 +102,7 @@ final class EmulationViewController: UIViewController, UIAdaptivePresentationCon
             turboISpeed: AppSettings.turboISpeed,
             turboIIEnabled: AppSettings.turboIIEnabled,
             turboIISpeed: AppSettings.turboIISpeed,
-            huc6280AEnabled: AppSettings.huc6280AEnabled,
+            psgRevision: AppSettings.psgRevision.rawValue,
             psgVolume: AppSettings.psgVolume,
             cdromVolume: AppSettings.cdromVolume,
             adpcmVolume: AppSettings.adpcmVolume,

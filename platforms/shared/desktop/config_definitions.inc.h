@@ -327,7 +327,7 @@ static inline void process(config_Operation operation)
 
     CONFIG_BOOL("Audio", "Enable", config_audio.enable, true);
     CONFIG_BOOL("Audio", "Sync", config_audio.sync, true);
-    CONFIG_BOOL("Audio", "HuC6280A", config_audio.huc6280a, true);
+    CONFIG_INT_RANGE("Audio", "PSGRevision", config_audio.psg_revision, GG_PSG_REVISION_AUTO, GG_PSG_REVISION_AUTO, GG_PSG_REVISION_HUC6280A);
     CONFIG_FLOAT_RANGE("Audio", "MasterVolume", config_audio.master_volume, 1.0f, 0.0f, 2.0f);
     CONFIG_FLOAT("Audio", "PSGVolume", config_audio.psg_volume, 1.0f);
     CONFIG_FLOAT("Audio", "CDROMVolume", config_audio.cdrom_volume, 1.0f);
@@ -490,6 +490,7 @@ static void after_read(int file_version)
 
 static void before_write(void)
 {
+    config_ini_data["Audio"].remove("HuC6280A");
     config_ini_data["Hotkeys"].remove("CaptureMouseScancode");
     config_ini_data["Hotkeys"].remove("CaptureMouseMod");
 
@@ -552,6 +553,12 @@ static void normalize(void)
 static void migrate(int file_version)
 {
     std::string stored;
+
+    if (file_version < 9)
+    {
+        bool huc6280a = read_bool("Audio", "HuC6280A", true);
+        write_int("Audio", "PSGRevision", huc6280a ? GG_PSG_REVISION_HUC6280A : GG_PSG_REVISION_HUC6280);
+    }
 
     if (file_version < 8)
     {

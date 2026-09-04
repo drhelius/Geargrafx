@@ -99,6 +99,19 @@ static GG_Console_Type ConsoleForOption(NSInteger option)
     }
 }
 
+static GG_PSG_Revision PSGRevisionForOption(NSInteger option)
+{
+    switch (option)
+    {
+        case 1:
+            return GG_PSG_REVISION_HUC6280;
+        case 2:
+            return GG_PSG_REVISION_HUC6280A;
+        default:
+            return GG_PSG_REVISION_AUTO;
+    }
+}
+
 static GG_Controller_Type ControllerForOption(NSInteger option)
 {
     switch (option)
@@ -183,7 +196,6 @@ static BOOL IsCDROMURL(NSURL* url)
     BOOL m_softResetEnabled;
     BOOL m_turboIEnabled;
     BOOL m_turboIIEnabled;
-    BOOL m_huc6280AEnabled;
     BOOL m_preloadCDROM;
     NSInteger m_console;
     NSInteger m_palette;
@@ -196,6 +208,7 @@ static BOOL IsCDROMURL(NSURL* url)
     NSInteger m_avenuePad3MainButton;
     NSInteger m_turboISpeed;
     NSInteger m_turboIISpeed;
+    NSInteger m_psgRevision;
     NSInteger m_psgVolume;
     NSInteger m_cdromVolume;
     NSInteger m_adpcmVolume;
@@ -253,7 +266,6 @@ static BOOL IsCDROMURL(NSURL* url)
         m_softResetEnabled = YES;
         m_turboIEnabled = NO;
         m_turboIIEnabled = NO;
-        m_huc6280AEnabled = YES;
         m_preloadCDROM = NO;
         m_console = 0;
         m_palette = 0;
@@ -266,6 +278,7 @@ static BOOL IsCDROMURL(NSURL* url)
         m_avenuePad3MainButton = 0;
         m_turboISpeed = 4;
         m_turboIISpeed = 4;
+        m_psgRevision = 0;
         m_psgVolume = 100;
         m_cdromVolume = 100;
         m_adpcmVolume = 100;
@@ -317,7 +330,7 @@ static BOOL IsCDROMURL(NSURL* url)
                 turboISpeed:(NSInteger)turboISpeed
              turboIIEnabled:(BOOL)turboIIEnabled
                turboIISpeed:(NSInteger)turboIISpeed
-            huc6280AEnabled:(BOOL)huc6280AEnabled
+                psgRevision:(NSInteger)psgRevision
                   psgVolume:(NSInteger)psgVolume
                 cdromVolume:(NSInteger)cdromVolume
                 adpcmVolume:(NSInteger)adpcmVolume
@@ -345,7 +358,7 @@ static BOOL IsCDROMURL(NSURL* url)
     m_turboISpeed = std::min(std::max(turboISpeed, (NSInteger)1), (NSInteger)20);
     m_turboIIEnabled = turboIIEnabled;
     m_turboIISpeed = std::min(std::max(turboIISpeed, (NSInteger)1), (NSInteger)20);
-    m_huc6280AEnabled = huc6280AEnabled;
+    m_psgRevision = psgRevision;
     m_psgVolume = std::min(std::max(psgVolume, (NSInteger)0), (NSInteger)200);
     m_cdromVolume = std::min(std::max(cdromVolume, (NSInteger)0), (NSInteger)200);
     m_adpcmVolume = std::min(std::max(adpcmVolume, (NSInteger)0), (NSInteger)200);
@@ -414,7 +427,7 @@ static BOOL IsCDROMURL(NSURL* url)
     m_core->GetInput()->SetTurboSpeed(GG_CONTROLLER_1, GG_KEY_I, (u8)m_turboISpeed);
     m_core->GetInput()->EnableTurbo(GG_CONTROLLER_1, GG_KEY_II, m_turboIIEnabled);
     m_core->GetInput()->SetTurboSpeed(GG_CONTROLLER_1, GG_KEY_II, (u8)m_turboIISpeed);
-    m_core->GetAudio()->GetPSG()->EnableHuC6280A(m_huc6280AEnabled);
+    m_core->SetPSGRevision(PSGRevisionForOption(m_psgRevision));
     m_core->GetAudio()->SetPSGVolume((float)m_psgVolume / 100.0f);
     m_core->GetAudio()->SetCDROMVolume((float)m_cdromVolume / 100.0f);
     m_core->GetAudio()->SetADPCMVolume((float)m_adpcmVolume / 100.0f);

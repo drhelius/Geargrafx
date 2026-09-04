@@ -26,7 +26,7 @@ HuC6280PSG::HuC6280PSG()
 {
     InitPointer(m_channels);
     InitPointer(m_ch);
-    m_dc_offset = 16;
+    m_dac_offset = k_huc6280_psg_huc6280_dac_offset;
     m_hpf_prev_input[0] = 0.0f;
     m_hpf_prev_input[1] = 0.0f;
     m_hpf_prev_output[0] = 0.0f;
@@ -398,8 +398,8 @@ void HuC6280PSG::Sync()
 
             if (!ch->mute)
             {
-                ch->left_sample = (s16)((data - m_dc_offset) * ch->gain_left);
-                ch->right_sample = (s16)((data - m_dc_offset) * ch->gain_right);
+                ch->left_sample = ScaleSample(data, ch->gain_left);
+                ch->right_sample = ScaleSample(data, ch->gain_right);
             }
         }
 
@@ -442,6 +442,7 @@ int HuC6280PSG::EndFrame(s16* sample_buffer)
             float raw = 0.0f;
             for (int i = 0; i < 6; i++)
                 raw += m_channels[i].output[s];
+            raw *= k_huc6280_psg_output_scale;
 
             const float hpf_r = 0.9985f;
             float outSample = raw - m_hpf_prev_input[channel] + hpf_r * m_hpf_prev_output[channel];
@@ -463,13 +464,12 @@ void HuC6280PSG::ComputeVolumeLUT()
     double amplitude = 65535.0 / 6.0 / 32.0;
     double step = 48.0 / 32.0;
     
-    for (int i = 0; i < 30; i++)
+    for (int i = 0; i < 31; i++)
     {
         m_volume_lut[i] = (u16)amplitude;
         amplitude /= pow(10.0, step / 20.0);
     }
 
-    m_volume_lut[30] = 0;
     m_volume_lut[31] = 0;
 }
 
@@ -477,11 +477,17 @@ void HuC6280PSG::UpdateChannelVolume(int channel)
 {
     HuC6280PSG_Channel* ch = &m_channels[channel];
 
-    u8 temp_left_vol = MIN(0x0F, (0x0F - m_main_vol_left) + (0x0F - ch->vol_left) + (0x0F - ch->vol));
-    u8 temp_right_vol = MIN(0x0F, (0x0F - m_main_vol_right) + (0x0F - ch->vol_right) + (0x0F - ch->vol));
+    u8 main_left = k_huc6280_psg_volume_scale[m_main_vol_left & 0x0F];
+    u8 main_right = k_huc6280_psg_volume_scale[m_main_vol_right & 0x0F];
+    u8 channel_left = k_huc6280_psg_volume_scale[ch->vol_left & 0x0F];
+    u8 channel_right = k_huc6280_psg_volume_scale[ch->vol_right & 0x0F];
+    u8 channel_volume = ch->control & 0x1F;
 
-    ch->gain_left = m_volume_lut[(temp_left_vol << 1) | (~ch->control & 0x01)];
-    ch->gain_right = m_volume_lut[(temp_right_vol << 1) | (~ch->control & 0x01)];
+    u8 temp_left_vol = MIN(0x1F, (0x1F - main_left) + (0x1F - channel_left) + (0x1F - channel_volume));
+    u8 temp_right_vol = MIN(0x1F, (0x1F - main_right) + (0x1F - channel_right) + (0x1F - channel_volume));
+
+    ch->gain_left = m_volume_lut[temp_left_vol];
+    ch->gain_right = m_volume_lut[temp_right_vol];
 }
 
 void HuC6280PSG::SaveState(std::ostream& stream)
@@ -586,6 +592,20 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
             stream.read(reinterpret_cast<char*> (m_channels[i].output), sizeof(m_channels[i].output));
         else
             memset(m_channels[i].output, 0, sizeof(m_channels[i].output));
+
+        if (version < 36)
+        {
+            s32 left_sample = (s32)m_channels[i].left_sample * k_huc6280_psg_sample_scale;
+            s32 right_sample = (s32)m_channels[i].right_sample * k_huc6280_psg_sample_scale;
+            m_channels[i].left_sample = (s16)CLAMP(left_sample, -32768, 32767);
+            m_channels[i].right_sample = (s16)CLAMP(right_sample, -32768, 32767);
+
+            for (int j = 0; j < GG_AUDIO_BUFFER_SIZE; j++)
+            {
+                s32 sample = (s32)m_channels[i].output[j] * k_huc6280_psg_sample_scale;
+                m_channels[i].output[j] = (s16)CLAMP(sample, -32768, 32767);
+            }
+        }
     }
 
     if (version >= 28)

@@ -44,8 +44,7 @@
 "Settings::TurboII" = "Turbo II";
 "Settings::TurboIIDetail" = "Automatically repeat Button II while held.";
 "Settings::TurboIISpeed" = "Turbo II Speed";
-"Settings::HuC6280A" = "HuC6280A Audio Chip";
-"Settings::HuC6280ADetail" = "Reduce clicks and pops using HuC6280A behavior.";
+"Settings::PSGRevision" = "PSG Revision";
 "Settings::PSGVolume" = "PSG Volume";
 "Settings::CDROMVolume" = "CD-ROM Volume";
 "Settings::ADPCMVolume" = "ADPCM Volume";

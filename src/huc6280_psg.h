@@ -87,6 +87,7 @@ private:
     u16 CalculateLfoPeriod(u16 frequency, u8 data) const;
     void UpdateWaveformOutput(u8 data);
     u16 AdvanceWaveform(HuC6280PSG_Channel* channel, int cycles);
+    s16 ScaleSample(u8 data, u16 gain) const;
     s16 GetWaveformSample(int channel, u16 frequency, u16 gain) const;
     s64 DivideRounded(s64 value, s64 divisor) const;
     void RebuildWaveSums();
@@ -112,7 +113,7 @@ private:
     s32 m_buffer_index;
     u16 m_volume_lut[32];
     u16 m_wave_sum[6];
-    u8 m_dc_offset;
+    u8 m_dac_offset;
     float m_hpf_prev_input[2];
     float m_hpf_prev_output[2];
 };
@@ -121,6 +122,14 @@ static const u16 k_huc6280_psg_lfo_zero_divider = 0x100;
 static const s16 k_huc6280_psg_lfo_depth[4] = { 0, 1, 4, 16 };
 static const u16 k_huc6280_psg_analytic_max_period = 5;
 static const int k_huc6280_psg_waveform_samples = 32;
+static const int k_huc6280_psg_sample_scale = 2;
+static const u8 k_huc6280_psg_huc6280_dac_offset = 0;
+static const u8 k_huc6280_psg_huc6280a_dac_offset = 31;
+static const float k_huc6280_psg_output_scale = 0.5f;
+static const u8 k_huc6280_psg_volume_scale[16] = {
+    0x00, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F,
+    0x10, 0x13, 0x15, 0x17, 0x19, 0x1B, 0x1D, 0x1F
+};
 
 #include "huc6280_psg_inline.h"
 

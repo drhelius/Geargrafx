@@ -44,8 +44,7 @@
 "Settings::TurboII" = "Turbo II";
 "Settings::TurboIIDetail" = "Repite automáticamente el botón II mientras se mantiene pulsado.";
 "Settings::TurboIISpeed" = "Velocidad de Turbo II";
-"Settings::HuC6280A" = "Chip de audio HuC6280A";
-"Settings::HuC6280ADetail" = "Reduce clics y chasquidos usando el comportamiento del HuC6280A.";
+"Settings::PSGRevision" = "Revisión del PSG";
 "Settings::PSGVolume" = "Volumen PSG";
 "Settings::CDROMVolume" = "Volumen CD-ROM";
 "Settings::ADPCMVolume" = "Volumen ADPCM";

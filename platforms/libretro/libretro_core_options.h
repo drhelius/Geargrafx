@@ -392,17 +392,18 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 
     {
         "geargrafx_psg_huc6280a",
-        "HuC6280A Audio Chip",
+        "PSG Revision",
         NULL,
-        "Enable the HuC6280A audio chip, as found in the SuperGrafx and CoreGrafx I. When disabled, the original HuC6280 chip from the PC Engine is used instead.",
+        "Select the PSG revision. Auto uses HuC6280A for SuperGrafx and HuC6280 for all other systems. Explicit selections override automatic matching.",
         NULL,
         "audio",
         {
-            { "Enabled",  NULL },
-            { "Disabled", NULL },
+            { "Auto",     NULL },
+            { "HuC6280",  NULL },
+            { "HuC6280A", NULL },
             { NULL, NULL },
         },
-        "Enabled"
+        "Auto"
     },
     {
         "geargrafx_psg_volume",

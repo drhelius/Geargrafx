@@ -51,7 +51,7 @@ final class SettingsViewController: UITableViewController {
     }
 
     private enum AudioRow: Int, CaseIterable {
-        case huc6280A
+        case psgRevision
         case psgVolume
         case cdromVolume
         case adpcmVolume
@@ -287,6 +287,12 @@ final class SettingsViewController: UITableViewController {
 
     private func showAudioOptions(row: Int) {
         switch AudioRow(rawValue: row) {
+        case .psgRevision:
+            showOptions(
+                title: L10n("Settings::PSGRevision"),
+                options: GeargrafxPSGRevisionOption.allCases.map(\.title),
+                selectedIndex: AppSettings.psgRevision.rawValue
+            ) { AppSettings.psgRevision = GeargrafxPSGRevisionOption(rawValue: $0) ?? .automatic }
         case .psgVolume:
             showVolumeOptions(title: L10n("Settings::PSGVolume"), currentValue: AppSettings.psgVolume) {
                 AppSettings.psgVolume = $0
@@ -510,13 +516,11 @@ final class SettingsViewController: UITableViewController {
 
     private func audioCell(row: Int) -> UITableViewCell {
         switch AudioRow(rawValue: row) {
-        case .huc6280A:
-            return toggleCell(
-                title: L10n("Settings::HuC6280A"),
-                detail: L10n("Settings::HuC6280ADetail"),
-                image: "cpu",
-                isOn: AppSettings.huc6280AEnabled,
-                action: #selector(huc6280AChanged(_:))
+        case .psgRevision:
+            return optionCell(
+                title: L10n("Settings::PSGRevision"),
+                value: AppSettings.psgRevision.title,
+                image: "cpu"
             )
         case .psgVolume:
             return optionCell(
@@ -751,10 +755,6 @@ final class SettingsViewController: UITableViewController {
     @objc private func turboIIChanged(_ sender: UISwitch) {
         AppSettings.turboIIEnabled = sender.isOn
         tableView.reloadSections(IndexSet(integer: Section.input.rawValue), with: .automatic)
-    }
-
-    @objc private func huc6280AChanged(_ sender: UISwitch) {
-        AppSettings.huc6280AEnabled = sender.isOn
     }
 
     @objc private func hapticsChanged(_ sender: UISwitch) {

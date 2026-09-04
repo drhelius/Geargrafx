@@ -1511,15 +1511,21 @@ static void menu_audio(void)
             emu_audio_mute(!config_audio.enable);
         }
 
-        if (ImGui::MenuItem("HuC6280A PSG", "", &config_audio.huc6280a))
+        if (ImGui::BeginMenu("PSG Revision"))
         {
-            emu_audio_huc6280a(config_audio.huc6280a);
+            ImGui::PushItemWidth(110.0f);
+            if (ImGui::Combo("##psg_revision", &config_audio.psg_revision, "Auto\0HuC6280\0HuC6280A\0\0"))
+            {
+                emu_audio_psg_revision(config_audio.psg_revision);
+            }
+            ImGui::PopItemWidth();
+            ImGui::EndMenu();
         }
         if (ImGui::IsItemHovered())
         {
             ImGui::BeginTooltip();
-            ImGui::Text("When enabled, this option will emulate the HuC6280A audio chip.");
-            ImGui::Text("This chip will reduce clicks and pops in the audio output.");
+            ImGui::Text("Auto uses HuC6280A for SuperGrafx and HuC6280 for all other systems.");
+            ImGui::Text("Explicit selections override automatic revision matching.");
             ImGui::EndTooltip();
         }
 
