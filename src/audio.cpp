@@ -208,59 +208,51 @@ bool Audio::StartVgmRecording(const char* file_path, int clock_rate, const VgmMe
 
     // Write initial state of all audio registers to VGM
     if (m_vgm_recording_enabled)
-    {
-        // Get PSG state
-        HuC6280PSG::HuC6280PSG_State* psg_state = m_psg->GetState();
-
-        // Write PSG registers (0x0800-0x0809)
-        // 0x0800 - Channel select
-        m_vgm_recorder.WriteHuC6280(0x0800, *psg_state->CHANNEL_SELECT);
-
-        // 0x0801 - Main amplitude
-        m_vgm_recorder.WriteHuC6280(0x0801, *psg_state->MAIN_AMPLITUDE);
-
-        // For each channel, write frequency, control, amplitude, and waveform data
-        for (int i = 0; i < 6; i++)
-        {
-            // Select channel
-            m_vgm_recorder.WriteHuC6280(0x0800, i);
-
-            // 0x0802 - Frequency low
-            m_vgm_recorder.WriteHuC6280(0x0802, psg_state->CHANNELS[i].frequency & 0xFF);
-
-            // 0x0803 - Frequency high
-            m_vgm_recorder.WriteHuC6280(0x0803, (psg_state->CHANNELS[i].frequency >> 8) & 0x0F);
-
-            // 0x0804 - Control
-            m_vgm_recorder.WriteHuC6280(0x0804, psg_state->CHANNELS[i].control);
-
-            // 0x0805 - Amplitude
-            m_vgm_recorder.WriteHuC6280(0x0805, psg_state->CHANNELS[i].amplitude);
-
-            // 0x0806 - Waveform data (32 writes)
-            for (int j = 0; j < 32; j++)
-            {
-                m_vgm_recorder.WriteHuC6280(0x0806, psg_state->CHANNELS[i].wave_data[j]);
-            }
-
-            // 0x0807 - Noise control (channels 4 and 5 only)
-            if (i >= 4)
-            {
-                m_vgm_recorder.WriteHuC6280(0x0807, psg_state->CHANNELS[i].noise_control);
-            }
-        }
-
-        // Restore channel select after dumping per-channel state.
-        m_vgm_recorder.WriteHuC6280(0x0800, *psg_state->CHANNEL_SELECT);
-
-        // 0x0808 - LFO frequency
-        m_vgm_recorder.WriteHuC6280(0x0808, *psg_state->LFO_FREQUENCY & 0xFF);
-
-        // 0x0809 - LFO control
-        m_vgm_recorder.WriteHuC6280(0x0809, *psg_state->LFO_CONTROL);
-    }
+        WriteVgmInitialState();
 
     return m_vgm_recording_enabled;
+}
+
+void Audio::WriteVgmInitialState()
+{
+    HuC6280PSG::HuC6280PSG_State* state = m_psg->GetState();
+
+    // R9 trigger has channel 2 side effects, so restore global/LFO state before channel state.
+    m_vgm_recorder.WriteHuC6280(0x0801, *state->MAIN_AMPLITUDE);
+    m_vgm_recorder.WriteHuC6280(0x0808, *state->LFO_FREQUENCY & 0xFF);
+    m_vgm_recorder.WriteHuC6280(0x0809, *state->LFO_CONTROL);
+
+    for (int i = 0; i < 6; i++)
+    {
+        HuC6280PSG::HuC6280PSG_Channel* channel = &state->CHANNELS[i];
+
+        // Reset the waveform address and restore the held DDA latch while the channel is off.
+        m_vgm_recorder.WriteHuC6280(0x0800, i);
+        m_vgm_recorder.WriteHuC6280(0x0804, 0x40);
+        m_vgm_recorder.WriteHuC6280(0x0806, (u8)channel->dda & 0x1F);
+        m_vgm_recorder.WriteHuC6280(0x0804, 0x00);
+
+        // Load waveform RAM sequentially from address zero.
+        for (int j = 0; j < 32; j++)
+            m_vgm_recorder.WriteHuC6280(0x0806, channel->wave_data[j] & 0x1F);
+
+        // Restore the waveform address without changing RAM contents.
+        if (IS_NOT_SET_BIT(channel->control, 6))
+        {
+            for (int j = 0; j < (channel->wave_index & 0x1F); j++)
+                m_vgm_recorder.WriteHuC6280(0x0806, channel->wave_data[j] & 0x1F);
+        }
+
+        m_vgm_recorder.WriteHuC6280(0x0802, channel->frequency & 0xFF);
+        m_vgm_recorder.WriteHuC6280(0x0803, (channel->frequency >> 8) & 0x0F);
+        m_vgm_recorder.WriteHuC6280(0x0805, channel->amplitude);
+        m_vgm_recorder.WriteHuC6280(0x0804, channel->control);
+
+        if (i >= 4)
+            m_vgm_recorder.WriteHuC6280(0x0807, channel->noise_control);
+    }
+
+    m_vgm_recorder.WriteHuC6280(0x0800, *state->CHANNEL_SELECT);
 }
 
 void Audio::StopVgmRecording()

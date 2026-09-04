@@ -58,6 +58,7 @@ private:
     void LogPsgEvent(u32 address, u8 value);
     void ClockSources(u32 cycles);
     void SampleSources();
+    void WriteVgmInitialState();
 
 private:
     bool m_mute;
