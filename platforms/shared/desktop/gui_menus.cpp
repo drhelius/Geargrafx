@@ -1512,6 +1512,8 @@ static void menu_audio(void)
             emu_audio_mute(!config_audio.enable);
         }
 
+        ImGui::Separator();
+
         if (ImGui::BeginMenu("PSG Revision"))
         {
             ImGui::PushItemWidth(110.0f);
@@ -1520,14 +1522,14 @@ static void menu_audio(void)
                 emu_audio_psg_revision(config_audio.psg_revision);
             }
             ImGui::PopItemWidth();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Auto uses HuC6280A for SuperGrafx and HuC6280 for all other systems.");
+                ImGui::Text("Explicit selections override automatic revision matching.");
+                ImGui::EndTooltip();
+            }
             ImGui::EndMenu();
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("Auto uses HuC6280A for SuperGrafx and HuC6280 for all other systems.");
-            ImGui::Text("Explicit selections override automatic revision matching.");
-            ImGui::EndTooltip();
         }
 
         ImGui::Separator();
