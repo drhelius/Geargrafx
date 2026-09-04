@@ -313,6 +313,7 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
                 break;
             case 0x0800:
                 // PSG
+                m_huc6280->ClockPendingCycles();
                 m_audio->WritePSG(offset, value);
                 m_io_buffer = value;
                 break;

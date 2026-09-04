@@ -124,6 +124,7 @@ public:
     void SetHardwareClock(GG_Clock_Hardware_Fn clock_fn, void* context);
     u32 GetClockedMasterCycles() const;
     void ClockCountedCycles(unsigned int cycles);
+    void ClockPendingCycles();
     void StallFastCycle();
     void ClockTimer(u32 cycles);
     void AssertIRQ1(bool asserted);
