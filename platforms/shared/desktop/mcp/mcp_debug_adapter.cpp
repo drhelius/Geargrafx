@@ -1684,7 +1684,7 @@ json DebugAdapter::GetADPCMStatus()
 
     status["length"] = *adpcm_state->LENGTH;
 
-    float frequency = (32000.0f / (16.0f - (float)*adpcm_state->SAMPLE_RATE)) / 1000.0f;
+    float frequency = (GG_ADPCM_BASE_SAMPLE_RATE / (16 - (*adpcm_state->SAMPLE_RATE & 0x0F))) / 1000.0;
     status["frequency_khz"] = frequency;
 
     // Registers

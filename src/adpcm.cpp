@@ -285,6 +285,12 @@ void Adpcm::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_step_index), sizeof(m_step_index));
     stream.read(reinterpret_cast<char*> (&m_adpcm_cycle_counter), sizeof(m_adpcm_cycle_counter));
 
+    if (version < 37)
+    {
+        m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate & 0x0F);
+        m_adpcm_cycle_counter *= 65536;
+    }
+
     if (version < 32)
     {
         s32 audio_cycle_counter = 0;
