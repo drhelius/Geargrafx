@@ -638,6 +638,7 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
     uint32_t data_size = 0;
     uint32_t data_offset = 0;
     bool found_data = false;
+    s64 file_size = file.GetSize();
 
     while (!found_data)
     {
@@ -658,7 +659,11 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
         }
 
         s64 position = file.Tell();
-        if ((position < 0) || !file.Seek(position + chunk_size))
+        s64 padded_size = (s64)chunk_size + (chunk_size & 1);
+        if ((position < 0) || (position > file_size) || (padded_size > file_size - position))
+            break;
+
+        if (!file.Seek(position + padded_size))
             break;
     }
     
