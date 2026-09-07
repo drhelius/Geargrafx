@@ -29,10 +29,33 @@
 using nlohmann::json;
 
 static const u64 k_mmi_max_media_info_size = 16ULL * 1024ULL * 1024ULL;
-static const u32 k_mmi_max_entries = 1024U * 1024U;
+static const u32 k_mmi_max_entries = 64U * 1024U;
 static const size_t k_mmi_max_entry_name = 4096;
 static const size_t k_mmi_max_media = 128;
 static const size_t k_mmi_max_streams = 64;
+static const size_t k_mmi_max_zip_allocation = 64U * 1024U * 1024U;
+
+static void* mmi_zip_allocate(void* opaque, size_t count, size_t size)
+{
+    UNUSED(opaque);
+    if (size != 0 && count > k_mmi_max_zip_allocation / size)
+        return NULL;
+    return malloc(count * size);
+}
+
+static void* mmi_zip_reallocate(void* opaque, void* memory, size_t count, size_t size)
+{
+    UNUSED(opaque);
+    if (size != 0 && count > k_mmi_max_zip_allocation / size)
+        return NULL;
+    return realloc(memory, count * size);
+}
+
+static void mmi_zip_free(void* opaque, void* memory)
+{
+    UNUSED(opaque);
+    free(memory);
+}
 
 static bool mmi_json_string(const json& object, const char* key, std::string& output,
     bool required, bool allow_empty)
@@ -48,14 +71,19 @@ static bool mmi_json_string(const json& object, const char* key, std::string& ou
         return false;
 
     output = value->get_ref<const std::string&>();
+    if (output.find('\0') != std::string::npos)
+        return false;
     return allow_empty || !output.empty();
 }
 
-static bool mmi_json_integer(const json& object, const char* key, s64& output)
+static bool mmi_json_integer(const json& object, const char* key, s64& output, bool required = true)
 {
     json::const_iterator value = object.find(key);
     if (value == object.end())
-        return false;
+    {
+        output = 0;
+        return !required;
+    }
 
     if (value->is_number_unsigned())
     {
@@ -85,6 +113,7 @@ MmiArchive::MmiArchive()
     InitPointer(m_file);
     mz_zip_zero_struct(&m_archive);
     m_archive_open = false;
+    m_crc = 0;
     m_error[0] = 0;
 }
 
@@ -138,6 +167,9 @@ bool MmiArchive::Open(const char* path)
     mz_zip_zero_struct(&m_archive);
     m_archive.m_pRead = ReadCallback;
     m_archive.m_pIO_opaque = this;
+    m_archive.m_pAlloc = mmi_zip_allocate;
+    m_archive.m_pRealloc = mmi_zip_reallocate;
+    m_archive.m_pFree = mmi_zip_free;
 
     if (!mz_zip_reader_init(&m_archive, (mz_uint64)file_size, 0))
     {
@@ -171,9 +203,11 @@ void MmiArchive::CloseArchiveData()
 
     mz_zip_zero_struct(&m_archive);
     m_archive_open = false;
+    m_crc = 0;
     SafeDelete(m_file);
     m_path.clear();
     m_entries.clear();
+    m_entry_lookup.clear();
     m_info = GG_MmiInfo();
 }
 
@@ -190,6 +224,11 @@ const char* MmiArchive::GetPath() const
 const char* MmiArchive::GetLastError() const
 {
     return m_error;
+}
+
+u32 MmiArchive::GetCRC() const
+{
+    return m_crc;
 }
 
 const GG_MmiInfo* MmiArchive::GetInfo() const
@@ -217,13 +256,13 @@ const GG_MmiEntry* MmiArchive::FindEntry(const char* name) const
         return NULL;
 
     std::string key = LowerAscii(normalized);
-    for (size_t i = 0; i < m_entries.size(); i++)
+    std::vector<u32>::const_iterator entry = std::lower_bound(m_entry_lookup.begin(),
+        m_entry_lookup.end(), key, [this](u32 index, const std::string& name)
     {
-        if (LowerAscii(m_entries[i].normalized_name) == key)
-            return &m_entries[i];
-    }
-
-    return NULL;
+        return m_entries[index].lookup_name < name;
+    });
+    return (entry != m_entry_lookup.end() && m_entries[*entry].lookup_name == key) ?
+        &m_entries[*entry] : NULL;
 }
 
 const GG_MmiEntry* MmiArchive::ResolveEntry(const char* base_entry, const char* reference) const
@@ -232,14 +271,15 @@ const GG_MmiEntry* MmiArchive::ResolveEntry(const char* base_entry, const char* 
         return NULL;
 
     std::string base;
-    if (!NormalizeEntryPath(base_entry, base))
+    std::string relative;
+    if (!NormalizeEntryPath(base_entry, base) || !NormalizeEntryPath(reference, relative))
         return NULL;
 
     size_t separator = base.find_last_of('/');
     std::string combined;
     if (separator != std::string::npos)
         combined = base.substr(0, separator + 1);
-    combined += reference;
+    combined += relative;
 
     return FindEntry(combined.c_str());
 }
@@ -386,6 +426,11 @@ bool MmiArchive::ReadEntries()
         GG_MmiEntry entry;
         entry.index = i;
         entry.name = &name[0];
+        if (entry.name.length() != name_size - 1)
+        {
+            SetError("Embedded NUL in MMI ZIP entry name at index %u", i);
+            return false;
+        }
         entry.flags = stat.m_bit_flag;
         entry.method = stat.m_method;
         entry.crc32 = stat.m_crc32;
@@ -401,15 +446,7 @@ bool MmiArchive::ReadEntries()
             return false;
         }
 
-        std::string key = LowerAscii(entry.normalized_name);
-        for (size_t j = 0; j < m_entries.size(); j++)
-        {
-            if (LowerAscii(m_entries[j].normalized_name) == key)
-            {
-                SetError("Duplicate MMI ZIP entry name: %s", entry.name.c_str());
-                return false;
-            }
-        }
+        entry.lookup_name = LowerAscii(entry.normalized_name);
 
         if (stat.m_is_encrypted || (entry.flags & 0x0001) || (entry.flags & 0x0040))
         {
@@ -439,6 +476,28 @@ bool MmiArchive::ReadEntries()
             return false;
 
         m_entries.push_back(entry);
+        m_entry_lookup.push_back(i);
+        // Use the complete archive directory for an identity shared by all sides.
+        // Payload CRCs are already stored in ZIP; no bulk stream is read here.
+        u8 identity[12];
+        write_u32_le(identity, entry.crc32);
+        write_u32_le(identity + 4, (u32)entry.uncompressed_size);
+        write_u32_le(identity + 8, (u32)(entry.uncompressed_size >> 32));
+        m_crc = (u32)mz_crc32(m_crc, (const u8*)entry.name.data(), entry.name.size());
+        m_crc = (u32)mz_crc32(m_crc, identity, sizeof(identity));
+    }
+
+    std::sort(m_entry_lookup.begin(), m_entry_lookup.end(), [this](u32 left, u32 right)
+    {
+        return m_entries[left].lookup_name < m_entries[right].lookup_name;
+    });
+    for (size_t i = 1; i < m_entry_lookup.size(); i++)
+    {
+        if (m_entries[m_entry_lookup[i - 1]].lookup_name == m_entries[m_entry_lookup[i]].lookup_name)
+        {
+            SetError("Duplicate MMI ZIP entry name: %s", m_entries[m_entry_lookup[i]].name.c_str());
+            return false;
+        }
     }
 
     return ValidateEntryRanges();
@@ -524,9 +583,6 @@ bool MmiArchive::ValidateEntryRanges()
     std::vector<EntryRange> ranges;
     for (size_t i = 0; i < m_entries.size(); i++)
     {
-        if (m_entries[i].directory)
-            continue;
-
         EntryRange range;
         range.start = m_entries[i].local_header_offset;
         if (!checked_add_u64(m_entries[i].data_offset, m_entries[i].compressed_size, &range.end))
@@ -653,10 +709,10 @@ bool MmiArchive::ParseMediaInfo()
                 !mmi_json_string(stream_json, "type", stream.type, true, false) ||
                 !mmi_json_string(stream_json, "file", stream.file, true, false) ||
                 !mmi_json_string(stream_json, "format", stream.format, false, true) ||
-                !mmi_json_integer(stream_json, "channels", stream.channels) ||
-                !mmi_json_integer(stream_json, "framesInActiveRegion", stream.frames_in_active_region) ||
-                !mmi_json_integer(stream_json, "framesInLeadInRegion", stream.frames_in_lead_in_region) ||
-                !mmi_json_integer(stream_json, "framesInLeadOutRegion", stream.frames_in_lead_out_region) ||
+                !mmi_json_integer(stream_json, "channels", stream.channels, false) ||
+                !mmi_json_integer(stream_json, "framesInActiveRegion", stream.frames_in_active_region, false) ||
+                !mmi_json_integer(stream_json, "framesInLeadInRegion", stream.frames_in_lead_in_region, false) ||
+                !mmi_json_integer(stream_json, "framesInLeadOutRegion", stream.frames_in_lead_out_region, false) ||
                 (stream.channels < 0) || (stream.frames_in_active_region < 0) ||
                 (stream.frames_in_lead_in_region < 0) || (stream.frames_in_lead_out_region < 0))
             {
@@ -672,12 +728,24 @@ bool MmiArchive::ParseMediaInfo()
             else if (role == "rawvideo")
                 stream.role = GG_MMI_STREAM_RAW_VIDEO;
 
+            bool has_channels = stream_json.find("channels") != stream_json.end();
+            if (!has_channels && stream.role == GG_MMI_STREAM_RAW_AUDIO)
+                stream.channels = 2;
             if (((stream.role == GG_MMI_STREAM_RAW_AUDIO) && (stream.channels != 2)) ||
-                ((stream.role == GG_MMI_STREAM_RAW_VIDEO) &&
+                ((stream.role == GG_MMI_STREAM_RAW_VIDEO) && has_channels &&
                 (stream.channels != 3) && (stream.channels != 4)))
             {
                 SetError("Unsupported channel count %lld for MMI stream %s",
                     (long long)stream.channels, stream.file.c_str());
+                return false;
+            }
+
+            if (stream.role == GG_MMI_STREAM_RAW_VIDEO &&
+                (!stream_json.count("framesInActiveRegion") ||
+                !stream_json.count("framesInLeadInRegion") ||
+                !stream_json.count("framesInLeadOutRegion") || stream.frames_in_active_region == 0))
+            {
+                SetError("Missing video region counts in MMI stream %s", stream.file.c_str());
                 return false;
             }
 

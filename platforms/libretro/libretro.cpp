@@ -62,6 +62,7 @@ static char retro_system_directory[4096];
 static char retro_save_directory[4096];
 static char retro_game_path[4096];
 static unsigned initial_mmi_image_index = 0;
+static char initial_mmi_image_path[4096] = {};
 
 static s16 audio_buf[GG_AUDIO_BUFFER_SIZE];
 static int audio_sample_count = 0;
@@ -249,7 +250,19 @@ void retro_set_environment(retro_environment_t cb)
         disk_get_image_path,
         disk_get_image_label
     };
-    environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, (void*)&disk_control);
+    if (!environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, (void*)&disk_control))
+    {
+        static const struct retro_disk_control_callback disk_control_basic = {
+            disk_set_eject_state,
+            disk_get_eject_state,
+            disk_get_image_index,
+            disk_set_image_index,
+            disk_get_num_images,
+            disk_replace_image_index,
+            disk_add_image_index
+        };
+        environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, (void*)&disk_control_basic);
+    }
 
     set_controller_info();
     libretro_set_core_options(environ_cb, &categories_supported);
@@ -304,6 +317,7 @@ void retro_deinit(void)
     current_aspect_ratio = 0.0f;
     aspect_ratio = 0.0f;
     initial_mmi_image_index = 0;
+    initial_mmi_image_path[0] = 0;
     libretro_supports_bitmasks = false;
 
     reset_controller_devices();
@@ -487,8 +501,12 @@ bool retro_load_game(const struct retro_game_info *info)
                 log_cb(RETRO_LOG_ERROR, "A recognized Game Express BIOS is required by this MMI.\n");
             else
                 log_cb(RETRO_LOG_ERROR, "A recognized PAC BIOS for the selected LaserActive region is required.\n");
+            core->GetMedia()->Reset();
             return false;
         }
+        if (is_mmi_content && initial_mmi_image_path[0] &&
+            strcmp(initial_mmi_image_path, retro_game_path) != 0)
+            initial_mmi_image_index = 0;
         if (is_mmi_content &&
             (initial_mmi_image_index != core->GetCDROMMedia()->GetSelectedMmiMediaIndex()))
         {
@@ -497,6 +515,7 @@ bool retro_load_game(const struct retro_game_info *info)
             {
                 log_cb(RETRO_LOG_ERROR, "Invalid initial MMI media index %u.\n",
                     initial_mmi_image_index);
+                core->GetMedia()->Reset();
                 return false;
             }
         }
@@ -532,6 +551,10 @@ void retro_unload_game(void)
 {
     save_mb128();
     initial_mmi_image_index = 0;
+    initial_mmi_image_path[0] = 0;
+    if (core && core->GetCDROMMedia()->IsMmi())
+        core->GetMedia()->Reset();
+    audio_sample_count = 0;
 }
 
 unsigned retro_get_region(void)
@@ -1751,17 +1774,11 @@ static bool disk_add_image_index(void)
 
 static bool disk_set_initial_image(unsigned index, const char* path)
 {
-    UNUSED(path);
-    if (!core || !core->GetCDROMMedia()->IsMmi())
-    {
-        initial_mmi_image_index = index;
-        return true;
-    }
-    if (index == core->GetCDROMMedia()->GetSelectedMmiMediaIndex())
-        return true;
-    if (!core->GetCDROMMedia()->IsMmiEjected() && !core->EjectLaserDisc())
+    if (path && strlen(path) >= sizeof(initial_mmi_image_path))
         return false;
-    return core->SelectLaserDiscMedia(index);
+    initial_mmi_image_index = index;
+    strncpy_fit(initial_mmi_image_path, path ? path : "", sizeof(initial_mmi_image_path));
+    return true;
 }
 
 static bool disk_get_image_path(unsigned index, char* path, size_t length)
@@ -1769,7 +1786,7 @@ static bool disk_get_image_path(unsigned index, char* path, size_t length)
     if (!core || !path || (length == 0))
         return false;
     const GG_MmiInfo* info = core->GetCDROMMedia()->GetMmiInfo();
-    if (!info || (index >= info->media.size()))
+    if (!info || (index >= info->media.size()) || strlen(retro_game_path) >= length)
         return false;
     strncpy_fit(path, retro_game_path, length);
     return true;
@@ -1780,7 +1797,7 @@ static bool disk_get_image_label(unsigned index, char* label, size_t length)
     if (!core || !label || (length == 0))
         return false;
     const GG_MmiInfo* info = core->GetCDROMMedia()->GetMmiInfo();
-    if (!info || (index >= info->media.size()))
+    if (!info || (index >= info->media.size()) || info->media[index].name.length() >= length)
         return false;
     strncpy_fit(label, info->media[index].name.c_str(), length);
     return true;

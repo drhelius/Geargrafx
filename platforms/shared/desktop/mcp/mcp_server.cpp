@@ -2857,6 +2857,9 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     }
     else if (normalizedTool == "select_mmi_media")
     {
+        if (!arguments.contains("index") || !arguments["index"].is_number_integer() ||
+            (arguments["index"] < 0) || (arguments["index"] > UINT32_MAX))
+            return {{"error", "MMI index must be a non-negative 32-bit integer"}};
         return m_debugAdapter.SelectMmiMedia(arguments["index"]);
     }
     else if (normalizedTool == "load_bios")

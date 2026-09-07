@@ -124,11 +124,11 @@ public:
 
 private:
     void Reset();
-    template<bool is_cdrom, bool is_sgx>
+    template<bool is_cdrom, bool is_sgx, bool is_laseractive>
     bool ClockHardware(u32 cycles);
-    template<bool is_cdrom, bool is_sgx>
+    template<bool is_cdrom, bool is_sgx, bool is_laseractive>
     static void ClockHardwareCallback(void* context, u32 cycles);
-    template<bool debugger, bool is_cdrom, bool is_sgx>
+    template<bool debugger, bool is_cdrom, bool is_sgx, bool is_laseractive = false>
     bool RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug, bool render);
     bool SaveState(std::ostream& stream, size_t& size, bool screenshot);
     bool LoadState(std::istream& stream);

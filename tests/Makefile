@@ -41,8 +41,8 @@ endif
 
 SANITIZE ?= 0
 ifeq ($(SANITIZE), 1)
-    CPPFLAGS +=-fsanitize=address
-    LDFLAGS += -lasan
+    CPPFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer
+    LDFLAGS += -fsanitize=address,undefined
 endif
 
 ifeq ($(UNAME_S), Linux) #LINUX

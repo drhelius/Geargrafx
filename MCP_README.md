@@ -469,9 +469,9 @@ Storage changes while tracing is active cleanly stop and restart the logger. Rep
 - `get_huc6260_status` - Get VCE status (position, sync signals, control)
 - `get_huc6202_status` - Get VPC status (SuperGrafx only)
 - `get_psg_status` - Get PSG status for all 6 channels
-- `get_cdrom_status` - Get CD-ROM or LaserActive drive status, including read-only PD6103A transport/register data for MMI media
+- `get_cdrom_status` - Get CD-ROM or LaserActive drive status, including the signed disc-head LBA, sample/frame position, search-burst phase, analog mute/fade counters, SRAM latch, and PD6103A registers/freeze state. Inspection does not advance emulated state.
 - `list_cdrom_tracks` - List CD-ROM track types and LBA ranges
-- `get_cdrom_audio_status` - Get CD-ROM audio playback status
+- `get_cdrom_audio_status` - Get CD-ROM audio playback status, or the shared LaserActive transport and mixed analog/digital output status
 - `get_adpcm_status` - Get ADPCM audio status
 - `get_arcade_card_status` - Get Arcade Card status
 - `get_turbolink_status` - Get BU5782K SEL/CLR and pull-low state, the last actual K/line sample with D0-D3 and event ticks, plus shared-memory membership, hardware readiness, pacing, progress, barrier, lease, generation, and recovery diagnostics
@@ -492,7 +492,7 @@ Storage changes while tracing is active cleanly stop and restart the logger. Rep
 - `list_mmi_media` - List the media/sides in the loaded MMI in sequence order
 - `eject_mmi_media` - Eject the virtual LaserDisc without resetting the machine
 - `insert_mmi_media` - Insert the selected virtual LaserDisc medium
-- `select_mmi_media` - Select an MMI media index while the virtual LaserDisc is ejected
+- `select_mmi_media` - Select a zero-based MMI media index while the virtual disc is ejected; indices follow sequence order and do not reset the CPU or RAM
 - `load_symbols` - Load debug symbols from file (.sym format with 'BANK:ADDRESS LABEL' entries)
 - `list_save_state_slots` - List all 5 save state slots with information (rom name, timestamp, validity)
 - `select_save_state_slot` - Select active save state slot (1-5) for save/load operations

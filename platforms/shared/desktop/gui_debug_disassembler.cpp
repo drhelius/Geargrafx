@@ -2248,17 +2248,27 @@ static bool resolve_label_with_context(GG_Disassembler_Record* record, std::stri
         }
     }
 
-    for (int i = 0; i < k_debug_label_count; i++)
+    const stDebugLabel* labels = k_debug_labels;
+    int label_count = k_debug_label_count;
+    u16 offset = label_lookup - hardware_offset;
+    if (emu_get_core()->GetMedia()->IsLaserActive() &&
+        ((offset >= 0x18C0 && offset <= 0x18C3) || (offset >= 0x1920 && offset <= 0x195F)))
     {
-        if (k_debug_labels[i].address + hardware_offset == label_lookup)
+        labels = k_debug_laseractive_labels;
+        label_count = k_debug_laseractive_label_count;
+    }
+
+    for (int i = 0; i < label_count; i++)
+    {
+        if (labels[i].address + hardware_offset == label_lookup)
         {
             char label_address[5];
             snprintf(label_address, 5, "%04X", lookup_address);
-            std::string replacement = std::string(color) + k_debug_labels[i].label + "_" + label_address + original_color;
+            std::string replacement = std::string(color) + labels[i].label + "_" + label_address + original_color;
 
             if (replace_operand_in_string(record, instr, replacement.c_str()))
             {
-                if (out_name) *out_name = k_debug_labels[i].label;
+                if (out_name) *out_name = labels[i].label;
                 if (out_address) *out_address = lookup_address;
                 return true;
             }

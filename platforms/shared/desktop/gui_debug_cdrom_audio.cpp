@@ -63,6 +63,8 @@ void gui_debug_window_cdrom_audio(void)
     CdRomAudio* cdrom_audio = core->GetCDROMAudio();
     CdRomAudio::CdRomAudio_State* cdrom_audio_state = cdrom_audio->GetState();
 
+    ImGui::BeginDisabled(core->GetMedia()->IsLaserActive());
+
     if (ImGui::BeginTable("##table", 2, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoPadOuterX))
     {
         ImGui::TableNextColumn();
@@ -289,6 +291,7 @@ void gui_debug_window_cdrom_audio(void)
     ImGui::TextColored(violet, "RIGHT "); ImGui::SameLine();
     ImGui::TextColored(white, "%+06d", cdrom_audio->GetRightSample());
 
+    ImGui::EndDisabled();
     ImGui::PopFont();
 
     ImGui::End();

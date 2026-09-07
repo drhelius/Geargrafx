@@ -45,6 +45,8 @@ public:
     bool IsSGX();
     bool IsCDROM();
     bool IsLaserActive();
+    u8* GetMappedBios();
+    int GetMappedBiosSize();
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool IsPhysicalCdRom();
 #endif
@@ -142,7 +144,7 @@ private:
     bool m_is_gameexpress;
     bool m_is_sgx;
     bool m_is_cdrom;
-    bool m_is_laseractive;
+    bool m_is_mmi;
     bool m_is_in_game_database;
     const char* m_game_database_name;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)

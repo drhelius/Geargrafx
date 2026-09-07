@@ -272,6 +272,10 @@ struct config_Debug
     bool show_cdrom;
     bool show_cdrom_toc;
     bool show_cdrom_audio;
+    bool show_laseractive_general;
+    bool show_laseractive_registers;
+    bool show_laseractive_audio;
+    bool show_laseractive_video;
     bool show_adpcm;
     bool show_arcade_card;
     bool show_trace_logger;

@@ -54,7 +54,7 @@ Media::Media(CdRomMedia* cdrom_media)
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
-    m_is_laseractive = false;
+    m_is_mmi = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
@@ -118,7 +118,7 @@ void Media::Reset()
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
-    m_is_laseractive = false;
+    m_is_mmi = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
@@ -191,7 +191,7 @@ bool Media::LoadMedia(const char* path, bool softpatching)
     else if (strcmp(m_file_extension, "mmi") == 0)
     {
         m_is_cdrom = true;
-        m_is_laseractive = true;
+        m_is_mmi = true;
         m_ready = LoadMmiFromFile(path);
     }
     else if (strcmp(m_file_extension, "iso") == 0)
@@ -358,20 +358,38 @@ bool Media::LoadMmiFromFile(const char* path)
 
 bool Media::IsLaserActive()
 {
-    return m_is_laseractive && m_cdrom_media->IsLaserDisc();
+    return m_is_mmi && m_cdrom_media->IsLaserDisc();
+}
+
+u8* Media::GetMappedBios()
+{
+    return m_is_cdrom ? m_rom_map[0] : NULL;
+}
+
+int Media::GetMappedBiosSize()
+{
+    if (!m_is_cdrom)
+        return 0;
+    const GG_MmiInfo* info = IsLaserActive() ? m_cdrom_media->GetMmiInfo() : NULL;
+    if (info && info->card.empty())
+        return GG_BIOS_LASERACTIVE_SIZE;
+    return m_is_gameexpress ? GG_BIOS_GAME_EXPRESS_SIZE : GG_BIOS_SYSCARD_SIZE;
 }
 
 bool Media::IsBiosReady()
 {
+    if (!m_is_mmi)
+        return m_is_gameexpress ? m_is_loaded_bios_gameexpress : m_is_loaded_bios_syscard;
+
+    const GG_MmiInfo* info = m_cdrom_media->GetMmiInfo();
+    if (info && (info->card == "System Card 1.0"))
+        return m_is_loaded_bios_syscard && m_is_valid_bios_syscard &&
+            (m_bios_crc_syscard == 0x3F9F95A4);
+    if (info && (info->card == "Games Express"))
+        return m_is_loaded_bios_gameexpress && m_is_valid_bios_gameexpress;
+
     if (IsLaserActive())
     {
-        const GG_MmiInfo* info = m_cdrom_media->GetMmiInfo();
-        if (info && (info->card == "System Card 1.0"))
-            return m_is_loaded_bios_syscard && m_is_valid_bios_syscard &&
-                (m_bios_crc_syscard == 0x3F9F95A4);
-        if (info && (info->card == "Games Express"))
-            return m_is_loaded_bios_gameexpress && m_is_valid_bios_gameexpress;
-
         if (m_selected_laseractive_region == GG_LASERACTIVE_REGION_US)
             return m_is_loaded_bios_pac_us && m_is_valid_bios_pac_us;
         if (m_selected_laseractive_region == GG_LASERACTIVE_REGION_JAPAN)
@@ -643,7 +661,12 @@ void Media::SelectPacBios()
         return;
     }
 
-    if (m_is_valid_bios_pac_japan && !m_is_valid_bios_pac_us)
+    const GG_MmiInfo* info = m_cdrom_media->GetMmiInfo();
+    if (info && info->region_code == "U")
+        m_selected_laseractive_region = GG_LASERACTIVE_REGION_US;
+    else if (info && info->region_code == "J")
+        m_selected_laseractive_region = GG_LASERACTIVE_REGION_JAPAN;
+    else if (m_is_valid_bios_pac_japan && !m_is_valid_bios_pac_us)
         m_selected_laseractive_region = GG_LASERACTIVE_REGION_JAPAN;
     else if (m_is_valid_bios_pac_us && !m_is_valid_bios_pac_japan)
         m_selected_laseractive_region = GG_LASERACTIVE_REGION_US;
@@ -806,29 +829,27 @@ void Media::GatherMediaInfo()
 
     GatherMediaInfoFromDB();
 
+    const GG_MmiInfo* mmi_info = m_cdrom_media->GetMmiInfo();
+    if (mmi_info)
+        m_is_gameexpress = mmi_info->card == "Games Express";
+
     if (IsLaserActive())
     {
-        const GG_MmiInfo* mmi_info = m_cdrom_media->GetMmiInfo();
         m_mapper = STANDARD_MAPPER;
         m_card_ram_size = 0x30000;
         m_is_sgx = false;
-
-        if (mmi_info && (mmi_info->card == "Games Express"))
-            m_is_gameexpress = true;
-        else
-            m_is_gameexpress = false;
 
         SelectPacBios();
         Log("Media is a LaserActive NEC LD-ROM2 image");
     }
 
-    if (m_force_gameexpress && m_is_cdrom)
+    if (m_force_gameexpress && m_is_cdrom && !mmi_info)
     {
         m_is_gameexpress = true;
         Log("Forcing Game Express because of user request");
     }
 
-    if (m_console_type == GG_CONSOLE_SGX)
+    if (m_console_type == GG_CONSOLE_SGX && !IsLaserActive())
     {
         m_is_sgx = true;
         Log("Forcing SuperGrafx (SGX) because of user request");
@@ -878,7 +899,17 @@ void Media::GatherMediaInfo()
         }
         else
         {
-            switch (m_cdrom_type)
+            GG_CDROM_Type cdrom_type = m_cdrom_type;
+            if (mmi_info && cdrom_type == GG_CDROM_AUTO)
+            {
+                if (mmi_info->system == "CDROM2")
+                    cdrom_type = GG_CDROM_STANDARD;
+                else if (mmi_info->system == "SuperCDROM2")
+                    cdrom_type = GG_CDROM_SUPER_CDROM;
+                else if (mmi_info->system == "ArcadeCDROM2")
+                    cdrom_type = GG_CDROM_ARCADE_CARD;
+            }
+            switch (cdrom_type)
             {
                 case GG_CDROM_STANDARD:
                     Log("CD-ROM Type: Standard");
@@ -899,7 +930,7 @@ void Media::GatherMediaInfo()
                     break;
             }
 
-            if (m_cdrom_type != GG_CDROM_STANDARD)
+            if (cdrom_type != GG_CDROM_STANDARD)
             {
                 m_card_ram_size = 0x30000;
                 Log("Enabling Super CD-ROM Card RAM");
@@ -1066,9 +1097,9 @@ void Media::GatherDataFromPath(const char* path)
 
 void Media::InitRomMAP()
 {
-    const GG_MmiInfo* mmi_info = IsLaserActive() ? m_cdrom_media->GetMmiInfo() : NULL;
+    const GG_MmiInfo* mmi_info = m_is_mmi ? m_cdrom_media->GetMmiInfo() : NULL;
     bool external_card = mmi_info && !mmi_info->card.empty();
-    bool use_pac_bios = IsLaserActive() && !external_card;
+    bool use_pac_bios = mmi_info && !external_card && m_cdrom_media->IsLaserDisc();
     int rom_size = use_pac_bios ? GG_BIOS_LASERACTIVE_SIZE :
         (m_is_cdrom ? (m_is_gameexpress ? GG_BIOS_GAME_EXPRESS_SIZE : GG_BIOS_SYSCARD_SIZE) : m_rom_size);
     int rom_bank_count = (rom_size / 0x2000) + (rom_size % 0x2000 ? 1 : 0);

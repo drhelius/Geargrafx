@@ -331,7 +331,7 @@ static void init_ogl_debug(void)
 
 static void init_ogl_savestates(void)
 {
-    create_texture_2d(&ogl_renderer_emu_savestates, 2048, 256, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, NULL, false);
+    create_texture_2d(&ogl_renderer_emu_savestates, 2048, SYSTEM_TEXTURE_HEIGHT, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, NULL, false);
     savestates_texture_slot = -1;
     savestates_texture_generation = 0;
 }

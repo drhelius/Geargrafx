@@ -86,8 +86,11 @@ void gui_debug_memory_reset(void)
 
     mem_edit[MEMORY_EDITOR_RAM].Reset("WRAM", memory->GetWorkingRAM(), 0x2000 * (is_sgx ? 4 : 1));
     mem_edit[MEMORY_EDITOR_ZERO_PAGE].Reset("ZP", memory->GetWorkingRAM(), 0x100);
-    mem_edit[MEMORY_EDITOR_ROM].Reset("ROM", media->GetROM(), media->GetROMSize());
-    mem_edit[MEMORY_EDITOR_CARD_RAM].Reset("CARD RAM", memory->GetCardRAM(), memory->GetCardRAMSize());
+    mem_edit[MEMORY_EDITOR_ROM].Reset(media->IsLaserActive() ? "BIOS" : "ROM",
+        media->IsLaserActive() ? media->GetMappedBios() : media->GetROM(),
+        media->IsLaserActive() ? media->GetMappedBiosSize() : media->GetROMSize());
+    mem_edit[MEMORY_EDITOR_CARD_RAM].Reset(media->IsLaserActive() ? "PAC SRAM" : "CARD RAM",
+        memory->GetCardRAM(), memory->GetCardRAMSize());
     mem_edit[MEMORY_EDITOR_BACKUP_RAM].Reset("BRAM", memory->GetBackupRAM(), 0x800);
     mem_edit[MEMORY_EDITOR_PALETTES].Reset("PALETTES", (u8*)huc6260->GetColorTable(), 512, 0, 2);
     mem_edit[MEMORY_EDITOR_VRAM_1].Reset(is_sgx ? "VRAM 1" : "VRAM", (u8*)huc6270_1->GetVRAM(), HUC6270_VRAM_SIZE, 0, 2);
@@ -211,7 +214,7 @@ static void draw_tabs(void)
     {
         if (!is_sgx && (i == MEMORY_EDITOR_VRAM_2 || i == MEMORY_EDITOR_SAT_2))
             continue;
-        if (i == MEMORY_EDITOR_ROM && !IsValidPointer(media->GetROM()))
+        if (i == MEMORY_EDITOR_ROM && !IsValidPointer(media->GetROM()) && !media->IsLaserActive())
             continue;
         if (i == MEMORY_EDITOR_CARD_RAM && core->GetMemory()->GetCardRAMSize() == 0)
             continue;

@@ -160,11 +160,13 @@ bool CdRomMedia::EjectMmi()
 {
     if (!IsMmi())
         return false;
+    if (m_mmi_image->IsEjected())
+        return true;
 
     m_mmi_image->SetEjected(true);
-    m_media_generation++;
     if (IsValidPointer(m_laseractive))
         m_laseractive->NotifyMediaEjected(true);
+    m_media_generation++;
     return true;
 }
 
@@ -172,6 +174,8 @@ bool CdRomMedia::InsertMmi()
 {
     if (!IsMmi())
         return false;
+    if (!m_mmi_image->IsEjected())
+        return true;
 
     m_mmi_image->SetEjected(false);
     m_media_generation++;
@@ -184,6 +188,9 @@ bool CdRomMedia::SelectMmiMedia(u32 index)
 {
     if (!IsMmi() || !m_mmi_image->IsEjected())
         return false;
+
+    if (index == m_mmi_image->GetSelectedMediaIndex() && m_mmi_image->IsReady())
+        return true;
 
     if (!m_mmi_image->SelectMediaByIndex(index))
         return false;

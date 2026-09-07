@@ -647,6 +647,8 @@ static void main_window(void)
 
     int base_width = (int)(runtime.screen_width / runtime.width_scale);
     int base_height = (int)(runtime.screen_height);
+    if (runtime.aspect_ratio > 0.0f)
+        base_width = (int)round(base_height * runtime.aspect_ratio);
 
     int w_corrected, h_corrected;
     int scale_multiplier = 0;

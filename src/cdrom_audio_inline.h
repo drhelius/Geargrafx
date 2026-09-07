@@ -69,22 +69,11 @@ INLINE void CdRomAudio::Sample()
     m_left_sample = 0;
     m_right_sample = 0;
 
-    if (m_cdrom_media->IsLaserDisc() && IsValidPointer(m_laseractive))
-    {
-        m_laseractive->Sample(m_left_sample, m_right_sample);
-        m_buffer[m_buffer_index + 0] = m_left_sample;
-        m_buffer[m_buffer_index + 1] = m_right_sample;
-        m_buffer_index += 2;
-        if (m_buffer_index >= GG_AUDIO_BUFFER_SIZE)
-        {
-            Error("CD AUDIO buffer overflow");
-            m_buffer_index = 0;
-        }
-        return;
-    }
-
-    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0) && (m_playback_delay_cycles == 0))
+    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0) &&
+        (m_playback_delay_cycles == 0) && !IsValidPointer(m_laseractive))
         GenerateSamples();
+    else if (IsValidPointer(m_laseractive))
+        m_laseractive->Sample(m_left_sample, m_right_sample);
 
     m_buffer[m_buffer_index + 0] = m_left_sample;
     m_buffer[m_buffer_index + 1] = m_right_sample;
@@ -100,23 +89,39 @@ INLINE void CdRomAudio::Sample()
 
 INLINE CdRomAudio::CdAudioState CdRomAudio::GetCurrentState()
 {
-    return m_current_state;
+    if (!IsValidPointer(m_laseractive))
+        return m_current_state;
+
+    switch (m_laseractive->GetDriveMode())
+    {
+        case LaserActive::DRIVE_PLAYING: return CD_AUDIO_STATE_PLAYING;
+        case LaserActive::DRIVE_PAUSED:
+        case LaserActive::DRIVE_SEEKING: return CD_AUDIO_STATE_PAUSED;
+        case LaserActive::DRIVE_READING: return CD_AUDIO_STATE_IDLE;
+        default: return CD_AUDIO_STATE_STOPPED;
+    }
 }
 
 INLINE CdRomAudio::CdAudioState CdRomAudio::GetSubcodeState()
 {
-    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles > 0))
-        return CD_AUDIO_STATE_PAUSED;
-
-    return m_current_state;
+    if (!IsValidPointer(m_laseractive))
+    {
+        if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles > 0))
+            return CD_AUDIO_STATE_PAUSED;
+        return m_current_state;
+    }
+    return GetCurrentState();
 }
 
 INLINE u32 CdRomAudio::GetSubcodeLBA()
 {
-    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles > 0))
-        return m_seek_start_lba;
-
-    return m_current_lba;
+    if (!IsValidPointer(m_laseractive))
+    {
+        if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles > 0))
+            return m_seek_start_lba;
+        return m_current_lba;
+    }
+    return (u32)MAX(m_laseractive->GetHeadLba(), 0);
 }
 
 INLINE CdRomAudio::CdRomAudio_State* CdRomAudio::GetState()
@@ -170,7 +175,11 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
     m_cdrom_media->PreloadTrack((u32)track);
 
     if (IsValidPointer(m_laseractive))
+    {
         m_laseractive->NotifyAudioStart(lba, pause);
+        m_seek_cycles = pause ? 0 : (s32)((u64)m_laseractive->GetSeekLatency() * GG_MASTER_CLOCK_RATE / 75);
+        m_playback_delay_cycles = 0;
+    }
 }
 
 INLINE void CdRomAudio::StopAudio()
@@ -221,6 +230,8 @@ INLINE void CdRomAudio::SetStopLBA(u32 lba, CdAudioStopEvent event)
 
     m_stop_lba = lba;
     m_stop_event = event;
+    if (IsValidPointer(m_laseractive))
+        m_laseractive->SetAudioEnd(lba);
     m_current_state = CD_AUDIO_STATE_PLAYING;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STOP_LBA, m_stop_lba, m_start_lba);
 }

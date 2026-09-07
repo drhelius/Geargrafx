@@ -130,9 +130,10 @@ INLINE void HuC6270::LatchScrollY()
         {
             m_bg_counter_y = m_register[HUC6270_REG_BYR];
             m_bg_scroll_y_update_pending = false;
+            m_bg_counter_y++;
         }
-
-        m_bg_counter_y++;
+        else if (m_increment_bg_counter_y)
+            m_bg_counter_y++;
     }
 
     m_bg_offset_y = m_bg_counter_y;

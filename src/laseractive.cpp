@@ -23,19 +23,42 @@
 #include <limits>
 #include "laseractive.h"
 #include "cdrom.h"
+#include "cdrom_audio.h"
 #include "cdrom_media.h"
 #include "cdrom_mmi_image.h"
 #include "memory.h"
 #include "media_file.h"
 #include "../platforms/shared/dependencies/qon/qoi2.h"
 
+/*
+ * PD6103A, transport and mixing adapted from ares/ares/pce/pcd (ISC).
+ * Reference: ares 7b51c8ab719e403a150aa700e0933d9e93a06851.
+ * Copyright (c) 2004-2025 ares team, Near et al
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
 static const double k_laseractive_video_fps = 30000.0 / 1001.0;
 static const u32 k_laseractive_state_magic = 0x4C414D4D;
+// Hardware observations give approximate timings; use the existing sector/sample clocks.
+static const u32 k_laseractive_search_sectors = 56; // About 0.75 seconds at 75 Hz.
+static const u32 k_laseractive_fade_samples = GG_AUDIO_SAMPLE_RATE / 2;
 
 LaserActive::LaserActive(CdRomMedia* media)
 {
     m_media = media;
     InitPointer(m_cdrom);
+    InitPointer(m_cdrom_audio);
     InitPointer(m_memory);
     InitPointer(m_video_file);
     InitPointer(m_video_prefetch_file);
@@ -54,9 +77,10 @@ LaserActive::~LaserActive()
         m_media->SetLaserActive(NULL);
 }
 
-void LaserActive::Init(CdRom* cdrom, Memory* memory)
+void LaserActive::Init(CdRom* cdrom, Memory* memory, CdRomAudio* audio)
 {
     m_cdrom = cdrom;
+    m_cdrom_audio = audio;
     m_memory = memory;
     Reset();
 }
@@ -83,6 +107,8 @@ void LaserActive::Reset()
     m_analog_attenuation_right = 0;
     m_analog_fade_muted_left = false;
     m_analog_fade_muted_right = false;
+    m_analog_fade_samples_left = 0;
+    m_analog_fade_samples_right = 0;
     m_active_seek_mode = SEEK_REDBOOK_TIME;
     memset(m_seek_point_regs, 0, sizeof(m_seek_point_regs));
     memset(m_stop_point_regs, 0, sizeof(m_stop_point_regs));
@@ -106,6 +132,7 @@ void LaserActive::Reset()
     m_end_lba = 0;
     m_seek_latency = 0;
     m_sector_repeat_count = 0;
+    m_search_sectors = 0;
     m_stop_point_enabled = false;
     m_stop_point_aba = 0;
     m_current_track = 1;
@@ -125,6 +152,8 @@ void LaserActive::Reset()
 
     m_analog_cache_offset = 0;
     m_analog_cache_valid = false;
+    m_analog_leading_samples = 0;
+    m_analog_audio_size = 0;
 
     InitPointer(m_video_file);
     InitPointer(m_video_prefetch_file);
@@ -137,6 +166,12 @@ void LaserActive::Reset()
     m_video_frame_valid = false;
     m_video_even_field = false;
     m_video_new_frame = false;
+    m_video_memory_latched = false;
+    m_video_field_selected = false;
+    m_video_selected_even = false;
+    m_video_display_absolute = 0;
+    m_video_display_valid = false;
+    m_video_display_even = false;
 #if !defined(GG_DISABLE_MMI_THREADS)
     m_video_thread_stop = false;
     m_video_job_pending = false;
@@ -244,6 +279,12 @@ void LaserActive::NotifyMediaEjected(bool ejected)
         m_target_drive_state = 1;
         m_drive_mode = DRIVE_INACTIVE;
         m_digital_sector_valid = false;
+        m_seek_latency = 0;
+        m_seek_frame_pending = false;
+        m_current_sample = 0;
+        m_current_video_frame = -1;
+        m_video_memory_latched = false;
+        m_search_sectors = 0;
     }
     else
     {
@@ -258,6 +299,7 @@ void LaserActive::NotifyMediaEjected(bool ejected)
 void LaserActive::NotifyMediaChanged()
 {
     StopVideoDecoder();
+    m_search_sectors = 0;
     m_digital_sector_valid = false;
     m_analog_cache_valid = false;
     m_current_video_frame = -1;
@@ -267,16 +309,14 @@ void LaserActive::NotifyMediaChanged()
         StartVideoDecoder();
 }
 
-void LaserActive::NotifyScsiReadStart(u32 lba)
+u32 LaserActive::NotifyScsiReadStart(u32 lba)
 {
-    if (!m_media->IsLaserDisc())
-        return;
+    if (!DiscIsLaserDisc())
+        return 0;
 
-    m_drive_mode = DRIVE_READING;
-    m_head_lba = (s32)lba;
-    m_media->SetCurrentSector(lba);
-    m_current_sample = 0;
-    m_digital_sector_valid = false;
+    SeekToSector((s32)lba, false);
+    m_seek_mode = DRIVE_READING;
+    return (u32)(((u64)m_seek_latency * GG_MASTER_CLOCK_RATE - m_sector_clock + 74) / 75);
 }
 
 void LaserActive::NotifyScsiSectorRead(u32 lba, bool final_sector)
@@ -295,10 +335,17 @@ void LaserActive::NotifyScsiSectorRead(u32 lba, bool final_sector)
 
 void LaserActive::NotifyAudioStart(u32 lba, bool paused)
 {
-    if (!m_media->IsLaserDisc())
+    if (!DiscIsLaserDisc())
         return;
 
     SeekToSector((s32)lba, paused);
+    m_end_lba = (s32)m_media->GetSectorCount();
+}
+
+void LaserActive::SetAudioEnd(u32 lba)
+{
+    m_end_lba = (s32)lba + 1;
+    SetDrivePlaying();
 }
 
 void LaserActive::NotifyAudioStop(bool paused)
@@ -456,6 +503,7 @@ u32 LaserActive::SeekDistance(s32 target) const
 
 void LaserActive::SeekToSector(s32 lba, bool paused)
 {
+    m_search_sectors = 0;
     m_drive_mode = DRIVE_SEEKING;
     m_seek_mode = paused ? DRIVE_PAUSED : DRIVE_PLAYING;
     m_seek_target_lba = lba;
@@ -504,6 +552,7 @@ void LaserActive::SetDrivePaused()
 
 void LaserActive::SetDriveStopped()
 {
+    m_search_sectors = 0;
     m_drive_mode = DiscLoaded() ? DRIVE_STOPPED : DRIVE_INACTIVE;
 }
 
@@ -534,8 +583,10 @@ s32 LaserActive::SectorAdvance() const
         }
         case 3:
         {
-            // TODO: speeds 6 and 7 are LaserActive search mode. The reference still
-            // lacks its 0.75-second play/four-second jump behavior.
+            // Both search directions play forwards, then jump four seconds.
+            if (m_playback_speed >= 6)
+                return m_search_sectors + 1 >= k_laseractive_search_sectors ?
+                    1 + (m_playback_reverse ? -300 : 300) : 1;
             static const s32 fast[8] = { 1, 2, 3, 8, 14, 20, 1, 1 };
             advance = fast[m_playback_speed & 7];
             if (m_playback_reverse)
@@ -563,6 +614,11 @@ void LaserActive::ClockSector()
             return;
         m_drive_mode = m_seek_mode;
         m_head_lba = m_seek_target_lba;
+        m_current_track = TrackFromLba(m_head_lba);
+        if (m_head_lba >= 0)
+            m_media->SetCurrentSector((u32)m_head_lba);
+        if (m_drive_mode == DRIVE_PAUSED || m_drive_mode == DRIVE_READING)
+            UpdateVideoFrame(m_head_lba + 150);
     }
 
     if (m_drive_mode != DRIVE_PLAYING)
@@ -581,6 +637,10 @@ void LaserActive::ClockSector()
     m_current_sample = 0;
 
     s32 advance = SectorAdvance();
+    if (m_end_lba == 0x00FFFFFF && m_playback_mode == 3 && m_playback_speed >= 6)
+        m_search_sectors = (m_search_sectors + 1) % k_laseractive_search_sectors;
+    else
+        m_search_sectors = 0;
     if ((m_playback_mode == 2) && (m_playback_speed >= 2))
     {
         if (advance == 0)
@@ -595,6 +655,14 @@ void LaserActive::ClockSector()
     if ((next < INT32_MIN) || (next > INT32_MAX))
     {
         m_drive_mode = DRIVE_INACTIVE;
+        return;
+    }
+
+    if (m_end_lba != 0x00FFFFFF && next >= m_end_lba)
+    {
+        m_drive_mode = DRIVE_STOPPED;
+        if (IsValidPointer(m_cdrom_audio))
+            m_cdrom_audio->FinishLaserActivePlayback();
         return;
     }
 
@@ -666,7 +734,7 @@ void LaserActive::UpdateVideoFrame(s32 aba)
     m_seek_frame_pending = false;
     s32 frame = ZeroBasedFrameFromAba(aba, true);
     bool lead_in = aba < 0;
-    bool lead_out = frame >= video_stream->frames_in_active_region;
+    bool lead_out = !lead_in && (frame >= video_stream->frames_in_active_region);
     if (lead_out)
         frame -= (s32)video_stream->frames_in_active_region;
 
@@ -685,21 +753,24 @@ void LaserActive::UpdateVideoFrame(s32 aba)
 
     bool same = (frame == m_current_video_frame) &&
         (lead_in == m_current_video_lead_in) && (lead_out == m_current_video_lead_out);
-    if (!completed_seek && same)
+    bool looping = (m_current_drive_state == 5) && !m_current_pause &&
+        (m_playback_mode == 2) && (m_playback_speed == 0);
+    if (!completed_seek && same && !looping && m_video_memory_latched)
         return;
 
     if (!completed_seek && (m_playback_mode == 1))
     {
         static const s32 skip[8] = { 1, -1, 2, 4, 8, 16, 30, 90 };
         s32 new_counter = skip[m_playback_speed & 7];
-        if (m_playback_speed == 1)
-            m_playback_reverse = !m_playback_reverse;
-
-        if ((m_frame_skip_base == 0) || (m_frame_skip_counter != new_counter))
+        if (m_frame_skip_counter != new_counter)
         {
             m_frame_skip_base = frame;
             m_frame_skip_counter = new_counter;
+            if (m_playback_speed == 1)
+                m_playback_reverse = !m_playback_reverse;
         }
+        else if (new_counter == -1)
+            return;
         else if ((new_counter > 0) && ((abs(frame - m_frame_skip_base) % new_counter) != 0))
             return;
     }
@@ -711,11 +782,21 @@ void LaserActive::UpdateVideoFrame(s32 aba)
         m_frame_skip_counter = 0;
     }
 
-    if ((GetBit(m_input_regs[0x0C], 5) && (m_current_video_frame >= 0)) ||
+    if ((GetBit(m_input_regs[0x0C], 5) && m_video_memory_latched) ||
         GetBit(m_input_regs[0x0C], 2))
     {
+        // Disabling video with hold released clears the digital-memory latch.
+        if (GetBit(m_input_regs[0x0C], 2) && !GetBit(m_input_regs[0x0C], 5))
+            m_video_memory_latched = false;
         return;
     }
+
+    m_video_memory_latched = true;
+    m_video_field_selected = (GetVideoMixingMode() >= 2) &&
+        (GetBit(m_input_regs[0x0C], 1) || GetBit(m_input_regs[0x0C], 3));
+    m_video_selected_even = m_video_field_selected && GetBit(m_input_regs[0x0C], 0);
+    if (same && m_video_frame_valid)
+        return;
 
     m_current_video_frame = frame;
     m_current_video_lead_in = lead_in;
@@ -752,7 +833,7 @@ bool LaserActive::FillAnalogCache(u64 offset)
     if (m_analog_cache_valid && (m_analog_cache_offset == aligned))
         return true;
 
-    u64 file_size = m_media->GetMmiAnalogAudioSize();
+    u64 file_size = m_analog_audio_size;
     if (aligned >= file_size)
     {
         m_analog_cache_valid = false;
@@ -777,37 +858,11 @@ bool LaserActive::ReadAnalogSample(s16& left, s16& right)
     left = 0;
     right = 0;
 
-    const GG_MmiMediaInfo* medium = m_media->GetSelectedMmiMedia();
-    if (!medium)
-        return false;
-
-    const GG_MmiStreamInfo* video_stream = NULL;
-    for (size_t i = 0; i < medium->streams.size(); i++)
-    {
-        if (medium->streams[i].role == GG_MMI_STREAM_RAW_VIDEO)
-        {
-            video_stream = &medium->streams[i];
-            break;
-        }
-    }
-    if (!video_stream)
-        return false;
-
-    u64 leading_samples;
-    if (!checked_multiply_u64((u64)video_stream->frames_in_lead_in_region,
-        44100ULL * 1001ULL, &leading_samples))
-    {
-        return false;
-    }
-    leading_samples /= 30000;
-    if (leading_samples > (u64)INT64_MAX)
-        return false;
-
     s64 aba = (s64)m_head_lba + 150;
     s64 sample_index = (aba * 588) + (s64)m_current_sample;
-    if ((sample_index > 0) && ((u64)sample_index > ((u64)INT64_MAX - leading_samples)))
+    if ((sample_index > 0) && ((u64)sample_index > ((u64)INT64_MAX - (u64)m_analog_leading_samples)))
         return false;
-    sample_index += (s64)leading_samples;
+    sample_index += (s64)m_analog_leading_samples;
     if (sample_index < 0)
         return true;
 
@@ -815,7 +870,7 @@ bool LaserActive::ReadAnalogSample(s16& left, s16& right)
     u64 sample_end;
     if (!checked_multiply_u64((u64)sample_index, 4, &byte_offset) ||
         !checked_add_u64(byte_offset, 4, &sample_end) ||
-        (sample_end > m_media->GetMmiAnalogAudioSize()) || !FillAnalogCache(byte_offset))
+        (sample_end > m_analog_audio_size) || !FillAnalogCache(byte_offset))
         return true;
 
     u64 cache_position = byte_offset - m_analog_cache_offset;
@@ -832,6 +887,12 @@ void LaserActive::Sample(s16& left, s16& right)
 {
     left = 0;
     right = 0;
+    u32 fade_left = m_analog_fade_samples_left;
+    u32 fade_right = m_analog_fade_samples_right;
+    if (m_analog_fade_samples_left > 0)
+        m_analog_fade_samples_left--;
+    if (m_analog_fade_samples_right > 0)
+        m_analog_fade_samples_right--;
     if (!DiscIsLaserDisc())
         return;
 
@@ -881,6 +942,8 @@ void LaserActive::Sample(s16& left, s16& right)
 
     s16 analog_left = 0;
     s16 analog_right = 0;
+    if (m_drive_mode == DRIVE_PLAYING && m_current_sample < 588)
+        m_current_sample++;
     ReadAnalogSample(analog_left, analog_right);
     if (analog_disabled || GetBit(m_input_regs[0x0E], 7) ||
         (GetBit(m_input_regs[0x0E], 0) && GetBit(m_input_regs[0x0E], 1)))
@@ -893,11 +956,16 @@ void LaserActive::Sample(s16& left, s16& right)
     else if (GetBit(m_input_regs[0x0E], 1))
         analog_left = analog_right;
 
-    u32 analog_scale_left = m_analog_fade_muted_left ? 0 : 0x100 - m_analog_attenuation_left;
-    u32 analog_scale_right = m_analog_fade_muted_right ? 0 : 0x100 - m_analog_attenuation_right;
+    u32 analog_scale_left = 0x100 - m_analog_attenuation_left;
+    u32 analog_scale_right = 0x100 - m_analog_attenuation_right;
 
     analog_left = (s16)(((s32)analog_left * (s32)analog_scale_left) >> 8);
     analog_right = (s16)(((s32)analog_right * (s32)analog_scale_right) >> 8);
+    // Linear approximation of the observed half-second fade, from the current gain.
+    if (m_analog_fade_muted_left)
+        analog_left = (s16)((s32)analog_left * (s32)fade_left / (s32)k_laseractive_fade_samples);
+    if (m_analog_fade_muted_right)
+        analog_right = (s16)((s32)analog_right * (s32)fade_right / (s32)k_laseractive_fade_samples);
 
     if (m_playback_mode == 2)
     {
@@ -912,9 +980,6 @@ void LaserActive::Sample(s16& left, s16& right)
     left = (s16)CLAMP(combined_left, -32768, 32767);
     right = (s16)CLAMP(combined_right, -32768, 32767);
 
-    m_current_sample++;
-    if (m_current_sample >= 588)
-        m_current_sample = 0;
 }
 
 u8 LaserActive::ReadRegister(u8 reg, bool output)
@@ -933,6 +998,18 @@ u8 LaserActive::ReadRegister(u8 reg, bool output)
         return m_output_frozen_regs[reg];
 
     return GetOutputRegisterValue(reg);
+}
+
+u8 LaserActive::PeekRegister(u8 reg, bool output)
+{
+    reg &= 0x1F;
+    if (!output)
+        return m_input_frozen ? m_input_frozen_regs[reg] : m_input_regs[reg];
+    if (m_output_cooldown[reg] > 0)
+        return m_output_written_data[reg];
+    if (m_output_frozen)
+        return m_output_frozen_regs[reg];
+    return GetOutputRegisterValue(reg, false);
 }
 
 void LaserActive::WriteRegister(u8 reg, bool output, u8 data)
@@ -1015,9 +1092,10 @@ void LaserActive::ApplyFrozenInputRegisters()
     }
 }
 
-u8 LaserActive::GetOutputRegisterValue(u8 reg)
+u8 LaserActive::GetOutputRegisterValue(u8 reg, bool side_effects)
 {
     u8 data = m_output_regs[reg];
+    u8 drive_state_delay = m_drive_state_delay;
     u8 flags = 0;
     u8 minute = 0;
     u8 second = 0;
@@ -1071,17 +1149,17 @@ u8 LaserActive::GetOutputRegisterValue(u8 reg)
         case 0x06:
         {
             u8 previous_state = GetBits(data, 0, 3);
-            if ((previous_state != m_current_drive_state) || (m_drive_state_delay > 0))
+            if ((previous_state != m_current_drive_state) || (drive_state_delay > 0))
             {
-                if (!GetBit(data, 7) || (m_drive_state_delay == 0))
-                    m_drive_state_delay = 10;
-                else if (m_drive_state_delay == 1)
+                if (!GetBit(data, 7) || (drive_state_delay == 0))
+                    drive_state_delay = 10;
+                else if (drive_state_delay == 1)
                 {
                     SetBits(data, 0, 3, m_current_drive_state);
-                    m_drive_state_delay = 0;
+                    drive_state_delay = 0;
                 }
                 else
-                    m_drive_state_delay--;
+                    drive_state_delay--;
             }
 
             bool seeking = (m_drive_mode == DRIVE_SEEKING) ||
@@ -1093,7 +1171,7 @@ u8 LaserActive::GetOutputRegisterValue(u8 reg)
             }
             else
             {
-                SetBit(data, 7, m_drive_state_delay > 0);
+                SetBit(data, 7, drive_state_delay > 0);
                 SetBit(data, 5, false);
             }
             SetBit(data, 4, m_current_pause || m_target_pause);
@@ -1129,7 +1207,7 @@ u8 LaserActive::GetOutputRegisterValue(u8 reg)
         case 0x10: data = m_input_regs[0x05]; break;
         case 0x11:
         {
-            if ((m_selected_track_info > TrackCount()) && (m_selected_track_info < 0xA0))
+            if (m_selected_track_info > TrackCount())
                 data = 0;
             else
             {
@@ -1215,7 +1293,11 @@ u8 LaserActive::GetOutputRegisterValue(u8 reg)
             break;
     }
 
-    m_output_regs[reg] = data;
+    if (side_effects)
+    {
+        m_output_regs[reg] = data;
+        m_drive_state_delay = drive_state_delay;
+    }
     return data;
 }
 
@@ -1296,6 +1378,8 @@ void LaserActive::ProcessInputRegisterWrite(u8 reg, u8 data, u8 previous_data, b
                 case 1:
                     m_current_drive_state = 1;
                     m_media->EjectMmi();
+                    if (IsValidPointer(m_cdrom))
+                        m_cdrom->NotifyMediaEjected();
                     m_drive_mode = DRIVE_INACTIVE;
                     ResetSeekTarget();
                     break;
@@ -1419,6 +1503,8 @@ void LaserActive::ProcessInputRegisterWrite(u8 reg, u8 data, u8 previous_data, b
                 else if ((mode == 3) && (speed == 7))
                     speed = 6;
 
+                if (mode != m_playback_mode || speed != m_playback_speed || reverse != m_playback_reverse)
+                    m_search_sectors = 0;
                 m_playback_mode = mode;
                 m_playback_speed = speed;
                 m_playback_reverse = reverse;
@@ -1486,21 +1572,34 @@ void LaserActive::ProcessInputRegisterWrite(u8 reg, u8 data, u8 previous_data, b
             }
             break;
         }
+        case 0x0C:
+            if (GetBit(data, 2) && !GetBit(data, 5))
+                m_video_memory_latched = false;
+            break;
         case 0x1E:
             m_input_regs[reg] = data;
             if (GetBit(m_input_regs[0x1E], 1) && GetBit(m_input_regs[0x1E], 3))
             {
-                if (!GetBit(m_input_regs[0x1E], 2))
+                // Only the first mute operation fades. Muting the other channel while
+                // either remains muted is immediate; repeated writes do not restart it.
+                u32 samples = !m_analog_fade_muted_left && !m_analog_fade_muted_right ?
+                    k_laseractive_fade_samples : 0;
+                if (!GetBit(data, 2) || !GetBit(data, 0))
                 {
+                    if (!m_analog_fade_muted_left)
+                        m_analog_fade_samples_left = samples;
                     m_analog_fade_muted_left = true;
+                }
+                if (!GetBit(data, 2) || GetBit(data, 0))
+                {
+                    if (!m_analog_fade_muted_right)
+                        m_analog_fade_samples_right = samples;
                     m_analog_fade_muted_right = true;
                 }
-                else if (!GetBit(m_input_regs[0x1E], 0))
-                    m_analog_fade_muted_left = true;
-                else
-                    m_analog_fade_muted_right = true;
             }
             // Register 1E deliberately also applies the current 1F attenuation value.
+            ProcessInputRegisterWrite(0x1F, m_input_regs[0x1F], m_input_regs[0x1F], deferred);
+            break;
         case 0x1F:
             if (GetBit(m_input_regs[0x1E], 1) && !GetBit(m_input_regs[0x1E], 3))
             {
@@ -1510,16 +1609,20 @@ void LaserActive::ProcessInputRegisterWrite(u8 reg, u8 data, u8 previous_data, b
                     m_analog_attenuation_right = data;
                     m_analog_fade_muted_left = false;
                     m_analog_fade_muted_right = false;
+                    m_analog_fade_samples_left = 0;
+                    m_analog_fade_samples_right = 0;
                 }
                 else if (!GetBit(m_input_regs[0x1E], 0))
                 {
                     m_analog_attenuation_left = data;
                     m_analog_fade_muted_left = false;
+                    m_analog_fade_samples_left = 0;
                 }
                 else
                 {
                     m_analog_attenuation_right = data;
                     m_analog_fade_muted_right = false;
+                    m_analog_fade_samples_right = 0;
                 }
             }
             break;
@@ -1760,6 +1863,18 @@ void LaserActive::HandleStopPoint(s32 aba)
 bool LaserActive::StartVideoDecoder()
 {
     StopVideoDecoder();
+    m_analog_audio_size = m_media->GetMmiAnalogAudioSize();
+    m_analog_leading_samples = 0;
+    const GG_MmiMediaInfo* medium = m_media->GetSelectedMmiMedia();
+    if (medium)
+    {
+        for (size_t i = 0; i < medium->streams.size(); i++)
+        {
+            if (medium->streams[i].role == GG_MMI_STREAM_RAW_VIDEO)
+                m_analog_leading_samples = medium->streams[i].frames_in_lead_in_region *
+                    (44100LL * 1001LL) / 30000LL;
+        }
+    }
     const GG_QonInfo* info = m_media->GetQonInfo();
     if (!info || (info->decoded_rgb_size == 0) || (info->decoded_rgb_size > (u64)SIZE_MAX))
         return false;
@@ -1770,6 +1885,37 @@ bool LaserActive::StartVideoDecoder()
 
     m_video_frame.resize((size_t)info->decoded_rgb_size);
     m_video_prefetch_frame.resize((size_t)info->decoded_rgb_size);
+    m_video_display_field.resize((size_t)info->width * 263 * 3);
+    u32 maximum_payload = 0;
+    for (size_t i = 0; i < info->frames.size(); i++)
+        maximum_payload = MAX(maximum_payload, info->frames[i].compressed_size);
+    m_video_compressed.reserve(maximum_payload);
+    m_video_prefetch_compressed.reserve(maximum_payload);
+    m_video_resampling.clear();
+    if (info->width > 119)
+    {
+        m_video_resampling.resize(1176);
+        u32 source_width = info->width - 118;
+        for (u32 x = 0; x < 1176; x++)
+        {
+            u64 start = ((u64)x * source_width << 16) / 1176;
+            u64 end = ((u64)(x + 1) * source_width << 16) / 1176;
+            VideoSample& sample = m_video_resampling[x];
+            sample.first = (u32)(start >> 16);
+            sample.count = (u32)((end - 1) >> 16) - sample.first + 1;
+            // The validated maximum QON width (4096) spans at most five pixels.
+            assert(sample.count <= 5);
+            u32 remaining = 65536;
+            for (u32 i = 0; i < sample.count; i++)
+            {
+                u64 pixel_start = (u64)(sample.first + i) << 16;
+                u64 overlap = MIN(end, pixel_start + 65536) - MAX(start, pixel_start);
+                sample.weights[i] = (i + 1 == sample.count) ? remaining :
+                    (u32)((overlap * 65536) / (end - start));
+                remaining -= sample.weights[i];
+            }
+        }
+    }
     m_video_generation = m_media->GetMediaGeneration();
     m_video_frame_valid = false;
 
@@ -1806,6 +1952,7 @@ void LaserActive::StopVideoDecoder()
     SafeDelete(m_video_file);
     SafeDelete(m_video_prefetch_file);
     m_video_frame_valid = false;
+    m_video_display_valid = false;
 }
 
 u32 LaserActive::AbsoluteVideoFrame(s32 frame, bool lead_in, bool lead_out) const
@@ -1831,6 +1978,9 @@ u32 LaserActive::AbsoluteVideoFrame(s32 frame, bool lead_in, bool lead_out) cons
         absolute += (u64)stream->frames_in_lead_in_region;
     if (lead_out)
         absolute += (u64)stream->frames_in_active_region;
+    const GG_QonInfo* info = m_media->GetQonInfo();
+    if (lead_out && info && !info->frames.empty() && absolute >= info->frames.size())
+        absolute = info->frames.size() - 1;
     return (absolute <= UINT32_MAX) ? (u32)absolute : UINT32_MAX;
 }
 
@@ -2019,6 +2169,7 @@ void LaserActive::VideoThread()
             frame = m_video_job_frame;
             generation = m_video_job_generation;
             m_video_job_pending = false;
+            m_video_result_ready = false;
         }
 
         bool decoded = DecodeVideoFrame(m_video_prefetch_file, frame,
@@ -2078,6 +2229,30 @@ void LaserActive::BeginVideoFrame()
     }
     else if (interlaced)
         m_video_even_field = !m_video_even_field;
+
+    if (m_video_frame_valid)
+    {
+        bool even = m_video_field_selected ? m_video_selected_even : m_video_even_field;
+        if (!m_video_display_valid || m_video_display_absolute != m_video_frame_absolute ||
+            m_video_display_even != even)
+            CopyDisplayField(&m_video_frame[0], even);
+        m_video_display_absolute = m_video_frame_absolute;
+        m_video_display_even = even;
+        m_video_display_valid = true;
+    }
+}
+
+void LaserActive::CopyDisplayField(const u8* frame, bool even)
+{
+    const GG_QonInfo* info = m_media->GetQonInfo();
+    if (!frame || !info || info->height == 0)
+        return;
+    size_t stride = (size_t)info->width * 3;
+    u32 first = MIN(even ? 263U : 0U, info->height - 1);
+    u32 lines = MIN(263U, info->height - first);
+    memcpy(&m_video_display_field[0], frame + first * stride, lines * stride);
+    for (u32 line = lines; line < 263; line++)
+        memcpy(&m_video_display_field[line * stride], frame + (info->height - 1) * stride, stride);
 }
 
 void LaserActive::CaptureVideoLineState(u8* state) const
@@ -2092,7 +2267,8 @@ void LaserActive::CaptureVideoLineState(u8* state) const
     state[4] = m_input_regs[0x1B];
     state[5] = m_input_regs[0x1C];
     state[6] = m_input_regs[0x1D];
-    state[7] = m_current_pause ? 1 : 0;
+    state[7] = (m_current_pause ? 1 : 0) | (m_video_field_selected ? 2 : 0) |
+        (m_video_selected_even ? 4 : 0) | (m_video_even_field ? 8 : 0);
 }
 
 void LaserActive::ComposeLine(u32 line, const u8* pce_pixels, const u8* classifications,
@@ -2105,78 +2281,51 @@ void LaserActive::ComposeLine(u32 line, const u8* pce_pixels, const u8* classifi
 
     u32 bytes_per_pixel = (pixel_format == GG_PIXEL_RGB565) ? 2 : 4;
     u8 mixing_mode = GetBits(line_state[0], 6, 7);
+    if (mixing_mode == 0 && pixel_format == GG_PIXEL_RGBA8888)
+    {
+        memcpy(output, pce_pixels, output_width * bytes_per_pixel);
+        return;
+    }
     // TODO: Input register 19 transparency remains retained but otherwise a reference-level no-op.
-    const u8* analog = GetVideoFrameBuffer();
+    const u8* analog = m_video_display_valid ? &m_video_display_field[0] : NULL;
     u32 analog_width = GetVideoWidth();
-    u32 analog_height = GetVideoHeight();
     bool video_blanked = GetBit(line_state[1], 2) ||
-        ((line_state[7] != 0) && !GetBit(line_state[1], 5));
+        (GetBit(line_state[7], 0) && !GetBit(line_state[1], 5));
 
-    bool select_field = (mixing_mode >= 2) &&
-        (GetBit(line_state[1], 1) || GetBit(line_state[1], 3));
-    bool even_field = select_field ? GetBit(line_state[1], 0) : m_video_even_field;
-    u32 analog_line = line + (even_field ? 263 : 0);
-    if (analog_height == 0)
-        analog_line = 0;
-    else if (analog_line >= analog_height)
-        analog_line = analog_height - 1;
-
-    const u32 left_crop = 118;
-
-    u32 source_width = (analog_width > left_crop) ? analog_width - left_crop : 0;
-    u64 source_line_offset = (u64)analog_line * analog_width * 3;
+    u64 source_line_offset = (u64)MIN(line, 262U) * analog_width * 3;
 
     for (u32 x = 0; x < output_width; x++)
     {
-        u8 pce_red;
-        u8 pce_green;
-        u8 pce_blue;
-        if (pixel_format == GG_PIXEL_RGB565)
-        {
-            const u16* source = reinterpret_cast<const u16*>(pce_pixels);
-            u16 pixel = source[x];
-            pce_red = (u8)(((pixel >> 11) & 0x1F) * 255 / 31);
-            pce_green = (u8)(((pixel >> 5) & 0x3F) * 255 / 63);
-            pce_blue = (u8)((pixel & 0x1F) * 255 / 31);
-        }
-        else
-        {
-            pce_red = pce_pixels[x * 4 + 0];
-            pce_green = pce_pixels[x * 4 + 1];
-            pce_blue = pce_pixels[x * 4 + 2];
-        }
+        u8 pce_red = pce_pixels[x * 4 + 0];
+        u8 pce_green = pce_pixels[x * 4 + 1];
+        u8 pce_blue = pce_pixels[x * 4 + 2];
 
         u8 final_red = pce_red;
         u8 final_green = pce_green;
         u8 final_blue = pce_blue;
 
-        if ((mixing_mode != 0) && analog && !video_blanked && (source_width >= 2))
+        if (mixing_mode != 0)
         {
-            u64 start = ((u64)x * source_width << 16) / output_width;
-            u64 end = ((u64)(x + 1) * source_width << 16) / output_width;
-            u32 first = (u32)(start >> 16);
-            u32 last = (u32)((end - 1) >> 16);
-            u64 red_sum = 0;
-            u64 green_sum = 0;
-            u64 blue_sum = 0;
-            u64 total_weight = end - start;
-
-            for (u32 source_x = first; source_x <= last; source_x++)
+            u8 analog_red = 0;
+            u8 analog_green = 0;
+            u8 analog_blue = 0;
+            if (analog && !video_blanked && !m_video_resampling.empty())
             {
-                u64 pixel_start = (u64)source_x << 16;
-                u64 pixel_end = pixel_start + 0x10000;
-                u64 overlap_start = MAX(start, pixel_start);
-                u64 overlap_end = MIN(end, pixel_end);
-                u64 weight = overlap_end - overlap_start;
-                u64 position = source_line_offset + ((u64)(left_crop + source_x) * 3);
-                red_sum += analog[position + 0] * weight;
-                green_sum += analog[position + 1] * weight;
-                blue_sum += analog[position + 2] * weight;
+                const VideoSample& sample = m_video_resampling[x];
+                const u8* pixel = analog + source_line_offset + (118 + sample.first) * 3;
+                u32 red_sum = 0;
+                u32 green_sum = 0;
+                u32 blue_sum = 0;
+                for (u32 i = 0; i < sample.count; i++, pixel += 3)
+                {
+                    red_sum += pixel[0] * sample.weights[i];
+                    green_sum += pixel[1] * sample.weights[i];
+                    blue_sum += pixel[2] * sample.weights[i];
+                }
+                analog_red = (u8)((red_sum + 32768) >> 16);
+                analog_green = (u8)((green_sum + 32768) >> 16);
+                analog_blue = (u8)((blue_sum + 32768) >> 16);
             }
-
-            u8 analog_red = (u8)((red_sum + total_weight / 2) / total_weight);
-            u8 analog_green = (u8)((green_sum + total_weight / 2) / total_weight);
-            u8 analog_blue = (u8)((blue_sum + total_weight / 2) / total_weight);
             u8 source = classifications[x] & 3;
             u32 fader = GetBits(line_state[3 + source], 2, 7);
             u32 normalized_fader = (fader << 10) | (fader << 4) | (fader >> 2);
@@ -2201,8 +2350,8 @@ void LaserActive::ComposeLine(u32 line, const u8* pce_pixels, const u8* classifi
 
         if (pixel_format == GG_PIXEL_RGB565)
         {
-            u16 packed = (u16)(((final_red * 31 / 255) << 11) |
-                ((final_green * 63 / 255) << 5) | (final_blue * 31 / 255));
+            u16 packed = (u16)((((final_red * 31 + 127) / 255) << 11) |
+                (((final_green * 63 + 127) / 255) << 5) | ((final_blue * 31 + 127) / 255));
             reinterpret_cast<u16*>(output)[x] = packed;
         }
         else
@@ -2217,17 +2366,31 @@ void LaserActive::ComposeLine(u32 line, const u8* pce_pixels, const u8* classifi
 
 void LaserActive::GetStatus(Status& status)
 {
-    memcpy(status.input_registers, m_input_regs, sizeof(m_input_regs));
     for (u8 i = 0; i < 0x20; i++)
-        status.output_registers[i] = m_output_frozen ? m_output_frozen_regs[i] : GetOutputRegisterValue(i);
+    {
+        status.input_registers[i] = PeekRegister(i, false);
+        status.live_input_registers[i] = m_input_regs[i];
+        status.output_registers[i] = PeekRegister(i, true);
+    }
     status.drive_mode = m_drive_mode;
     status.head_lba = m_head_lba;
     status.seek_latency = m_seek_latency;
     status.current_track = m_current_track;
     status.current_drive_state = m_current_drive_state;
-    status.paused = m_current_pause;
+    status.paused = m_drive_mode == DRIVE_PAUSED;
     status.sram_enabled = m_sram_enabled;
     status.ejected = m_media->IsMmiEjected();
+    status.input_frozen = m_input_frozen;
+    status.output_frozen = m_output_frozen;
+    status.sample = m_current_sample;
+    status.video_frame = m_current_video_frame;
+    status.search_sectors = m_search_sectors;
+    status.analog_fade_samples_left = m_analog_fade_samples_left;
+    status.analog_fade_samples_right = m_analog_fade_samples_right;
+    status.analog_muted_left = m_analog_fade_muted_left;
+    status.analog_muted_right = m_analog_fade_muted_right;
+    status.analog_attenuation_left = m_analog_attenuation_left;
+    status.analog_attenuation_right = m_analog_attenuation_right;
 }
 
 u8 LaserActive::GetVideoMixingMode() const
@@ -2323,19 +2486,28 @@ void LaserActive::SaveState(std::ostream& stream) const
     stream.write(reinterpret_cast<const char*>(&m_frame_skip_counter), sizeof(m_frame_skip_counter));
     stream.write(reinterpret_cast<const char*>(&m_video_even_field), sizeof(m_video_even_field));
     stream.write(reinterpret_cast<const char*>(&m_video_new_frame), sizeof(m_video_new_frame));
+    stream.write(reinterpret_cast<const char*>(&m_video_memory_latched), sizeof(m_video_memory_latched));
+    stream.write(reinterpret_cast<const char*>(&m_video_field_selected), sizeof(m_video_field_selected));
+    stream.write(reinterpret_cast<const char*>(&m_video_selected_even), sizeof(m_video_selected_even));
+    stream.write(reinterpret_cast<const char*>(&m_video_display_absolute), sizeof(m_video_display_absolute));
+    stream.write(reinterpret_cast<const char*>(&m_video_display_valid), sizeof(m_video_display_valid));
+    stream.write(reinterpret_cast<const char*>(&m_video_display_even), sizeof(m_video_display_even));
+    stream.write(reinterpret_cast<const char*>(&m_search_sectors), sizeof(m_search_sectors));
+    stream.write(reinterpret_cast<const char*>(&m_analog_fade_samples_left), sizeof(m_analog_fade_samples_left));
+    stream.write(reinterpret_cast<const char*>(&m_analog_fade_samples_right), sizeof(m_analog_fade_samples_right));
 }
 
-void LaserActive::LoadState(std::istream& stream)
+void LaserActive::LoadState(std::istream& stream, u32 version)
 {
     StopVideoDecoder();
-    u32 state_magic;
-    s64 selected_sequence;
-    bool media_ejected;
+    u32 state_magic = 0;
+    s64 selected_sequence = -1;
+    bool media_ejected = false;
     stream.read(reinterpret_cast<char*>(&state_magic), sizeof(state_magic));
     stream.read(reinterpret_cast<char*>(&selected_sequence), sizeof(selected_sequence));
     stream.read(reinterpret_cast<char*>(&media_ejected), sizeof(media_ejected));
 
-    if (state_magic != k_laseractive_state_magic)
+    if (stream.fail() || (state_magic != k_laseractive_state_magic))
     {
         stream.setstate(std::ios::failbit);
         return;
@@ -2434,6 +2606,38 @@ void LaserActive::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*>(&m_frame_skip_counter), sizeof(m_frame_skip_counter));
     stream.read(reinterpret_cast<char*>(&m_video_even_field), sizeof(m_video_even_field));
     stream.read(reinterpret_cast<char*>(&m_video_new_frame), sizeof(m_video_new_frame));
+    if (version >= 37)
+    {
+        stream.read(reinterpret_cast<char*>(&m_video_memory_latched), sizeof(m_video_memory_latched));
+        stream.read(reinterpret_cast<char*>(&m_video_field_selected), sizeof(m_video_field_selected));
+        stream.read(reinterpret_cast<char*>(&m_video_selected_even), sizeof(m_video_selected_even));
+    }
+    else
+    {
+        m_video_memory_latched = m_current_video_frame >= 0;
+        m_video_field_selected = (GetVideoMixingMode() >= 2) &&
+            (GetBit(m_input_regs[0x0C], 1) || GetBit(m_input_regs[0x0C], 3));
+        m_video_selected_even = m_video_field_selected && GetBit(m_input_regs[0x0C], 0);
+    }
+    u32 display_absolute = 0;
+    bool display_valid = false;
+    bool display_even = false;
+    if (version >= 38)
+    {
+        stream.read(reinterpret_cast<char*>(&display_absolute), sizeof(display_absolute));
+        stream.read(reinterpret_cast<char*>(&display_valid), sizeof(display_valid));
+        stream.read(reinterpret_cast<char*>(&display_even), sizeof(display_even));
+    }
+
+    m_search_sectors = 0;
+    m_analog_fade_samples_left = 0;
+    m_analog_fade_samples_right = 0;
+    if (version >= 39)
+    {
+        stream.read(reinterpret_cast<char*>(&m_search_sectors), sizeof(m_search_sectors));
+        stream.read(reinterpret_cast<char*>(&m_analog_fade_samples_left), sizeof(m_analog_fade_samples_left));
+        stream.read(reinterpret_cast<char*>(&m_analog_fade_samples_right), sizeof(m_analog_fade_samples_right));
+    }
 
     if (stream.fail())
         return;
@@ -2453,16 +2657,45 @@ void LaserActive::LoadState(std::istream& stream)
         m_current_drive_state = 2;
     m_seek_latency = MIN(m_seek_latency, 100000U);
     m_sector_repeat_count = CLAMP(m_sector_repeat_count, 0, 90);
+    m_search_sectors = MIN(m_search_sectors, k_laseractive_search_sectors - 1);
+    m_analog_fade_samples_left = MIN(m_analog_fade_samples_left, k_laseractive_fade_samples);
+    m_analog_fade_samples_right = MIN(m_analog_fade_samples_right, k_laseractive_fade_samples);
     for (u32 i = 0; i < 0x20; i++)
         m_output_cooldown[i] = MIN(m_output_cooldown[i], (u8)5);
     m_current_track = CLAMP(m_current_track, 0, TrackCount());
-    m_current_sample %= 588;
+    m_head_lba = CLAMP(m_head_lba, INT32_MIN + 150, INT32_MAX - 150);
+    m_seek_target_lba = CLAMP(m_seek_target_lba, INT32_MIN + 150, INT32_MAX - 150);
+    m_current_sample = MIN(m_current_sample, 588U);
     m_sector_clock %= GG_MASTER_CLOCK_RATE;
     if (m_current_video_frame < -1)
         m_current_video_frame = -1;
     m_analog_cache_valid = false;
     if (IsValidPointer(m_memory))
         m_memory->UpdateLaserActiveSram();
-    if (DiscIsLaserDisc() && StartVideoDecoder() && (m_current_video_frame >= 0))
-        LoadCurrentVideoFrame();
+    bool new_frame = m_video_new_frame;
+    if (DiscIsLaserDisc() && (!StartVideoDecoder() ||
+        ((m_current_video_frame >= 0) && !LoadCurrentVideoFrame())))
+        stream.setstate(std::ios::failbit);
+    m_video_new_frame = new_frame;
+    if (version < 38)
+    {
+        display_absolute = m_video_frame_absolute;
+        display_valid = m_video_frame_valid;
+        display_even = m_video_field_selected ? m_video_selected_even : m_video_even_field;
+    }
+    if (display_valid && DiscIsLaserDisc() && !stream.fail())
+    {
+        const u8* frame = m_video_frame_valid && display_absolute == m_video_frame_absolute ?
+            &m_video_frame[0] : NULL;
+        if (!frame && DecodeVideoFrame(m_video_file, display_absolute,
+            m_video_prefetch_frame, m_video_prefetch_compressed))
+            frame = &m_video_prefetch_frame[0];
+        if (!frame)
+            stream.setstate(std::ios::failbit);
+        else
+            CopyDisplayField(frame, display_even);
+    }
+    m_video_display_absolute = display_absolute;
+    m_video_display_valid = display_valid && DiscIsLaserDisc() && !stream.fail();
+    m_video_display_even = display_even;
 }

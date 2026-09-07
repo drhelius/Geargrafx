@@ -81,6 +81,12 @@ void CdRom::SetLaserActive(LaserActive* laseractive)
     m_laseractive = laseractive;
 }
 
+void CdRom::NotifyMediaEjected()
+{
+    // Cancel pending CD transactions on a tray-open event.
+    m_scsi_controller->Reset(true);
+}
+
 void CdRom::LogCdRomEvent(u8 event, u8 value)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
@@ -133,7 +139,7 @@ void CdRom::Reset()
 u8 CdRom::ReadRegister(u16 address)
 {
     u16 hardware_address = address & 0x1FFF;
-    if (m_core->GetMedia()->IsLaserActive() && IsValidPointer(m_laseractive))
+    if (hardware_address > 0x180F && IsValidPointer(m_laseractive))
     {
         if ((hardware_address >= 0x18C0) && (hardware_address <= 0x18C3))
             return m_laseractive->ReadSramControl(hardware_address);
@@ -229,7 +235,7 @@ u8 CdRom::ReadRegister(u16 address)
 void CdRom::WriteRegister(u16 address, u8 value)
 {
     u16 hardware_address = address & 0x1FFF;
-    if (m_core->GetMedia()->IsLaserActive() && IsValidPointer(m_laseractive))
+    if (hardware_address > 0x180F && IsValidPointer(m_laseractive))
     {
         if (hardware_address == 0x18C0)
         {

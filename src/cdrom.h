@@ -69,6 +69,7 @@ public:
     CdRom_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);
     void SetLaserActive(LaserActive* laseractive);
+    void NotifyMediaEjected();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 

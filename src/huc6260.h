@@ -72,7 +72,7 @@ public:
     ~HuC6260();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     void Reset();
-    template <bool is_sgx>
+    template <bool is_sgx, bool is_laseractive = false>
     bool Clock(u32 cycles);
     u8 ReadRegister(u16 address);
     void WriteRegister(u16 address, u8 value);
@@ -111,9 +111,8 @@ private:
     void CalculateScreenBounds();
     void SanitizeState();
     template <int BPP>
-    void ApplyLowPassFilter();
-    template <int BPP>
-    void RenderLaserActiveFrame();
+    void ApplyLowPassFilter(u8* buffer = NULL, int width = 0, int height = 0, int speed = -1);
+    void RenderLaserActiveLine();
     u8 RGB565Component(u8 value, u16 max);
     u16 PackRGB565(u8 red, u8 green, u8 blue);
     u8 RoundToByte(float value);
@@ -136,7 +135,7 @@ private:
     u16 m_vce_buffer_2[1024 * 512] = {};
     s32 m_line_speed[HUC6260_LINES] = {};
     u8 m_laseractive_classification[683 * HUC6260_LINES] = {};
-    u8 m_laseractive_output_classification[HUC6260_LASERACTIVE_WIDTH * HUC6260_LINES] = {};
+    u8 m_laseractive_output_classification[HUC6260_LASERACTIVE_WIDTH] = {};
     u8 m_laseractive_line_state[HUC6260_LINES * 8] = {};
     bool m_multiple_speeds;
     bool m_scaled_width;

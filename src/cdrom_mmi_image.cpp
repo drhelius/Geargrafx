@@ -158,6 +158,12 @@ bool CdRomMmiImage::SelectMediaByIndex(u32 index)
     if (!info || (index >= info->media.size()))
         return false;
 
+    if (info->media[index].laserdisc != m_laserdisc)
+    {
+        Error("MMI media selection cannot change the machine type without a reset");
+        return false;
+    }
+
     if ((index == m_selected_media_index) && IsReady())
         return true;
 
@@ -165,6 +171,9 @@ bool CdRomMmiImage::SelectMediaByIndex(u32 index)
     bool previous_ejected = m_ejected;
     if (LoadSelectedMedia(index))
         return true;
+
+    if (IsReady())
+        return false;
 
     Error("MMI media selection failed; restoring media index %u", previous_index);
     if (LoadSelectedMedia(previous_index))
@@ -383,6 +392,15 @@ bool CdRomMmiImage::LoadSelectedMedia(u32 index)
         return false;
     }
 
+    if (m_toc.sector_count == 0 || m_toc.sector_count > (u32)INT32_MAX - 150)
+    {
+        Error("MMI Redbook sector count exceeds the signed transport range");
+        SafeDelete(new_audio_file);
+        SafeDelete(new_video_file);
+        CdRomCueBinImage::Reset();
+        return false;
+    }
+
     const GG_MmiEntry* subchannel_entry = NULL;
     if (!FindSubchannelEntry(cue_entry, subchannel_entry))
     {
@@ -415,6 +433,7 @@ bool CdRomMmiImage::LoadSelectedMedia(u32 index)
     m_subchannel_first_lba = new_subchannel_first_lba;
     m_subchannel_sector_count = new_subchannel_file ?
         (u64)new_subchannel_file->GetSize() / k_mmi_subchannel_record_size : 0;
+    m_crc = m_archive.GetCRC();
     return true;
 }
 
@@ -577,7 +596,10 @@ bool CdRomMmiImage::IndexQon(MediaFile* video_file, const GG_MmiStreamInfo& stre
 
     s64 file_size_signed = video_file->GetSize();
     if (file_size_signed < 24)
+    {
+        Error("Truncated QON header in %s", stream.file.c_str());
         return false;
+    }
     u64 file_size = (u64)file_size_signed;
 
     u8 header[24];
@@ -598,9 +620,9 @@ bool CdRomMmiImage::IndexQon(MediaFile* video_file, const GG_MmiStreamInfo& stre
     u64 pixel_count;
     if ((info.width == 0) || (info.height == 0) || (info.width > k_qon_max_dimension) ||
         (info.height > k_qon_max_dimension) || (info.channels < 3) || (info.channels > 4) ||
-        ((s64)info.channels != stream.channels) ||
+        ((stream.channels != 0) && ((s64)info.channels != stream.channels)) ||
         (info.colorspace > 1) || (info.frame_count == 0) ||
-        (info.frame_count > k_qon_max_frame_count) || (info.frame_duration_us == 0) ||
+        (info.frame_count > k_qon_max_frame_count) ||
         (info.flags & k_qon_interframe_file_flag) ||
         !checked_multiply_u64(info.width, info.height, &pixel_count) ||
         !checked_multiply_u64(pixel_count, 3, &info.decoded_rgb_size) ||
@@ -630,13 +652,16 @@ bool CdRomMmiImage::IndexQon(MediaFile* video_file, const GG_MmiStreamInfo& stre
         return false;
     }
 
+    // Released NEC MMIs leave frame_duration_us unset. The transport is NTSC
+    // (30000/1001 Hz), independent of that optional QON duration field.
     u64 required_frames;
+    u64 program_end;
     if (!checked_add_u64((u64)stream.frames_in_lead_in_region,
-        (u64)stream.frames_in_active_region, &required_frames) ||
-        !checked_add_u64(required_frames, (u64)stream.frames_in_lead_out_region, &required_frames) ||
-        (required_frames > info.frame_count))
+        (u64)stream.frames_in_active_region, &program_end) ||
+        !checked_add_u64(program_end, (u64)stream.frames_in_lead_out_region, &required_frames) ||
+        (program_end > info.frame_count))
     {
-        Error("QON frame count is smaller than MediaInfo regions in %s", stream.file.c_str());
+        Error("QON frame count is smaller than the MediaInfo program region in %s", stream.file.c_str());
         return false;
     }
 
@@ -708,6 +733,9 @@ bool CdRomMmiImage::IndexQon(MediaFile* video_file, const GG_MmiStreamInfo& stre
     if (required_frames < info.frame_count)
         Log("MMI QON stream %s contains %u trailing frame(s)", stream.file.c_str(),
             (unsigned)(info.frame_count - required_frames));
+    else if (required_frames > info.frame_count)
+        Log("MMI QON stream %s has %llu fewer captured lead-out frames than declared",
+            stream.file.c_str(), (unsigned long long)(required_frames - info.frame_count));
 
     return true;
 }

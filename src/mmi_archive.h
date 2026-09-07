@@ -40,6 +40,7 @@ struct GG_MmiEntry
     u32 index;
     std::string name;
     std::string normalized_name;
+    std::string lookup_name;
     u16 flags;
     u16 method;
     u32 crc32;
@@ -99,6 +100,7 @@ public:
     bool IsOpen() const;
     const char* GetPath() const;
     const char* GetLastError() const;
+    u32 GetCRC() const;
     const GG_MmiInfo* GetInfo() const;
     const std::vector<GG_MmiEntry>& GetEntries() const;
     const GG_MmiEntry* GetEntry(u32 index) const;
@@ -126,8 +128,10 @@ private:
     MediaFile* m_file;
     mz_zip_archive m_archive;
     bool m_archive_open;
+    u32 m_crc;
     std::string m_path;
     std::vector<GG_MmiEntry> m_entries;
+    std::vector<u32> m_entry_lookup;
     GG_MmiInfo m_info;
     char m_error[512];
 };

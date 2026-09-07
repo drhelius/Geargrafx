@@ -26,7 +26,7 @@ INLINE bool CdRomMedia::IsReady()
 {
     if (IsValidPointer(m_current_image))
     {
-        return m_current_image->IsReady();
+        return m_current_image->IsReady() && !IsMmiEjected();
     }
     else
     {

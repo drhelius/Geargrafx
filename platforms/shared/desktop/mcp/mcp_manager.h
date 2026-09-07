@@ -202,6 +202,10 @@ public:
 
     void PumpCommands(GeargrafxCore* core)
     {
+        // GUI and command-line loads also replace media on the loader thread.
+        if (m_debugAdapter->IsMediaLoading())
+            return;
+
         u64 current_cycles = core->GetMasterClockCycles();
 
         for (size_t i = 0; i < m_delayedReleases.size(); )
@@ -248,9 +252,6 @@ public:
 
         if (m_pending_media_load)
         {
-            if (m_debugAdapter->IsMediaLoading())
-                return;
-
             DebugResponse* resp = new DebugResponse();
             resp->requestId = m_pending_media_load_request_id;
             resp->isError = false;

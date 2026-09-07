@@ -184,7 +184,8 @@ static void menu_geargrafx(void)
 #endif
 
         Media* loaded_media = emu_get_core()->GetMedia();
-        if (!emu_is_empty() && loaded_media->IsLaserActive() && ImGui::BeginMenu("LaserDisc Media"))
+        if (!emu_is_empty() && emu_get_core()->GetCDROMMedia()->IsMmi() &&
+            ImGui::BeginMenu(loaded_media->IsLaserActive() ? "LaserDisc Media" : "MMI Media"))
         {
             CdRomMedia* cdrom_media = emu_get_core()->GetCDROMMedia();
             bool ejected = cdrom_media->IsMmiEjected();
@@ -2029,6 +2030,15 @@ static void menu_debug(void)
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("LaserActive", config_debug.debug && emu_get_core()->GetMedia()->IsLaserActive()))
+        {
+            ImGui::MenuItem("Show General", "", &config_debug.show_laseractive_general);
+            ImGui::MenuItem("Show Registers", "", &config_debug.show_laseractive_registers);
+            ImGui::MenuItem("Show Audio", "", &config_debug.show_laseractive_audio);
+            ImGui::MenuItem("Show Video", "", &config_debug.show_laseractive_video);
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Audio", config_debug.debug))
         {
             ImGui::MenuItem("Show PSG", "", &config_debug.show_psg);
@@ -2694,7 +2704,7 @@ static void draw_savestate_slot_info(int slot)
         {
             float width = (float)emu_savestates_screenshots[slot].width;
             float height = (float)emu_savestates_screenshots[slot].height;
-            ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_savestates, ImVec2((height / 3.0f) * 4.0f, height), ImVec2(0, 0), ImVec2(width / 2048.0f, height / 256.0f));
+            ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_savestates, ImVec2((height / 3.0f) * 4.0f, height), ImVec2(0, 0), ImVec2(width / 2048.0f, height / (float)SYSTEM_TEXTURE_HEIGHT));
         }
     }
     else

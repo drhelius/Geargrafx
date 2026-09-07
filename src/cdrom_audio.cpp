@@ -99,6 +99,21 @@ void CdRomAudio::LogCdRomAudioEvent(u8 event, u32 lba, u32 param)
 #endif
 }
 
+void CdRomAudio::FinishLaserActivePlayback()
+{
+    m_current_lba = m_stop_lba;
+    TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_BOUNDARY, m_stop_lba, m_current_lba);
+    if (m_stop_event == CD_AUDIO_STOP_EVENT_LOOP)
+    {
+        m_laseractive->NotifyAudioStart(m_start_lba, false);
+        m_laseractive->SetAudioEnd(m_stop_lba);
+        return;
+    }
+    m_current_state = CD_AUDIO_STATE_STOPPED;
+    if (m_stop_event == CD_AUDIO_STOP_EVENT_IRQ)
+        m_scsi_controller->StartStatus(ScsiController::SCSI_STATUS_GOOD);
+}
+
 void CdRomAudio::Reset()
 {
     m_buffer_index = 0;

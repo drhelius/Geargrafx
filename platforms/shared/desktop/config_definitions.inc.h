@@ -124,6 +124,10 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Debug", "CDROM", config_debug.show_cdrom, false);
     CONFIG_BOOL("Debug", "CDROMTOC", config_debug.show_cdrom_toc, false);
     CONFIG_BOOL("Debug", "CDROMAudio", config_debug.show_cdrom_audio, false);
+    CONFIG_BOOL("Debug", "LaserActiveGeneral", config_debug.show_laseractive_general, false);
+    CONFIG_BOOL("Debug", "LaserActiveRegisters", config_debug.show_laseractive_registers, false);
+    CONFIG_BOOL("Debug", "LaserActiveAudio", config_debug.show_laseractive_audio, false);
+    CONFIG_BOOL("Debug", "LaserActiveVideo", config_debug.show_laseractive_video, false);
     CONFIG_BOOL("Debug", "ADPCM", config_debug.show_adpcm, false);
     CONFIG_BOOL("Debug", "ArcadeCard", config_debug.show_arcade_card, false);
     CONFIG_BOOL("Debug", "TraceLogger", config_debug.show_trace_logger, false);
@@ -233,7 +237,7 @@ static inline void process(config_Operation operation)
     CONFIG_INT("Emulator", "ConsoleType", config_emulator.console_type, 0);
     CONFIG_INT("Emulator", "CDROMType", config_emulator.cdrom_type, 0);
     CONFIG_INT_RANGE("Emulator", "LaserActiveRegion", config_emulator.laseractive_region,
-        GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_JAPAN, GG_LASERACTIVE_REGION_US);
+        GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_US);
     CONFIG_BOOL("Emulator", "PreloadCDROM", config_emulator.preload_cdrom, false);
 
     // Files and paths
