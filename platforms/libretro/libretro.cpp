@@ -315,6 +315,13 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
         return;
     }
 
+    if ((port != 0) && (device == RETRO_DEVICE_PCE_MOUSE))
+    {
+        if (log_cb)
+            log_cb(RETRO_LOG_WARN, "Mouse is only supported on port 1. Using a standard PCE pad on port %u.\n", port + 1);
+        device = RETRO_DEVICE_PCE_PAD;
+    }
+
     if ((input_device[port] != device) && core)
         release_controller_input(port);
 
@@ -736,10 +743,10 @@ static void set_controller_info(void)
 
     static const struct retro_controller_info ports[] = {
         { port, 4 },
-        { port, 4 },
-        { port, 4 },
-        { port, 4 },
-        { port, 4 },
+        { port, 3 },
+        { port, 3 },
+        { port, 3 },
+        { port, 3 },
         { NULL, 0 }
     };
 
@@ -770,13 +777,9 @@ static void set_controller_info(void)
         button_ids(0)
         mouse_ids(0)
         button_ids(1)
-        mouse_ids(1)
         button_ids(2)
-        mouse_ids(2)
         button_ids(3)
-        mouse_ids(3)
         button_ids(4)
-        mouse_ids(4)
         { 0, 0, 0, 0, NULL }
     };
 
