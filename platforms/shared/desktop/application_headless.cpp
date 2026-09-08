@@ -61,6 +61,8 @@ int application_headless_init(const ApplicationParams& params)
     config_debug.debug = params.mcp_mode >= 0;
     emu_set_overscan(0);
     emu_set_scanline_start_end(0, 241);
+    emu_set_laseractive_scanlines(config_video.laseractive_scanline_mode,
+        config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
     emu_audio_mute(true);
     emu_audio_psg_revision(config_audio.psg_revision);
 

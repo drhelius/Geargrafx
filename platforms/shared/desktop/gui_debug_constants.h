@@ -182,10 +182,10 @@ static const stDebugLabel k_debug_laseractive_labels[] =
     { 0x1958, "PD_OUT_POSITION_LOW" },
     { 0x1959, "PD_OUT_POSITION_FRAME" },
     { 0x195A, "PD_OUT_STOP_TRACK" },
-    { 0x195B, "PD_OUT_STOP_HIGH" },
-    { 0x195C, "PD_OUT_STOP_MID" },
-    { 0x195D, "PD_OUT_STOP_LOW" },
-    { 0x195E, "PD_OUT_STOP_FRAME" },
+    { 0x195B, "PD_OUT_STOP_FRAME" },
+    { 0x195C, "PD_OUT_STOP_LOW" },
+    { 0x195D, "PD_OUT_STOP_MID" },
+    { 0x195E, "PD_OUT_STOP_HIGH" },
     { 0x195F, "PD_OUT_STOP_STATUS" },
 };
 static const int k_debug_laseractive_label_count =

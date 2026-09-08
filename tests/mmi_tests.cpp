@@ -50,7 +50,7 @@ static u16 subchannel_crc(const u8* data)
     return (u16)~crc;
 }
 
-static bool create_mmi_fixture(const char* path, bool transport, u64 reserve, u32 sector_count)
+static bool create_mmi_fixture(const char* path, bool transport, u64 reserve, u32 sector_count, bool digital_audio = false)
 {
     static const char media_info[] =
         "{"
@@ -78,13 +78,23 @@ static bool create_mmi_fixture(const char* path, bool transport, u64 reserve, u3
         "\"format\":\"QON/QOI2\",\"channels\":3,\"framesInActiveRegion\":1,"
         "\"framesInLeadInRegion\":0,\"framesInLeadOutRegion\":0}"
         "]}]}";
-    static const char cue[] = "FILE \"disc.bin\" BINARY\n  TRACK 01 MODE1/2352\n    INDEX 01 00:00:00\n";
+    const char* cue = digital_audio ?
+        "FILE \"disc.bin\" BINARY\n  TRACK 01 AUDIO\n    INDEX 01 00:00:00\n" :
+        "FILE \"disc.bin\" BINARY\n  TRACK 01 MODE1/2352\n    INDEX 01 00:00:00\n";
 
     std::vector<u8> sectors(2352 * sector_count, 0);
     for (u32 sector = 0; sector < sector_count; sector++)
     {
         for (int i = 0; i < 2048; i++)
             sectors[(sector * 2352) + 16 + i] = (u8)((i + sector) & 0xFF);
+        if (digital_audio)
+        {
+            for (int sample = 0; sample < 588; sample++)
+            {
+                write_u16_le(&sectors[sector * 2352 + sample * 4], (u16)(1000 + sector));
+                write_u16_le(&sectors[sector * 2352 + sample * 4 + 2], (u16)-(s16)(1000 + sector));
+            }
+        }
     }
 
     std::vector<u8> analog_audio(transport ? 2352 * (sector_count + 151) : 4);
@@ -96,7 +106,7 @@ static bool create_mmi_fixture(const char* path, bool transport, u64 reserve, u3
     std::vector<u8> subchannel(96 * sector_count, 0);
     for (u32 sector = 0; sector < sector_count; sector++)
     {
-        u8 q[12] = { 0x41, 0x01, 0x01, 0x00, 0x00, 0x00,
+        u8 q[12] = { (u8)(digital_audio ? 0x01 : 0x41), 0x01, 0x01, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x02, (u8)sector, 0x00, 0x00 };
         q[3] = DecToBcd(sector / (60 * 75));
         q[4] = DecToBcd((sector / 75) % 60);
@@ -193,7 +203,7 @@ static bool create_mmi_fixture(const char* path, bool transport, u64 reserve, u3
         return false;
 
     bool ok = add_zip_entry(zip, "MediaInfo.json", manifest_text.data(), manifest_text.size(), true) &&
-        add_zip_entry(zip, "disc/disc.cue", cue, sizeof(cue) - 1, true) &&
+        add_zip_entry(zip, "disc/disc.cue", cue, strlen(cue), true) &&
         add_zip_entry(zip, "disc/disc.bin", &sectors[0], sectors.size(), false) &&
         add_zip_entry(zip, "disc/other.cue", other_cue, sizeof(other_cue) - 1, false) &&
         add_zip_entry(zip, "disc/other.bin", &other_sectors[0], other_sectors.size(), false) &&
@@ -403,6 +413,16 @@ static void seek_laseractive_test(LaserActive& laser)
         laser.Clock(GG_MASTER_CLOCK_RATE / 75 + 1);
 }
 
+static void clock_audio_sector(LaserActive& laser)
+{
+    laser.Clock(GG_MASTER_CLOCK_RATE / 75 + 1);
+    for (int i = 0; i < 588; i++)
+    {
+        s16 left, right;
+        laser.Sample(left, right);
+    }
+}
+
 static bool run_laseractive_search_fade_tests()
 {
     char path[] = "/tmp/geargrafx-search-fade-XXXXXX.mmi";
@@ -478,7 +498,7 @@ static bool run_laseractive_search_fade_tests()
         laser.NotifyAudioStart(500, false);
         laser.SetAudioEnd(501);
         for (int i = 0; i < 40; i++)
-            laser.Clock(GG_MASTER_CLOCK_RATE / 75 + 1);
+            clock_audio_sector(laser);
         laser.GetStatus(status);
         ok = expect(status.head_lba == 501 && status.drive_mode == LaserActive::DRIVE_STOPPED &&
             status.search_sectors == 0, "SCSI end-marked playback is not redirected by PD search mode") && ok;
@@ -511,7 +531,7 @@ static bool run_laseractive_search_fade_tests()
         }
         // Version 38 stored only the final mute flags; do not invent an in-progress fade.
         std::string old_state = saved.str();
-        old_state.resize(old_state.size() - 3 * sizeof(u32));
+        old_state.resize(old_state.size() - 3 * sizeof(u32) - sizeof(bool));
         std::stringstream legacy(old_state);
         laser.LoadState(legacy, 38);
         laser.Sample(left, right);
@@ -767,12 +787,12 @@ static bool run_laseractive_tests()
     core->GetCDROMAudio()->StartAudio(0, true);
     core->GetCDROMAudio()->SetStopLBA(2, CdRomAudio::CD_AUDIO_STOP_EVENT_LOOP);
     for (int i = 0; i < 24; i++)
-        core->GetLaserActive()->Clock(GG_MASTER_CLOCK_RATE / 75 + 1);
+        clock_audio_sector(*core->GetLaserActive());
     ok = expect(core->GetLaserActive()->GetDriveMode() == LaserActive::DRIVE_SEEKING,
         "SCSI audio end marker loops the shared transport") && ok;
     core->GetCDROMAudio()->SetStopLBA(2, CdRomAudio::CD_AUDIO_STOP_EVENT_STOP);
     for (int i = 0; i < 30; i++)
-        core->GetLaserActive()->Clock(GG_MASTER_CLOCK_RATE / 75 + 1);
+        clock_audio_sector(*core->GetLaserActive());
     ok = expect(core->GetCDROMAudio()->GetCurrentState() == CdRomAudio::CD_AUDIO_STATE_STOPPED,
         "SCSI audio end marker stops the shared transport") && ok;
 
@@ -866,6 +886,30 @@ static bool run_laseractive_tests()
         clear = clear && pixels[i] == 0 && pixels[i + 1] == 0 && pixels[i + 2] == 0;
     ok = expect(clear, "short horizontal timing must not advance vertical scroll twice per line") && ok;
 
+    GG_Runtime_Info runtime;
+    core->GetRuntimeInfo(runtime);
+    ok = expect(runtime.screen_width == 1176 && runtime.screen_height == 240,
+        "LaserActive defaults to the cropped picture") && ok;
+    vce->SetOverscan(true);
+    vce->SetScanlineStart(30);
+    vce->SetScanlineEnd(200);
+    core->GetRuntimeInfo(runtime);
+    ok = expect(runtime.screen_height == 240, "PCE preferences do not override LaserActive framing") && ok;
+    vce->SetLaserActiveScanlines(0, 262);
+    core->GetRuntimeInfo(runtime);
+    ok = expect(runtime.screen_height == 263, "full LaserActive field remains available") && ok;
+    memset(&pixels[0], 0xA5, pixels.size());
+    vce->WriteRegister(0, 0);
+    vce->Clock<false, true>(HUC6260_LINE_LENGTH * 262 * 3);
+    ok = expect(pixels[(2 * 1176) * 4 + 3] == 0xFF,
+        "full-field output initializes the extra line during 262-line VCE operation") && ok;
+    vce->SetLaserActiveScanlines(30, 200);
+    core->GetRuntimeInfo(runtime);
+    ok = expect(runtime.screen_height == 171, "manual LaserActive framing reports its actual line count") && ok;
+    vce->SetLaserActiveScanlines(300, -1);
+    ok = expect(vce->GetCurrentHeight() == 1, "LaserActive framing clamps invalid bounds") && ok;
+    vce->SetLaserActiveScanlines(HUC6260_LASERACTIVE_SCANLINE_START, HUC6260_LASERACTIVE_SCANLINE_END);
+
     char cd_path[] = "/tmp/geargrafx-cd-mmi-XXXXXX.mmi";
     int cd_fixture = mkstemps(cd_path, 4);
     if (cd_fixture >= 0)
@@ -882,11 +926,101 @@ static bool run_laseractive_tests()
             core->LoadState(&state[0], state.size()) &&
             core->GetCDROMMedia()->GetSelectedMmiMediaIndex() == 0,
             "CD-only MMI save state restores its selected side") && ok;
+
+        HuC6280PSG::HuC6280PSG_Channel* channels = core->GetAudio()->GetPSG()->GetState()->CHANNELS;
+        for (u32 version = 39; version <= GG_SAVESTATE_VERSION; version++)
+        {
+            channels[0].left_sample = 100;
+            channels[0].right_sample = -100;
+            channels[0].output[0] = 50;
+            ok = expect(core->SaveState(&state[0], state_size), "save audio migration fixture") && ok;
+            GG_SaveState_Header header;
+            memcpy(&header, &state[state.size() - sizeof(header)], sizeof(header));
+            header.version = version;
+            memcpy(&state[state.size() - sizeof(header)], &header, sizeof(header));
+            ok = expect(core->LoadState(&state[0], state.size()), "load audio migration fixture") && ok;
+            int scale = version == 39 ? 2 : 1;
+            ok = expect(channels[0].left_sample == 100 * scale &&
+                channels[0].right_sample == -100 * scale && channels[0].output[0] == 50 * scale,
+                "migrate pre-merge PSG samples without rescaling merged states") && ok;
+        }
         core->GetMedia()->Reset();
         remove(cd_path);
     }
     else
         ok = expect(false, "create CD-only MMI fixture") && ok;
+    delete core;
+    remove(path);
+    return ok;
+}
+
+static bool run_audio_end_tests()
+{
+    char path[] = "/tmp/geargrafx-mmi-audio-end-XXXXXX.mmi";
+    int fixture = mkstemps(path, 4);
+    if (fixture < 0)
+        return false;
+    close(fixture);
+    bool ok = expect(create_mmi_fixture(path, true, 0, 10, true), "create digital-audio MMI fixture");
+    GeargrafxCore* core = new GeargrafxCore;
+    core->Init(NULL);
+    if (!core->LoadMedia(path))
+    {
+        delete core;
+        remove(path);
+        return false;
+    }
+    LaserActive* laser = core->GetLaserActive();
+    for (int mode = 0; mode < 3; mode++)
+    {
+        for (u32 end = 0; end <= 2; end++)
+        {
+            core->ResetMedia(false);
+            core->GetCDROMAudio()->StartAudio(0, false);
+            core->GetCDROMAudio()->SetStopLBA(end, (CdRomAudio::CdAudioStopEvent)mode);
+            for (int tick = 0; tick < 100 && laser->GetDriveMode() == LaserActive::DRIVE_SEEKING; tick++)
+                laser->Clock(GG_MASTER_CLOCK_RATE / 75 + 1);
+            ok = expect(laser->GetDriveMode() == LaserActive::DRIVE_PLAYING,
+                "end-marked playback reaches its first digital sector") && ok;
+            u32 samples = 0;
+            for (u32 sector = 0; sector <= end; sector++)
+            {
+                if (sector != 0)
+                    laser->Clock(GG_MASTER_CLOCK_RATE / 75 + 1);
+                bool pcm_correct = true;
+                for (int sample = 0; sample < 587; sample++)
+                {
+                    s16 left, right;
+                    laser->Sample(left, right);
+                    pcm_correct = pcm_correct && left == (s16)(1000 + sector) && right == -(s16)(1000 + sector);
+                    samples++;
+                }
+                ok = expect(pcm_correct, "play every digital sample before the inclusive endpoint") && ok;
+                ok = expect(laser->GetDriveMode() == LaserActive::DRIVE_PLAYING,
+                    "stop/loop/completion waits for the last sample") && ok;
+                if (sector == end)
+                {
+                    size_t size = 0;
+                    ok = expect(core->SaveState((u8*)NULL, size), "query final-sector state size") && ok;
+                    std::vector<u8> state(size);
+                    ok = expect(core->SaveState(&state[0], size) && core->LoadState(&state[0], size),
+                        "restore a partially consumed final audio sector") && ok;
+                }
+                s16 left, right;
+                laser->Sample(left, right);
+                ok = expect(left == (s16)(1000 + sector) && right == -(s16)(1000 + sector),
+                    "include the final stereo sample after state restoration") && ok;
+                samples++;
+            }
+            ok = expect(samples == (end + 1) * 588, "inclusive CDDA endpoint sample count") && ok;
+            ok = expect(laser->GetDriveMode() == (mode == CdRomAudio::CD_AUDIO_STOP_EVENT_LOOP ?
+                LaserActive::DRIVE_SEEKING : LaserActive::DRIVE_STOPPED),
+                "apply the end event after all endpoint PCM") && ok;
+            if (mode == CdRomAudio::CD_AUDIO_STOP_EVENT_IRQ)
+                ok = expect(*core->GetScsiController()->GetState()->PHASE == ScsiController::SCSI_PHASE_STATUS,
+                    "complete SCSI playback after its final sample") && ok;
+        }
+    }
     delete core;
     remove(path);
     return ok;
@@ -1009,5 +1143,6 @@ bool run_mmi_tests()
     remove(unsafe_path);
     ok = run_laseractive_tests() && ok;
     ok = run_laseractive_search_fade_tests() && ok;
+    ok = run_audio_end_tests() && ok;
     return ok;
 }

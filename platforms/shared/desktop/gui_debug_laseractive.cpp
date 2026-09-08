@@ -47,8 +47,8 @@ static const char* const output_names[32] = {
     "Hour / frame", "Min / frame", "Sec / frame", "Frame",
     "TOC request", "TOC flags", "TOC minute", "TOC second",
     "TOC frame", "Track", "Hour / frame", "Min / frame",
-    "Sec / frame", "Frame", "Stop chapter", "Stop hour",
-    "Stop minute", "Stop second", "Stop frame", "Reserved"
+    "Sec / frame", "Frame", "Stop chapter", "Stop frame",
+    "Stop sec / low", "Stop min / mid", "Stop hr / high", "Stop status"
 };
 
 static void draw_value(const char* label, const char* value, const GuiDebugColor& color, bool active)
@@ -89,7 +89,6 @@ static void draw_registers(const LaserActive::Status& state, int first, bool ava
         for (int reg = first; reg < first + 16; reg++)
         {
             bool input_used = reg != 4 && (reg < 0x10 || reg >= 0x1A);
-            bool output_used = reg != 0x1F;
             ImGui::TableNextRow();
             ImGui::TableNextColumn(); ImGui::TextColored(violet, "$%02X", reg);
             ImGui::TableNextColumn();
@@ -104,12 +103,12 @@ static void draw_registers(const LaserActive::Status& state, int first, bool ava
                     "Retained register; no implemented hardware effect.");
             }
             ImGui::TableNextColumn();
-            ImGui::TextColored(output_used ? violet : gray, "%s", output_names[reg]);
+            ImGui::TextColored(violet, "%s", output_names[reg]);
             ImGui::TableNextColumn();
-            ImGui::TextColored(available && output_used ? white : gray, "$%02X", state.output_registers[reg]);
+            ImGui::TextColored(available ? white : gray, "$%02X", state.output_registers[reg]);
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("Output $%02X / CPU $%04X\nPassive peek; does not consume busy or cooldown reads.",
-                    reg, 0x1941 + reg * 2);
+                    reg, 0x1940 + reg);
         }
         ImGui::EndTable();
     }

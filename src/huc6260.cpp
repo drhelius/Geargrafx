@@ -41,6 +41,8 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random)
     m_overscan = 0;
     m_scanline_start = 0;
     m_scanline_end = 241;
+    m_laseractive_scanline_start = HUC6260_LASERACTIVE_SCANLINE_START;
+    m_laseractive_scanline_end = HUC6260_LASERACTIVE_SCANLINE_END;
     m_reset_value = -1;
     m_palette = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
@@ -533,4 +535,33 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
 
     SanitizeState();
+}
+
+void HuC6260::SaveLaserActiveState(std::ostream& stream)
+{
+    int line = CLAMP(m_vpos, 0, HUC6260_LINES - 1);
+    stream.write(reinterpret_cast<const char*>(m_vce_buffer_1 + line * 683), 683 * sizeof(u16));
+    stream.write(reinterpret_cast<const char*>(m_laseractive_classification + line * 683), 683);
+    stream.write(reinterpret_cast<const char*>(m_line_speed + line), sizeof(m_line_speed[0]));
+    stream.write(reinterpret_cast<const char*>(m_laseractive_line_state + line * 8), 8);
+}
+
+void HuC6260::LoadLaserActiveState(std::istream& stream, u32 version)
+{
+    int line = CLAMP(m_vpos, 0, HUC6260_LINES - 1);
+    if (version >= 41)
+    {
+        stream.read(reinterpret_cast<char*>(m_vce_buffer_1 + line * 683), 683 * sizeof(u16));
+        stream.read(reinterpret_cast<char*>(m_laseractive_classification + line * 683), 683);
+        stream.read(reinterpret_cast<char*>(m_line_speed + line), sizeof(m_line_speed[0]));
+        stream.read(reinterpret_cast<char*>(m_laseractive_line_state + line * 8), 8);
+        m_line_speed[line] = CLAMP(m_line_speed[line], 0, 3);
+    }
+    else
+    {
+        memset(m_vce_buffer_1 + line * 683, 0, 683 * sizeof(u16));
+        memset(m_laseractive_classification + line * 683, 3, 683);
+        m_line_speed[line] = m_speed;
+        m_laseractive->CaptureVideoLineState(m_laseractive_line_state + line * 8);
+    }
 }

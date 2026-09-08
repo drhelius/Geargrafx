@@ -273,6 +273,7 @@ private:
     u8 m_current_track;
     alignas(s16) u8 m_digital_sector[2352];
     bool m_digital_sector_valid;
+    bool m_audio_end_pending;
     u32 m_current_sample;
     u64 m_sector_clock;
 

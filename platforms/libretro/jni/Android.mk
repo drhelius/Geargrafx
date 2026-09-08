@@ -4,11 +4,11 @@ ROOT_DIR   := $(LOCAL_PATH)/../../..
 CORE_DIR   := $(ROOT_DIR)/platforms/libretro
 SOURCE_DIR := $(ROOT_DIR)/src
 DEPS_DIR   := $(ROOT_DIR)/platforms/shared/dependencies
-INCLUDES   := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(DEPS_DIR)/minivorbis -I$(DEPS_DIR)/miniz -I$(DEPS_DIR)/libchdr/include -I$(DEPS_DIR)/zstd -I$(DEPS_DIR)/lzma/include
+INCLUDES   := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(DEPS_DIR)/minivorbis -I$(DEPS_DIR)/miniz -I$(DEPS_DIR)/json -I$(DEPS_DIR)/qon -I$(DEPS_DIR)/libchdr/include -I$(DEPS_DIR)/zstd -I$(DEPS_DIR)/lzma/include
 
 include $(CORE_DIR)/Makefile.common
 
-COREFLAGS := -DHAVE_STDINT_H -DHAVE_INTTYPES_H -D__LIBRETRO__ -DGG_DISABLE_DISASSEMBLER -DGG_DISABLE_VGMRECORDER -DZ7_ST -DZSTD_DISABLE_ASM $(INCLUDES)
+COREFLAGS := -DHAVE_STDINT_H -DHAVE_INTTYPES_H -D__LIBRETRO__ -DGG_DISABLE_DISASSEMBLER -DGG_DISABLE_VGMRECORDER -DGG_DISABLE_MMI_THREADS -DZ7_ST -DZSTD_DISABLE_ASM $(INCLUDES)
 
 GIT_VERSION ?= " $(shell git -c safe.directory="$(abspath $(ROOT_DIR))" describe --abbrev=7 --dirty --always --tags || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")

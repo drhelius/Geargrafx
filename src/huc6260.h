@@ -31,6 +31,8 @@
 #define HUC6260_HSYNC_END_HPOS 0
 #define HUC6260_VSYNC_HPOS (HUC6260_HSYNC_START_HPOS + 30)
 #define HUC6260_LASERACTIVE_WIDTH 1176
+#define HUC6260_LASERACTIVE_SCANLINE_START 22
+#define HUC6260_LASERACTIVE_SCANLINE_END 261
 
 class HuC6202;
 class HuC6280;
@@ -88,6 +90,7 @@ public:
     int GetWidthScale();
     void SetScanlineStart(int scanline_start);
     void SetScanlineEnd(int scanline_end);
+    void SetLaserActiveScanlines(int start, int end);
     void SetOverscan(bool overscan);
     GG_Pixel_Format GetPixelFormat();
     void SetResetValue(int value);
@@ -98,6 +101,8 @@ public:
     void SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
+    void SaveLaserActiveState(std::ostream& stream);
+    void LoadLaserActiveState(std::istream& stream, u32 version);
 
 private:
     void TraceVceEvent(u8 event);
@@ -112,7 +117,7 @@ private:
     void SanitizeState();
     template <int BPP>
     void ApplyLowPassFilter(u8* buffer = NULL, int width = 0, int height = 0, int speed = -1);
-    void RenderLaserActiveLine();
+    void RenderLaserActiveLine(int source_y);
     u8 RGB565Component(u8 value, u16 max);
     u16 PackRGB565(u8 red, u8 green, u8 blue);
     u8 RoundToByte(float value);
@@ -151,6 +156,8 @@ private:
     int m_overscan;
     int m_scanline_start;
     int m_scanline_end;
+    int m_laseractive_scanline_start;
+    int m_laseractive_scanline_end;
     GG_Pixel_Format m_pixel_format;
     u8 m_rgba888_palette[HuC6260_PALETTE_COUNT][512][4] = {};
     u16 m_rgb565_palette[HuC6260_PALETTE_COUNT][512] = {};

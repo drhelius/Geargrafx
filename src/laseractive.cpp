@@ -139,6 +139,7 @@ void LaserActive::Reset()
     memset(m_digital_sector, 0, sizeof(m_digital_sector));
     m_digital_sector_valid = false;
     m_current_sample = 0;
+    m_audio_end_pending = false;
     m_sector_clock = 0;
 
     m_sram_shift = 0;
@@ -279,6 +280,7 @@ void LaserActive::NotifyMediaEjected(bool ejected)
         m_target_drive_state = 1;
         m_drive_mode = DRIVE_INACTIVE;
         m_digital_sector_valid = false;
+        m_audio_end_pending = false;
         m_seek_latency = 0;
         m_seek_frame_pending = false;
         m_current_sample = 0;
@@ -299,6 +301,7 @@ void LaserActive::NotifyMediaEjected(bool ejected)
 void LaserActive::NotifyMediaChanged()
 {
     StopVideoDecoder();
+    m_audio_end_pending = false;
     m_search_sectors = 0;
     m_digital_sector_valid = false;
     m_analog_cache_valid = false;
@@ -503,6 +506,7 @@ u32 LaserActive::SeekDistance(s32 target) const
 
 void LaserActive::SeekToSector(s32 lba, bool paused)
 {
+    m_audio_end_pending = false;
     m_search_sectors = 0;
     m_drive_mode = DRIVE_SEEKING;
     m_seek_mode = paused ? DRIVE_PAUSED : DRIVE_PLAYING;
@@ -552,6 +556,7 @@ void LaserActive::SetDrivePaused()
 
 void LaserActive::SetDriveStopped()
 {
+    m_audio_end_pending = false;
     m_search_sectors = 0;
     m_drive_mode = DiscLoaded() ? DRIVE_STOPPED : DRIVE_INACTIVE;
 }
@@ -621,7 +626,7 @@ void LaserActive::ClockSector()
             UpdateVideoFrame(m_head_lba + 150);
     }
 
-    if (m_drive_mode != DRIVE_PLAYING)
+    if (m_drive_mode != DRIVE_PLAYING || m_audio_end_pending)
         return;
 
     s32 sector_lba = m_head_lba;
@@ -660,9 +665,7 @@ void LaserActive::ClockSector()
 
     if (m_end_lba != 0x00FFFFFF && next >= m_end_lba)
     {
-        m_drive_mode = DRIVE_STOPPED;
-        if (IsValidPointer(m_cdrom_audio))
-            m_cdrom_audio->FinishLaserActivePlayback();
+        m_audio_end_pending = true;
         return;
     }
 
@@ -980,6 +983,13 @@ void LaserActive::Sample(s16& left, s16& right)
     left = (s16)CLAMP(combined_left, -32768, 32767);
     right = (s16)CLAMP(combined_right, -32768, 32767);
 
+    if (m_audio_end_pending && m_drive_mode == DRIVE_PLAYING && m_current_sample == 588)
+    {
+        m_audio_end_pending = false;
+        m_drive_mode = DRIVE_STOPPED;
+        if (IsValidPointer(m_cdrom_audio))
+            m_cdrom_audio->FinishLaserActivePlayback();
+    }
 }
 
 u8 LaserActive::ReadRegister(u8 reg, bool output)
@@ -2495,6 +2505,7 @@ void LaserActive::SaveState(std::ostream& stream) const
     stream.write(reinterpret_cast<const char*>(&m_search_sectors), sizeof(m_search_sectors));
     stream.write(reinterpret_cast<const char*>(&m_analog_fade_samples_left), sizeof(m_analog_fade_samples_left));
     stream.write(reinterpret_cast<const char*>(&m_analog_fade_samples_right), sizeof(m_analog_fade_samples_right));
+    stream.write(reinterpret_cast<const char*>(&m_audio_end_pending), sizeof(m_audio_end_pending));
 }
 
 void LaserActive::LoadState(std::istream& stream, u32 version)
@@ -2638,6 +2649,10 @@ void LaserActive::LoadState(std::istream& stream, u32 version)
         stream.read(reinterpret_cast<char*>(&m_analog_fade_samples_left), sizeof(m_analog_fade_samples_left));
         stream.read(reinterpret_cast<char*>(&m_analog_fade_samples_right), sizeof(m_analog_fade_samples_right));
     }
+
+    m_audio_end_pending = false;
+    if (version >= 41)
+        stream.read(reinterpret_cast<char*>(&m_audio_end_pending), sizeof(m_audio_end_pending));
 
     if (stream.fail())
         return;

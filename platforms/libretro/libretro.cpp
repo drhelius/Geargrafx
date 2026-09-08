@@ -72,6 +72,8 @@ static int current_screen_height = 0;
 static int current_width_scale = 1;
 static float current_aspect_ratio = 0.0f;
 static float aspect_ratio = 0.0f;
+static float laseractive_aspect_ratio = 4.0f / 3.0f;
+static int laseractive_scanline_mode = 0;
 static double current_fps = 0.0;
 
 static bool allow_up_down = false;
@@ -146,6 +148,7 @@ static void poll_input(void);
 static void apply_input(void);
 static bool categories_supported = false;
 static void check_variables(void);
+static float get_aspect_ratio(void);
 static bool path_has_extension(const char* path, const char* extension);
 static bool path_is_cdrom_uri(const char* path);
 static bool path_is_cd_content(const char* path);
@@ -329,6 +332,8 @@ void retro_deinit(void)
     current_width_scale = 1;
     current_aspect_ratio = 0.0f;
     aspect_ratio = 0.0f;
+    laseractive_aspect_ratio = 4.0f / 3.0f;
+    laseractive_scanline_mode = 0;
     initial_mmi_image_index = 0;
     initial_mmi_image_path[0] = 0;
     current_fps = 0.0;
@@ -384,9 +389,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     info->geometry.base_height  = runtime_info.screen_height;
     info->geometry.max_width    = MAX_SCREEN_WIDTH;
     info->geometry.max_height   = MAX_SCREEN_HEIGHT;
-    info->geometry.aspect_ratio = runtime_info.aspect_ratio > 0.0f ? runtime_info.aspect_ratio :
-        (aspect_ratio == 0.0f ? (float)runtime_info.screen_width / (float)runtime_info.screen_height /
-        (float)runtime_info.width_scale : aspect_ratio);
+    info->geometry.aspect_ratio = get_aspect_ratio();
     info->timing.fps            = current_fps;
     info->timing.sample_rate    = 44100.0;
 }
@@ -405,18 +408,19 @@ void retro_run(void)
 
     core->GetRuntimeInfo(runtime_info);
 
+    float effective_aspect_ratio = get_aspect_ratio();
     bool fps_changed = runtime_info.fps < current_fps - 0.000001 || runtime_info.fps > current_fps + 0.000001;
     bool geometry_changed = (runtime_info.screen_width != current_screen_width) ||
                             (runtime_info.screen_height != current_screen_height) ||
                             (runtime_info.width_scale != current_width_scale) ||
-                            (aspect_ratio != current_aspect_ratio);
+                            (effective_aspect_ratio != current_aspect_ratio);
 
     if (fps_changed || geometry_changed)
     {
         current_screen_width = runtime_info.screen_width;
         current_screen_height = runtime_info.screen_height;
         current_width_scale = runtime_info.width_scale;
-        current_aspect_ratio = aspect_ratio;
+        current_aspect_ratio = effective_aspect_ratio;
         current_fps = runtime_info.fps;
 
         retro_system_av_info info;
@@ -424,9 +428,7 @@ void retro_run(void)
         info.geometry.base_height  = runtime_info.screen_height;
         info.geometry.max_width    = MAX_SCREEN_WIDTH;
         info.geometry.max_height   = MAX_SCREEN_HEIGHT;
-        info.geometry.aspect_ratio = runtime_info.aspect_ratio > 0.0f ? runtime_info.aspect_ratio :
-            (aspect_ratio == 0.0f ? ((float)runtime_info.screen_width / (float)runtime_info.width_scale) /
-            (float)runtime_info.screen_height : aspect_ratio);
+        info.geometry.aspect_ratio = effective_aspect_ratio;
         info.timing.fps            = current_fps;
         info.timing.sample_rate    = 44100.0;
 
@@ -1580,6 +1582,50 @@ static void check_variables(void)
         core->SetLaserActiveRegion(region);
     }
 
+    var.key = "geargrafx_laseractive_aspect_ratio";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        laseractive_aspect_ratio = 4.0f / 3.0f;
+        if (strcmp(var.value, "1:1 PAR") == 0)
+            laseractive_aspect_ratio = 0.0f;
+        else if (strcmp(var.value, "16:9 DAR") == 0)
+            laseractive_aspect_ratio = 16.0f / 9.0f;
+        else if (strcmp(var.value, "16:10 DAR") == 0)
+            laseractive_aspect_ratio = 16.0f / 10.0f;
+    }
+
+    var.key = "geargrafx_laseractive_framing";
+    var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        laseractive_scanline_mode = 0;
+        if (strcmp(var.value, "Full Field") == 0)
+            laseractive_scanline_mode = 1;
+        else if (strcmp(var.value, "Manual") == 0)
+            laseractive_scanline_mode = 2;
+    }
+
+    int laseractive_start = HUC6260_LASERACTIVE_SCANLINE_START;
+    int laseractive_end = HUC6260_LASERACTIVE_SCANLINE_END;
+    if (laseractive_scanline_mode == 1)
+    {
+        laseractive_start = 0;
+        laseractive_end = HUC6260_LINES - 1;
+    }
+    else if (laseractive_scanline_mode == 2)
+    {
+        var.key = "geargrafx_laseractive_scanline_start";
+        var.value = NULL;
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+            laseractive_start = atoi(var.value);
+        var.key = "geargrafx_laseractive_scanline_end";
+        var.value = NULL;
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+            laseractive_end = atoi(var.value);
+    }
+    core->GetHuC6260()->SetLaserActiveScanlines(laseractive_start, laseractive_end);
+
     var.key = "geargrafx_psg_huc6280a";
     var.value = NULL;
 
@@ -1738,6 +1784,16 @@ static void check_variables(void)
             core->GetInput()->SetTurboSpeed((GG_Controllers)i, GG_KEY_II, speed);
         }
     }
+}
+
+static float get_aspect_ratio(void)
+{
+    float ratio = runtime_info.aspect_ratio > 0.0f ? laseractive_aspect_ratio : aspect_ratio;
+
+    if (ratio > 0.0f)
+        return ratio;
+
+    return (float)runtime_info.screen_width / (float)runtime_info.width_scale / (float)runtime_info.screen_height;
 }
 
 static bool path_has_extension(const char* path, const char* extension)

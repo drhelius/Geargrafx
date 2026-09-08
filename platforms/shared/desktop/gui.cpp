@@ -126,6 +126,8 @@ bool gui_init(void)
     emu_set_scanline_start_end(
                 config_debug.debug ? 0 : config_video.scanline_start,
                 config_debug.debug ? 241 : config_video.scanline_end);
+    emu_set_laseractive_scanlines(config_video.laseractive_scanline_mode,
+                config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
     emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
                 config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
     emu_set_memory_reset_values(
@@ -618,7 +620,8 @@ static void main_window(void)
     int physical_w = (int)floorf(logical_w * framebuffer_scale_x);
     int physical_h = (int)floorf(logical_h * framebuffer_scale_y);
 
-    int selected_ratio = config_debug.debug ? 0 : config_video.ratio;
+    bool laseractive = runtime.aspect_ratio > 0.0f;
+    int selected_ratio = laseractive ? config_video.laseractive_ratio : (config_debug.debug ? 0 : config_video.ratio);
     float ratio = 0;
 
     switch (selected_ratio)
@@ -636,8 +639,7 @@ static void main_window(void)
             ratio = 6.0f / 5.0f;
             break;
         default:
-            ratio = runtime.aspect_ratio > 0.0f ? runtime.aspect_ratio :
-                ((float)runtime.screen_width / (float)runtime.width_scale) / (float)runtime.screen_height;
+            ratio = ((float)runtime.screen_width / (float)runtime.width_scale) / (float)runtime.screen_height;
     }
 
     if (!config_debug.debug && config_video.scale == 3)
@@ -647,8 +649,6 @@ static void main_window(void)
 
     int base_width = (int)(runtime.screen_width / runtime.width_scale);
     int base_height = (int)(runtime.screen_height);
-    if (runtime.aspect_ratio > 0.0f)
-        base_width = (int)round(base_height * runtime.aspect_ratio);
 
     int w_corrected, h_corrected;
     int scale_multiplier = 0;
@@ -656,7 +656,7 @@ static void main_window(void)
     if (config_debug.debug)
     {
         scale_multiplier = config_debug.scale;
-        w_corrected = base_width;
+        w_corrected = laseractive && selected_ratio != 0 ? (int)round(base_height * ratio) : base_width;
         h_corrected = base_height;
     }
     else

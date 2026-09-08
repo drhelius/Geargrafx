@@ -58,6 +58,12 @@
 			path = ../shared/dependencies/miniz;
 			sourceTree = "<group>";
 		};
+		C50000000000000000000001 /* Qon */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = Qon;
+			path = ../shared/dependencies/qon;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +84,7 @@
 				A10000000000000000000001 /* Geargrafx */,
 				A10000000000000000000002 /* Core */,
 				A10000000000000000000008 /* Miniz */,
+				C50000000000000000000001 /* Qon */,
 				B30200000000000000000001 /* CHD Dependencies */,
 				C40200000000000000000001 /* MiniVorbis */,
 				A10000000000000000000005 /* Support */,
@@ -165,6 +172,7 @@
 				A10000000000000000000001 /* Geargrafx */,
 				A10000000000000000000002 /* Core */,
 				A10000000000000000000008 /* Miniz */,
+				C50000000000000000000001 /* Qon */,
 			);
 			name = Geargrafx;
 			packageProductDependencies = (
@@ -398,6 +406,7 @@
 					"$(SRCROOT)/../../src/audio",
 					"$(SRCROOT)/../shared/dependencies/minivorbis",
 					"$(SRCROOT)/../shared/dependencies/miniz",
+					"$(SRCROOT)/../shared/dependencies/json",
 					"$(SRCROOT)/../shared/dependencies/libchdr/include",
 					"$(SRCROOT)/../shared/dependencies/lzma/include",
 					"$(SRCROOT)/../shared/dependencies/zstd",
@@ -455,6 +464,7 @@
 					"$(SRCROOT)/../../src/audio",
 					"$(SRCROOT)/../shared/dependencies/minivorbis",
 					"$(SRCROOT)/../shared/dependencies/miniz",
+					"$(SRCROOT)/../shared/dependencies/json",
 					"$(SRCROOT)/../shared/dependencies/libchdr/include",
 					"$(SRCROOT)/../shared/dependencies/lzma/include",
 					"$(SRCROOT)/../shared/dependencies/zstd",

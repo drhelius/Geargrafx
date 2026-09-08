@@ -184,9 +184,8 @@ static void menu_geargrafx(void)
         }
 #endif
 
-        Media* loaded_media = emu_get_core()->GetMedia();
-        if (!emu_is_empty() && emu_get_core()->GetCDROMMedia()->IsMmi() &&
-            ImGui::BeginMenu(loaded_media->IsLaserActive() ? "LaserDisc Media" : "MMI Media"))
+        bool mmi_loaded = !emu_is_media_loading() && !emu_is_empty() && emu_get_core()->GetCDROMMedia()->IsMmi();
+        if (ImGui::BeginMenu("MMI Media", mmi_loaded))
         {
             CdRomMedia* cdrom_media = emu_get_core()->GetCDROMMedia();
             bool ejected = cdrom_media->IsMmiEjected();
@@ -856,6 +855,8 @@ static void menu_emulator(void)
 
 static void menu_video(void)
 {
+    bool laseractive = !emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive();
+
     if (ImGui::BeginMenu("Video"))
     {
         gui_in_use = true;
@@ -906,7 +907,7 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Aspect Ratio"))
+        if (ImGui::BeginMenu("Aspect Ratio", !laseractive))
         {
             ImGui::PushItemWidth(190.0f);
             ImGui::Combo("##ratio", &config_video.ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0PCE (6:5 DAR)\0\0");
@@ -914,7 +915,7 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Overscan"))
+        if (ImGui::BeginMenu("Overscan", !laseractive))
         {
             ImGui::PushItemWidth(100.0f);
             if (ImGui::Combo("##overscan", &config_video.overscan, "Disabled\0Enabled\0\0"))
@@ -925,7 +926,7 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Scanline Count"))
+        if (ImGui::BeginMenu("Scanline Count", !laseractive))
         {
             ImGui::PushItemWidth(110.0f);
             if (ImGui::Combo("##scanline_mode", &config_video.scanline_mode, "Mode 224p\0Mode 240p\0Manual\0\0"))
@@ -969,6 +970,53 @@ static void menu_video(void)
                         emu_set_scanline_start_end(config_video.scanline_start, config_video.scanline_end);
                     }
                 }
+            }
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("LaserDisc"))
+        {
+            if (ImGui::BeginMenu("Aspect Ratio"))
+            {
+                ImGui::PushItemWidth(190.0f);
+                ImGui::Combo("##laseractive_ratio", &config_video.laseractive_ratio,
+                    "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0\0");
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Framing"))
+            {
+                ImGui::PushItemWidth(250.0f);
+                bool changed = ImGui::Combo("##laseractive_framing", &config_video.laseractive_scanline_mode,
+                    "Cropped (240 lines)\0Full Field (263 lines)\0Manual\0\0");
+                ImGui::Separator();
+                ImGui::BeginDisabled(config_video.laseractive_scanline_mode != 2);
+                if (ImGui::SliderInt("##laseractive_start", &config_video.laseractive_scanline_start,
+                    0, HUC6260_LINES - 1, "First line (Manual) = %d"))
+                {
+                    config_video.laseractive_scanline_end = MAX(config_video.laseractive_scanline_end,
+                        config_video.laseractive_scanline_start);
+                    changed = true;
+                }
+                if (ImGui::SliderInt("##laseractive_end", &config_video.laseractive_scanline_end,
+                    0, HUC6260_LINES - 1, "Last line (Manual) = %d"))
+                {
+                    config_video.laseractive_scanline_start = MIN(config_video.laseractive_scanline_start,
+                        config_video.laseractive_scanline_end);
+                    changed = true;
+                }
+                ImGui::EndDisabled();
+                if (changed)
+                    emu_set_laseractive_scanlines(config_video.laseractive_scanline_mode,
+                        config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
+                int lines = config_video.laseractive_scanline_mode == 0 ? 240 :
+                    (config_video.laseractive_scanline_mode == 1 ? HUC6260_LINES :
+                    MAX(1, config_video.laseractive_scanline_end - config_video.laseractive_scanline_start + 1));
+                ImGui::TextDisabled("Picture height: %d lines", lines);
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }

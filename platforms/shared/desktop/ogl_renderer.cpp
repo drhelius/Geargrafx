@@ -698,6 +698,9 @@ static bool get_active_shader_preset_file(char* preset_file, size_t preset_file_
 
 static float get_original_aspect(void)
 {
+    if (current_runtime.aspect_ratio > 0.0f)
+        return current_runtime.aspect_ratio;
+
     if (current_runtime.screen_height <= 0)
         return 1.0f;
 

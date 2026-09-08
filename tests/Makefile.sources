@@ -26,7 +26,6 @@ SOURCES_CXX := \
     $(SRC_DIR)/cdrom_audio.cpp \
     $(SRC_DIR)/cdrom_chd_file_adapter.cpp \
     $(SRC_DIR)/cdrom_chd_image.cpp \
-    $(SRC_DIR)/cdrom_chd_file_adapter.cpp \
     $(SRC_DIR)/cdrom_cuebin_image.cpp \
     $(SRC_DIR)/cdrom_mmi_image.cpp \
     $(SRC_DIR)/media_file.cpp \

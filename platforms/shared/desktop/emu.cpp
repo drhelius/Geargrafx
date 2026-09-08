@@ -897,6 +897,21 @@ void emu_set_scanline_start_end(int start, int end)
     geargrafx->GetHuC6260()->SetScanlineEnd(end);
 }
 
+void emu_set_laseractive_scanlines(int mode, int start, int end)
+{
+    if (mode == 0)
+    {
+        start = HUC6260_LASERACTIVE_SCANLINE_START;
+        end = HUC6260_LASERACTIVE_SCANLINE_END;
+    }
+    else if (mode == 1)
+    {
+        start = 0;
+        end = HUC6260_LINES - 1;
+    }
+    geargrafx->GetHuC6260()->SetLaserActiveScanlines(start, end);
+}
+
 void emu_set_lowpass_filter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8)
 {
     geargrafx->GetHuC6260()->SetLowPassFilter(enabled, intensity, cutoff_mhz, speed_5_36, speed_7_16, speed_10_8);

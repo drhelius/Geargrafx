@@ -743,7 +743,10 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
         m_cdrom_audio->SaveState(stream);
         m_adpcm->SaveState(stream);
         if (m_media->IsLaserActive())
+        {
             m_laseractive->SaveState(stream);
+            m_huc6260->SaveLaserActiveState(stream);
+        }
     }
     m_random->SaveState(stream);
 
@@ -987,8 +990,19 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     m_huc6270_1->LoadState(stream, header.version);
     m_huc6270_2->LoadState(stream, header.version);
     m_huc6280->LoadState(stream);
-    m_audio->LoadState(stream, header.version);
+
+    u32 audio_version = header.version;
+    u32 adpcm_version = header.version;
+
+    if (header.version >= 36 && header.version < 40 && (header.version >= 38 || m_cdrom_media->IsMmi()))
+    {
+        audio_version = 35;
+        adpcm_version = 36;
+    }
+
+    m_audio->LoadState(stream, audio_version);
     m_input->LoadState(stream, header.version);
+
     if (m_media->IsCDROM())
     {
         if (header.version >= 38 && m_cdrom_media->IsMmi() && !m_media->IsLaserActive())
@@ -1010,9 +1024,13 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         m_cdrom->LoadState(stream, header.version);
         m_scsi_controller->LoadState(stream, header.version);
         m_cdrom_audio->LoadState(stream, header.version);
-        m_adpcm->LoadState(stream, header.version);
+        m_adpcm->LoadState(stream, adpcm_version);
+
         if (m_media->IsLaserActive())
+        {
             m_laseractive->LoadState(stream, header.version);
+            m_huc6260->LoadLaserActiveState(stream, header.version);
+        }
     }
 
     if (header.version >= 33)
