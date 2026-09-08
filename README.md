@@ -30,11 +30,11 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     <tr>
       <td rowspan="2"><strong>Windows</strong></td>
       <td>Desktop x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.19/Geargrafx-1.7.19-desktop-windows-x64.zip">Geargrafx-1.7.19-desktop-windows-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.22/Geargrafx-1.7.22-desktop-windows-x64.zip">Geargrafx-1.7.22-desktop-windows-x64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.19/Geargrafx-1.7.19-desktop-windows-arm64.zip">Geargrafx-1.7.19-desktop-windows-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.22/Geargrafx-1.7.22-desktop-windows-arm64.zip">Geargrafx-1.7.22-desktop-windows-arm64.zip</a></td>
     </tr>
     <tr>
       <td rowspan="3"><strong>macOS</strong></td>
@@ -43,11 +43,11 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     </tr>
     <tr>
       <td>Desktop Apple Silicon</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.19/Geargrafx-1.7.19-desktop-macos-arm64.zip">Geargrafx-1.7.19-desktop-macos-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.22/Geargrafx-1.7.22-desktop-macos-arm64.zip">Geargrafx-1.7.22-desktop-macos-arm64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop Intel</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.19/Geargrafx-1.7.19-desktop-macos-intel.zip">Geargrafx-1.7.19-desktop-macos-intel.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.22/Geargrafx-1.7.22-desktop-macos-intel.zip">Geargrafx-1.7.22-desktop-macos-intel.zip</a></td>
     </tr>
     <tr>
       <td rowspan="5"><strong>Linux</strong></td>
@@ -60,15 +60,15 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
     </tr>
     <tr>
       <td>Desktop Ubuntu 24.04 x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.19/Geargrafx-1.7.19-desktop-ubuntu24.04-x64.zip">Geargrafx-1.7.19-desktop-ubuntu24.04-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.22/Geargrafx-1.7.22-desktop-ubuntu24.04-x64.zip">Geargrafx-1.7.22-desktop-ubuntu24.04-x64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop Ubuntu 22.04 x64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.19/Geargrafx-1.7.19-desktop-ubuntu22.04-x64.zip">Geargrafx-1.7.19-desktop-ubuntu22.04-x64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.22/Geargrafx-1.7.22-desktop-ubuntu22.04-x64.zip">Geargrafx-1.7.22-desktop-ubuntu22.04-x64.zip</a></td>
     </tr>
     <tr>
       <td>Desktop Ubuntu 24.04 ARM64</td>
-      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.19/Geargrafx-1.7.19-desktop-ubuntu24.04-arm64.zip">Geargrafx-1.7.19-desktop-ubuntu24.04-arm64.zip</a></td>
+      <td><a href="https://github.com/drhelius/Geargrafx/releases/download/1.7.22/Geargrafx-1.7.22-desktop-ubuntu24.04-arm64.zip">Geargrafx-1.7.22-desktop-ubuntu24.04-arm64.zip</a></td>
     </tr>
     <tr>
       <td><strong>MCPB</strong></td>
@@ -125,7 +125,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 
 ### Basic Usage
 - **BIOS**: Geargrafx requires a BIOS to run CD-ROM games. It is possible to load any BIOS but the System Card 3.0 with md5 `38179df8f4ac870017db21ebcbf53114` is recommended.
-- **CD-ROM Images**: Geargrafx supports `chd`, zipped and unzipped `cue/bin`, `cue/img` and `cue/iso` images. `cue/iso + wav` is also supported when audio track format is 44100Hz, 16 bit, stereo. It does not support MP3 or OGG audio tracks.
+- **CD-ROM Images**: Geargrafx supports `chd`, zipped and unzipped `cue/bin`, `cue/img` and `cue/iso` images. CUE audio tracks can use raw BIN, compatible WAV (44100 Hz, 16-bit, stereo) or Ogg Vorbis (44100 Hz, stereo) files. MP3 audio tracks are not supported.
 - **LaserActive Images**: Geargrafx supports NEC LD-ROM² `.mmi` images on 64-bit desktop and libretro builds with seekable file access. Configure a recognized Japanese PAC-N1/PCE-LP1 or US PAC-N10 BIOS in the BIOS menu; automatic region selection uses the image's region code. Libretro uses `pac-n1.bin`, `pce-lp1.bin`, and `pac-n10.bin` in its system directory. To change sides, use **Geargrafx → LaserDisc Media**: eject, select the other side, then insert. Libretro exposes the same operations through its disk controls. Side changes preserve the running machine, and save states restore their original side. LaserActive video is displayed at 4:3. Rewind and run-ahead are disabled while LaserActive media is loaded.
 - **Mouse Cursor**: Automatically hides when hovering over the main output window or when Main Menu is disabled.
 - **Portable Mode**: Run with `--portable`, or create an empty file named `portable.ini` in the same directory as the application binary. On macOS, place the file next to the `.app` bundle.

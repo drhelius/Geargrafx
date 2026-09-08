@@ -172,7 +172,8 @@ struct DisassemblerBookmark
 
 static bool NormalizeMemoryAreaAddress(const MemoryAreaInfo& info, u32 address, u32* offset)
 {
-    if (!IsValidPointer(offset) || !IsValidPointer(info.data) || info.size == 0)
+    bool virtual_area = info.id == MEMORY_EDITOR_LOGICAL || info.id == MEMORY_EDITOR_PHYSICAL;
+    if (!IsValidPointer(offset) || (!virtual_area && !IsValidPointer(info.data)) || info.size == 0)
         return false;
 
     if (address < info.size)
@@ -187,6 +188,15 @@ static bool NormalizeMemoryAreaAddress(const MemoryAreaInfo& info, u32 address, 
 static u32 GetMemoryAreaByteSize(const MemoryAreaInfo& info)
 {
     return info.size * info.unit_size;
+}
+
+static int GetMemoryAreaAddressDigits(const MemoryAreaInfo& info)
+{
+    int digits = 1;
+    u32 address = info.size > 0 ? info.size - 1 : 0;
+    while (address >>= 4)
+        digits++;
+    return digits;
 }
 
 void DebugAdapter::Pause()
@@ -363,7 +373,8 @@ std::vector<MemoryAreaInfo> DebugAdapter::ListMemoryAreas()
     for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
     {
         MemoryAreaInfo info = GetMemoryAreaInfo(i);
-        if (info.data != NULL && info.size > 0)
+        bool virtual_area = i == MEMORY_EDITOR_LOGICAL || i == MEMORY_EDITOR_PHYSICAL;
+        if ((info.data != NULL || virtual_area) && info.size > 0)
         {
             result.push_back(info);
         }
@@ -377,7 +388,8 @@ std::vector<u8> DebugAdapter::ReadMemoryArea(int area, u32 offset, size_t size)
     std::vector<u8> result;
     MemoryAreaInfo info = GetMemoryAreaInfo(area);
 
-    if (info.data == NULL || info.unit_size == 0 || offset >= info.size)
+    bool virtual_area = area == MEMORY_EDITOR_LOGICAL || area == MEMORY_EDITOR_PHYSICAL;
+    if ((!virtual_area && info.data == NULL) || info.unit_size == 0 || offset >= info.size)
         return result;
 
     u32 byte_offset = offset * info.unit_size;
@@ -386,29 +398,65 @@ std::vector<u8> DebugAdapter::ReadMemoryArea(int area, u32 offset, size_t size)
     u32 bytes_remaining = byte_size - byte_offset;
     if (size > bytes_remaining)
         bytes_to_read = bytes_remaining;
+    Memory* memory = virtual_area ? m_core->GetMemory() : NULL;
 
     for (u32 i = 0; i < bytes_to_read; i++)
     {
-        result.push_back(info.data[byte_offset + i]);
+        if (!virtual_area)
+        {
+            result.push_back(info.data[byte_offset + i]);
+            continue;
+        }
+
+        u32 address = byte_offset + i;
+        u8 value = 0xFF;
+
+        if (area == MEMORY_EDITOR_LOGICAL)
+            memory->TryPeek((u16)address, &value);
+        else
+            memory->TryPeek((u16)(address & 0x1FFF), (u8)(address >> 13), &value);
+
+        result.push_back(value);
     }
 
     return result;
 }
 
-void DebugAdapter::WriteMemoryArea(int area, u32 offset, const std::vector<u8>& data)
+size_t DebugAdapter::WriteMemoryArea(int area, u32 offset, const std::vector<u8>& data)
 {
     MemoryAreaInfo info = GetMemoryAreaInfo(area);
+    bool virtual_area = area == MEMORY_EDITOR_LOGICAL || area == MEMORY_EDITOR_PHYSICAL;
 
-    if (info.data == NULL || info.unit_size == 0 || offset >= info.size)
-        return;
+    if ((!virtual_area && info.data == NULL) || info.unit_size == 0 || offset >= info.size)
+        return 0;
 
     u32 byte_offset = offset * info.unit_size;
     u32 byte_size = GetMemoryAreaByteSize(info);
+    size_t bytes_written = 0;
+    Memory* memory = virtual_area ? m_core->GetMemory() : NULL;
 
     for (size_t i = 0; i < data.size() && (byte_offset + i) < byte_size; i++)
     {
-        info.data[byte_offset + i] = data[i];
+        if (!virtual_area)
+        {
+            info.data[byte_offset + i] = data[i];
+            bytes_written++;
+            continue;
+        }
+
+        u32 address = byte_offset + (u32)i;
+        bool written = false;
+
+        if (area == MEMORY_EDITOR_LOGICAL)
+            written = memory->TryPoke((u16)address, data[i]);
+        else
+            written = memory->TryPoke((u16)(address & 0x1FFF), (u8)(address >> 13), data[i]);
+
+        if (written)
+            bytes_written++;
     }
+
+    return bytes_written;
 }
 
 std::vector<DisasmLine> DebugAdapter::GetDisassembly(u16 start_address, u16 end_address, int bank, bool resolve_symbols)
@@ -623,7 +671,7 @@ const char* DebugAdapter::GetBreakpointTypeName(int type)
         case HuC6280::HuC6280_BREAKPOINT_TYPE_HUC6260_REGISTER:
             return "6260 REG";
         case HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM:
-            return "WRAM";
+            return "SYSTEM RAM";
         case HuC6280::HuC6280_BREAKPOINT_TYPE_ZERO_PAGE:
             return "ZERO PAGE";
         case HuC6280::HuC6280_BREAKPOINT_TYPE_ROM:
@@ -657,8 +705,16 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
 
     switch (area)
     {
+        case MEMORY_EDITOR_LOGICAL:
+            info.name = "LOGICAL";
+            info.size = 0x10000;
+            break;
+        case MEMORY_EDITOR_PHYSICAL:
+            info.name = "PHYSICAL";
+            info.size = 0x200000;
+            break;
         case MEMORY_EDITOR_RAM:
-            info.name = "WRAM";
+            info.name = "SYSTEM RAM";
             info.data = memory->GetWorkingRAM();
             info.size = 0x2000 * (is_sgx ? 4 : 1);
             break;
@@ -1809,7 +1865,7 @@ json DebugAdapter::GetADPCMStatus()
 
     status["length"] = *adpcm_state->LENGTH;
 
-    float frequency = (32000.0f / (16.0f - (float)*adpcm_state->SAMPLE_RATE)) / 1000.0f;
+    float frequency = (GG_ADPCM_BASE_SAMPLE_RATE / (16 - (*adpcm_state->SAMPLE_RATE & 0x0F))) / 1000.0;
     status["frequency_khz"] = frequency;
 
     // Registers
@@ -2892,12 +2948,13 @@ json DebugAdapter::SelectMemoryRange(int editor, int start_address, int end_addr
 
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-13)";
+        result["error"] = "Invalid editor number";
         return result;
     }
 
     MemoryAreaInfo info = GetMemoryAreaInfo(editor);
-    if (!IsValidPointer(info.data) || info.size == 0)
+    bool virtual_area = editor == MEMORY_EDITOR_LOGICAL || editor == MEMORY_EDITOR_PHYSICAL;
+    if ((!virtual_area && !IsValidPointer(info.data)) || info.size == 0)
     {
         result["error"] = "Memory area unavailable";
         return result;
@@ -2931,8 +2988,9 @@ json DebugAdapter::SelectMemoryRange(int editor, int start_address, int end_addr
     }
 
     std::ostringstream start_ss, end_ss;
-    start_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << (u32)actual_start;
-    end_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << (u32)actual_end;
+    int address_digits = GetMemoryAreaAddressDigits(info);
+    start_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << (u32)actual_start;
+    end_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << (u32)actual_end;
 
     result["success"] = true;
     result["area"] = editor;
@@ -2954,15 +3012,16 @@ json DebugAdapter::SetMemorySelectionValue(int editor, u8 value)
 
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-13)";
+        result["error"] = "Invalid editor number";
         return result;
     }
 
-    gui_debug_memory_set_selection_value(editor, value);
+    int values_written = gui_debug_memory_set_selection_value(editor, value);
 
-    result["success"] = true;
+    result["success"] = values_written > 0;
     result["editor"] = editor;
     result["value"] = value;
+    result["values_written"] = values_written;
 
     return result;
 }
@@ -2979,7 +3038,7 @@ json DebugAdapter::AddMemoryBookmark(int editor, int address, const std::string&
 
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-13)";
+        result["error"] = "Invalid editor number";
         return result;
     }
 
@@ -3005,7 +3064,7 @@ json DebugAdapter::RemoveMemoryBookmark(int editor, int address)
 
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-13)";
+        result["error"] = "Invalid editor number";
         return result;
     }
 
@@ -3030,7 +3089,7 @@ json DebugAdapter::AddMemoryWatch(int editor, int address, const std::string& no
 
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-13)";
+        result["error"] = "Invalid editor number";
         return result;
     }
 
@@ -3069,7 +3128,7 @@ json DebugAdapter::RemoveMemoryWatch(int editor, int address)
 
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid editor number (must be 0-13)";
+        result["error"] = "Invalid editor number";
         return result;
     }
 
@@ -3301,6 +3360,7 @@ json DebugAdapter::ListMemoryBookmarks(int area)
 
     void* bookmarks_ptr = NULL;
     int count = gui_debug_memory_get_bookmarks(area, &bookmarks_ptr);
+    int address_digits = GetMemoryAreaAddressDigits(GetMemoryAreaInfo(area));
 
     std::vector<MemEditor::Bookmark>* bookmarks = (std::vector<MemEditor::Bookmark>*)bookmarks_ptr;
 
@@ -3313,7 +3373,7 @@ json DebugAdapter::ListMemoryBookmarks(int area)
             json bookmark_obj;
 
             std::ostringstream addr_ss;
-            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << bookmark.address;
+            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << bookmark.address;
             bookmark_obj["address"] = addr_ss.str();
             bookmark_obj["name"] = bookmark.name;
 
@@ -3346,6 +3406,7 @@ json DebugAdapter::ListMemoryWatches(int area)
 
     void* watches_ptr = NULL;
     int count = gui_debug_memory_get_watches(area, &watches_ptr);
+    int address_digits = GetMemoryAreaAddressDigits(GetMemoryAreaInfo(area));
 
     std::vector<MemEditor::Watch>* watches = (std::vector<MemEditor::Watch>*)watches_ptr;
 
@@ -3361,7 +3422,7 @@ json DebugAdapter::ListMemoryWatches(int area)
             json watch_obj;
 
             std::ostringstream addr_ss;
-            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << watch.address;
+            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << watch.address;
             watch_obj["address"] = addr_ss.str();
             watch_obj["notes"] = watch.notes;
 
@@ -3400,14 +3461,15 @@ json DebugAdapter::GetMemorySelection(int area)
     int start = -1;
     int end = -1;
     gui_debug_memory_get_selection(area, &start, &end);
+    int address_digits = GetMemoryAreaAddressDigits(GetMemoryAreaInfo(area));
 
     result["area"] = area;
 
     if (start >= 0 && end >= 0 && start <= end)
     {
         std::ostringstream start_ss, end_ss;
-        start_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << start;
-        end_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << end;
+        start_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << start;
+        end_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << end;
 
         result["selected"] = true;
         result["start"] = start_ss.str();
@@ -3435,7 +3497,7 @@ json DebugAdapter::MemorySearchCapture(int area)
 
     if (area < 0 || area >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid area number (must be 0-13)";
+        result["error"] = "Invalid area number";
         return result;
     }
 
@@ -3459,7 +3521,7 @@ json DebugAdapter::MemorySearch(int area, const std::string& op, const std::stri
 
     if (area < 0 || area >= MEMORY_EDITOR_MAX)
     {
-        result["error"] = "Invalid area number (must be 0-13)";
+        result["error"] = "Invalid area number";
         return result;
     }
 
@@ -3511,6 +3573,7 @@ json DebugAdapter::MemorySearch(int area, const std::string& op, const std::stri
 
     void* results_ptr = NULL;
     int count = gui_debug_memory_search(area, op_index, compare_type_index, compare_value, data_type_index, &results_ptr);
+    int address_digits = GetMemoryAreaAddressDigits(GetMemoryAreaInfo(area));
 
     result["area"] = area;
     result["count"] = count;
@@ -3529,7 +3592,7 @@ json DebugAdapter::MemorySearch(int area, const std::string& op, const std::stri
             json item = json::array();
 
             std::ostringstream addr_ss;
-            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << search.address;
+            addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << search.address;
 
             item.push_back(addr_ss.str());
             item.push_back(search.value);
@@ -3547,7 +3610,7 @@ json DebugAdapter::MemorySearch(int area, const std::string& op, const std::stri
     return result;
 }
 
-json DebugAdapter::MemoryFindBytes(int area, const std::string& hex_bytes)
+json DebugAdapter::MemoryFind(int area, const std::string& value, bool text, bool case_sensitive)
 {
     json result;
 
@@ -3563,14 +3626,24 @@ json DebugAdapter::MemoryFindBytes(int area, const std::string& hex_bytes)
         return result;
     }
 
-    if (hex_bytes.empty())
+    if (value.empty())
     {
-        result["error"] = "Empty hex byte string";
+        result["error"] = text ? "text is empty" : "hex_bytes is empty";
         return result;
     }
 
     int addresses[100];
-    int count = gui_debug_memory_find_bytes(area, hex_bytes.c_str(), addresses, 100);
+    int count = gui_debug_memory_find(area, value.c_str(), text, case_sensitive, addresses, 100);
+    int address_digits = GetMemoryAreaAddressDigits(GetMemoryAreaInfo(area));
+
+    if (count < 0)
+    {
+        if (text)
+            result["error"] = "text must not exceed 512 bytes";
+        else
+            result["error"] = "hex_bytes must contain valid hex byte pairs";
+        return result;
+    }
 
     result["area"] = area;
     result["count"] = count;
@@ -3581,7 +3654,7 @@ json DebugAdapter::MemoryFindBytes(int area, const std::string& hex_bytes)
     for (int i = 0; i < max_results; i++)
     {
         std::ostringstream addr_ss;
-        addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << addresses[i];
+        addr_ss << std::hex << std::uppercase << std::setfill('0') << std::setw(address_digits) << addresses[i];
         result["addresses"].push_back(addr_ss.str());
     }
 

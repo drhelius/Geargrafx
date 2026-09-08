@@ -460,7 +460,7 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "set_breakpoint"},
         {"title", "Set Breakpoint"},
-        {"description", "Add execute/read/write breakpoint at CPU address (logical ROM/RAM), VRAM, palette, VDC, VCE, WRAM, ROM, Card RAM or CD RAM address."},
+        {"description", "Add execute/read/write breakpoint at CPU address (logical ROM/RAM), VRAM, palette, VDC, VCE, SYSTEM RAM, ROM, Card RAM or CD RAM address."},
         {"annotations", {{"readOnlyHint", false}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
         {"inputSchema", {
             {"type", "object"},
@@ -471,8 +471,8 @@ json McpServer::BuildToolList()
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, wram, rom, zp, card_ram, cd_ram, backup_ram"},
-                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "zp", "palette", "huc6270_reg", "huc6260_reg", "wram", "rom", "card_ram", "cd_ram", "backup_ram"})}
+                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, system_ram, rom, zp, card_ram, cd_ram, backup_ram"},
+                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "zp", "palette", "huc6270_reg", "huc6260_reg", "system_ram", "rom", "card_ram", "cd_ram", "backup_ram"})}
                 }},
                 {"read", {
                     {"type", "boolean"},
@@ -509,8 +509,8 @@ json McpServer::BuildToolList()
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: cpu_addr, rom_ram, vram, palette, huc6270_reg, huc6260_reg, wram, zp, rom, card_ram, cd_ram, backup_ram"},
-                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "wram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
+                    {"description", "Memory area: cpu_addr, rom_ram, vram, palette, huc6270_reg, huc6260_reg, system_ram, zp, rom, card_ram, cd_ram, backup_ram"},
+                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "system_ram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
                 }},
                 {"read", {
                     {"type", "boolean"},
@@ -547,8 +547,8 @@ json McpServer::BuildToolList()
                 }},
                 {"memory_area", {
                     {"type", "string"},
-                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, wram, zp, rom, card_ram, cd_ram, backup_ram"},
-                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "wram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
+                    {"description", "Memory area: cpu_addr (default), rom_ram, vram, palette, huc6270_reg, huc6260_reg, system_ram, zp, rom, card_ram, cd_ram, backup_ram"},
+                    {"enum", json::array({"cpu_addr", "rom_ram", "vram", "palette", "huc6270_reg", "huc6260_reg", "system_ram", "zp", "rom", "card_ram", "cd_ram", "backup_ram"})}
                 }}
             }},
             {"required", json::array({"address"})}
@@ -571,7 +571,8 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "list_memory_areas"},
         {"title", "List Memory Areas"},
-        {"description", "List memory spaces/tabs: WRAM, VRAM, palette, ROM banks; returns area IDs, sizes in addressable units, unit sizes, and byte sizes."},
+        {"description", "List memory spaces/tabs, including logical CPU and physical bus views; "
+            "returns area IDs, sizes in addressable units, unit sizes, and byte sizes."},
         {"annotations", {{"readOnlyHint", true}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
         {"inputSchema", {
             {"type", "object"},
@@ -1794,9 +1795,9 @@ json McpServer::BuildToolList()
     });
 
     tools.push_back({
-        {"name", "memory_find_bytes"},
-        {"title", "Find Byte Sequence in Memory"},
-        {"description", "Find consecutive hex byte sequence in memory; return addresses."},
+        {"name", "memory_find"},
+        {"title", "Find Bytes or Text in Memory"},
+        {"description", "Find consecutive hex bytes or text in memory; return addresses."},
         {"annotations", {{"readOnlyHint", true}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
         {"inputSchema", {
             {"type", "object"},
@@ -1807,10 +1808,27 @@ json McpServer::BuildToolList()
                 }},
                 {"hex_bytes", {
                     {"type", "string"},
-                    {"description", "Hex byte pairs to find, e.g. '04E5FF32' (spaces optional)"}
+                    {"description", "Hex byte pairs to find, e.g. '04E5FF32' (spaces optional). "
+                        "Use either hex_bytes or text."},
+                    {"minLength", 1}
+                }},
+                {"text", {
+                    {"type", "string"},
+                    {"description", "UTF-8 text to find. Use either text or hex_bytes."},
+                    {"minLength", 1}
+                }},
+                {"case_sensitive", {
+                    {"type", "boolean"},
+                    {"description", "Match text case. Default true; false folds ASCII letters. "
+                        "Ignored for hex_bytes."}
                 }}
             }},
-            {"required", json::array({"area", "hex_bytes"})}
+            {"required", json::array({"area"})},
+            {"oneOf", json::array({
+                {{"required", json::array({"hex_bytes"})}},
+                {{"required", json::array({"text"})}}
+            })},
+            {"additionalProperties", false}
         }}
     });
 
@@ -2252,7 +2270,7 @@ static bool GetBreakpointTypeFromString(const std::string& memory_area, int& typ
         return true;
     }
 
-    if (memory_area == "wram")
+    if (memory_area == "system_ram")
     {
         type = HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM;
         return true;
@@ -2632,8 +2650,8 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
             data.push_back(byte);
         }
 
-        m_debugAdapter.WriteMemoryArea(area, offset, data);
-        return {{"success", true}, {"area", area}, {"offset", offsetStr}, {"bytes_written", data.size()}};
+        size_t bytes_written = m_debugAdapter.WriteMemoryArea(area, offset, data);
+        return {{"success", bytes_written > 0}, {"area", area}, {"offset", offsetStr}, {"bytes_written", bytes_written}};
     }
     // Registers
     else if (normalizedTool == "write_huc6280_register")
@@ -3148,16 +3166,30 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         std::string data_type = arguments.value("data_type", "unsigned");
         return m_debugAdapter.MemorySearch(area, op, compare_type, compare_value, data_type);
     }
-    else if (normalizedTool == "memory_find_bytes")
+    else if (normalizedTool == "memory_find")
     {
         if (!arguments.contains("area") || !arguments["area"].is_number_integer())
             return {{"error", "area is required"}};
-        if (!arguments.contains("hex_bytes") || !arguments["hex_bytes"].is_string())
-            return {{"error", "hex_bytes is required"}};
+        if (arguments.contains("hex_bytes") && !arguments["hex_bytes"].is_string())
+            return {{"error", "hex_bytes must be a string"}};
+        if (arguments.contains("text") && !arguments["text"].is_string())
+            return {{"error", "text must be a string"}};
+        if (arguments.contains("case_sensitive") && !arguments["case_sensitive"].is_boolean())
+            return {{"error", "case_sensitive must be a boolean"}};
+
+        bool has_hex_bytes = arguments.contains("hex_bytes");
+        bool has_text = arguments.contains("text");
+        if (has_hex_bytes == has_text)
+            return {{"error", "Exactly one of hex_bytes or text is required"}};
 
         int area = arguments["area"].get<int>();
-        std::string hex_bytes = arguments["hex_bytes"].get<std::string>();
-        return m_debugAdapter.MemoryFindBytes(area, hex_bytes);
+        std::string value;
+        if (has_text)
+            value = arguments["text"].get<std::string>();
+        else
+            value = arguments["hex_bytes"].get<std::string>();
+        bool case_sensitive = arguments.value("case_sensitive", true);
+        return m_debugAdapter.MemoryFind(area, value, has_text, case_sensitive);
     }
     else if (normalizedTool == "get_trace_log")
     {

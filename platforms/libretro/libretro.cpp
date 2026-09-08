@@ -72,6 +72,7 @@ static int current_screen_height = 0;
 static int current_width_scale = 1;
 static float current_aspect_ratio = 0.0f;
 static float aspect_ratio = 0.0f;
+static double current_fps = 0.0;
 
 static bool allow_up_down = false;
 static bool allow_soft_reset = false;
@@ -87,6 +88,7 @@ static bool lowpass_speed_108 = true;
 static bool turbo_toggle_hotkey = false;
 static int mouse_sensitivity = 5;
 static bool libretro_supports_bitmasks = false;
+static GG_Keys avenue_pad_3_button = GG_KEY_NONE;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
 static int joypad_old[MAX_PADS][MAX_BUTTONS];
 struct MouseState
@@ -176,6 +178,17 @@ static bool IsJoypadDevice(unsigned device)
 {
     return ((device == RETRO_DEVICE_JOYPAD) || (device == RETRO_DEVICE_PCE_PAD) ||
             (device == RETRO_DEVICE_PCE_AVENUE_PAD_3) || (device == RETRO_DEVICE_PCE_AVENUE_PAD_6));
+}
+
+static GG_Keys get_avenue_pad_3_button(void)
+{
+    if (avenue_pad_3_button != GG_KEY_NONE)
+        return avenue_pad_3_button;
+
+    if (core)
+        return core->GetMedia()->GetAvenuePad3Button();
+
+    return GG_KEY_RUN;
 }
 
 unsigned retro_api_version(void)
@@ -318,7 +331,9 @@ void retro_deinit(void)
     aspect_ratio = 0.0f;
     initial_mmi_image_index = 0;
     initial_mmi_image_path[0] = 0;
+    current_fps = 0.0;
     libretro_supports_bitmasks = false;
+    avenue_pad_3_button = GG_KEY_NONE;
 
     reset_controller_devices();
     clear_input_state();
@@ -362,6 +377,9 @@ void retro_get_system_info(struct retro_system_info *info)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
+    core->GetRuntimeInfo(runtime_info);
+    current_fps = runtime_info.fps;
+
     info->geometry.base_width   = runtime_info.screen_width;
     info->geometry.base_height  = runtime_info.screen_height;
     info->geometry.max_width    = MAX_SCREEN_WIDTH;
@@ -369,7 +387,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     info->geometry.aspect_ratio = runtime_info.aspect_ratio > 0.0f ? runtime_info.aspect_ratio :
         (aspect_ratio == 0.0f ? (float)runtime_info.screen_width / (float)runtime_info.screen_height /
         (float)runtime_info.width_scale : aspect_ratio);
-    info->timing.fps            = 59.82;
+    info->timing.fps            = current_fps;
     info->timing.sample_rate    = 44100.0;
 }
 
@@ -387,18 +405,19 @@ void retro_run(void)
 
     core->GetRuntimeInfo(runtime_info);
 
-    float effective_aspect_ratio = runtime_info.aspect_ratio > 0.0f ?
-        runtime_info.aspect_ratio : aspect_ratio;
+    bool fps_changed = runtime_info.fps < current_fps - 0.000001 || runtime_info.fps > current_fps + 0.000001;
+    bool geometry_changed = (runtime_info.screen_width != current_screen_width) ||
+                            (runtime_info.screen_height != current_screen_height) ||
+                            (runtime_info.width_scale != current_width_scale) ||
+                            (aspect_ratio != current_aspect_ratio);
 
-    if ((runtime_info.screen_width != current_screen_width) ||
-        (runtime_info.screen_height != current_screen_height) ||
-        (runtime_info.width_scale != current_width_scale) ||
-        (effective_aspect_ratio != current_aspect_ratio))
+    if (fps_changed || geometry_changed)
     {
         current_screen_width = runtime_info.screen_width;
         current_screen_height = runtime_info.screen_height;
         current_width_scale = runtime_info.width_scale;
-        current_aspect_ratio = effective_aspect_ratio;
+        current_aspect_ratio = aspect_ratio;
+        current_fps = runtime_info.fps;
 
         retro_system_av_info info;
         info.geometry.base_width   = runtime_info.screen_width;
@@ -408,8 +427,13 @@ void retro_run(void)
         info.geometry.aspect_ratio = runtime_info.aspect_ratio > 0.0f ? runtime_info.aspect_ratio :
             (aspect_ratio == 0.0f ? ((float)runtime_info.screen_width / (float)runtime_info.width_scale) /
             (float)runtime_info.screen_height : aspect_ratio);
+        info.timing.fps            = current_fps;
+        info.timing.sample_rate    = 44100.0;
 
-        environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
+        if (fps_changed)
+            environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+        else
+            environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
     }
 
     video_cb((uint8_t*)frame_buffer, runtime_info.screen_width, runtime_info.screen_height, runtime_info.screen_width * sizeof(u8) * 2);
@@ -1127,6 +1151,25 @@ static void poll_input(void)
 
         int select_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_SELECT);
         int start_pressed  = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_START);
+        int third_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_Y);
+        int fourth_pressed = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_X);
+
+        if (input_device[j] == RETRO_DEVICE_PCE_AVENUE_PAD_3)
+        {
+            if (get_avenue_pad_3_button() == GG_KEY_SELECT)
+            {
+                select_pressed |= third_pressed;
+                start_pressed |= fourth_pressed;
+            }
+            else
+            {
+                start_pressed |= third_pressed;
+                select_pressed |= fourth_pressed;
+            }
+
+            third_pressed = 0;
+            fourth_pressed = 0;
+        }
 
         if (allow_soft_reset)
         {
@@ -1141,8 +1184,8 @@ static void poll_input(void)
 
         joypad_current[j][4] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_A);
         joypad_current[j][5] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_B);
-        joypad_current[j][8] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_Y);
-        joypad_current[j][9] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_X);
+        joypad_current[j][8] = third_pressed;
+        joypad_current[j][9] = fourth_pressed;
         joypad_current[j][10] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_L);
         joypad_current[j][11] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_R);
         joypad_current[j][12] = IsButtonPressed(joypad_bits[j], RETRO_DEVICE_ID_JOYPAD_L2);
@@ -1542,8 +1585,14 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        bool huc6280a = (strcmp(var.value, "Enabled") == 0);
-        core->GetAudio()->GetPSG()->EnableHuC6280A(huc6280a);
+        GG_PSG_Revision revision = GG_PSG_REVISION_AUTO;
+
+        if ((strcmp(var.value, "HuC6280") == 0) || (strcmp(var.value, "Disabled") == 0))
+            revision = GG_PSG_REVISION_HUC6280;
+        else if ((strcmp(var.value, "HuC6280A") == 0) || (strcmp(var.value, "Enabled") == 0))
+            revision = GG_PSG_REVISION_HUC6280A;
+
+        core->SetPSGRevision(revision);
     }
 
     var.key = "geargrafx_no_sprite_limit";
@@ -1569,18 +1618,17 @@ static void check_variables(void)
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        GG_Keys button;
         if (strcmp(var.value, "Auto") == 0)
-            button = GG_KEY_NONE;
+            avenue_pad_3_button = GG_KEY_NONE;
         else if (strcmp(var.value, "SELECT") == 0)
-            button = GG_KEY_SELECT;
+            avenue_pad_3_button = GG_KEY_SELECT;
         else if (strcmp(var.value, "RUN") == 0)
-            button = GG_KEY_RUN;
+            avenue_pad_3_button = GG_KEY_RUN;
         else
-            button = GG_KEY_NONE;
+            avenue_pad_3_button = GG_KEY_NONE;
 
         for (int i = 0; i < MAX_PADS; i++)
-            core->GetInput()->SetAvenuePad3Button((GG_Controllers)i, button);
+            core->GetInput()->SetAvenuePad3Button((GG_Controllers)i, avenue_pad_3_button);
     }
 
     var.key = "geargrafx_soft_reset";

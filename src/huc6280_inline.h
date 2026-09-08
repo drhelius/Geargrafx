@@ -188,6 +188,14 @@ INLINE void HuC6280::ClockCountedCycles(unsigned int cycles)
     ClockHardwareCycles(cycles * k_huc6280_speed_divisor[m_speed]);
 }
 
+INLINE void HuC6280::ClockPendingCycles()
+{
+    u32 target = (m_cycles * k_huc6280_speed_divisor[m_speed]) + m_extra_master_cycles;
+
+    if (target > m_clocked_master_cycles)
+        ClockHardwareCycles(target - m_clocked_master_cycles);
+}
+
 INLINE void HuC6280::StallFastCycle()
 {
     m_extra_master_cycles += 3;

@@ -123,8 +123,8 @@ INLINE void Adpcm::Write(u16 address, u8 value)
 
 INLINE u32 Adpcm::CalculateCyclesPerSample(u8 sample_rate)
 {
-    double frequency = 32000.0 / (16.0 - (double)sample_rate);
-    return (u32)((double)GG_MASTER_CLOCK_RATE / frequency);
+    double frequency = GG_ADPCM_BASE_SAMPLE_RATE / (16.0 - (double)sample_rate);
+    return (u32)(((double)GG_MASTER_CLOCK_RATE * 65536.0 / frequency) + 0.5);
 }
 
 INLINE u32 Adpcm::NextSlotCycles(bool read)
@@ -248,7 +248,7 @@ inline void Adpcm::RunAdpcm(u32 cycles)
         return;
     }
 
-    m_adpcm_cycle_counter += cycles;
+    m_adpcm_cycle_counter += cycles << 16;
     if (m_adpcm_cycle_counter >= m_cycles_per_sample)
     {
         m_adpcm_cycle_counter -= m_cycles_per_sample;

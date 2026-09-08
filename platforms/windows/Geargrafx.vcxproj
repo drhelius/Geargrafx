@@ -30,6 +30,7 @@
     <ClCompile Include="..\..\src\media_file_native.cpp" />
     <ClCompile Include="..\..\src\media_file_slice.cpp" />
     <ClCompile Include="..\..\src\mmi_archive.cpp" />
+    <ClCompile Include="..\..\src\ogg_vorbis_decoder.cpp" />
     <ClCompile Include="..\..\src\cdrom_image.cpp" />
     <ClCompile Include="..\..\src\media.cpp" />
     <ClCompile Include="..\..\src\cdrom_audio.cpp" />
@@ -87,6 +88,10 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\shared\dependencies\qon\qon.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\shared\dependencies\minivorbis\minivorbis.c">
+      <CompileAs>CompileAsC</CompileAs>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\shared\desktop\sound_queue.cpp" />
@@ -176,6 +181,7 @@
     <ClInclude Include="..\..\src\media_file_native.h" />
     <ClInclude Include="..\..\src\media_file_slice.h" />
     <ClInclude Include="..\..\src\mmi_archive.h" />
+    <ClInclude Include="..\..\src\ogg_vorbis_decoder.h" />
     <ClInclude Include="..\..\src\cdrom_image.h" />
     <ClInclude Include="..\..\src\crc.h" />
     <ClInclude Include="..\..\src\huc6202_inline.h" />
@@ -236,6 +242,7 @@
     <ClInclude Include="..\..\src\laseractive.h" />
     <ClInclude Include="..\..\src\types.h" />
     <ClInclude Include="..\shared\dependencies\glad\glad.h" />
+    <ClInclude Include="..\shared\dependencies\minivorbis\minivorbis.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\bitstream.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\cdrom.h" />
     <ClInclude Include="..\shared\dependencies\libchdr\include\libchdr\chd.h" />
@@ -337,6 +344,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Geargrafx.rc" />
+    <ResourceCompile Include="version.rc">
+      <PreprocessorDefinitions>EMULATOR_BUILD="$(EmulatorBuild)";EMULATOR_VERSION=$(EmulatorVersionResource);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -344,6 +354,10 @@
     <ProjectGuid>{2344a943-76d2-473d-a742-4b3583b894ac}</ProjectGuid>
     <RootNamespace>Geargrafx</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <EmulatorBuild Condition="'$(EmulatorBuild)' == ''">undefined</EmulatorBuild>
+    <EmulatorVersion>$([System.Text.RegularExpressions.Regex]::Match('$(EmulatorBuild)', '^[0-9]+\.[0-9]+\.[0-9]+').Value)</EmulatorVersion>
+    <EmulatorVersion Condition="'$(EmulatorVersion)' == ''">0.0.0</EmulatorVersion>
+    <EmulatorVersionResource>$([System.String]::Copy('$(EmulatorVersion)').Replace('.', ',')),0</EmulatorVersionResource>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -421,7 +435,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/minivorbis;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -463,7 +477,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/minivorbis;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;release;.;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>release\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -505,7 +519,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/minivorbis;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -545,7 +559,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;../../src;../shared/dependencies/imgui;../shared/dependencies/mINI;../shared/dependencies/stb;../shared/dependencies/libchdr/include;../shared/dependencies/lzma/include;../shared/dependencies/zstd;../shared/dependencies/minivorbis;../shared/dependencies/miniz;../shared/dependencies/glad;../shared/dependencies/json;dependencies/SDL3/include;debug;.\GeneratedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:strictStrings -Zc:throwingNew -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>

@@ -538,9 +538,9 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                 else if (entry.adpcm.reg == 0x0E)
                 {
                     u8 rate = entry.adpcm.value & 0x0F;
-                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X) Value:$%02X  Rate:%uHz%s",
+                    snprintf(buf, buf_size, "  [ADPCM] WRITE   %s($%02X) Value:$%02X  Rate:%.2fHz%s",
                              reg_name, entry.adpcm.reg, entry.adpcm.value,
-                             32000 / (16 - rate), state);
+                             GG_ADPCM_BASE_SAMPLE_RATE / (16 - rate), state);
                 }
                 else
                 {

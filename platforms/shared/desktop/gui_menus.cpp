@@ -29,6 +29,7 @@
 #include "application.h"
 #include "display.h"
 #include "gamepad.h"
+#include "sound_queue.h"
 #include "emu.h"
 #include "ogl_renderer.h"
 #include "ogl_shader_chain.h"
@@ -976,11 +977,12 @@ static void menu_video(void)
 
         if (ImGui::BeginMenu("Vertical Sync"))
         {
-            ImGui::PushItemWidth(240.0f);
 #if defined(_WIN32)
-            if (ImGui::Combo("##sync_mode", &config_video.sync_mode, "Disabled\0Fixed (60 Hz, 120 Hz, 240 Hz)\0Variable Refresh Rate (VRR)\0\0"))
+            ImGui::PushItemWidth(220.0f);
+            if (ImGui::Combo("##sync_mode", &config_video.sync_mode, "Disabled\0Fixed Vertical Sync\0Variable Refresh Rate (VRR)\0\0"))
 #else
-            if (ImGui::Combo("##sync_mode", &config_video.sync_mode, "Disabled\0Fixed (60 Hz, 120 Hz, 240 Hz)\0\0"))
+            ImGui::PushItemWidth(100.0f);
+            if (ImGui::Combo("##sync_mode", &config_video.sync_mode, "Disabled\0Enabled\0\0"))
 #endif
             {
                 if (config_video.sync_mode != config_VideoSync_Disabled)
@@ -994,19 +996,18 @@ static void menu_video(void)
             }
             ImGui::PopItemWidth();
 
+#if defined(_WIN32)
             if (ImGui::IsItemHovered())
             {
                 ImGui::BeginTooltip();
                 ImGui::Text("Disabled: do not synchronize presentation to the monitor.");
-                ImGui::Text("Fixed: use normal VSync for 60 Hz, 120 Hz, and 240 Hz displays.");
-#if defined(_WIN32)
+                ImGui::Text("Fixed Vertical Sync: use normal VSync.");
                 ImGui::Text("VRR: present at the emulator frame rate.");
-                ImGui::Text("VRR requires fullscreen, a VRR display, and G-SYNC,");
+                ImGui::Text("\nVRR requires fullscreen, a VRR display, and G-SYNC,");
                 ImGui::Text("FreeSync, or Adaptive Sync enabled in your monitor and GPU driver settings.");
-#endif
                 ImGui::EndTooltip();
             }
-
+#endif
             ImGui::EndMenu();
         }
 
@@ -1608,16 +1609,24 @@ static void menu_audio(void)
             emu_audio_mute(!config_audio.enable);
         }
 
-        if (ImGui::MenuItem("HuC6280A PSG", "", &config_audio.huc6280a))
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("PSG Revision"))
         {
-            emu_audio_huc6280a(config_audio.huc6280a);
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("When enabled, this option will emulate the HuC6280A audio chip.");
-            ImGui::Text("This chip will reduce clicks and pops in the audio output.");
-            ImGui::EndTooltip();
+            ImGui::PushItemWidth(110.0f);
+            if (ImGui::Combo("##psg_revision", &config_audio.psg_revision, "Auto\0HuC6280\0HuC6280A\0\0"))
+            {
+                emu_audio_psg_revision(config_audio.psg_revision);
+            }
+            ImGui::PopItemWidth();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Auto uses HuC6280A for SuperGrafx and HuC6280 for all other systems.");
+                ImGui::Text("Explicit selections override automatic revision matching.");
+                ImGui::EndTooltip();
+            }
+            ImGui::EndMenu();
         }
 
         ImGui::Separator();
@@ -1721,12 +1730,12 @@ static void menu_audio(void)
             ImGui::PopItemWidth();
             if (ImGui::IsItemHovered())
             {
-                float latency_ms = (config_audio.buffer_count * GG_AUDIO_QUEUE_SIZE) / (float)(GG_AUDIO_SAMPLE_RATE * 2) * 1000.0f;
                 ImGui::BeginTooltip();
-                ImGui::Text("Lower values reduce audio latency.");
+                ImGui::Text("Audio latency: %.0f ms", sound_queue_get_target_latency_ms());
+                ImGui::Text("\nLower values reduce audio latency.");
                 ImGui::Text("Higher values prevent audio underruns.");
                 ImGui::Text("Enabling VSync may force higher buffer counts.");
-                ImGui::Text("Current audio latency: %.0f ms", latency_ms);
+
                 ImGui::EndTooltip();
             }
             ImGui::EndMenu();
@@ -1885,7 +1894,7 @@ static void menu_debug(void)
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("WRAM & CD-ROM RAM"))
+            if (ImGui::BeginMenu("SYSTEM RAM & CD-ROM RAM"))
             {
                 ImGui::PushItemWidth(100.0f);
                 if (ImGui::Combo("##init_ram", &config_debug.reset_ram, "Random\0 0x00\0 0xFF\0\0"))

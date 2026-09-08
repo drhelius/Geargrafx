@@ -62,6 +62,7 @@ int application_headless_init(const ApplicationParams& params)
     emu_set_overscan(0);
     emu_set_scanline_start_end(0, 241);
     emu_audio_mute(true);
+    emu_audio_psg_revision(config_audio.psg_revision);
 
     gui_debug_init();
 

@@ -179,7 +179,7 @@ To find text strings for translation or modification:
 
 1. Determine the character encoding — PC Engine games often use custom character maps stored in VRAM tiles, not ASCII
 2. `read_memory` across ROM scanning for known byte patterns
-3. Use `memory_find_bytes` to search for specific byte sequences across memory
+3. Use `memory_find` with `text` for literal strings or `hex_bytes` for encoded byte sequences
 4. Set read breakpoints on suspected text addresses with `set_breakpoint` (type: read) to confirm they're used for rendering
 5. `get_screenshot` to correlate displayed text with memory contents
 
@@ -247,7 +247,7 @@ The most powerful cheat-finding technique:
 ### 2. Find String Data
 
 1. Look for sequential text bytes in ROM using `read_memory` with large ranges
-2. Use `memory_find_bytes` to search for known byte patterns
+2. Use `memory_find` with `text` for literal strings or `hex_bytes` for known byte patterns
 3. Cross-reference with the character table to decode strings
 4. `add_memory_bookmark` to mark each string location
 

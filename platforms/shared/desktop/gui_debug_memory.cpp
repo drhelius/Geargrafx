@@ -33,9 +33,18 @@ static int mem_edit_select = -1;
 static int current_mem_edit = 0;
 static char set_value_buffer[5] = { };
 static const int DEBUG_MEMORY_MAX_SETTINGS_RECORDS = 0x10000;
+static_assert(config_memory_editor_count == MEMORY_EDITOR_MAX, "Memory editor config count mismatch");
 
 static void memory_editor_menu(void);
 static void draw_tabs(void);
+static bool logical_memory_read(int address, u8* value, void* user_data);
+static bool logical_memory_write(int address, u8 value, void* user_data);
+static bool logical_memory_can_write(int address, void* user_data);
+static void logical_memory_format_address(int address, char* buffer, int buffer_size,
+    void* user_data);
+static bool physical_memory_read(int address, u8* value, void* user_data);
+static bool physical_memory_write(int address, u8 value, void* user_data);
+static bool physical_memory_can_write(int address, void* user_data);
 static void toggle_memory_breakpoint(int editor, int start, int end);
 static bool memory_settings_read_data(std::istream& stream, void* data, size_t size);
 static bool memory_settings_read_count(std::istream& stream, int& count, size_t record_size);
@@ -56,7 +65,8 @@ void gui_debug_memory_init(void)
         options.gray_out_zeros = config_debug.mem_editor_gray_out_zeros[i];
         mem_edit[i].SetOptions(options);
 
-        mem_edit[i].SetBreakpointCallback(toggle_memory_breakpoint, i);
+        if (i != MEMORY_EDITOR_PHYSICAL)
+            mem_edit[i].SetBreakpointCallback(toggle_memory_breakpoint, i);
     }
 }
 
@@ -84,7 +94,10 @@ void gui_debug_memory_reset(void)
     Adpcm* adpcm = core->GetAdpcm();
     bool is_sgx = media->IsSGX();
 
-    mem_edit[MEMORY_EDITOR_RAM].Reset("WRAM", memory->GetWorkingRAM(), 0x2000 * (is_sgx ? 4 : 1));
+    mem_edit[MEMORY_EDITOR_LOGICAL].Reset("LOGICAL", 0x10000, logical_memory_read, logical_memory_write, logical_memory_can_write, memory);
+    mem_edit[MEMORY_EDITOR_LOGICAL].SetAddressFormatter(logical_memory_format_address, 7);
+    mem_edit[MEMORY_EDITOR_PHYSICAL].Reset("PHYSICAL", 0x200000, physical_memory_read, physical_memory_write, physical_memory_can_write, memory);
+    mem_edit[MEMORY_EDITOR_RAM].Reset("SYSTEM RAM", memory->GetWorkingRAM(), 0x2000 * (is_sgx ? 4 : 1));
     mem_edit[MEMORY_EDITOR_ZERO_PAGE].Reset("ZP", memory->GetWorkingRAM(), 0x100);
     mem_edit[MEMORY_EDITOR_ROM].Reset(media->IsLaserActive() ? "BIOS" : "ROM",
         media->IsLaserActive() ? media->GetMappedBios() : media->GetROM(),
@@ -210,8 +223,30 @@ static void draw_tabs(void)
     bool is_cdrom = media->IsCDROM();
     bool is_arcade_card = core->GetMedia()->IsArcadeCard();
 
-    for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
+    static const int tab_order[MEMORY_EDITOR_MAX] =
     {
+        MEMORY_EDITOR_LOGICAL,
+        MEMORY_EDITOR_PHYSICAL,
+        MEMORY_EDITOR_RAM,
+        MEMORY_EDITOR_ZERO_PAGE,
+        MEMORY_EDITOR_CDROM_RAM,
+        MEMORY_EDITOR_ROM,
+        MEMORY_EDITOR_VRAM_1,
+        MEMORY_EDITOR_VRAM_2,
+        MEMORY_EDITOR_SAT_1,
+        MEMORY_EDITOR_SAT_2,
+        MEMORY_EDITOR_PALETTES,
+        MEMORY_EDITOR_CARD_RAM,
+        MEMORY_EDITOR_BACKUP_RAM,
+        MEMORY_EDITOR_ADPCM_RAM,
+        MEMORY_EDITOR_ARCADE_RAM,
+        MEMORY_EDITOR_MB128
+    };
+
+    for (int tab = 0; tab < MEMORY_EDITOR_MAX; tab++)
+    {
+        int i = tab_order[tab];
+
         if (!is_sgx && (i == MEMORY_EDITOR_VRAM_2 || i == MEMORY_EDITOR_SAT_2))
             continue;
         if (i == MEMORY_EDITOR_ROM && !IsValidPointer(media->GetROM()) && !media->IsLaserActive())
@@ -232,14 +267,65 @@ static void draw_tabs(void)
         if (ImGui::BeginTabItem(mem_edit[i].GetTitle(), NULL, mem_edit_select == i ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
         {
             ImGui::PushFont(gui_default_font);
-                if (mem_edit_select == i)
+            if (mem_edit_select == i)
                 mem_edit_select = -1;
             current_mem_edit = i;
+
             mem_edit[i].Draw();
             ImGui::PopFont();
             ImGui::EndTabItem();
         }
     }
+}
+
+static bool logical_memory_read(int address, u8* value, void* user_data)
+{
+    Memory* memory = (Memory*)user_data;
+    return IsValidPointer(memory) && memory->TryPeek((u16)address, value);
+}
+
+static bool logical_memory_write(int address, u8 value, void* user_data)
+{
+    Memory* memory = (Memory*)user_data;
+    return IsValidPointer(memory) && memory->TryPoke((u16)address, value);
+}
+
+static bool logical_memory_can_write(int address, void* user_data)
+{
+    Memory* memory = (Memory*)user_data;
+    return IsValidPointer(memory) && memory->CanPoke((u16)address);
+}
+
+static void logical_memory_format_address(int address, char* buffer, int buffer_size,
+    void* user_data)
+{
+    Memory* memory = (Memory*)user_data;
+
+    if (IsValidPointer(memory))
+        snprintf(buffer, buffer_size, "%02X:%04X", memory->GetBank((u16)address), address & 0xFFFF);
+    else
+        snprintf(buffer, buffer_size, "??:%04X", address & 0xFFFF);
+}
+
+static bool physical_memory_read(int address, u8* value, void* user_data)
+{
+    Memory* memory = (Memory*)user_data;
+    u8 bank = (u8)(address >> 13);
+    return IsValidPointer(memory) && memory->TryPeek((u16)(address & 0x1FFF), bank, value);
+}
+
+static bool physical_memory_write(int address, u8 value, void* user_data)
+{
+    Memory* memory = (Memory*)user_data;
+    u8 bank = (u8)(address >> 13);
+    return IsValidPointer(memory) && memory->TryPoke((u16)(address & 0x1FFF), bank, value);
+}
+
+static bool physical_memory_can_write(int address, void* user_data)
+{
+    Memory* memory = (Memory*)user_data;
+    u8 bank = (u8)(address >> 13);
+    return IsValidPointer(memory) && memory->CanPoke((u16)(address & 0x1FFF), bank);
 }
 
 static void memory_editor_menu(void)
@@ -344,8 +430,12 @@ static void memory_editor_menu(void)
         {
             MemEditor::Bookmark* bookmark = &(*bookmarks)[i];
 
+            char address[32];
+            mem_edit[current_mem_edit].FormatAddress(bookmark->address, address, sizeof(address));
+
             char label[80];
-            snprintf(label, 80, "$%04X: %s", bookmark->address, bookmark->name);
+            snprintf(label, sizeof(label), mem_edit[current_mem_edit].HasAddressFormatter() ?
+                "%s: %s" : "$%s: %s", address, bookmark->name);
 
             if (ImGui::MenuItem(label))
             {
@@ -395,6 +485,12 @@ static void memory_editor_menu(void)
             mem_edit[current_mem_edit].OpenFindBytes();
         }
 
+        snprintf(label, 64, "Find Text in %s...", mem_edit[current_mem_edit].GetTitle());
+        if (ImGui::MenuItem(label))
+        {
+            mem_edit[current_mem_edit].OpenFindText();
+        }
+
         ImGui::EndMenu();
     }
 
@@ -415,12 +511,12 @@ bool gui_debug_memory_select_range(int editor, int start_address, int end_addres
     return true;
 }
 
-void gui_debug_memory_set_selection_value(int editor, u8 value)
+int gui_debug_memory_set_selection_value(int editor, u8 value)
 {
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
-        return;
+        return 0;
 
-    mem_edit[editor].SetValueToSelection(value);
+    return mem_edit[editor].SetValueToSelection(value);
 }
 
 void gui_debug_memory_add_bookmark(int editor, int address, const char* name)
@@ -438,7 +534,7 @@ void gui_debug_memory_add_bookmark(int editor, int address, const char* name)
     }
     else
     {
-        snprintf(bookmark.name, sizeof(bookmark.name), "Bookmark_%04X", address);
+        snprintf(bookmark.name, sizeof(bookmark.name), "Bookmark_%0*X", mem_edit[editor].GetAddressDigits(), address);
     }
 
     bookmarks->push_back(bookmark);
@@ -564,12 +660,12 @@ int gui_debug_memory_search(int editor, int op, int compare_type, int compare_va
     return count;
 }
 
-int gui_debug_memory_find_bytes(int editor, const char* hex_str, int* out_addresses, int max_results)
+int gui_debug_memory_find(int editor, const char* value, bool text, bool case_sensitive, int* out_addresses, int max_results)
 {
     if (editor < 0 || editor >= MEMORY_EDITOR_MAX)
         return 0;
 
-    return mem_edit[editor].FindBytesSequence(hex_str, out_addresses, max_results);
+    return mem_edit[editor].FindSequence(value, text, case_sensitive, out_addresses, max_results);
 }
 
 void gui_debug_memory_save_settings(std::ostream& stream)
@@ -580,13 +676,16 @@ void gui_debug_memory_save_settings(std::ostream& stream)
     }
 }
 
-bool gui_debug_memory_load_settings(std::istream& stream)
+bool gui_debug_memory_load_settings(std::istream& stream, int editor_count)
 {
+    if (editor_count < 0 || editor_count > MEMORY_EDITOR_MAX)
+        return false;
+
     std::vector<MemEditor::Bookmark> bookmarks[MEMORY_EDITOR_MAX];
     std::vector<MemEditor::Watch> watches[MEMORY_EDITOR_MAX];
     u32 total_records = 0;
 
-    for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
+    for (int i = 0; i < editor_count; i++)
     {
         if (!memory_settings_read_editor(stream, bookmarks[i], watches[i], total_records))
             return false;
@@ -686,6 +785,10 @@ static void toggle_memory_breakpoint(int editor, int start, int end)
 
     switch (editor)
     {
+    case MEMORY_EDITOR_LOGICAL:
+        type = HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS;
+        break;
+
     case MEMORY_EDITOR_RAM:
         type = HuC6280::HuC6280_BREAKPOINT_TYPE_WRAM;
         break;

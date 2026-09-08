@@ -370,6 +370,7 @@ include Makefile.common
 OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
 INCLUDES += -I$(CORE_DIR) -I$(SOURCE_DIR)
+INCLUDES += -I$(DEPS_DIR)/minivorbis
 INCLUDES += -I$(DEPS_DIR)/miniz
 INCLUDES += -I$(DEPS_DIR)/json
 INCLUDES += -I$(DEPS_DIR)/qon

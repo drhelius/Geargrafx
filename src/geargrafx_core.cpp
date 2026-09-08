@@ -68,6 +68,8 @@ GeargrafxCore::GeargrafxCore()
     m_turbolink_next_sync_cycle = TURBOLINK_MAX_SYNC_CYCLES;
     m_frame_ready = false;
     m_mb128_mode = GG_MB128_AUTO;
+    m_requested_psg_revision = GG_PSG_REVISION_AUTO;
+    m_psg_revision = GG_PSG_REVISION_AUTO;
 }
 
 GeargrafxCore::~GeargrafxCore()
@@ -135,6 +137,8 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_adpcm->Init(this, m_cdrom, m_scsi_controller);
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);
 
+    SelectPSGRevision();
+
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_trace_logger = new TraceLogger(&m_master_clock_cycles);
     m_memory->SetTraceLogger(m_trace_logger);
@@ -150,6 +154,38 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_adpcm->SetTraceLogger(m_trace_logger);
     m_scsi_controller->SetTraceLogger(m_trace_logger);
 #endif
+}
+
+void GeargrafxCore::SetPSGRevision(GG_PSG_Revision revision)
+{
+    if ((revision == GG_PSG_REVISION_AUTO) || (revision == GG_PSG_REVISION_HUC6280) ||
+        (revision == GG_PSG_REVISION_HUC6280A))
+    {
+        m_requested_psg_revision = revision;
+
+        if (IsValidPointer(m_audio) && IsValidPointer(m_media))
+            SelectPSGRevision();
+    }
+}
+
+GG_PSG_Revision GeargrafxCore::GetPSGRevision() const
+{
+    return m_psg_revision;
+}
+
+void GeargrafxCore::SelectPSGRevision()
+{
+    GG_PSG_Revision revision = m_requested_psg_revision;
+
+    if (revision == GG_PSG_REVISION_AUTO)
+        revision = m_media->IsSGX() ? GG_PSG_REVISION_HUC6280A : GG_PSG_REVISION_HUC6280;
+
+    if (revision != m_psg_revision)
+    {
+        m_psg_revision = revision;
+        m_audio->GetPSG()->EnableHuC6280A(revision == GG_PSG_REVISION_HUC6280A);
+        Log("PSG revision: %s", revision == GG_PSG_REVISION_HUC6280A ? "HuC6280A" : "HuC6280");
+    }
 }
 
 bool GeargrafxCore::LoadMedia(const char* file_path, bool softpatching)
@@ -261,6 +297,7 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
     runtime_info.aspect_ratio = 0.0f;
     if (m_media->IsCDROM() && m_media->IsLaserActive())
         runtime_info.aspect_ratio = 4.0f / 3.0f;
+    runtime_info.fps = huc6260_get_frame_rate(m_huc6260->GetTotalLines());
 
     return m_media->IsReady();
 }
@@ -1120,6 +1157,8 @@ void GeargrafxCore::Reset()
     bool force_backup_ram = m_media->IsBackupRAMForced();
     bool is_sgx = m_media->IsSGX();
     bool is_cdrom = m_media->IsCDROM();
+
+    SelectPSGRevision();
 
     LaserActive* laseractive = m_media->IsLaserActive() ? m_laseractive : NULL;
     m_cdrom_audio->SetLaserActive(laseractive);

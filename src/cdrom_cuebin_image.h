@@ -47,6 +47,7 @@ struct GG_CdRomCueBinLoadOptions
 };
 
 class MediaFile;
+class OggVorbisDecoder;
 
 typedef MediaFile* (*GG_CdRomCueFileResolver)(const char* reference, char* resolved_path,
     size_t resolved_path_size, void* user_data);
@@ -66,6 +67,9 @@ private:
         u8** chunks;
         u64* cached_chunk_indices;
         MediaFile* file;
+        OggVorbisDecoder* ogg_decoder;
+        u64 decoded_pcm_size;
+        bool is_ogg;
         bool is_wav;
         u64 wav_data_offset;
     };
@@ -123,10 +127,12 @@ private:
     void InitParsedCueTrack(ParsedCueTrack& track);
     void InitParsedCueFile(ParsedCueFile& cue_file);
     void InitTrackFile(TrackFile& track_file);
+    void DestroyImgFile(ImgFile* img_file);
     void DestroyImgFiles();
     bool GatherImgInfo(ImgFile* img_file);
     bool OpenImgFile(ImgFile* img_file);
     bool ProcessFileFormat(ImgFile* img_file);
+    bool ProcessOggFormat(ImgFile* img_file);
     bool ProcessWavFormat(ImgFile* img_file);
     bool FindWavDataChunk(ImgFile* img_file, MediaFile& file);
     bool SetupFileChunks(ImgFile* img_file);

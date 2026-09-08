@@ -599,9 +599,9 @@ bool emu_eject_physical_cdrom(void)
     #endif
 }
 
-void emu_audio_huc6280a(bool enabled)
+void emu_audio_psg_revision(int revision)
 {
-    geargrafx->GetAudio()->GetPSG()->EnableHuC6280A(enabled);
+    geargrafx->SetPSGRevision((GG_PSG_Revision)revision);
 }
 
 void emu_audio_mute(bool mute)
@@ -739,6 +739,16 @@ void update_savestates_data(void)
 void emu_get_runtime(GG_Runtime_Info& runtime)
 {
     geargrafx->GetRuntimeInfo(runtime);
+}
+
+double emu_get_frame_rate(void)
+{
+    if (!IsValidPointer(geargrafx))
+        return 60.0;
+
+    GG_Runtime_Info runtime;
+    emu_get_runtime(runtime);
+    return runtime.fps;
 }
 
 void emu_get_info(char* info, int buffer_size)

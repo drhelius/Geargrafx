@@ -95,9 +95,21 @@ const GG_DB_Entry k_game_database[] =
     { 0xECF7F668, "CD Pachi-Slot - Bishoujo Gambler (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS },
     { 0xAB786649, "Hi-Leg Fantasy (Japan) (Unl)", GG_GAMEDB_GAME_EXPRESS },
 
-    // ARCADE CARD GAMES
-    { 0xEF4294FC, "Garou Densetsu Special (J)" , GG_GAMEDB_ARCADE_CARD },
+    // ARCADE CARD COMPATIBLE SUPER CD-ROM GAMES
+    { 0x0B5D6132, "3x3 Eyes - Sanjiyan Hensei (J)", GG_GAMEDB_ARCADE_CARD },
+    { 0xB797C7F2, "3x3 Eyes - Sanjiyan Hensei (J) [Rev 1]", GG_GAMEDB_ARCADE_CARD },
     { 0xCDD5208E, "Formation Soccer 95 della Serie A (J)" , GG_GAMEDB_ARCADE_CARD },
+    { 0xA0CDB71C, "J. League Tremendous Soccer '94 (J)", GG_GAMEDB_ARCADE_CARD },
+    { 0xD69A7A56, "Linda^3 (J)", GG_GAMEDB_ARCADE_CARD },
+    { 0x2DF5FA07, "Mahjong Sword - Princess Quest Gaiden (J)", GG_GAMEDB_ARCADE_CARD },
+    { 0x9F9404B3, "Popful Mail (J)", GG_GAMEDB_ARCADE_CARD },
+    { 0x64DA90DD, "Sexy Idol Mahjong - Fashion Monogatari (J)", GG_GAMEDB_ARCADE_CARD },
+    { 0xA6B2A3F9, "Sotsugyou II - Neo Generation (J)", GG_GAMEDB_ARCADE_CARD },
+    { 0x946897FC, "Tanjou - Debut (J)", GG_GAMEDB_ARCADE_CARD },
+    { 0x05E496DB, "Wrestling Angels - Double Impact (J)", GG_GAMEDB_ARCADE_CARD },
+
+    // ARCADE CARD REQUIRED GAMES
+    { 0xEF4294FC, "Garou Densetsu Special (J)" , GG_GAMEDB_ARCADE_CARD },
     { 0x083F480F, "Garou Densetsu Special (J) [Demo]" , GG_GAMEDB_ARCADE_CARD },
     { 0x4B2CEDF2, "Garou Densetsu 2 - Aratanaru Tatakai (J)" , GG_GAMEDB_ARCADE_CARD },
     { 0x97948AEF, "Garou Densetsu 2 - Aratanaru Tatakai (J) [Demo]" , GG_GAMEDB_ARCADE_CARD },
@@ -179,24 +191,24 @@ const GG_DB_Entry k_game_database[] =
     // MB128 REQUIRED
     { 0xF12521E2, "A.III. - A Ressha de Ikou III (J)", GG_GAMEDB_MB128 },
     { 0x5BE0579C, "Aoki Ookami to Shiroki Mejika - Genchou Hishi (J)", GG_GAMEDB_MB128 },
-    { 0x04EAAFE4, "Eikan wa Kimi ni - Koukou Yakyuu Zenkoku Taikai (J)", GG_GAMEDB_MB128 },
+    { 0x04EAAFE4, "Eikan wa Kimi ni - Koukou Yakyuu Zenkoku Taikai (J)", GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
     { 0xDBD015F9, "Nobunaga no Yabou - Bushou Fuuunroku (J)", GG_GAMEDB_MB128 },
     { 0x3CF9B1FE, "Nobunaga no Yabou - Zenkokuban (J)", GG_GAMEDB_MB128 },
     { 0x7F4CB0C0, "Sangokushi III (J)", GG_GAMEDB_MB128 },
-    { 0x5E9F63A9, "The Atlas - Renaissance Voyager (J)", GG_GAMEDB_MB128 },
+    { 0x5E9F63A9, "The Atlas - Renaissance Voyager (J)", GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
 
     // MB128 COMPATIBLE
     { 0x05B6E0FA, "Bishoujo Senshi Sailor Moon Collection (J)", GG_GAMEDB_MB128 },
-    { 0x771A3258, "Brandish (J)", GG_GAMEDB_MB128 },
+    { 0x771A3258, "Brandish (J)", GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
     { 0x367DE1F4, "Magicoal (J)", GG_GAMEDB_MB128 },
-    { 0xDC2760EA, "Princess Maker 2 (J)", GG_GAMEDB_MB128 },
-    { 0x655C319F, "Private Eye dol (J)", GG_GAMEDB_MB128 },
+    { 0xDC2760EA, "Princess Maker 2 (J)", GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
+    { 0x655C319F, "Private Eye dol (J)", GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
     { 0x9B8A510C, "Shin Megami Tensei (J)", GG_GAMEDB_MB128 },
     { 0xF6980283, "Super Mahjong Taikai (J)", GG_GAMEDB_MB128 },
-    { 0x16D344D4, "Super Real Mahjong PII·III Custom (J)", GG_GAMEDB_MB128 },
-    { 0x42A6B864, "Super Real Mahjong P.V Custom (J)", GG_GAMEDB_MB128 },
+    { 0x16D344D4, "Super Real Mahjong PII·III Custom (J)", GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
+    { 0x42A6B864, "Super Real Mahjong P.V Custom (J)", GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
     { 0x86F2C397, "Tadaima Yuusha Boshuu-chuu (J)", GG_GAMEDB_MB128 },
-    { 0x38DD30EB, "Vasteel 2 (J)", GG_GAMEDB_MB128 },
+    { 0x38DD30EB, "Vasteel 2 (J)", GG_GAMEDB_ARCADE_CARD | GG_GAMEDB_MB128 },
 
     {0, 0, 0}
 };

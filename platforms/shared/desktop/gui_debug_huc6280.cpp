@@ -168,12 +168,12 @@ void gui_debug_window_huc6280(void)
         ImGui::TextColored(yellow, " PHYS PC"); ImGui::SameLine();
         if (ImGui::IsItemClicked())
         {
-            gui_debug_memory_goto(MEMORY_EDITOR_ROM, memory->GetPhysicalAddress(proc_state->PC->GetValue()));
+            gui_debug_memory_goto(MEMORY_EDITOR_PHYSICAL, memory->GetPhysicalAddress(proc_state->PC->GetValue()));
         }
         ImGui::Text("= $%06X", memory->GetPhysicalAddress(proc_state->PC->GetValue()));
         if (ImGui::IsItemClicked())
         {
-            gui_debug_memory_goto(MEMORY_EDITOR_ROM, memory->GetPhysicalAddress(proc_state->PC->GetValue()));
+            gui_debug_memory_goto(MEMORY_EDITOR_PHYSICAL, memory->GetPhysicalAddress(proc_state->PC->GetValue()));
         }
 
         ImGui::TableNextColumn();
@@ -405,14 +405,14 @@ static void get_bank_name(u8 mpr, u8 mpr_value, char *name, char* tooltip)
 
             if (media->IsSGX())
             {
-                snprintf(name, 16, "WRAM $%02X", ram_bank);
-                snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (WRAM) $%04X-$%04X",
+                snprintf(name, 16, "SYSTEM RAM $%02X", ram_bank);
+                snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (SYSTEM RAM) $%04X-$%04X",
                     cpu_address, cpu_address + 0x1FFF, ram_address, ram_address + 0x1FFF);
             }
             else
             {
-                snprintf(name, 16, "WRAM $00");
-                snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (WRAM) $0000-$1FFF",
+                snprintf(name, 16, "SYSTEM RAM $00");
+                snprintf(tooltip, 128, "Range (CPU) $%04X-$%04X \nRange (SYSTEM RAM) $0000-$1FFF",
                     cpu_address, cpu_address + 0x1FFF);
             }
         }

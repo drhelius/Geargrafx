@@ -294,7 +294,7 @@ void application_update_title_with_rom(const char* rom)
 
 void application_input_pump(void)
 {
-    events_emu();
+    events_apply_input();
 }
 
 bool application_check_single_instance(const char* rom_file, const char* symbol_file)
@@ -615,12 +615,13 @@ static void run_emulator(void)
     if (!display_should_run_emu_frame())
         return;
 
+    events_poll_input();
+    events_apply_input();
+
     config_emulator.paused = emu_is_paused();
     emu_audio_sync = config_audio.sync;
     emu_update();
 
-    if (!events_input_updated())
-        events_emu();
     events_reset_input();
 
     display_update_vsync_state();
