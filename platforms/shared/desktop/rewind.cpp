@@ -74,6 +74,7 @@ void rewind_reset(void)
     active = false;
     storage_dirty = true;
     seek_age = -1;
+
     for (int i = 0; i < REWIND_MAX_SNAPSHOTS; i++)
         sizes[i] = 0;
 
@@ -82,16 +83,11 @@ void rewind_reset(void)
         release_storage();
         return;
     }
-
-    capacity = get_target_capacity();
-    ensure_storage();
 }
 
 void rewind_push(void)
 {
     if (!config_rewind.enabled)
-        return;
-    if (!IsValidPointer(buffer))
         return;
     if (emu_is_empty() || emu_is_paused())
         return;
