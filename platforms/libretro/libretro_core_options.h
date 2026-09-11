@@ -509,9 +509,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 
     {
         "geargrafx_cdrom_type",
-        "CD-ROM (restart)",
+        "CD-ROM Model (restart)",
         NULL,
-        "Select the CD-ROM system type. 'Auto' automatically selects the appropriate CD-ROM system based on the loaded content.",
+        "Select the CD-ROM model. Auto enables CD-ROM hardware only for CD media and automatically selects the system type. Selecting Standard, Super CD-ROM or Arcade CD-ROM also enables CD-ROM hardware for HuCards, preserving their ROM and cartridge RAM mapping. Reset the emulator to apply changes.",
         NULL,
         "cdrom",
         {

@@ -657,6 +657,9 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
 
     Debug("Serializing save state...");
 
+    bool cdrom_hardware_enabled = m_media->IsCDROMHardwareEnabled();
+    stream.write(reinterpret_cast<const char*> (&cdrom_hardware_enabled), sizeof(cdrom_hardware_enabled));
+
     stream.write(reinterpret_cast<const char*> (&m_master_clock_cycles), sizeof(m_master_clock_cycles));
 
     m_memory->SaveState(stream);
@@ -667,7 +670,7 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     m_huc6280->SaveState(stream);
     m_audio->SaveState(stream);
     m_input->SaveState(stream);
-    if (m_media->IsCDROM())
+    if (m_media->IsCDROMHardwareEnabled())
     {
         m_cdrom->SaveState(stream);
         m_scsi_controller->SaveState(stream);
@@ -897,6 +900,16 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     }
 #endif
 
+    bool cdrom_hardware_enabled = m_media->IsCDROM();
+    if (header.version >= 38)
+        stream.read(reinterpret_cast<char*> (&cdrom_hardware_enabled), sizeof(cdrom_hardware_enabled));
+
+    if (stream.fail() || (cdrom_hardware_enabled != m_media->IsCDROMHardwareEnabled()))
+    {
+        Error("Save state CD-ROM hardware configuration does not match");
+        return false;
+    }
+
     Debug("Unserializing save state...");
 
     if (header.version >= 27)
@@ -912,7 +925,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     m_huc6280->LoadState(stream);
     m_audio->LoadState(stream, header.version);
     m_input->LoadState(stream, header.version);
-    if (m_media->IsCDROM())
+    if (m_media->IsCDROMHardwareEnabled())
     {
         m_cdrom->LoadState(stream, header.version);
         m_scsi_controller->LoadState(stream, header.version);
@@ -1061,7 +1074,7 @@ void GeargrafxCore::Reset()
     GG_Console_Type console_type = m_media->GetConsoleType();
     bool force_backup_ram = m_media->IsBackupRAMForced();
     bool is_sgx = m_media->IsSGX();
-    bool is_cdrom = m_media->IsCDROM();
+    bool is_cdrom = m_media->IsCDROMHardwareEnabled();
 
     SelectPSGRevision();
 

@@ -48,6 +48,11 @@ inline bool Media::IsCDROM()
     return m_is_cdrom;
 }
 
+inline bool Media::IsCDROMHardwareEnabled()
+{
+    return m_cdrom_hardware_enabled;
+}
+
 inline bool Media::IsInGameDatabase()
 {
     return m_is_in_game_database;

@@ -217,7 +217,7 @@ static void draw_tabs(void)
     GeargrafxCore* core = emu_get_core();
     Media* media = core->GetMedia();
     bool is_sgx = media->IsSGX();
-    bool is_cdrom = media->IsCDROM();
+    bool is_cdrom = media->IsCDROMHardwareEnabled();
     bool is_arcade_card = core->GetMedia()->IsArcadeCard();
 
     static const int tab_order[MEMORY_EDITOR_MAX] =

@@ -49,6 +49,7 @@ Media::Media(CdRomMedia* cdrom_media)
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
+    m_cdrom_hardware_enabled = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
@@ -106,6 +107,7 @@ void Media::Reset()
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
+    m_cdrom_hardware_enabled = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
@@ -581,6 +583,8 @@ bool Media::LoadMediaFromZipFile(const char* path, bool softpatching)
 
 void Media::GatherMediaInfo()
 {
+    m_cdrom_hardware_enabled = m_is_cdrom || (m_cdrom_type != GG_CDROM_AUTO);
+
     if (m_is_cdrom)
     {
         m_crc = m_cdrom_media->GetCRC();

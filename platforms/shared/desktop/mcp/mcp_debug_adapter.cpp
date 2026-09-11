@@ -763,7 +763,7 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
             }
             break;
         case MEMORY_EDITOR_CDROM_RAM:
-            if (media->IsCDROM())
+            if (media->IsCDROMHardwareEnabled())
             {
                 info.name = "CDROM RAM";
                 info.data = memory->GetCDROMRAM();
@@ -771,7 +771,7 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
             }
             break;
         case MEMORY_EDITOR_ADPCM_RAM:
-            if (media->IsCDROM())
+            if (media->IsCDROMHardwareEnabled())
             {
                 info.name = "ADPCM";
                 info.data = adpcm->GetRAM();
@@ -821,6 +821,7 @@ json DebugAdapter::GetMediaInfo()
     info["is_hes"] = media->IsHES();
     info["is_sgx"] = media->IsSGX();
     info["is_cdrom"] = media->IsCDROM();
+    info["is_cdrom_hardware_enabled"] = media->IsCDROMHardwareEnabled();
     info["is_gameexpress"] = media->IsGameExpress();
     info["is_arcade_card"] = media->IsArcadeCard();
     info["is_mb128"] = media->IsMB128();
@@ -848,7 +849,7 @@ json DebugAdapter::GetMediaInfo()
             break;
     }
 
-    if (media->IsCDROM())
+    if (media->IsCDROMHardwareEnabled())
     {
         GG_CDROM_Type cdrom_type = media->GetCDROMType();
         switch (cdrom_type)
@@ -1326,7 +1327,7 @@ json DebugAdapter::GetPSGStatus()
 
 json DebugAdapter::GetCDROMStatus()
 {
-    if (!m_core->GetMedia()->IsCDROM())
+    if (!m_core->GetMedia()->IsCDROMHardwareEnabled())
         return json::object();
 
     json status;
@@ -1552,7 +1553,7 @@ json DebugAdapter::GetArcadeCardStatus()
 
 json DebugAdapter::GetCDROMAudioStatus()
 {
-    if (!m_core->GetMedia()->IsCDROM())
+    if (!m_core->GetMedia()->IsCDROMHardwareEnabled())
         return json::object();
 
     json status;
@@ -1661,7 +1662,7 @@ json DebugAdapter::GetCDROMAudioStatus()
 
 json DebugAdapter::GetADPCMStatus()
 {
-    if (!m_core->GetMedia()->IsCDROM())
+    if (!m_core->GetMedia()->IsCDROMHardwareEnabled())
         return json::object();
 
     json status;

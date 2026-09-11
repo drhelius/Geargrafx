@@ -1446,7 +1446,7 @@ void emu_start_vgm_recording(const char* file_path)
     metadata.system_name = "NEC PC Engine / TurboGrafx-16";
     if (media->IsSGX())
         metadata.system_name = "NEC PC Engine SuperGrafx";
-    else if (media->IsCDROM())
+    else if (media->IsCDROMHardwareEnabled())
         metadata.system_name = "NEC PC Engine CD-ROM";
 
     metadata.game_name = media->IsInGameDatabase() ? media->GetGameDatabaseName() : media->GetFileName();

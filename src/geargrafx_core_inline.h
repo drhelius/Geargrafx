@@ -36,8 +36,9 @@ INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int
     if (m_paused || !m_media->IsReady())
         return false;
 
-    const bool is_cdrom = m_media->IsCDROM();
+    const bool is_cdrom = m_media->IsCDROMHardwareEnabled();
     const bool is_sgx = m_media->IsSGX();
+
 #if defined(GG_DISABLE_DISASSEMBLER)
     const bool debugger = false;
 #else

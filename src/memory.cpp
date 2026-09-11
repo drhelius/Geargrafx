@@ -141,7 +141,7 @@ void Memory::Reset()
     else
         m_current_mapper = NULL;
 
-    m_cdrom_ram_size = m_media->IsCDROM() ? 0x10000 : 0;
+    m_cdrom_ram_size = m_media->IsCDROMHardwareEnabled() ? 0x10000 : 0;
 
     for (u32 i = 0; i < m_cdrom_ram_size; i++)
     {
@@ -223,7 +223,7 @@ void Memory::ReloadMemoryMap()
     }
 
     // 0x80 - 0x87
-    if (m_media->IsCDROM())
+    if (m_media->IsCDROMHardwareEnabled())
         for (int i = 0x80; i <= 0x87; i++)
         {
             // CDROM RAM
@@ -388,7 +388,7 @@ GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
 
 Memory::MemoryBankType Memory::GetBankType(u8 bank)
 {
-    if (m_media->IsCDROM() && bank >= 0x80 && bank <= 0x87)
+    if (m_media->IsCDROMHardwareEnabled() && bank >= 0x80 && bank <= 0x87)
         return MEMORY_BANK_TYPE_CDROM_RAM;
 
     if (bank == 0xF7 && m_backup_ram_enabled)
