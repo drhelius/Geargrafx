@@ -140,6 +140,8 @@ static void release_controller_input(unsigned port);
 static void poll_input(void);
 static void apply_input(void);
 static bool categories_supported = false;
+static bool adpcm_clock_speed_visible = true;
+static bool update_core_options_display(void);
 static void check_variables(void);
 static bool path_has_extension(const char* path, const char* extension);
 static bool path_is_cdrom_uri(const char* path);
@@ -238,6 +240,11 @@ void retro_set_environment(retro_environment_t cb)
 
     set_controller_info();
     libretro_set_core_options(environ_cb, &categories_supported);
+
+    adpcm_clock_speed_visible = true;
+    struct retro_core_options_update_display_callback display_callback = { update_core_options_display };
+    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK, &display_callback);
+    update_core_options_display();
 }
 
 void retro_init(void)
@@ -1139,6 +1146,23 @@ static void apply_input(void)
     }
 }
 
+static bool update_core_options_display(void)
+{
+    struct retro_variable var = { "geargrafx_adpcm_clock_mode", NULL };
+    bool visible = environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value &&
+        (strcmp(var.value, "Manual") == 0);
+
+    if (visible == adpcm_clock_speed_visible)
+        return false;
+
+    struct retro_core_option_display display = { "geargrafx_adpcm_clock_speed", visible };
+    if (!environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &display))
+        return false;
+
+    adpcm_clock_speed_visible = visible;
+    return true;
+}
+
 static void check_variables(void)
 {
     struct retro_variable var = { };
@@ -1451,6 +1475,28 @@ static void check_variables(void)
 
         core->SetPSGRevision(revision);
     }
+
+    var.key = "geargrafx_adpcm_clock_mode";
+    var.value = NULL;
+    bool manual_adpcm_clock = environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value &&
+        (strcmp(var.value, "Manual") == 0);
+
+    float adpcm_clock_speed = 0.0f;
+    if (manual_adpcm_clock)
+    {
+        adpcm_clock_speed = GG_ADPCM_DEFAULT_CLOCK_SPEED;
+        var.key = "geargrafx_adpcm_clock_speed";
+        var.value = NULL;
+
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+        {
+            int clock_speed = atoi(var.value);
+            if (clock_speed >= 32000 && clock_speed <= 32200)
+                adpcm_clock_speed = (float)clock_speed;
+        }
+    }
+    core->SetADPCMClockSpeed(adpcm_clock_speed);
+    update_core_options_display();
 
     var.key = "geargrafx_no_sprite_limit";
     var.value = NULL;

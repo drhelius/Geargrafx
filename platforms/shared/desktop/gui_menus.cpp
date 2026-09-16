@@ -1534,6 +1534,37 @@ static void menu_audio(void)
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("ADPCM Clock Speed"))
+        {
+            ImGui::PushItemWidth(110.0f);
+            if (ImGui::Combo("##adpcm_clock_mode", &config_audio.adpcm_clock_mode, "Auto\0Manual\0\0"))
+            {
+                emu_audio_adpcm_clock_speed(config_audio.adpcm_clock_mode, config_audio.adpcm_clock_speed);
+            }
+            ImGui::PopItemWidth();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Leave on Auto (recommended).");
+                ImGui::Text("The original hardware's piezoelectric resonator varies between units.");
+                ImGui::Text("32100 Hz is the most common clock speed.");
+                ImGui::EndTooltip();
+            }
+
+            if (config_audio.adpcm_clock_mode == 1)
+            {
+                int clock_speed = (int)(config_audio.adpcm_clock_speed + 0.5f);
+                ImGui::PushItemWidth(200.0f);
+                if (ImGui::SliderInt("##adpcm_clock_speed", &clock_speed, 32000, 32200, "%d Hz", ImGuiSliderFlags_AlwaysClamp))
+                {
+                    config_audio.adpcm_clock_speed = (float)clock_speed;
+                    emu_audio_adpcm_clock_speed(config_audio.adpcm_clock_mode, config_audio.adpcm_clock_speed);
+                }
+                ImGui::PopItemWidth();
+            }
+            ImGui::EndMenu();
+        }
+
         ImGui::Separator();
 
         if (ImGui::BeginMenu("Master Volume", config_audio.enable))

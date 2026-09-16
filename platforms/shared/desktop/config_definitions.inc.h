@@ -328,6 +328,8 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Audio", "Enable", config_audio.enable, true);
     CONFIG_BOOL("Audio", "Sync", config_audio.sync, true);
     CONFIG_INT_RANGE("Audio", "PSGRevision", config_audio.psg_revision, GG_PSG_REVISION_AUTO, GG_PSG_REVISION_AUTO, GG_PSG_REVISION_HUC6280A);
+    CONFIG_INT_RANGE("Audio", "ADPCMClockMode", config_audio.adpcm_clock_mode, 0, 0, 1);
+    CONFIG_FLOAT_RANGE("Audio", "ADPCMClockSpeed", config_audio.adpcm_clock_speed, GG_ADPCM_DEFAULT_CLOCK_SPEED, 32000.0f, 32200.0f);
     CONFIG_FLOAT_RANGE("Audio", "MasterVolume", config_audio.master_volume, 1.0f, 0.0f, 2.0f);
     CONFIG_FLOAT("Audio", "PSGVolume", config_audio.psg_volume, 1.0f);
     CONFIG_FLOAT("Audio", "CDROMVolume", config_audio.cdrom_volume, 1.0f);

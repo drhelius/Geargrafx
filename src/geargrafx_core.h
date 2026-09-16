@@ -83,6 +83,7 @@ public:
     void EnableMB128(GG_MB128_Mode mode);
     void SetPSGRevision(GG_PSG_Revision revision);
     GG_PSG_Revision GetPSGRevision() const;
+    void SetADPCMClockSpeed(float clock_speed);
     bool SaveState(const char* path = NULL, int index = -1, bool screenshot = false);
     bool SaveState(u8* buffer, size_t& size, bool screenshot = false);
     bool LoadState(const char* path = NULL, int index = -1);
@@ -118,6 +119,7 @@ public:
 private:
     void Reset();
     void SelectPSGRevision();
+    void SelectADPCMClockSpeed();
     template<bool is_cdrom, bool is_sgx>
     bool ClockHardware(u32 cycles);
     template<bool is_cdrom, bool is_sgx>
@@ -153,6 +155,7 @@ private:
     GG_MB128_Mode m_mb128_mode;
     GG_PSG_Revision m_requested_psg_revision;
     GG_PSG_Revision m_psg_revision;
+    float m_requested_adpcm_clock_speed;
 };
 
 #include "geargrafx_core_inline.h"

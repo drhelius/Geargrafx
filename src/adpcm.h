@@ -65,6 +65,8 @@ public:
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
     void SetTraceLogger(TraceLogger* trace_logger);
+    void SetClockSpeed(float clock_speed);
+    float GetClockSpeed() const;
 
 private:
     void ComputeDeltaLUT();
@@ -101,6 +103,7 @@ private:
     u16 m_write_address;
     u16 m_address;
     u32 m_samples_left;
+    float m_clock_speed;
     u8 m_sample_rate;
     s32 m_cycles_per_sample;
     u8 m_control;

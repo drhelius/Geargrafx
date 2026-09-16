@@ -599,6 +599,11 @@ bool emu_eject_physical_cdrom(void)
     #endif
 }
 
+void emu_audio_adpcm_clock_speed(int mode, float clock_speed)
+{
+    geargrafx->SetADPCMClockSpeed(mode == 0 ? 0.0f : clock_speed);
+}
+
 void emu_audio_psg_revision(int revision)
 {
     geargrafx->SetPSGRevision((GG_PSG_Revision)revision);

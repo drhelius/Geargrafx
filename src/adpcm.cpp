@@ -30,6 +30,7 @@ Adpcm::Adpcm()
     InitPointer(m_core);
     InitPointer(m_scsi_controller);
     InitPointer(m_trace_logger);
+    m_clock_speed = GG_ADPCM_DEFAULT_CLOCK_SPEED;
     Reset();
 
     m_state.CONTROL = &m_control;
@@ -61,6 +62,17 @@ void Adpcm::Init(GeargrafxCore* core, CdRom* cdrom, ScsiController* scsi_control
     Reset();
 }
 
+void Adpcm::SetClockSpeed(float clock_speed)
+{
+    m_clock_speed = clock_speed;
+    m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate & 0x0F);
+}
+
+float Adpcm::GetClockSpeed() const
+{
+    return m_clock_speed;
+}
+
 void Adpcm::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
@@ -76,6 +88,7 @@ void Adpcm::LogAdpcmEvent(u8 event, u16 reg, u8 value, u16 address)
     e.adpcm.value = value;
     e.adpcm.address = address;
     e.adpcm.length = m_length;
+    e.adpcm.clock_speed = m_clock_speed;
     bool playing = m_playing;
     bool play_pending = m_play_pending;
     bool half_irq = m_half_irq;
@@ -285,11 +298,10 @@ void Adpcm::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_step_index), sizeof(m_step_index));
     stream.read(reinterpret_cast<char*> (&m_adpcm_cycle_counter), sizeof(m_adpcm_cycle_counter));
 
+    m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate & 0x0F);
+
     if (version < 37)
-    {
-        m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate & 0x0F);
         m_adpcm_cycle_counter *= 65536;
-    }
 
     if (version < 32)
     {

@@ -68,6 +68,7 @@ GeargrafxCore::GeargrafxCore()
     m_mb128_mode = GG_MB128_AUTO;
     m_requested_psg_revision = GG_PSG_REVISION_AUTO;
     m_psg_revision = GG_PSG_REVISION_AUTO;
+    m_requested_adpcm_clock_speed = 0.0f;
 }
 
 GeargrafxCore::~GeargrafxCore()
@@ -127,6 +128,7 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);
 
     SelectPSGRevision();
+    SelectADPCMClockSpeed();
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_trace_logger = new TraceLogger(&m_master_clock_cycles);
@@ -143,6 +145,27 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_adpcm->SetTraceLogger(m_trace_logger);
     m_scsi_controller->SetTraceLogger(m_trace_logger);
 #endif
+}
+
+void GeargrafxCore::SetADPCMClockSpeed(float clock_speed)
+{
+    if ((clock_speed == 0.0f) || ((clock_speed >= 32000.0f) && (clock_speed <= 32200.0f)))
+    {
+        m_requested_adpcm_clock_speed = clock_speed;
+
+        if (IsValidPointer(m_adpcm) && IsValidPointer(m_media))
+            SelectADPCMClockSpeed();
+    }
+}
+
+void GeargrafxCore::SelectADPCMClockSpeed()
+{
+    float clock_speed = m_requested_adpcm_clock_speed;
+
+    if (clock_speed == 0.0f)
+        clock_speed = m_media->GetADPCMClockSpeed();
+
+    m_adpcm->SetClockSpeed(clock_speed);
 }
 
 void GeargrafxCore::SetPSGRevision(GG_PSG_Revision revision)
@@ -1077,6 +1100,7 @@ void GeargrafxCore::Reset()
     bool is_cdrom = m_media->IsCDROMHardwareEnabled();
 
     SelectPSGRevision();
+    SelectADPCMClockSpeed();
 
     m_input->EnablePCEJap((console_type == GG_CONSOLE_PCE) || (console_type == GG_CONSOLE_SGX));
     m_input->EnableCDROM(is_cdrom || force_backup_ram);

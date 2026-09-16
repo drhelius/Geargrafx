@@ -129,7 +129,7 @@ void gui_debug_window_adpcm(void)
     ImGui::TextColored(violet, "LENGTH"); ImGui::SameLine();
     ImGui::TextColored(white, "%d", *adpcm_state->LENGTH);
 
-    float frequency = (GG_ADPCM_BASE_SAMPLE_RATE / (16 - (*adpcm_state->SAMPLE_RATE & 0x0F))) / 1000.0;
+    float frequency = (float)((emu_get_core()->GetAdpcm()->GetClockSpeed() / (16 - (*adpcm_state->SAMPLE_RATE & 0x0F))) / 1000.0);
     ImGui::TextColored(violet, "FREQUENCY"); ImGui::SameLine();
     ImGui::TextColored(white, "%.2f KHz", frequency);
 

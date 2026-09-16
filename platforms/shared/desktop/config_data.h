@@ -125,6 +125,8 @@ struct config_Audio
     bool enable;
     bool sync;
     int psg_revision;
+    int adpcm_clock_mode;
+    float adpcm_clock_speed;
     float master_volume;
     float psg_volume;
     float cdrom_volume;
