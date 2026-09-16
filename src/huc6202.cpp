@@ -126,7 +126,7 @@ void HuC6202::CalculatePriorityMode(HuC6202_Window_Mode window_mode, u8 value)
 void HuC6202::CalculateSourceSelection(HuC6202_Window_Mode window_mode)
 {
     HuC6202_Window_Priority* priority = &m_window_priority[window_mode];
-    int vdcs_enabled = priority->vdc_1_enabled | (priority->vdc_2_enabled << 1);
+    int vdcs_enabled = (int)priority->vdc_1_enabled | ((int)priority->vdc_2_enabled << 1);
     u8* selection = &m_source_selection[window_mode * 16];
 
     for (int classification = 0; classification < 16; classification++)
