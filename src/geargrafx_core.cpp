@@ -70,6 +70,7 @@ GeargrafxCore::GeargrafxCore()
     m_mb128_mode = GG_MB128_AUTO;
     m_requested_psg_revision = GG_PSG_REVISION_AUTO;
     m_psg_revision = GG_PSG_REVISION_AUTO;
+    m_requested_adpcm_clock_speed = 0.0f;
 }
 
 GeargrafxCore::~GeargrafxCore()
@@ -138,6 +139,7 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);
 
     SelectPSGRevision();
+    SelectADPCMClockSpeed();
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_trace_logger = new TraceLogger(&m_master_clock_cycles);
@@ -154,6 +156,27 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_adpcm->SetTraceLogger(m_trace_logger);
     m_scsi_controller->SetTraceLogger(m_trace_logger);
 #endif
+}
+
+void GeargrafxCore::SetADPCMClockSpeed(float clock_speed)
+{
+    if ((clock_speed == 0.0f) || ((clock_speed >= 32000.0f) && (clock_speed <= 32200.0f)))
+    {
+        m_requested_adpcm_clock_speed = clock_speed;
+
+        if (IsValidPointer(m_adpcm) && IsValidPointer(m_media))
+            SelectADPCMClockSpeed();
+    }
+}
+
+void GeargrafxCore::SelectADPCMClockSpeed()
+{
+    float clock_speed = m_requested_adpcm_clock_speed;
+
+    if (clock_speed == 0.0f)
+        clock_speed = m_media->GetADPCMClockSpeed();
+
+    m_adpcm->SetClockSpeed(clock_speed);
 }
 
 void GeargrafxCore::SetPSGRevision(GG_PSG_Revision revision)
@@ -719,6 +742,9 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
 
     Debug("Serializing save state...");
 
+    bool cdrom_hardware_enabled = m_media->IsCDROMHardwareEnabled();
+    stream.write(reinterpret_cast<const char*> (&cdrom_hardware_enabled), sizeof(cdrom_hardware_enabled));
+
     stream.write(reinterpret_cast<const char*> (&m_master_clock_cycles), sizeof(m_master_clock_cycles));
 
     m_memory->SaveState(stream);
@@ -729,7 +755,7 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     m_huc6280->SaveState(stream);
     m_audio->SaveState(stream);
     m_input->SaveState(stream);
-    if (m_media->IsCDROM())
+    if (m_media->IsCDROMHardwareEnabled())
     {
         if (m_cdrom_media->IsMmi() && !m_media->IsLaserActive())
         {
@@ -895,9 +921,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     }
 
     GG_SaveState_Header_Libretro header = {};
-#if !defined(__LIBRETRO__)
     bool is_desktop_savestate = false;
-#endif
 
     stream.seekg(0, ios::end);
     size_t size = static_cast<size_t>(stream.tellg());
@@ -913,9 +937,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         {
             header.magic = desktop_header.magic;
             header.version = desktop_header.version;
-#if !defined(__LIBRETRO__)
             is_desktop_savestate = true;
-#endif
             Debug("Loading desktop save state");
         }
     }
@@ -977,6 +999,53 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     }
 #endif
 
+    bool main_version_38 = header.version == 38 && !m_cdrom_media->IsMmi();
+    u8 cdrom_hardware_enabled = m_media->IsCDROM() ? 1 : 0;
+    if (main_version_38 || header.version >= 42)
+        stream.read(reinterpret_cast<char*>(&cdrom_hardware_enabled), sizeof(cdrom_hardware_enabled));
+
+    if (stream.fail() || cdrom_hardware_enabled > 1 ||
+        (cdrom_hardware_enabled != (m_media->IsCDROMHardwareEnabled() ? 1 : 0)))
+    {
+        Error("Save state CD-ROM hardware configuration does not match");
+        return false;
+    }
+
+    if (main_version_38)
+    {
+        size_t payload_size = size - sizeof(header);
+        if (is_desktop_savestate)
+        {
+            if (desktop_header.screenshot_size > size - sizeof(desktop_header))
+            {
+                Error("Invalid save state screenshot size");
+                return false;
+            }
+            payload_size = size - sizeof(desktop_header) - desktop_header.screenshot_size;
+        }
+
+        size_t current_size = 0;
+        if (!SaveState((u8*)NULL, current_size))
+            return false;
+#if defined(__LIBRETRO__)
+        current_size -= sizeof(GG_SaveState_Header_Libretro);
+#else
+        current_size -= sizeof(GG_SaveState_Header);
+#endif
+        stringstream mb128_state;
+        m_input->GetMB128()->SaveState(mb128_state);
+        size_t mb128_size = static_cast<size_t>(mb128_state.tellp());
+        if (m_input->GetMB128()->IsConnected())
+            current_size -= mb128_size;
+
+        // Local MMI version 38 omitted the hardware byte and used legacy audio units.
+        if (payload_size != current_size && payload_size != current_size + mb128_size)
+        {
+            Error("Unsupported version 38 save state layout or hardware configuration");
+            return false;
+        }
+    }
+
     Debug("Unserializing save state...");
 
     if (header.version >= 27)
@@ -994,7 +1063,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     u32 audio_version = header.version;
     u32 adpcm_version = header.version;
 
-    if (header.version >= 36 && header.version < 40 && (header.version >= 38 || m_cdrom_media->IsMmi()))
+    if (header.version >= 36 && header.version < 40 && (header.version >= 39 || m_cdrom_media->IsMmi()))
     {
         audio_version = 35;
         adpcm_version = 36;
@@ -1002,8 +1071,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     m_audio->LoadState(stream, audio_version);
     m_input->LoadState(stream, header.version);
-
-    if (m_media->IsCDROM())
+    if (m_media->IsCDROMHardwareEnabled())
     {
         if (header.version >= 38 && m_cdrom_media->IsMmi() && !m_media->IsLaserActive())
         {
@@ -1174,9 +1242,10 @@ void GeargrafxCore::Reset()
     GG_Console_Type console_type = m_media->GetConsoleType();
     bool force_backup_ram = m_media->IsBackupRAMForced();
     bool is_sgx = m_media->IsSGX();
-    bool is_cdrom = m_media->IsCDROM();
+    bool is_cdrom = m_media->IsCDROMHardwareEnabled();
 
     SelectPSGRevision();
+    SelectADPCMClockSpeed();
 
     LaserActive* laseractive = m_media->IsLaserActive() ? m_laseractive : NULL;
     m_cdrom_audio->SetLaserActive(laseractive);

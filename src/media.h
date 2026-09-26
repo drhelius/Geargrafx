@@ -44,6 +44,7 @@ public:
     bool IsHES();
     bool IsSGX();
     bool IsCDROM();
+    bool IsCDROMHardwareEnabled();
     bool IsLaserActive();
     u8* GetMappedBios();
     int GetMappedBiosSize();
@@ -52,6 +53,7 @@ public:
 #endif
     bool IsInGameDatabase();
     const char* GetGameDatabaseName();
+    float GetADPCMClockSpeed();
     bool IsGameExpress();
     bool IsArcadeCard();
     bool IsMB128();
@@ -144,9 +146,11 @@ private:
     bool m_is_gameexpress;
     bool m_is_sgx;
     bool m_is_cdrom;
+    bool m_cdrom_hardware_enabled;
     bool m_is_mmi;
     bool m_is_in_game_database;
     const char* m_game_database_name;
+    float m_adpcm_clock_speed;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     bool m_is_physical_cdrom;
     char m_physical_cdrom_device_id[256];

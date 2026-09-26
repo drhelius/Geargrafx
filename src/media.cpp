@@ -54,9 +54,11 @@ Media::Media(CdRomMedia* cdrom_media)
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
+    m_cdrom_hardware_enabled = false;
     m_is_mmi = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
+    m_adpcm_clock_speed = GG_ADPCM_DEFAULT_CLOCK_SPEED;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     m_is_physical_cdrom = false;
     m_physical_cdrom_device_id[0] = 0;
@@ -118,9 +120,11 @@ void Media::Reset()
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
+    m_cdrom_hardware_enabled = false;
     m_is_mmi = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
+    m_adpcm_clock_speed = GG_ADPCM_DEFAULT_CLOCK_SPEED;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     m_is_physical_cdrom = false;
     m_physical_cdrom_device_id[0] = 0;
@@ -815,6 +819,8 @@ bool Media::LoadMediaFromZipFile(const char* path, bool softpatching)
 
 void Media::GatherMediaInfo()
 {
+    m_cdrom_hardware_enabled = m_is_cdrom || (m_cdrom_type != GG_CDROM_AUTO);
+
     if (m_is_cdrom)
     {
         m_crc = m_cdrom_media->GetCRC();
@@ -948,6 +954,7 @@ void Media::GatherMediaInfoFromDB()
     m_is_sgx = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
+    m_adpcm_clock_speed = GG_ADPCM_DEFAULT_CLOCK_SPEED;
 
     int i = 0;
 
@@ -960,6 +967,12 @@ void Media::GatherMediaInfoFromDB()
             m_is_in_game_database = true;
             m_game_database_name = k_game_database[i].title;
             Log("Media found in database: %s. CRC: %08X", k_game_database[i].title, m_crc);
+
+            if (k_game_database[i].adpcm_clock_speed > 0.0f)
+            {
+                m_adpcm_clock_speed = k_game_database[i].adpcm_clock_speed;
+                Log("Media has a custom ADPCM clock speed: %.1f Hz", m_adpcm_clock_speed);
+            }
 
             if (k_game_database[i].flags & GG_GAMEDB_CARD_RAM_8000)
             {

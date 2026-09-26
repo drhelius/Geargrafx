@@ -725,7 +725,9 @@ static void menu_emulator(void)
             if (ImGui::IsItemHovered())
             {
                 ImGui::BeginTooltip();
-                ImGui::Text("It is recommended to leave this option on Auto.");
+                ImGui::Text("Auto enables CD-ROM hardware only for CD media.");
+                ImGui::Text("Selecting a model also enables CD-ROM hardware for HuCards.");
+                ImGui::Text("HuCards keep their own ROM and cartridge RAM mapping.");
                 ImGui::Text("Reset the emulator to apply changes.");
                 ImGui::EndTooltip();
             }
@@ -1677,6 +1679,37 @@ static void menu_audio(void)
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("ADPCM Clock Speed"))
+        {
+            ImGui::PushItemWidth(110.0f);
+            if (ImGui::Combo("##adpcm_clock_mode", &config_audio.adpcm_clock_mode, "Auto\0Manual\0\0"))
+            {
+                emu_audio_adpcm_clock_speed(config_audio.adpcm_clock_mode, config_audio.adpcm_clock_speed);
+            }
+            ImGui::PopItemWidth();
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Leave on Auto (recommended).");
+                ImGui::Text("The original hardware's piezoelectric resonator varies between units.");
+                ImGui::Text("32100 Hz is the most common clock speed.");
+                ImGui::EndTooltip();
+            }
+
+            if (config_audio.adpcm_clock_mode == 1)
+            {
+                int clock_speed = (int)(config_audio.adpcm_clock_speed + 0.5f);
+                ImGui::PushItemWidth(200.0f);
+                if (ImGui::SliderInt("##adpcm_clock_speed", &clock_speed, 32000, 32200, "%d Hz", ImGuiSliderFlags_AlwaysClamp))
+                {
+                    config_audio.adpcm_clock_speed = (float)clock_speed;
+                    emu_audio_adpcm_clock_speed(config_audio.adpcm_clock_mode, config_audio.adpcm_clock_speed);
+                }
+                ImGui::PopItemWidth();
+            }
+            ImGui::EndMenu();
+        }
+
         ImGui::Separator();
 
         if (ImGui::BeginMenu("Master Volume", config_audio.enable))
@@ -2076,10 +2109,10 @@ static void menu_debug(void)
             }
         }
 
-        if (ImGui::BeginMenu("CD-ROM", config_debug.debug && emu_get_core()->GetMedia()->IsCDROM()))
+        if (ImGui::BeginMenu("CD-ROM", config_debug.debug && emu_get_core()->GetMedia()->IsCDROMHardwareEnabled()))
         {
             ImGui::MenuItem("Show Status", "", &config_debug.show_cdrom);
-            ImGui::MenuItem("Show TOC", "", &config_debug.show_cdrom_toc);
+            ImGui::MenuItem("Show TOC", "", &config_debug.show_cdrom_toc, emu_get_core()->GetMedia()->IsCDROM());
             ImGui::MenuItem("Show Arcade Card", "", &config_debug.show_arcade_card, emu_get_core()->GetMedia()->IsArcadeCard());
             ImGui::Separator();
             ImGui::MenuItem("Show CD-ROM Audio", "", &config_debug.show_cdrom_audio);

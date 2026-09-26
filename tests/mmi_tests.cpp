@@ -934,11 +934,15 @@ static bool run_laseractive_tests()
             channels[0].right_sample = -100;
             channels[0].output[0] = 50;
             ok = expect(core->SaveState(&state[0], state_size), "save audio migration fixture") && ok;
+            std::vector<u8> legacy = state;
+            if (version < 42)
+                legacy.erase(legacy.begin());
             GG_SaveState_Header header;
-            memcpy(&header, &state[state.size() - sizeof(header)], sizeof(header));
+            memcpy(&header, &legacy[legacy.size() - sizeof(header)], sizeof(header));
             header.version = version;
-            memcpy(&state[state.size() - sizeof(header)], &header, sizeof(header));
-            ok = expect(core->LoadState(&state[0], state.size()), "load audio migration fixture") && ok;
+            header.size = (u32)legacy.size();
+            memcpy(&legacy[legacy.size() - sizeof(header)], &header, sizeof(header));
+            ok = expect(core->LoadState(&legacy[0], legacy.size()), "load audio migration fixture") && ok;
             int scale = version == 39 ? 2 : 1;
             ok = expect(channels[0].left_sample == 100 * scale &&
                 channels[0].right_sample == -100 * scale && channels[0].output[0] == 50 * scale,

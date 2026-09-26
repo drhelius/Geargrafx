@@ -362,6 +362,7 @@ struct GG_Trace_Entry
         struct
         {
             u32 length;
+            float clock_speed;
             u16 address;
             u8 reg;
             u8 value;

@@ -550,6 +550,43 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         "Auto"
     },
     {
+        "geargrafx_adpcm_clock_mode",
+        "ADPCM Clock Speed",
+        NULL,
+        "Leave on Auto (recommended). The original hardware's piezoelectric resonator varies between units; 32100 Hz is most common. Auto uses this speed unless the game database overrides it.",
+        NULL,
+        "audio",
+        {
+            { "Auto",   NULL },
+            { "Manual", NULL },
+            { NULL, NULL },
+        },
+        "Auto"
+    },
+    {
+        "geargrafx_adpcm_clock_speed",
+        "ADPCM Manual Clock Speed",
+        NULL,
+        "Changing this is not recommended. Set the ADPCM clock speed from 32000 to 32200 Hz in 20 Hz steps. Only used in Manual mode.",
+        NULL,
+        "audio",
+        {
+            { "32000", "32000 Hz" },
+            { "32020", "32020 Hz" },
+            { "32040", "32040 Hz" },
+            { "32060", "32060 Hz" },
+            { "32080", "32080 Hz" },
+            { "32100", "32100 Hz" },
+            { "32120", "32120 Hz" },
+            { "32140", "32140 Hz" },
+            { "32160", "32160 Hz" },
+            { "32180", "32180 Hz" },
+            { "32200", "32200 Hz" },
+            { NULL, NULL },
+        },
+        "32100"
+    },
+    {
         "geargrafx_psg_volume",
         "PSG Volume",
         NULL,
@@ -653,9 +690,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 
     {
         "geargrafx_cdrom_type",
-        "CD-ROM (restart)",
+        "CD-ROM Model (restart)",
         NULL,
-        "Select the CD-ROM system type. 'Auto' automatically selects the appropriate CD-ROM system based on the loaded content.",
+        "Select the CD-ROM model. Auto enables CD-ROM hardware only for CD media and automatically selects the system type. Selecting Standard, Super CD-ROM or Arcade CD-ROM also enables CD-ROM hardware for HuCards, preserving their ROM and cartridge RAM mapping. Reset the emulator to apply changes.",
         NULL,
         "cdrom",
         {

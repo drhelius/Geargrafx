@@ -599,6 +599,11 @@ bool emu_eject_physical_cdrom(void)
     #endif
 }
 
+void emu_audio_adpcm_clock_speed(int mode, float clock_speed)
+{
+    geargrafx->SetADPCMClockSpeed(mode == 0 ? 0.0f : clock_speed);
+}
+
 void emu_audio_psg_revision(int revision)
 {
     geargrafx->SetPSGRevision((GG_PSG_Revision)revision);
@@ -1471,7 +1476,7 @@ void emu_start_vgm_recording(const char* file_path)
     metadata.system_name = "NEC PC Engine / TurboGrafx-16";
     if (media->IsSGX())
         metadata.system_name = "NEC PC Engine SuperGrafx";
-    else if (media->IsCDROM())
+    else if (media->IsCDROMHardwareEnabled())
         metadata.system_name = "NEC PC Engine CD-ROM";
 
     metadata.game_name = media->IsInGameDatabase() ? media->GetGameDatabaseName() : media->GetFileName();

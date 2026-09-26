@@ -82,6 +82,7 @@ EXTERN bool emu_is_empty(void);
 EXTERN void emu_reset(void);
 EXTERN bool emu_eject_physical_cdrom(void);
 EXTERN void emu_audio_psg_revision(int revision);
+EXTERN void emu_audio_adpcm_clock_speed(int mode, float clock_speed);
 EXTERN void emu_audio_mute(bool mute);
 EXTERN void emu_audio_set_master_volume(float volume);
 EXTERN void emu_audio_psg_volume(float volume);

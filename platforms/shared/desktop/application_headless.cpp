@@ -65,6 +65,7 @@ int application_headless_init(const ApplicationParams& params)
         config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
     emu_audio_mute(true);
     emu_audio_psg_revision(config_audio.psg_revision);
+    emu_audio_adpcm_clock_speed(config_audio.adpcm_clock_mode, config_audio.adpcm_clock_speed);
 
     gui_debug_init();
 

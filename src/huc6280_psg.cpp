@@ -175,7 +175,7 @@ void HuC6280PSG::Write(u16 address, u8 value)
             bool dda_falling = m_ch->dda_enabled && !dda_enabled;
 
             // Channel enable/disable
-            if (m_ch->enabled != enabled)
+            if (m_ch->enabled != (u8)enabled)
             {
                 m_ch->counter = m_ch->frequency;
             }

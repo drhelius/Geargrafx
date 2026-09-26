@@ -147,6 +147,8 @@ static void release_controller_input(unsigned port);
 static void poll_input(void);
 static void apply_input(void);
 static bool categories_supported = false;
+static bool adpcm_clock_speed_visible = true;
+static bool update_core_options_display(void);
 static void check_variables(void);
 static float get_aspect_ratio(void);
 static bool path_has_extension(const char* path, const char* extension);
@@ -282,6 +284,11 @@ void retro_set_environment(retro_environment_t cb)
 
     set_controller_info();
     libretro_set_core_options(environ_cb, &categories_supported);
+
+    adpcm_clock_speed_visible = true;
+    struct retro_core_options_update_display_callback display_callback = { update_core_options_display };
+    environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK, &display_callback);
+    update_core_options_display();
 }
 
 void retro_init(void)
@@ -361,6 +368,13 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
         if (log_cb)
             log_cb(RETRO_LOG_DEBUG, "retro_set_controller_port_device invalid port number: %u\n", port);
         return;
+    }
+
+    if ((port != 0) && (device == RETRO_DEVICE_PCE_MOUSE))
+    {
+        if (log_cb)
+            log_cb(RETRO_LOG_WARN, "Mouse is only supported on port 1. Using a standard PCE pad on port %u.\n", port + 1);
+        device = RETRO_DEVICE_PCE_PAD;
     }
 
     if ((input_device[port] != device) && core)
@@ -872,10 +886,10 @@ static void set_controller_info(void)
 
     static const struct retro_controller_info ports[] = {
         { port, 4 },
-        { port, 4 },
-        { port, 4 },
-        { port, 4 },
-        { port, 4 },
+        { port, 3 },
+        { port, 3 },
+        { port, 3 },
+        { port, 3 },
         { NULL, 0 }
     };
 
@@ -906,13 +920,9 @@ static void set_controller_info(void)
         button_ids(0)
         mouse_ids(0)
         button_ids(1)
-        mouse_ids(1)
         button_ids(2)
-        mouse_ids(2)
         button_ids(3)
-        mouse_ids(3)
         button_ids(4)
-        mouse_ids(4)
         { 0, 0, 0, 0, NULL }
     };
 
@@ -1270,6 +1280,23 @@ static void apply_input(void)
             }
         }
     }
+}
+
+static bool update_core_options_display(void)
+{
+    struct retro_variable var = { "geargrafx_adpcm_clock_mode", NULL };
+    bool visible = environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value &&
+        (strcmp(var.value, "Manual") == 0);
+
+    if (visible == adpcm_clock_speed_visible)
+        return false;
+
+    struct retro_core_option_display display = { "geargrafx_adpcm_clock_speed", visible };
+    if (!environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &display))
+        return false;
+
+    adpcm_clock_speed_visible = visible;
+    return true;
 }
 
 static void check_variables(void)
@@ -1640,6 +1667,28 @@ static void check_variables(void)
 
         core->SetPSGRevision(revision);
     }
+
+    var.key = "geargrafx_adpcm_clock_mode";
+    var.value = NULL;
+    bool manual_adpcm_clock = environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value &&
+        (strcmp(var.value, "Manual") == 0);
+
+    float adpcm_clock_speed = 0.0f;
+    if (manual_adpcm_clock)
+    {
+        adpcm_clock_speed = GG_ADPCM_DEFAULT_CLOCK_SPEED;
+        var.key = "geargrafx_adpcm_clock_speed";
+        var.value = NULL;
+
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+        {
+            int clock_speed = atoi(var.value);
+            if (clock_speed >= 32000 && clock_speed <= 32200)
+                adpcm_clock_speed = (float)clock_speed;
+        }
+    }
+    core->SetADPCMClockSpeed(adpcm_clock_speed);
+    update_core_options_display();
 
     var.key = "geargrafx_no_sprite_limit";
     var.value = NULL;

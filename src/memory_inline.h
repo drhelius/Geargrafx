@@ -128,7 +128,7 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
             }
             case 0x1800:
                 // CDROM
-                if (m_media->IsCDROM())
+                if (m_media->IsCDROMHardwareEnabled())
                 {
                     if (IsValidPointer(m_current_mapper) && (offset >= 0x1A00))
                         return m_current_mapper->ReadHardware(offset);
@@ -349,7 +349,7 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
             }
             case 0x1800:
                 // CDROM
-                if (m_media->IsCDROM())
+                if (m_media->IsCDROMHardwareEnabled())
                 {
                     if (IsValidPointer(m_current_mapper) && (offset >= 0x1A00))
                         m_current_mapper->WriteHardware(offset, value);
