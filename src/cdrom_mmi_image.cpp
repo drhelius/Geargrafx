@@ -319,8 +319,7 @@ bool CdRomMmiImage::DecodeQonFrame(u32 frame_index, std::vector<u8>& output)
     return true;
 }
 
-MediaFile* CdRomMmiImage::ResolveMmiFile(const char* reference, char* resolved_path,
-    size_t resolved_path_size, void* user_data)
+MediaFile* CdRomMmiImage::ResolveMmiFile(const char* reference, char* resolved_path, size_t resolved_path_size, void* user_data)
 {
     CdRomMmiImage* image = reinterpret_cast<CdRomMmiImage*> (user_data);
 
@@ -386,10 +385,8 @@ bool CdRomMmiImage::LoadSelectedMedia(u32 index)
 
     if (media.laserdisc)
     {
-        const GG_MmiEntry* audio_entry = analog_audio_stream ?
-            m_archive.GetEntry(analog_audio_stream->entry_index) : NULL;
-        const GG_MmiEntry* video_entry = analog_video_stream ?
-            m_archive.GetEntry(analog_video_stream->entry_index) : NULL;
+        const GG_MmiEntry* audio_entry = analog_audio_stream ? m_archive.GetEntry(analog_audio_stream->entry_index) : NULL;
+        const GG_MmiEntry* video_entry = analog_video_stream ? m_archive.GetEntry(analog_video_stream->entry_index) : NULL;
 
         if (!audio_entry || !video_entry || (audio_entry->method != 0) || (video_entry->method != 0) ||
             ((audio_entry->uncompressed_size & 3) != 0))
@@ -457,6 +454,7 @@ bool CdRomMmiImage::LoadSelectedMedia(u32 index)
     SafeDelete(m_analog_audio_file);
     SafeDelete(m_video_file);
     SafeDelete(m_subchannel_file);
+
     m_analog_audio_file = new_audio_file;
     m_video_file = new_video_file;
     m_subchannel_file = new_subchannel_file;
@@ -465,8 +463,7 @@ bool CdRomMmiImage::LoadSelectedMedia(u32 index)
     m_laserdisc = media.laserdisc;
     m_ejected = false;
     m_subchannel_first_lba = new_subchannel_first_lba;
-    m_subchannel_sector_count = new_subchannel_file ?
-        (u64)new_subchannel_file->GetSize() / k_mmi_subchannel_record_size : 0;
+    m_subchannel_sector_count = new_subchannel_file ? (u64)new_subchannel_file->GetSize() / k_mmi_subchannel_record_size : 0;
     m_crc = m_archive.GetCRC();
 
     return true;
@@ -493,8 +490,8 @@ bool CdRomMmiImage::FindSubchannelEntry(const GG_MmiEntry* cue_entry, const GG_M
     }
 
     size_t separator_pos = cue_entry->normalized_name.find_last_of('/');
-    std::string directory = separator_pos == std::string::npos ? "" :
-        cue_entry->normalized_name.substr(0, separator_pos + 1);
+    std::string directory = separator_pos == std::string::npos ? "" : cue_entry->normalized_name.substr(0, separator_pos + 1);
+
     const GG_MmiEntry* match = NULL;
     const std::vector<GG_MmiEntry>& entries = m_archive.GetEntries();
 
@@ -540,8 +537,7 @@ bool CdRomMmiImage::OpenSubchannel(const GG_MmiEntry* entry, MediaFile*& file, s
     if (!entry || (entry->method != 0) || (entry->uncompressed_size == 0) ||
         ((entry->uncompressed_size % k_mmi_subchannel_record_size) != 0))
     {
-        Error("MMI SUB entry must be a non-empty stored 96-byte record stream: %s",
-            entry ? entry->name.c_str() : "unknown");
+        Error("MMI SUB entry must be a non-empty stored 96-byte record stream: %s", entry ? entry->name.c_str() : "unknown");
         return false;
     }
 
@@ -715,7 +711,7 @@ bool CdRomMmiImage::ReadQonIndex(MediaFile* video_file, const GG_MmiStreamInfo& 
     }
 
     // Released NEC MMIs leave frame_duration_us unset. The transport is NTSC
-    // (30000/1001 Hz), independent of that optional QON duration field.
+    // (30000/1001 Hz), independent of that optional QON duration field
     u64 total_frames;
     u64 program_end_frame;
 

@@ -60,8 +60,7 @@ static void mmi_zip_free(void* user_data, void* memory)
     free(memory);
 }
 
-static bool mmi_read_json_string(const json& object, const char* key, std::string& output,
-    bool required, bool allow_empty)
+static bool mmi_read_json_string(const json& object, const char* key, std::string& output, bool required, bool allow_empty)
 {
     json::const_iterator value = object.find(key);
 

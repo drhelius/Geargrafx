@@ -30,8 +30,9 @@
 #include "../platforms/shared/dependencies/qon/qoi2.h"
 
 /*
- * PD6103A, transport and mixing adapted from ares/ares/pce/pcd (ISC).
- * Reference: ares 7b51c8ab719e403a150aa700e0933d9e93a06851.
+ * PD6103A emulation, disc transport and mixing were implemented using information
+ * from the ares implementation (ISC):
+ * https://github.com/ares-emulator/ares/tree/7b51c8ab719e403a150aa700e0933d9e93a06851/ares/pce/pcd
  * Copyright (c) 2004-2025 ares team, Near et al
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -636,7 +637,7 @@ s32 LaserActive::GetSectorAdvance() const
 
         case 3:
         {
-            // Both search directions play forwards, then jump four seconds.
+            // Both search directions play forwards, then jump four seconds
             if (m_playback_speed >= 6)
                 return m_search_sectors + 1 >= k_laseractive_search_sectors ? 1 + (m_playback_reverse ? -300 : 300) : 1;
 
@@ -2637,7 +2638,7 @@ void LaserActive::ComposeLine(u32 line, const u8* pce_pixels, const u8* classifi
         memcpy(output, pce_pixels, output_width * bytes_per_pixel);
         return;
     }
-    // TODO: Implement input register 19 transparency.
+    // TODO: Implement input register 19 transparency
     const u8* analog = m_video_display_valid ? &m_video_display_field[0] : NULL;
     u32 analog_width = GetVideoWidth();
     bool video_blanked = GetBit(line_state[1], 2) || (GetBit(line_state[7], 0) && !GetBit(line_state[1], 5));
@@ -2811,8 +2812,7 @@ void LaserActive::SaveState(std::ostream& stream) const
     stream.write(reinterpret_cast<const char*> (m_seek_point_regs), sizeof(m_seek_point_regs));
     stream.write(reinterpret_cast<const char*> (m_stop_point_regs), sizeof(m_stop_point_regs));
     stream.write(reinterpret_cast<const char*> (&m_reached_stop_point), sizeof(m_reached_stop_point));
-    stream.write(reinterpret_cast<const char*> (&m_reached_stop_point_previously),
-        sizeof(m_reached_stop_point_previously));
+    stream.write(reinterpret_cast<const char*> (&m_reached_stop_point_previously), sizeof(m_reached_stop_point_previously));
     stream.write(reinterpret_cast<const char*> (&m_playback_mode), sizeof(m_playback_mode));
     stream.write(reinterpret_cast<const char*> (&m_playback_speed), sizeof(m_playback_speed));
     stream.write(reinterpret_cast<const char*> (&m_playback_reverse), sizeof(m_playback_reverse));

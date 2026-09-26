@@ -128,17 +128,9 @@ static void draw_laseractive_registers(const LaserActive::Status& status, int fi
     ImGui::PopID();
 }
 
-static bool begin_laseractive_window(const char* title, bool* open, ImVec2 position, float columns, float rows)
+static bool begin_laseractive_window(const char* title, bool* open)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::SetNextWindowPos(position, ImGuiCond_FirstUseEver);
-    ImGui::PushFont(gui_default_font);
-
-    float width = columns * ImGui::CalcTextSize("M").x;
-    float height = rows * ImGui::GetTextLineHeightWithSpacing();
-
-    ImGui::PopFont();
-    ImGui::SetNextWindowSize(ImVec2(width, height + ImGui::GetFrameHeight()), ImGuiCond_FirstUseEver);
 
     bool visible = ImGui::Begin(title, open);
 
@@ -168,7 +160,10 @@ static bool get_laseractive_status(LaserActive::Status& status)
 
 void gui_debug_window_laseractive_general(void)
 {
-    if (begin_laseractive_window("LaserActive General", &config_debug.show_laseractive_general, ImVec2(85, 80), 32, 19))
+    ImGui::SetNextWindowPos(ImVec2(100, 100), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(190, 280), ImGuiCond_FirstUseEver);
+
+    if (begin_laseractive_window("LaserActive General", &config_debug.show_laseractive_general))
     {
         LaserActive::Status status = {};
         bool available = get_laseractive_status(status);
@@ -211,7 +206,10 @@ void gui_debug_window_laseractive_general(void)
 
 void gui_debug_window_laseractive_video(void)
 {
-    if (begin_laseractive_window("LaserActive Video", &config_debug.show_laseractive_video, ImVec2(330, 80), 34, 23))
+    ImGui::SetNextWindowPos(ImVec2(320, 100), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(176, 336), ImGuiCond_FirstUseEver);
+
+    if (begin_laseractive_window("LaserActive Video", &config_debug.show_laseractive_video))
     {
         LaserActive::Status status = {};
         bool available = get_laseractive_status(status);
@@ -263,7 +261,10 @@ void gui_debug_window_laseractive_video(void)
 
 void gui_debug_window_laseractive_audio(void)
 {
-    if (begin_laseractive_window("LaserActive Audio", &config_debug.show_laseractive_audio, ImVec2(590, 80), 76, 33))
+    ImGui::SetNextWindowPos(ImVec2(200, 200), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(462, 466), ImGuiCond_FirstUseEver);
+
+    if (begin_laseractive_window("LaserActive Audio", &config_debug.show_laseractive_audio))
     {
         LaserActive::Status status = {};
         bool available = get_laseractive_status(status);
@@ -429,8 +430,10 @@ void gui_debug_window_laseractive_audio(void)
 
 void gui_debug_window_laseractive_registers(void)
 {
-    if (begin_laseractive_window("LaserActive Registers", &config_debug.show_laseractive_registers,
-        ImVec2(85, 540), 104, 23))
+    ImGui::SetNextWindowPos(ImVec2(100, 400), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(704, 386), ImGuiCond_FirstUseEver);
+
+    if (begin_laseractive_window("LaserActive Registers", &config_debug.show_laseractive_registers))
     {
         LaserActive::Status status = {};
         bool available = get_laseractive_status(status);

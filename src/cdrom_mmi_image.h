@@ -71,8 +71,7 @@ public:
     bool DecodeQonFrame(u32 frame_index, std::vector<u8>& output);
 
 private:
-    static MediaFile* ResolveMmiFile(const char* reference, char* resolved_path,
-        size_t resolved_path_size, void* user_data);
+    static MediaFile* ResolveMmiFile(const char* reference, char* resolved_path, size_t resolved_path_size, void* user_data);
     bool LoadSelectedMedia(u32 index);
     bool ReadQonIndex(MediaFile* video_file, const GG_MmiStreamInfo& stream, GG_QonInfo& qon_info);
     bool FindSubchannelEntry(const GG_MmiEntry* cue_entry, const GG_MmiEntry*& entry) const;

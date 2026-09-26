@@ -646,7 +646,7 @@ static void menu_emulator(void)
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("LaserActive NEC PAC"))
+            if (ImGui::BeginMenu("LaserActive"))
             {
                 if (ImGui::MenuItem("Load Japanese PAC BIOS..."))
                     open_pac_japan_bios = true;
