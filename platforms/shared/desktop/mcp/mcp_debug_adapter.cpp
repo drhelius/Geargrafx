@@ -39,6 +39,8 @@
 #include <iomanip>
 #include <vector>
 #include <algorithm>
+#include "mmi_archive.h"
+#include "laseractive.h"
 
 static const int k_mcp_mouse_motion_step = 4;
 
@@ -91,13 +93,23 @@ static bool resolve_mcp_disassembly_label(GG_Disassembler_Record* record,
     u16 label_lookup = is_zp ? (0x2000 | address) : address;
     u16 hardware_offset = label_lookup & 0xE000;
 
-    for (int i = 0; i < k_debug_label_count; i++)
+    const stDebugLabel* labels = k_debug_labels;
+    int label_count = k_debug_label_count;
+    u16 offset = label_lookup - hardware_offset;
+    if (emu_get_core()->GetMedia()->IsLaserActive() &&
+        ((offset >= 0x18C0 && offset <= 0x18C3) || (offset >= 0x1920 && offset <= 0x195F)))
     {
-        if (k_debug_labels[i].address + hardware_offset == label_lookup)
+        labels = k_debug_laseractive_labels;
+        label_count = k_debug_laseractive_label_count;
+    }
+
+    for (int i = 0; i < label_count; i++)
+    {
+        if (labels[i].address + hardware_offset == label_lookup)
         {
             char replacement[64];
             snprintf(replacement, sizeof(replacement), "%s_%04X",
-                k_debug_labels[i].label, address);
+                labels[i].label, address);
             return replace_mcp_disassembly_operand(record, instruction, replacement);
         }
     }
@@ -712,12 +724,12 @@ MemoryAreaInfo DebugAdapter::GetMemoryAreaInfo(int area)
             info.size = 0x100;
             break;
         case MEMORY_EDITOR_ROM:
-            info.name = "ROM";
-            info.data = media->GetROM();
-            info.size = media->GetROMSize();
+            info.name = media->IsLaserActive() ? "BIOS" : "ROM";
+            info.data = media->IsLaserActive() ? media->GetMappedBios() : media->GetROM();
+            info.size = media->IsLaserActive() ? media->GetMappedBiosSize() : media->GetROMSize();
             break;
         case MEMORY_EDITOR_CARD_RAM:
-            info.name = "CARD RAM";
+            info.name = media->IsLaserActive() ? "PAC SRAM" : "CARD RAM";
             info.data = memory->GetCardRAM();
             info.size = memory->GetCardRAMSize();
             break;
@@ -822,6 +834,7 @@ json DebugAdapter::GetMediaInfo()
     info["is_sgx"] = media->IsSGX();
     info["is_cdrom"] = media->IsCDROM();
     info["is_cdrom_hardware_enabled"] = media->IsCDROMHardwareEnabled();
+    info["laseractive"] = media->IsLaserActive();
     info["is_gameexpress"] = media->IsGameExpress();
     info["is_arcade_card"] = media->IsArcadeCard();
     info["is_mb128"] = media->IsMB128();
@@ -851,24 +864,30 @@ json DebugAdapter::GetMediaInfo()
 
     if (media->IsCDROMHardwareEnabled())
     {
-        GG_CDROM_Type cdrom_type = media->GetCDROMType();
-        switch (cdrom_type)
+        if (media->IsLaserActive())
+            info["cdrom_type"] = "LaserActive LD-ROM²";
+        else
         {
-            case GG_CDROM_AUTO:
-                info["cdrom_type"] = media->IsArcadeCard() ? "Arcade CD-ROM²" : "Super CD-ROM²";
-                break;
-            case GG_CDROM_STANDARD:
-                info["cdrom_type"] = "CD-ROM²";
-                break;
-            case GG_CDROM_SUPER_CDROM:
-                info["cdrom_type"] = "Super CD-ROM²";
-                break;
-            case GG_CDROM_ARCADE_CARD:
-                info["cdrom_type"] = "Arcade CD-ROM²";
-                break;
-            default:
-                info["cdrom_type"] = "Unknown";
-                break;
+            GG_CDROM_Type cdrom_type = media->GetCDROMType();
+            switch (cdrom_type)
+            {
+                case GG_CDROM_AUTO:
+                    info["cdrom_type"] = media->IsArcadeCard() ? "Arcade CD-ROM²" :
+                        (media->GetCardRAMSize() > 0 ? "Super CD-ROM²" : "CD-ROM²");
+                    break;
+                case GG_CDROM_STANDARD:
+                    info["cdrom_type"] = "CD-ROM²";
+                    break;
+                case GG_CDROM_SUPER_CDROM:
+                    info["cdrom_type"] = "Super CD-ROM²";
+                    break;
+                case GG_CDROM_ARCADE_CARD:
+                    info["cdrom_type"] = "Arcade CD-ROM²";
+                    break;
+                default:
+                    info["cdrom_type"] = "Unknown";
+                    break;
+            }
         }
     }
 
@@ -893,9 +912,60 @@ json DebugAdapter::GetMediaInfo()
     info["loaded_bios"] = bios_ready;
     if (bios_ready)
     {
-        bool syscard = !media->IsGameExpress();
-        info["bios_name"] = media->GetBiosName(syscard);
-        info["valid_bios"] = syscard ? media->IsSyscardBiosValid() : media->IsGameExpressBiosValid();
+        if (media->IsLaserActive())
+        {
+            const GG_MmiInfo* mmi = m_core->GetCDROMMedia()->GetMmiInfo();
+            if (mmi && (mmi->card == "System Card 1.0"))
+            {
+                info["bios_name"] = media->GetBiosName(true);
+                info["valid_bios"] = media->IsSyscardBiosValid();
+                info["laseractive_card"] = mmi->card;
+            }
+            else if (mmi && (mmi->card == "Games Express"))
+            {
+                info["bios_name"] = media->GetBiosName(false);
+                info["valid_bios"] = media->IsGameExpressBiosValid();
+                info["laseractive_card"] = mmi->card;
+            }
+            else
+            {
+                GG_LaserActive_Region region = media->GetSelectedLaserActiveRegion();
+                info["bios_name"] = media->GetPacBiosName(region);
+                info["valid_bios"] = media->IsPacBiosValid(region);
+                info["bios_crc32"] = media->GetPacBiosCRC(region);
+                info["laseractive_region"] = region == GG_LASERACTIVE_REGION_US ? "US" : "Japan";
+            }
+        }
+        else
+        {
+            bool syscard = !media->IsGameExpress();
+            info["bios_name"] = media->GetBiosName(syscard);
+            info["valid_bios"] = syscard ? media->IsSyscardBiosValid() : media->IsGameExpressBiosValid();
+        }
+    }
+
+    if (m_core->GetCDROMMedia()->IsMmi())
+    {
+        CdRomMedia* cdrom_media = m_core->GetCDROMMedia();
+        const GG_MmiInfo* mmi = cdrom_media->GetMmiInfo();
+        const GG_MmiMediaInfo* selected = cdrom_media->GetSelectedMmiMedia();
+        info["mmi_media_count"] = mmi ? mmi->media.size() : 0;
+        info["mmi_ejected"] = cdrom_media->IsMmiEjected();
+        if (mmi)
+        {
+            info["mmi_system"] = mmi->system;
+            info["mmi_catalog_id"] = mmi->catalog_id;
+            info["mmi_region_code"] = mmi->region_code;
+        }
+        if (selected)
+        {
+            info["mmi_selected_name"] = selected->name;
+            info["mmi_selected_sequence"] = selected->sequence_number;
+            info["mmi_selected_volume"] = selected->volume_number;
+            info["mmi_selected_side"] = selected->side_number;
+            info["mmi_selected_type"] = selected->type;
+            info["mmi_selected_format"] = selected->format;
+        }
     }
 
     info["backup_ram_forced"] = media->IsBackupRAMForced();
@@ -905,6 +975,62 @@ json DebugAdapter::GetMediaInfo()
         info["softpatch_path"] = media->GetSoftpatchPath();
 
     return info;
+}
+
+json DebugAdapter::ListMmiMedia()
+{
+    json result;
+    const GG_MmiInfo* info = m_core->GetCDROMMedia()->GetMmiInfo();
+    if (!info)
+        return {{"error", "No MMI media loaded"}};
+
+    json media = json::array();
+    for (size_t i = 0; i < info->media.size(); i++)
+    {
+        const GG_MmiMediaInfo& item = info->media[i];
+        media.push_back({
+            {"index", i},
+            {"name", item.name},
+            {"sequence", item.sequence_number},
+            {"volume", item.volume_number},
+            {"side", item.side_number},
+            {"type", item.type},
+            {"format", item.format},
+            {"selected", i == m_core->GetCDROMMedia()->GetSelectedMmiMediaIndex()}
+        });
+    }
+    result["ejected"] = m_core->GetCDROMMedia()->IsMmiEjected();
+    result["media"] = media;
+    return result;
+}
+
+json DebugAdapter::EjectMmiMedia()
+{
+    if (!m_core->EjectLaserDisc())
+        return {{"error", "Unable to eject MMI media"}};
+    emu_audio_reset();
+    rewind_reset();
+    return {{"success", true}, {"ejected", true}};
+}
+
+json DebugAdapter::InsertMmiMedia()
+{
+    if (!m_core->InsertLaserDisc())
+        return {{"error", "Unable to insert MMI media"}};
+    emu_audio_reset();
+    rewind_reset();
+    return {{"success", true}, {"ejected", false}};
+}
+
+json DebugAdapter::SelectMmiMedia(u32 index)
+{
+    if (!m_core->GetCDROMMedia()->IsMmiEjected())
+        return {{"error", "Eject MMI media before selecting a side"}};
+    if (!m_core->SelectLaserDiscMedia(index))
+        return {{"error", "Invalid or unloadable MMI media index"}};
+    emu_audio_reset();
+    rewind_reset();
+    return {{"success", true}, {"index", index}, {"ejected", true}};
 }
 
 json DebugAdapter::ListRecentMedia()
@@ -1397,6 +1523,37 @@ json DebugAdapter::GetCDROMStatus()
     status["length"] = time_str;
     status["sector_count"] = cdrom_media->GetSectorCount();
 
+    if (m_core->GetMedia()->IsLaserActive())
+    {
+        LaserActive::Status laseractive;
+        m_core->GetLaserActive()->GetStatus(laseractive);
+        status["laseractive"] = true;
+        status["laseractive_head_lba"] = laseractive.head_lba;
+        status["laseractive_seek_latency"] = laseractive.seek_latency;
+        status["laseractive_track"] = laseractive.current_track;
+        status["laseractive_drive_state"] = laseractive.current_drive_state;
+        status["laseractive_paused"] = laseractive.paused;
+        status["laseractive_sram_enabled"] = laseractive.sram_enabled;
+        status["laseractive_ejected"] = laseractive.ejected;
+        status["laseractive_drive_mode"] = (int)laseractive.drive_mode;
+        status["laseractive_sample"] = laseractive.sample;
+        status["laseractive_video_frame"] = laseractive.video_frame;
+        status["laseractive_search_sectors"] = laseractive.search_sectors;
+        status["laseractive_analog_fade_samples_left"] = laseractive.analog_fade_samples_left;
+        status["laseractive_analog_fade_samples_right"] = laseractive.analog_fade_samples_right;
+        status["laseractive_analog_muted_left"] = laseractive.analog_muted_left;
+        status["laseractive_analog_muted_right"] = laseractive.analog_muted_right;
+        status["pd6103a_input_frozen"] = laseractive.input_frozen;
+        status["pd6103a_output_frozen"] = laseractive.output_frozen;
+        status["pd6103a_input"] = json::array();
+        status["pd6103a_output"] = json::array();
+        for (int i = 0; i < 0x20; i++)
+        {
+            status["pd6103a_input"].push_back(laseractive.input_registers[i]);
+            status["pd6103a_output"].push_back(laseractive.output_registers[i]);
+        }
+    }
+
     return status;
 }
 
@@ -1561,7 +1718,13 @@ json DebugAdapter::GetCDROMAudioStatus()
     CdRomMedia* cdrom_media = m_core->GetCDROMMedia();
     CdRomAudio* cdrom_audio = m_core->GetCDROMAudio();
     CdRomAudio::CdRomAudio_State* cdrom_audio_state = cdrom_audio->GetState();
-    u32 current_lba = *cdrom_audio_state->CURRENT_LBA;
+    bool is_laseractive = m_core->GetMedia()->IsLaserActive();
+    LaserActive::Status laseractive = {};
+    if (is_laseractive)
+        m_core->GetLaserActive()->GetStatus(laseractive);
+    CdRomAudio::CdAudioState current_state = cdrom_audio->GetCurrentState();
+    u32 current_lba = is_laseractive ? (u32)MAX(laseractive.head_lba, 0) :
+        *cdrom_audio_state->CURRENT_LBA;
     s32 current_track = cdrom_media->FindTrackFromLBA(current_lba, true);
     const std::vector<CdRomImage::Track>& tracks = cdrom_media->GetTracks();
     const CdRomImage::Track* track = NULL;
@@ -1571,19 +1734,19 @@ json DebugAdapter::GetCDROMAudioStatus()
 
     // State
     const char* state_names[] = { "PLAYING", "IDLE", "PAUSED", "STOPPED" };
-    status["state"] = state_names[*cdrom_audio_state->CURRENT_STATE];
+    status["state"] = state_names[current_state];
 
     // Stop event
     const char* stop_event_names[] = { "STOP", "LOOP", "IRQ" };
     status["stop_event"] = stop_event_names[*cdrom_audio_state->STOP_EVENT];
 
     bool audio_sector = cdrom_media->IsAudioSector(current_lba);
-    bool audible = (*cdrom_audio_state->CURRENT_STATE == CdRomAudio::CD_AUDIO_STATE_PLAYING) &&
+    bool audible = (current_state == CdRomAudio::CD_AUDIO_STATE_PLAYING) &&
         (*cdrom_audio_state->SEEK_CYCLES <= 0) &&
         (*cdrom_audio_state->PLAYBACK_DELAY_CYCLES <= 0) && audio_sector;
     const char* output_state = "SILENT";
 
-    if (*cdrom_audio_state->CURRENT_STATE == CdRomAudio::CD_AUDIO_STATE_PLAYING)
+    if (current_state == CdRomAudio::CD_AUDIO_STATE_PLAYING)
     {
         if (*cdrom_audio_state->SEEK_CYCLES > 0)
             output_state = "SEEKING";
@@ -1657,6 +1820,24 @@ json DebugAdapter::GetCDROMAudioStatus()
     status["fader_speed"] = fader_enabled ? (IS_SET_BIT(fader, 2) ? "FAST" : "SLOW") : "NONE";
     status["fader_gain"] = fader_cd_audio ? cdrom->GetFaderValue() : 1.0;
 
+    if (is_laseractive)
+    {
+        static const char* modes[] = { "INACTIVE", "SEEKING", "READING", "PLAYING", "PAUSED", "STOPPED" };
+        status["laseractive"] = true;
+        status["state"] = modes[laseractive.drive_mode];
+        status["current_lba"] = laseractive.head_lba;
+        status["current_track"] = laseractive.current_track;
+        status["current_sample"] = laseractive.sample;
+        status["seek_ms"] = laseractive.seek_latency * (1000.0 / 75.0);
+        status["seek_cycles"] = (u64)laseractive.seek_latency * GG_MASTER_CLOCK_RATE / 75;
+        status["playback_delay_ms"] = 0;
+        status["playback_delay_cycles"] = 0;
+        status["audible"] = cdrom_audio->GetLeftSample() != 0 || cdrom_audio->GetRightSample() != 0;
+        status["output_state"] = laseractive.drive_mode == LaserActive::DRIVE_SEEKING ? "SEEKING" :
+            (status["audible"].get<bool>() ? "AUDIBLE" : "SILENT");
+        format_cdrom_signed_msf(laseractive.head_lba, current_msf, sizeof(current_msf));
+        status["current_position_msf"] = current_msf;
+    }
     return status;
 }
 
@@ -1841,6 +2022,26 @@ json DebugAdapter::LoadBios(const std::string& file_path, bool syscard)
         result["warning"] = "CRC does not match any known BIOS";
 
     return result;
+}
+
+json DebugAdapter::LoadPacBios(const std::string& file_path, GG_LaserActive_Region region)
+{
+    if (file_path.empty())
+        return {{"error", "File path is required"}};
+    if (!emu_load_pac_bios(file_path.c_str(), region))
+        return {{"error", "Failed to load LaserActive BIOS file"}};
+
+    Media* media = m_core->GetMedia();
+    if (media->IsLaserActive())
+        gui_action_reset();
+    return {
+        {"success", true},
+        {"file_path", file_path},
+        {"type", region == GG_LASERACTIVE_REGION_US ? "pac_us" : "pac_japan"},
+        {"valid_crc", media->IsPacBiosValid(region)},
+        {"bios_name", media->GetPacBiosName(region)},
+        {"crc32", media->GetPacBiosCRC(region)}
+    };
 }
 
 json DebugAdapter::LoadSymbols(const std::string& file_path)

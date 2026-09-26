@@ -30,8 +30,9 @@
 #include "arcade_card_mapper.h"
 #include "random.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
-Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random)
+Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random, LaserActive* laseractive)
 {
     m_huc6260 = huc6260;
     m_huc6202 = huc6202;
@@ -41,6 +42,7 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* medi
     m_audio = audio;
     m_cdrom = cdrom;
     m_random = random;
+    m_laseractive = laseractive;
     InitPointer(m_trace_logger);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
@@ -249,6 +251,30 @@ void Memory::ReloadMemoryMap()
         else
             m_memory_map[i] = &m_wram[0];
     }
+
+    if (m_media->IsLaserActive())
+    {
+        for (int i = 0x40; i <= 0x7F; i++)
+        {
+            m_memory_map_write[i] = false;
+            m_memory_map[i] = m_unused_memory;
+        }
+        UpdateLaserActiveSram();
+    }
+}
+
+void Memory::UpdateLaserActiveSram()
+{
+    if (!m_media->IsLaserActive())
+        return;
+
+    bool enabled = m_laseractive->IsSramEnabled();
+
+    for (int i = 0x68; i <= 0x7F; i++)
+    {
+        m_memory_map_write[i] = enabled;
+        m_memory_map[i] = enabled ? &m_card_ram[(i - 0x68) * 0x2000] : m_unused_memory;
+    }
 }
 
 void Memory::SetResetValues(int mpr, int wram, int card_ram, int arcade_card)
@@ -397,11 +423,18 @@ Memory::MemoryBankType Memory::GetBankType(u8 bank)
     if (bank >= 0xF8 && bank <= 0xFB)
         return MEMORY_BANK_TYPE_WRAM;
 
-    if ((m_card_ram_size > 0) && (bank >= m_card_ram_start) && (bank <= m_card_ram_end))
-        return MEMORY_BANK_TYPE_CARD_RAM;
-
     if (bank < 0x80)
-        return m_media->IsCDROM() ? MEMORY_BANK_TYPE_BIOS : MEMORY_BANK_TYPE_ROM;
+    {
+        bool card_ram = (m_card_ram_size > 0) && (bank >= m_card_ram_start) && (bank <= m_card_ram_end);
+
+        if (!m_media->IsCDROM())
+            return card_ram ? MEMORY_BANK_TYPE_CARD_RAM : MEMORY_BANK_TYPE_ROM;
+
+        if (bank >= 0x40 && m_media->IsLaserActive())
+            return (bank >= 0x68 && m_memory_map_write[bank]) ? MEMORY_BANK_TYPE_CARD_RAM : MEMORY_BANK_TYPE_UNUSED;
+
+        return card_ram ? MEMORY_BANK_TYPE_CARD_RAM : MEMORY_BANK_TYPE_BIOS;
+    }
 
     if (bank == 0xFF)
         return MEMORY_BANK_TYPE_HARDWARE;

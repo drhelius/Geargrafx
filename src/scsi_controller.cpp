@@ -26,6 +26,7 @@
 #include "huc6280.h"
 #include "random.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
 static const u32 k_scsi_command_buffer_capacity = 16;
 static const u32 k_scsi_data_buffer_capacity = 2048;
@@ -35,11 +36,12 @@ static const u32 k_scsi_initial_read_phase_max_cycles = GG_MASTER_CLOCK_RATE / 6
 static const u8 k_scsi_command_buffer_padding[k_scsi_command_buffer_capacity] = {};
 static const u8 k_scsi_data_buffer_padding[k_scsi_data_buffer_capacity] = {};
 
-ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random)
+ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random, LaserActive* laseractive)
 {
     m_cdrom_media = cdrom_media;
     m_cdrom_audio = cdrom_audio;
     m_random = random;
+    m_laseractive = laseractive;
     InitPointer(m_trace_logger);
     m_bus.db = 0;
     m_bus.signals = 0;
@@ -519,6 +521,8 @@ void ScsiController::CommandRead()
     u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
     u32 seek_cycles = TimeToCycles(seek_time * 1000);
     u32 transfer_cycles = m_cdrom_media->SectorTransferCycles();
+    if (m_laseractive->IsActive())
+        seek_cycles = m_laseractive->NotifyScsiReadStart(lba);
 
     if (m_initial_read_phase_cycles > 0)
     {
@@ -556,6 +560,12 @@ void ScsiController::CommandAudioStartPosition()
 
     SCSI_DEBUG("SCSI CMD Audio Start Position: start LBA %d, mode %02X", start_lba, mode);
 
+    if (!m_cdrom_media->IsReady())
+    {
+        StartStatus(SCSI_STATUS_CHECK_CONDITION);
+        return;
+    }
+
     m_cdrom_audio->StartAudio(start_lba, mode == 0);
 
     if (mode == 0)
@@ -574,6 +584,12 @@ void ScsiController::CommandAudioStopPosition()
     u8 mode = m_command_buffer[1];
 
     SCSI_DEBUG("SCSI CMD Audio Stop Position: stop LBA %d, mode %02X", stop_lba, mode);
+
+    if (!m_cdrom_media->IsReady())
+    {
+        StartStatus(SCSI_STATUS_CHECK_CONDITION);
+        return;
+    }
 
     switch (mode)
     {
@@ -608,6 +624,12 @@ void ScsiController::CommandAudioPause()
     SCSI_DEBUG("SCSI CMD Audio Pause");
     SCSI_DEBUG("******");
 
+    if (!m_cdrom_media->IsReady())
+    {
+        StartStatus(SCSI_STATUS_CHECK_CONDITION);
+        return;
+    }
+
     m_cdrom_audio->PauseAudio();
 
     StartStatus(SCSI_STATUS_GOOD);
@@ -618,6 +640,12 @@ void ScsiController::CommandReadSubcodeQ()
     SCSI_DEBUG("******");
     SCSI_DEBUG("SCSI CMD Read Subcode Q");
     SCSI_DEBUG("******");
+
+    if (!m_cdrom_media->IsReady())
+    {
+        StartStatus(SCSI_STATUS_CHECK_CONDITION);
+        return;
+    }
 
     CdRomAudio::CdAudioState audio_state = m_cdrom_audio->GetSubcodeState();
     u32 current_lba = (m_cdrom_audio->GetCurrentState() == CdRomAudio::CD_AUDIO_STATE_IDLE) ?
@@ -648,6 +676,30 @@ void ScsiController::CommandReadSubcodeQ()
     buffer[8] = DecToBcd(absolute.seconds);
     buffer[9] = DecToBcd(absolute.frames);
 
+    if (m_cdrom_media->IsMmi())
+    {
+        s32 lba = m_laseractive->IsActive() ? m_laseractive->GetHeadLba() : (s32)current_lba;
+        u8 captured_q[12];
+
+        if (m_cdrom_media->ReadSubchannelQ(lba, captured_q))
+        {
+            memcpy(buffer + 1, captured_q, 6);
+            memcpy(buffer + 7, captured_q + 7, 3);
+        }
+        else if (lba < 0)
+        {
+            LbaToMsf((u32)-(s64)lba, &relative);
+            LbaToMsf((u32)MAX((s64)lba + 150, 0LL), &absolute);
+            buffer[3] = 0;
+            buffer[4] = DecToBcd(relative.minutes);
+            buffer[5] = DecToBcd(relative.seconds);
+            buffer[6] = DecToBcd(relative.frames);
+            buffer[7] = DecToBcd(absolute.minutes);
+            buffer[8] = DecToBcd(absolute.seconds);
+            buffer[9] = DecToBcd(absolute.frames);
+        }
+    }
+
     m_data_buffer.assign(buffer, buffer + buffer_size);
     m_data_buffer_offset = 0;
     TraceScsiEvent(TRACE_SCSI_RESPONSE, SCSI_CMD_READ_SUBCODE_Q, (u8)m_phase, 0, 0, buffer, buffer_size);
@@ -661,6 +713,12 @@ void ScsiController::CommandReadSubcodeQ()
 
 void ScsiController::CommandReadTOC()
 {
+    if (!m_cdrom_media->IsReady())
+    {
+        StartStatus(SCSI_STATUS_CHECK_CONDITION);
+        return;
+    }
+
     SCSI_DEBUG("******");
     SCSI_DEBUG("SCSI CMD Read TOC");
     SCSI_DEBUG("******");
@@ -776,6 +834,9 @@ void ScsiController::LoadSector()
         m_load_sector++;
         m_load_sector &= 0x1FFFFF;
         m_load_sector_count--;
+
+        if (m_laseractive->IsActive())
+            m_laseractive->NotifyScsiSectorRead(m_load_sector - 1, m_load_sector_count == 0);
 
         if (m_load_sector_count == 0)
             m_next_load_cycles = 0;

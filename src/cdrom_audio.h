@@ -28,6 +28,7 @@ class CdRom;
 class CdRomMedia;
 class ScsiController;
 class TraceLogger;
+class LaserActive;
 
 class CdRomAudio
 {
@@ -62,7 +63,7 @@ public:
     };
 
 public:
-    CdRomAudio(CdRomMedia* cdrom_media);
+    CdRomAudio(CdRomMedia* cdrom_media, LaserActive* laseractive);
     ~CdRomAudio();
     void Init(CdRom* cdrom, ScsiController* scsi_controller);
     void Reset();
@@ -83,6 +84,7 @@ public:
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
     void SetTraceLogger(TraceLogger* trace_logger);
+    void FinishLaserActivePlayback();
 
 private:
     void GenerateSamples();
@@ -116,6 +118,7 @@ private:
     u32 m_sector_cache_generation;
     bool m_sector_cache_attempted;
     bool m_sector_cache_valid;
+    LaserActive* m_laseractive;
 
     // DShadof measured delay between seek completion status and audible CD-DA playback.
     static const u32 k_playback_delay_us = 224000;

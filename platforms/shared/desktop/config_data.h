@@ -78,6 +78,8 @@ struct config_Emulator
     int mb128_mode;
     std::string syscard_bios_path;
     std::string gameexpress_bios_path;
+    std::string pac_japan_bios_path;
+    std::string pac_us_bios_path;
     std::string screenshots_path;
     std::string last_open_path;
     int window_width;
@@ -87,6 +89,7 @@ struct config_Emulator
     bool backup_ram;
     int console_type;
     int cdrom_type;
+    int laseractive_region;
     bool preload_cdrom;
     int mcp_tcp_port;
     std::string mcp_http_address;
@@ -105,6 +108,13 @@ struct config_Video
     int scanline_mode;
     int scanline_start;
     int scanline_end;
+    int laseractive_ratio;
+    int laseractive_scanline_mode;
+    int laseractive_scanline_start;
+    int laseractive_scanline_end;
+    int laseractive_width_mode;
+    int laseractive_pixel_start;
+    int laseractive_pixel_end;
     int palette;
     bool fps;
     bool sprite_limit;
@@ -271,6 +281,10 @@ struct config_Debug
     bool show_cdrom;
     bool show_cdrom_toc;
     bool show_cdrom_audio;
+    bool show_laseractive_general;
+    bool show_laseractive_registers;
+    bool show_laseractive_audio;
+    bool show_laseractive_video;
     bool show_adpcm;
     bool show_arcade_card;
     bool show_trace_logger;

@@ -25,6 +25,7 @@
 #include "huc6280.h"
 #include "cdrom_audio.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
 INLINE void CdRom::TraceCdRomEvent(u8 event, u8 value)
 {

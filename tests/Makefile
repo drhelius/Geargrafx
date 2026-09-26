@@ -12,6 +12,8 @@ INCLUDES += -I$(DEPS_DIR)/libchdr/include
 INCLUDES += -I$(DEPS_DIR)/lzma/include
 INCLUDES += -I$(DEPS_DIR)/minivorbis
 INCLUDES += -I$(DEPS_DIR)/miniz
+INCLUDES += -I$(DEPS_DIR)/json
+INCLUDES += -I$(DEPS_DIR)/qon
 INCLUDES += -I$(DEPS_DIR)/zstd
 
 USE_CLANG ?= 0
@@ -40,8 +42,8 @@ endif
 
 SANITIZE ?= 0
 ifeq ($(SANITIZE), 1)
-    CPPFLAGS +=-fsanitize=address
-    LDFLAGS += -lasan
+    CPPFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer
+    LDFLAGS += -fsanitize=address,undefined
 endif
 
 ifeq ($(UNAME_S), Linux) #LINUX

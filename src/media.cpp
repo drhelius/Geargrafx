@@ -27,6 +27,7 @@
 #include "ips_patch.h"
 #include "media_file.h"
 #include "cdrom_media.h"
+#include "mmi_archive.h"
 
 Media::Media(CdRomMedia* cdrom_media)
 {
@@ -42,14 +43,19 @@ Media::Media(CdRomMedia* cdrom_media)
     m_temp_path[0] = 0;
     m_bios_name_syscard[0] = 0;
     m_bios_name_gameexpress[0] = 0;
+    m_bios_name_pac_japan[0] = 0;
+    m_bios_name_pac_us[0] = 0;
     m_crc = 0;
     m_bios_crc_syscard = 0;
     m_bios_crc_gameexpress = 0;
+    m_bios_crc_pac_japan = 0;
+    m_bios_crc_pac_us = 0;
     m_is_hes = false;
     m_is_gameexpress = false;
     m_is_sgx = false;
     m_is_cdrom = false;
     m_cdrom_hardware_enabled = false;
+    m_is_mmi = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
     m_adpcm_clock_speed = GG_ADPCM_DEFAULT_CLOCK_SPEED;
@@ -62,10 +68,16 @@ Media::Media(CdRomMedia* cdrom_media)
     m_is_valid_bios_gameexpress = false;
     m_is_loaded_bios_syscard = false;
     m_is_loaded_bios_gameexpress = false;
+    m_is_valid_bios_pac_japan = false;
+    m_is_valid_bios_pac_us = false;
+    m_is_loaded_bios_pac_japan = false;
+    m_is_loaded_bios_pac_us = false;
     m_mapper = STANDARD_MAPPER;
     m_avenue_pad_3_button = GG_KEY_RUN;
     m_console_type = GG_CONSOLE_AUTO;
     m_cdrom_type = GG_CDROM_AUTO;
+    m_laseractive_region = GG_LASERACTIVE_REGION_AUTO;
+    m_selected_laseractive_region = GG_LASERACTIVE_REGION_AUTO;
     m_force_backup_ram = false;
     m_force_gameexpress = false;
     m_preload_cdrom = false;
@@ -109,6 +121,7 @@ void Media::Reset()
     m_is_sgx = false;
     m_is_cdrom = false;
     m_cdrom_hardware_enabled = false;
+    m_is_mmi = false;
     m_is_in_game_database = false;
     m_game_database_name = NULL;
     m_adpcm_clock_speed = GG_ADPCM_DEFAULT_CLOCK_SPEED;
@@ -178,6 +191,12 @@ bool Media::LoadMedia(const char* path, bool softpatching)
     {
         m_is_cdrom = true;
         m_ready = LoadChdFromFile(path);
+    }
+    else if (strcmp(m_file_extension, "mmi") == 0)
+    {
+        m_is_cdrom = true;
+        m_is_mmi = true;
+        m_ready = LoadMmiFromFile(path);
     }
     else if (strcmp(m_file_extension, "iso") == 0)
     {
@@ -333,6 +352,44 @@ bool Media::LoadChdFromFile(const char* path)
     return m_ready;
 }
 
+bool Media::LoadMmiFromFile(const char* path)
+{
+    m_ready = m_cdrom_media->LoadMmiFromFile(path);
+    if (m_ready)
+        SelectPacBios();
+    return m_ready;
+}
+
+bool Media::IsLaserActive()
+{
+    return m_is_mmi && m_cdrom_media->IsLaserDisc();
+}
+
+u8* Media::GetMappedBios()
+{
+    return m_is_cdrom ? m_rom_map[0] : NULL;
+}
+
+int Media::GetMappedBiosSize()
+{
+    if (!m_is_cdrom)
+        return 0;
+    const GG_MmiInfo* info = IsLaserActive() ? m_cdrom_media->GetMmiInfo() : NULL;
+    if (info && info->card.empty())
+        return GG_BIOS_LASERACTIVE_SIZE;
+    return m_is_gameexpress ? GG_BIOS_GAME_EXPRESS_SIZE : GG_BIOS_SYSCARD_SIZE;
+}
+
+bool Media::IsBiosReady()
+{
+    const GG_MmiInfo* info = IsLaserActive() ? m_cdrom_media->GetMmiInfo() : NULL;
+
+    if (info && info->card.empty())
+        return IsPacBiosLoaded(m_selected_laseractive_region);
+
+    return m_is_gameexpress ? m_is_loaded_bios_gameexpress : m_is_loaded_bios_syscard;
+}
+
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 bool Media::LoadPhysicalCdRom(const char* device_id)
 {
@@ -403,15 +460,18 @@ bool Media::LoadBios(const char* file_path, bool syscard)
         return false;
     }
 
-    int size = static_cast<int>(file.tellg());
-    if (size <= 0)
+    streamsize size = file.tellg();
+    int expected_size = syscard ? GG_BIOS_SYSCARD_SIZE : GG_BIOS_GAME_EXPRESS_SIZE;
+
+    if ((size != expected_size) && (size != expected_size + 512))
     {
-        Log("Invalid BIOS size %d: %s", size, file_path);
+        Log("Incorrect BIOS size %lld: expected %d. %s", (long long)size, expected_size, file_path);
         return false;
     }
 
     u8* buffer = new u8[size];
     file.seekg(0, ios::beg);
+
     if (!file.read(reinterpret_cast<char*>(buffer), size))
     {
         SafeDeleteArray(buffer);
@@ -420,7 +480,7 @@ bool Media::LoadBios(const char* file_path, bool syscard)
     }
     file.close();
 
-    bool loaded = LoadBiosData(buffer, size, syscard, file_path);
+    bool loaded = LoadBiosData(buffer, (int)size, syscard, file_path);
     SafeDeleteArray(buffer);
     return loaded;
 }
@@ -428,6 +488,49 @@ bool Media::LoadBios(const char* file_path, bool syscard)
 bool Media::LoadBiosFromBuffer(const u8* buffer, int size, bool syscard)
 {
     return LoadBiosData(buffer, size, syscard, NULL);
+}
+
+bool Media::LoadPacBios(const char* file_path, GG_LaserActive_Region region)
+{
+    if (!IsValidPointer(file_path) || ((region != GG_LASERACTIVE_REGION_JAPAN) && (region != GG_LASERACTIVE_REGION_US)))
+        return false;
+
+    MediaFile* file = MediaFile::OpenFile(file_path);
+
+    if (!file)
+    {
+        Log("There was a problem opening the LaserActive BIOS %s", file_path);
+        return false;
+    }
+
+    s64 size = file->GetSize();
+
+    if ((size != GG_BIOS_LASERACTIVE_SIZE) && (size != GG_BIOS_LASERACTIVE_SIZE + 512))
+    {
+        Log("Invalid LaserActive BIOS size %lld: %s", (long long)size, file_path);
+        SafeDelete(file);
+        return false;
+    }
+
+    u8* buffer = new u8[(size_t)size];
+    bool read = file->ReadAt(0, buffer, (u64)size);
+    SafeDelete(file);
+
+    if (!read)
+    {
+        SafeDeleteArray(buffer);
+        Log("There was a problem reading the LaserActive BIOS %s", file_path);
+        return false;
+    }
+
+    bool loaded = LoadPacBiosData(buffer, (int)size, region, file_path);
+    SafeDeleteArray(buffer);
+    return loaded;
+}
+
+bool Media::LoadPacBiosFromBuffer(const u8* buffer, int size, GG_LaserActive_Region region)
+{
+    return LoadPacBiosData(buffer, size, region, NULL);
 }
 
 void Media::UnloadBios(bool syscard)
@@ -444,6 +547,118 @@ void Media::UnloadBios(bool syscard)
     }
 }
 
+void Media::UnloadPacBios(GG_LaserActive_Region region)
+{
+    if (region == GG_LASERACTIVE_REGION_JAPAN)
+    {
+        m_is_loaded_bios_pac_japan = false;
+        m_is_valid_bios_pac_japan = false;
+        m_bios_crc_pac_japan = 0;
+        m_bios_name_pac_japan[0] = 0;
+    }
+    else if (region == GG_LASERACTIVE_REGION_US)
+    {
+        m_is_loaded_bios_pac_us = false;
+        m_is_valid_bios_pac_us = false;
+        m_bios_crc_pac_us = 0;
+        m_bios_name_pac_us[0] = 0;
+    }
+
+    SelectPacBios();
+}
+
+bool Media::LoadPacBiosData(const u8* buffer, int size, GG_LaserActive_Region region, const char* path)
+{
+    if (!IsValidPointer(buffer) || ((region != GG_LASERACTIVE_REGION_JAPAN) && (region != GG_LASERACTIVE_REGION_US)))
+        return false;
+
+    const u8* source = buffer;
+    int data_size = size;
+
+    if (data_size == (GG_BIOS_LASERACTIVE_SIZE + 512))
+    {
+        source += 512;
+        data_size -= 512;
+    }
+
+    if (data_size != GG_BIOS_LASERACTIVE_SIZE)
+    {
+        Log("Incorrect LaserActive BIOS size %d: expected %d%s%s", data_size, GG_BIOS_LASERACTIVE_SIZE, path ? ". " : "", path ? path : "");
+        return false;
+    }
+
+    u32 crc = CalculateCRC32(0, source, data_size);
+    bool valid = false;
+    const char* name = "Unknown";
+
+    if ((region == GG_LASERACTIVE_REGION_JAPAN) && (crc == 0xA8CB694C))
+    {
+        valid = true;
+        name = "PAC-N1 v1.02";
+    }
+    else if ((region == GG_LASERACTIVE_REGION_JAPAN) && (crc == 0x76116A02))
+    {
+        valid = true;
+        name = "PCE-LP1 v1.02";
+    }
+    else if ((region == GG_LASERACTIVE_REGION_US) && (crc == 0x01223DD5))
+    {
+        valid = true;
+        name = "PAC-N10 v1.02";
+    }
+
+    if (!valid)
+    {
+        Log("Unrecognized %s LaserActive BIOS CRC32 %08X%s%s",
+            region == GG_LASERACTIVE_REGION_US ? "US" : "Japanese", crc,
+            path ? ": " : "", path ? path : "");
+    }
+
+    u8* destination = (region == GG_LASERACTIVE_REGION_US) ? m_pac_bios_us : m_pac_bios_japan;
+    bool* loaded = (region == GG_LASERACTIVE_REGION_US) ? &m_is_loaded_bios_pac_us : &m_is_loaded_bios_pac_japan;
+    bool* valid_bios = (region == GG_LASERACTIVE_REGION_US) ? &m_is_valid_bios_pac_us : &m_is_valid_bios_pac_japan;
+    u32* bios_crc = (region == GG_LASERACTIVE_REGION_US) ? &m_bios_crc_pac_us : &m_bios_crc_pac_japan;
+    char* bios_name = (region == GG_LASERACTIVE_REGION_US) ? m_bios_name_pac_us : m_bios_name_pac_japan;
+
+    memcpy(destination, source, GG_BIOS_LASERACTIVE_SIZE);
+    *loaded = true;
+    *valid_bios = valid;
+    *bios_crc = crc;
+    strncpy_fit(bios_name, name, 64);
+    SelectPacBios();
+
+    Log("LaserActive BIOS loaded: %s (%08X)%s%s", name, crc, path ? ": " : "", path ? path : "");
+    return true;
+}
+
+void Media::SelectPacBios()
+{
+    if (m_laseractive_region == GG_LASERACTIVE_REGION_JAPAN)
+    {
+        m_selected_laseractive_region = GG_LASERACTIVE_REGION_JAPAN;
+        return;
+    }
+
+    if (m_laseractive_region == GG_LASERACTIVE_REGION_US)
+    {
+        m_selected_laseractive_region = GG_LASERACTIVE_REGION_US;
+        return;
+    }
+
+    const GG_MmiInfo* info = m_cdrom_media->GetMmiInfo();
+
+    if (info && info->region_code == "U")
+        m_selected_laseractive_region = GG_LASERACTIVE_REGION_US;
+    else if (info && info->region_code == "J")
+        m_selected_laseractive_region = GG_LASERACTIVE_REGION_JAPAN;
+    else if (m_is_loaded_bios_pac_japan && !m_is_loaded_bios_pac_us)
+        m_selected_laseractive_region = GG_LASERACTIVE_REGION_JAPAN;
+    else if (m_is_loaded_bios_pac_us && !m_is_loaded_bios_pac_japan)
+        m_selected_laseractive_region = GG_LASERACTIVE_REGION_US;
+    else
+        m_selected_laseractive_region = GG_LASERACTIVE_REGION_AUTO;
+}
+
 bool Media::LoadBiosData(const u8* buffer, int size, bool syscard, const char* path)
 {
     int expected_size = syscard ? GG_BIOS_SYSCARD_SIZE : GG_BIOS_GAME_EXPRESS_SIZE;
@@ -455,25 +670,27 @@ bool Media::LoadBiosData(const u8* buffer, int size, bool syscard, const char* p
     if (!IsValidPointer(buffer) || (size <= 0))
         return false;
 
-    if (size != expected_size)
-    {
-        if (path)
-            Log("Incorrect BIOS size %d: expected: %d. %s", size, expected_size, path);
-        else
-            Log("Incorrect BIOS size %d: expected: %d", size, expected_size);
-    }
-
     const u8* source = buffer;
     int data_size = size;
-    if (data_size & 512)
+
+    if (data_size == expected_size + 512)
     {
         Log("Removing 512 bytes header from BIOS...");
-        data_size &= ~512;
+        data_size -= 512;
         source += 512;
     }
 
-    memset(bios, 0x00, expected_size);
-    memcpy(bios, source, MIN(data_size, expected_size));
+    if (data_size != expected_size)
+    {
+        if (path)
+            Log("Incorrect BIOS size %d: expected: %d. %s", data_size, expected_size, path);
+        else
+            Log("Incorrect BIOS size %d: expected: %d", data_size, expected_size);
+
+        return false;
+    }
+
+    memcpy(bios, source, expected_size);
 
     *bios_crc = CalculateCRC32(0, bios, expected_size);
     GatherBIOSInfoFromDB(syscard);
@@ -601,13 +818,27 @@ void Media::GatherMediaInfo()
 
     GatherMediaInfoFromDB();
 
-    if (m_force_gameexpress && m_is_cdrom)
+    const GG_MmiInfo* mmi_info = m_cdrom_media->GetMmiInfo();
+    if (mmi_info)
+        m_is_gameexpress = mmi_info->card == "Games Express";
+
+    if (IsLaserActive())
+    {
+        m_mapper = STANDARD_MAPPER;
+        m_card_ram_size = 0x30000;
+        m_is_sgx = false;
+
+        SelectPacBios();
+        Log("Media is a LaserActive NEC LD-ROM2 image");
+    }
+
+    if (m_force_gameexpress && m_is_cdrom && !mmi_info)
     {
         m_is_gameexpress = true;
         Log("Forcing Game Express because of user request");
     }
 
-    if (m_console_type == GG_CONSOLE_SGX)
+    if (m_console_type == GG_CONSOLE_SGX && !IsLaserActive())
     {
         m_is_sgx = true;
         Log("Forcing SuperGrafx (SGX) because of user request");
@@ -649,31 +880,50 @@ void Media::GatherMediaInfo()
 
     if (m_is_cdrom)
     {
-        switch (m_cdrom_type)
+        if (IsLaserActive())
         {
-            case GG_CDROM_STANDARD:
-                Log("CD-ROM Type: Standard");
-                if (m_mapper == ARCADE_CARD_MAPPER)
-                    m_mapper = STANDARD_MAPPER;
-                break;
-            case GG_CDROM_SUPER_CDROM:
-                Log("CD-ROM Type: Super CD-ROM");
-                if (m_mapper == ARCADE_CARD_MAPPER)
-                    m_mapper = STANDARD_MAPPER;
-                break;
-            case GG_CDROM_ARCADE_CARD:
-                m_mapper = ARCADE_CARD_MAPPER;
-                Log("CD-ROM Type: Arcade Card");
-                break;
-            default:
-                Log("CD-ROM Type: Auto");
-                break;
-        }
-
-        if (m_cdrom_type != GG_CDROM_STANDARD)
-        {
+            Log("CD-ROM Type: LaserActive LD-ROM2");
+            m_mapper = STANDARD_MAPPER;
             m_card_ram_size = 0x30000;
-            Log("Enabling Super CD-ROM Card RAM");
+        }
+        else
+        {
+            GG_CDROM_Type cdrom_type = m_cdrom_type;
+            if (mmi_info && cdrom_type == GG_CDROM_AUTO)
+            {
+                if (mmi_info->system == "CDROM2")
+                    cdrom_type = GG_CDROM_STANDARD;
+                else if (mmi_info->system == "SuperCDROM2")
+                    cdrom_type = GG_CDROM_SUPER_CDROM;
+                else if (mmi_info->system == "ArcadeCDROM2")
+                    cdrom_type = GG_CDROM_ARCADE_CARD;
+            }
+            switch (cdrom_type)
+            {
+                case GG_CDROM_STANDARD:
+                    Log("CD-ROM Type: Standard");
+                    if (m_mapper == ARCADE_CARD_MAPPER)
+                        m_mapper = STANDARD_MAPPER;
+                    break;
+                case GG_CDROM_SUPER_CDROM:
+                    Log("CD-ROM Type: Super CD-ROM");
+                    if (m_mapper == ARCADE_CARD_MAPPER)
+                        m_mapper = STANDARD_MAPPER;
+                    break;
+                case GG_CDROM_ARCADE_CARD:
+                    m_mapper = ARCADE_CARD_MAPPER;
+                    Log("CD-ROM Type: Arcade Card");
+                    break;
+                default:
+                    Log("CD-ROM Type: Auto");
+                    break;
+            }
+
+            if (cdrom_type != GG_CDROM_STANDARD)
+            {
+                m_card_ram_size = 0x30000;
+                Log("Enabling Super CD-ROM Card RAM");
+            }
         }
     }
 
@@ -843,10 +1093,16 @@ void Media::GatherDataFromPath(const char* path)
 
 void Media::InitRomMAP()
 {
-    int rom_size = m_is_cdrom ? (m_is_gameexpress ? GG_BIOS_GAME_EXPRESS_SIZE : GG_BIOS_SYSCARD_SIZE) : m_rom_size;
+    const GG_MmiInfo* mmi_info = m_is_mmi ? m_cdrom_media->GetMmiInfo() : NULL;
+    bool external_card = mmi_info && !mmi_info->card.empty();
+    bool use_pac_bios = mmi_info && !external_card && m_cdrom_media->IsLaserDisc();
+    int rom_size = use_pac_bios ? GG_BIOS_LASERACTIVE_SIZE :
+        (m_is_cdrom ? (m_is_gameexpress ? GG_BIOS_GAME_EXPRESS_SIZE : GG_BIOS_SYSCARD_SIZE) : m_rom_size);
     int rom_bank_count = (rom_size / 0x2000) + (rom_size % 0x2000 ? 1 : 0);
     u8* bios_ptr = m_is_gameexpress ? m_gameexpress_bios : m_syscard_bios;
-    u8* rom_ptr = m_is_cdrom ? bios_ptr : m_rom;
+    u8* pac_bios = (m_selected_laseractive_region == GG_LASERACTIVE_REGION_US) ?
+        m_pac_bios_us : m_pac_bios_japan;
+    u8* rom_ptr = use_pac_bios ? pac_bios : (m_is_cdrom ? bios_ptr : m_rom);
 
     if (rom_bank_count == 0x30)
     {

@@ -116,7 +116,7 @@ private:
     bool m_vdc2_selected;
     bool m_irq1_1;
     bool m_irq1_2;
-    HuC6202_Window_Priority m_window_priority[4];
+    HuC6202_Window_Priority m_window_priority[4] = {};
     u8 m_source_selection[4 * 16];
 };
 

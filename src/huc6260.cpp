@@ -22,12 +22,14 @@
 #include "huc6260.h"
 #include "random.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
-HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random)
+HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random, LaserActive* laseractive)
 {
     m_huc6280 = huc6280;
     m_huc6202 = huc6202;
     m_random = random;
+    m_laseractive = laseractive;
     InitPointer(m_trace_logger);
     m_pixel_format = GG_PIXEL_RGBA8888;
     m_state.CR = &m_control_register;
@@ -39,6 +41,10 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random)
     m_overscan = 0;
     m_scanline_start = 0;
     m_scanline_end = 241;
+    m_laseractive_scanline_start = HUC6260_LASERACTIVE_SCANLINE_START;
+    m_laseractive_scanline_end = HUC6260_LASERACTIVE_SCANLINE_END;
+    m_laseractive_pixel_start = HUC6260_LASERACTIVE_PIXEL_START;
+    m_laseractive_width = HUC6260_LASERACTIVE_DEFAULT_WIDTH * HUC6260_LASERACTIVE_WIDTH_SCALE;
     m_reset_value = -1;
     m_palette = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
@@ -162,6 +168,15 @@ void HuC6260::Reset()
     m_blur = 0;
     m_black_and_white = 0;
     m_active_line = false;
+
+    memset(m_laseractive_line_state, 0, sizeof(m_laseractive_line_state));
+    for (int line = 0; line < HUC6260_LINES; line++)
+    {
+        m_laseractive_line_state[line * 8 + 3] = 0xFF;
+        m_laseractive_line_state[line * 8 + 4] = 0xFF;
+        m_laseractive_line_state[line * 8 + 5] = 0xFF;
+        m_laseractive_line_state[line * 8 + 6] = 0xFF;
+    }
 
     for (int i = 0; i < 256; i++)
     {
@@ -387,15 +402,19 @@ void HuC6260::SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, 
 }
 
 template <int bytes_per_pixel>
-void HuC6260::ApplyLowPassFilter()
+void HuC6260::ApplyLowPassFilter(u8* buffer, int width, int height, int speed)
 {
     static const float k_speed_mhz[4] = { 5.36f, 7.16f, 10.8f, 10.8f };
 
-    int speed_index = MIN(m_speed, 2);
+    if (!buffer)
+        buffer = m_frame_buffer;
+    if (speed < 0)
+        speed = m_speed;
+    int speed_index = MIN(speed, 2);
     if (!m_lowpass_speed[speed_index])
         return;
 
-    float dot_clock = k_speed_mhz[m_speed];
+    float dot_clock = k_speed_mhz[speed];
     float base_alpha = m_lowpass_cutoff_mhz / dot_clock;
     base_alpha = CLAMP(base_alpha, 0.3f, 1.0f);
     float alpha = base_alpha + (1.0f - base_alpha) * (1.0f - m_lowpass_intensity);
@@ -403,8 +422,10 @@ void HuC6260::ApplyLowPassFilter()
     if (alpha >= 1.0f)
         return;
 
-    int width = m_scaled_width ? k_huc6260_scaling_width[m_overscan] : k_huc6260_line_width[m_overscan][m_speed];
-    int height = GetCurrentHeight();
+    if (width == 0)
+        width = m_scaled_width ? k_huc6260_scaling_width[m_overscan] : k_huc6260_line_width[m_overscan][m_speed];
+    if (height == 0)
+        height = GetCurrentHeight();
 
     for (int y = 0; y < height; y++)
     {
@@ -413,16 +434,16 @@ void HuC6260::ApplyLowPassFilter()
 
         if (bytes_per_pixel == 2)
         {
-            u16 first_pixel = *reinterpret_cast<u16*>(m_frame_buffer + line_offset);
+            u16 first_pixel = *reinterpret_cast<u16*>(buffer + line_offset);
             r_prev = ((first_pixel >> 11) & 0x1F) * 255.0f / 31.0f;
             g_prev = ((first_pixel >> 5) & 0x3F) * 255.0f / 63.0f;
             b_prev = (first_pixel & 0x1F) * 255.0f / 31.0f;
         }
         else
         {
-            r_prev = m_frame_buffer[line_offset + 0];
-            g_prev = m_frame_buffer[line_offset + 1];
-            b_prev = m_frame_buffer[line_offset + 2];
+            r_prev = buffer[line_offset + 0];
+            g_prev = buffer[line_offset + 1];
+            b_prev = buffer[line_offset + 2];
         }
 
         for (int x = 0; x < width; x++)
@@ -432,16 +453,16 @@ void HuC6260::ApplyLowPassFilter()
 
             if (bytes_per_pixel == 2)
             {
-                u16 pixel = *reinterpret_cast<u16*>(m_frame_buffer + idx);
+                u16 pixel = *reinterpret_cast<u16*>(buffer + idx);
                 r = ((pixel >> 11) & 0x1F) * 255.0f / 31.0f;
                 g = ((pixel >> 5) & 0x3F) * 255.0f / 63.0f;
                 b = (pixel & 0x1F) * 255.0f / 31.0f;
             }
             else
             {
-                r = m_frame_buffer[idx + 0];
-                g = m_frame_buffer[idx + 1];
-                b = m_frame_buffer[idx + 2];
+                r = buffer[idx + 0];
+                g = buffer[idx + 1];
+                b = buffer[idx + 2];
             }
 
             r = alpha * r + (1.0f - alpha) * r_prev;
@@ -454,13 +475,13 @@ void HuC6260::ApplyLowPassFilter()
                 u8 g8 = RoundToByte(g);
                 u8 b8 = RoundToByte(b);
                 u16 pixel = PackRGB565(r8, g8, b8);
-                *reinterpret_cast<u16*>(m_frame_buffer + idx) = pixel;
+                *reinterpret_cast<u16*>(buffer + idx) = pixel;
             }
             else
             {
-                m_frame_buffer[idx + 0] = (u8)r;
-                m_frame_buffer[idx + 1] = (u8)g;
-                m_frame_buffer[idx + 2] = (u8)b;
+                buffer[idx + 0] = (u8)r;
+                buffer[idx + 1] = (u8)g;
+                buffer[idx + 2] = (u8)b;
             }
 
             r_prev = r; g_prev = g; b_prev = b;
@@ -468,8 +489,8 @@ void HuC6260::ApplyLowPassFilter()
     }
 }
 
-template void HuC6260::ApplyLowPassFilter<2>();
-template void HuC6260::ApplyLowPassFilter<4>();
+template void HuC6260::ApplyLowPassFilter<2>(u8*, int, int, int);
+template void HuC6260::ApplyLowPassFilter<4>(u8*, int, int, int);
 
 void HuC6260::SaveState(std::ostream& stream)
 {
@@ -511,4 +532,23 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
 
     SanitizeState();
+}
+
+void HuC6260::SaveLaserActiveState(std::ostream& stream)
+{
+    int line = CLAMP(m_vpos, 0, HUC6260_LINES - 1);
+    stream.write(reinterpret_cast<const char*>(m_vce_buffer_1 + line * 683), 683 * sizeof(u16));
+    stream.write(reinterpret_cast<const char*>(m_laseractive_classification + line * 683), 683);
+    stream.write(reinterpret_cast<const char*>(m_line_speed + line), sizeof(m_line_speed[0]));
+    stream.write(reinterpret_cast<const char*>(m_laseractive_line_state + line * 8), 8);
+}
+
+void HuC6260::LoadLaserActiveState(std::istream& stream)
+{
+    int line = CLAMP(m_vpos, 0, HUC6260_LINES - 1);
+    stream.read(reinterpret_cast<char*>(m_vce_buffer_1 + line * 683), 683 * sizeof(u16));
+    stream.read(reinterpret_cast<char*>(m_laseractive_classification + line * 683), 683);
+    stream.read(reinterpret_cast<char*>(m_line_speed + line), sizeof(m_line_speed[0]));
+    stream.read(reinterpret_cast<char*>(m_laseractive_line_state + line * 8), 8);
+    m_line_speed[line] = CLAMP(m_line_speed[line], 0, 3);
 }

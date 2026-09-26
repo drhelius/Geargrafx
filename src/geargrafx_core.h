@@ -40,6 +40,7 @@ class Adpcm;
 class ScsiController;
 class Random;
 class TraceLogger;
+class LaserActive;
 
 class GeargrafxCore
 {
@@ -68,7 +69,14 @@ public:
     bool LoadHuCardFromBuffer(const u8* buffer, int size, const char* path = NULL);
     bool LoadBios(const char* file_path, bool syscard);
     bool LoadBiosFromBuffer(const u8* buffer, int size, bool syscard);
+    bool LoadPacBios(const char* file_path, GG_LaserActive_Region region);
+    bool LoadPacBiosFromBuffer(const u8* buffer, int size, GG_LaserActive_Region region);
     void UnloadBios(bool syscard);
+    void UnloadPacBios(GG_LaserActive_Region region);
+    void SetLaserActiveRegion(GG_LaserActive_Region region);
+    bool EjectLaserDisc();
+    bool InsertLaserDisc();
+    bool SelectLaserDiscMedia(u32 index);
     void ResetMedia(bool preserve_ram);
     void KeyPressed(GG_Controllers controller, GG_Keys key);
     void KeyReleased(GG_Controllers controller, GG_Keys key);
@@ -115,16 +123,17 @@ public:
     u64 GetTurboLinkCycle() const;
     GG_TurboLink_Drive GetTurboLinkDrive() const;
     TraceLogger* GetTraceLogger();
+    LaserActive* GetLaserActive();
 
 private:
     void Reset();
     void SelectPSGRevision();
     void SelectADPCMClockSpeed();
-    template<bool is_cdrom, bool is_sgx>
+    template<bool is_cdrom, bool is_sgx, bool is_laseractive>
     bool ClockHardware(u32 cycles);
-    template<bool is_cdrom, bool is_sgx>
+    template<bool is_cdrom, bool is_sgx, bool is_laseractive>
     static void ClockHardwareCallback(void* context, u32 cycles);
-    template<bool debugger, bool is_cdrom, bool is_sgx>
+    template<bool debugger, bool is_cdrom, bool is_sgx, bool is_laseractive = false>
     bool RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug, bool render);
     bool SaveState(std::ostream& stream, size_t& size, bool screenshot);
     bool LoadState(std::istream& stream);
@@ -146,6 +155,7 @@ private:
     Adpcm* m_adpcm;
     ScsiController* m_scsi_controller;
     Random* m_random;
+    LaserActive* m_laseractive;
     bool m_paused;
     TraceLogger* m_trace_logger;
     u64 m_master_clock_cycles;

@@ -35,6 +35,7 @@
 #include "gui_debug_psg.h"
 #include "gui_debug_cdrom.h"
 #include "gui_debug_cdrom_audio.h"
+#include "gui_debug_laseractive.h"
 #include "gui_debug_adpcm.h"
 #include "gui_debug_trace_logger.h"
 #include "gui_debug_turbolink.h"
@@ -142,6 +143,15 @@ void gui_debug_windows(void)
             gui_debug_window_cdrom_toc();
         if (config_debug.show_cdrom_audio && cdrom_available)
             gui_debug_window_cdrom_audio();
+        bool laseractive_available = cdrom_available && emu_get_core()->GetMedia()->IsLaserActive();
+        if (config_debug.show_laseractive_general && laseractive_available)
+            gui_debug_window_laseractive_general();
+        if (config_debug.show_laseractive_registers && laseractive_available)
+            gui_debug_window_laseractive_registers();
+        if (config_debug.show_laseractive_audio && laseractive_available)
+            gui_debug_window_laseractive_audio();
+        if (config_debug.show_laseractive_video && laseractive_available)
+            gui_debug_window_laseractive_video();
         if (config_debug.show_adpcm && cdrom_available)
             gui_debug_window_adpcm();
         if (config_debug.show_arcade_card && emu_get_core()->GetMedia()->IsArcadeCard())

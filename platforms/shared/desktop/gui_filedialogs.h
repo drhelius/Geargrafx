@@ -37,6 +37,7 @@ EXTERN void gui_file_dialog_choose_trace_path(void);
 EXTERN void gui_file_dialog_choose_backup_ram_path(void);
 EXTERN void gui_file_dialog_choose_mb128_path(void);
 EXTERN void gui_file_dialog_load_bios(bool syscard);
+EXTERN void gui_file_dialog_load_pac_bios(bool us_region);
 EXTERN void gui_file_dialog_load_symbols(void);
 EXTERN void gui_file_dialog_save_screenshot(void);
 EXTERN void gui_file_dialog_save_vgm(void);

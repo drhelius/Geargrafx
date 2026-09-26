@@ -124,6 +124,10 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Debug", "CDROM", config_debug.show_cdrom, false);
     CONFIG_BOOL("Debug", "CDROMTOC", config_debug.show_cdrom_toc, false);
     CONFIG_BOOL("Debug", "CDROMAudio", config_debug.show_cdrom_audio, false);
+    CONFIG_BOOL("Debug", "LaserActiveGeneral", config_debug.show_laseractive_general, false);
+    CONFIG_BOOL("Debug", "LaserActiveRegisters", config_debug.show_laseractive_registers, false);
+    CONFIG_BOOL("Debug", "LaserActiveAudio", config_debug.show_laseractive_audio, false);
+    CONFIG_BOOL("Debug", "LaserActiveVideo", config_debug.show_laseractive_video, false);
     CONFIG_BOOL("Debug", "ADPCM", config_debug.show_adpcm, false);
     CONFIG_BOOL("Debug", "ArcadeCard", config_debug.show_arcade_card, false);
     CONFIG_BOOL("Debug", "TraceLogger", config_debug.show_trace_logger, false);
@@ -232,6 +236,8 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Emulator", "BackupRAM", config_emulator.backup_ram, true);
     CONFIG_INT("Emulator", "ConsoleType", config_emulator.console_type, 0);
     CONFIG_INT("Emulator", "CDROMType", config_emulator.cdrom_type, 0);
+    CONFIG_INT_RANGE("Emulator", "LaserActiveRegion", config_emulator.laseractive_region,
+        GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_US);
     CONFIG_BOOL("Emulator", "PreloadCDROM", config_emulator.preload_cdrom, false);
 
     // Files and paths
@@ -249,6 +255,8 @@ static inline void process(config_Operation operation)
     CONFIG_STRING("Emulator", "LastOpenPath", config_emulator.last_open_path, "");
     CONFIG_STRING("Emulator", "SysCardBiosPath", config_emulator.syscard_bios_path, "");
     CONFIG_STRING("Emulator", "GameExpressBiosPath", config_emulator.gameexpress_bios_path, "");
+    CONFIG_STRING("Emulator", "PacJapanBiosPath", config_emulator.pac_japan_bios_path, "");
+    CONFIG_STRING("Emulator", "PacUsBiosPath", config_emulator.pac_us_bios_path, "");
     CONFIG_STRING_ARRAY("Emulator", "RecentROM%d", config_emulator.recent_roms, config_max_recent_roms, "");
 
     // Services
@@ -275,6 +283,13 @@ static inline void process(config_Operation operation)
     CONFIG_INT("Video", "ScanlineMode", config_video.scanline_mode, 0);
     CONFIG_INT("Video", "ScanlineStart", config_video.scanline_start, 11);
     CONFIG_INT("Video", "ScanlineEnd", config_video.scanline_end, 234);
+    CONFIG_INT_RANGE("Video", "LaserActiveAspectRatio", config_video.laseractive_ratio, 1, 0, 3);
+    CONFIG_INT_RANGE("Video", "LaserActiveScanlineMode", config_video.laseractive_scanline_mode, 0, 0, 2);
+    CONFIG_INT_RANGE("Video", "LaserActiveScanlineStart", config_video.laseractive_scanline_start, HUC6260_LASERACTIVE_SCANLINE_START, 0, HUC6260_LINES - 1);
+    CONFIG_INT_RANGE("Video", "LaserActiveScanlineEnd", config_video.laseractive_scanline_end, HUC6260_LASERACTIVE_SCANLINE_END, 0, HUC6260_LINES - 1);
+    CONFIG_INT_RANGE("Video", "LaserActiveWidthMode", config_video.laseractive_width_mode, 0, 0, 2);
+    CONFIG_INT_RANGE("Video", "LaserActivePixelStart", config_video.laseractive_pixel_start, HUC6260_LASERACTIVE_PIXEL_START, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1);
+    CONFIG_INT_RANGE("Video", "LaserActivePixelEnd", config_video.laseractive_pixel_end, HUC6260_LASERACTIVE_PIXEL_END, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1);
     CONFIG_INT_RANGE("Video", "Palette", config_video.palette, 0, 0, 3);
     CONFIG_BOOL("Video", "FPS", config_video.fps, false);
     CONFIG_BOOL("Video", "SpriteLimit", config_video.sprite_limit, false);
@@ -543,6 +558,8 @@ static void after_defaults(void)
 
 static void normalize(void)
 {
+    config_video.laseractive_pixel_end = MAX(config_video.laseractive_pixel_end, config_video.laseractive_pixel_start);
+
 #if defined(GG_DISABLE_DISASSEMBLER)
     config_debug.debug = false;
 #endif
@@ -556,7 +573,7 @@ static void migrate(int file_version)
 {
     std::string stored;
 
-    if (file_version < 9)
+    if (!get_setting("Audio", "PSGRevision", &stored) && (file_version < 9 || get_setting("Audio", "HuC6280A", &stored)))
     {
         bool huc6280a = read_bool("Audio", "HuC6280A", true);
         write_int("Audio", "PSGRevision", huc6280a ? GG_PSG_REVISION_HUC6280A : GG_PSG_REVISION_HUC6280);

@@ -718,6 +718,43 @@ json McpServer::BuildToolList()
         }}
     });
 
+    tools.push_back({
+        {"name", "list_mmi_media"},
+        {"title", "List MMI Media"},
+        {"description", "List LaserActive MMI discs/sides and the selected/ejected state."},
+        {"annotations", {{"readOnlyHint", true}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
+        {"inputSchema", {{"type", "object"}, {"properties", json::object()}, {"additionalProperties", false}}}
+    });
+
+    tools.push_back({
+        {"name", "eject_mmi_media"},
+        {"title", "Eject MMI Media"},
+        {"description", "Eject the currently selected virtual LaserDisc without resetting the machine."},
+        {"annotations", {{"readOnlyHint", false}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
+        {"inputSchema", {{"type", "object"}, {"properties", json::object()}, {"additionalProperties", false}}}
+    });
+
+    tools.push_back({
+        {"name", "insert_mmi_media"},
+        {"title", "Insert MMI Media"},
+        {"description", "Insert the selected virtual LaserDisc without resetting the machine."},
+        {"annotations", {{"readOnlyHint", false}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
+        {"inputSchema", {{"type", "object"}, {"properties", json::object()}, {"additionalProperties", false}}}
+    });
+
+    tools.push_back({
+        {"name", "select_mmi_media"},
+        {"title", "Select MMI Media"},
+        {"description", "Select an MMI disc/side by zero-based index while the virtual drive is ejected."},
+        {"annotations", {{"readOnlyHint", false}, {"destructiveHint", false}, {"idempotentHint", true}, {"openWorldHint", false}}},
+        {"inputSchema", {
+            {"type", "object"},
+            {"properties", {{"index", {{"type", "integer"}, {"minimum", 0}}}}},
+            {"required", json::array({"index"})},
+            {"additionalProperties", false}
+        }}
+    });
+
     // Chip status tools
     tools.push_back({
         {"name", "get_huc6280_status"},
@@ -902,7 +939,7 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "load_media"},
         {"title", "Load Media"},
-        {"description", "Load ROM/CD media (.pce .sgx .hes .cue .zip); reset emulator and auto-load symbols. Debugger state may be lost unless saved debugger settings are enabled."},
+        {"description", "Load ROM/CD/MMI media (.pce .sgx .hes .cue .chd .mmi .zip); reset emulator and auto-load symbols. Debugger state may be lost unless saved debugger settings are enabled."},
         {"annotations", {{"readOnlyHint", false}, {"destructiveHint", true}, {"idempotentHint", false}, {"openWorldHint", true}}},
         {"inputSchema", {
             {"type", "object"},
@@ -919,7 +956,7 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "load_bios"},
         {"title", "Load BIOS"},
-        {"description", "Load CD BIOS: syscard System Card 256KB or gameexpress 32KB."},
+        {"description", "Load a System Card, Game Express, or 512KB LaserActive NEC PAC BIOS."},
         {"annotations", {{"readOnlyHint", false}, {"destructiveHint", true}, {"idempotentHint", false}, {"openWorldHint", true}}},
         {"inputSchema", {
             {"type", "object"},
@@ -930,8 +967,8 @@ json McpServer::BuildToolList()
                 }},
                 {"type", {
                     {"type", "string"},
-                    {"enum", json::array({"syscard", "gameexpress"})},
-                    {"description", "BIOS type: syscard or gameexpress."}
+                    {"enum", json::array({"syscard", "gameexpress", "pac_japan", "pac_us"})},
+                    {"description", "BIOS type: syscard, gameexpress, pac_japan, or pac_us."}
                 }}
             }},
             {"required", json::array({"file_path", "type"})}
@@ -2824,12 +2861,34 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
     {
         return {{"error", "load_media must be handled by the MCP manager"}};
     }
+    else if (normalizedTool == "list_mmi_media")
+    {
+        return m_debugAdapter.ListMmiMedia();
+    }
+    else if (normalizedTool == "eject_mmi_media")
+    {
+        return m_debugAdapter.EjectMmiMedia();
+    }
+    else if (normalizedTool == "insert_mmi_media")
+    {
+        return m_debugAdapter.InsertMmiMedia();
+    }
+    else if (normalizedTool == "select_mmi_media")
+    {
+        if (!arguments.contains("index") || !arguments["index"].is_number_integer() ||
+            (arguments["index"] < 0) || (arguments["index"] > UINT32_MAX))
+            return {{"error", "MMI index must be a non-negative 32-bit integer"}};
+        return m_debugAdapter.SelectMmiMedia(arguments["index"]);
+    }
     else if (normalizedTool == "load_bios")
     {
         std::string file_path = arguments["file_path"];
         std::string type = arguments["type"];
-        bool syscard = (type == "syscard");
-        return m_debugAdapter.LoadBios(file_path, syscard);
+        if (type == "pac_japan")
+            return m_debugAdapter.LoadPacBios(file_path, GG_LASERACTIVE_REGION_JAPAN);
+        if (type == "pac_us")
+            return m_debugAdapter.LoadPacBios(file_path, GG_LASERACTIVE_REGION_US);
+        return m_debugAdapter.LoadBios(file_path, type == "syscard");
     }
     else if (normalizedTool == "load_symbols")
     {

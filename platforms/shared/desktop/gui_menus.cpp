@@ -37,6 +37,7 @@
 #include "utils.h"
 #include "geargrafx.h"
 #include "rewind.h"
+#include "mmi_archive.h"
 
 static bool open_rom = false;
 static bool open_ram = false;
@@ -53,6 +54,8 @@ static bool choose_backup_ram_path = false;
 static bool choose_mb128_path = false;
 static bool open_syscard_bios = false;
 static bool open_gameexpress_bios = false;
+static bool open_pac_japan_bios = false;
+static bool open_pac_us_bios = false;
 static bool save_debug_settings = false;
 static bool load_debug_settings = false;
 static const ImVec4 service_turbolink_color(0.39f, 0.58f, 0.93f, 1.0f);
@@ -120,6 +123,8 @@ void gui_main_menu(void)
     choose_mb128_path = false;
     open_syscard_bios = false;
     open_gameexpress_bios = false;
+    open_pac_japan_bios = false;
+    open_pac_us_bios = false;
     save_debug_settings = false;
     load_debug_settings = false;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
@@ -179,6 +184,49 @@ static void menu_geargrafx(void)
         }
 #endif
 
+        bool mmi_loaded = !emu_is_media_loading() && !emu_is_empty() && emu_get_core()->GetCDROMMedia()->IsMmi();
+
+        if (mmi_loaded && ImGui::BeginMenu("MMI Media"))
+        {
+            CdRomMedia* cdrom_media = emu_get_core()->GetCDROMMedia();
+            bool ejected = cdrom_media->IsMmiEjected();
+
+            if (ImGui::MenuItem(ejected ? "Insert" : "Eject"))
+            {
+                bool changed = ejected ? emu_get_core()->InsertLaserDisc() : emu_get_core()->EjectLaserDisc();
+
+                if (changed)
+                {
+                    emu_audio_reset();
+                    rewind_reset();
+                }
+            }
+
+            ImGui::Separator();
+            const GG_MmiInfo* info = cdrom_media->GetMmiInfo();
+
+            if (info)
+            {
+                for (size_t i = 0; i < info->media.size(); i++)
+                {
+                    bool selected = i == cdrom_media->GetSelectedMmiMediaIndex();
+                    if (ImGui::MenuItem(info->media[i].name.c_str(), NULL, selected,  ejected && !selected))
+                    {
+                        if (emu_get_core()->SelectLaserDiscMedia((u32)i))
+                        {
+                            emu_audio_reset();
+                            rewind_reset();
+                        }
+                    }
+                }
+            }
+
+            if (!ejected)
+                ImGui::TextDisabled("Eject before changing sides.");
+
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Open Recent"))
         {
             for (int i = 0; i < config_max_recent_roms; i++)
@@ -230,7 +278,8 @@ static void menu_geargrafx(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Rewind", !turbolink_active))
+        bool laseractive = !emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive();
+        if (ImGui::BeginMenu("Rewind", !turbolink_active && !laseractive))
         {
             if (ImGui::MenuItem("Enabled", config_hotkeys[config_HotkeyIndex_Rewind].str, &config_rewind.enabled))
                 rewind_reset();
@@ -242,7 +291,7 @@ static void menu_geargrafx(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Run-Ahead", !turbolink_active))
+        if (ImGui::BeginMenu("Run-Ahead", !turbolink_active && !laseractive))
         {
             ImGui::PushItemWidth(140.0f);
             ImGui::Combo("##runahead", &config_emulator.runahead, "Disabled\0" "1 Frame\0" "2 Frames\0" "3 Frames\0\0");
@@ -259,6 +308,9 @@ static void menu_geargrafx(void)
 
             ImGui::EndMenu();
         }
+
+        if (laseractive && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            ImGui::SetTooltip("Run-ahead and rewind are disabled until LaserActive state restore is validated.");
 
         ImGui::Separator();
 
@@ -593,6 +645,69 @@ static void menu_emulator(void)
 
                 ImGui::EndMenu();
             }
+
+            if (ImGui::BeginMenu("LaserActive"))
+            {
+                if (ImGui::MenuItem("Load Japanese PAC BIOS..."))
+                    open_pac_japan_bios = true;
+                ImGui::PushItemWidth(350);
+
+                if (ImGui::InputText("##pac_japan_bios_path", gui_pac_japan_bios_path, IM_ARRAYSIZE(gui_pac_japan_bios_path), ImGuiInputTextFlags_AutoSelectAll))
+                {
+                    config_emulator.pac_japan_bios_path.assign(gui_pac_japan_bios_path);
+                    gui_load_pac_bios(gui_pac_japan_bios_path, GG_LASERACTIVE_REGION_JAPAN);
+                }
+
+                ImGui::PopItemWidth();
+
+                if (media->IsPacBiosValid(GG_LASERACTIVE_REGION_JAPAN))
+                {
+                    ImGui::TextColored(service_mcp_http_color, "Valid BIOS: %s (CRC32 %08X)",
+                        media->GetPacBiosName(GG_LASERACTIVE_REGION_JAPAN),
+                        media->GetPacBiosCRC(GG_LASERACTIVE_REGION_JAPAN));
+                }
+                else if (media->IsPacBiosLoaded(GG_LASERACTIVE_REGION_JAPAN))
+                {
+                    ImGui::TextColored(service_turbolink_color, "Custom or unknown BIOS loaded.");
+                    ImGui::TextColored(service_turbolink_color, "CRC not found in BIOS database.");
+                }
+                else
+                {
+                    ImGui::TextDisabled("Japanese PAC BIOS not loaded.");
+                }
+
+                ImGui::Separator();
+
+                if (ImGui::MenuItem("Load US PAC BIOS..."))
+                    open_pac_us_bios = true;
+
+                ImGui::PushItemWidth(350);
+                if (ImGui::InputText("##pac_us_bios_path", gui_pac_us_bios_path, IM_ARRAYSIZE(gui_pac_us_bios_path), ImGuiInputTextFlags_AutoSelectAll))
+                {
+                    config_emulator.pac_us_bios_path.assign(gui_pac_us_bios_path);
+                    gui_load_pac_bios(gui_pac_us_bios_path, GG_LASERACTIVE_REGION_US);
+                }
+
+                ImGui::PopItemWidth();
+
+                if (media->IsPacBiosValid(GG_LASERACTIVE_REGION_US))
+                {
+                    ImGui::TextColored(service_mcp_http_color, "Valid BIOS: %s (CRC32 %08X)",
+                        media->GetPacBiosName(GG_LASERACTIVE_REGION_US),
+                        media->GetPacBiosCRC(GG_LASERACTIVE_REGION_US));
+                }
+                else if (media->IsPacBiosLoaded(GG_LASERACTIVE_REGION_US))
+                {
+                    ImGui::TextColored(service_turbolink_color, "Custom or unknown BIOS loaded.");
+                    ImGui::TextColored(service_turbolink_color, "CRC not found in BIOS database.");
+                }
+                else
+                {
+                    ImGui::TextDisabled("US PAC BIOS not loaded.");
+                }
+
+                ImGui::EndMenu();
+            }
             ImGui::EndMenu();
         }
 
@@ -662,6 +777,24 @@ static void menu_emulator(void)
             ImGui::Text("It is recommended to leave this option enabled.");
             ImGui::Text("Reset the emulator to apply changes.");
             ImGui::EndTooltip();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("LaserActive Region"))
+        {
+            ImGui::PushItemWidth(100.0f);
+
+            if (ImGui::Combo("##laseractiveregion", &config_emulator.laseractive_region, "Auto\0Japan\0US\0\0"))
+            {
+                emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
+
+                if (!emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive())
+                    gui_action_reset();
+            }
+
+            ImGui::PopItemWidth();
+            ImGui::EndMenu();
         }
 
         ImGui::Separator();
@@ -761,6 +894,8 @@ static void menu_emulator(void)
 
 static void menu_video(void)
 {
+    bool laseractive = !emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive();
+
     if (ImGui::BeginMenu("Video"))
     {
         gui_in_use = true;
@@ -811,7 +946,7 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Aspect Ratio"))
+        if (ImGui::BeginMenu("Aspect Ratio", !laseractive))
         {
             ImGui::PushItemWidth(190.0f);
             ImGui::Combo("##ratio", &config_video.ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0PCE (6:5 DAR)\0\0");
@@ -819,7 +954,7 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Overscan"))
+        if (ImGui::BeginMenu("Overscan", !laseractive))
         {
             ImGui::PushItemWidth(100.0f);
             if (ImGui::Combo("##overscan", &config_video.overscan, "Disabled\0Enabled\0\0"))
@@ -830,7 +965,7 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Scanline Count"))
+        if (ImGui::BeginMenu("Scanline Count", !laseractive))
         {
             ImGui::PushItemWidth(110.0f);
             if (ImGui::Combo("##scanline_mode", &config_video.scanline_mode, "Mode 224p\0Mode 240p\0Manual\0\0"))
@@ -874,6 +1009,86 @@ static void menu_video(void)
                         emu_set_scanline_start_end(config_video.scanline_start, config_video.scanline_end);
                     }
                 }
+            }
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("LaserActive"))
+        {
+            if (ImGui::BeginMenu("Aspect Ratio"))
+            {
+                ImGui::PushItemWidth(190.0f);
+                ImGui::Combo("##laseractive_ratio", &config_video.laseractive_ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0\0");
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Horizontal Overscan"))
+            {
+                ImGui::PushItemWidth(250.0f);
+                bool changed = ImGui::Combo("##laseractive_horizontal_framing", &config_video.laseractive_width_mode, "Cropped (348 pixels)\0Full Width (392 pixels)\0Manual\0\0");
+
+                ImGui::Separator();
+                ImGui::BeginDisabled(config_video.laseractive_width_mode != 2);
+                if (ImGui::SliderInt("##laseractive_pixel_start", &config_video.laseractive_pixel_start, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1, "First pixel (Manual) = %d"))
+                {
+                    config_video.laseractive_pixel_end = MAX(config_video.laseractive_pixel_end, config_video.laseractive_pixel_start);
+                    changed = true;
+                }
+
+                if (ImGui::SliderInt("##laseractive_pixel_end", &config_video.laseractive_pixel_end, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1, "Last pixel (Manual) = %d"))
+                {
+                    config_video.laseractive_pixel_start = MIN(config_video.laseractive_pixel_start, config_video.laseractive_pixel_end);
+                    changed = true;
+                }
+                ImGui::EndDisabled();
+
+                if (changed)
+                    emu_set_laseractive_pixels(config_video.laseractive_width_mode,
+                        config_video.laseractive_pixel_start, config_video.laseractive_pixel_end);
+
+                int width = config_video.laseractive_width_mode == 0 ? HUC6260_LASERACTIVE_DEFAULT_WIDTH :
+                    (config_video.laseractive_width_mode == 1 ? HUC6260_LASERACTIVE_PIXEL_WIDTH :
+                    MAX(1, config_video.laseractive_pixel_end - config_video.laseractive_pixel_start + 1));
+
+                ImGui::TextDisabled("Picture width: %d pixels", width);
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Vertical Overscan"))
+            {
+                ImGui::PushItemWidth(250.0f);
+                bool changed = ImGui::Combo("##laseractive_framing", &config_video.laseractive_scanline_mode, "Cropped (240 lines)\0Full Field (263 lines)\0Manual\0\0");
+
+                ImGui::Separator();
+                ImGui::BeginDisabled(config_video.laseractive_scanline_mode != 2);
+                if (ImGui::SliderInt("##laseractive_start", &config_video.laseractive_scanline_start, 0, HUC6260_LINES - 1, "First line (Manual) = %d"))
+                {
+                    config_video.laseractive_scanline_end = MAX(config_video.laseractive_scanline_end, config_video.laseractive_scanline_start);
+                    changed = true;
+                }
+
+                if (ImGui::SliderInt("##laseractive_end", &config_video.laseractive_scanline_end, 0, HUC6260_LINES - 1, "Last line (Manual) = %d"))
+                {
+                    config_video.laseractive_scanline_start = MIN(config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
+                    changed = true;
+                }
+
+                ImGui::EndDisabled();
+                if (changed)
+                    emu_set_laseractive_scanlines(config_video.laseractive_scanline_mode,
+                        config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
+
+                int lines = config_video.laseractive_scanline_mode == 0 ? 240 :
+                    (config_video.laseractive_scanline_mode == 1 ? HUC6260_LINES :
+                    MAX(1, config_video.laseractive_scanline_end - config_video.laseractive_scanline_start + 1));
+
+                ImGui::TextDisabled("Picture height: %d lines", lines);
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }
@@ -1975,6 +2190,15 @@ static void menu_debug(void)
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("LaserActive", config_debug.debug && emu_get_core()->GetMedia()->IsLaserActive()))
+        {
+            ImGui::MenuItem("Show General", "", &config_debug.show_laseractive_general);
+            ImGui::MenuItem("Show Registers", "", &config_debug.show_laseractive_registers);
+            ImGui::MenuItem("Show Audio", "", &config_debug.show_laseractive_audio);
+            ImGui::MenuItem("Show Video", "", &config_debug.show_laseractive_video);
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Audio", config_debug.debug))
         {
             ImGui::MenuItem("Show PSG", "", &config_debug.show_psg);
@@ -2251,6 +2475,10 @@ static void file_dialogs(void)
         gui_file_dialog_load_bios(true);
     if (open_gameexpress_bios)
         gui_file_dialog_load_bios(false);
+    if (open_pac_japan_bios)
+        gui_file_dialog_load_pac_bios(false);
+    if (open_pac_us_bios)
+        gui_file_dialog_load_pac_bios(true);
     if (save_debug_settings)
         gui_file_dialog_save_debug_settings();
     if (load_debug_settings)
@@ -2636,7 +2864,7 @@ static void draw_savestate_slot_info(int slot)
         {
             float width = (float)emu_savestates_screenshots[slot].width;
             float height = (float)emu_savestates_screenshots[slot].height;
-            ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_savestates, ImVec2((height / 3.0f) * 4.0f, height), ImVec2(0, 0), ImVec2(width / 2048.0f, height / 256.0f));
+            ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_savestates, ImVec2((height / 3.0f) * 4.0f, height), ImVec2(0, 0), ImVec2(width / 2048.0f, height / (float)SYSTEM_TEXTURE_HEIGHT));
         }
     }
     else

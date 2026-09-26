@@ -115,9 +115,16 @@ inline bool Media::IsGameExpressBiosValid()
     return m_is_valid_bios_gameexpress;
 }
 
-inline bool Media::IsBiosReady()
+inline bool Media::IsPacBiosLoaded(GG_LaserActive_Region region)
 {
-    return m_is_gameexpress ? m_is_loaded_bios_gameexpress : m_is_loaded_bios_syscard;
+    return (region == GG_LASERACTIVE_REGION_US) ? m_is_loaded_bios_pac_us :
+        ((region == GG_LASERACTIVE_REGION_JAPAN) && m_is_loaded_bios_pac_japan);
+}
+
+inline bool Media::IsPacBiosValid(GG_LaserActive_Region region)
+{
+    return (region == GG_LASERACTIVE_REGION_US) ? m_is_valid_bios_pac_us :
+        ((region == GG_LASERACTIVE_REGION_JAPAN) && m_is_valid_bios_pac_japan);
 }
 
 inline void Media::SetConsoleType(GG_Console_Type console_type)
@@ -138,6 +145,22 @@ inline void Media::SetCDROMType(GG_CDROM_Type cdrom_type)
 inline GG_CDROM_Type Media::GetCDROMType()
 {
     return m_cdrom_type;
+}
+
+inline void Media::SetLaserActiveRegion(GG_LaserActive_Region region)
+{
+    m_laseractive_region = region;
+    SelectPacBios();
+}
+
+inline GG_LaserActive_Region Media::GetLaserActiveRegion()
+{
+    return m_laseractive_region;
+}
+
+inline GG_LaserActive_Region Media::GetSelectedLaserActiveRegion()
+{
+    return m_selected_laseractive_region;
 }
 
 inline Media::HuCardMapper Media::GetMapper()
@@ -215,6 +238,24 @@ inline const char* Media::GetPhysicalCdRomDeviceId()
 inline const char* Media::GetBiosName(bool syscard)
 {
     return syscard ? m_bios_name_syscard : m_bios_name_gameexpress;
+}
+
+inline const char* Media::GetPacBiosName(GG_LaserActive_Region region)
+{
+    if (region == GG_LASERACTIVE_REGION_US)
+        return m_bios_name_pac_us;
+    if (region == GG_LASERACTIVE_REGION_JAPAN)
+        return m_bios_name_pac_japan;
+    return "";
+}
+
+inline u32 Media::GetPacBiosCRC(GG_LaserActive_Region region)
+{
+    if (region == GG_LASERACTIVE_REGION_US)
+        return m_bios_crc_pac_us;
+    if (region == GG_LASERACTIVE_REGION_JAPAN)
+        return m_bios_crc_pac_japan;
+    return 0;
 }
 
 inline u8* Media::GetROM()

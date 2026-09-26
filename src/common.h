@@ -48,6 +48,24 @@ inline bool checked_add_u32(u32 value, u32 addend, u32* result)
     return true;
 }
 
+inline bool checked_add_u64(u64 value, u64 addend, u64* result)
+{
+    if (value > UINT64_MAX - addend)
+        return false;
+
+    *result = value + addend;
+    return true;
+}
+
+inline bool checked_multiply_u64(u64 value, u64 multiplier, u64* result)
+{
+    if ((value != 0) && (multiplier > UINT64_MAX / value))
+        return false;
+
+    *result = value * multiplier;
+    return true;
+}
+
 inline u16 read_u16_le(const u8* p)
 {
     return (u16)p[0] | ((u16)p[1] << 8);
@@ -56,6 +74,17 @@ inline u16 read_u16_le(const u8* p)
 inline u32 read_u32_le(const u8* p)
 {
     return (u32)p[0] | ((u32)p[1] << 8) | ((u32)p[2] << 16) | ((u32)p[3] << 24);
+}
+
+inline u64 read_u48_le(const u8* p)
+{
+    return (u64)p[0] | ((u64)p[1] << 8) | ((u64)p[2] << 16) | ((u64)p[3] << 24) | ((u64)p[4] << 32) | ((u64)p[5] << 40);
+}
+
+inline u64 read_u64_le(const u8* p)
+{
+    return (u64)p[0] | ((u64)p[1] << 8) | ((u64)p[2] << 16) | ((u64)p[3] << 24) | ((u64)p[4] << 32) | ((u64)p[5] << 40) | 
+        ((u64)p[6] << 48) | ((u64)p[7] << 56);
 }
 
 inline void write_u16_le(u8* p, u16 value)

@@ -20,6 +20,8 @@
 #include "cdrom_media.h"
 #include "cdrom_cuebin_image.h"
 #include "cdrom_chd_image.h"
+#include "cdrom_mmi_image.h"
+#include "laseractive.h"
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 #include "cdrom_physical_image.h"
 #endif
@@ -28,6 +30,10 @@ CdRomMedia::CdRomMedia()
 {
     InitPointer(m_current_image);
     m_media_generation = 0;
+    InitPointer(m_cue_bin_image);
+    InitPointer(m_chd_image);
+    InitPointer(m_mmi_image);
+    InitPointer(m_laseractive);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     InitPointer(m_physical_image);
 #endif
@@ -37,18 +43,24 @@ CdRomMedia::~CdRomMedia()
 {
     SafeDelete(m_cue_bin_image);
     SafeDelete(m_chd_image);
+    SafeDelete(m_mmi_image);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     SafeDelete(m_physical_image);
 #endif
 }
 
-void CdRomMedia::Init()
+void CdRomMedia::Init(LaserActive* laseractive)
 {
+    m_laseractive = laseractive;
+
     m_cue_bin_image = new CdRomCueBinImage();
     m_cue_bin_image->Init();
 
     m_chd_image = new CdRomChdImage();
     m_chd_image->Init();
+
+    m_mmi_image = new CdRomMmiImage();
+    m_mmi_image->Init();
 
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     m_physical_image = new CdRomPhysicalImage();
@@ -60,11 +72,15 @@ void CdRomMedia::Init()
 
 void CdRomMedia::Reset()
 {
+    if (IsValidPointer(m_laseractive))
+        m_laseractive->NotifyMediaEjected(true);
+
     InitPointer(m_current_image);
     m_media_generation++;
 
     m_cue_bin_image->Reset();
     m_chd_image->Reset();
+    m_mmi_image->Reset();
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     m_physical_image->Reset();
 #endif
@@ -106,6 +122,124 @@ bool CdRomMedia::LoadChdFromFile(const char* path, bool preload)
         Reset();
         return false;
     }
+}
+
+bool CdRomMedia::LoadMmiFromFile(const char* path)
+{
+    if (m_mmi_image->LoadFromFile(path, false))
+    {
+        m_current_image = m_mmi_image;
+        m_media_generation++;
+        return true;
+    }
+
+    Error("Failed to load MMI file from %s", path);
+    Reset();
+    return false;
+}
+
+bool CdRomMedia::IsMmi() const
+{
+    return IsValidPointer(m_mmi_image) && (m_current_image == m_mmi_image);
+}
+
+bool CdRomMedia::IsLaserDisc() const
+{
+    return IsMmi() && m_mmi_image->IsLaserDisc();
+}
+
+bool CdRomMedia::IsMmiEjected() const
+{
+    return IsMmi() && m_mmi_image->IsEjected();
+}
+
+bool CdRomMedia::EjectMmi()
+{
+    if (!IsMmi())
+        return false;
+    if (m_mmi_image->IsEjected())
+        return true;
+
+    m_mmi_image->SetEjected(true);
+    if (IsValidPointer(m_laseractive))
+        m_laseractive->NotifyMediaEjected(true);
+    m_media_generation++;
+    return true;
+}
+
+bool CdRomMedia::InsertMmi()
+{
+    if (!IsMmi())
+        return false;
+    if (!m_mmi_image->IsEjected())
+        return true;
+
+    m_mmi_image->SetEjected(false);
+    m_media_generation++;
+    if (IsValidPointer(m_laseractive))
+        m_laseractive->NotifyMediaEjected(false);
+    return true;
+}
+
+bool CdRomMedia::SelectMmiMedia(u32 index)
+{
+    if (!IsMmi() || !m_mmi_image->IsEjected())
+        return false;
+
+    if (index == m_mmi_image->GetSelectedMediaIndex() && m_mmi_image->IsReady())
+        return true;
+
+    if (!m_mmi_image->SelectMediaByIndex(index))
+        return false;
+
+    m_mmi_image->SetEjected(true);
+    m_media_generation++;
+    if (IsValidPointer(m_laseractive))
+    {
+        m_laseractive->NotifyMediaChanged();
+        m_laseractive->NotifyMediaEjected(true);
+    }
+    return true;
+}
+
+u32 CdRomMedia::GetSelectedMmiMediaIndex() const
+{
+    return IsMmi() ? m_mmi_image->GetSelectedMediaIndex() : 0;
+}
+
+const GG_MmiInfo* CdRomMedia::GetMmiInfo() const
+{
+    return IsMmi() ? m_mmi_image->GetMmiInfo() : NULL;
+}
+
+const GG_MmiMediaInfo* CdRomMedia::GetSelectedMmiMedia() const
+{
+    return IsMmi() ? m_mmi_image->GetSelectedMedia() : NULL;
+}
+
+const GG_QonInfo* CdRomMedia::GetQonInfo() const
+{
+    return IsMmi() ? m_mmi_image->GetQonInfo() : NULL;
+}
+
+bool CdRomMedia::ReadMmiAnalogAudio(u64 offset, void* buffer, u32 size)
+{
+    return IsMmi() && m_mmi_image->ReadAnalogAudio(offset, buffer, size);
+}
+
+u64 CdRomMedia::GetMmiAnalogAudioSize() const
+{
+    return IsMmi() ? m_mmi_image->GetAnalogAudioSize() : 0;
+}
+
+bool CdRomMedia::ReadMmiVideoData(u64 offset, void* buffer, u32 size)
+{
+    return IsMmi() && m_mmi_image->ReadVideoData(offset, buffer, size);
+}
+
+MediaFile* CdRomMedia::OpenMmiVideoStream() const
+{
+    return IsMmi() ? m_mmi_image->OpenVideoStream() : NULL;
 }
 
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
@@ -155,6 +289,11 @@ bool CdRomMedia::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
         Error("ReadBytes failed - Current image is NULL");
         return false;
     }
+}
+
+bool CdRomMedia::ReadSubchannelQ(s32 lba, u8* buffer)
+{
+    return IsValidPointer(m_current_image) && m_current_image->ReadSubchannelQ(lba, buffer);
 }
 
 bool CdRomMedia::PreloadTrack(u32 track_number)

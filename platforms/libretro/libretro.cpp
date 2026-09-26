@@ -29,6 +29,7 @@
 #include "media_file.h"
 #include "libretro_core_options.h"
 #include "libretro_vfs_file.h"
+#include "mmi_archive.h"
 
 #ifdef _WIN32
 static const char slash = '\\';
@@ -44,8 +45,8 @@ static const char slash = '/';
 #define MAX_PADS GG_MAX_GAMEPADS
 #define MAX_BUTTONS 14
 
-#define MAX_SCREEN_WIDTH 1120
-#define MAX_SCREEN_HEIGHT 242
+#define MAX_SCREEN_WIDTH 1176
+#define MAX_SCREEN_HEIGHT 263
 
 static retro_environment_t environ_cb;
 static retro_video_refresh_t video_cb;
@@ -60,6 +61,8 @@ retro_log_printf_t log_cb;
 static char retro_system_directory[4096];
 static char retro_save_directory[4096];
 static char retro_game_path[4096];
+static unsigned initial_mmi_image_index = 0;
+static char initial_mmi_image_path[4096] = {};
 
 static s16 audio_buf[GG_AUDIO_BUFFER_SIZE];
 static int audio_sample_count = 0;
@@ -69,6 +72,8 @@ static int current_screen_height = 0;
 static int current_width_scale = 1;
 static float current_aspect_ratio = 0.0f;
 static float aspect_ratio = 0.0f;
+static float laseractive_aspect_ratio = 4.0f / 3.0f;
+static int laseractive_scanline_mode = 0;
 static double current_fps = 0.0;
 
 static bool allow_up_down = false;
@@ -88,6 +93,7 @@ static bool libretro_supports_bitmasks = false;
 static GG_Keys avenue_pad_3_button = GG_KEY_NONE;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
 static int joypad_old[MAX_PADS][MAX_BUTTONS];
+
 struct MouseState
 {
     int delta_x;
@@ -129,6 +135,8 @@ static u8* frame_buffer;
 static const retro_vfs_interface* vfs_interface = NULL;
 
 static void load_bios(void);
+static bool load_pac_bios_file(const char* path, GG_LaserActive_Region region);
+static void load_pac_bios(void);
 static void save_mb128(void);
 static void load_mb128(void);
 static void set_controller_info(void);
@@ -143,9 +151,20 @@ static bool categories_supported = false;
 static bool adpcm_clock_speed_visible = true;
 static bool update_core_options_display(void);
 static void check_variables(void);
+static float get_aspect_ratio(void);
 static bool path_has_extension(const char* path, const char* extension);
 static bool path_is_cdrom_uri(const char* path);
 static bool path_is_cd_content(const char* path);
+static bool disk_set_eject_state(bool ejected);
+static bool disk_get_eject_state(void);
+static unsigned disk_get_image_index(void);
+static bool disk_set_image_index(unsigned index);
+static unsigned disk_get_num_images(void);
+static bool disk_replace_image_index(unsigned index, const struct retro_game_info* info);
+static bool disk_add_image_index(void);
+static bool disk_set_initial_image(unsigned index, const char* path);
+static bool disk_get_image_path(unsigned index, char* path, size_t length);
+static bool disk_get_image_label(unsigned index, char* label, size_t length);
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 {
@@ -238,6 +257,33 @@ void retro_set_environment(retro_environment_t cb)
 
     environ_cb(RETRO_ENVIRONMENT_SET_CONTENT_INFO_OVERRIDE, (void*)content_overrides);
 
+    static const struct retro_disk_control_ext_callback disk_control = {
+        disk_set_eject_state,
+        disk_get_eject_state,
+        disk_get_image_index,
+        disk_set_image_index,
+        disk_get_num_images,
+        disk_replace_image_index,
+        disk_add_image_index,
+        disk_set_initial_image,
+        disk_get_image_path,
+        disk_get_image_label
+    };
+
+    if (!environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, (void*)&disk_control))
+    {
+        static const struct retro_disk_control_callback disk_control_basic = {
+            disk_set_eject_state,
+            disk_get_eject_state,
+            disk_get_image_index,
+            disk_set_image_index,
+            disk_get_num_images,
+            disk_replace_image_index,
+            disk_add_image_index
+        };
+        environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, (void*)&disk_control_basic);
+    }
+
     set_controller_info();
     libretro_set_core_options(environ_cb, &categories_supported);
 
@@ -295,6 +341,10 @@ void retro_deinit(void)
     current_width_scale = 1;
     current_aspect_ratio = 0.0f;
     aspect_ratio = 0.0f;
+    laseractive_aspect_ratio = 4.0f / 3.0f;
+    laseractive_scanline_mode = 0;
+    initial_mmi_image_index = 0;
+    initial_mmi_image_path[0] = 0;
     current_fps = 0.0;
     libretro_supports_bitmasks = false;
     avenue_pad_3_button = GG_KEY_NONE;
@@ -343,7 +393,7 @@ void retro_get_system_info(struct retro_system_info *info)
     info->library_name     = GG_TITLE;
     info->library_version  = GG_VERSION;
     info->need_fullpath    = true;
-    info->valid_extensions = "pce|sgx|hes|cue|chd";
+    info->valid_extensions = "pce|sgx|hes|cue|chd|mmi";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -355,7 +405,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
     info->geometry.base_height  = runtime_info.screen_height;
     info->geometry.max_width    = MAX_SCREEN_WIDTH;
     info->geometry.max_height   = MAX_SCREEN_HEIGHT;
-    info->geometry.aspect_ratio = aspect_ratio == 0.0f ? (float)runtime_info.screen_width / (float)runtime_info.screen_height / (float)runtime_info.width_scale : aspect_ratio;
+    info->geometry.aspect_ratio = get_aspect_ratio();
     info->timing.fps            = current_fps;
     info->timing.sample_rate    = 44100.0;
 }
@@ -374,18 +424,19 @@ void retro_run(void)
 
     core->GetRuntimeInfo(runtime_info);
 
+    float effective_aspect_ratio = get_aspect_ratio();
     bool fps_changed = runtime_info.fps < current_fps - 0.000001 || runtime_info.fps > current_fps + 0.000001;
     bool geometry_changed = (runtime_info.screen_width != current_screen_width) ||
                             (runtime_info.screen_height != current_screen_height) ||
                             (runtime_info.width_scale != current_width_scale) ||
-                            (aspect_ratio != current_aspect_ratio);
+                            (effective_aspect_ratio != current_aspect_ratio);
 
     if (fps_changed || geometry_changed)
     {
         current_screen_width = runtime_info.screen_width;
         current_screen_height = runtime_info.screen_height;
         current_width_scale = runtime_info.width_scale;
-        current_aspect_ratio = aspect_ratio;
+        current_aspect_ratio = effective_aspect_ratio;
         current_fps = runtime_info.fps;
 
         retro_system_av_info info;
@@ -393,7 +444,7 @@ void retro_run(void)
         info.geometry.base_height  = runtime_info.screen_height;
         info.geometry.max_width    = MAX_SCREEN_WIDTH;
         info.geometry.max_height   = MAX_SCREEN_HEIGHT;
-        info.geometry.aspect_ratio = (aspect_ratio == 0.0f ? ((float)runtime_info.screen_width / (float)runtime_info.width_scale) / (float)runtime_info.screen_height : aspect_ratio);
+        info.geometry.aspect_ratio = effective_aspect_ratio;
         info.timing.fps            = current_fps;
         info.timing.sample_rate    = 44100.0;
 
@@ -459,6 +510,13 @@ bool retro_load_game(const struct retro_game_info *info)
     log_cb(RETRO_LOG_INFO, "retro_load_game: %s\n", retro_game_path);
 
     bool is_cd_content = path_is_cd_content(retro_game_path);
+    bool is_mmi_content = path_has_extension(retro_game_path, "mmi");
+
+    if (is_mmi_content && (sizeof(void*) < 8))
+    {
+        log_cb(RETRO_LOG_ERROR, "MMI requires a 64-bit libretro target.\n");
+        return false;
+    }
 
     if (path_is_cdrom_uri(retro_game_path))
         log_cb(RETRO_LOG_INFO, "Loading CD-ROM through libretro VFS: %s\n", retro_game_path);
@@ -466,18 +524,53 @@ bool retro_load_game(const struct retro_game_info *info)
     if (is_cd_content)
         load_bios();
 
+    if (is_mmi_content)
+        load_pac_bios();
+
     if (is_cd_content)
     {
         log_cb(RETRO_LOG_INFO, "retro_load_game CD-ROM from file.\n");
+
         if (!core->LoadMedia(retro_game_path))
         {
             log_cb(RETRO_LOG_ERROR, "Invalid or corrupted CD-ROM media.\n");
             return false;
         }
+
+        if (is_mmi_content && !core->GetMedia()->IsBiosReady())
+        {
+            Media* media = core->GetMedia();
+            const GG_MmiInfo* mmi = core->GetCDROMMedia()->GetMmiInfo();
+
+            if (media->IsLaserActive() && mmi && mmi->card.empty())
+                log_cb(RETRO_LOG_ERROR, "A PAC BIOS for the selected LaserActive region is required.\n");
+            else if (media->IsGameExpress())
+                log_cb(RETRO_LOG_ERROR, "A Game Express BIOS is required by this MMI.\n");
+            else
+                log_cb(RETRO_LOG_ERROR, "A System Card BIOS is required by this MMI.\n");
+
+            core->GetMedia()->Reset();
+
+            return false;
+        }
+
+        if (is_mmi_content && initial_mmi_image_path[0] && strcmp(initial_mmi_image_path, retro_game_path) != 0)
+            initial_mmi_image_index = 0;
+
+        if (is_mmi_content && (initial_mmi_image_index != core->GetCDROMMedia()->GetSelectedMmiMediaIndex()))
+        {
+            if (!core->EjectLaserDisc() || !core->SelectLaserDiscMedia(initial_mmi_image_index) || !core->InsertLaserDisc())
+            {
+                log_cb(RETRO_LOG_ERROR, "Invalid initial MMI media index %u.\n", initial_mmi_image_index);
+                core->GetMedia()->Reset();
+                return false;
+            }
+        }
     }
     else
     {
         log_cb(RETRO_LOG_INFO, "retro_load_game HuCard.\n");
+
         if (!load_hucard(info, retro_game_path))
         {
             log_cb(RETRO_LOG_ERROR, "Invalid or corrupted HuCard file.\n");
@@ -505,6 +598,11 @@ bool retro_load_game(const struct retro_game_info *info)
 void retro_unload_game(void)
 {
     save_mb128();
+    initial_mmi_image_index = 0;
+    initial_mmi_image_path[0] = 0;
+    if (core && core->GetCDROMMedia()->IsMmi())
+        core->GetMedia()->Reset();
+    audio_sample_count = 0;
 }
 
 unsigned retro_get_region(void)
@@ -655,6 +753,53 @@ static void load_bios(void)
 
     snprintf(bios_path, 4113, "%s%c%s", retro_system_directory, slash, gameexpress);
     load_bios_file(bios_path, false);
+}
+
+static bool load_pac_bios_file(const char* path, GG_LaserActive_Region region)
+{
+    core->UnloadPacBios(region);
+
+    if (!vfs_interface)
+        return core->LoadPacBios(path, region);
+
+    LibretroVfsFile file(vfs_interface);
+    if (!file.Open(path, RETRO_VFS_FILE_ACCESS_READ))
+        return false;
+
+    s64 size = file.GetSize();
+    if ((size <= 0) || (size > (GG_BIOS_LASERACTIVE_SIZE + 512)))
+        return false;
+
+    u8* buffer = new u8[(size_t)size];
+    bool loaded = file.ReadAll(buffer, (u64)size);
+    loaded = file.Close() && loaded;
+    loaded = loaded && core->LoadPacBiosFromBuffer(buffer, (int)size, region);
+    SafeDeleteArray(buffer);
+    return loaded;
+}
+
+static void load_pac_bios(void)
+{
+    char path[4113];
+    GG_LaserActive_Region region = core->GetMedia()->GetLaserActiveRegion();
+
+    if ((region == GG_LASERACTIVE_REGION_AUTO) || (region == GG_LASERACTIVE_REGION_JAPAN))
+    {
+        snprintf(path, sizeof(path), "%s%c%s", retro_system_directory, slash, "pac-n1.bin");
+        bool loaded = load_pac_bios_file(path, GG_LASERACTIVE_REGION_JAPAN);
+
+        if (!loaded)
+        {
+            snprintf(path, sizeof(path), "%s%c%s", retro_system_directory, slash, "pce-lp1.bin");
+            load_pac_bios_file(path, GG_LASERACTIVE_REGION_JAPAN);
+        }
+    }
+
+    if ((region == GG_LASERACTIVE_REGION_AUTO) || (region == GG_LASERACTIVE_REGION_US))
+    {
+        snprintf(path, sizeof(path), "%s%c%s", retro_system_directory, slash, "pac-n10.bin");
+        load_pac_bios_file(path, GG_LASERACTIVE_REGION_US);
+    }
 }
 
 static void save_mb128(void)
@@ -1461,6 +1606,100 @@ static void check_variables(void)
         core->GetMedia()->PreloadCdRom(preload_cdrom);
     }
 
+    var.key = "geargrafx_laseractive_region";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        GG_LaserActive_Region region = GG_LASERACTIVE_REGION_AUTO;
+        if (strcmp(var.value, "Japan") == 0)
+            region = GG_LASERACTIVE_REGION_JAPAN;
+        else if (strcmp(var.value, "US") == 0)
+            region = GG_LASERACTIVE_REGION_US;
+        core->SetLaserActiveRegion(region);
+    }
+
+    var.key = "geargrafx_laseractive_aspect_ratio";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        laseractive_aspect_ratio = 4.0f / 3.0f;
+        if (strcmp(var.value, "1:1 PAR") == 0)
+            laseractive_aspect_ratio = 0.0f;
+        else if (strcmp(var.value, "16:9 DAR") == 0)
+            laseractive_aspect_ratio = 16.0f / 9.0f;
+        else if (strcmp(var.value, "16:10 DAR") == 0)
+            laseractive_aspect_ratio = 16.0f / 10.0f;
+    }
+
+    var.key = "geargrafx_laseractive_framing";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        laseractive_scanline_mode = 0;
+        if (strcmp(var.value, "Full Field") == 0)
+            laseractive_scanline_mode = 1;
+        else if (strcmp(var.value, "Manual") == 0)
+            laseractive_scanline_mode = 2;
+    }
+
+    int laseractive_start = HUC6260_LASERACTIVE_SCANLINE_START;
+    int laseractive_end = HUC6260_LASERACTIVE_SCANLINE_END;
+
+    if (laseractive_scanline_mode == 1)
+    {
+        laseractive_start = 0;
+        laseractive_end = HUC6260_LINES - 1;
+    }
+    else if (laseractive_scanline_mode == 2)
+    {
+        var.key = "geargrafx_laseractive_scanline_start";
+        var.value = NULL;
+
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+            laseractive_start = atoi(var.value);
+
+        var.key = "geargrafx_laseractive_scanline_end";
+        var.value = NULL;
+
+        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+            laseractive_end = atoi(var.value);
+    }
+
+    core->GetHuC6260()->SetLaserActiveScanlines(laseractive_start, laseractive_end);
+
+    int laseractive_pixel_start = HUC6260_LASERACTIVE_PIXEL_START;
+    int laseractive_pixel_end = HUC6260_LASERACTIVE_PIXEL_END;
+    var.key = "geargrafx_laseractive_horizontal_framing";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (strcmp(var.value, "Full Width") == 0)
+        {
+            laseractive_pixel_start = 0;
+            laseractive_pixel_end = HUC6260_LASERACTIVE_PIXEL_WIDTH - 1;
+        }
+        else if (strcmp(var.value, "Manual") == 0)
+        {
+            var.key = "geargrafx_laseractive_pixel_start";
+            var.value = NULL;
+
+            if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+                laseractive_pixel_start = atoi(var.value);
+
+            var.key = "geargrafx_laseractive_pixel_end";
+            var.value = NULL;
+
+            if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+                laseractive_pixel_end = atoi(var.value);
+        }
+    }
+
+    core->GetHuC6260()->SetLaserActivePixels(laseractive_pixel_start, laseractive_pixel_end);
+
     var.key = "geargrafx_psg_huc6280a";
     var.value = NULL;
 
@@ -1643,6 +1882,16 @@ static void check_variables(void)
     }
 }
 
+static float get_aspect_ratio(void)
+{
+    float ratio = runtime_info.aspect_ratio > 0.0f ? laseractive_aspect_ratio : aspect_ratio;
+
+    if (ratio > 0.0f)
+        return ratio;
+
+    return (float)runtime_info.screen_width / (float)runtime_info.width_scale / (float)runtime_info.screen_height;
+}
+
 static bool path_has_extension(const char* path, const char* extension)
 {
     if (!path || !extension)
@@ -1673,5 +1922,93 @@ static bool path_is_cdrom_uri(const char* path)
 
 static bool path_is_cd_content(const char* path)
 {
-    return path_is_cdrom_uri(path) || path_has_extension(path, "cue") || path_has_extension(path, "chd");
+    return path_is_cdrom_uri(path) || path_has_extension(path, "cue") || path_has_extension(path, "chd") || path_has_extension(path, "mmi");
+}
+
+static bool disk_set_eject_state(bool ejected)
+{
+    if (!core || !core->GetCDROMMedia()->IsMmi())
+        return false;
+
+    if (ejected == core->GetCDROMMedia()->IsMmiEjected())
+        return true;
+
+    return ejected ? core->EjectLaserDisc() : core->InsertLaserDisc();
+}
+
+static bool disk_get_eject_state(void)
+{
+    return core && core->GetCDROMMedia()->IsMmiEjected();
+}
+
+static unsigned disk_get_image_index(void)
+{
+    return core && core->GetCDROMMedia()->IsMmi() ? core->GetCDROMMedia()->GetSelectedMmiMediaIndex() : 0;
+}
+
+static bool disk_set_image_index(unsigned index)
+{
+    return core && core->GetCDROMMedia()->IsMmiEjected() && core->SelectLaserDiscMedia(index);
+}
+
+static unsigned disk_get_num_images(void)
+{
+    if (!core)
+        return 0;
+
+    const GG_MmiInfo* info = core->GetCDROMMedia()->GetMmiInfo();
+    return info ? (unsigned)info->media.size() : 0;
+}
+
+static bool disk_replace_image_index(unsigned index, const struct retro_game_info* info)
+{
+    UNUSED(index);
+    UNUSED(info);
+    return false;
+}
+
+static bool disk_add_image_index(void)
+{
+    return false;
+}
+
+static bool disk_set_initial_image(unsigned index, const char* path)
+{
+    if (path && strlen(path) >= sizeof(initial_mmi_image_path))
+        return false;
+
+    initial_mmi_image_index = index;
+    strncpy_fit(initial_mmi_image_path, path ? path : "", sizeof(initial_mmi_image_path));
+
+    return true;
+}
+
+static bool disk_get_image_path(unsigned index, char* path, size_t length)
+{
+    if (!core || !path || (length == 0))
+        return false;
+
+    const GG_MmiInfo* info = core->GetCDROMMedia()->GetMmiInfo();
+
+    if (!info || (index >= info->media.size()) || strlen(retro_game_path) >= length)
+        return false;
+
+    strncpy_fit(path, retro_game_path, length);
+
+    return true;
+}
+
+static bool disk_get_image_label(unsigned index, char* label, size_t length)
+{
+    if (!core || !label || (length == 0))
+        return false;
+    
+    const GG_MmiInfo* info = core->GetCDROMMedia()->GetMmiInfo();
+
+    if (!info || (index >= info->media.size()) || info->media[index].name.length() >= length)
+        return false;
+
+    strncpy_fit(label, info->media[index].name.c_str(), length);
+
+    return true;
 }

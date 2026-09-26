@@ -9,12 +9,12 @@
 Instructions and tips at:
 https://github.com/drhelius/Geargrafx
 -----------------------------------------------------
-Geargrafx is an accurate cross-platform TurboGrafx-16, PC Engine and SuperGrafx emulator with PCE CD-ROM2 support.
+Geargrafx is an accurate cross-platform TurboGrafx-16, PC Engine and SuperGrafx emulator with PCE CD-ROM2 and NEC LaserActive LD-ROM2 support.
 Created by Nacho Sánchez. Follow me on X: https://x.com/drhelius
 -----------------------------------------------------
 Features:
-    - Accurate HuCard PCE/SGX emulation and CD-ROM2, Super CD-ROM2 and Arcade CD-ROM2 support.
-    - Backup RAM, Memory Base 128, HES music ROMs, physical CD-ROMs and compressed ROM/CD images including PCE, SGX, CUE, ZIP and CHD.
+    - Accurate HuCard PCE/SGX emulation and CD-ROM2, Super CD-ROM2, Arcade CD-ROM2 and NEC LaserActive LD-ROM2 support.
+    - Backup RAM, Memory Base 128, HES music ROMs, physical CD-ROMs and compressed ROM/CD images including PCE, SGX, CUE, ZIP, CHD and MMI.
     - Multi Tap for up to five players, gamepads, and mouse support.
     - Adjustable scanlines and RGB or composite color output with optional LPF.
     - Save states with preview and rewind, run-ahead, and VGM recording.
@@ -32,6 +32,7 @@ Licensing:
     - LZMA SDK: Copyright Igor Pavlov, public domain.
     - mINI: Copyright 2018 Danijel Durakovic, MIT.
     - miniz: Copyright Rich Geldreich and contributors, Unlicense.
+    - QON/QOI2: Copyright 2025 Roger Sanders, MIT; QOI2 is based on QOI by Dominic Szablewski.
     - stb: Copyright Sean Barrett and contributors, public domain or MIT.
     - zstd: Copyright Meta Platforms, Inc. and affiliates, BSD-3-clause or GPL-2.
     - glad: glad contributors, WTFPL or CC0-1.0 and Apache-2.0.

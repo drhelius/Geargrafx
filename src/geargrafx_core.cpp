@@ -41,6 +41,7 @@
 #include "audio.h"
 #include "input.h"
 #include "memory_stream.h"
+#include "laseractive.h"
 
 GeargrafxCore::GeargrafxCore()
 {
@@ -60,6 +61,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_input);
     InitPointer(m_media);
     InitPointer(m_trace_logger);
+    InitPointer(m_laseractive);
     m_paused = true;
     m_master_clock_cycles = 0;
     m_turbolink_cycles = 0;
@@ -74,6 +76,7 @@ GeargrafxCore::GeargrafxCore()
 GeargrafxCore::~GeargrafxCore()
 {
     SafeDelete(m_trace_logger);
+    SafeDelete(m_laseractive);
     SafeDelete(m_media);
     SafeDelete(m_input);
     SafeDelete(m_audio);
@@ -96,6 +99,7 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     Log("Loading %s core %s by Ignacio Sanchez", GG_TITLE, GG_VERSION);
 
     m_cdrom_media = new CdRomMedia();
+    m_laseractive = new LaserActive(m_cdrom_media);
     m_media = new Media(m_cdrom_media);
     m_random = new Random();
     m_random->Seed((u32)time(NULL));
@@ -103,18 +107,18 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_huc6270_1 = new HuC6270(m_huc6280);
     m_huc6270_2 = new HuC6270(m_huc6280);
     m_huc6202 = new HuC6202(m_huc6270_1, m_huc6270_2, m_huc6280);
-    m_huc6260 = new HuC6260(m_huc6202, m_huc6280, m_random);
+    m_huc6260 = new HuC6260(m_huc6202, m_huc6280, m_random, m_laseractive);
     m_input = new Input(m_media, this);
     m_adpcm = new Adpcm();
-    m_cdrom_audio = new CdRomAudio(m_cdrom_media);
+    m_cdrom_audio = new CdRomAudio(m_cdrom_media, m_laseractive);
     m_audio = new Audio(m_adpcm, m_cdrom_audio);
-    m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio, m_random);
-    m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, m_audio, this);
-    m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom, m_random);
+    m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio, m_random, m_laseractive);
+    m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, m_audio, this, m_laseractive);
+    m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom, m_random, m_laseractive);
 
     m_audio->Init();
     m_input->Init();
-    m_cdrom_media->Init();
+    m_cdrom_media->Init(m_laseractive);
     m_cdrom->Init(m_huc6280, m_memory, m_adpcm);
     m_scsi_controller->Init(m_huc6280, m_cdrom);
     m_media->Init();
@@ -126,6 +130,7 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_huc6280->Init(m_memory, m_huc6202);
     m_adpcm->Init(this, m_cdrom, m_scsi_controller);
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);
+    m_laseractive->Init(m_cdrom, m_memory, m_cdrom_audio);
 
     SelectPSGRevision();
     SelectADPCMClockSpeed();
@@ -253,11 +258,62 @@ void GeargrafxCore::UnloadBios(bool syscard)
     m_media->UnloadBios(syscard);
 }
 
+bool GeargrafxCore::LoadPacBios(const char* file_path, GG_LaserActive_Region region)
+{
+    return m_media->LoadPacBios(file_path, region);
+}
+
+bool GeargrafxCore::LoadPacBiosFromBuffer(const u8* buffer, int size, GG_LaserActive_Region region)
+{
+    return m_media->LoadPacBiosFromBuffer(buffer, size, region);
+}
+
+void GeargrafxCore::UnloadPacBios(GG_LaserActive_Region region)
+{
+    m_media->UnloadPacBios(region);
+}
+
+void GeargrafxCore::SetLaserActiveRegion(GG_LaserActive_Region region)
+{
+    m_media->SetLaserActiveRegion(region);
+}
+
+bool GeargrafxCore::EjectLaserDisc()
+{
+    bool ejected = m_cdrom_media->IsMmiEjected();
+    if (!m_cdrom_media->EjectMmi())
+        return false;
+
+    if (!ejected)
+        m_cdrom->NotifyMediaEjected();
+    return true;
+}
+
+bool GeargrafxCore::InsertLaserDisc()
+{
+    if (!m_cdrom_media->InsertMmi())
+        return false;
+
+    return true;
+}
+
+bool GeargrafxCore::SelectLaserDiscMedia(u32 index)
+{
+    if (!m_cdrom_media->SelectMmiMedia(index))
+        return false;
+
+    m_cdrom_audio->StopAudio();
+    return true;
+}
+
 bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
 {
     runtime_info.screen_width = m_huc6260->GetCurrentWidth();
     runtime_info.screen_height = m_huc6260->GetCurrentHeight();
     runtime_info.width_scale = m_huc6260->GetWidthScale();
+    runtime_info.aspect_ratio = 0.0f;
+    if (m_media->IsCDROM() && m_media->IsLaserActive())
+        runtime_info.aspect_ratio = 4.0f / 3.0f;
     runtime_info.fps = huc6260_get_frame_rate(m_huc6260->GetTotalLines());
 
     return m_media->IsReady();
@@ -695,10 +751,22 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     m_input->SaveState(stream);
     if (m_media->IsCDROMHardwareEnabled())
     {
+        if (m_cdrom_media->IsMmi() && !m_media->IsLaserActive())
+        {
+            u32 index = m_cdrom_media->GetSelectedMmiMediaIndex();
+            bool ejected = m_cdrom_media->IsMmiEjected();
+            stream.write(reinterpret_cast<const char*>(&index), sizeof(index));
+            stream.write(reinterpret_cast<const char*>(&ejected), sizeof(ejected));
+        }
         m_cdrom->SaveState(stream);
         m_scsi_controller->SaveState(stream);
         m_cdrom_audio->SaveState(stream);
         m_adpcm->SaveState(stream);
+        if (m_media->IsLaserActive())
+        {
+            m_laseractive->SaveState(stream);
+            m_huc6260->SaveLaserActiveState(stream);
+        }
     }
     m_random->SaveState(stream);
 
@@ -896,6 +964,12 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         return false;
     }
 
+    if ((header.version < 39) && m_cdrom_media->IsMmi())
+    {
+        Error("MMI save state version %u lacks required state", header.version);
+        return false;
+    }
+
 #if !defined(__LIBRETRO__)
     if (is_desktop_savestate)
     {
@@ -923,11 +997,11 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     }
 #endif
 
-    bool cdrom_hardware_enabled = m_media->IsCDROM();
+    u8 cdrom_hardware_enabled = m_media->IsCDROM() ? 1 : 0;
     if (header.version >= 38)
-        stream.read(reinterpret_cast<char*> (&cdrom_hardware_enabled), sizeof(cdrom_hardware_enabled));
+        stream.read(reinterpret_cast<char*>(&cdrom_hardware_enabled), sizeof(cdrom_hardware_enabled));
 
-    if (stream.fail() || (cdrom_hardware_enabled != m_media->IsCDROMHardwareEnabled()))
+    if (stream.fail() || cdrom_hardware_enabled > 1 || (cdrom_hardware_enabled != (m_media->IsCDROMHardwareEnabled() ? 1 : 0)))
     {
         Error("Save state CD-ROM hardware configuration does not match");
         return false;
@@ -948,12 +1022,36 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     m_huc6280->LoadState(stream);
     m_audio->LoadState(stream, header.version);
     m_input->LoadState(stream, header.version);
+
     if (m_media->IsCDROMHardwareEnabled())
     {
+        if (m_cdrom_media->IsMmi() && !m_media->IsLaserActive())
+        {
+            u32 index = 0;
+            bool ejected = false;
+            stream.read(reinterpret_cast<char*>(&index), sizeof(index));
+            stream.read(reinterpret_cast<char*>(&ejected), sizeof(ejected));
+            if (stream.fail())
+                return false;
+            if (index != m_cdrom_media->GetSelectedMmiMediaIndex() &&
+                (!m_cdrom_media->EjectMmi() || !m_cdrom_media->SelectMmiMedia(index)))
+                return false;
+            if (ejected)
+                m_cdrom_media->EjectMmi();
+            else
+                m_cdrom_media->InsertMmi();
+        }
+
         m_cdrom->LoadState(stream, header.version);
         m_scsi_controller->LoadState(stream, header.version);
         m_cdrom_audio->LoadState(stream, header.version);
         m_adpcm->LoadState(stream, header.version);
+
+        if (m_media->IsLaserActive())
+        {
+            m_laseractive->LoadState(stream);
+            m_huc6260->LoadLaserActiveState(stream);
+        }
     }
 
     if (header.version >= 33)
@@ -1102,7 +1200,10 @@ void GeargrafxCore::Reset()
     SelectPSGRevision();
     SelectADPCMClockSpeed();
 
-    m_input->EnablePCEJap((console_type == GG_CONSOLE_PCE) || (console_type == GG_CONSOLE_SGX));
+    bool pce_japanese = (console_type == GG_CONSOLE_PCE) || (console_type == GG_CONSOLE_SGX);
+    if (m_media->IsLaserActive())
+        pce_japanese = m_media->GetSelectedLaserActiveRegion() != GG_LASERACTIVE_REGION_US;
+    m_input->EnablePCEJap(pce_japanese);
     m_input->EnableCDROM(is_cdrom || force_backup_ram);
     m_memory->EnableBackupRam(is_cdrom || force_backup_ram);
 
@@ -1116,6 +1217,7 @@ void GeargrafxCore::Reset()
     m_scsi_controller->Reset();
     m_cdrom_audio->Reset();
     m_adpcm->Reset();
+    m_laseractive->Reset();
     m_audio->Reset(is_cdrom);
     m_input->Reset();
 

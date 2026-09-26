@@ -331,7 +331,7 @@ static void init_ogl_debug(void)
 
 static void init_ogl_savestates(void)
 {
-    create_texture_2d(&ogl_renderer_emu_savestates, 2048, 256, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, NULL, false);
+    create_texture_2d(&ogl_renderer_emu_savestates, 2048, SYSTEM_TEXTURE_HEIGHT, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, NULL, false);
     savestates_texture_slot = -1;
     savestates_texture_generation = 0;
 }
@@ -698,6 +698,9 @@ static bool get_active_shader_preset_file(char* preset_file, size_t preset_file_
 
 static float get_original_aspect(void)
 {
+    if (current_runtime.aspect_ratio > 0.0f)
+        return current_runtime.aspect_ratio;
+
     if (current_runtime.screen_height <= 0)
         return 1.0f;
 

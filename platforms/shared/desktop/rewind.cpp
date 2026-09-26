@@ -93,6 +93,8 @@ void rewind_push(void)
         return;
     if (active)
         return;
+    if (emu_get_core()->GetMedia()->IsLaserActive())
+        return;
 
     frame_accum++;
     if (frame_accum < config_rewind.frames_per_snapshot)

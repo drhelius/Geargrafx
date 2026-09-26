@@ -25,6 +25,7 @@
 #include "cdrom_media.h"
 #include "scsi_controller.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
 INLINE void CdRomAudio::Clock(u32 cycles)
 {
@@ -68,7 +69,9 @@ INLINE void CdRomAudio::Sample()
     m_left_sample = 0;
     m_right_sample = 0;
 
-    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0) && (m_playback_delay_cycles == 0))
+    if (m_laseractive->IsActive())
+        m_laseractive->Sample(m_left_sample, m_right_sample);
+    else if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0) && (m_playback_delay_cycles == 0))
         GenerateSamples();
 
     m_buffer[m_buffer_index + 0] = m_left_sample;
@@ -85,23 +88,43 @@ INLINE void CdRomAudio::Sample()
 
 INLINE CdRomAudio::CdAudioState CdRomAudio::GetCurrentState()
 {
-    return m_current_state;
+    if (!m_laseractive->IsActive())
+        return m_current_state;
+
+    switch (m_laseractive->GetDriveMode())
+    {
+        case LaserActive::DRIVE_PLAYING:
+            return CD_AUDIO_STATE_PLAYING;
+        case LaserActive::DRIVE_PAUSED:
+        case LaserActive::DRIVE_SEEKING:
+            return CD_AUDIO_STATE_PAUSED;
+        case LaserActive::DRIVE_READING:
+            return CD_AUDIO_STATE_IDLE;
+        default:
+            return CD_AUDIO_STATE_STOPPED;
+    }
 }
 
 INLINE CdRomAudio::CdAudioState CdRomAudio::GetSubcodeState()
 {
-    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles > 0))
-        return CD_AUDIO_STATE_PAUSED;
-
-    return m_current_state;
+    if (!m_laseractive->IsActive())
+    {
+        if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles > 0))
+            return CD_AUDIO_STATE_PAUSED;
+        return m_current_state;
+    }
+    return GetCurrentState();
 }
 
 INLINE u32 CdRomAudio::GetSubcodeLBA()
 {
-    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles > 0))
-        return m_seek_start_lba;
-
-    return m_current_lba;
+    if (!m_laseractive->IsActive())
+    {
+        if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles > 0))
+            return m_seek_start_lba;
+        return m_current_lba;
+    }
+    return (u32)MAX(m_laseractive->GetHeadLba(), 0);
 }
 
 INLINE CdRomAudio::CdRomAudio_State* CdRomAudio::GetState()
@@ -153,6 +176,13 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
           lba, track, current_lba, m_seek_cycles, m_playback_delay_cycles);
 
     m_cdrom_media->PreloadTrack((u32)track);
+
+    if (m_laseractive->IsActive())
+    {
+        m_laseractive->NotifyAudioStart(lba, pause);
+        m_seek_cycles = pause ? 0 : (s32)((u64)m_laseractive->GetSeekLatency() * GG_MASTER_CLOCK_RATE / 75);
+        m_playback_delay_cycles = 0;
+    }
 }
 
 INLINE void CdRomAudio::StopAudio()
@@ -160,6 +190,8 @@ INLINE void CdRomAudio::StopAudio()
     m_playback_delay_cycles = 0;
     m_current_state = CD_AUDIO_STATE_STOPPED;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STATE, m_current_lba);
+    if (m_laseractive->IsActive())
+        m_laseractive->NotifyAudioStop(false);
 }
 
 INLINE void CdRomAudio::PauseAudio()
@@ -167,6 +199,8 @@ INLINE void CdRomAudio::PauseAudio()
     m_playback_delay_cycles = 0;
     m_current_state = CD_AUDIO_STATE_PAUSED;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STATE, m_current_lba);
+    if (m_laseractive->IsActive())
+        m_laseractive->NotifyAudioStop(true);
 }
 
 INLINE void CdRomAudio::SetIdle()
@@ -199,6 +233,8 @@ INLINE void CdRomAudio::SetStopLBA(u32 lba, CdAudioStopEvent event)
 
     m_stop_lba = lba;
     m_stop_event = event;
+    if (m_laseractive->IsActive())
+        m_laseractive->SetAudioEnd(lba);
     m_current_state = CD_AUDIO_STATE_PLAYING;
     TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_STOP_LBA, m_stop_lba, m_start_lba);
 }

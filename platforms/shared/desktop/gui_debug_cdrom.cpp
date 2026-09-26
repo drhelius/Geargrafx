@@ -290,7 +290,7 @@ void gui_debug_window_cdrom_toc(void)
                 ImGui::TextColored(gray, "--");
 
             ImGui::TableNextColumn();
-            ImGui::Text("%u", track.file_offset);
+            ImGui::Text("%llu", (unsigned long long)track.file_offset);
         }
 
         ImGui::EndTable();

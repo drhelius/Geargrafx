@@ -36,6 +36,7 @@ class Mapper;
 class SF2Mapper;
 class ArcadeCardMapper;
 class TraceLogger;
+class LaserActive;
 
 class Memory
 {
@@ -53,7 +54,7 @@ public:
     };
 
 public:
-    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random);
+    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random, LaserActive* laseractive);
     ~Memory();
     void Init();
     void Reset();
@@ -100,6 +101,7 @@ public:
     bool IsBackupRamEnabled();
     bool IsBackupRamUsed();
     void UpdateBackupRam(bool enable);
+    void UpdateLaserActiveSram();
     MemoryBankType GetBankType(u8 bank);
     void SaveRam(std::ostream &file);
     bool LoadRam(std::istream &file, s32 file_size);
@@ -126,6 +128,7 @@ private:
     CdRom* m_cdrom;
     Random* m_random;
     TraceLogger* m_trace_logger;
+    LaserActive* m_laseractive;
     u8 m_mpr[8];
     u8* m_memory_map[0x100] = {};
     bool m_memory_map_write[0x100] = {};

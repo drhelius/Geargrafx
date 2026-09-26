@@ -117,8 +117,79 @@ struct stDebugLabel
     const char* label;
 };
 
-static const int k_debug_label_count = 43;
-static const stDebugLabel k_debug_labels[k_debug_label_count] = 
+static const stDebugLabel k_debug_laseractive_labels[] =
+{
+    { 0x18C0, "PAC_SRAM_ENABLE" },
+    { 0x18C1, "PAC_ID_AA" },
+    { 0x18C2, "PAC_ID_55" },
+    { 0x18C3, "PAC_SRAM_SIZE" },
+    { 0x1920, "PD_IN_CONTROL" },
+    { 0x1921, "PD_IN_MIXING" },
+    { 0x1922, "PD_IN_DRIVE" },
+    { 0x1923, "PD_IN_PLAYBACK" },
+    { 0x1924, "PD_IN_IN_04" },
+    { 0x1925, "PD_IN_TRACK_INFO" },
+    { 0x1926, "PD_IN_SEEK_MODE" },
+    { 0x1927, "PD_IN_SEEK_TRACK" },
+    { 0x1928, "PD_IN_SEEK_HIGH" },
+    { 0x1929, "PD_IN_SEEK_MID" },
+    { 0x192A, "PD_IN_SEEK_LOW" },
+    { 0x192B, "PD_IN_SEEK_FRAME" },
+    { 0x192C, "PD_IN_VIDEO" },
+    { 0x192D, "PD_IN_DIGITAL_AUDIO" },
+    { 0x192E, "PD_IN_ANALOG_AUDIO" },
+    { 0x192F, "PD_IN_DIGITAL_VOLUME" },
+    { 0x1930, "PD_IN_IN_10" },
+    { 0x1931, "PD_IN_IN_11" },
+    { 0x1932, "PD_IN_IN_12" },
+    { 0x1933, "PD_IN_IN_13" },
+    { 0x1934, "PD_IN_IN_14" },
+    { 0x1935, "PD_IN_IN_15" },
+    { 0x1936, "PD_IN_IN_16" },
+    { 0x1937, "PD_IN_IN_17" },
+    { 0x1938, "PD_IN_IN_18" },
+    { 0x1939, "PD_IN_TRANSPARENCY" },
+    { 0x193A, "PD_IN_SPRITE_FADER" },
+    { 0x193B, "PD_IN_BACKGROUND_FADER" },
+    { 0x193C, "PD_IN_BACKDROP_FADER" },
+    { 0x193D, "PD_IN_BLANKING_FADER" },
+    { 0x193E, "PD_IN_ANALOG_CONTROL" },
+    { 0x193F, "PD_IN_ANALOG_ATTENUATION" },
+    { 0x1940, "PD_OUT_CONTROL" },
+    { 0x1941, "PD_OUT_MODEL" },
+    { 0x1942, "PD_OUT_DISC_TYPE" },
+    { 0x1943, "PD_OUT_DISC_SIDE" },
+    { 0x1944, "PD_OUT_AUDIO" },
+    { 0x1945, "PD_OUT_BUTTON" },
+    { 0x1946, "PD_OUT_DRIVE" },
+    { 0x1947, "PD_OUT_PLAYBACK" },
+    { 0x1948, "PD_OUT_DISC_STATUS" },
+    { 0x1949, "PD_OUT_ERROR" },
+    { 0x194A, "PD_OUT_SEEK_MODE" },
+    { 0x194B, "PD_OUT_SEEK_TRACK" },
+    { 0x194C, "PD_OUT_SEEK_HIGH" },
+    { 0x194D, "PD_OUT_SEEK_MID" },
+    { 0x194E, "PD_OUT_SEEK_LOW" },
+    { 0x194F, "PD_OUT_SEEK_FRAME" },
+    { 0x1950, "PD_OUT_TRACK_INFO" },
+    { 0x1951, "PD_OUT_TOC_CONTROL" },
+    { 0x1952, "PD_OUT_TOC_MINUTE" },
+    { 0x1953, "PD_OUT_TOC_SECOND" },
+    { 0x1954, "PD_OUT_TOC_FRAME" },
+    { 0x1955, "PD_OUT_TRACK" },
+    { 0x1956, "PD_OUT_POSITION_HIGH" },
+    { 0x1957, "PD_OUT_POSITION_MID" },
+    { 0x1958, "PD_OUT_POSITION_LOW" },
+    { 0x1959, "PD_OUT_POSITION_FRAME" },
+    { 0x195A, "PD_OUT_STOP_TRACK" },
+    { 0x195B, "PD_OUT_STOP_FRAME" },
+    { 0x195C, "PD_OUT_STOP_LOW" },
+    { 0x195D, "PD_OUT_STOP_MID" },
+    { 0x195E, "PD_OUT_STOP_HIGH" },
+    { 0x195F, "PD_OUT_STOP_STATUS" },
+};
+
+static const stDebugLabel k_debug_labels[] =
 {
     { 0x0000, "VDC_ADDRESS" },
     { 0x0002, "VDC_DATA_LO" },
@@ -165,9 +236,7 @@ static const stDebugLabel k_debug_labels[k_debug_label_count] =
     { 0x18C3, "CD_SIGNATURE3" }
 };
 
-static const int k_cdrom_bios_symbol_count = 76;
-
-static const stDebugLabel k_cdrom_bios_symbols[k_cdrom_bios_symbol_count] = 
+static const stDebugLabel k_cdrom_bios_symbols[] =
 {
     // CD commands
     { 0xE000, "CD_BOOT"     },
@@ -259,5 +328,9 @@ static const stDebugLabel k_cdrom_bios_symbols[k_cdrom_bios_symbol_count] =
     { 0xE0DE, "GRP_BIOS"    },
     { 0xE0E1, "PSG_DRIVE"   }
 };
+
+static const int k_debug_laseractive_label_count = sizeof(k_debug_laseractive_labels) / sizeof(k_debug_laseractive_labels[0]);
+static const int k_cdrom_bios_symbol_count = sizeof(k_cdrom_bios_symbols) / sizeof(k_cdrom_bios_symbols[0]);
+static const int k_debug_label_count = sizeof(k_debug_labels) / sizeof(k_debug_labels[0]);
 
 #endif /* GUI_DEBUG_CONSTANTS_H */

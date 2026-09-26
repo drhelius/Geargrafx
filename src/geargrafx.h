@@ -37,6 +37,7 @@
 #include "cdrom_audio.h"
 #include "adpcm.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 #include "mapper.h"
 #include "sf2_mapper.h"
 #include "arcade_card_mapper.h"

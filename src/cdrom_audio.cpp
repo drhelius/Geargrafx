@@ -20,10 +20,12 @@
 #include "cdrom_audio.h"
 #include "cdrom_media.h"
 #include "trace_logger.h"
+#include "laseractive.h"
 
-CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
+CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media, LaserActive* laseractive)
 {
     m_cdrom_media = cdrom_media;
+    m_laseractive = laseractive;
     InitPointer(m_cdrom);
     InitPointer(m_scsi_controller);
     InitPointer(m_trace_logger);
@@ -90,6 +92,24 @@ void CdRomAudio::LogCdRomAudioEvent(u8 event, u32 lba, u32 param)
     UNUSED(lba);
     UNUSED(param);
 #endif
+}
+
+void CdRomAudio::FinishLaserActivePlayback()
+{
+    m_current_lba = m_stop_lba;
+    TraceCdRomAudioEvent(TRACE_CDROM_AUDIO_BOUNDARY, m_stop_lba, m_current_lba);
+
+    if (m_stop_event == CD_AUDIO_STOP_EVENT_LOOP)
+    {
+        m_laseractive->NotifyAudioStart(m_start_lba, false);
+        m_laseractive->SetAudioEnd(m_stop_lba);
+        return;
+    }
+
+    m_current_state = CD_AUDIO_STATE_STOPPED;
+
+    if (m_stop_event == CD_AUDIO_STOP_EVENT_IRQ)
+        m_scsi_controller->StartStatus(ScsiController::SCSI_STATUS_GOOD);
 }
 
 void CdRomAudio::Reset()

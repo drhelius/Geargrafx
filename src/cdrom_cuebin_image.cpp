@@ -32,6 +32,8 @@
 CdRomCueBinImage::CdRomCueBinImage() : CdRomImage()
 {
     m_load_options = GG_CdRomCueBinDefaultLoadOptions();
+    m_file_resolver = ResolveNormalFile;
+    m_file_resolver_user_data = this;
 #if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
     m_read_ahead_running.store(false);
     m_keep_alive_file = NULL;
@@ -61,12 +63,12 @@ void CdRomCueBinImage::Reset()
 #endif
     CdRomImage::Reset();
     DestroyImgFiles();
+    m_file_resolver = ResolveNormalFile;
+    m_file_resolver_user_data = this;
 }
 
 bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
 {
-    using namespace std;
-
     Log("Loading CUE from %s...", path);
 
     if (!IsValidPointer(path))
@@ -76,7 +78,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
         return m_ready;
     }
 
-    Reset();
+    CdRomCueBinImage::Reset();
     GatherPaths(path);
 
     if (strcmp(m_file_extension, "cue") != 0)
@@ -108,57 +110,35 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
             return m_ready;
         }
 
-        int size = (int)file_size;
-        char* buffer = new char[size + 1];
-        if (!file->Seek(0))
-        {
-            Error("Unable to seek to beginning of file %s", path);
-            SafeDeleteArray(buffer);
-            SafeDelete(file);
-            m_ready = false;
-            return m_ready;
-        }
-
-        s64 read = file->Read(buffer, size);
+        size_t size = (size_t)file_size;
+        u8* buffer = new u8[size];
+        bool read = file->ReadAt(0, buffer, size);
         SafeDelete(file);
 
-        if (read != size)
+        if (!read)
         {
-            Error("Unable to read file %s. Read %lld bytes, expected %d bytes", path, (long long)read, size);
+            Error("Unable to read complete CUE file %s", path);
             SafeDeleteArray(buffer);
             m_ready = false;
             return m_ready;
         }
 
-        buffer[size] = 0;
-
-        for (int i = 0; i < size; i++)
+        bool empty = true;
+        for (size_t i = 0; i < size; i++)
         {
             if (buffer[i] != 0)
-                break;
-
-            if (i == size - 1)
             {
-                Error("File %s is empty!", path);
-                SafeDeleteArray(buffer);
-                m_ready = false;
-                return m_ready;
+                empty = false;
+                break;
             }
         }
 
-        m_ready = ParseCueFile(buffer);
+        if (empty)
+            Error("File %s is empty!", path);
+        else
+            m_ready = LoadFromCueData(path, buffer, size, preload, ResolveNormalFile, this);
 
         SafeDeleteArray(buffer);
-
-        if (preload && m_ready)
-            m_ready = PreloadDisc();
-
-        CalculateCRC();
-
-#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
-        if (m_ready && m_load_options.enable_read_ahead)
-            StartReadAheadWorker();
-#endif
     }
     else
     {
@@ -170,6 +150,71 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
         Reset();
 
     return m_ready;
+}
+
+bool CdRomCueBinImage::LoadFromCueData(const char* source_path, const u8* cue_data,
+    size_t cue_size, bool preload, GG_CdRomCueFileResolver resolver, void* resolver_user_data)
+{
+    if (!IsValidPointer(source_path) || !IsValidPointer(cue_data) || (cue_size == 0) || (cue_size > 0x7FFFFFFF) || !IsValidPointer(resolver))
+    {
+        Error("Invalid in-memory CUE data");
+        return false;
+    }
+
+    CdRomCueBinImage::Reset();
+    GatherPaths(source_path);
+    m_file_resolver = resolver;
+    m_file_resolver_user_data = resolver_user_data;
+
+    char* text = new char[cue_size + 1];
+    memcpy(text, cue_data, cue_size);
+    text[cue_size] = 0;
+
+    if (memchr(text, 0, cue_size) != NULL)
+    {
+        Error("CUE data contains an embedded NUL byte");
+        SafeDeleteArray(text);
+        CdRomCueBinImage::Reset();
+        return false;
+    }
+
+    m_ready = ParseCueFile(text);
+    SafeDeleteArray(text);
+
+    if (preload && m_ready)
+        m_ready = PreloadDisc();
+
+    if (m_ready)
+        CalculateCRC();
+
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+    if (m_ready && m_load_options.enable_read_ahead)
+        StartReadAheadWorker();
+#endif
+
+    if (!m_ready)
+        CdRomCueBinImage::Reset();
+
+    return m_ready;
+}
+
+MediaFile* CdRomCueBinImage::ResolveNormalFile(const char* reference, char* resolved_path,
+    size_t resolved_path_size, void* user_data)
+{
+    CdRomCueBinImage* image = reinterpret_cast<CdRomCueBinImage*>(user_data);
+    if (!IsValidPointer(image) || !IsValidPointer(reference) || !IsValidPointer(resolved_path) || (resolved_path_size == 0))
+    {
+        return NULL;
+    }
+
+    std::string path = reference;
+    if (!path.empty() && !image->IsUriPath(path.c_str()) && (path[0] != '/') && (path[0] != '\\') && ((path.size() < 2) || (path[1] != ':')))
+    {
+        path = std::string(image->m_file_directory) + "/" + path;
+    }
+
+    strncpy_fit(resolved_path, path.c_str(), resolved_path_size);
+    return MediaFile::OpenFile(resolved_path);
 }
 
 void CdRomCueBinImage::SetLoadOptions(const GG_CdRomCueBinLoadOptions& options)
@@ -215,18 +260,27 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
         return false;
     }
 
-    u32 byte_offset = track.file_offset + (sector_offset * sector_size);
+    u64 sector_byte_offset;
+    u64 byte_offset;
+    if (!checked_multiply_u64(sector_offset, sector_size, &sector_byte_offset) ||
+        !checked_add_u64(track.file_offset, sector_byte_offset, &byte_offset))
+    {
+        Error("ReadSector failed - Byte offset overflow");
+        return false;
+    }
 
     if (sector_size == 2352)
     {
-        byte_offset += 16;
+        if (!checked_add_u64(byte_offset, 16, &byte_offset))
+            return false;
         sector_size = 2048;
     }
 
-    if (byte_offset + sector_size > img_file->file_size)
+    u64 read_end;
+    if (!checked_add_u64(byte_offset, sector_size, &read_end) || (read_end > img_file->file_size))
     {
-        Error("ReadSector failed - Byte offset %u + sector size %u exceeds file size %u",
-            byte_offset, sector_size, img_file->file_size);
+        Error("ReadSector failed - Byte offset %llu + sector size %u exceeds file size %llu",
+            (unsigned long long)byte_offset, sector_size, (unsigned long long)img_file->file_size);
         return false;
     }
 
@@ -234,7 +288,7 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
     if (m_current_sector >= m_toc.sector_count)
         m_current_sector = m_toc.sector_count - 1;
 
-    Debug("Reading sector %d from track %d (offset: %d)", lba, track_index, byte_offset);
+    Debug("Reading sector %d from track %d (offset: %llu)", lba, track_index, (unsigned long long)byte_offset);
 
     return ReadFromImgFile(img_file, byte_offset, buffer, sector_size);
 }
@@ -272,13 +326,24 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
         return false;
     }
 
-    u32 byte_offset = track.file_offset + (sector_offset * sector_size) + offset;
-    u32 size = count * 2;
-
-    if (byte_offset + size > img_file->file_size)
+    u64 sector_byte_offset;
+    u64 byte_offset;
+    u64 sample_size;
+    if (!checked_multiply_u64(sector_offset, sector_size, &sector_byte_offset) ||
+        !checked_add_u64(track.file_offset, sector_byte_offset, &byte_offset) ||
+        !checked_add_u64(byte_offset, offset, &byte_offset) ||
+        !checked_multiply_u64(count, 2, &sample_size) || (sample_size > UINT32_MAX))
     {
-        Error("ReadBytes failed - Byte offset %u + size %u exceeds file size %u",
-            byte_offset, size, img_file->file_size);
+        Error("ReadBytes failed - Byte offset overflow");
+        return false;
+    }
+    u32 size = (u32)sample_size;
+
+    u64 read_end;
+    if (!checked_add_u64(byte_offset, size, &read_end) || (read_end > img_file->file_size))
+    {
+        Error("ReadBytes failed - Byte offset %llu + size %u exceeds file size %llu",
+            (unsigned long long)byte_offset, size, (unsigned long long)img_file->file_size);
         return false;
     }
 
@@ -347,16 +412,21 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     const TrackFile& track_file = m_track_files[track_number];
 
     u32 sector_size = track.sector_size;
-    u32 start_offset = track.file_offset;
-    u32 total_bytes = track.sector_count * sector_size;
+    u64 start_offset = track.file_offset;
+    u64 total_bytes;
+    if (!checked_multiply_u64(track.sector_count, sector_size, &total_bytes))
+        return false;
 
     if (total_bytes == 0)
         return true;
 
     u32 chunk_size = track_file.img_file->chunk_size;
-    u32 start_chunk = start_offset / chunk_size;
-    u32 end_chunk = (start_offset + total_bytes - 1) / chunk_size;
-    u32 chunks_needed = end_chunk - start_chunk + 1;
+    u64 final_offset;
+    if (!checked_add_u64(start_offset, total_bytes - 1, &final_offset))
+        return false;
+    u64 start_chunk = start_offset / chunk_size;
+    u64 end_chunk = final_offset / chunk_size;
+    u64 chunks_needed = end_chunk - start_chunk + 1;
 
 #if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
     if (m_load_options.enable_read_ahead)
@@ -369,11 +439,11 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     if (m_load_options.max_preload_chunks != GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK)
     {
         chunks_needed = MIN(chunks_needed, m_load_options.max_preload_chunks);
-        Debug("Preloading %u chunk(s) for track %u", chunks_needed, track_number);
+        Debug("Preloading %llu chunk(s) for track %u", (unsigned long long)chunks_needed, track_number);
     }
     else
     {
-        Debug("Preloading all sectors for track %u (sectors: %u, bytes: %u)", track_number, track.sector_count, total_bytes);
+        Debug("Preloading all sectors for track %u (sectors: %u, bytes: %llu)", track_number, track.sector_count, (unsigned long long)total_bytes);
     }
 
     return PreloadChunks(track_file.img_file, start_chunk, chunks_needed);
@@ -386,7 +456,9 @@ void CdRomCueBinImage::InitImgFile(ImgFile* img_file)
     img_file->file_size = 0;
     img_file->chunk_size = 0;
     img_file->chunk_count = 0;
+    img_file->chunk_cache_count = 0;
     img_file->chunks = NULL;
+    img_file->cached_chunk_indices = NULL;
     InitPointer(img_file->file);
     InitPointer(img_file->ogg_decoder);
     img_file->decoded_pcm_size = 0;
@@ -427,11 +499,12 @@ void CdRomCueBinImage::DestroyImgFile(ImgFile* img_file)
 
     if (IsValidPointer(img_file->chunks))
     {
-        for (u32 i = 0; i < img_file->chunk_count; i++)
+        for (u64 i = 0; i < img_file->chunk_cache_count; i++)
             SafeDeleteArray(img_file->chunks[i]);
         SafeDeleteArray(img_file->chunks);
     }
 
+    SafeDeleteArray(img_file->cached_chunk_indices);
     SafeDelete(img_file);
 }
 
@@ -469,8 +542,9 @@ bool CdRomCueBinImage::GatherImgInfo(ImgFile* img_file)
         return false;
 
     Debug("Gathered ImgFile info: %s", img_file->file_path);
-    Debug("ImgFile info Size: %d, Chunk size: %d, Chunk count: %d", 
-          img_file->file_size, img_file->chunk_size, img_file->chunk_count);
+    Debug("ImgFile info Size: %llu, Chunk size: %u, Chunk count: %llu",
+        (unsigned long long)img_file->file_size, img_file->chunk_size,
+        (unsigned long long)img_file->chunk_count);
 
     return true;
 }
@@ -486,7 +560,11 @@ bool CdRomCueBinImage::OpenImgFile(ImgFile* img_file)
     img_file->is_ogg = false;
     img_file->is_wav = false;
     img_file->wav_data_offset = 0;
-    img_file->file = MediaFile::OpenFile(img_file->file_path);
+    if (!IsValidPointer(m_file_resolver))
+        return false;
+
+    img_file->file = m_file_resolver(img_file->file_name, img_file->file_path,
+        sizeof(img_file->file_path), m_file_resolver_user_data);
 
     if (img_file->file)
     {
@@ -499,13 +577,6 @@ bool CdRomCueBinImage::OpenImgFile(ImgFile* img_file)
             return false;
         }
 
-        if (size > 0xFFFFFFFFLL)
-        {
-            Error("Unable to open file %s. Size too large: %lld", img_file->file_path, (long long)size);
-            SafeDelete(img_file->file);
-            return false;
-        }
-
         if (!img_file->file->IsValid())
         {
             Error("Unable to open file %s. Bad file!", img_file->file_path);
@@ -513,7 +584,7 @@ bool CdRomCueBinImage::OpenImgFile(ImgFile* img_file)
             return false;
         }
 
-        img_file->file_size = (u32)size;
+        img_file->file_size = (u64)size;
 
         return true;
     }
@@ -579,8 +650,7 @@ bool CdRomCueBinImage::ProcessOggFormat(ImgFile* img_file)
     img_file->file_size = (u32)(sector_count * 2352);
     img_file->is_ogg = true;
 
-    Debug("Ogg Vorbis virtual PCM size: %llu bytes, %llu sector(s)",
-        (unsigned long long)decoded_pcm_size, (unsigned long long)sector_count);
+    Debug("Ogg Vorbis virtual PCM size: %llu bytes, %llu sector(s)", (unsigned long long)decoded_pcm_size, (unsigned long long)sector_count);
 
     return true;
 }
@@ -636,7 +706,7 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
     }
 
     uint32_t data_size = 0;
-    uint32_t data_offset = 0;
+    u64 data_offset = 0;
     bool found_data = false;
     s64 file_size = file.GetSize();
 
@@ -653,7 +723,10 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
         if (strncmp(chunk_id, "data", 4) == 0)
         {
             data_size = chunk_size;
-            data_offset = (u32)file.Tell();
+            s64 position = file.Tell();
+            if (position < 0)
+                return false;
+            data_offset = (u64)position;
             found_data = true;
             break;
         }
@@ -673,7 +746,7 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
         return false;
     }
     
-    Debug("WAV data chunk found at offset %d with size %d", data_offset, data_size);
+    Debug("WAV data chunk found at offset %llu with size %u", (unsigned long long)data_offset, data_size);
 
     img_file->is_wav = true;
     img_file->wav_data_offset = data_offset;
@@ -709,41 +782,60 @@ bool CdRomCueBinImage::SetupFileChunks(ImgFile* img_file)
     if (img_file->file_size % img_file->chunk_size != 0)
         img_file->chunk_count++;
 
-    const u32 max_chunk_count = 0x7FFFFFFFU / (u32)sizeof(u8*);
-    if (img_file->chunk_count > max_chunk_count)
+    img_file->chunk_cache_count = img_file->chunk_count;
+    if ((m_load_options.max_cached_chunks != 0) &&
+        (img_file->chunk_cache_count > m_load_options.max_cached_chunks))
     {
-        Error("Too many chunks for %s: %u", img_file->file_path, img_file->chunk_count);
+        img_file->chunk_cache_count = MAX(2U, m_load_options.max_cached_chunks);
+    }
+
+    const u64 max_chunk_count = (u64)SIZE_MAX / MAX(sizeof(u8*), sizeof(u64));
+    if ((img_file->chunk_cache_count == 0) || (img_file->chunk_cache_count > max_chunk_count))
+    {
+        Error("Invalid chunk cache size for %s: %llu", img_file->file_path, (unsigned long long)img_file->chunk_cache_count);
         return false;
     }
 
-    img_file->chunks = new u8*[img_file->chunk_count];
+    img_file->chunks = new u8*[(size_t)img_file->chunk_cache_count];
+    img_file->cached_chunk_indices = new u64[(size_t)img_file->chunk_cache_count];
 
-    for (u32 i = 0; i < img_file->chunk_count; i++)
+    for (u64 i = 0; i < img_file->chunk_cache_count; i++)
+    {
         InitPointer(img_file->chunks[i]);
+        img_file->cached_chunk_indices[i] = UINT64_MAX;
+    }
 
     return true;
 }
 
-u32 CdRomCueBinImage::CalculateFileOffset(ImgFile* img_file, u32 chunk_index)
+u64 CdRomCueBinImage::CalculateFileOffset(ImgFile* img_file, u64 chunk_index)
 {
-    u32 offset = chunk_index * img_file->chunk_size;
+    u64 offset;
+    if (!checked_multiply_u64(chunk_index, img_file->chunk_size, &offset))
+        return UINT64_MAX;
 
     if (img_file->is_wav)
-        offset += img_file->wav_data_offset;
+    {
+        if (!checked_add_u64(offset, img_file->wav_data_offset, &offset))
+            return UINT64_MAX;
+    }
 
     return offset;
 }
 
-u32 CdRomCueBinImage::CalculateReadSize(ImgFile* img_file, u32 file_offset)
+u32 CdRomCueBinImage::CalculateReadSize(ImgFile* img_file, u64 file_offset)
 {
     u32 to_read = img_file->chunk_size;
-    u32 effective_offset = file_offset;
+    u64 effective_offset = file_offset;
 
     if (img_file->is_wav)
         effective_offset -= img_file->wav_data_offset;
 
-    if (effective_offset + to_read > img_file->file_size)
-        to_read = img_file->file_size - effective_offset;
+    if (effective_offset > img_file->file_size)
+        return 0;
+
+    if ((u64)to_read > (img_file->file_size - effective_offset))
+        to_read = (u32)(img_file->file_size - effective_offset);
 
     return to_read;
 }
@@ -788,7 +880,6 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
                 parsed_files.back().tracks.push_back(current_parsed_track);
             }
 
-            string current_file_path;
             string file_name;
 
             size_t first_quote = line.find_first_of("\"");
@@ -796,40 +887,31 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
 
             if (first_quote != string::npos && last_quote != string::npos && first_quote != last_quote)
             {
-                current_file_path = line.substr(first_quote + 1, last_quote - first_quote - 1);
-                file_name = current_file_path;
+                file_name = line.substr(first_quote + 1, last_quote - first_quote - 1);
             }
             else
             {
                 istringstream file_stream(line.substr(4));
-                file_stream >> current_file_path;
+                file_stream >> file_name;
 
-                if (current_file_path.empty())
+                if (file_name.empty())
                 {
                     Error("Invalid FILE format in CUE: %s", line.c_str());
                     return false;
                 }
-
-                file_name = current_file_path;
             }
 
-            if (!current_file_path.empty() && !IsUriPath(current_file_path.c_str()) && current_file_path[0] != '/' && current_file_path[0] != '\\' &&
-                (current_file_path.size() < 2 || current_file_path[1] != ':'))
-            {
-                current_file_path = string(m_file_directory) + "/" + current_file_path;
-            }
-
-            Debug("Found FILE: %s", current_file_path.c_str());
+            Debug("Found FILE: %s", file_name.c_str());
 
             ImgFile* img_file = new ImgFile;
             InitImgFile(img_file);
 
-            strncpy_fit(img_file->file_path, current_file_path.c_str(), sizeof(img_file->file_path));
+            strncpy_fit(img_file->file_path, file_name.c_str(), sizeof(img_file->file_path));
             strncpy_fit(img_file->file_name, file_name.c_str(), sizeof(img_file->file_name));
 
             if (!GatherImgInfo(img_file))
             {
-                Error("Failed to gather ImgFile info for %s", current_file_path.c_str());
+                Error("Failed to gather ImgFile info for %s", file_name.c_str());
                 DestroyImgFile(img_file);
                 return false;
             }
@@ -1036,7 +1118,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
                 track.lead_in_lba = p.index0_lba + start_sector;
             }
 
-            u32 current_file_offset = 0;
+            u64 current_file_offset = 0;
 
             if(j != 0)
             {
@@ -1045,28 +1127,59 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
                 LbaToMsf(prev.end_lba, &prev.end_msf);
 
                 prev.sector_count = prev.end_lba - prev.start_lba + 1;
-                current_file_offset = prev.file_offset + (prev.sector_count * prev.sector_size);
+                u64 previous_size;
+                if (!checked_multiply_u64(prev.sector_count, prev.sector_size, &previous_size) ||
+                    !checked_add_u64(prev.file_offset, previous_size, &current_file_offset))
+                {
+                    Error("CUE file offset overflow in %s", f.img_file->file_path);
+                    return false;
+                }
             }
 
             track.file_offset = current_file_offset;
 
             if (track.has_lead_in && !p.has_pregap && !file_starts_at_index1)
-                track.file_offset += (track.start_lba - track.lead_in_lba) * track.sector_size;
+            {
+                u64 lead_in_size;
+                if (!checked_multiply_u64(track.start_lba - track.lead_in_lba,
+                    track.sector_size, &lead_in_size) ||
+                    !checked_add_u64(track.file_offset, lead_in_size, &track.file_offset))
+                {
+                    Error("CUE lead-in offset overflow in %s", f.img_file->file_path);
+                    return false;
+                }
+            }
 
             m_toc.tracks.push_back(track);
             m_track_files.push_back(track_file);
         }
 
         Track& last = m_toc.tracks.back();
-        u32 last_size = (f.img_file->file_size - last.file_offset);
-        last.sector_count = last_size / last.sector_size;
+        if (last.file_offset > f.img_file->file_size)
+        {
+            Error("CUE track offset exceeds file size in %s", f.img_file->file_path);
+            return false;
+        }
+
+        u64 last_size = f.img_file->file_size - last.file_offset;
+        u64 last_sector_count = last_size / last.sector_size;
 
         if (last_size % last.sector_size != 0)
         {
             Log("WARNING: Last track has remaining bytes that do not fit into a full sector:");
-            Log("File size: %u, File offset: %u, Sector size: %u", f.img_file->file_size, last.file_offset, last.sector_size);
-            last.sector_count++;
+            Log("File size: %llu, File offset: %llu, Sector size: %u",
+                (unsigned long long)f.img_file->file_size,
+                (unsigned long long)last.file_offset, last.sector_size);
+            last_sector_count++;
         }
+
+        if ((last_sector_count == 0) || (last_sector_count > UINT32_MAX) || (last_sector_count > (u64)UINT32_MAX - last.start_lba + 1))
+        {
+            Error("Invalid CUE track sector count in %s", f.img_file->file_path);
+            return false;
+        }
+
+        last.sector_count = (u32)last_sector_count;
 
         last.end_lba = last.start_lba + last.sector_count - 1;
         LbaToMsf(last.end_lba, &last.end_msf);
@@ -1076,13 +1189,13 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
     {
         Track& track = m_toc.tracks[i];
 
-        Log("Track %2d (%s): Start LBA: %6u, End LBA: %6u, Sectors: %6u, File Offset: %8u",
+        Log("Track %2d (%s): Start LBA: %6u, End LBA: %6u, Sectors: %6u, File Offset: %8llu",
             (int)(i + 1),
             TrackTypeName(track.type),
             track.start_lba,
             track.end_lba,
             track.sector_count,
-            track.file_offset);
+            (unsigned long long)track.file_offset);
     }
 
     Log("Successfully parsed CUE file with %d tracks", (int)m_toc.tracks.size());
@@ -1105,7 +1218,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
     return !m_toc.tracks.empty();
 }
 
-bool CdRomCueBinImage::ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer, u32 size)
+bool CdRomCueBinImage::ReadFromImgFile(ImgFile* img_file, u64 offset, u8* buffer, u32 size)
 {
     if (!IsValidPointer(img_file) || !IsValidPointer(buffer))
     {
@@ -1113,70 +1226,73 @@ bool CdRomCueBinImage::ReadFromImgFile(ImgFile* img_file, u32 offset, u8* buffer
         return false;
     }
 
-    if (offset + size > img_file->file_size)
+    u64 read_end;
+    if (!checked_add_u64(offset, size, &read_end) || (read_end > img_file->file_size))
     {
-        Error("ReadFromImgFile failed - Offset %u + size %u exceeds file size %u",
-            offset, size, img_file->file_size);
+        Error("ReadFromImgFile failed - Offset %llu + size %u exceeds file size %llu",
+            (unsigned long long)offset, size, (unsigned long long)img_file->file_size);
         return false;
     }
 
     const u32 chunk_size = img_file->chunk_size;
-    u32 chunk_index = offset / chunk_size;
+    u64 chunk_index = offset / chunk_size;
     u32 chunk_offset = offset % chunk_size;
 #if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
-    u32 last_chunk_index = chunk_index;
+    u64 last_chunk_index = chunk_index;
 #endif
 
-    if (!LoadChunk(img_file, chunk_index))
+    bool crosses_chunk = chunk_offset + size > chunk_size;
+    if (crosses_chunk && (chunk_index + 1 >= img_file->chunk_count))
     {
-        Error("Failed to load chunk %d", chunk_index);
+        Error("ReadFromImgFile failed - chunk boundary crossing exceeds chunk count (chunk %llu, count %llu)",
+            (unsigned long long)(chunk_index + 1), (unsigned long long)img_file->chunk_count);
         return false;
     }
 
-    if (chunk_offset + size > chunk_size)
     {
-        if (chunk_index + 1 >= img_file->chunk_count)
-        {
-            Error("ReadFromImgFile failed - chunk boundary crossing exceeds chunk count (chunk %u, count %u)", chunk_index + 1, img_file->chunk_count);
-            return false;
-        }
-
-        if (!LoadChunk(img_file, chunk_index + 1))
-        {
-            Error("Failed to load chunk %d", chunk_index + 1);
-            return false;
-        }
-
 #if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
-        last_chunk_index = chunk_index + 1;
-#endif
-    }
-
-#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
-    {
         std::lock_guard<std::mutex> lock(m_chunk_mutex);
 #endif
 
-        if (chunk_offset + size <= chunk_size)
+        if (!LoadChunkUnlocked(img_file, chunk_index))
         {
-            memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, size);
+            Error("Failed to load chunk %llu", (unsigned long long)chunk_index);
+            return false;
+        }
+        if (crosses_chunk && !LoadChunkUnlocked(img_file, chunk_index + 1))
+        {
+            Error("Failed to load chunk %llu", (unsigned long long)(chunk_index + 1));
+            return false;
+        }
+
+        u8* first_chunk = GetChunkData(img_file, chunk_index);
+        u8* second_chunk = crosses_chunk ? GetChunkData(img_file, chunk_index + 1) : NULL;
+        if (!first_chunk || (crosses_chunk && !second_chunk))
+            return false;
+
+        if (!crosses_chunk)
+        {
+            memcpy(buffer, first_chunk + chunk_offset, size);
         }
         else
         {
             u32 first_part = chunk_size - chunk_offset;
-            memcpy(buffer, img_file->chunks[chunk_index] + chunk_offset, first_part);
-            memcpy(buffer + first_part, img_file->chunks[chunk_index + 1], size - first_part);
-        }
+            memcpy(buffer, first_chunk + chunk_offset, first_part);
+            memcpy(buffer + first_part, second_chunk, size - first_part);
 #if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
+            last_chunk_index = chunk_index + 1;
+#endif
+        }
     }
 
+#if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
     QueueReadAhead(img_file, last_chunk_index + 1);
 #endif
 
     return true;
 }
 
-bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
+bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u64 chunk_index)
 {
     if (!IsValidPointer(img_file))
     {
@@ -1186,7 +1302,8 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
 
     if (chunk_index >= img_file->chunk_count)
     {
-        Error("Cannot load chunk - Chunk index %u out of bounds (count: %u)", chunk_index, img_file->chunk_count);
+        Error("Cannot load chunk - Chunk index %llu out of bounds (count: %llu)",
+            (unsigned long long)chunk_index, (unsigned long long)img_file->chunk_count);
         return false;
     }
 
@@ -1194,7 +1311,17 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
     std::lock_guard<std::mutex> lock(m_chunk_mutex);
 #endif
 
-    if (!img_file->chunks[chunk_index])
+    return LoadChunkUnlocked(img_file, chunk_index);
+}
+
+bool CdRomCueBinImage::LoadChunkUnlocked(ImgFile* img_file, u64 chunk_index)
+{
+    if (!IsValidPointer(img_file) || (chunk_index >= img_file->chunk_count))
+        return false;
+
+    u64 slot = GetChunkSlot(img_file, chunk_index);
+
+    if (!IsChunkLoaded(img_file, chunk_index))
     {
         if (!IsValidPointer(img_file->file))
         {
@@ -1202,19 +1329,21 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
             return false;
         }
 
-        u32 file_offset = CalculateFileOffset(img_file, chunk_index);
+        u64 file_offset = CalculateFileOffset(img_file, chunk_index);
 
         if (img_file->is_ogg)
         {
             if (!IsValidPointer(img_file->ogg_decoder))
             {
                 Error("Cannot load Ogg Vorbis chunk - Decoder is not open for %s", img_file->file_path);
-                SafeDeleteArray(img_file->chunks[chunk_index]);
+                SafeDeleteArray(img_file->chunks[slot]);
                 return false;
             }
 
-            img_file->chunks[chunk_index] = new u8[img_file->chunk_size];
-            memset(img_file->chunks[chunk_index], 0, img_file->chunk_size);
+            SafeDeleteArray(img_file->chunks[slot]);
+            img_file->cached_chunk_indices[slot] = UINT64_MAX;
+            img_file->chunks[slot] = new u8[img_file->chunk_size];
+            memset(img_file->chunks[slot], 0, img_file->chunk_size);
 
             u32 to_read = CalculateReadSize(img_file, file_offset);
             u32 decode_size = 0;
@@ -1225,39 +1354,45 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
                 decode_size = (remaining < to_read) ? (u32)remaining : to_read;
             }
 
-            Debug("Decoding chunk %d from %s", chunk_index, img_file->file_path);
+            Debug("Decoding chunk %llu from %s", (unsigned long long)chunk_index, img_file->file_path);
 
-            if ((decode_size != 0) && !img_file->ogg_decoder->ReadPcm(file_offset, img_file->chunks[chunk_index], decode_size))
+            if ((decode_size != 0) && !img_file->ogg_decoder->ReadPcm(file_offset, img_file->chunks[slot], decode_size))
             {
-                Error("Failed to decode Ogg Vorbis chunk %d from %s", chunk_index, img_file->file_path);
-                SafeDeleteArray(img_file->chunks[chunk_index]);
+                Error("Failed to decode Ogg Vorbis chunk %llu from %s", (unsigned long long)chunk_index, img_file->file_path);
+                SafeDeleteArray(img_file->chunks[slot]);
                 return false;
             }
 
+            img_file->cached_chunk_indices[slot] = chunk_index;
             return true;
         }
 
-        if (!img_file->file->Seek(file_offset))
+        if ((file_offset == UINT64_MAX) || (file_offset > (u64)INT64_MAX) ||
+            !img_file->file->Seek((s64)file_offset))
         {
-            Error("Cannot load chunk - Failed to seek to offset %u in file %s (tell after failure: %lld)",
-                file_offset, img_file->file_path, (long long)img_file->file->Tell());
+            Error("Cannot load chunk - Failed to seek to offset %llu in file %s (tell after failure: %lld)",
+                (unsigned long long)file_offset, img_file->file_path, (long long)img_file->file->Tell());
             return false;
         }
 
-        img_file->chunks[chunk_index] = new u8[img_file->chunk_size];
+        SafeDeleteArray(img_file->chunks[slot]);
+        img_file->cached_chunk_indices[slot] = UINT64_MAX;
+        img_file->chunks[slot] = new u8[img_file->chunk_size];
 
         u32 to_read = CalculateReadSize(img_file, file_offset);
 
-        Debug("Loading chunk %d from %s", chunk_index, img_file->file_path);
-        s64 read = img_file->file->Read(img_file->chunks[chunk_index], to_read);
+        Debug("Loading chunk %llu from %s", (unsigned long long)chunk_index, img_file->file_path);
+        bool read = (to_read != 0) && img_file->file->ReadExact(img_file->chunks[slot], to_read);
 
-        if (read != to_read)
+        if (!read)
         {
-            Error("Failed to read chunk %d from %s. Read %lld bytes, expected %d bytes",
-                chunk_index, img_file->file_path, (long long)read, to_read);
-            SafeDeleteArray(img_file->chunks[chunk_index]);
+            Error("Failed to read chunk %llu from %s. Expected %u bytes",
+                (unsigned long long)chunk_index, img_file->file_path, to_read);
+            SafeDeleteArray(img_file->chunks[slot]);
             return false;
         }
+
+        img_file->cached_chunk_indices[slot] = chunk_index;
 
 #if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
         m_keep_alive_file = img_file;
@@ -1267,7 +1402,31 @@ bool CdRomCueBinImage::LoadChunk(ImgFile* img_file, u32 chunk_index)
     return true;
 }
 
-bool CdRomCueBinImage::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 count)
+u64 CdRomCueBinImage::GetChunkSlot(const ImgFile* img_file, u64 chunk_index) const
+{
+    return img_file->chunk_cache_count == img_file->chunk_count ? chunk_index :
+        chunk_index % img_file->chunk_cache_count;
+}
+
+bool CdRomCueBinImage::IsChunkLoaded(const ImgFile* img_file, u64 chunk_index) const
+{
+    if (!img_file || !img_file->chunks || !img_file->cached_chunk_indices ||
+        (chunk_index >= img_file->chunk_count) || (img_file->chunk_cache_count == 0))
+    {
+        return false;
+    }
+
+    u64 slot = GetChunkSlot(img_file, chunk_index);
+    return img_file->chunks[slot] && (img_file->cached_chunk_indices[slot] == chunk_index);
+}
+
+u8* CdRomCueBinImage::GetChunkData(const ImgFile* img_file, u64 chunk_index) const
+{
+    return IsChunkLoaded(img_file, chunk_index) ?
+        img_file->chunks[GetChunkSlot(img_file, chunk_index)] : NULL;
+}
+
+bool CdRomCueBinImage::PreloadChunks(ImgFile* img_file, u64 start_chunk, u64 count)
 {
     if (!IsValidPointer(img_file))
     {
@@ -1277,28 +1436,26 @@ bool CdRomCueBinImage::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 cou
 
     if (start_chunk >= img_file->chunk_count)
     {
-        Error("Cannot preload chunks - Start chunk index %d out of bounds (max: %d)",
-            start_chunk, img_file->chunk_count - 1);
+        Error("Cannot preload chunks - Start chunk index %llu out of bounds (max: %llu)",
+            (unsigned long long)start_chunk, (unsigned long long)(img_file->chunk_count - 1));
         return false;
     }
 
-    u32 end_chunk = start_chunk + count;
-    if (end_chunk > img_file->chunk_count)
-    {
+    u64 end_chunk;
+    if (count > img_file->chunk_cache_count)
+        count = img_file->chunk_cache_count;
+    if (!checked_add_u64(start_chunk, count, &end_chunk) || (end_chunk > img_file->chunk_count))
         end_chunk = img_file->chunk_count;
-    }
 
-    Debug("Preloading chunks %d-%d from %s", start_chunk, end_chunk - 1, img_file->file_path);
+    Debug("Preloading chunks %llu-%llu from %s", (unsigned long long)start_chunk,
+        (unsigned long long)(end_chunk - 1), img_file->file_path);
 
-    for (u32 i = start_chunk; i < end_chunk; i++)
+    for (u64 i = start_chunk; i < end_chunk; i++)
     {
-        if (img_file->chunks[i] == NULL)
+        if (!LoadChunk(img_file, i))
         {
-            if (!LoadChunk(img_file, i))
-            {
-                Error("Failed to preload chunk %d", i);
-                return false;
-            }
+            Error("Failed to preload chunk %llu", (unsigned long long)i);
+            return false;
         }
     }
 
@@ -1306,7 +1463,7 @@ bool CdRomCueBinImage::PreloadChunks(ImgFile* img_file, u32 start_chunk, u32 cou
 }
 
 #if defined(GG_ENABLE_CDROM_CUEBIN_READAHEAD)
-void CdRomCueBinImage::QueueReadAhead(ImgFile* img_file, u32 start_chunk)
+void CdRomCueBinImage::QueueReadAhead(ImgFile* img_file, u64 start_chunk)
 {
     if (!m_load_options.enable_read_ahead || (m_load_options.read_ahead_chunks == 0))
         return;
@@ -1319,7 +1476,7 @@ void CdRomCueBinImage::QueueReadAhead(ImgFile* img_file, u32 start_chunk)
 
     for (u32 i = 0; i < m_load_options.read_ahead_chunks; i++)
     {
-        u32 chunk_index = start_chunk + i;
+        u64 chunk_index = start_chunk + i;
         if (chunk_index >= img_file->chunk_count)
             break;
 
@@ -1327,7 +1484,7 @@ void CdRomCueBinImage::QueueReadAhead(ImgFile* img_file, u32 start_chunk)
     }
 }
 
-void CdRomCueBinImage::QueueChunk(ImgFile* img_file, u32 chunk_index)
+void CdRomCueBinImage::QueueChunk(ImgFile* img_file, u64 chunk_index)
 {
     if (!m_read_ahead_running.load())
         return;
@@ -1455,13 +1612,20 @@ bool CdRomCueBinImage::KeepAliveFile()
     if (!IsValidPointer(img_file) || !IsValidPointer(img_file->file) || (img_file->file_size == 0))
         return false;
 
-    s64 file_end = (s64)img_file->file_size;
+    u64 file_end_u64 = img_file->file_size;
     if (img_file->is_wav)
-        file_end += img_file->wav_data_offset;
+    {
+        if (!checked_add_u64(file_end_u64, img_file->wav_data_offset, &file_end_u64))
+            return false;
+    }
+
+    if (file_end_u64 > (u64)INT64_MAX)
+        return false;
+    s64 file_end = (s64)file_end_u64;
 
     s64 offset = img_file->file->Tell();
     if ((offset < 0) || (offset >= file_end))
-        offset = img_file->is_wav ? img_file->wav_data_offset : 0;
+        offset = img_file->is_wav ? (s64)img_file->wav_data_offset : 0;
 
     if (!img_file->file->Seek(offset))
         return false;
@@ -1555,10 +1719,20 @@ void CdRomCueBinImage::CalculateCRC()
 
     for (u32 sec = first_sector; sec <= max_index; sec++)
     {
-        u32 file_offset = first_data_track->file_offset + (first_data_track->sector_size * sec);
+        u64 sector_offset;
+        u64 file_offset;
+        if (!checked_multiply_u64(first_data_track->sector_size, sec, &sector_offset) ||
+            !checked_add_u64(first_data_track->file_offset, sector_offset, &file_offset))
+        {
+            Error("CRC file offset overflow for sector %u", sec);
+            break;
+        }
 
         if (first_data_track->sector_size == 2352)
-            file_offset += 16;
+        {
+            if (!checked_add_u64(file_offset, 16, &file_offset))
+                break;
+        }
 
         if (!ReadFromImgFile(img_file, file_offset, buffer, sector_data_size))
         {

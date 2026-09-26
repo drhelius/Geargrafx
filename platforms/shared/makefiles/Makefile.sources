@@ -16,6 +16,7 @@ SOURCES_C := \
     $(DEPS_DIR)/miniz/miniz.c \
 
 SOURCES_CXX := \
+    $(DEPS_DIR)/qon/qon.cpp \
     $(DEPS_DIR)/imgui/imgui_impl_sdl3.cpp \
     $(DEPS_DIR)/imgui/imgui_impl_opengl3.cpp \
     $(DEPS_DIR)/imgui/imgui.cpp \
@@ -39,6 +40,7 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_debug.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_cdrom.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_cdrom_audio.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_laseractive.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_adpcm.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_disassembler.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_huc6202.cpp \
@@ -79,8 +81,11 @@ SOURCES_CXX := \
     $(SRC_DIR)/cdrom_chd_file_adapter.cpp \
     $(SRC_DIR)/cdrom_chd_image.cpp \
     $(SRC_DIR)/cdrom_cuebin_image.cpp \
+    $(SRC_DIR)/cdrom_mmi_image.cpp \
     $(SRC_DIR)/media_file.cpp \
     $(SRC_DIR)/media_file_native.cpp \
+    $(SRC_DIR)/media_file_slice.cpp \
+    $(SRC_DIR)/mmi_archive.cpp \
     $(SRC_DIR)/ogg_vorbis_decoder.cpp \
     $(SRC_DIR)/cdrom_image.cpp \
     $(SRC_DIR)/cdrom_media.cpp \
@@ -93,6 +98,7 @@ SOURCES_CXX := \
     $(SRC_DIR)/huc6280_opcodes.cpp \
     $(SRC_DIR)/huc6280_psg.cpp \
     $(SRC_DIR)/input.cpp \
+    $(SRC_DIR)/laseractive.cpp \
     $(SRC_DIR)/mapper.cpp \
     $(SRC_DIR)/mb128.cpp \
     $(SRC_DIR)/media.cpp \

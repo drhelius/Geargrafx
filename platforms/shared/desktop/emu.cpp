@@ -102,7 +102,7 @@ static void stop_physical_cdrom_after_error(void);
 
 bool emu_init(GG_Input_Pump_Fn input_pump_fn)
 {
-    emu_frame_buffer = new u8[2048 * 256 * 4];
+    emu_frame_buffer = new u8[2048 * 512 * 4];
     audio_buffer = new s16[GG_AUDIO_BUFFER_SIZE];
 
     init_debug();
@@ -902,6 +902,37 @@ void emu_set_scanline_start_end(int start, int end)
     geargrafx->GetHuC6260()->SetScanlineEnd(end);
 }
 
+void emu_set_laseractive_scanlines(int mode, int start, int end)
+{
+    if (mode == 0)
+    {
+        start = HUC6260_LASERACTIVE_SCANLINE_START;
+        end = HUC6260_LASERACTIVE_SCANLINE_END;
+    }
+    else if (mode == 1)
+    {
+        start = 0;
+        end = HUC6260_LINES - 1;
+    }
+    geargrafx->GetHuC6260()->SetLaserActiveScanlines(start, end);
+}
+
+void emu_set_laseractive_pixels(int mode, int start, int end)
+{
+    if (mode == 0)
+    {
+        start = HUC6260_LASERACTIVE_PIXEL_START;
+        end = HUC6260_LASERACTIVE_PIXEL_END;
+    }
+    else if (mode == 1)
+    {
+        start = 0;
+        end = HUC6260_LASERACTIVE_PIXEL_WIDTH - 1;
+    }
+
+    geargrafx->GetHuC6260()->SetLaserActivePixels(start, end);
+}
+
 void emu_set_lowpass_filter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8)
 {
     geargrafx->GetHuC6260()->SetLowPassFilter(enabled, intensity, cutoff_mhz, speed_5_36, speed_7_16, speed_10_8);
@@ -1088,6 +1119,16 @@ void emu_save_background(const char* file_path, int vdc)
 bool emu_load_bios(const char* file_path, bool syscard)
 {
     return geargrafx->LoadBios(file_path, syscard);
+}
+
+bool emu_load_pac_bios(const char* file_path, GG_LaserActive_Region region)
+{
+    return geargrafx->LoadPacBios(file_path, region);
+}
+
+void emu_set_laseractive_region(GG_LaserActive_Region region)
+{
+    geargrafx->SetLaserActiveRegion(region);
 }
 
 static void save_ram(void)

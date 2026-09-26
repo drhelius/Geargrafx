@@ -32,6 +32,7 @@ class CdRomAudio;
 class HuC6280;
 class Random;
 class TraceLogger;
+class LaserActive;
 
 class ScsiController
 {
@@ -123,7 +124,7 @@ public:
     };
 
 public:
-    ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random);
+    ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random, LaserActive* laseractive);
     ~ScsiController();
     void Init(HuC6280* huc6280, CdRom* cdrom);
     void Reset(bool keep_rst_signal = false);
@@ -200,6 +201,7 @@ private:
     bool m_bus_changed;
     u16 m_previous_signals;
     u8 m_data_bus_latch;
+    LaserActive* m_laseractive;
 };
 
 static const char* const k_scsi_phase_names[] = {

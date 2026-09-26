@@ -61,6 +61,8 @@ int application_headless_init(const ApplicationParams& params)
     config_debug.debug = params.mcp_mode >= 0;
     emu_set_overscan(0);
     emu_set_scanline_start_end(0, 241);
+    emu_set_laseractive_scanlines(config_video.laseractive_scanline_mode, config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
+    emu_set_laseractive_pixels(config_video.laseractive_width_mode, config_video.laseractive_pixel_start, config_video.laseractive_pixel_end);
     emu_audio_mute(true);
     emu_audio_psg_revision(config_audio.psg_revision);
     emu_audio_adpcm_clock_speed(config_audio.adpcm_clock_mode, config_audio.adpcm_clock_speed);
@@ -77,6 +79,20 @@ int application_headless_init(const ApplicationParams& params)
     {
         Log("Loading Game Express BIOS: %s", config_emulator.gameexpress_bios_path.c_str());
         emu_load_bios(config_emulator.gameexpress_bios_path.c_str(), false);
+    }
+
+    emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
+
+    if (!config_emulator.pac_japan_bios_path.empty())
+    {
+        Log("Loading Japanese LaserActive BIOS: %s", config_emulator.pac_japan_bios_path.c_str());
+        emu_load_pac_bios(config_emulator.pac_japan_bios_path.c_str(), GG_LASERACTIVE_REGION_JAPAN);
+    }
+
+    if (!config_emulator.pac_us_bios_path.empty())
+    {
+        Log("Loading US LaserActive BIOS: %s", config_emulator.pac_us_bios_path.c_str());
+        emu_load_pac_bios(config_emulator.pac_us_bios_path.c_str(), GG_LASERACTIVE_REGION_US);
     }
 
     bool rom_file_argument = IsValidPointer(params.rom_file) && (strlen(params.rom_file) > 0);
