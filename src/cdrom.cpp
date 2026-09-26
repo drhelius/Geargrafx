@@ -27,17 +27,17 @@
 #include "media.h"
 #include "laseractive.h"
 
-CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* audio, GeargrafxCore* core)
+CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* audio, GeargrafxCore* core, LaserActive* laseractive)
 {
     m_core = core;
     m_cdrom_audio = cdrom_audio;
     m_scsi_controller = scsi_controller;
     m_audio = audio;
+    m_laseractive = laseractive;
     InitPointer(m_trace_logger);
     InitPointer(m_adpcm);
     InitPointer(m_huc6280);
     InitPointer(m_memory);
-    InitPointer(m_laseractive);
     m_reset = 0;
     m_bram_enabled = false;
     m_active_irqs = 0;
@@ -74,11 +74,6 @@ void CdRom::Init(HuC6280* huc6280, Memory* memory, Adpcm* adpcm)
 void CdRom::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
-}
-
-void CdRom::SetLaserActive(LaserActive* laseractive)
-{
-    m_laseractive = laseractive;
 }
 
 void CdRom::NotifyMediaEjected()
@@ -137,7 +132,7 @@ void CdRom::Reset()
 
 u8 CdRom::ReadRegister(u16 address)
 {
-    if (IsValidPointer(m_laseractive))
+    if (m_laseractive->IsActive())
     {
         u16 hardware_address = address & 0x1FFF;
 
@@ -237,7 +232,7 @@ u8 CdRom::ReadRegister(u16 address)
 
 void CdRom::WriteRegister(u16 address, u8 value)
 {
-    if (IsValidPointer(m_laseractive))
+    if (m_laseractive->IsActive())
     {
         u16 hardware_address = address & 0x1FFF;
 

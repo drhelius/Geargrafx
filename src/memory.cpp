@@ -32,7 +32,7 @@
 #include "trace_logger.h"
 #include "laseractive.h"
 
-Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random)
+Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random, LaserActive* laseractive)
 {
     m_huc6260 = huc6260;
     m_huc6202 = huc6202;
@@ -42,8 +42,8 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* medi
     m_audio = audio;
     m_cdrom = cdrom;
     m_random = random;
+    m_laseractive = laseractive;
     InitPointer(m_trace_logger);
-    InitPointer(m_laseractive);
     InitPointer(m_disassembler);
     InitPointer(m_test_memory);
     InitPointer(m_current_mapper);
@@ -263,17 +263,13 @@ void Memory::ReloadMemoryMap()
     }
 }
 
-void Memory::SetLaserActive(LaserActive* laseractive)
-{
-    m_laseractive = laseractive;
-}
-
 void Memory::UpdateLaserActiveSram()
 {
     if (!m_media->IsLaserActive())
         return;
 
-    bool enabled = IsValidPointer(m_laseractive) && m_laseractive->IsSramEnabled();
+    bool enabled = m_laseractive->IsSramEnabled();
+
     for (int i = 0x68; i <= 0x7F; i++)
     {
         m_memory_map_write[i] = enabled;
@@ -430,11 +426,13 @@ Memory::MemoryBankType Memory::GetBankType(u8 bank)
     if (bank < 0x80)
     {
         bool card_ram = (m_card_ram_size > 0) && (bank >= m_card_ram_start) && (bank <= m_card_ram_end);
+
         if (!m_media->IsCDROM())
             return card_ram ? MEMORY_BANK_TYPE_CARD_RAM : MEMORY_BANK_TYPE_ROM;
+
         if (bank >= 0x40 && m_media->IsLaserActive())
-            return (bank >= 0x68 && m_memory_map_write[bank]) ?
-                MEMORY_BANK_TYPE_CARD_RAM : MEMORY_BANK_TYPE_UNUSED;
+            return (bank >= 0x68 && m_memory_map_write[bank]) ? MEMORY_BANK_TYPE_CARD_RAM : MEMORY_BANK_TYPE_UNUSED;
+
         return card_ram ? MEMORY_BANK_TYPE_CARD_RAM : MEMORY_BANK_TYPE_BIOS;
     }
 

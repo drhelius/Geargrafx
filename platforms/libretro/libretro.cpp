@@ -539,14 +539,15 @@ bool retro_load_game(const struct retro_game_info *info)
 
         if (is_mmi_content && !core->GetMedia()->IsBiosReady())
         {
+            Media* media = core->GetMedia();
             const GG_MmiInfo* mmi = core->GetCDROMMedia()->GetMmiInfo();
 
-            if (mmi && (mmi->card == "System Card 1.0"))
-                log_cb(RETRO_LOG_ERROR, "The Japanese System Card 1.0 BIOS is required by this MMI.\n");
-            else if (mmi && (mmi->card == "Games Express"))
-                log_cb(RETRO_LOG_ERROR, "A recognized Game Express BIOS is required by this MMI.\n");
+            if (media->IsLaserActive() && mmi && mmi->card.empty())
+                log_cb(RETRO_LOG_ERROR, "A PAC BIOS for the selected LaserActive region is required.\n");
+            else if (media->IsGameExpress())
+                log_cb(RETRO_LOG_ERROR, "A Game Express BIOS is required by this MMI.\n");
             else
-                log_cb(RETRO_LOG_ERROR, "A recognized PAC BIOS for the selected LaserActive region is required.\n");
+                log_cb(RETRO_LOG_ERROR, "A System Card BIOS is required by this MMI.\n");
 
             core->GetMedia()->Reset();
 
@@ -1668,6 +1669,36 @@ static void check_variables(void)
     }
 
     core->GetHuC6260()->SetLaserActiveScanlines(laseractive_start, laseractive_end);
+
+    int laseractive_pixel_start = HUC6260_LASERACTIVE_PIXEL_START;
+    int laseractive_pixel_end = HUC6260_LASERACTIVE_PIXEL_END;
+    var.key = "geargrafx_laseractive_horizontal_framing";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        if (strcmp(var.value, "Full Width") == 0)
+        {
+            laseractive_pixel_start = 0;
+            laseractive_pixel_end = HUC6260_LASERACTIVE_PIXEL_WIDTH - 1;
+        }
+        else if (strcmp(var.value, "Manual") == 0)
+        {
+            var.key = "geargrafx_laseractive_pixel_start";
+            var.value = NULL;
+
+            if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+                laseractive_pixel_start = atoi(var.value);
+
+            var.key = "geargrafx_laseractive_pixel_end";
+            var.value = NULL;
+
+            if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+                laseractive_pixel_end = atoi(var.value);
+        }
+    }
+
+    core->GetHuC6260()->SetLaserActivePixels(laseractive_pixel_start, laseractive_pixel_end);
 
     var.key = "geargrafx_psg_huc6280a";
     var.value = NULL;

@@ -2029,7 +2029,7 @@ json DebugAdapter::LoadPacBios(const std::string& file_path, GG_LaserActive_Regi
     if (file_path.empty())
         return {{"error", "File path is required"}};
     if (!emu_load_pac_bios(file_path.c_str(), region))
-        return {{"error", "Failed to load recognized LaserActive BIOS file"}};
+        return {{"error", "Failed to load LaserActive BIOS file"}};
 
     Media* media = m_core->GetMedia();
     if (media->IsLaserActive())

@@ -22,13 +22,13 @@
 #include "trace_logger.h"
 #include "laseractive.h"
 
-CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media)
+CdRomAudio::CdRomAudio(CdRomMedia* cdrom_media, LaserActive* laseractive)
 {
     m_cdrom_media = cdrom_media;
+    m_laseractive = laseractive;
     InitPointer(m_cdrom);
     InitPointer(m_scsi_controller);
     InitPointer(m_trace_logger);
-    InitPointer(m_laseractive);
     m_buffer_index = 0;
     m_frame_samples = 0;
     m_current_state = CD_AUDIO_STATE_STOPPED;
@@ -74,11 +74,6 @@ void CdRomAudio::Init(CdRom* cdrom, ScsiController* scsi_controller)
 void CdRomAudio::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
-}
-
-void CdRomAudio::SetLaserActive(LaserActive* laseractive)
-{
-    m_laseractive = laseractive;
 }
 
 void CdRomAudio::LogCdRomAudioEvent(u8 event, u32 lba, u32 param)

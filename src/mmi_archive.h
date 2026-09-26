@@ -17,7 +17,6 @@
  *
  */
 
-
 #ifndef MMI_ARCHIVE_H
 #define MMI_ARCHIVE_H
 
@@ -107,22 +106,22 @@ public:
     const GG_MmiEntry* FindEntry(const char* name) const;
     const GG_MmiEntry* ResolveEntry(const char* base_entry, const char* reference) const;
     MediaFile* OpenStoredEntry(const GG_MmiEntry* entry) const;
-    bool ExtractSmallEntry(const GG_MmiEntry* entry, std::vector<u8>& output, u64 maximum_size);
+    bool ExtractSmallEntry(const GG_MmiEntry* entry, std::vector<u8>& output, u64 max_size);
 
 private:
     MmiArchive(const MmiArchive&);
     MmiArchive& operator=(const MmiArchive&);
 
-    static size_t ReadCallback(void* opaque, mz_uint64 offset, void* buffer, size_t size);
-    static std::string LowerAscii(const std::string& value);
-    static bool NormalizeEntryPath(const char* path, std::string& normalized);
+    static size_t ReadCallback(void* user_data, mz_uint64 offset, void* buffer, size_t size);
+    static std::string ToLowerAscii(const std::string& value);
+    static bool NormalizeEntryPath(const char* path, std::string& normalized_path);
     bool ReadEntries();
-    bool ReadLocalHeader(GG_MmiEntry& entry, const mz_zip_archive_file_stat& stat);
+    bool ReadLocalHeader(GG_MmiEntry& entry, const mz_zip_archive_file_stat& file_stat);
     bool ValidateEntryRanges();
     bool ParseMediaInfo();
     bool IsSupportedSystem(const std::string& system) const;
     void SetError(const char* format, ...);
-    void CloseArchiveData();
+    void CloseArchive();
 
 private:
     MediaFile* m_file;
@@ -132,7 +131,7 @@ private:
     std::string m_path;
     std::vector<GG_MmiEntry> m_entries;
     std::vector<u32> m_entry_lookup;
-    GG_MmiInfo m_info;
+    GG_MmiInfo m_mmi_info;
     char m_error[512];
 };
 

@@ -648,14 +648,6 @@ static void menu_emulator(void)
 
             if (ImGui::BeginMenu("LaserActive NEC PAC"))
             {
-                if (ImGui::Combo("Region", &config_emulator.laseractive_region, "Auto\0Japan\0US\0\0"))
-                {
-                    emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
-                    if (!emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive())
-                        gui_action_reset();
-                }
-
-                ImGui::SeparatorText("Japanese PAC-N1 / PCE-LP1");
                 if (ImGui::MenuItem("Load Japanese PAC BIOS..."))
                     open_pac_japan_bios = true;
                 ImGui::PushItemWidth(350);
@@ -667,14 +659,25 @@ static void menu_emulator(void)
                 }
 
                 ImGui::PopItemWidth();
+
                 if (media->IsPacBiosValid(GG_LASERACTIVE_REGION_JAPAN))
+                {
                     ImGui::TextColored(service_mcp_http_color, "Valid BIOS: %s (CRC32 %08X)",
                         media->GetPacBiosName(GG_LASERACTIVE_REGION_JAPAN),
                         media->GetPacBiosCRC(GG_LASERACTIVE_REGION_JAPAN));
+                }
+                else if (media->IsPacBiosLoaded(GG_LASERACTIVE_REGION_JAPAN))
+                {
+                    ImGui::TextColored(service_turbolink_color, "Custom or unknown BIOS loaded.");
+                    ImGui::TextColored(service_turbolink_color, "CRC not found in BIOS database.");
+                }
                 else
+                {
                     ImGui::TextDisabled("Japanese PAC BIOS not loaded.");
+                }
 
-                ImGui::SeparatorText("US PAC-N10");
+                ImGui::Separator();
+
                 if (ImGui::MenuItem("Load US PAC BIOS..."))
                     open_pac_us_bios = true;
 
@@ -686,12 +689,22 @@ static void menu_emulator(void)
                 }
 
                 ImGui::PopItemWidth();
+
                 if (media->IsPacBiosValid(GG_LASERACTIVE_REGION_US))
+                {
                     ImGui::TextColored(service_mcp_http_color, "Valid BIOS: %s (CRC32 %08X)",
                         media->GetPacBiosName(GG_LASERACTIVE_REGION_US),
                         media->GetPacBiosCRC(GG_LASERACTIVE_REGION_US));
+                }
+                else if (media->IsPacBiosLoaded(GG_LASERACTIVE_REGION_US))
+                {
+                    ImGui::TextColored(service_turbolink_color, "Custom or unknown BIOS loaded.");
+                    ImGui::TextColored(service_turbolink_color, "CRC not found in BIOS database.");
+                }
                 else
+                {
                     ImGui::TextDisabled("US PAC BIOS not loaded.");
+                }
 
                 ImGui::EndMenu();
             }
@@ -764,6 +777,24 @@ static void menu_emulator(void)
             ImGui::Text("It is recommended to leave this option enabled.");
             ImGui::Text("Reset the emulator to apply changes.");
             ImGui::EndTooltip();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::BeginMenu("LaserActive Region"))
+        {
+            ImGui::PushItemWidth(100.0f);
+
+            if (ImGui::Combo("##laseractiveregion", &config_emulator.laseractive_region, "Auto\0Japan\0US\0\0"))
+            {
+                emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
+
+                if (!emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive())
+                    gui_action_reset();
+            }
+
+            ImGui::PopItemWidth();
+            ImGui::EndMenu();
         }
 
         ImGui::Separator();
@@ -984,7 +1015,7 @@ static void menu_video(void)
 
         ImGui::Separator();
 
-        if (ImGui::BeginMenu("LaserDisc"))
+        if (ImGui::BeginMenu("LaserActive"))
         {
             if (ImGui::BeginMenu("Aspect Ratio"))
             {
@@ -994,7 +1025,40 @@ static void menu_video(void)
                 ImGui::EndMenu();
             }
 
-            if (ImGui::BeginMenu("Framing"))
+            if (ImGui::BeginMenu("Horizontal Overscan"))
+            {
+                ImGui::PushItemWidth(250.0f);
+                bool changed = ImGui::Combo("##laseractive_horizontal_framing", &config_video.laseractive_width_mode, "Cropped (348 pixels)\0Full Width (392 pixels)\0Manual\0\0");
+
+                ImGui::Separator();
+                ImGui::BeginDisabled(config_video.laseractive_width_mode != 2);
+                if (ImGui::SliderInt("##laseractive_pixel_start", &config_video.laseractive_pixel_start, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1, "First pixel (Manual) = %d"))
+                {
+                    config_video.laseractive_pixel_end = MAX(config_video.laseractive_pixel_end, config_video.laseractive_pixel_start);
+                    changed = true;
+                }
+
+                if (ImGui::SliderInt("##laseractive_pixel_end", &config_video.laseractive_pixel_end, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1, "Last pixel (Manual) = %d"))
+                {
+                    config_video.laseractive_pixel_start = MIN(config_video.laseractive_pixel_start, config_video.laseractive_pixel_end);
+                    changed = true;
+                }
+                ImGui::EndDisabled();
+
+                if (changed)
+                    emu_set_laseractive_pixels(config_video.laseractive_width_mode,
+                        config_video.laseractive_pixel_start, config_video.laseractive_pixel_end);
+
+                int width = config_video.laseractive_width_mode == 0 ? HUC6260_LASERACTIVE_DEFAULT_WIDTH :
+                    (config_video.laseractive_width_mode == 1 ? HUC6260_LASERACTIVE_PIXEL_WIDTH :
+                    MAX(1, config_video.laseractive_pixel_end - config_video.laseractive_pixel_start + 1));
+
+                ImGui::TextDisabled("Picture width: %d pixels", width);
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Vertical Overscan"))
             {
                 ImGui::PushItemWidth(250.0f);
                 bool changed = ImGui::Combo("##laseractive_framing", &config_video.laseractive_scanline_mode, "Cropped (240 lines)\0Full Field (263 lines)\0Manual\0\0");

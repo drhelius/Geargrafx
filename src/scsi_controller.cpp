@@ -36,13 +36,13 @@ static const u32 k_scsi_initial_read_phase_max_cycles = GG_MASTER_CLOCK_RATE / 6
 static const u8 k_scsi_command_buffer_padding[k_scsi_command_buffer_capacity] = {};
 static const u8 k_scsi_data_buffer_padding[k_scsi_data_buffer_capacity] = {};
 
-ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random)
+ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random, LaserActive* laseractive)
 {
     m_cdrom_media = cdrom_media;
     m_cdrom_audio = cdrom_audio;
     m_random = random;
+    m_laseractive = laseractive;
     InitPointer(m_trace_logger);
-    InitPointer(m_laseractive);
     m_bus.db = 0;
     m_bus.signals = 0;
     m_phase = SCSI_PHASE_BUS_FREE;
@@ -90,11 +90,6 @@ void ScsiController::Init(HuC6280* huc6280, CdRom* cdrom)
 void ScsiController::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
-}
-
-void ScsiController::SetLaserActive(LaserActive* laseractive)
-{
-    m_laseractive = laseractive;
 }
 
 void ScsiController::LogScsiEvent(u8 event, u8 command, u8 phase, u8 status,
@@ -526,7 +521,7 @@ void ScsiController::CommandRead()
     u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
     u32 seek_cycles = TimeToCycles(seek_time * 1000);
     u32 transfer_cycles = m_cdrom_media->SectorTransferCycles();
-    if (IsValidPointer(m_laseractive))
+    if (m_laseractive->IsActive())
         seek_cycles = m_laseractive->NotifyScsiReadStart(lba);
 
     if (m_initial_read_phase_cycles > 0)
@@ -683,8 +678,9 @@ void ScsiController::CommandReadSubcodeQ()
 
     if (m_cdrom_media->IsMmi())
     {
-        s32 lba = IsValidPointer(m_laseractive) ? m_laseractive->GetHeadLba() : (s32)current_lba;
+        s32 lba = m_laseractive->IsActive() ? m_laseractive->GetHeadLba() : (s32)current_lba;
         u8 captured_q[12];
+
         if (m_cdrom_media->ReadSubchannelQ(lba, captured_q))
         {
             memcpy(buffer + 1, captured_q, 6);
@@ -839,7 +835,7 @@ void ScsiController::LoadSector()
         m_load_sector &= 0x1FFFFF;
         m_load_sector_count--;
 
-        if (IsValidPointer(m_laseractive))
+        if (m_laseractive->IsActive())
             m_laseractive->NotifyScsiSectorRead(m_load_sector - 1, m_load_sector_count == 0);
 
         if (m_load_sector_count == 0)

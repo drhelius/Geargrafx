@@ -112,6 +112,9 @@ struct config_Video
     int laseractive_scanline_mode;
     int laseractive_scanline_start;
     int laseractive_scanline_end;
+    int laseractive_width_mode;
+    int laseractive_pixel_start;
+    int laseractive_pixel_end;
     int palette;
     bool fps;
     bool sprite_limit;

@@ -17,7 +17,6 @@
  *
  */
 
-
 #ifndef LASERACTIVE_H
 #define LASERACTIVE_H
 
@@ -92,9 +91,9 @@ public:
     };
 
 public:
-    LaserActive(CdRomMedia* media);
+    LaserActive(CdRomMedia* cdrom_media);
     ~LaserActive();
-    void Init(CdRom* cdrom, Memory* memory, CdRomAudio* audio = NULL);
+    void Init(CdRom* cdrom, Memory* memory, CdRomAudio* cdrom_audio = NULL);
     void Reset();
     void Clock(u32 cycles);
     u8 ReadRegister(u8 reg, bool output);
@@ -113,24 +112,28 @@ public:
     void Sample(s16& left, s16& right);
     void GetStatus(Status& status);
     void SaveState(std::ostream& stream) const;
-    void LoadState(std::istream& stream, u32 version = GG_SAVESTATE_VERSION);
+    void LoadState(std::istream& stream);
 
     u8 GetVideoMixingMode() const;
     u8 GetVideoControl() const;
     u8 GetGraphicsFader(u8 source) const;
     s32 GetHeadLba() const;
+
     DriveMode GetDriveMode() const
     {
         return m_drive_mode;
     }
+
     u32 GetCurrentSample() const
     {
         return m_current_sample;
     }
+
     u32 GetSeekLatency() const
     {
         return m_seek_latency;
     }
+
     s32 GetCurrentVideoFrame() const;
     const u8* GetVideoFrameBuffer() const;
     u32 GetVideoWidth() const;
@@ -139,7 +142,6 @@ public:
     bool IsActive() const;
     void BeginVideoFrame();
     void CaptureVideoLineState(u8* state) const;
-    // Resolve and filter PCE pixels in RGBA8888; pack only the final composite.
     void ComposeLine(u32 line, const u8* pce_pixels, const u8* classifications,
         const u8* line_state, u8* output, GG_Pixel_Format pixel_format) const;
 
@@ -169,33 +171,33 @@ private:
     static u8 DecodeBcd(u8 value);
     static u8 EncodeBcd(u8 value);
 
-    bool DiscLoaded() const;
-    bool DiscIsLaserDisc() const;
-    bool DiscIsClv() const;
-    u8 TrackCount() const;
-    u8 CurrentTrack() const;
-    bool TrackIsAudio(u8 track) const;
-    s32 TrackStartLba(u8 track) const;
-    s32 TrackEndLba(u8 track) const;
-    s32 MinimumLba() const;
-    u8 TrackFromLba(s32 lba) const;
-    void GetTrackToc(u8 track, u8& flags, u8& minute, u8& second, u8& frame) const;
+    bool IsDiscLoaded() const;
+    bool IsLaserDisc() const;
+    bool IsCLVDisc() const;
+    u8 GetTrackCount() const;
+    u8 GetCurrentTrack() const;
+    bool IsAudioTrack(u8 track) const;
+    s32 GetTrackStartLBA(u8 track) const;
+    s32 GetTrackEndLBA(u8 track) const;
+    s32 GetMinimumLBA() const;
+    u8 GetTrackFromLBA(s32 lba) const;
+    void GetTrackTOC(u8 track, u8& flags, u8& minute, u8& second, u8& frame) const;
     void GetTimecode(s32 lba, u8& minute, u8& second, u8& frame) const;
     void GetRelativeTimecode(u8& minute, u8& second, u8& frame) const;
-    s32 AbaFromTime(u8 hour, u8 minute, u8 second, u8 frame) const;
+    s32 GetABAFromTime(u8 hour, u8 minute, u8 second, u8 frame) const;
 
     u8 GetOutputRegisterValue(u8 reg, bool side_effects = true);
     void ProcessInputRegisterWrite(u8 reg, u8 data, u8 previous_data, bool deferred);
     void ApplyFrozenInputRegisters();
     void UpdateStopPoint();
     void ResetSeekTarget();
-    bool LiveSeekTargetAvailable() const;
+    bool HasLiveSeekTarget() const;
     bool LatchSeekTarget();
     void PerformLatchedSeek();
     void HandleStopPoint(s32 aba);
 
-    double NormalizedPosition(s32 lba) const;
-    u32 SeekDistance(s32 target) const;
+    double GetNormalizedPosition(s32 lba) const;
+    u32 CalculateSeekLatency(s32 target_lba) const;
     void SeekToSector(s32 lba, bool paused);
     void SeekToTrack(u8 track, bool paused);
     void SeekToRelativeTime(u8 track, u8 minute, u8 second, u8 frame, bool paused);
@@ -203,36 +205,36 @@ private:
     void SetDrivePaused();
     void SetDriveStopped();
     void ClockSector();
-    s32 SectorAdvance() const;
+    s32 GetSectorAdvance() const;
     void UpdateVideoFrame(s32 aba);
-    s32 ZeroBasedFrameFromAba(s32 aba, bool lead_in) const;
-    s32 AbaFromZeroBasedFrame(s32 frame) const;
+    s32 GetVideoFrameFromABA(s32 aba, bool lead_in) const;
+    s32 GetABAFromVideoFrame(s32 frame) const;
     void VideoTimeToRedbookTime(u8& hour, u8& minute, u8& second, u8& frame) const;
     bool ReadAnalogSample(s16& left, s16& right);
     bool FillAnalogCache(u64 offset);
     bool StartVideoDecoder();
     void StopVideoDecoder();
-    u32 AbsoluteVideoFrame(s32 frame, bool lead_in, bool lead_out) const;
-    bool DecodeVideoFrame(MediaFile* file, u32 frame, std::vector<u8>& rgb,
-        std::vector<u8>& compressed);
+    u32 GetAbsoluteVideoFrame(s32 frame, bool lead_in, bool lead_out) const;
+    bool DecodeVideoFrame(MediaFile* file, u32 frame, std::vector<u8>& rgb_data, std::vector<u8>& compressed_data);
     bool LoadCurrentVideoFrame();
-    void CopyDisplayField(const u8* frame, bool even);
+    void CopyDisplayField(const u8* frame, bool even_field);
     u32 PredictNextVideoFrame() const;
     u32 DecodeBiphaseCode(u32 line) const;
+
 #if !defined(GG_DISABLE_MMI_THREADS)
     void VideoThread();
     void QueueVideoPrefetch(u32 frame);
 #endif
 
 private:
-    struct VideoSample
+    struct VideoResampleInfo
     {
-        u32 first;
-        u32 count;
+        u32 first_pixel;
+        u32 pixel_count;
         u32 weights[5];
     };
 
-    CdRomMedia* m_media;
+    CdRomMedia* m_cdrom_media;
     CdRom* m_cdrom;
     CdRomAudio* m_cdrom_audio;
     Memory* m_memory;
@@ -275,10 +277,10 @@ private:
     u8 m_selected_track_info;
 
     DriveMode m_drive_mode;
-    DriveMode m_seek_mode;
+    DriveMode m_seek_drive_mode;
     s32 m_head_lba;
     s32 m_seek_target_lba;
-    s32 m_end_lba;
+    s32 m_audio_end_lba;
     u32 m_seek_latency;
     s32 m_sector_repeat_count;
     u32 m_search_sectors;
@@ -303,7 +305,7 @@ private:
     u8 m_analog_cache[2352];
     u64 m_analog_cache_offset;
     bool m_analog_cache_valid;
-    s64 m_analog_leading_samples;
+    s64 m_analog_lead_in_samples;
     u64 m_analog_audio_size;
 
     MediaFile* m_video_file;
@@ -311,10 +313,10 @@ private:
     std::vector<u8> m_video_frame;
     std::vector<u8> m_video_prefetch_frame;
     std::vector<u8> m_video_display_field;
-    std::vector<u8> m_video_compressed;
-    std::vector<u8> m_video_prefetch_compressed;
-    std::vector<VideoSample> m_video_resampling;
-    u32 m_video_frame_absolute;
+    std::vector<u8> m_video_compressed_data;
+    std::vector<u8> m_video_prefetch_compressed_data;
+    std::vector<VideoResampleInfo> m_video_resampling;
+    u32 m_video_frame_index;
     u32 m_video_generation;
     bool m_video_frame_valid;
     bool m_video_even_field;
@@ -322,9 +324,10 @@ private:
     bool m_video_memory_latched;
     bool m_video_field_selected;
     bool m_video_selected_even;
-    u32 m_video_display_absolute;
+    u32 m_video_display_frame_index;
     bool m_video_display_valid;
     bool m_video_display_even;
+
 #if !defined(GG_DISABLE_MMI_THREADS)
     std::thread m_video_thread;
     std::mutex m_video_mutex;

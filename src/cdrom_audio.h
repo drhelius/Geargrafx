@@ -63,7 +63,7 @@ public:
     };
 
 public:
-    CdRomAudio(CdRomMedia* cdrom_media);
+    CdRomAudio(CdRomMedia* cdrom_media, LaserActive* laseractive);
     ~CdRomAudio();
     void Init(CdRom* cdrom, ScsiController* scsi_controller);
     void Reset();
@@ -84,7 +84,6 @@ public:
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
     void SetTraceLogger(TraceLogger* trace_logger);
-    void SetLaserActive(LaserActive* laseractive);
     void FinishLaserActivePlayback();
 
 private:

@@ -31,6 +31,11 @@
 #define HUC6260_HSYNC_END_HPOS 0
 #define HUC6260_VSYNC_HPOS (HUC6260_HSYNC_START_HPOS + 30)
 #define HUC6260_LASERACTIVE_WIDTH 1176
+#define HUC6260_LASERACTIVE_WIDTH_SCALE 3
+#define HUC6260_LASERACTIVE_PIXEL_WIDTH (HUC6260_LASERACTIVE_WIDTH / HUC6260_LASERACTIVE_WIDTH_SCALE)
+#define HUC6260_LASERACTIVE_DEFAULT_WIDTH 348
+#define HUC6260_LASERACTIVE_PIXEL_START ((HUC6260_LASERACTIVE_PIXEL_WIDTH - HUC6260_LASERACTIVE_DEFAULT_WIDTH) / 2)
+#define HUC6260_LASERACTIVE_PIXEL_END (HUC6260_LASERACTIVE_PIXEL_START + HUC6260_LASERACTIVE_DEFAULT_WIDTH - 1)
 #define HUC6260_LASERACTIVE_SCANLINE_START 22
 #define HUC6260_LASERACTIVE_SCANLINE_END 261
 
@@ -70,7 +75,7 @@ public:
     };
 
 public:
-    HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random);
+    HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random, LaserActive* laseractive);
     ~HuC6260();
     void Init(GG_Pixel_Format pixel_format = GG_PIXEL_RGBA8888);
     void Reset();
@@ -91,18 +96,18 @@ public:
     void SetScanlineStart(int scanline_start);
     void SetScanlineEnd(int scanline_end);
     void SetLaserActiveScanlines(int start, int end);
+    void SetLaserActivePixels(int start, int end);
     void SetOverscan(bool overscan);
     GG_Pixel_Format GetPixelFormat();
     void SetResetValue(int value);
     void SetTraceLogger(TraceLogger* trace_logger);
-    void SetLaserActive(LaserActive* laseractive);
     void SetPalette(int palette);
     void SetCustomPalette(const u8* data);
     void SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
     void SaveLaserActiveState(std::ostream& stream);
-    void LoadLaserActiveState(std::istream& stream, u32 version);
+    void LoadLaserActiveState(std::istream& stream);
 
 private:
     void TraceVceEvent(u8 event);
@@ -158,6 +163,8 @@ private:
     int m_scanline_end;
     int m_laseractive_scanline_start;
     int m_laseractive_scanline_end;
+    int m_laseractive_pixel_start;
+    int m_laseractive_width;
     GG_Pixel_Format m_pixel_format;
     u8 m_rgba888_palette[HuC6260_PALETTE_COUNT][512][4] = {};
     u16 m_rgb565_palette[HuC6260_PALETTE_COUNT][512] = {};

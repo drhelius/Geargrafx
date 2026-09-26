@@ -34,8 +34,6 @@ int excluded_tests[] = {
 
 bool run_file(const char* filename);
 bool run_test(RSJresource& test);
-bool run_mmi_tests();
-bool create_mmi_test_fixture(const char* path, bool transport, u64 reserve);
 
 GeargrafxCore* core = NULL;
 HuC6280* cpu = NULL;
@@ -43,16 +41,10 @@ Memory* memory = NULL;
 
 int main(int argc, char* argv[])
 {
+    UNUSED(argc);
+    UNUSED(argv);
+
     int ret = 0;
-
-    if (argc == 3 && strcmp(argv[1], "--mmi-fixture") == 0)
-        return create_mmi_test_fixture(argv[2], true, 0) ? 0 : 1;
-
-    if (!run_mmi_tests())
-        return 1;
-
-    if ((argc > 1) && (strcmp(argv[1], "--mmi-only") == 0))
-        return 0;
 
     core = new GeargrafxCore();
     core->Init(NULL);

@@ -124,7 +124,7 @@ public:
     };
 
 public:
-    ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random);
+    ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random, LaserActive* laseractive);
     ~ScsiController();
     void Init(HuC6280* huc6280, CdRom* cdrom);
     void Reset(bool keep_rst_signal = false);
@@ -142,7 +142,6 @@ public:
     bool IsDataReady();
     Scsi_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);
-    void SetLaserActive(LaserActive* laseractive);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 

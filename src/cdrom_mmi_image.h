@@ -68,17 +68,17 @@ public:
     u64 GetAnalogAudioSize() const;
     bool ReadVideoData(u64 offset, void* buffer, u32 size);
     MediaFile* OpenVideoStream() const;
-    bool DecodeQonFrame(u32 frame, std::vector<u8>& output);
+    bool DecodeQonFrame(u32 frame_index, std::vector<u8>& output);
 
 private:
     static MediaFile* ResolveMmiFile(const char* reference, char* resolved_path,
         size_t resolved_path_size, void* user_data);
     bool LoadSelectedMedia(u32 index);
-    bool IndexQon(MediaFile* video_file, const GG_MmiStreamInfo& stream, GG_QonInfo& info);
+    bool ReadQonIndex(MediaFile* video_file, const GG_MmiStreamInfo& stream, GG_QonInfo& qon_info);
     bool FindSubchannelEntry(const GG_MmiEntry* cue_entry, const GG_MmiEntry*& entry) const;
     bool OpenSubchannel(const GG_MmiEntry* entry, MediaFile*& file, s32& first_lba);
-    static bool DecodeSubchannelQ(const u8* raw, u8* q);
-    static bool ValidateSubchannelQ(const u8* q);
+    static bool DecodeSubchannelQ(const u8* raw_subchannel, u8* subchannel_q);
+    static bool ValidateSubchannelQ(const u8* subchannel_q);
     const GG_MmiStreamInfo* FindStream(const GG_MmiMediaInfo& media, GG_MmiStreamRole role) const;
     void ResetSelectedMedia();
 
@@ -87,9 +87,9 @@ private:
     MediaFile* m_analog_audio_file;
     MediaFile* m_video_file;
     MediaFile* m_subchannel_file;
-    GG_QonInfo m_qon;
+    GG_QonInfo m_qon_info;
     u32 m_selected_media_index;
-    std::string m_selected_cue_entry;
+    std::string m_selected_cue_path;
     bool m_laserdisc;
     bool m_ejected;
     s32 m_subchannel_first_lba;

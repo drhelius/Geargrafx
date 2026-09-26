@@ -17,7 +17,6 @@
  *
  */
 
-
 #ifndef MEDIA_FILE_SLICE_H
 #define MEDIA_FILE_SLICE_H
 
@@ -29,7 +28,7 @@ public:
     MediaFileSlice();
     virtual ~MediaFileSlice();
 
-    bool OpenSlice(const char* path, u64 base_offset, u64 length);
+    bool OpenSlice(const char* path, u64 base_offset, u64 size);
 
     virtual bool Open(const char* path) override;
     virtual void Close() override;
@@ -44,7 +43,7 @@ public:
 private:
     MediaFile* m_file;
     u64 m_base_offset;
-    u64 m_length;
+    u64 m_size;
     u64 m_position;
 };
 

@@ -24,13 +24,13 @@
 #include "trace_logger.h"
 #include "laseractive.h"
 
-HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random)
+HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random, LaserActive* laseractive)
 {
     m_huc6280 = huc6280;
     m_huc6202 = huc6202;
     m_random = random;
+    m_laseractive = laseractive;
     InitPointer(m_trace_logger);
-    InitPointer(m_laseractive);
     m_pixel_format = GG_PIXEL_RGBA8888;
     m_state.CR = &m_control_register;
     m_state.CTA = &m_color_table_address;
@@ -43,6 +43,8 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random)
     m_scanline_end = 241;
     m_laseractive_scanline_start = HUC6260_LASERACTIVE_SCANLINE_START;
     m_laseractive_scanline_end = HUC6260_LASERACTIVE_SCANLINE_END;
+    m_laseractive_pixel_start = HUC6260_LASERACTIVE_PIXEL_START;
+    m_laseractive_width = HUC6260_LASERACTIVE_DEFAULT_WIDTH * HUC6260_LASERACTIVE_WIDTH_SCALE;
     m_reset_value = -1;
     m_palette = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
@@ -71,11 +73,6 @@ void HuC6260::Init(GG_Pixel_Format pixel_format)
 void HuC6260::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
-}
-
-void HuC6260::SetLaserActive(LaserActive* laseractive)
-{
-    m_laseractive = laseractive;
 }
 
 void HuC6260::LogVceEvent(u8 event)
@@ -546,22 +543,12 @@ void HuC6260::SaveLaserActiveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*>(m_laseractive_line_state + line * 8), 8);
 }
 
-void HuC6260::LoadLaserActiveState(std::istream& stream, u32 version)
+void HuC6260::LoadLaserActiveState(std::istream& stream)
 {
     int line = CLAMP(m_vpos, 0, HUC6260_LINES - 1);
-    if (version >= 41)
-    {
-        stream.read(reinterpret_cast<char*>(m_vce_buffer_1 + line * 683), 683 * sizeof(u16));
-        stream.read(reinterpret_cast<char*>(m_laseractive_classification + line * 683), 683);
-        stream.read(reinterpret_cast<char*>(m_line_speed + line), sizeof(m_line_speed[0]));
-        stream.read(reinterpret_cast<char*>(m_laseractive_line_state + line * 8), 8);
-        m_line_speed[line] = CLAMP(m_line_speed[line], 0, 3);
-    }
-    else
-    {
-        memset(m_vce_buffer_1 + line * 683, 0, 683 * sizeof(u16));
-        memset(m_laseractive_classification + line * 683, 3, 683);
-        m_line_speed[line] = m_speed;
-        m_laseractive->CaptureVideoLineState(m_laseractive_line_state + line * 8);
-    }
+    stream.read(reinterpret_cast<char*>(m_vce_buffer_1 + line * 683), 683 * sizeof(u16));
+    stream.read(reinterpret_cast<char*>(m_laseractive_classification + line * 683), 683);
+    stream.read(reinterpret_cast<char*>(m_line_speed + line), sizeof(m_line_speed[0]));
+    stream.read(reinterpret_cast<char*>(m_laseractive_line_state + line * 8), 8);
+    m_line_speed[line] = CLAMP(m_line_speed[line], 0, 3);
 }

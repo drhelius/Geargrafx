@@ -382,24 +382,10 @@ int Media::GetMappedBiosSize()
 
 bool Media::IsBiosReady()
 {
-    if (!m_is_mmi)
-        return m_is_gameexpress ? m_is_loaded_bios_gameexpress : m_is_loaded_bios_syscard;
+    const GG_MmiInfo* info = IsLaserActive() ? m_cdrom_media->GetMmiInfo() : NULL;
 
-    const GG_MmiInfo* info = m_cdrom_media->GetMmiInfo();
-    if (info && (info->card == "System Card 1.0"))
-        return m_is_loaded_bios_syscard && m_is_valid_bios_syscard &&
-            (m_bios_crc_syscard == 0x3F9F95A4);
-    if (info && (info->card == "Games Express"))
-        return m_is_loaded_bios_gameexpress && m_is_valid_bios_gameexpress;
-
-    if (IsLaserActive())
-    {
-        if (m_selected_laseractive_region == GG_LASERACTIVE_REGION_US)
-            return m_is_loaded_bios_pac_us && m_is_valid_bios_pac_us;
-        if (m_selected_laseractive_region == GG_LASERACTIVE_REGION_JAPAN)
-            return m_is_loaded_bios_pac_japan && m_is_valid_bios_pac_japan;
-        return false;
-    }
+    if (info && info->card.empty())
+        return IsPacBiosLoaded(m_selected_laseractive_region);
 
     return m_is_gameexpress ? m_is_loaded_bios_gameexpress : m_is_loaded_bios_syscard;
 }
@@ -474,15 +460,18 @@ bool Media::LoadBios(const char* file_path, bool syscard)
         return false;
     }
 
-    int size = static_cast<int>(file.tellg());
-    if (size <= 0)
+    streamsize size = file.tellg();
+    int expected_size = syscard ? GG_BIOS_SYSCARD_SIZE : GG_BIOS_GAME_EXPRESS_SIZE;
+
+    if ((size != expected_size) && (size != expected_size + 512))
     {
-        Log("Invalid BIOS size %d: %s", size, file_path);
+        Log("Incorrect BIOS size %lld: expected %d. %s", (long long)size, expected_size, file_path);
         return false;
     }
 
     u8* buffer = new u8[size];
     file.seekg(0, ios::beg);
+
     if (!file.read(reinterpret_cast<char*>(buffer), size))
     {
         SafeDeleteArray(buffer);
@@ -491,7 +480,7 @@ bool Media::LoadBios(const char* file_path, bool syscard)
     }
     file.close();
 
-    bool loaded = LoadBiosData(buffer, size, syscard, file_path);
+    bool loaded = LoadBiosData(buffer, (int)size, syscard, file_path);
     SafeDeleteArray(buffer);
     return loaded;
 }
@@ -503,13 +492,11 @@ bool Media::LoadBiosFromBuffer(const u8* buffer, int size, bool syscard)
 
 bool Media::LoadPacBios(const char* file_path, GG_LaserActive_Region region)
 {
-    if (!IsValidPointer(file_path) || ((region != GG_LASERACTIVE_REGION_JAPAN) &&
-        (region != GG_LASERACTIVE_REGION_US)))
-    {
+    if (!IsValidPointer(file_path) || ((region != GG_LASERACTIVE_REGION_JAPAN) && (region != GG_LASERACTIVE_REGION_US)))
         return false;
-    }
 
     MediaFile* file = MediaFile::OpenFile(file_path);
+
     if (!file)
     {
         Log("There was a problem opening the LaserActive BIOS %s", file_path);
@@ -517,7 +504,8 @@ bool Media::LoadPacBios(const char* file_path, GG_LaserActive_Region region)
     }
 
     s64 size = file->GetSize();
-    if ((size <= 0) || (size > (GG_BIOS_LASERACTIVE_SIZE + 512)))
+
+    if ((size != GG_BIOS_LASERACTIVE_SIZE) && (size != GG_BIOS_LASERACTIVE_SIZE + 512))
     {
         Log("Invalid LaserActive BIOS size %lld: %s", (long long)size, file_path);
         SafeDelete(file);
@@ -527,6 +515,7 @@ bool Media::LoadPacBios(const char* file_path, GG_LaserActive_Region region)
     u8* buffer = new u8[(size_t)size];
     bool read = file->ReadAt(0, buffer, (u64)size);
     SafeDelete(file);
+
     if (!read)
     {
         SafeDeleteArray(buffer);
@@ -578,17 +567,14 @@ void Media::UnloadPacBios(GG_LaserActive_Region region)
     SelectPacBios();
 }
 
-bool Media::LoadPacBiosData(const u8* buffer, int size, GG_LaserActive_Region region,
-    const char* path)
+bool Media::LoadPacBiosData(const u8* buffer, int size, GG_LaserActive_Region region, const char* path)
 {
-    if (!IsValidPointer(buffer) || ((region != GG_LASERACTIVE_REGION_JAPAN) &&
-        (region != GG_LASERACTIVE_REGION_US)))
-    {
+    if (!IsValidPointer(buffer) || ((region != GG_LASERACTIVE_REGION_JAPAN) && (region != GG_LASERACTIVE_REGION_US)))
         return false;
-    }
 
     const u8* source = buffer;
     int data_size = size;
+
     if (data_size == (GG_BIOS_LASERACTIVE_SIZE + 512))
     {
         source += 512;
@@ -597,8 +583,7 @@ bool Media::LoadPacBiosData(const u8* buffer, int size, GG_LaserActive_Region re
 
     if (data_size != GG_BIOS_LASERACTIVE_SIZE)
     {
-        Log("Incorrect LaserActive BIOS size %d: expected %d%s%s", data_size,
-            GG_BIOS_LASERACTIVE_SIZE, path ? ". " : "", path ? path : "");
+        Log("Incorrect LaserActive BIOS size %d: expected %d%s%s", data_size, GG_BIOS_LASERACTIVE_SIZE, path ? ". " : "", path ? path : "");
         return false;
     }
 
@@ -627,22 +612,17 @@ bool Media::LoadPacBiosData(const u8* buffer, int size, GG_LaserActive_Region re
         Log("Unrecognized %s LaserActive BIOS CRC32 %08X%s%s",
             region == GG_LASERACTIVE_REGION_US ? "US" : "Japanese", crc,
             path ? ": " : "", path ? path : "");
-        return false;
     }
 
     u8* destination = (region == GG_LASERACTIVE_REGION_US) ? m_pac_bios_us : m_pac_bios_japan;
-    bool* loaded = (region == GG_LASERACTIVE_REGION_US) ?
-        &m_is_loaded_bios_pac_us : &m_is_loaded_bios_pac_japan;
-    bool* valid_bios = (region == GG_LASERACTIVE_REGION_US) ?
-        &m_is_valid_bios_pac_us : &m_is_valid_bios_pac_japan;
-    u32* bios_crc = (region == GG_LASERACTIVE_REGION_US) ?
-        &m_bios_crc_pac_us : &m_bios_crc_pac_japan;
-    char* bios_name = (region == GG_LASERACTIVE_REGION_US) ?
-        m_bios_name_pac_us : m_bios_name_pac_japan;
+    bool* loaded = (region == GG_LASERACTIVE_REGION_US) ? &m_is_loaded_bios_pac_us : &m_is_loaded_bios_pac_japan;
+    bool* valid_bios = (region == GG_LASERACTIVE_REGION_US) ? &m_is_valid_bios_pac_us : &m_is_valid_bios_pac_japan;
+    u32* bios_crc = (region == GG_LASERACTIVE_REGION_US) ? &m_bios_crc_pac_us : &m_bios_crc_pac_japan;
+    char* bios_name = (region == GG_LASERACTIVE_REGION_US) ? m_bios_name_pac_us : m_bios_name_pac_japan;
 
     memcpy(destination, source, GG_BIOS_LASERACTIVE_SIZE);
     *loaded = true;
-    *valid_bios = true;
+    *valid_bios = valid;
     *bios_crc = crc;
     strncpy_fit(bios_name, name, 64);
     SelectPacBios();
@@ -666,13 +646,14 @@ void Media::SelectPacBios()
     }
 
     const GG_MmiInfo* info = m_cdrom_media->GetMmiInfo();
+
     if (info && info->region_code == "U")
         m_selected_laseractive_region = GG_LASERACTIVE_REGION_US;
     else if (info && info->region_code == "J")
         m_selected_laseractive_region = GG_LASERACTIVE_REGION_JAPAN;
-    else if (m_is_valid_bios_pac_japan && !m_is_valid_bios_pac_us)
+    else if (m_is_loaded_bios_pac_japan && !m_is_loaded_bios_pac_us)
         m_selected_laseractive_region = GG_LASERACTIVE_REGION_JAPAN;
-    else if (m_is_valid_bios_pac_us && !m_is_valid_bios_pac_japan)
+    else if (m_is_loaded_bios_pac_us && !m_is_loaded_bios_pac_japan)
         m_selected_laseractive_region = GG_LASERACTIVE_REGION_US;
     else
         m_selected_laseractive_region = GG_LASERACTIVE_REGION_AUTO;
@@ -689,25 +670,27 @@ bool Media::LoadBiosData(const u8* buffer, int size, bool syscard, const char* p
     if (!IsValidPointer(buffer) || (size <= 0))
         return false;
 
-    if (size != expected_size)
-    {
-        if (path)
-            Log("Incorrect BIOS size %d: expected: %d. %s", size, expected_size, path);
-        else
-            Log("Incorrect BIOS size %d: expected: %d", size, expected_size);
-    }
-
     const u8* source = buffer;
     int data_size = size;
-    if (data_size & 512)
+
+    if (data_size == expected_size + 512)
     {
         Log("Removing 512 bytes header from BIOS...");
-        data_size &= ~512;
+        data_size -= 512;
         source += 512;
     }
 
-    memset(bios, 0x00, expected_size);
-    memcpy(bios, source, MIN(data_size, expected_size));
+    if (data_size != expected_size)
+    {
+        if (path)
+            Log("Incorrect BIOS size %d: expected: %d. %s", data_size, expected_size, path);
+        else
+            Log("Incorrect BIOS size %d: expected: %d", data_size, expected_size);
+
+        return false;
+    }
+
+    memcpy(bios, source, expected_size);
 
     *bios_crc = CalculateCRC32(0, bios, expected_size);
     GatherBIOSInfoFromDB(syscard);

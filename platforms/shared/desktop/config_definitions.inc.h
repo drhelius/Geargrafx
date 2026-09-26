@@ -287,6 +287,9 @@ static inline void process(config_Operation operation)
     CONFIG_INT_RANGE("Video", "LaserActiveScanlineMode", config_video.laseractive_scanline_mode, 0, 0, 2);
     CONFIG_INT_RANGE("Video", "LaserActiveScanlineStart", config_video.laseractive_scanline_start, HUC6260_LASERACTIVE_SCANLINE_START, 0, HUC6260_LINES - 1);
     CONFIG_INT_RANGE("Video", "LaserActiveScanlineEnd", config_video.laseractive_scanline_end, HUC6260_LASERACTIVE_SCANLINE_END, 0, HUC6260_LINES - 1);
+    CONFIG_INT_RANGE("Video", "LaserActiveWidthMode", config_video.laseractive_width_mode, 0, 0, 2);
+    CONFIG_INT_RANGE("Video", "LaserActivePixelStart", config_video.laseractive_pixel_start, HUC6260_LASERACTIVE_PIXEL_START, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1);
+    CONFIG_INT_RANGE("Video", "LaserActivePixelEnd", config_video.laseractive_pixel_end, HUC6260_LASERACTIVE_PIXEL_END, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1);
     CONFIG_INT_RANGE("Video", "Palette", config_video.palette, 0, 0, 3);
     CONFIG_BOOL("Video", "FPS", config_video.fps, false);
     CONFIG_BOOL("Video", "SpriteLimit", config_video.sprite_limit, false);
@@ -555,6 +558,8 @@ static void after_defaults(void)
 
 static void normalize(void)
 {
+    config_video.laseractive_pixel_end = MAX(config_video.laseractive_pixel_end, config_video.laseractive_pixel_start);
+
 #if defined(GG_DISABLE_DISASSEMBLER)
     config_debug.debug = false;
 #endif

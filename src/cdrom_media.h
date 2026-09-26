@@ -43,9 +43,8 @@ class CdRomMedia
 public:
     CdRomMedia();
     ~CdRomMedia();
-    void Init();
+    void Init(LaserActive* laseractive);
     void Reset();
-    void SetLaserActive(LaserActive* laseractive);
     bool IsReady();
     u32 GetCRC();
     const char* GetFilePath();

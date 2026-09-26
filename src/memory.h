@@ -54,7 +54,7 @@ public:
     };
 
 public:
-    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random);
+    Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* media, Input* input, Audio* audio, CdRom* cdrom, Random* random, LaserActive* laseractive);
     ~Memory();
     void Init();
     void Reset();
@@ -101,7 +101,6 @@ public:
     bool IsBackupRamEnabled();
     bool IsBackupRamUsed();
     void UpdateBackupRam(bool enable);
-    void SetLaserActive(LaserActive* laseractive);
     void UpdateLaserActiveSram();
     MemoryBankType GetBankType(u8 bank);
     void SaveRam(std::ostream &file);

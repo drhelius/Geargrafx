@@ -117,6 +117,7 @@ EXTERN void emu_set_safe_vdc_defaults(bool enabled);
 EXTERN void emu_set_overscan(int overscan);
 EXTERN void emu_set_scanline_start_end(int start, int end);
 EXTERN void emu_set_laseractive_scanlines(int mode, int start, int end);
+EXTERN void emu_set_laseractive_pixels(int mode, int start, int end);
 EXTERN void emu_set_lowpass_filter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8);
 EXTERN void emu_set_memory_reset_values(int mpr, int wram, int card_ram, int arcade_card);
 EXTERN void emu_set_huc6260_color_table_reset_value(int value);

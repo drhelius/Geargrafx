@@ -17,7 +17,6 @@
  *
  */
 
-
 #include "media_file_slice.h"
 #include "common.h"
 
@@ -25,7 +24,7 @@ MediaFileSlice::MediaFileSlice()
 {
     InitPointer(m_file);
     m_base_offset = 0;
-    m_length = 0;
+    m_size = 0;
     m_position = 0;
 }
 
@@ -34,18 +33,20 @@ MediaFileSlice::~MediaFileSlice()
     Close();
 }
 
-bool MediaFileSlice::OpenSlice(const char* path, u64 base_offset, u64 length)
+bool MediaFileSlice::OpenSlice(const char* path, u64 base_offset, u64 size)
 {
     Close();
 
-    if (!IsValidPointer(path) || (base_offset > (u64)INT64_MAX) || (length > (u64)INT64_MAX))
+    if (!IsValidPointer(path) || (base_offset > (u64)INT64_MAX) || (size > (u64)INT64_MAX))
         return false;
 
     u64 end_offset;
-    if (!checked_add_u64(base_offset, length, &end_offset) || (end_offset > (u64)INT64_MAX))
+
+    if (!checked_add_u64(base_offset, size, &end_offset) || (end_offset > (u64)INT64_MAX))
         return false;
 
     m_file = MediaFile::OpenFile(path);
+
     if (!IsValidPointer(m_file) || !m_file->CanSeek())
     {
         Close();
@@ -53,6 +54,7 @@ bool MediaFileSlice::OpenSlice(const char* path, u64 base_offset, u64 length)
     }
 
     s64 file_size = m_file->GetSize();
+
     if ((file_size < 0) || (end_offset > (u64)file_size) || !m_file->Seek((s64)base_offset))
     {
         Close();
@@ -60,14 +62,16 @@ bool MediaFileSlice::OpenSlice(const char* path, u64 base_offset, u64 length)
     }
 
     m_base_offset = base_offset;
-    m_length = length;
+    m_size = size;
     m_position = 0;
+
     return true;
 }
 
 bool MediaFileSlice::Open(const char* path)
 {
     UNUSED(path);
+
     return false;
 }
 
@@ -75,7 +79,7 @@ void MediaFileSlice::Close()
 {
     SafeDelete(m_file);
     m_base_offset = 0;
-    m_length = 0;
+    m_size = 0;
     m_position = 0;
 }
 
@@ -86,7 +90,7 @@ bool MediaFileSlice::IsOpen() const
 
 bool MediaFileSlice::IsValid() const
 {
-    return IsValidPointer(m_file) && m_file->IsValid() && (m_position <= m_length);
+    return IsValidPointer(m_file) && m_file->IsValid() && (m_position <= m_size);
 }
 
 bool MediaFileSlice::CanSeek() const
@@ -96,7 +100,7 @@ bool MediaFileSlice::CanSeek() const
 
 s64 MediaFileSlice::GetSize()
 {
-    return IsOpen() ? (s64)m_length : -1;
+    return IsOpen() ? (s64)m_size : -1;
 }
 
 s64 MediaFileSlice::Tell()
@@ -106,17 +110,19 @@ s64 MediaFileSlice::Tell()
 
 bool MediaFileSlice::Seek(s64 offset)
 {
-    if (!IsOpen() || (offset < 0) || ((u64)offset > m_length))
+    if (!IsOpen() || (offset < 0) || ((u64)offset > m_size))
         return false;
 
-    u64 absolute;
-    if (!checked_add_u64(m_base_offset, (u64)offset, &absolute) || (absolute > (u64)INT64_MAX))
+    u64 absolute_offset;
+
+    if (!checked_add_u64(m_base_offset, (u64)offset, &absolute_offset) || (absolute_offset > (u64)INT64_MAX))
         return false;
 
-    if (!m_file->Seek((s64)absolute))
+    if (!m_file->Seek((s64)absolute_offset))
         return false;
 
     m_position = (u64)offset;
+
     return true;
 }
 
@@ -125,15 +131,18 @@ s64 MediaFileSlice::Read(void* buffer, u64 size)
     if (!IsOpen() || (!IsValidPointer(buffer) && (size != 0)))
         return -1;
 
-    u64 available = m_length - m_position;
-    u64 to_read = MIN(size, available);
-    if (to_read == 0)
+    u64 available_size = m_size - m_position;
+    u64 read_size = MIN(size, available_size);
+
+    if (read_size == 0)
         return 0;
 
-    s64 read = m_file->Read(buffer, to_read);
-    if ((read < 0) || ((u64)read > to_read))
+    s64 bytes_read = m_file->Read(buffer, read_size);
+
+    if ((bytes_read < 0) || ((u64)bytes_read > read_size))
         return -1;
 
-    m_position += (u64)read;
-    return read;
+    m_position += (u64)bytes_read;
+
+    return bytes_read;
 }

@@ -49,8 +49,10 @@ CdRomMedia::~CdRomMedia()
 #endif
 }
 
-void CdRomMedia::Init()
+void CdRomMedia::Init(LaserActive* laseractive)
 {
+    m_laseractive = laseractive;
+
     m_cue_bin_image = new CdRomCueBinImage();
     m_cue_bin_image->Init();
 
@@ -82,11 +84,6 @@ void CdRomMedia::Reset()
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
     m_physical_image->Reset();
 #endif
-}
-
-void CdRomMedia::SetLaserActive(LaserActive* laseractive)
-{
-    m_laseractive = laseractive;
 }
 
 bool CdRomMedia::LoadCueFromFile(const char* path, bool preload)

@@ -103,6 +103,7 @@ INLINE bool HuC6260::Clock(u32 cycles)
             else
             {
                 u16 pixel = m_huc6202->Clock();
+
                 if (!is_laseractive)
                 {
                     if (m_active_line && (m_pixel_x >= m_screen_start_x) && (m_pixel_x < m_screen_end_x))
@@ -123,9 +124,11 @@ INLINE bool HuC6260::Clock(u32 cycles)
                         m_laseractive->CaptureVideoLineState(m_laseractive_line_state + (m_vpos * 8));
                         m_line_speed[m_vpos] = m_speed;
                     }
+
                     int index = (m_vpos * 683) + m_pixel_x;
                     bool black = (pixel & HUC6270_PIXEL_BLACK) != 0;
                     m_vce_buffer_1[index] = black ? HUC6270_PIXEL_BLACK : m_color_table[pixel & 0x1FF];
+
                     if (black || pixel == 0x100)
                         m_laseractive_classification[index] = 3;
                     else if (pixel & 0x100)
@@ -143,6 +146,7 @@ INLINE bool HuC6260::Clock(u32 cycles)
         {
             if (is_laseractive && IsValidPointer(m_frame_buffer))
                 RenderLaserActiveLine(m_vpos);
+
             m_hpos = 0;
             m_pixel_x = 0;
         }
@@ -172,8 +176,10 @@ INLINE bool HuC6260::Clock(u32 cycles)
                         m_vce_buffer_1[262 * 683 + x] = HUC6270_PIXEL_BLACK;
                         m_laseractive_classification[262 * 683 + x] = 3;
                     }
+
                     m_line_speed[262] = m_speed;
                     m_laseractive->CaptureVideoLineState(m_laseractive_line_state + 262 * 8);
+
                     RenderLaserActiveLine(262);
                 }
                 m_vsync = true;
@@ -260,6 +266,7 @@ INLINE void HuC6260::RenderLaserActiveLine(int source_y)
         m_laseractive_output_classification[x] = m_laseractive_classification[source_index];
 
         u8* destination = m_scale_buffer + x * 4;
+
         if (color & HUC6270_PIXEL_BLACK)
         {
             destination[0] = 0;
@@ -276,9 +283,15 @@ INLINE void HuC6260::RenderLaserActiveLine(int source_y)
 
     const u8* line_state = m_laseractive_line_state + (source_y * 8);
     int bytes_per_pixel = (m_pixel_format == GG_PIXEL_RGB565) ? 2 : 4;
-    u8* output = m_frame_buffer + ((y - m_laseractive_scanline_start) * HUC6260_LASERACTIVE_WIDTH * bytes_per_pixel);
-    m_laseractive->ComposeLine((u32)y, m_scale_buffer, m_laseractive_output_classification,
-        line_state, output, m_pixel_format);
+    u8* output = m_frame_buffer + ((y - m_laseractive_scanline_start) * m_laseractive_width * bytes_per_pixel);
+    u8* composite = m_laseractive_width == HUC6260_LASERACTIVE_WIDTH ? output : m_scale_buffer + HUC6260_LASERACTIVE_WIDTH * 4;
+    m_laseractive->ComposeLine((u32)y, m_scale_buffer, m_laseractive_output_classification, line_state, composite, m_pixel_format);
+
+    if (composite != output)
+    {
+        int crop = m_laseractive_pixel_start * HUC6260_LASERACTIVE_WIDTH_SCALE;
+        memcpy(output, composite + crop * bytes_per_pixel, m_laseractive_width * bytes_per_pixel);
+    }
 }
 
 template <bool is_sgx, int bytes_per_pixel>
@@ -451,21 +464,21 @@ INLINE u8* HuC6260::GetBuffer()
 
 INLINE int HuC6260::GetCurrentWidth()
 {
-    if (!IsValidPointer(m_laseractive) || !m_laseractive->IsActive())
+    if (!m_laseractive->IsActive())
         return m_scaled_width ? k_huc6260_scaling_width[m_overscan] : k_huc6260_line_width[m_overscan][m_speed];
-    return HUC6260_LASERACTIVE_WIDTH;
+    return m_laseractive_width;
 }
 
 INLINE int HuC6260::GetCurrentHeight()
 {
-    if (!IsValidPointer(m_laseractive) || !m_laseractive->IsActive())
+    if (!m_laseractive->IsActive())
         return CLAMP(HUC6270_LINES_ACTIVE - m_scanline_start - ((HUC6270_LINES_ACTIVE - 1) - m_scanline_end), 1, HUC6270_LINES_ACTIVE);
     return m_laseractive_scanline_end - m_laseractive_scanline_start + 1;
 }
 
 INLINE int HuC6260::GetWidthScale()
 {
-    if (!IsValidPointer(m_laseractive) || !m_laseractive->IsActive())
+    if (!m_laseractive->IsActive())
         return m_scaled_width ? 3 : 1;
     return 1;
 }
@@ -486,6 +499,13 @@ INLINE void HuC6260::SetLaserActiveScanlines(int start, int end)
 {
     m_laseractive_scanline_start = CLAMP(start, 0, HUC6260_LINES - 1);
     m_laseractive_scanline_end = CLAMP(end, m_laseractive_scanline_start, HUC6260_LINES - 1);
+}
+
+INLINE void HuC6260::SetLaserActivePixels(int start, int end)
+{
+    m_laseractive_pixel_start = CLAMP(start, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1);
+    end = CLAMP(end, m_laseractive_pixel_start, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1);
+    m_laseractive_width = (end - m_laseractive_pixel_start + 1) * HUC6260_LASERACTIVE_WIDTH_SCALE;
 }
 
 INLINE void HuC6260::SetOverscan(bool overscan)

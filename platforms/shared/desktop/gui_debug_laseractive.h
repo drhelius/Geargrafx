@@ -17,7 +17,6 @@
  *
  */
 
-
 #ifndef GUI_DEBUG_LASERACTIVE_H
 #define GUI_DEBUG_LASERACTIVE_H
 

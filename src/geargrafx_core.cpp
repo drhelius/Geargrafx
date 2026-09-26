@@ -99,6 +99,7 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     Log("Loading %s core %s by Ignacio Sanchez", GG_TITLE, GG_VERSION);
 
     m_cdrom_media = new CdRomMedia();
+    m_laseractive = new LaserActive(m_cdrom_media);
     m_media = new Media(m_cdrom_media);
     m_random = new Random();
     m_random->Seed((u32)time(NULL));
@@ -106,26 +107,18 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_huc6270_1 = new HuC6270(m_huc6280);
     m_huc6270_2 = new HuC6270(m_huc6280);
     m_huc6202 = new HuC6202(m_huc6270_1, m_huc6270_2, m_huc6280);
-    m_huc6260 = new HuC6260(m_huc6202, m_huc6280, m_random);
+    m_huc6260 = new HuC6260(m_huc6202, m_huc6280, m_random, m_laseractive);
     m_input = new Input(m_media, this);
     m_adpcm = new Adpcm();
-    m_cdrom_audio = new CdRomAudio(m_cdrom_media);
+    m_cdrom_audio = new CdRomAudio(m_cdrom_media, m_laseractive);
     m_audio = new Audio(m_adpcm, m_cdrom_audio);
-    m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio, m_random);
-    m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, m_audio, this);
-    m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom, m_random);
-    m_laseractive = new LaserActive(m_cdrom_media);
-    m_laseractive->Init(m_cdrom, m_memory, m_cdrom_audio);
-    m_cdrom_media->SetLaserActive(m_laseractive);
-    m_memory->SetLaserActive(m_laseractive);
-    m_cdrom->SetLaserActive(m_laseractive);
-    m_cdrom_audio->SetLaserActive(m_laseractive);
-    m_scsi_controller->SetLaserActive(m_laseractive);
-    m_huc6260->SetLaserActive(m_laseractive);
+    m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio, m_random, m_laseractive);
+    m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, m_audio, this, m_laseractive);
+    m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom, m_random, m_laseractive);
 
     m_audio->Init();
     m_input->Init();
-    m_cdrom_media->Init();
+    m_cdrom_media->Init(m_laseractive);
     m_cdrom->Init(m_huc6280, m_memory, m_adpcm);
     m_scsi_controller->Init(m_huc6280, m_cdrom);
     m_media->Init();
@@ -137,6 +130,7 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_huc6280->Init(m_memory, m_huc6202);
     m_adpcm->Init(this, m_cdrom, m_scsi_controller);
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);
+    m_laseractive->Init(m_cdrom, m_memory, m_cdrom_audio);
 
     SelectPSGRevision();
     SelectADPCMClockSpeed();
@@ -921,7 +915,9 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     }
 
     GG_SaveState_Header_Libretro header = {};
+#if !defined(__LIBRETRO__)
     bool is_desktop_savestate = false;
+#endif
 
     stream.seekg(0, ios::end);
     size_t size = static_cast<size_t>(stream.tellg());
@@ -937,7 +933,9 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         {
             header.magic = desktop_header.magic;
             header.version = desktop_header.version;
+#if !defined(__LIBRETRO__)
             is_desktop_savestate = true;
+#endif
             Debug("Loading desktop save state");
         }
     }
@@ -966,9 +964,9 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         return false;
     }
 
-    if ((header.version < 36) && m_media->IsLaserActive())
+    if ((header.version < 39) && m_cdrom_media->IsMmi())
     {
-        Error("LaserActive save state version %u lacks required state", header.version);
+        Error("MMI save state version %u lacks required state", header.version);
         return false;
     }
 
@@ -999,51 +997,14 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     }
 #endif
 
-    bool main_version_38 = header.version == 38 && !m_cdrom_media->IsMmi();
     u8 cdrom_hardware_enabled = m_media->IsCDROM() ? 1 : 0;
-    if (main_version_38 || header.version >= 42)
+    if (header.version >= 38)
         stream.read(reinterpret_cast<char*>(&cdrom_hardware_enabled), sizeof(cdrom_hardware_enabled));
 
-    if (stream.fail() || cdrom_hardware_enabled > 1 ||
-        (cdrom_hardware_enabled != (m_media->IsCDROMHardwareEnabled() ? 1 : 0)))
+    if (stream.fail() || cdrom_hardware_enabled > 1 || (cdrom_hardware_enabled != (m_media->IsCDROMHardwareEnabled() ? 1 : 0)))
     {
         Error("Save state CD-ROM hardware configuration does not match");
         return false;
-    }
-
-    if (main_version_38)
-    {
-        size_t payload_size = size - sizeof(header);
-        if (is_desktop_savestate)
-        {
-            if (desktop_header.screenshot_size > size - sizeof(desktop_header))
-            {
-                Error("Invalid save state screenshot size");
-                return false;
-            }
-            payload_size = size - sizeof(desktop_header) - desktop_header.screenshot_size;
-        }
-
-        size_t current_size = 0;
-        if (!SaveState((u8*)NULL, current_size))
-            return false;
-#if defined(__LIBRETRO__)
-        current_size -= sizeof(GG_SaveState_Header_Libretro);
-#else
-        current_size -= sizeof(GG_SaveState_Header);
-#endif
-        stringstream mb128_state;
-        m_input->GetMB128()->SaveState(mb128_state);
-        size_t mb128_size = static_cast<size_t>(mb128_state.tellp());
-        if (m_input->GetMB128()->IsConnected())
-            current_size -= mb128_size;
-
-        // Local MMI version 38 omitted the hardware byte and used legacy audio units.
-        if (payload_size != current_size && payload_size != current_size + mb128_size)
-        {
-            Error("Unsupported version 38 save state layout or hardware configuration");
-            return false;
-        }
     }
 
     Debug("Unserializing save state...");
@@ -1059,21 +1020,12 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     m_huc6270_1->LoadState(stream, header.version);
     m_huc6270_2->LoadState(stream, header.version);
     m_huc6280->LoadState(stream);
-
-    u32 audio_version = header.version;
-    u32 adpcm_version = header.version;
-
-    if (header.version >= 36 && header.version < 40 && (header.version >= 39 || m_cdrom_media->IsMmi()))
-    {
-        audio_version = 35;
-        adpcm_version = 36;
-    }
-
-    m_audio->LoadState(stream, audio_version);
+    m_audio->LoadState(stream, header.version);
     m_input->LoadState(stream, header.version);
+
     if (m_media->IsCDROMHardwareEnabled())
     {
-        if (header.version >= 38 && m_cdrom_media->IsMmi() && !m_media->IsLaserActive())
+        if (m_cdrom_media->IsMmi() && !m_media->IsLaserActive())
         {
             u32 index = 0;
             bool ejected = false;
@@ -1089,15 +1041,16 @@ bool GeargrafxCore::LoadState(std::istream& stream)
             else
                 m_cdrom_media->InsertMmi();
         }
+
         m_cdrom->LoadState(stream, header.version);
         m_scsi_controller->LoadState(stream, header.version);
         m_cdrom_audio->LoadState(stream, header.version);
-        m_adpcm->LoadState(stream, adpcm_version);
+        m_adpcm->LoadState(stream, header.version);
 
         if (m_media->IsLaserActive())
         {
-            m_laseractive->LoadState(stream, header.version);
-            m_huc6260->LoadLaserActiveState(stream, header.version);
+            m_laseractive->LoadState(stream);
+            m_huc6260->LoadLaserActiveState(stream);
         }
     }
 
@@ -1246,12 +1199,6 @@ void GeargrafxCore::Reset()
 
     SelectPSGRevision();
     SelectADPCMClockSpeed();
-
-    LaserActive* laseractive = m_media->IsLaserActive() ? m_laseractive : NULL;
-    m_cdrom_audio->SetLaserActive(laseractive);
-    m_cdrom->SetLaserActive(laseractive);
-    m_scsi_controller->SetLaserActive(laseractive);
-    m_huc6260->SetLaserActive(laseractive);
 
     bool pce_japanese = (console_type == GG_CONSOLE_PCE) || (console_type == GG_CONSOLE_SGX);
     if (m_media->IsLaserActive())

@@ -129,6 +129,8 @@ bool gui_init(void)
                 config_debug.debug ? 241 : config_video.scanline_end);
     emu_set_laseractive_scanlines(config_video.laseractive_scanline_mode,
                 config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
+    emu_set_laseractive_pixels(config_video.laseractive_width_mode,
+                config_video.laseractive_pixel_start, config_video.laseractive_pixel_end);
     emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
                 config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
     emu_set_memory_reset_values(
@@ -398,7 +400,17 @@ void gui_load_pac_bios(const char* path, GG_LaserActive_Region region)
         return;
     }
 
+    Media* media = emu_get_core()->GetMedia();
+    bool known_bios = media->IsPacBiosValid(region);
+
     gui_action_reset();
+
+    if (!known_bios)
+    {
+        std::string message("Custom or unknown BIOS loaded: ");
+        message += filename;
+        gui_set_status_message(message.c_str(), 4000);
+    }
 }
 
 void gui_load_palette(const char* path)
@@ -874,27 +886,20 @@ static bool finish_loading_rom(void)
     if (emu_get_core()->GetMedia()->IsCDROM() && !emu_get_core()->GetMedia()->IsBiosReady())
     {
         Media* media = emu_get_core()->GetMedia();
-        bool is_gameexpress = media->IsGameExpress();
-        std::string bios_name;
+        std::string bios_name = media->IsGameExpress() ? "Game Express BIOS" : "System Card BIOS";
 
         if (media->IsLaserActive())
         {
             const GG_MmiInfo* info = emu_get_core()->GetCDROMMedia()->GetMmiInfo();
 
-            if (info && (info->card == "System Card 1.0"))
-                bios_name = "The Japanese System Card 1.0 BIOS";
-            else if (info && (info->card == "Games Express"))
-                bios_name = "A recognized Game Express BIOS";
-            else
-                bios_name = "A recognized LaserActive NEC PAC BIOS";
+            if (info && info->card.empty())
+                bios_name = "LaserActive NEC PAC BIOS";
         }
-        else
-            bios_name = is_gameexpress ? "Game Express BIOS" : "System Card BIOS";
 
         std::string message;
         message += bios_name;
         message += " is required to run this ROM!!\n";
-        message += "Make sure you have a valid BIOS file in 'Menu->Emulator->BIOS'.";
+        message += "Make sure you have loaded a BIOS file in 'Menu->Emulator->BIOS'.";
         gui_set_error_message(message.c_str());
 
         emu_get_core()->GetMedia()->Reset();

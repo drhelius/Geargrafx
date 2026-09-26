@@ -956,7 +956,7 @@ json McpServer::BuildToolList()
     tools.push_back({
         {"name", "load_bios"},
         {"title", "Load BIOS"},
-        {"description", "Load a System Card, Game Express, or recognized 512KB LaserActive NEC PAC BIOS."},
+        {"description", "Load a System Card, Game Express, or 512KB LaserActive NEC PAC BIOS."},
         {"annotations", {{"readOnlyHint", false}, {"destructiveHint", true}, {"idempotentHint", false}, {"openWorldHint", true}}},
         {"inputSchema", {
             {"type", "object"},
