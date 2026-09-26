@@ -202,7 +202,6 @@ public:
 
     void PumpCommands(GeargrafxCore* core)
     {
-        // GUI and command-line loads also replace media on the loader thread.
         if (m_debugAdapter->IsMediaLoading())
             return;
 

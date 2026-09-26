@@ -2393,6 +2393,10 @@ void LaserActive::GetStatus(Status& status)
     status.input_frozen = m_input_frozen;
     status.output_frozen = m_output_frozen;
     status.sample = m_current_sample;
+    status.audio_end_lba = m_end_lba;
+    status.playback_mode = m_playback_mode;
+    status.digital_sector_valid = m_digital_sector_valid;
+    status.audio_end_pending = m_audio_end_pending;
     status.video_frame = m_current_video_frame;
     status.search_sectors = m_search_sectors;
     status.analog_fade_samples_left = m_analog_fade_samples_left;

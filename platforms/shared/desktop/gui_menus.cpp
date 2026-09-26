@@ -185,14 +185,16 @@ static void menu_geargrafx(void)
 #endif
 
         bool mmi_loaded = !emu_is_media_loading() && !emu_is_empty() && emu_get_core()->GetCDROMMedia()->IsMmi();
-        if (ImGui::BeginMenu("MMI Media", mmi_loaded))
+
+        if (mmi_loaded && ImGui::BeginMenu("MMI Media"))
         {
             CdRomMedia* cdrom_media = emu_get_core()->GetCDROMMedia();
             bool ejected = cdrom_media->IsMmiEjected();
+
             if (ImGui::MenuItem(ejected ? "Insert" : "Eject"))
             {
-                bool changed = ejected ? emu_get_core()->InsertLaserDisc() :
-                    emu_get_core()->EjectLaserDisc();
+                bool changed = ejected ? emu_get_core()->InsertLaserDisc() : emu_get_core()->EjectLaserDisc();
+
                 if (changed)
                 {
                     emu_audio_reset();
@@ -202,13 +204,13 @@ static void menu_geargrafx(void)
 
             ImGui::Separator();
             const GG_MmiInfo* info = cdrom_media->GetMmiInfo();
+
             if (info)
             {
                 for (size_t i = 0; i < info->media.size(); i++)
                 {
                     bool selected = i == cdrom_media->GetSelectedMmiMediaIndex();
-                    if (ImGui::MenuItem(info->media[i].name.c_str(), NULL, selected,
-                        ejected && !selected))
+                    if (ImGui::MenuItem(info->media[i].name.c_str(), NULL, selected,  ejected && !selected))
                     {
                         if (emu_get_core()->SelectLaserDiscMedia((u32)i))
                         {
@@ -218,8 +220,10 @@ static void menu_geargrafx(void)
                     }
                 }
             }
+
             if (!ejected)
                 ImGui::TextDisabled("Eject before changing sides.");
+
             ImGui::EndMenu();
         }
 
@@ -304,6 +308,7 @@ static void menu_geargrafx(void)
 
             ImGui::EndMenu();
         }
+
         if (laseractive && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
             ImGui::SetTooltip("Run-ahead and rewind are disabled until LaserActive state restore is validated.");
 
@@ -643,8 +648,7 @@ static void menu_emulator(void)
 
             if (ImGui::BeginMenu("LaserActive NEC PAC"))
             {
-                if (ImGui::Combo("Region", &config_emulator.laseractive_region,
-                    "Auto\0Japan\0US\0\0"))
+                if (ImGui::Combo("Region", &config_emulator.laseractive_region, "Auto\0Japan\0US\0\0"))
                 {
                     emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
                     if (!emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive())
@@ -655,12 +659,13 @@ static void menu_emulator(void)
                 if (ImGui::MenuItem("Load Japanese PAC BIOS..."))
                     open_pac_japan_bios = true;
                 ImGui::PushItemWidth(350);
-                if (ImGui::InputText("##pac_japan_bios_path", gui_pac_japan_bios_path,
-                    IM_ARRAYSIZE(gui_pac_japan_bios_path), ImGuiInputTextFlags_AutoSelectAll))
+
+                if (ImGui::InputText("##pac_japan_bios_path", gui_pac_japan_bios_path, IM_ARRAYSIZE(gui_pac_japan_bios_path), ImGuiInputTextFlags_AutoSelectAll))
                 {
                     config_emulator.pac_japan_bios_path.assign(gui_pac_japan_bios_path);
                     gui_load_pac_bios(gui_pac_japan_bios_path, GG_LASERACTIVE_REGION_JAPAN);
                 }
+
                 ImGui::PopItemWidth();
                 if (media->IsPacBiosValid(GG_LASERACTIVE_REGION_JAPAN))
                     ImGui::TextColored(service_mcp_http_color, "Valid BIOS: %s (CRC32 %08X)",
@@ -672,13 +677,14 @@ static void menu_emulator(void)
                 ImGui::SeparatorText("US PAC-N10");
                 if (ImGui::MenuItem("Load US PAC BIOS..."))
                     open_pac_us_bios = true;
+
                 ImGui::PushItemWidth(350);
-                if (ImGui::InputText("##pac_us_bios_path", gui_pac_us_bios_path,
-                    IM_ARRAYSIZE(gui_pac_us_bios_path), ImGuiInputTextFlags_AutoSelectAll))
+                if (ImGui::InputText("##pac_us_bios_path", gui_pac_us_bios_path, IM_ARRAYSIZE(gui_pac_us_bios_path), ImGuiInputTextFlags_AutoSelectAll))
                 {
                     config_emulator.pac_us_bios_path.assign(gui_pac_us_bios_path);
                     gui_load_pac_bios(gui_pac_us_bios_path, GG_LASERACTIVE_REGION_US);
                 }
+
                 ImGui::PopItemWidth();
                 if (media->IsPacBiosValid(GG_LASERACTIVE_REGION_US))
                     ImGui::TextColored(service_mcp_http_color, "Valid BIOS: %s (CRC32 %08X)",
@@ -983,39 +989,39 @@ static void menu_video(void)
             if (ImGui::BeginMenu("Aspect Ratio"))
             {
                 ImGui::PushItemWidth(190.0f);
-                ImGui::Combo("##laseractive_ratio", &config_video.laseractive_ratio,
-                    "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0\0");
+                ImGui::Combo("##laseractive_ratio", &config_video.laseractive_ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0\0");
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
             }
+
             if (ImGui::BeginMenu("Framing"))
             {
                 ImGui::PushItemWidth(250.0f);
-                bool changed = ImGui::Combo("##laseractive_framing", &config_video.laseractive_scanline_mode,
-                    "Cropped (240 lines)\0Full Field (263 lines)\0Manual\0\0");
+                bool changed = ImGui::Combo("##laseractive_framing", &config_video.laseractive_scanline_mode, "Cropped (240 lines)\0Full Field (263 lines)\0Manual\0\0");
+
                 ImGui::Separator();
                 ImGui::BeginDisabled(config_video.laseractive_scanline_mode != 2);
-                if (ImGui::SliderInt("##laseractive_start", &config_video.laseractive_scanline_start,
-                    0, HUC6260_LINES - 1, "First line (Manual) = %d"))
+                if (ImGui::SliderInt("##laseractive_start", &config_video.laseractive_scanline_start, 0, HUC6260_LINES - 1, "First line (Manual) = %d"))
                 {
-                    config_video.laseractive_scanline_end = MAX(config_video.laseractive_scanline_end,
-                        config_video.laseractive_scanline_start);
+                    config_video.laseractive_scanline_end = MAX(config_video.laseractive_scanline_end, config_video.laseractive_scanline_start);
                     changed = true;
                 }
-                if (ImGui::SliderInt("##laseractive_end", &config_video.laseractive_scanline_end,
-                    0, HUC6260_LINES - 1, "Last line (Manual) = %d"))
+
+                if (ImGui::SliderInt("##laseractive_end", &config_video.laseractive_scanline_end, 0, HUC6260_LINES - 1, "Last line (Manual) = %d"))
                 {
-                    config_video.laseractive_scanline_start = MIN(config_video.laseractive_scanline_start,
-                        config_video.laseractive_scanline_end);
+                    config_video.laseractive_scanline_start = MIN(config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
                     changed = true;
                 }
+
                 ImGui::EndDisabled();
                 if (changed)
                     emu_set_laseractive_scanlines(config_video.laseractive_scanline_mode,
                         config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
+
                 int lines = config_video.laseractive_scanline_mode == 0 ? 240 :
                     (config_video.laseractive_scanline_mode == 1 ? HUC6260_LINES :
                     MAX(1, config_video.laseractive_scanline_end - config_video.laseractive_scanline_start + 1));
+
                 ImGui::TextDisabled("Picture height: %d lines", lines);
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();

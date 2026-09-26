@@ -93,6 +93,7 @@ static bool libretro_supports_bitmasks = false;
 static GG_Keys avenue_pad_3_button = GG_KEY_NONE;
 static int joypad_current[MAX_PADS][MAX_BUTTONS];
 static int joypad_old[MAX_PADS][MAX_BUTTONS];
+
 struct MouseState
 {
     int delta_x;
@@ -268,6 +269,7 @@ void retro_set_environment(retro_environment_t cb)
         disk_get_image_path,
         disk_get_image_label
     };
+
     if (!environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, (void*)&disk_control))
     {
         static const struct retro_disk_control_callback disk_control_basic = {
@@ -521,40 +523,44 @@ bool retro_load_game(const struct retro_game_info *info)
 
     if (is_cd_content)
         load_bios();
+
     if (is_mmi_content)
         load_pac_bios();
 
     if (is_cd_content)
     {
         log_cb(RETRO_LOG_INFO, "retro_load_game CD-ROM from file.\n");
+
         if (!core->LoadMedia(retro_game_path))
         {
             log_cb(RETRO_LOG_ERROR, "Invalid or corrupted CD-ROM media.\n");
             return false;
         }
+
         if (is_mmi_content && !core->GetMedia()->IsBiosReady())
         {
             const GG_MmiInfo* mmi = core->GetCDROMMedia()->GetMmiInfo();
+
             if (mmi && (mmi->card == "System Card 1.0"))
                 log_cb(RETRO_LOG_ERROR, "The Japanese System Card 1.0 BIOS is required by this MMI.\n");
             else if (mmi && (mmi->card == "Games Express"))
                 log_cb(RETRO_LOG_ERROR, "A recognized Game Express BIOS is required by this MMI.\n");
             else
                 log_cb(RETRO_LOG_ERROR, "A recognized PAC BIOS for the selected LaserActive region is required.\n");
+
             core->GetMedia()->Reset();
+
             return false;
         }
-        if (is_mmi_content && initial_mmi_image_path[0] &&
-            strcmp(initial_mmi_image_path, retro_game_path) != 0)
+
+        if (is_mmi_content && initial_mmi_image_path[0] && strcmp(initial_mmi_image_path, retro_game_path) != 0)
             initial_mmi_image_index = 0;
-        if (is_mmi_content &&
-            (initial_mmi_image_index != core->GetCDROMMedia()->GetSelectedMmiMediaIndex()))
+
+        if (is_mmi_content && (initial_mmi_image_index != core->GetCDROMMedia()->GetSelectedMmiMediaIndex()))
         {
-            if (!core->EjectLaserDisc() || !core->SelectLaserDiscMedia(initial_mmi_image_index) ||
-                !core->InsertLaserDisc())
+            if (!core->EjectLaserDisc() || !core->SelectLaserDiscMedia(initial_mmi_image_index) || !core->InsertLaserDisc())
             {
-                log_cb(RETRO_LOG_ERROR, "Invalid initial MMI media index %u.\n",
-                    initial_mmi_image_index);
+                log_cb(RETRO_LOG_ERROR, "Invalid initial MMI media index %u.\n", initial_mmi_image_index);
                 core->GetMedia()->Reset();
                 return false;
             }
@@ -563,6 +569,7 @@ bool retro_load_game(const struct retro_game_info *info)
     else
     {
         log_cb(RETRO_LOG_INFO, "retro_load_game HuCard.\n");
+
         if (!load_hucard(info, retro_game_path))
         {
             log_cb(RETRO_LOG_ERROR, "Invalid or corrupted HuCard file.\n");
@@ -779,6 +786,7 @@ static void load_pac_bios(void)
     {
         snprintf(path, sizeof(path), "%s%c%s", retro_system_directory, slash, "pac-n1.bin");
         bool loaded = load_pac_bios_file(path, GG_LASERACTIVE_REGION_JAPAN);
+
         if (!loaded)
         {
             snprintf(path, sizeof(path), "%s%c%s", retro_system_directory, slash, "pce-lp1.bin");
@@ -1599,6 +1607,7 @@ static void check_variables(void)
 
     var.key = "geargrafx_laseractive_region";
     var.value = NULL;
+
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         GG_LaserActive_Region region = GG_LASERACTIVE_REGION_AUTO;
@@ -1611,6 +1620,7 @@ static void check_variables(void)
 
     var.key = "geargrafx_laseractive_aspect_ratio";
     var.value = NULL;
+
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         laseractive_aspect_ratio = 4.0f / 3.0f;
@@ -1624,6 +1634,7 @@ static void check_variables(void)
 
     var.key = "geargrafx_laseractive_framing";
     var.value = NULL;
+
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
         laseractive_scanline_mode = 0;
@@ -1635,6 +1646,7 @@ static void check_variables(void)
 
     int laseractive_start = HUC6260_LASERACTIVE_SCANLINE_START;
     int laseractive_end = HUC6260_LASERACTIVE_SCANLINE_END;
+
     if (laseractive_scanline_mode == 1)
     {
         laseractive_start = 0;
@@ -1644,13 +1656,17 @@ static void check_variables(void)
     {
         var.key = "geargrafx_laseractive_scanline_start";
         var.value = NULL;
+
         if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
             laseractive_start = atoi(var.value);
+
         var.key = "geargrafx_laseractive_scanline_end";
         var.value = NULL;
+
         if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
             laseractive_end = atoi(var.value);
     }
+
     core->GetHuC6260()->SetLaserActiveScanlines(laseractive_start, laseractive_end);
 
     var.key = "geargrafx_psg_huc6280a";
@@ -1875,16 +1891,17 @@ static bool path_is_cdrom_uri(const char* path)
 
 static bool path_is_cd_content(const char* path)
 {
-    return path_is_cdrom_uri(path) || path_has_extension(path, "cue") ||
-        path_has_extension(path, "chd") || path_has_extension(path, "mmi");
+    return path_is_cdrom_uri(path) || path_has_extension(path, "cue") || path_has_extension(path, "chd") || path_has_extension(path, "mmi");
 }
 
 static bool disk_set_eject_state(bool ejected)
 {
     if (!core || !core->GetCDROMMedia()->IsMmi())
         return false;
+
     if (ejected == core->GetCDROMMedia()->IsMmiEjected())
         return true;
+
     return ejected ? core->EjectLaserDisc() : core->InsertLaserDisc();
 }
 
@@ -1895,20 +1912,19 @@ static bool disk_get_eject_state(void)
 
 static unsigned disk_get_image_index(void)
 {
-    return core && core->GetCDROMMedia()->IsMmi() ?
-        core->GetCDROMMedia()->GetSelectedMmiMediaIndex() : 0;
+    return core && core->GetCDROMMedia()->IsMmi() ? core->GetCDROMMedia()->GetSelectedMmiMediaIndex() : 0;
 }
 
 static bool disk_set_image_index(unsigned index)
 {
-    return core && core->GetCDROMMedia()->IsMmiEjected() &&
-        core->SelectLaserDiscMedia(index);
+    return core && core->GetCDROMMedia()->IsMmiEjected() && core->SelectLaserDiscMedia(index);
 }
 
 static unsigned disk_get_num_images(void)
 {
     if (!core)
         return 0;
+
     const GG_MmiInfo* info = core->GetCDROMMedia()->GetMmiInfo();
     return info ? (unsigned)info->media.size() : 0;
 }
@@ -1929,8 +1945,10 @@ static bool disk_set_initial_image(unsigned index, const char* path)
 {
     if (path && strlen(path) >= sizeof(initial_mmi_image_path))
         return false;
+
     initial_mmi_image_index = index;
     strncpy_fit(initial_mmi_image_path, path ? path : "", sizeof(initial_mmi_image_path));
+
     return true;
 }
 
@@ -1938,10 +1956,14 @@ static bool disk_get_image_path(unsigned index, char* path, size_t length)
 {
     if (!core || !path || (length == 0))
         return false;
+
     const GG_MmiInfo* info = core->GetCDROMMedia()->GetMmiInfo();
+
     if (!info || (index >= info->media.size()) || strlen(retro_game_path) >= length)
         return false;
+
     strncpy_fit(path, retro_game_path, length);
+
     return true;
 }
 
@@ -1949,9 +1971,13 @@ static bool disk_get_image_label(unsigned index, char* label, size_t length)
 {
     if (!core || !label || (length == 0))
         return false;
+    
     const GG_MmiInfo* info = core->GetCDROMMedia()->GetMmiInfo();
+
     if (!info || (index >= info->media.size()) || info->media[index].name.length() >= length)
         return false;
+
     strncpy_fit(label, info->media[index].name.c_str(), length);
+
     return true;
 }

@@ -93,17 +93,17 @@ void gui_debug_memory_reset(void)
     HuC6270* huc6270_2 = core->GetHuC6270_2();
     Adpcm* adpcm = core->GetAdpcm();
     bool is_sgx = media->IsSGX();
+    bool is_laser_active = media->IsLaserActive();
+    u8* mapped_rom = is_laser_active ? media->GetMappedBios() : media->GetROM();
+    size_t mapped_rom_size = is_laser_active ? media->GetMappedBiosSize() : media->GetROMSize();
 
     mem_edit[MEMORY_EDITOR_LOGICAL].Reset("LOGICAL", 0x10000, logical_memory_read, logical_memory_write, logical_memory_can_write, memory);
     mem_edit[MEMORY_EDITOR_LOGICAL].SetAddressFormatter(logical_memory_format_address, 7);
     mem_edit[MEMORY_EDITOR_PHYSICAL].Reset("PHYSICAL", 0x200000, physical_memory_read, physical_memory_write, physical_memory_can_write, memory);
     mem_edit[MEMORY_EDITOR_RAM].Reset("SYSTEM RAM", memory->GetWorkingRAM(), 0x2000 * (is_sgx ? 4 : 1));
     mem_edit[MEMORY_EDITOR_ZERO_PAGE].Reset("ZP", memory->GetWorkingRAM(), 0x100);
-    mem_edit[MEMORY_EDITOR_ROM].Reset(media->IsLaserActive() ? "BIOS" : "ROM",
-        media->IsLaserActive() ? media->GetMappedBios() : media->GetROM(),
-        media->IsLaserActive() ? media->GetMappedBiosSize() : media->GetROMSize());
-    mem_edit[MEMORY_EDITOR_CARD_RAM].Reset(media->IsLaserActive() ? "PAC SRAM" : "CARD RAM",
-        memory->GetCardRAM(), memory->GetCardRAMSize());
+    mem_edit[MEMORY_EDITOR_ROM].Reset(is_laser_active ? "BIOS" : "ROM", mapped_rom, mapped_rom_size);
+    mem_edit[MEMORY_EDITOR_CARD_RAM].Reset(is_laser_active ? "PAC SRAM" : "CARD RAM", memory->GetCardRAM(), memory->GetCardRAMSize());
     mem_edit[MEMORY_EDITOR_BACKUP_RAM].Reset("BRAM", memory->GetBackupRAM(), 0x800);
     mem_edit[MEMORY_EDITOR_PALETTES].Reset("PALETTES", (u8*)huc6260->GetColorTable(), 512, 0, 2);
     mem_edit[MEMORY_EDITOR_VRAM_1].Reset(is_sgx ? "VRAM 1" : "VRAM", (u8*)huc6270_1->GetVRAM(), HUC6270_VRAM_SIZE, 0, 2);

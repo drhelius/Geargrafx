@@ -285,10 +285,8 @@ static inline void process(config_Operation operation)
     CONFIG_INT("Video", "ScanlineEnd", config_video.scanline_end, 234);
     CONFIG_INT_RANGE("Video", "LaserActiveAspectRatio", config_video.laseractive_ratio, 1, 0, 3);
     CONFIG_INT_RANGE("Video", "LaserActiveScanlineMode", config_video.laseractive_scanline_mode, 0, 0, 2);
-    CONFIG_INT_RANGE("Video", "LaserActiveScanlineStart", config_video.laseractive_scanline_start,
-        HUC6260_LASERACTIVE_SCANLINE_START, 0, HUC6260_LINES - 1);
-    CONFIG_INT_RANGE("Video", "LaserActiveScanlineEnd", config_video.laseractive_scanline_end,
-        HUC6260_LASERACTIVE_SCANLINE_END, 0, HUC6260_LINES - 1);
+    CONFIG_INT_RANGE("Video", "LaserActiveScanlineStart", config_video.laseractive_scanline_start, HUC6260_LASERACTIVE_SCANLINE_START, 0, HUC6260_LINES - 1);
+    CONFIG_INT_RANGE("Video", "LaserActiveScanlineEnd", config_video.laseractive_scanline_end, HUC6260_LASERACTIVE_SCANLINE_END, 0, HUC6260_LINES - 1);
     CONFIG_INT_RANGE("Video", "Palette", config_video.palette, 0, 0, 3);
     CONFIG_BOOL("Video", "FPS", config_video.fps, false);
     CONFIG_BOOL("Video", "SpriteLimit", config_video.sprite_limit, false);

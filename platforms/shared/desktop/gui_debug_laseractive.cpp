@@ -24,6 +24,7 @@
 #include "imgui.h"
 #include "geargrafx.h"
 #include "mmi_archive.h"
+#include "gui_debug_cdrom_audio.h"
 #include "gui_debug_constants.h"
 #include "gui.h"
 #include "config.h"
@@ -124,8 +125,8 @@ static bool begin_window(const char* title, bool* open, ImVec2 position, float c
     float width = columns * ImGui::CalcTextSize("M").x;
     float height = rows * ImGui::GetTextLineHeightWithSpacing();
     ImGui::PopFont();
-    ImGui::SetNextWindowSize(ImVec2(width, height + ImGui::GetFrameHeight()), ImGuiCond_Always);
-    bool visible = ImGui::Begin(title, open, ImGuiWindowFlags_NoResize);
+    ImGui::SetNextWindowSize(ImVec2(width, height + ImGui::GetFrameHeight()), ImGuiCond_FirstUseEver);
+    bool visible = ImGui::Begin(title, open);
     ImGui::PushFont(gui_default_font);
     return visible;
 }
@@ -228,42 +229,126 @@ void gui_debug_window_laseractive_video(void)
 
 void gui_debug_window_laseractive_audio(void)
 {
-    if (begin_window("LaserActive Audio", &config_debug.show_laseractive_audio, ImVec2(590, 80), 34, 25))
+    if (begin_window("LaserActive Audio", &config_debug.show_laseractive_audio, ImVec2(590, 80), 76, 33))
     {
         LaserActive::Status state = {};
         bool available = get_status(state);
         bool inserted = available && !state.ejected;
+        CdRom* cdrom = available ? emu_get_core()->GetCDROM() : NULL;
+        CdRomAudio* audio = available ? emu_get_core()->GetCDROMAudio() : NULL;
+        CdRomAudio::CdRomAudio_State* audio_state = audio ? audio->GetState() : NULL;
         const u8* input = state.live_input_registers;
         u8 mix = input[1] >> 6;
-        s16 left = available ? emu_get_core()->GetCDROMAudio()->GetLeftSample() : 0;
-        s16 right = available ? emu_get_core()->GetCDROMAudio()->GetRightSample() : 0;
-        char text[32];
+        u8 selection = input[0x0D] >> 6;
+        bool digital_enabled = mix == 0 || (selection != 2 && (mix != 1 || !(input[0x0D] & 0x10)));
+        bool analog_enabled = mix != 0 && (mix != 1 || (input[0x0D] & 0x10));
+        bool gain_bypassed = mix == 0 || selection == 3;
+        char text[48];
         ImGui::BeginDisabled(!available);
 
-        draw_number("ROUTING     ", input[0x0D], available, true);
-        draw_number("ANALOG ROUTE", input[0x0E], mix != 0 && inserted, true);
+        gui_debug_cdrom_audio_output(audio, "Mute LaserActive Audio (analog + digital)");
 
-        ImGui::NewLine(); ImGui::TextColored(cyan, "GAIN / ATTENUATION"); ImGui::Separator();
-        draw_number("DIGITAL GAIN", input[0x0F], mix != 0 && (input[0x0D] >> 6) != 3 && inserted, true);
-        draw_number("ANALOG LEFT ", state.analog_attenuation_left, mix != 0 && inserted, true);
-        draw_number("ANALOG RIGHT", state.analog_attenuation_right, mix != 0 && inserted, true);
+        ImGui::NewLine();
+        float unit = ImGui::CalcTextSize("M").x;
+        ImGuiTableFlags flags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings |
+            ImGuiTableFlags_NoPadOuterX | ImGuiTableFlags_BordersInnerV;
+        if (ImGui::BeginTable("Audio", 2, flags))
+        {
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 36 * unit);
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 36 * unit);
+            ImGui::TableNextColumn();
 
-        ImGui::NewLine(); ImGui::TextColored(cyan, "ANALOG MUTE / FADE"); ImGui::Separator();
-        draw_flag("MUTE  ", (input[0x0E] & 0x80) != 0, inserted && mix != 0);
-        draw_value("LEFT  ", state.analog_muted_left ? (state.analog_fade_samples_left ? "FADING" : "MUTED") : "OFF",
-            state.analog_muted_left ? yellow : gray, available);
-        draw_value("RIGHT ", state.analog_muted_right ? (state.analog_fade_samples_right ? "FADING" : "MUTED") : "OFF",
-            state.analog_muted_right ? yellow : gray, available);
-        draw_number("FADE L", state.analog_fade_samples_left, state.analog_fade_samples_left != 0);
-        draw_number("FADE R", state.analog_fade_samples_right, state.analog_fade_samples_right != 0);
+            ImGui::TextColored(cyan, "PLAYBACK"); ImGui::Separator();
+            static const char* const modes[] = { "INACTIVE", "SEEKING", "READING", "PLAYING", "PAUSED", "STOPPED" };
+            draw_value("STATE        ", modes[CLAMP((int)state.drive_mode, 0, 5)], blue, available);
+            snprintf(text, sizeof(text), "%u%s", state.playback_mode, state.playback_mode == 2 ? " (SILENT)" : "");
+            draw_value("PLAY MODE    ", text, white, inserted);
+            draw_number("HEAD LBA     ", state.head_lba, inserted);
+            draw_number("TRACK        ", state.current_track, inserted);
+            snprintf(text, sizeof(text), "%u ticks / %.1f ms", state.seek_latency, state.seek_latency * 1000.0 / 75.0);
+            draw_value("SEEK         ", text, white, inserted && state.drive_mode == LaserActive::DRIVE_SEEKING);
+            bool end_set = state.audio_end_lba != 0x00FFFFFF;
+            if (end_set)
+                draw_number("END LBA      ", state.audio_end_lba, inserted);
+            else
+                draw_value("END LBA      ", "NONE", gray, inserted);
+            static const char* const events[] = { "STOP", "LOOP", "IRQ" };
+            int event = audio_state ? CLAMP((int)*audio_state->STOP_EVENT, 0, 2) : 0;
+            draw_value("END EVENT    ", events[event], blue, inserted && end_set);
+            draw_flag("END PENDING  ", state.audio_end_pending, inserted);
+            draw_value("CDDA BUFFER  ", state.digital_sector_valid ? "VALID" : "EMPTY",
+                state.digital_sector_valid ? green : gray, inserted);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Digital audio sector buffer; data tracks and failed reads provide silence.");
+            snprintf(text, sizeof(text), "%03u / 588", state.sample);
+            draw_value("SECTOR SAMPLE", text, white, inserted);
 
-        ImGui::NewLine(); ImGui::TextColored(cyan, "OUTPUT / SAMPLES"); ImGui::Separator();
-        snprintf(text, sizeof(text), "%+06d", left);
-        draw_value("LEFT         ", text, white, inserted);
-        snprintf(text, sizeof(text), "%+06d", right);
-        draw_value("RIGHT        ", text, white, inserted);
-        snprintf(text, sizeof(text), "%03u / 588", state.sample);
-        draw_value("SECTOR SAMPLE", text, white, inserted);
+            ImGui::NewLine(); ImGui::TextColored(cyan, "ROUTING"); ImGui::Separator();
+            draw_number("MIX MODE     ", mix, available);
+            draw_flag("DIGITAL PATH ", digital_enabled, inserted);
+            static const char* const digital_routes[] = { "STEREO", "L -> L+R", "R -> L+R", "HALF STEREO" };
+            u8 digital_route = input[0x0D] & 3;
+            if (mix == 0 && digital_route == 3)
+                digital_route = 1;
+            snprintf(text, sizeof(text), "$%02X / %s", input[0x0D], digital_routes[digital_route]);
+            draw_value("DIGITAL ROUTE", text, white, inserted && digital_enabled);
+            draw_flag("ANALOG PATH  ", analog_enabled, inserted);
+            static const char* const analog_routes[] = { "STEREO", "L -> L+R", "R -> L+R", "MUTED" };
+            snprintf(text, sizeof(text), "$%02X / %s", input[0x0E], analog_routes[input[0x0E] & 3]);
+            draw_value("ANALOG ROUTE ", text, white, inserted && analog_enabled);
+            draw_flag("INPUT FREEZE ", state.input_frozen, available);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Routing and gains show applied state. Pending input writes are visible in LaserActive Registers.");
+
+            ImGui::TableNextColumn();
+
+            ImGui::TextColored(cyan, "GAIN / ATTENUATION"); ImGui::Separator();
+            snprintf(text, sizeof(text), "$%02X / %.1f%%", input[0x0F], gain_bypassed ? 100.0 : input[0x0F] * 100.0 / 255.0);
+            draw_value("DIGITAL GAIN ", text, white, inserted && digital_enabled);
+            draw_value("GAIN MODE    ", gain_bypassed ? "BYPASSED" : "APPLIED", blue, inserted && digital_enabled);
+            bool fader_enabled = cdrom && cdrom->IsFaderEnabled(false);
+            if (fader_enabled)
+            {
+                snprintf(text, sizeof(text), "%.1f%% / %s", cdrom->GetFaderValue() * 100.0,
+                    (*cdrom->GetState()->FADER & 4) ? "FAST" : "SLOW");
+                draw_value("CD FADER     ", text, yellow, inserted && digital_enabled);
+            }
+            else
+                draw_value("CD FADER     ", "OFF", gray, inserted);
+            snprintf(text, sizeof(text), "$%02X / %.1f%%", state.analog_attenuation_left,
+                (256 - state.analog_attenuation_left) * 100.0 / 256.0);
+            draw_value("ANALOG LEFT  ", text, white, inserted && analog_enabled);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Latched attenuation / remaining gain before mute and fade.");
+            snprintf(text, sizeof(text), "$%02X / %.1f%%", state.analog_attenuation_right,
+                (256 - state.analog_attenuation_right) * 100.0 / 256.0);
+            draw_value("ANALOG RIGHT ", text, white, inserted && analog_enabled);
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Latched attenuation / remaining gain before mute and fade.");
+            draw_number("COMMAND $1E  ", input[0x1E], available, true);
+            draw_number("VALUE   $1F  ", input[0x1F], available, true);
+
+            ImGui::NewLine(); ImGui::TextColored(cyan, "ANALOG MUTE / FADE"); ImGui::Separator();
+            draw_flag("MUTE         ", (input[0x0E] & 0x80) != 0, inserted && analog_enabled);
+            draw_value("LEFT         ", state.analog_muted_left ? (state.analog_fade_samples_left ? "FADING" : "MUTED") : "OFF",
+                state.analog_muted_left ? yellow : gray, available);
+            draw_value("RIGHT        ", state.analog_muted_right ? (state.analog_fade_samples_right ? "FADING" : "MUTED") : "OFF",
+                state.analog_muted_right ? yellow : gray, available);
+            snprintf(text, sizeof(text), "%u / %.1f ms", state.analog_fade_samples_left,
+                state.analog_fade_samples_left * 1000.0 / GG_AUDIO_SAMPLE_RATE);
+            draw_value("FADE LEFT    ", text, white, inserted && state.analog_fade_samples_left != 0);
+            snprintf(text, sizeof(text), "%u / %.1f ms", state.analog_fade_samples_right,
+                state.analog_fade_samples_right * 1000.0 / GG_AUDIO_SAMPLE_RATE);
+            draw_value("FADE RIGHT   ", text, white, inserted && state.analog_fade_samples_right != 0);
+
+            ImGui::NewLine(); ImGui::TextColored(cyan, "OUTPUT / SAMPLES"); ImGui::Separator();
+            draw_number("FRAME SAMPLES", audio_state ? *audio_state->FRAME_SAMPLES / 2 : 0, inserted);
+            snprintf(text, sizeof(text), "%+06d", audio ? audio->GetLeftSample() : 0);
+            draw_value("LEFT         ", text, white, inserted);
+            snprintf(text, sizeof(text), "%+06d", audio ? audio->GetRightSample() : 0);
+            draw_value("RIGHT        ", text, white, inserted);
+            ImGui::EndTable();
+        }
         ImGui::EndDisabled();
     }
     end_window();

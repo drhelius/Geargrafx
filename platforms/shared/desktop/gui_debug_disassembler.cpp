@@ -2251,8 +2251,8 @@ static bool resolve_label_with_context(GG_Disassembler_Record* record, std::stri
     const stDebugLabel* labels = k_debug_labels;
     int label_count = k_debug_label_count;
     u16 offset = label_lookup - hardware_offset;
-    if (emu_get_core()->GetMedia()->IsLaserActive() &&
-        ((offset >= 0x18C0 && offset <= 0x18C3) || (offset >= 0x1920 && offset <= 0x195F)))
+
+    if (emu_get_core()->GetMedia()->IsLaserActive() && ((offset >= 0x18C0 && offset <= 0x18C3) || (offset >= 0x1920 && offset <= 0x195F)))
     {
         labels = k_debug_laseractive_labels;
         label_count = k_debug_laseractive_label_count;

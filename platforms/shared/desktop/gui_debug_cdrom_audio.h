@@ -26,8 +26,11 @@
     #define EXTERN extern
 #endif
 
+class CdRomAudio;
+
 EXTERN void gui_debug_cdrom_audio_init(void);
 EXTERN void gui_debug_cdrom_audio_destroy(void);
+EXTERN void gui_debug_cdrom_audio_output(CdRomAudio* cdrom_audio, const char* mute_tooltip);
 EXTERN void gui_debug_window_cdrom_audio(void);
 
 #undef GUI_DEBUG_CDROM_AUDIO_IMPORT

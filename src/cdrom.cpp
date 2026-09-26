@@ -83,7 +83,6 @@ void CdRom::SetLaserActive(LaserActive* laseractive)
 
 void CdRom::NotifyMediaEjected()
 {
-    // Cancel pending CD transactions on a tray-open event.
     m_scsi_controller->Reset(true);
 }
 
@@ -138,19 +137,23 @@ void CdRom::Reset()
 
 u8 CdRom::ReadRegister(u16 address)
 {
-    u16 hardware_address = address & 0x1FFF;
-    if (hardware_address > 0x180F && IsValidPointer(m_laseractive))
+    if (IsValidPointer(m_laseractive))
     {
-        if ((hardware_address >= 0x18C0) && (hardware_address <= 0x18C3))
-            return m_laseractive->ReadSramControl(hardware_address);
-        if ((hardware_address >= 0x1920) && (hardware_address <= 0x193F))
-            return m_laseractive->ReadRegister((u8)(hardware_address - 0x1920), false);
-        if ((hardware_address >= 0x1940) && (hardware_address <= 0x195F))
-            return m_laseractive->ReadRegister((u8)(hardware_address - 0x1940), true);
-        if (hardware_address >= 0x1960)
-            return 0xFF;
-        if ((hardware_address >= 0x18C4) || (hardware_address <= 0x18BF))
-            address = (u16)(0x1800 | (hardware_address & 0x0F));
+        u16 hardware_address = address & 0x1FFF;
+
+        if (hardware_address > 0x180F)
+        {
+            if ((hardware_address >= 0x18C0) && (hardware_address <= 0x18C3))
+                return m_laseractive->ReadSramControl(hardware_address);
+            if ((hardware_address >= 0x1920) && (hardware_address <= 0x193F))
+                return m_laseractive->ReadRegister((u8)(hardware_address - 0x1920), false);
+            if ((hardware_address >= 0x1940) && (hardware_address <= 0x195F))
+                return m_laseractive->ReadRegister((u8)(hardware_address - 0x1940), true);
+            if (hardware_address >= 0x1960)
+                return 0xFF;
+            if ((hardware_address >= 0x18C4) || (hardware_address <= 0x18BF))
+                address = (u16)(0x1800 | (hardware_address & 0x0F));
+        }
     }
 
     u16 reg = address & 0x3FF;
@@ -234,30 +237,34 @@ u8 CdRom::ReadRegister(u16 address)
 
 void CdRom::WriteRegister(u16 address, u8 value)
 {
-    u16 hardware_address = address & 0x1FFF;
-    if (hardware_address > 0x180F && IsValidPointer(m_laseractive))
+    if (IsValidPointer(m_laseractive))
     {
-        if (hardware_address == 0x18C0)
+        u16 hardware_address = address & 0x1FFF;
+
+        if (hardware_address > 0x180F)
         {
-            m_laseractive->WriteSramControl(value);
-            return;
+            if (hardware_address == 0x18C0)
+            {
+                m_laseractive->WriteSramControl(value);
+                return;
+            }
+            if ((hardware_address >= 0x18C1) && (hardware_address <= 0x18C3))
+                return;
+            if ((hardware_address >= 0x1920) && (hardware_address <= 0x193F))
+            {
+                m_laseractive->WriteRegister((u8)(hardware_address - 0x1920), false, value);
+                return;
+            }
+            if ((hardware_address >= 0x1940) && (hardware_address <= 0x195F))
+            {
+                m_laseractive->WriteRegister((u8)(hardware_address - 0x1940), true, value);
+                return;
+            }
+            if (hardware_address >= 0x1960)
+                return;
+            if ((hardware_address >= 0x18C4) || (hardware_address <= 0x18BF))
+                address = (u16)(0x1800 | (hardware_address & 0x0F));
         }
-        if ((hardware_address >= 0x18C1) && (hardware_address <= 0x18C3))
-            return;
-        if ((hardware_address >= 0x1920) && (hardware_address <= 0x193F))
-        {
-            m_laseractive->WriteRegister((u8)(hardware_address - 0x1920), false, value);
-            return;
-        }
-        if ((hardware_address >= 0x1940) && (hardware_address <= 0x195F))
-        {
-            m_laseractive->WriteRegister((u8)(hardware_address - 0x1940), true, value);
-            return;
-        }
-        if (hardware_address >= 0x1960)
-            return;
-        if ((hardware_address >= 0x18C4) || (hardware_address <= 0x18BF))
-            address = (u16)(0x1800 | (hardware_address & 0x0F));
     }
 
     u16 reg = address & 0x3FF;

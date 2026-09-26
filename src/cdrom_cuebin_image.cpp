@@ -137,6 +137,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
             Error("File %s is empty!", path);
         else
             m_ready = LoadFromCueData(path, buffer, size, preload, ResolveNormalFile, this);
+
         SafeDeleteArray(buffer);
     }
     else
@@ -154,8 +155,7 @@ bool CdRomCueBinImage::LoadFromFile(const char* path, bool preload)
 bool CdRomCueBinImage::LoadFromCueData(const char* source_path, const u8* cue_data,
     size_t cue_size, bool preload, GG_CdRomCueFileResolver resolver, void* resolver_user_data)
 {
-    if (!IsValidPointer(source_path) || !IsValidPointer(cue_data) || (cue_size == 0) ||
-        (cue_size > 0x7FFFFFFF) || !IsValidPointer(resolver))
+    if (!IsValidPointer(source_path) || !IsValidPointer(cue_data) || (cue_size == 0) || (cue_size > 0x7FFFFFFF) || !IsValidPointer(resolver))
     {
         Error("Invalid in-memory CUE data");
         return false;
@@ -202,15 +202,13 @@ MediaFile* CdRomCueBinImage::ResolveNormalFile(const char* reference, char* reso
     size_t resolved_path_size, void* user_data)
 {
     CdRomCueBinImage* image = reinterpret_cast<CdRomCueBinImage*>(user_data);
-    if (!IsValidPointer(image) || !IsValidPointer(reference) || !IsValidPointer(resolved_path) ||
-        (resolved_path_size == 0))
+    if (!IsValidPointer(image) || !IsValidPointer(reference) || !IsValidPointer(resolved_path) || (resolved_path_size == 0))
     {
         return NULL;
     }
 
     std::string path = reference;
-    if (!path.empty() && !image->IsUriPath(path.c_str()) && (path[0] != '/') && (path[0] != '\\') &&
-        ((path.size() < 2) || (path[1] != ':')))
+    if (!path.empty() && !image->IsUriPath(path.c_str()) && (path[0] != '/') && (path[0] != '\\') && ((path.size() < 2) || (path[1] != ':')))
     {
         path = std::string(image->m_file_directory) + "/" + path;
     }
@@ -290,8 +288,7 @@ bool CdRomCueBinImage::ReadSector(u32 lba, u8* buffer)
     if (m_current_sector >= m_toc.sector_count)
         m_current_sector = m_toc.sector_count - 1;
 
-    Debug("Reading sector %d from track %d (offset: %llu)", lba, track_index,
-        (unsigned long long)byte_offset);
+    Debug("Reading sector %d from track %d (offset: %llu)", lba, track_index, (unsigned long long)byte_offset);
 
     return ReadFromImgFile(img_file, byte_offset, buffer, sector_size);
 }
@@ -446,8 +443,7 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     }
     else
     {
-        Debug("Preloading all sectors for track %u (sectors: %u, bytes: %llu)", track_number,
-            track.sector_count, (unsigned long long)total_bytes);
+        Debug("Preloading all sectors for track %u (sectors: %u, bytes: %llu)", track_number, track.sector_count, (unsigned long long)total_bytes);
     }
 
     return PreloadChunks(track_file.img_file, start_chunk, chunks_needed);
@@ -654,8 +650,7 @@ bool CdRomCueBinImage::ProcessOggFormat(ImgFile* img_file)
     img_file->file_size = (u32)(sector_count * 2352);
     img_file->is_ogg = true;
 
-    Debug("Ogg Vorbis virtual PCM size: %llu bytes, %llu sector(s)",
-        (unsigned long long)decoded_pcm_size, (unsigned long long)sector_count);
+    Debug("Ogg Vorbis virtual PCM size: %llu bytes, %llu sector(s)", (unsigned long long)decoded_pcm_size, (unsigned long long)sector_count);
 
     return true;
 }
@@ -751,8 +746,7 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
         return false;
     }
     
-    Debug("WAV data chunk found at offset %llu with size %u",
-        (unsigned long long)data_offset, data_size);
+    Debug("WAV data chunk found at offset %llu with size %u", (unsigned long long)data_offset, data_size);
 
     img_file->is_wav = true;
     img_file->wav_data_offset = data_offset;
@@ -798,8 +792,7 @@ bool CdRomCueBinImage::SetupFileChunks(ImgFile* img_file)
     const u64 max_chunk_count = (u64)SIZE_MAX / MAX(sizeof(u8*), sizeof(u64));
     if ((img_file->chunk_cache_count == 0) || (img_file->chunk_cache_count > max_chunk_count))
     {
-        Error("Invalid chunk cache size for %s: %llu", img_file->file_path,
-            (unsigned long long)img_file->chunk_cache_count);
+        Error("Invalid chunk cache size for %s: %llu", img_file->file_path, (unsigned long long)img_file->chunk_cache_count);
         return false;
     }
 
@@ -1180,8 +1173,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
             last_sector_count++;
         }
 
-        if ((last_sector_count == 0) || (last_sector_count > UINT32_MAX) ||
-            (last_sector_count > (u64)UINT32_MAX - last.start_lba + 1))
+        if ((last_sector_count == 0) || (last_sector_count > UINT32_MAX) || (last_sector_count > (u64)UINT32_MAX - last.start_lba + 1))
         {
             Error("Invalid CUE track sector count in %s", f.img_file->file_path);
             return false;

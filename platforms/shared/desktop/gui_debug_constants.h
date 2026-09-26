@@ -188,11 +188,8 @@ static const stDebugLabel k_debug_laseractive_labels[] =
     { 0x195E, "PD_OUT_STOP_HIGH" },
     { 0x195F, "PD_OUT_STOP_STATUS" },
 };
-static const int k_debug_laseractive_label_count =
-    sizeof(k_debug_laseractive_labels) / sizeof(k_debug_laseractive_labels[0]);
 
-static const int k_debug_label_count = 43;
-static const stDebugLabel k_debug_labels[k_debug_label_count] = 
+static const stDebugLabel k_debug_labels[] =
 {
     { 0x0000, "VDC_ADDRESS" },
     { 0x0002, "VDC_DATA_LO" },
@@ -239,9 +236,7 @@ static const stDebugLabel k_debug_labels[k_debug_label_count] =
     { 0x18C3, "CD_SIGNATURE3" }
 };
 
-static const int k_cdrom_bios_symbol_count = 76;
-
-static const stDebugLabel k_cdrom_bios_symbols[k_cdrom_bios_symbol_count] = 
+static const stDebugLabel k_cdrom_bios_symbols[] =
 {
     // CD commands
     { 0xE000, "CD_BOOT"     },
@@ -333,5 +328,9 @@ static const stDebugLabel k_cdrom_bios_symbols[k_cdrom_bios_symbol_count] =
     { 0xE0DE, "GRP_BIOS"    },
     { 0xE0E1, "PSG_DRIVE"   }
 };
+
+static const int k_debug_laseractive_label_count = sizeof(k_debug_laseractive_labels) / sizeof(k_debug_laseractive_labels[0]);
+static const int k_cdrom_bios_symbol_count = sizeof(k_cdrom_bios_symbols) / sizeof(k_cdrom_bios_symbols[0]);
+static const int k_debug_label_count = sizeof(k_debug_labels) / sizeof(k_debug_labels[0]);
 
 #endif /* GUI_DEBUG_CONSTANTS_H */

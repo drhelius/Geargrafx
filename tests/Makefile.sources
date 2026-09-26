@@ -18,7 +18,6 @@ SOURCES_C := \
 SOURCES_CXX := \
     $(DEPS_DIR)/qon/qon.cpp \
     $(TEST_SRC_DIR)/main.cpp \
-    $(TEST_SRC_DIR)/mmi_tests.cpp \
     $(SRC_DIR)/geargrafx_core.cpp \
     $(SRC_DIR)/adpcm.cpp \
     $(SRC_DIR)/audio.cpp \

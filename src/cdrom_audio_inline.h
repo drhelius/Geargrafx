@@ -69,8 +69,7 @@ INLINE void CdRomAudio::Sample()
     m_left_sample = 0;
     m_right_sample = 0;
 
-    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0) &&
-        (m_playback_delay_cycles == 0) && !IsValidPointer(m_laseractive))
+    if ((m_current_state == CD_AUDIO_STATE_PLAYING) && (m_seek_cycles == 0) && (m_playback_delay_cycles == 0) && !IsValidPointer(m_laseractive))
         GenerateSamples();
     else if (IsValidPointer(m_laseractive))
         m_laseractive->Sample(m_left_sample, m_right_sample);
@@ -94,11 +93,15 @@ INLINE CdRomAudio::CdAudioState CdRomAudio::GetCurrentState()
 
     switch (m_laseractive->GetDriveMode())
     {
-        case LaserActive::DRIVE_PLAYING: return CD_AUDIO_STATE_PLAYING;
+        case LaserActive::DRIVE_PLAYING:
+            return CD_AUDIO_STATE_PLAYING;
         case LaserActive::DRIVE_PAUSED:
-        case LaserActive::DRIVE_SEEKING: return CD_AUDIO_STATE_PAUSED;
-        case LaserActive::DRIVE_READING: return CD_AUDIO_STATE_IDLE;
-        default: return CD_AUDIO_STATE_STOPPED;
+        case LaserActive::DRIVE_SEEKING:
+            return CD_AUDIO_STATE_PAUSED;
+        case LaserActive::DRIVE_READING:
+            return CD_AUDIO_STATE_IDLE;
+        default:
+            return CD_AUDIO_STATE_STOPPED;
     }
 }
 

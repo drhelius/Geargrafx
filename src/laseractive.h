@@ -77,6 +77,10 @@ public:
         bool input_frozen;
         bool output_frozen;
         u32 sample;
+        s32 audio_end_lba;
+        u8 playback_mode;
+        bool digital_sector_valid;
+        bool audio_end_pending;
         s32 video_frame;
         u32 search_sectors;
         u32 analog_fade_samples_left;

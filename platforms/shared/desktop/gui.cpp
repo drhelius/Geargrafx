@@ -876,9 +876,11 @@ static bool finish_loading_rom(void)
         Media* media = emu_get_core()->GetMedia();
         bool is_gameexpress = media->IsGameExpress();
         std::string bios_name;
+
         if (media->IsLaserActive())
         {
             const GG_MmiInfo* info = emu_get_core()->GetCDROMMedia()->GetMmiInfo();
+
             if (info && (info->card == "System Card 1.0"))
                 bios_name = "The Japanese System Card 1.0 BIOS";
             else if (info && (info->card == "Games Express"))
