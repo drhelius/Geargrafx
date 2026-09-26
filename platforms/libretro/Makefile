@@ -332,11 +332,9 @@ endif
 
 ifneq (,$(filter $(platform),unix osx win))
 	CXXFLAGS += -DGG_ENABLE_CDROM_CUEBIN_READAHEAD
-else
-	CXXFLAGS += -DGG_DISABLE_MMI_THREADS
 endif
 
-ifneq (,$(filter $(platform),unix win))
+ifneq (,$(filter unix% win% classic_armv7_a7 rs90 gcw0 retrofw miyoo,$(platform)))
 	CXXFLAGS += -pthread
 	LDFLAGS += -pthread
 endif

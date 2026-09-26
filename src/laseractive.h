@@ -23,6 +23,16 @@
 
 #include <iostream>
 #include <vector>
+
+#if defined(__LIBRETRO__) && !defined(GG_DISABLE_MMI_THREADS)
+#if (defined(__GLIBCXX__) && !defined(_GLIBCXX_HAS_GTHREADS)) || \
+    (defined(_LIBCPP_HAS_THREADS) && !_LIBCPP_HAS_THREADS) || \
+    defined(_LIBCPP_HAS_NO_THREADS) || \
+    (defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__))
+#define GG_DISABLE_MMI_THREADS
+#endif
+#endif
+
 #if !defined(GG_DISABLE_MMI_THREADS)
 #include <condition_variable>
 #include <mutex>
