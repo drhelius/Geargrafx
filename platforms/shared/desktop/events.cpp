@@ -408,7 +408,7 @@ static Uint16 input_build_state(int controller, bool update_turbo)
     if (IsValidPointer(sdl_controller))
     {
         // Use D-Pad
-        if (gamepad_primary->gamepad_directional == 0)
+        if (gamepad_primary->gamepad_directional == 0 || gamepad_primary->gamepad_directional == 2)
         {
             if (SDL_GetGamepadButton(sdl_controller, SDL_GAMEPAD_BUTTON_DPAD_LEFT))
                 ret |= GG_KEY_LEFT;
@@ -420,7 +420,7 @@ static Uint16 input_build_state(int controller, bool update_turbo)
                 ret |= GG_KEY_DOWN;
         }
         // Use analog sticks
-        else
+        if (gamepad_primary->gamepad_directional == 1 || gamepad_primary->gamepad_directional == 2)
         {
             const int STICK_DEAD_ZONE = 8000;
             const int rawx = SDL_GetGamepadAxis(sdl_controller, (SDL_GamepadAxis)gamepad_primary->gamepad_x_axis);

@@ -2646,9 +2646,9 @@ static void gamepad_profile_menu(int player, config_InputProfile profile)
     ImGui::Text("D-pad:");
     ImGui::SameLine(150.0f);
     
-    ImGui::PushItemWidth(180.0f);
+    ImGui::PushItemWidth(200.0f);
     ImGui::Combo("##directional", &primary->gamepad_directional,
-        "D-pad\0Left Analog Stick\0\0");
+        "D-pad\0Left Analog Stick\0D-pad + Left Analog Stick\0\0");
     ImGui::PopItemWidth();
 }
 

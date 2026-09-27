@@ -433,7 +433,7 @@ static inline void process(config_Operation operation)
 
             config_Input_Gamepad* primary = &config_input_gamepad[i][profile][0];
             config_Input_Gamepad* secondary = &config_input_gamepad[i][profile][1];
-            CONFIG_INT(gamepad_section, "GamepadDirectional", primary->gamepad_directional, 0);
+            CONFIG_INT_RANGE(gamepad_section, "GamepadDirectional", primary->gamepad_directional, 0, 0, 2);
             CONFIG_BOOL(gamepad_section, "GamepadInvertX", primary->gamepad_invert_x_axis, false);
             CONFIG_BOOL(gamepad_section, "GamepadInvertY", primary->gamepad_invert_y_axis, false);
             CONFIG_INT(gamepad_section, "GamepadX", primary->gamepad_x_axis, SDL_GAMEPAD_AXIS_LEFTX);
