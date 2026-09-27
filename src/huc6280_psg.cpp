@@ -379,8 +379,8 @@ void HuC6280PSG::Sync()
 
                 data = m_lfo_dest->wave_data[m_lfo_dest->wave_index];
             }
-            // LFO source
-            else if (lfo_configured && (i == 1))
+            // LFO source or channel 1 held by the trigger, even without modulation
+            else if ((i == 1) && (lfo_configured || IS_SET_BIT(m_lfo_control, 7)))
                 data = m_lfo_src->wave_data[m_lfo_src->wave_index];
             // Waveform without LFO
             else
