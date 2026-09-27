@@ -172,7 +172,7 @@ bool CdRomChdImage::ReadSector(u32 lba, u8* buffer)
     }
 
     const Track& track = m_toc.tracks[(size_t)track_index];
-    u32 sector_index = (lba - track.start_lba) + track.file_offset;
+    u32 sector_index = (lba - track.start_lba) + (u32)track.file_offset;
     u32 hunk_index  = sector_index / m_sectors_per_hunk;
     u32 hunk_offset = sector_index % m_sectors_per_hunk;
     u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
@@ -227,7 +227,7 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
     }
 
     const Track& track = m_toc.tracks[(size_t)track_index];
-    u32 sector_index = (lba - track.start_lba) + track.file_offset;
+    u32 sector_index = (lba - track.start_lba) + (u32)track.file_offset;
     u32 hunk_index  = sector_index / m_sectors_per_hunk;
     u32 hunk_offset = sector_index % m_sectors_per_hunk;
     u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
@@ -298,10 +298,10 @@ bool CdRomChdImage::PreloadTrack(u32 track_number)
     if (track.sector_count == 0)
         return true;
 
-    u32 first_sector = track.file_offset;
+    u32 first_sector = (u32)track.file_offset;
     u32 last_sector = 0;
 
-    if (!checked_add_u32(track.file_offset, track.sector_count - 1, &last_sector))
+    if (!checked_add_u32(first_sector, track.sector_count - 1, &last_sector))
     {
         Error("PreloadTrack failed - Track sector range overflow");
         return false;

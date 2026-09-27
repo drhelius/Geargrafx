@@ -120,7 +120,7 @@ s64 MediaFileNative::Read(void* buffer, u64 size)
     if (!m_file.is_open())
         return -1;
 
-    if (size > (u64)std::numeric_limits<std::streamsize>::max())
+    if (size > (u64)(std::numeric_limits<std::streamsize>::max)())
         return -1;
 
     m_file.read(reinterpret_cast<char*>(buffer), (std::streamsize)size);

@@ -95,7 +95,7 @@ void gui_debug_memory_reset(void)
     bool is_sgx = media->IsSGX();
     bool is_laser_active = media->IsLaserActive();
     u8* mapped_rom = is_laser_active ? media->GetMappedBios() : media->GetROM();
-    size_t mapped_rom_size = is_laser_active ? media->GetMappedBiosSize() : media->GetROMSize();
+    int mapped_rom_size = is_laser_active ? media->GetMappedBiosSize() : media->GetROMSize();
 
     mem_edit[MEMORY_EDITOR_LOGICAL].Reset("LOGICAL", 0x10000, logical_memory_read, logical_memory_write, logical_memory_can_write, memory);
     mem_edit[MEMORY_EDITOR_LOGICAL].SetAddressFormatter(logical_memory_format_address, 7);

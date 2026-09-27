@@ -608,6 +608,7 @@ INLINE void Memory::CheckPhysicalMemoryBreakpoints(u8 bank, u32 offset, bool rea
             if (!m_media->IsLaserActive())
                 return;
         }
+        // fall through
 
         case MEMORY_BANK_TYPE_ROM:
         {

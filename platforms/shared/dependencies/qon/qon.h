@@ -136,7 +136,6 @@ int qon_encode_header(const qon_desc *desc, unsigned char *bytes) {
 }
 
 int qon_decode_header(const unsigned char *bytes, size_t byte_count, qon_desc *desc) {
-	size_t p = 0;
 	unsigned int header_magic;
 
 	if (bytes == NULL || desc == NULL || (byte_count < QON_BARE_HEADER_SIZE)) {

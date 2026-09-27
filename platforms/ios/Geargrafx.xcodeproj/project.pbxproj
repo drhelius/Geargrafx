@@ -8,11 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		A20000000000000000000002 /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* AVFAudio.framework */; };
-		B30000000000000000000001 /* libchdr_bitstream.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000001 /* libchdr_bitstream.c */; };
-		B30000000000000000000002 /* libchdr_cdrom.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000002 /* libchdr_cdrom.c */; };
-		B30000000000000000000003 /* libchdr_chd.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000003 /* libchdr_chd.c */; };
-		B30000000000000000000004 /* libchdr_flac.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000004 /* libchdr_flac.c */; };
-		B30000000000000000000005 /* libchdr_huffman.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000005 /* libchdr_huffman.c */; };
+		B30000000000000000000001 /* libchdr_bitstream.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000001 /* libchdr_bitstream.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		B30000000000000000000002 /* libchdr_cdrom.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000002 /* libchdr_cdrom.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		B30000000000000000000003 /* libchdr_chd.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000003 /* libchdr_chd.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		B30000000000000000000004 /* libchdr_flac.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000004 /* libchdr_flac.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		B30000000000000000000005 /* libchdr_huffman.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000005 /* libchdr_huffman.c */; settings = {COMPILER_FLAGS = "-w"; }; };
 		B30000000000000000000006 /* LzFind.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000006 /* LzFind.c */; };
 		B30000000000000000000007 /* LzmaEnc.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000007 /* LzmaEnc.c */; };
 		B30000000000000000000008 /* LzmaDec.c in Sources */ = {isa = PBXBuildFile; fileRef = B30100000000000000000008 /* LzmaDec.c */; };

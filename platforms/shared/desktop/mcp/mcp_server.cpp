@@ -33,6 +33,90 @@ static void add_trace_event_filter(u32* flags, u32* event_filters,
     event_filters[type] |= filter;
 }
 
+static bool parse_trace_filter(const std::string& filter, u32* flags, u32* event_filters)
+{
+    if (filter == "cpu.instructions")
+        *flags |= TRACE_FLAG_CPU;
+    else if (filter == "cpu.irqs")
+        *flags |= TRACE_FLAG_CPU_IRQ;
+    else if (filter == "vdc.registers")
+        add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_REGISTERS);
+    else if (filter == "vdc.irqs")
+        add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_IRQS);
+    else if (filter == "vdc.dma")
+        add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_DMA);
+    else if (filter == "vce.registers")
+        add_trace_event_filter(flags, event_filters, TRACE_VCE, TRACE_VCE_FILTER_REGISTERS);
+    else if (filter == "vce.timing")
+        add_trace_event_filter(flags, event_filters, TRACE_VCE, TRACE_VCE_FILTER_TIMING);
+    else if (filter == "input.reads")
+        add_trace_event_filter(flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_READS);
+    else if (filter == "input.writes")
+        add_trace_event_filter(flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_WRITES);
+    else if (filter == "input.turbolink")
+        add_trace_event_filter(flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_TURBOLINK);
+    else if (filter == "input.turbolink.writes")
+        add_trace_event_filter(flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_TURBOLINK_WRITES);
+    else if (filter == "input.turbolink.drive")
+        add_trace_event_filter(flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_TURBOLINK_DRIVE);
+    else if (filter == "input.turbolink.samples")
+        add_trace_event_filter(flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_TURBOLINK_SAMPLES);
+    else if (filter == "input.turbolink.cable")
+        add_trace_event_filter(flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_TURBOLINK_CABLE);
+    else if (filter == "timer.irqs")
+        add_trace_event_filter(flags, event_filters, TRACE_TIMER, TRACE_TIMER_FILTER_IRQS);
+    else if (filter == "timer.registers")
+        add_trace_event_filter(flags, event_filters, TRACE_TIMER, TRACE_TIMER_FILTER_REGISTERS);
+    else if (filter == "cdrom.irqs")
+        add_trace_event_filter(flags, event_filters, TRACE_CDROM, TRACE_CDROM_FILTER_IRQS);
+    else if (filter == "cdrom.control")
+        add_trace_event_filter(flags, event_filters, TRACE_CDROM, TRACE_CDROM_FILTER_CONTROL);
+    else if (filter == "cdrom.audio")
+        add_trace_event_filter(flags, event_filters, TRACE_CDROM, TRACE_CDROM_FILTER_AUDIO);
+    else if (filter == "psg.global_lfo")
+        add_trace_event_filter(flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_GLOBAL);
+    else if (filter == "psg.frequency")
+        add_trace_event_filter(flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_FREQUENCY);
+    else if (filter == "psg.channel")
+        add_trace_event_filter(flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_CHANNEL);
+    else if (filter == "psg.wave_dda")
+        add_trace_event_filter(flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_WAVE);
+    else if (filter == "psg.noise")
+        add_trace_event_filter(flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_NOISE);
+    else if (filter == "adpcm.registers")
+        add_trace_event_filter(flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_REGISTERS);
+    else if (filter == "adpcm.dma")
+        add_trace_event_filter(flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_DMA);
+    else if (filter == "adpcm.playback")
+        add_trace_event_filter(flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_PLAYBACK);
+    else if (filter == "adpcm.transfers")
+        add_trace_event_filter(flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_TRANSFERS);
+    else if (filter == "adpcm.irqs")
+        add_trace_event_filter(flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_IRQS);
+    else if (filter == "scsi.commands")
+        add_trace_event_filter(flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_COMMANDS);
+    else if (filter == "scsi.phases")
+        add_trace_event_filter(flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_PHASES);
+    else if (filter == "scsi.responses")
+        add_trace_event_filter(flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_RESPONSES);
+    else if (filter == "scsi.response_bytes")
+        add_trace_event_filter(flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_RESPONSE_BYTES);
+    else if (filter == "scsi.transfers")
+        add_trace_event_filter(flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_TRANSFERS);
+    else if (filter == "scsi.problems")
+        add_trace_event_filter(flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_PROBLEMS);
+    else if (filter == "system.mpr")
+        add_trace_event_filter(flags, event_filters, TRACE_SYSTEM, TRACE_SYSTEM_FILTER_MPR);
+    else if (filter == "system.mapper")
+        add_trace_event_filter(flags, event_filters, TRACE_SYSTEM, TRACE_SYSTEM_FILTER_MAPPER);
+    else if (filter == "system.interrupts")
+        add_trace_event_filter(flags, event_filters, TRACE_SYSTEM, TRACE_SYSTEM_FILTER_INTERRUPTS);
+    else
+        return false;
+
+    return true;
+}
+
 void McpServer::ReaderLoop()
 {
     while (m_running.load())
@@ -3222,85 +3306,8 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
                 for (json::const_iterator it = filters.begin(); it != filters.end(); ++it)
                 {
                     std::string filter = it->get<std::string>();
-                    if (filter == "cpu.instructions") flags |= TRACE_FLAG_CPU;
-                    else if (filter == "cpu.irqs") flags |= TRACE_FLAG_CPU_IRQ;
-                    else if (filter == "vdc.registers")
-                        add_trace_event_filter(&flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_REGISTERS);
-                    else if (filter == "vdc.irqs")
-                        add_trace_event_filter(&flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_IRQS);
-                    else if (filter == "vdc.dma")
-                        add_trace_event_filter(&flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_DMA);
-                    else if (filter == "vce.registers")
-                        add_trace_event_filter(&flags, event_filters, TRACE_VCE, TRACE_VCE_FILTER_REGISTERS);
-                    else if (filter == "vce.timing")
-                        add_trace_event_filter(&flags, event_filters, TRACE_VCE, TRACE_VCE_FILTER_TIMING);
-                    else if (filter == "input.reads")
-                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_READS);
-                    else if (filter == "input.writes")
-                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_WRITES);
-                    else if (filter == "input.turbolink")
-                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT, TRACE_INPUT_FILTER_TURBOLINK);
-                    else if (filter == "input.turbolink.writes")
-                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT,
-                            TRACE_INPUT_FILTER_TURBOLINK_WRITES);
-                    else if (filter == "input.turbolink.drive")
-                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT,
-                            TRACE_INPUT_FILTER_TURBOLINK_DRIVE);
-                    else if (filter == "input.turbolink.samples")
-                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT,
-                            TRACE_INPUT_FILTER_TURBOLINK_SAMPLES);
-                    else if (filter == "input.turbolink.cable")
-                        add_trace_event_filter(&flags, event_filters, TRACE_INPUT,
-                            TRACE_INPUT_FILTER_TURBOLINK_CABLE);
-                    else if (filter == "timer.irqs")
-                        add_trace_event_filter(&flags, event_filters, TRACE_TIMER, TRACE_TIMER_FILTER_IRQS);
-                    else if (filter == "timer.registers")
-                        add_trace_event_filter(&flags, event_filters, TRACE_TIMER, TRACE_TIMER_FILTER_REGISTERS);
-                    else if (filter == "cdrom.irqs")
-                        add_trace_event_filter(&flags, event_filters, TRACE_CDROM, TRACE_CDROM_FILTER_IRQS);
-                    else if (filter == "cdrom.control")
-                        add_trace_event_filter(&flags, event_filters, TRACE_CDROM, TRACE_CDROM_FILTER_CONTROL);
-                    else if (filter == "cdrom.audio")
-                        add_trace_event_filter(&flags, event_filters, TRACE_CDROM, TRACE_CDROM_FILTER_AUDIO);
-                    else if (filter == "psg.global_lfo")
-                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_GLOBAL);
-                    else if (filter == "psg.frequency")
-                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_FREQUENCY);
-                    else if (filter == "psg.channel")
-                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_CHANNEL);
-                    else if (filter == "psg.wave_dda")
-                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_WAVE);
-                    else if (filter == "psg.noise")
-                        add_trace_event_filter(&flags, event_filters, TRACE_PSG, TRACE_PSG_FILTER_NOISE);
-                    else if (filter == "adpcm.registers")
-                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_REGISTERS);
-                    else if (filter == "adpcm.dma")
-                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_DMA);
-                    else if (filter == "adpcm.playback")
-                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_PLAYBACK);
-                    else if (filter == "adpcm.transfers")
-                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_TRANSFERS);
-                    else if (filter == "adpcm.irqs")
-                        add_trace_event_filter(&flags, event_filters, TRACE_ADPCM, TRACE_ADPCM_FILTER_IRQS);
-                    else if (filter == "scsi.commands")
-                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_COMMANDS);
-                    else if (filter == "scsi.phases")
-                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_PHASES);
-                    else if (filter == "scsi.responses")
-                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_RESPONSES);
-                    else if (filter == "scsi.response_bytes")
-                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_RESPONSE_BYTES);
-                    else if (filter == "scsi.transfers")
-                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_TRANSFERS);
-                    else if (filter == "scsi.problems")
-                        add_trace_event_filter(&flags, event_filters, TRACE_SCSI, TRACE_SCSI_FILTER_PROBLEMS);
-                    else if (filter == "system.mpr")
-                        add_trace_event_filter(&flags, event_filters, TRACE_SYSTEM, TRACE_SYSTEM_FILTER_MPR);
-                    else if (filter == "system.mapper")
-                        add_trace_event_filter(&flags, event_filters, TRACE_SYSTEM, TRACE_SYSTEM_FILTER_MAPPER);
-                    else if (filter == "system.interrupts")
-                        add_trace_event_filter(&flags, event_filters, TRACE_SYSTEM, TRACE_SYSTEM_FILTER_INTERRUPTS);
-                    else return {{"error", "Unknown trace filter: " + filter}};
+                    if (!parse_trace_filter(filter, &flags, event_filters))
+                        return {{"error", "Unknown trace filter: " + filter}};
                 }
 
                 if (flags == 0)
