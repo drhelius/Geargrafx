@@ -265,7 +265,8 @@ void HuC6280PSG::Write(u16 address, u8 value)
         if (IS_SET_BIT(value, 7))
         {
             u16 lfo_freq = m_lfo_src->frequency ? m_lfo_src->frequency : 0x1000;
-            m_lfo_src->counter = lfo_freq * GetLfoFrequency();
+            // Reload the period active before this control write.
+            m_lfo_src->counter = lfo_freq * (m_lfo_enabled ? GetLfoFrequency() : 1);
             m_lfo_src->wave_index = 0;
             m_lfo_src->dda = m_lfo_src->wave_data[0];
         }
