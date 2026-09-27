@@ -356,8 +356,10 @@ else
 	BUILD_CONFIG = Release
 	CXXFLAGS += -O3 -DNDEBUG
 	ifeq ($(LTO), 1)
-		CXXFLAGS += -flto=auto
-		LDFLAGS += -O3 -flto=auto
+		LTO_FLAGS := $(shell $(CXX) -x c++ -flto=auto -c /dev/null -o /dev/null >/dev/null 2>&1 \
+			&& echo -flto=auto || echo -flto)
+		CXXFLAGS += $(LTO_FLAGS)
+		LDFLAGS += -O3 $(LTO_FLAGS)
 	endif
 endif
 
