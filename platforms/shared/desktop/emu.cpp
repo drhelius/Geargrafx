@@ -546,7 +546,13 @@ bool emu_is_empty(void)
     return !geargrafx->GetMedia()->IsReady();
 }
 
-void emu_reset(void)
+void emu_save_persistent_data(void)
+{
+    save_ram();
+    save_mb128();
+}
+
+void emu_reset(bool save_persistent_data)
 {
     gui_debug_trace_logger_reset();
     emu_debug_command = Debug_Command_None;
@@ -556,8 +562,8 @@ void emu_reset(void)
     reset_buffers();
     reset_rewind_timing();
     emu_audio_reset();
-    save_ram();
-    save_mb128();
+    if (save_persistent_data)
+        emu_save_persistent_data();
     geargrafx->ResetMedia(false);
     load_ram();
     load_mb128();

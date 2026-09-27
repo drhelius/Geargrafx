@@ -104,15 +104,37 @@ bool gui_init(void)
         gui_default_fonts[i] = io.Fonts->AddFontDefault(&font_cfg);
     }
 
-    gui_default_font = gui_default_fonts[config_debug.font_size];
+    gui_custom_palette_loaded = false;
+    gui_apply_settings();
 
+    if (strlen(gui_syscard_bios_path) > 0)
+        gui_load_bios(gui_syscard_bios_path, true);
+    if (strlen(gui_gameexpress_bios_path) > 0)
+        gui_load_bios(gui_gameexpress_bios_path, false);
+    if (strlen(gui_pac_japan_bios_path) > 0)
+        gui_load_pac_bios(gui_pac_japan_bios_path, GG_LASERACTIVE_REGION_JAPAN);
+    if (strlen(gui_pac_us_bios_path) > 0)
+        gui_load_pac_bios(gui_pac_us_bios_path, GG_LASERACTIVE_REGION_US);
+
+    load_custom_palette_from_settings();
+
+    gui_hes_init();
+    gui_debug_init();
+    gui_init_menus();
+
+    return true;
+}
+
+void gui_apply_settings(void)
+{
+    gui_default_font = gui_default_fonts[config_debug.font_size];
     set_style();
 
     gui_audio_mute_cdrom = false;
     gui_audio_mute_psg = false;
     gui_audio_mute_adpcm = false;
-    gui_custom_palette_loaded = false;
 
+    emu_audio_sync = config_audio.sync;
     emu_audio_mute(!config_audio.enable);
     emu_audio_psg_revision(config_audio.psg_revision);
     emu_audio_adpcm_clock_speed(config_audio.adpcm_clock_mode, config_audio.adpcm_clock_speed);
@@ -147,7 +169,7 @@ bool gui_init(void)
     emu_set_backup_ram(config_emulator.backup_ram);
     emu_set_mb128_mode((GG_MB128_Mode)config_emulator.mb128_mode);
     emu_set_disassembler_syntax(config_debug.dis_syntax);
-    emu_set_palette(config_video.palette);
+    emu_turbolink_set_normal_barrier_stall_us((u32)config_emulator.turbolink_stall_us);
     emu_set_turbo_tap(config_input.turbo_tap);
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -175,22 +197,6 @@ bool gui_init(void)
     strncpy_fit(gui_pac_japan_bios_path, config_emulator.pac_japan_bios_path.c_str(), sizeof(gui_pac_japan_bios_path));
     strncpy_fit(gui_pac_us_bios_path, config_emulator.pac_us_bios_path.c_str(), sizeof(gui_pac_us_bios_path));
     strncpy_fit(gui_mcp_http_address, config_emulator.mcp_http_address.c_str(), sizeof(gui_mcp_http_address));
-    if (strlen(gui_syscard_bios_path) > 0)
-        gui_load_bios(gui_syscard_bios_path, true);
-    if (strlen(gui_gameexpress_bios_path) > 0)
-        gui_load_bios(gui_gameexpress_bios_path, false);
-    if (strlen(gui_pac_japan_bios_path) > 0)
-        gui_load_pac_bios(gui_pac_japan_bios_path, GG_LASERACTIVE_REGION_JAPAN);
-    if (strlen(gui_pac_us_bios_path) > 0)
-        gui_load_pac_bios(gui_pac_us_bios_path, GG_LASERACTIVE_REGION_US);
-
-    load_custom_palette_from_settings();
-
-    gui_hes_init();
-    gui_debug_init();
-    gui_init_menus();
-
-    return true;
 }
 
 void gui_destroy(void)

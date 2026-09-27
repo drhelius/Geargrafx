@@ -54,7 +54,17 @@ static bool memory_settings_read_editor(std::istream& stream, std::vector<MemEdi
 void gui_debug_memory_init(void)
 {
     gui_debug_memory_reset();
+    gui_debug_memory_apply_settings();
 
+    for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
+    {
+        if (i != MEMORY_EDITOR_PHYSICAL)
+            mem_edit[i].SetBreakpointCallback(toggle_memory_breakpoint, i);
+    }
+}
+
+void gui_debug_memory_apply_settings(void)
+{
     for (int i = 0; i < MEMORY_EDITOR_MAX; i++)
     {
         MemEditor::Options options;
@@ -64,9 +74,6 @@ void gui_debug_memory_init(void)
         options.uppercase_hex = config_debug.mem_editor_uppercase_hex[i];
         options.gray_out_zeros = config_debug.mem_editor_gray_out_zeros[i];
         mem_edit[i].SetOptions(options);
-
-        if (i != MEMORY_EDITOR_PHYSICAL)
-            mem_edit[i].SetBreakpointCallback(toggle_memory_breakpoint, i);
     }
 }
 

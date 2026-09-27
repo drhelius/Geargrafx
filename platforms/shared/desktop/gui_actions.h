@@ -26,6 +26,7 @@
     #define EXTERN extern
 #endif
 
+EXTERN void gui_action_load_defaults(void);
 EXTERN void gui_action_reset(void);
 EXTERN void gui_action_reload_rom(void);
 #if defined(GG_ENABLE_PHYSICAL_CDROM)

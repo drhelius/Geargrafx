@@ -388,7 +388,7 @@ static void menu_geargrafx(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Load Default Settings"))
+        if (ImGui::MenuItem("Load Default Settings", NULL, false, !gui_is_rom_loading() && !emu_is_media_loading()))
         {
             open_load_defaults = true;
         }

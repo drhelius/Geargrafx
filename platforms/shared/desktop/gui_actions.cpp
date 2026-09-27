@@ -20,6 +20,8 @@
 #define GUI_ACTIONS_IMPORT
 #include "gui_actions.h"
 #include "gui.h"
+#include "gui_debug.h"
+#include "gui_debug_memory.h"
 #include "gui_debug_trace_logger.h"
 #include "config.h"
 #include "emu.h"
@@ -30,6 +32,54 @@
 #include "application.h"
 #include "display.h"
 #include "utils.h"
+
+void gui_action_load_defaults(void)
+{
+    if (gui_is_rom_loading() || emu_is_media_loading())
+        return;
+
+    if (!gui_debug_trace_logger_stop())
+        return;
+
+    emu_stop_vgm_recording();
+    emu_turbolink_stop();
+    emu_save_persistent_data();
+
+    GeargrafxCore* core = emu_get_core();
+    bool close_media = core->GetMedia()->IsCDROM();
+
+    if (close_media)
+    {
+        gui_debug_auto_save_settings();
+        core->GetMedia()->Reset();
+        application_update_title_with_rom(NULL);
+    }
+
+    core->UnloadBios(true);
+    core->UnloadBios(false);
+    core->UnloadPacBios(GG_LASERACTIVE_REGION_JAPAN);
+    core->UnloadPacBios(GG_LASERACTIVE_REGION_US);
+
+    config_load_defaults();
+    gui_apply_settings();
+
+    emu_resume();
+    emu_reset(false);
+
+    if (close_media)
+        gui_debug_reset();
+    else
+        gui_debug_memory_reset();
+
+    gui_debug_memory_apply_settings();
+    gui_debug_trace_logger_init();
+    update_savestates_data();
+    events_sync_input();
+    ogl_renderer_unload_shader_preset();
+    application_apply_settings();
+
+    config_write();
+}
 
 void gui_action_reset(void)
 {
