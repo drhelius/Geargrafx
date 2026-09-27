@@ -279,10 +279,22 @@ void HuC6280PSG::Sync()
     while (remaining_cycles > 0)
     {
         int batch_size = remaining_cycles;
-        remaining_cycles -= batch_size;
 
         bool lfo_configured = IsLfoConfigured();
         bool lfo_running = IsLfoRunning();
+
+        if (lfo_running && !m_lfo_src->dda_enabled && !m_lfo_dest->dda_enabled)
+        {
+            int source_counter = MAX(1, m_lfo_src->counter);
+            int dest_counter = MAX(1, m_lfo_dest->counter);
+
+            // Batch constant modulation, or stop at the first destination reload
+            // after the source changes.
+            int lfo_cycles = dest_counter < source_counter ? source_counter - 1 : dest_counter;
+            batch_size = MIN(batch_size, lfo_cycles);
+        }
+
+        remaining_cycles -= batch_size;
 
         if (lfo_running && !m_lfo_src->dda_enabled)
         {
