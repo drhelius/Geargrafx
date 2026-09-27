@@ -23,15 +23,19 @@
 #include "mmi_archive.h"
 #include "media_file.h"
 #include "media_file_slice.h"
+
+#if UINTPTR_MAX > UINT32_MAX
 #include "json.hpp"
 
 using nlohmann::json;
 
 static const u64 k_mmi_max_media_info_size = 16ULL * 1024ULL * 1024ULL;
-static const u32 k_mmi_max_entries = 64U * 1024U;
-static const size_t k_mmi_max_entry_name_length = 4096;
 static const size_t k_mmi_max_media_count = 128;
 static const size_t k_mmi_max_stream_count = 64;
+#endif
+
+static const u32 k_mmi_max_entries = 64U * 1024U;
+static const size_t k_mmi_max_entry_name_length = 4096;
 static const size_t k_mmi_max_zip_allocation = 64U * 1024U * 1024U;
 
 static void* mmi_zip_allocate(void* user_data, size_t count, size_t size)
@@ -60,6 +64,7 @@ static void mmi_zip_free(void* user_data, void* memory)
     free(memory);
 }
 
+#if UINTPTR_MAX > UINT32_MAX
 static bool mmi_read_json_string(const json& object, const char* key, std::string& output, bool required, bool allow_empty)
 {
     json::const_iterator value = object.find(key);
@@ -115,6 +120,7 @@ static bool mmi_read_json_integer(const json& object, const char* key, s64& outp
 
     return false;
 }
+#endif
 
 MmiArchive::MmiArchive()
 {
@@ -660,6 +666,7 @@ bool MmiArchive::ValidateEntryRanges()
 
 bool MmiArchive::ParseMediaInfo()
 {
+#if UINTPTR_MAX > UINT32_MAX
     const GG_MmiEntry* media_info_entry = FindEntry("MediaInfo.json");
 
     if (!media_info_entry)
@@ -874,6 +881,10 @@ bool MmiArchive::ParseMediaInfo()
     m_mmi_info = mmi_info;
 
     return true;
+#else
+    SetError("MMI requires a 64-bit build");
+    return false;
+#endif
 }
 
 bool MmiArchive::IsSupportedSystem(const std::string& system) const
