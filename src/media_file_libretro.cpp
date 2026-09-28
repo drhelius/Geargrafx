@@ -117,8 +117,7 @@ bool MediaFileLibretro::IsValid() const
 
 bool MediaFileLibretro::CanSeek() const
 {
-    return m_file.IsOpen() && m_file.CanSeek() && s_vfs_interface &&
-        s_vfs_interface->size && s_vfs_interface->tell && s_vfs_interface->read;
+    return m_file.CanReadAt();
 }
 
 s64 MediaFileLibretro::GetSize()

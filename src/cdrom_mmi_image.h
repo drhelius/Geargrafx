@@ -26,7 +26,7 @@
 struct GG_QonFrameInfo
 {
     u64 record_offset;
-    u32 compressed_size;
+    u32 max_compressed_size;
     u16 flags;
 };
 
@@ -69,6 +69,7 @@ public:
     bool ReadVideoData(u64 offset, void* buffer, u32 size);
     MediaFile* OpenVideoStream() const;
     bool DecodeQonFrame(u32 frame_index, std::vector<u8>& output);
+    static bool ReadQonFrame(MediaFile* file, const GG_QonInfo& qon_info, u32 frame_index, std::vector<u8>& data);
 
 private:
     static MediaFile* ResolveMmiFile(const char* reference, char* resolved_path, size_t resolved_path_size, void* user_data);

@@ -305,6 +305,7 @@ private:
     u8 m_analog_cache[2352];
     u64 m_analog_cache_offset;
     bool m_analog_cache_valid;
+    bool m_analog_read_error_reported;
     s64 m_analog_lead_in_samples;
     u64 m_analog_audio_size;
 
@@ -319,6 +320,7 @@ private:
     u32 m_video_frame_index;
     u32 m_video_generation;
     bool m_video_frame_valid;
+    bool m_video_decode_error_reported;
     bool m_video_even_field;
     bool m_video_new_frame;
     bool m_video_memory_latched;

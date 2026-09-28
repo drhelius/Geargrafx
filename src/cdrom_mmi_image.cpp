@@ -292,14 +292,10 @@ bool CdRomMmiImage::DecodeQonFrame(u32 frame_index, std::vector<u8>& output)
         return false;
     }
 
-    const GG_QonFrameInfo& frame_info = m_qon_info.frames[frame_index];
-    std::vector<u8> compressed_data(frame_info.compressed_size);
+    std::vector<u8> compressed_data;
 
-    if (compressed_data.empty() || !m_video_file->ReadAt(frame_info.record_offset + 4,
-        &compressed_data[0], compressed_data.size()))
-    {
+    if (!ReadQonFrame(m_video_file, m_qon_info, frame_index, compressed_data))
         return false;
-    }
 
     output.resize((size_t)m_qon_info.decoded_rgb_size);
 
@@ -317,6 +313,27 @@ bool CdRomMmiImage::DecodeQonFrame(u32 frame_index, std::vector<u8>& output)
     }
 
     return true;
+}
+
+bool CdRomMmiImage::ReadQonFrame(MediaFile* file, const GG_QonInfo& qon_info, u32 frame_index, std::vector<u8>& data)
+{
+    if (!file || (frame_index >= qon_info.frames.size()))
+        return false;
+
+    const GG_QonFrameInfo& frame_info = qon_info.frames[frame_index];
+    u8 size_data[4];
+
+    if (!file->ReadAt(frame_info.record_offset, size_data, sizeof(size_data)))
+        return false;
+
+    u32 compressed_size = read_u32_le(size_data);
+
+    if ((compressed_size == 0) || (compressed_size > frame_info.max_compressed_size))
+        return false;
+
+    data.resize(compressed_size);
+
+    return file->ReadExact(&data[0], data.size());
 }
 
 MediaFile* CdRomMmiImage::ResolveMmiFile(const char* reference, char* resolved_path, size_t resolved_path_size, void* user_data)
@@ -733,6 +750,7 @@ bool CdRomMmiImage::ReadQonIndex(MediaFile* video_file, const GG_MmiStreamInfo& 
     }
 
     qon_info.frames.resize(qon_info.frame_count);
+    std::vector<u32> sorted_frames(qon_info.frame_count);
 
     for (u32 i = 0; i < qon_info.frame_count; i++)
     {
@@ -750,51 +768,37 @@ bool CdRomMmiImage::ReadQonIndex(MediaFile* video_file, const GG_MmiStreamInfo& 
             return false;
         }
 
-        u8 size_data[4];
-
-        if (!video_file->ReadAt(record_offset, size_data, sizeof(size_data)))
-            return false;
-
-        u32 compressed_size = read_u32_le(size_data);
-        u64 frame_end_offset;
-
-        if ((compressed_size == 0) || ((u64)compressed_size > max_compressed_size) ||
-            !checked_add_u64(record_offset, 4, &frame_end_offset) ||
-            !checked_add_u64(frame_end_offset, compressed_size, &frame_end_offset) || (frame_end_offset > file_size))
-        {
-            Error("Invalid QON frame payload %u in %s", i, stream.file.c_str());
-            return false;
-        }
-
         qon_info.frames[i].record_offset = record_offset;
-        qon_info.frames[i].compressed_size = compressed_size;
         qon_info.frames[i].flags = flags;
+        sorted_frames[i] = i;
     }
 
-    std::vector<GG_QonFrameInfo> sorted_frames = qon_info.frames;
-
-    std::sort(sorted_frames.begin(), sorted_frames.end(), [](const GG_QonFrameInfo& left, const GG_QonFrameInfo& right)
+    std::sort(sorted_frames.begin(), sorted_frames.end(), [&qon_info](u32 left, u32 right)
     {
-        return left.record_offset < right.record_offset;
+        return qon_info.frames[left].record_offset < qon_info.frames[right].record_offset;
     });
 
-    for (size_t i = 1; i < sorted_frames.size(); i++)
-    {
-        if (sorted_frames[i].record_offset == sorted_frames[i - 1].record_offset)
-        {
-            if (sorted_frames[i].compressed_size != sorted_frames[i - 1].compressed_size)
-                return false;
+    u64 record_end = file_size;
 
-            continue;
+    for (size_t i = sorted_frames.size(); i > 0; i--)
+    {
+        GG_QonFrameInfo& frame = qon_info.frames[sorted_frames[i - 1]];
+
+        if (i < sorted_frames.size())
+        {
+            u64 next_offset = qon_info.frames[sorted_frames[i]].record_offset;
+
+            if (next_offset != frame.record_offset)
+                record_end = next_offset;
         }
 
-        u64 previous_end = sorted_frames[i - 1].record_offset + 4 + sorted_frames[i - 1].compressed_size;
-
-        if (sorted_frames[i].record_offset < previous_end)
+        if ((record_end - frame.record_offset) <= 4)
         {
-            Error("Overlapping QON frame payloads in %s", stream.file.c_str());
+            Error("Invalid QON frame extent in %s", stream.file.c_str());
             return false;
         }
+
+        frame.max_compressed_size = (u32)MIN(max_compressed_size, record_end - frame.record_offset - 4);
     }
 
     if (total_frames < qon_info.frame_count)

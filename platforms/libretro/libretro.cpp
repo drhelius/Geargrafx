@@ -230,21 +230,6 @@ void retro_set_environment(retro_environment_t cb)
 {
     environ_cb = cb;
 
-    struct retro_vfs_interface_info vfs_interface_info = { };
-    vfs_interface_info.required_interface_version = 2;
-    vfs_interface_info.iface = NULL;
-
-    if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_interface_info) && vfs_interface_info.iface)
-    {
-        vfs_interface = vfs_interface_info.iface;
-        MediaFile::SetVfsInterface(vfs_interface);
-    }
-    else
-    {
-        vfs_interface = NULL;
-        MediaFile::SetVfsInterface(NULL);
-    }
-
     static const struct retro_system_content_info_override content_overrides[] = {
         {
             "pce|sgx|hes",  // extensions
@@ -294,6 +279,16 @@ void retro_set_environment(retro_environment_t cb)
 
 void retro_init(void)
 {
+    struct retro_vfs_interface_info vfs_interface_info = { };
+    vfs_interface_info.required_interface_version = 2;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_interface_info) && vfs_interface_info.iface)
+        vfs_interface = vfs_interface_info.iface;
+    else
+        vfs_interface = NULL;
+
+    MediaFile::SetVfsInterface(vfs_interface);
+
     if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logging))
         log_cb = logging.log;
     else

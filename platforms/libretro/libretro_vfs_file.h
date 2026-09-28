@@ -33,6 +33,7 @@ public:
     bool Close();
     bool IsOpen() const;
     bool CanSeek() const;
+    bool CanReadAt() const;
     s64 GetSize() const;
     s64 Tell() const;
     s64 Seek(s64 offset, int position);

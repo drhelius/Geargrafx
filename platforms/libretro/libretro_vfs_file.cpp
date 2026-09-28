@@ -73,6 +73,11 @@ bool LibretroVfsFile::CanSeek() const
     return m_interface && m_interface->seek;
 }
 
+bool LibretroVfsFile::CanReadAt() const
+{
+    return m_file && m_interface && m_interface->size && m_interface->tell && m_interface->read && m_interface->seek;
+}
+
 s64 LibretroVfsFile::GetSize() const
 {
     if (!m_file || !m_interface || !m_interface->size)

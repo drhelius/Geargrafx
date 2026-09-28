@@ -152,6 +152,7 @@ void LaserActive::Reset()
 
     m_analog_cache_offset = 0;
     m_analog_cache_valid = false;
+    m_analog_read_error_reported = false;
     m_analog_lead_in_samples = 0;
     m_analog_audio_size = 0;
 
@@ -164,6 +165,7 @@ void LaserActive::Reset()
     m_video_frame_index = 0;
     m_video_generation = 0;
     m_video_frame_valid = false;
+    m_video_decode_error_reported = false;
     m_video_even_field = false;
     m_video_new_frame = false;
     m_video_memory_latched = false;
@@ -932,6 +934,12 @@ bool LaserActive::FillAnalogCache(u64 offset)
 
     if (!m_cdrom_media->ReadMmiAnalogAudio(aligned_offset, m_analog_cache, read_size))
     {
+        if (!m_analog_read_error_reported)
+        {
+            Error("Unable to read LaserActive analog audio at offset %llu", (unsigned long long)aligned_offset);
+            m_analog_read_error_reported = true;
+        }
+
         m_analog_cache_valid = false;
         return false;
     }
@@ -2138,6 +2146,8 @@ void LaserActive::HandleStopPoint(s32 aba)
 bool LaserActive::StartVideoDecoder()
 {
     StopVideoDecoder();
+    m_analog_read_error_reported = false;
+    m_video_decode_error_reported = false;
     m_analog_audio_size = m_cdrom_media->GetMmiAnalogAudioSize();
     m_analog_lead_in_samples = 0;
 
@@ -2167,13 +2177,6 @@ bool LaserActive::StartVideoDecoder()
     m_video_prefetch_frame.resize((size_t)qon_info->decoded_rgb_size);
     m_video_display_field.resize((size_t)qon_info->width * 263 * 3);
 
-    u32 max_frame_size = 0;
-
-    for (size_t i = 0; i < qon_info->frames.size(); i++)
-        max_frame_size = MAX(max_frame_size, qon_info->frames[i].compressed_size);
-
-    m_video_compressed_data.reserve(max_frame_size);
-    m_video_prefetch_compressed_data.reserve(max_frame_size);
     m_video_resampling.clear();
 
     if (qon_info->width > 119)
@@ -2299,15 +2302,8 @@ bool LaserActive::DecodeVideoFrame(MediaFile* file, u32 frame, std::vector<u8>& 
         return false;
     }
 
-    const GG_QonFrameInfo& frame_info = qon_info->frames[frame];
-
-    compressed_data.resize(frame_info.compressed_size);
-
-    if (compressed_data.empty() || !file->ReadAt(frame_info.record_offset + 4,
-        &compressed_data[0], compressed_data.size()))
-    {
+    if (!CdRomMmiImage::ReadQonFrame(file, *qon_info, frame, compressed_data))
         return false;
-    }
 
     rgb_data.resize((size_t)qon_info->decoded_rgb_size);
 
@@ -2356,6 +2352,11 @@ bool LaserActive::LoadCurrentVideoFrame()
         m_video_frame_index = frame;
         m_video_generation = m_cdrom_media->GetMediaGeneration();
         m_video_new_frame = true;
+    }
+    else if (!m_video_decode_error_reported)
+    {
+        Error("Unable to read or decode LaserActive video frame %u", frame);
+        m_video_decode_error_reported = true;
     }
 
     return m_video_frame_valid;
