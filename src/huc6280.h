@@ -166,6 +166,7 @@ public:
     void SetDisassemblerSyntax(GG_Disassembler_Syntax syntax);
     GG_Disassembler_Syntax GetDisassemblerSyntax() const;
     void ClearDisassemblerCallStack();
+    void ResetDebuggerExecutionState();
     std::stack<GG_CallStackEntry>* GetDisassemblerCallStack();
     void CheckMemoryBreakpoints(int type, u32 address, bool read);
     void SetTraceLogger(TraceLogger* trace_logger);

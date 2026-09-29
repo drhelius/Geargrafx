@@ -799,6 +799,20 @@ void HuC6280::ClearDisassemblerCallStack()
         m_disassembler_call_stack.pop();
 }
 
+void HuC6280::ResetDebuggerExecutionState()
+{
+    ClearDisassemblerCallStack();
+    m_run_to_breakpoint_requested = false;
+    m_run_to_breakpoint.enabled = false;
+    m_run_to_breakpoint_hit = false;
+    m_cpu_breakpoint_hit = false;
+    m_memory_breakpoint_hit = false;
+    m_debug_brk_breakpoint_hit = false;
+    m_breakpoint_hit_address_valid = false;
+    m_breakpoint_hit_address = 0xFFFF;
+    m_prev_opcode_address = 0xFFFF;
+}
+
 void HuC6280::CheckMemoryBreakpoints(int type, u32 address, bool read)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)

@@ -143,6 +143,7 @@ bool rewind_pop(void)
 
     if (ok)
     {
+        emu_debug_state_restored();
         restore_screenshot(slot, size);
         events_sync_input();
     }
@@ -168,6 +169,7 @@ bool rewind_seek(int age)
 
     if (ok)
     {
+        emu_debug_state_restored();
         restore_screenshot(slot, size);
         events_sync_input();
         seek_age = age;
