@@ -419,7 +419,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.7.19;
-				PRODUCT_BUNDLE_IDENTIFIER = me.ignaciosanchez.geargrafx;
+				PRODUCT_BUNDLE_IDENTIFIER = com.drhelius.emus.geargrafx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -477,7 +477,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.7.19;
-				PRODUCT_BUNDLE_IDENTIFIER = me.ignaciosanchez.geargrafx;
+				PRODUCT_BUNDLE_IDENTIFIER = com.drhelius.emus.geargrafx;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
