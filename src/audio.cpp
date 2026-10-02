@@ -89,7 +89,20 @@ void Audio::Reset(bool cdrom)
 void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 {
     if (!IsValidPointer(sample_buffer) || !IsValidPointer(sample_count))
+    {
+        m_psg->EndFrame(NULL);
+
+        if (m_is_cdrom)
+        {
+            m_adpcm->EndFrame(NULL);
+            m_cdrom_audio->EndFrame(NULL);
+        }
+
+        if (IsValidPointer(sample_count))
+            *sample_count = 0;
+
         return;
+    }
 
     *sample_count = 0;
 

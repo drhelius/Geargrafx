@@ -150,9 +150,7 @@ void CdRomAudio::SaveState(std::ostream& stream)
 {
     using namespace std;
 
-    stream.write(reinterpret_cast<const char*> (&m_buffer_index), sizeof(m_buffer_index));
     stream.write(reinterpret_cast<const char*> (&m_frame_samples), sizeof(m_frame_samples));
-    stream.write(reinterpret_cast<const char*> (m_buffer), sizeof(m_buffer));
     stream.write(reinterpret_cast<const char*> (&m_current_state), sizeof(m_current_state));
     stream.write(reinterpret_cast<const char*> (&m_start_lba), sizeof(m_start_lba));
     stream.write(reinterpret_cast<const char*> (&m_stop_lba), sizeof(m_stop_lba));
@@ -176,7 +174,14 @@ void CdRomAudio::LoadState(std::istream& stream, int version)
         stream.read(reinterpret_cast<char*> (&sample_cycle_counter), sizeof(sample_cycle_counter));
     }
 
-    if (version >= 27)
+    if (version >= 40)
+    {
+        stream.read(reinterpret_cast<char*> (&m_frame_samples), sizeof(m_frame_samples));
+
+        m_buffer_index = 0;
+        m_frame_samples = CLAMP(m_frame_samples, 0, GG_AUDIO_BUFFER_SIZE);
+    }
+    else if (version >= 27)
     {
         stream.read(reinterpret_cast<char*> (&m_buffer_index), sizeof(m_buffer_index));
         stream.read(reinterpret_cast<char*> (&m_frame_samples), sizeof(m_frame_samples));

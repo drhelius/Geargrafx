@@ -933,6 +933,7 @@ void ScsiController::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_data_bus_latch), sizeof(m_data_bus_latch));
     u32 current_sector = m_cdrom_media->GetCurrentSector();
     stream.write(reinterpret_cast<const char*> (&current_sector), sizeof(current_sector));
+    stream.write(reinterpret_cast<const char*> (&m_initial_read_phase_cycles), sizeof(m_initial_read_phase_cycles));
 }
 
 void ScsiController::LoadState(std::istream& stream, int version)
@@ -1001,6 +1002,14 @@ void ScsiController::LoadState(std::istream& stream, int version)
     u32 current_sector;
     stream.read(reinterpret_cast<char*> (&current_sector), sizeof(current_sector));
 
+    if (version >= 40)
+    {
+        stream.read(reinterpret_cast<char*> (&m_initial_read_phase_cycles), sizeof(m_initial_read_phase_cycles));
+        m_initial_read_phase_cycles = MIN(m_initial_read_phase_cycles, k_scsi_initial_read_phase_max_cycles);
+    }
+    else
+        m_initial_read_phase_cycles = 0;
+
     u32 max_data_buffer_offset = m_data_buffer.empty() ?
         k_scsi_data_buffer_capacity : (u32)m_data_buffer.size();
 
@@ -1011,5 +1020,4 @@ void ScsiController::LoadState(std::istream& stream, int version)
     }
 
     m_cdrom_media->SetCurrentSector(current_sector);
-    m_initial_read_phase_cycles = 0;
 }
