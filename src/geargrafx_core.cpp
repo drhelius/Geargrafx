@@ -739,6 +739,9 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     bool cdrom_hardware_enabled = m_media->IsCDROMHardwareEnabled();
     stream.write(reinterpret_cast<const char*> (&cdrom_hardware_enabled), sizeof(cdrom_hardware_enabled));
 
+    u32 content_crc = m_media->GetCRC();
+    stream.write(reinterpret_cast<const char*>(&content_crc), sizeof(content_crc));
+
     stream.write(reinterpret_cast<const char*> (&m_master_clock_cycles), sizeof(m_master_clock_cycles));
 
     m_memory->SaveState(stream);
@@ -1007,6 +1010,17 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         return false;
     }
 
+    if (header.version >= 41)
+    {
+        u32 content_crc = 0;
+        stream.read(reinterpret_cast<char*>(&content_crc), sizeof(content_crc));
+        if (stream.fail() || (content_crc != m_media->GetCRC()))
+        {
+            Error("Save state content CRC does not match");
+            return false;
+        }
+    }
+
     Debug("Unserializing save state...");
 
     if (header.version >= 27)
@@ -1044,6 +1058,8 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
         m_cdrom->LoadState(stream, header.version);
         m_scsi_controller->LoadState(stream, header.version);
+        if (stream.fail())
+            return false;
         m_cdrom_audio->LoadState(stream, header.version);
         m_adpcm->LoadState(stream, header.version);
 

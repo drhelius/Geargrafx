@@ -949,13 +949,17 @@ void ScsiController::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_load_sector), sizeof(m_load_sector));
     stream.read(reinterpret_cast<char*> (&m_load_sector_count), sizeof(m_load_sector_count));
     stream.read(reinterpret_cast<char*> (&m_auto_ack_cycles), sizeof(m_auto_ack_cycles));
-    u32 command_buffer_size;
+    u32 command_buffer_size = 0;
     stream.read(reinterpret_cast<char*> (&command_buffer_size), sizeof(command_buffer_size));
+    if (stream.fail())
+        return;
 
     if (version >= 27)
     {
         u8 command_buffer[k_scsi_command_buffer_capacity] = {};
         stream.read(reinterpret_cast<char*> (command_buffer), sizeof(command_buffer));
+        if (stream.fail())
+            return;
 
         if (command_buffer_size > k_scsi_command_buffer_capacity)
         {
@@ -968,17 +972,30 @@ void ScsiController::LoadState(std::istream& stream, int version)
     }
     else
     {
-        m_command_buffer.resize(command_buffer_size);
-        stream.read(reinterpret_cast<char*> (m_command_buffer.data()), command_buffer_size * sizeof(u8));
+        if (command_buffer_size > k_scsi_command_buffer_capacity)
+        {
+            stream.setstate(ios::failbit);
+            return;
+        }
+
+        u8 command_buffer[k_scsi_command_buffer_capacity] = {};
+        stream.read(reinterpret_cast<char*>(command_buffer), command_buffer_size);
+        if (stream.fail())
+            return;
+        m_command_buffer.assign(command_buffer, command_buffer + command_buffer_size);
     }
 
-    u32 data_buffer_size;
+    u32 data_buffer_size = 0;
     stream.read(reinterpret_cast<char*> (&data_buffer_size), sizeof(data_buffer_size));
+    if (stream.fail())
+        return;
 
     if (version >= 27)
     {
         u8 data_buffer[k_scsi_data_buffer_capacity] = {};
         stream.read(reinterpret_cast<char*> (data_buffer), sizeof(data_buffer));
+        if (stream.fail())
+            return;
 
         if (data_buffer_size > k_scsi_data_buffer_capacity)
         {
@@ -991,15 +1008,24 @@ void ScsiController::LoadState(std::istream& stream, int version)
     }
     else
     {
-        m_data_buffer.resize(data_buffer_size);
-        stream.read(reinterpret_cast<char*> (m_data_buffer.data()), data_buffer_size * sizeof(u8));
+        if (data_buffer_size > k_scsi_data_buffer_capacity)
+        {
+            stream.setstate(ios::failbit);
+            return;
+        }
+
+        u8 data_buffer[k_scsi_data_buffer_capacity] = {};
+        stream.read(reinterpret_cast<char*>(data_buffer), data_buffer_size);
+        if (stream.fail())
+            return;
+        m_data_buffer.assign(data_buffer, data_buffer + data_buffer_size);
     }
 
     stream.read(reinterpret_cast<char*> (&m_data_buffer_offset), sizeof(m_data_buffer_offset));
     stream.read(reinterpret_cast<char*> (&m_bus_changed), sizeof(m_bus_changed));
     stream.read(reinterpret_cast<char*> (&m_previous_signals), sizeof(m_previous_signals));
     stream.read(reinterpret_cast<char*> (&m_data_bus_latch), sizeof(m_data_bus_latch));
-    u32 current_sector;
+    u32 current_sector = 0;
     stream.read(reinterpret_cast<char*> (&current_sector), sizeof(current_sector));
 
     if (version >= 40)
@@ -1009,6 +1035,9 @@ void ScsiController::LoadState(std::istream& stream, int version)
     }
     else
         m_initial_read_phase_cycles = 0;
+
+    if (stream.fail())
+        return;
 
     u32 max_data_buffer_offset = m_data_buffer.empty() ?
         k_scsi_data_buffer_capacity : (u32)m_data_buffer.size();

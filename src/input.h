@@ -55,6 +55,7 @@ public:
     void SetControllerType(GG_Controllers controller, GG_Controller_Type type);
     GG_Controller_Type GetControllerType(GG_Controllers controller);
     void SetAvenuePad3Button(GG_Controllers controller, GG_Keys button);
+    GG_Keys GetAvenuePad3Button(GG_Controllers controller);
     void SetMouseDelta(s32 x, s32 y);
     void EnableMB128(bool enable);
     void SetTurboLinkCallbacks(GG_TurboLink_Publish_Callback publish_callback, GG_TurboLink_Sample_Callback sample_callback,
