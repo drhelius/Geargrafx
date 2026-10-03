@@ -145,10 +145,10 @@ void gui_apply_settings(void)
     emu_set_palette(config_video.palette);
     emu_video_no_sprite_limit(config_video.sprite_limit);
     emu_set_safe_vdc_defaults(config_video.safe_vdc_defaults);
-    emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
+    emu_set_overscan(config_debug.debug ? config_debug.overscan : config_video.overscan);
     emu_set_scanline_start_end(
-                config_debug.debug ? 0 : config_video.scanline_start,
-                config_debug.debug ? 241 : config_video.scanline_end);
+                config_debug.debug ? config_debug.scanline_start : config_video.scanline_start,
+                config_debug.debug ? config_debug.scanline_end : config_video.scanline_end);
     emu_set_laseractive_scanlines(config_video.laseractive_scanline_mode,
                 config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
     emu_set_laseractive_pixels(config_video.laseractive_width_mode,

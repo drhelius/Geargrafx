@@ -80,6 +80,8 @@ static void menu_audio(void);
 static void menu_turbolink(void);
 static void menu_debug(void);
 static void menu_about(void);
+static void draw_overscan_menu(const char* label, int* overscan, bool enabled, bool apply);
+static void draw_scanline_count_menu(const char* label, int* mode, int* start, int* end, bool enabled, bool apply);
 static void draw_background_color_menu(const char* label, int theme);
 static void draw_mcp_status(void);
 static void file_dialogs(void);
@@ -954,64 +956,9 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Overscan", !laseractive))
-        {
-            ImGui::PushItemWidth(100.0f);
-            if (ImGui::Combo("##overscan", &config_video.overscan, "Disabled\0Enabled\0\0"))
-            {
-                emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
-            }
-            ImGui::PopItemWidth();
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("Scanline Count", !laseractive))
-        {
-            ImGui::PushItemWidth(110.0f);
-            if (ImGui::Combo("##scanline_mode", &config_video.scanline_mode, "Mode 224p\0Mode 240p\0Manual\0\0"))
-            {
-                if (config_video.scanline_mode == 0)
-                {
-                    config_video.scanline_start = 11;
-                    config_video.scanline_end = 234;
-                }
-                else if (config_video.scanline_mode == 1)
-                {
-                    config_video.scanline_start = 2;
-                    config_video.scanline_end = 241;
-                }
-                emu_set_scanline_start_end(config_video.scanline_start, config_video.scanline_end);
-            }
-
-            if (config_video.scanline_mode == 2)
-            {
-                ImGui::Separator();
-                ImGui::TextDisabled("Displaying %d scanlines:", MAX(0, config_video.scanline_end - config_video.scanline_start + 1));
-                ImGui::PushItemWidth(250.0f);
-                if (ImGui::SliderInt("##scanline_start", &config_video.scanline_start, 0, 241, "Start line = %d"))
-                {
-                    emu_set_scanline_start_end(
-                    config_debug.debug ? 0 : config_video.scanline_start,
-                    config_debug.debug ? 241 : config_video.scanline_end);
-                }
-                if (ImGui::SliderInt("##scanline_end", &config_video.scanline_end, 0, 241, "End line = %d"))
-                {
-                    emu_set_scanline_start_end(
-                    config_debug.debug ? 0 : config_video.scanline_start,
-                    config_debug.debug ? 241 : config_video.scanline_end);
-                }
-                if (ImGui::Button("Show all scanlines", ImVec2(250.0f, 0)))
-                {
-                    if (!config_debug.debug)
-                    {
-                        config_video.scanline_start = 0;
-                        config_video.scanline_end = 241;
-                        emu_set_scanline_start_end(config_video.scanline_start, config_video.scanline_end);
-                    }
-                }
-            }
-            ImGui::EndMenu();
-        }
+        draw_overscan_menu("Overscan", &config_video.overscan, !laseractive, !config_debug.debug);
+        draw_scanline_count_menu("Scanline Count", &config_video.scanline_mode,
+                &config_video.scanline_start, &config_video.scanline_end, !laseractive, !config_debug.debug);
 
         ImGui::Separator();
 
@@ -1256,6 +1203,68 @@ static void menu_video(void)
             ImGui::EndMenu();
         }
 
+        ImGui::EndMenu();
+    }
+}
+
+static void draw_overscan_menu(const char* label, int* overscan, bool enabled, bool apply)
+{
+    if (ImGui::BeginMenu(label, enabled))
+    {
+        ImGui::PushItemWidth(100.0f);
+        if (ImGui::Combo("##overscan", overscan, "Disabled\0Enabled\0\0") && apply)
+        {
+            emu_set_overscan(*overscan);
+        }
+        ImGui::PopItemWidth();
+        ImGui::EndMenu();
+    }
+}
+
+static void draw_scanline_count_menu(const char* label, int* mode, int* start, int* end, bool enabled, bool apply)
+{
+    if (ImGui::BeginMenu(label, enabled))
+    {
+        ImGui::PushItemWidth(110.0f);
+        if (ImGui::Combo("##scanline_mode", mode, "Mode 224p\0Mode 240p\0Manual\0\0"))
+        {
+            if (*mode == 0)
+            {
+                *start = 11;
+                *end = 234;
+            }
+            else if (*mode == 1)
+            {
+                *start = 2;
+                *end = 241;
+            }
+            if (apply)
+                emu_set_scanline_start_end(*start, *end);
+        }
+        ImGui::PopItemWidth();
+
+        if (*mode == 2)
+        {
+            ImGui::Separator();
+            ImGui::TextDisabled("Displaying %d scanlines:", MAX(0, *end - *start + 1));
+            ImGui::PushItemWidth(250.0f);
+            if (ImGui::SliderInt("##scanline_start", start, 0, 241, "Start line = %d") && apply)
+            {
+                emu_set_scanline_start_end(*start, *end);
+            }
+            if (ImGui::SliderInt("##scanline_end", end, 0, 241, "End line = %d") && apply)
+            {
+                emu_set_scanline_start_end(*start, *end);
+            }
+            if (ImGui::Button("Show all scanlines", ImVec2(250.0f, 0)))
+            {
+                *start = 0;
+                *end = 241;
+                if (apply)
+                    emu_set_scanline_start_end(*start, *end);
+            }
+            ImGui::PopItemWidth();
+        }
         ImGui::EndMenu();
     }
 }
@@ -1927,16 +1936,18 @@ static void menu_audio(void)
 static void menu_debug(void)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
+    bool laseractive = !emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive();
+
     if (ImGui::BeginMenu("Debug"))
     {
         gui_in_use = true;
 
         if (ImGui::MenuItem("Enable", "", &config_debug.debug))
         {
-            emu_set_overscan(config_debug.debug ? 0 : config_video.overscan);
+            emu_set_overscan(config_debug.debug ? config_debug.overscan : config_video.overscan);
             emu_set_scanline_start_end(
-                config_debug.debug ? 0 : config_video.scanline_start,
-                config_debug.debug ? 241 : config_video.scanline_end);
+                config_debug.debug ? config_debug.scanline_start : config_video.scanline_start,
+                config_debug.debug ? config_debug.scanline_end : config_video.scanline_end);
         }
 
         ImGui::Separator();
@@ -2106,13 +2117,22 @@ static void menu_debug(void)
 
         ImGui::Separator();
 
-        ImGui::MenuItem("Show Output Screen", "", &config_debug.show_screen, config_debug.debug);
-
-        if (ImGui::BeginMenu("Output Scale", config_debug.debug))
+        if (ImGui::BeginMenu("Debug Output Screen", config_debug.debug))
         {
-            ImGui::PushItemWidth(200.0f);
-            ImGui::SliderInt("##debug_scale", &config_debug.scale, 1, 10);
-            ImGui::PopItemWidth();
+            ImGui::MenuItem("Show Output Screen", "", &config_debug.show_screen, config_debug.debug);
+
+            if (ImGui::BeginMenu("Scale", config_debug.debug))
+            {
+                ImGui::PushItemWidth(200.0f);
+                ImGui::SliderInt("##debug_scale", &config_debug.scale, 1, 10);
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            draw_overscan_menu("Overscan", &config_debug.overscan, config_debug.debug && !laseractive, config_debug.debug);
+            draw_scanline_count_menu("Scanline Count", &config_debug.scanline_mode,
+                    &config_debug.scanline_start, &config_debug.scanline_end, config_debug.debug && !laseractive, config_debug.debug);
+
             ImGui::EndMenu();
         }
 

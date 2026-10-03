@@ -150,17 +150,22 @@ void gui_debug_window_huc6270_sprites(int vdc)
         int palette = sprite_flags & 0x0F;
         bool priority = (sprite_flags & 0x0080) != 0;
 
-        const float hds_scale = (runtime.screen_width == 512) ? 2.0f : 8.0f;
-        const int base_x_offset = (runtime.screen_width == 512) ? 64 : 32;
+        int overscan_x_offset = 0;
+        if (config_debug.overscan)
+            overscan_x_offset = (runtime.screen_width == 560) ? 24 : ((runtime.screen_width == 373) ? 16 : 12);
+        int screen_width = runtime.screen_width - (overscan_x_offset * 2);
+
+        const float hds_scale = (screen_width == 512) ? 2.0f : 8.0f;
+        const int base_x_offset = (screen_width == 512) ? 64 : 32;
         int per_res_x_offset = 0;
         int hds = (int)((huc6270_state->R[HUC6270_REG_HSR] >> 8) & 0x7F);
         int base_hds = 4;
         int hds_delta = hds - base_hds;
-        if (runtime.screen_width != 256)
+        if (screen_width != 256)
             per_res_x_offset = (int)roundf(hds_delta * hds_scale);
 
-        float real_x = (float)(sprite_x - base_x_offset + per_res_x_offset);
-        float real_y = (float)(sprite_y - 64);
+        float real_x = (float)(sprite_x - base_x_offset + per_res_x_offset + overscan_x_offset);
+        float real_y = (float)(sprite_y - 64 - config_debug.scanline_start);
         float width_f = (float)width;
         float height_f = (float)height;
 

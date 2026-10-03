@@ -338,6 +338,10 @@ struct config_Debug
     bool pause_on_brk_trigger_irq;
     int font_size;
     int scale;
+    int overscan;
+    int scanline_mode;
+    int scanline_start;
+    int scanline_end;
     bool multi_viewport;
     bool single_instance;
     bool auto_debug_settings;

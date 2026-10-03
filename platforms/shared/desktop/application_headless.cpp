@@ -59,8 +59,8 @@ int application_headless_init(const ApplicationParams& params)
     }
 
     config_debug.debug = params.mcp_mode >= 0;
-    emu_set_overscan(0);
-    emu_set_scanline_start_end(0, 241);
+    emu_set_overscan(config_debug.overscan);
+    emu_set_scanline_start_end(config_debug.scanline_start, config_debug.scanline_end);
     emu_set_laseractive_scanlines(config_video.laseractive_scanline_mode, config_video.laseractive_scanline_start, config_video.laseractive_scanline_end);
     emu_set_laseractive_pixels(config_video.laseractive_width_mode, config_video.laseractive_pixel_start, config_video.laseractive_pixel_end);
     emu_audio_mute(true);

@@ -187,6 +187,10 @@ static inline void process(config_Operation operation)
     // Interface
     CONFIG_INT_RANGE("Debug", "FontSize", config_debug.font_size, 0, 0, 3);
     CONFIG_INT("Debug", "Scale", config_debug.scale, 2);
+    CONFIG_INT("Debug", "Overscan", config_debug.overscan, 0);
+    CONFIG_INT("Debug", "ScanlineMode", config_debug.scanline_mode, 2);
+    CONFIG_INT("Debug", "ScanlineStart", config_debug.scanline_start, 0);
+    CONFIG_INT("Debug", "ScanlineEnd", config_debug.scanline_end, 241);
     CONFIG_BOOL("Debug", "MultiViewport", config_debug.multi_viewport, false);
     CONFIG_BOOL("Debug", "SingleInstance", config_debug.single_instance, false);
     CONFIG_BOOL("Debug", "AutoDebugSettings", config_debug.auto_debug_settings, false);
