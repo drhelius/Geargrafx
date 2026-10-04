@@ -239,6 +239,13 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                                  chip_name, entry.vdc.value, entry.vdc.value3);
                     break;
                 }
+                case TRACE_VDC_VSYNC_MISS:
+                {
+                    const char* access = entry.vdc.raw == 0x03 ? "R/W" : (entry.vdc.raw == 0x02 ? "W" : "R");
+                    snprintf(buf, buf_size, "  [%s]  VSYNC     MISSED  Watch:$%04X %s  Consecutive:%u",
+                             chip_name, entry.vdc.value, access, entry.vdc.param);
+                    break;
+                }
                 default:
                     snprintf(buf, buf_size, "  [%s]  EVENT     UNKNOWN($%02X)", chip_name, entry.vdc.event);
                     break;

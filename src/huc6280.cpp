@@ -61,6 +61,10 @@ HuC6280::HuC6280(Random* random)
     m_processor_state.TIMER_RELOAD = &m_timer_reload;
     m_processor_state.IDR = &m_interrupt_disable_register;
     m_processor_state.IRR = &m_interrupt_request_register;
+    for (int i = 0; i < HuC6280_BREAKPOINT_ACCESS_COUNT; i++)
+        m_vsync_watch[i] = false;
+    m_vsync_watch_address = 0;
+    ResetVSyncWatch();
     RefreshBreakpointFlags();
 }
 
@@ -245,6 +249,7 @@ void HuC6280::Reset()
     m_debug_brk_trigger_irq = false;
     m_prev_opcode_address = 0xFFFF;
     ClearDisassemblerCallStack();
+    ResetVSyncWatch();
 }
 
 HuC6280::HuC6280_State* HuC6280::GetState()
@@ -274,6 +279,7 @@ void HuC6280::EnableBreakpoints(bool enable, bool irqs)
 {
     m_breakpoints_enabled = enable;
     m_breakpoints_irq_enabled = irqs;
+    RefreshMemoryHooks();
 }
 
 void HuC6280::ResetBreakpoints()
@@ -416,6 +422,17 @@ void HuC6280::RefreshBreakpointFlags()
         m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_ROM][HuC6280_BREAKPOINT_ACCESS_EXECUTE] ||
         m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CARD_RAM][HuC6280_BREAKPOINT_ACCESS_EXECUTE] ||
         m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CDROM_RAM][HuC6280_BREAKPOINT_ACCESS_EXECUTE];
+
+    RefreshMemoryHooks();
+}
+
+void HuC6280::RefreshMemoryHooks()
+{
+    for (int i = 0; i < HuC6280_BREAKPOINT_ACCESS_COUNT; i++)
+    {
+        m_memory_hook_cache[i] = m_vsync_watch[i] || (m_breakpoints_enabled &&
+            (m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS][i] || m_physical_breakpoint_cache[i]));
+    }
 }
 
 bool HuC6280::BreakpointAccessSupported(int type, GG_Breakpoint_Access access) const
@@ -793,6 +810,40 @@ void HuC6280::SetBreakpoints(const std::vector<GG_Breakpoint>& breakpoints)
     RefreshBreakpointFlags();
 }
 
+void HuC6280::SetVSyncWatch(bool read, bool write, u16 address)
+{
+    if ((m_vsync_watch[HuC6280_BREAKPOINT_ACCESS_READ] == read) &&
+        (m_vsync_watch[HuC6280_BREAKPOINT_ACCESS_WRITE] == write) &&
+        (m_vsync_watch_address == address))
+        return;
+
+    m_vsync_watch[HuC6280_BREAKPOINT_ACCESS_READ] = read;
+    m_vsync_watch[HuC6280_BREAKPOINT_ACCESS_WRITE] = write;
+    m_vsync_watch_address = address;
+    ResetVSyncWatch();
+    RefreshMemoryHooks();
+}
+
+u32 HuC6280::UpdateVSyncWatch()
+{
+    if (!m_vsync_watch[HuC6280_BREAKPOINT_ACCESS_READ] && !m_vsync_watch[HuC6280_BREAKPOINT_ACCESS_WRITE])
+        return 0;
+
+    bool missed = m_vsync_watch_armed && !m_vsync_watch_hit;
+    m_vsync_watch_armed = true;
+    m_vsync_watch_hit = false;
+    m_vsync_watch_misses = missed ? m_vsync_watch_misses + 1 : 0;
+
+    return m_vsync_watch_misses;
+}
+
+void HuC6280::ResetVSyncWatch()
+{
+    m_vsync_watch_hit = false;
+    m_vsync_watch_armed = false;
+    m_vsync_watch_misses = 0;
+}
+
 void HuC6280::ClearDisassemblerCallStack()
 {
     while(!m_disassembler_call_stack.empty())
@@ -927,4 +978,6 @@ void HuC6280::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_interrupt_request_register), sizeof(m_interrupt_request_register));
     stream.read(reinterpret_cast<char*> (&m_transfer_flag), sizeof(m_transfer_flag));
     stream.read(reinterpret_cast<char*> (&m_debug_next_irq), sizeof(m_debug_next_irq));
+
+    ResetVSyncWatch();
 }

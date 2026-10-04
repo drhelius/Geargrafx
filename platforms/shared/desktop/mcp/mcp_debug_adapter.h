@@ -198,7 +198,8 @@ public:
     json GetTraceLog(s64 start, int count);
     json SetTraceLog(bool enabled, u32 flags, const std::string& output,
         const std::string& memory_size, const std::string& disk_size,
-        const std::string& output_path, const u32* event_filters);
+        const std::string& output_path, const u32* event_filters,
+        const std::string& vsync_watch_address, const std::string& vsync_watch_operation);
 
     // Rewind
     json GetRewindStatus();

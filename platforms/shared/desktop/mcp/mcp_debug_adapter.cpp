@@ -3753,8 +3753,10 @@ json DebugAdapter::GetTraceLog(s64 start, int count)
 
 json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& output,
     const std::string& memory_size, const std::string& disk_size,
-    const std::string& output_path, const u32* event_filters)
+    const std::string& output_path, const u32* event_filters,
+    const std::string& vsync_watch_address, const std::string& vsync_watch_operation)
 {
+    static const char* const k_vsync_watch_operations[] = { "read", "write", "read_write" };
     json result;
 
     TraceLogger* tl = m_core->GetTraceLogger();
@@ -3802,6 +3804,34 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& outpu
             }
         }
 
+        int vsync_watch_address_value = config_debug.trace_vsync_watch_address;
+        if (!vsync_watch_address.empty())
+        {
+            u16 address = 0;
+            if (!parse_hex_with_prefix(vsync_watch_address, &address))
+            {
+                result["error"] = "Invalid vsync watch address";
+                return result;
+            }
+            vsync_watch_address_value = address;
+        }
+
+        int vsync_watch_operation_value = config_debug.trace_vsync_watch_operation;
+        if (!vsync_watch_operation.empty())
+        {
+            vsync_watch_operation_value = -1;
+            for (int i = 0; i < 3; i++)
+            {
+                if (vsync_watch_operation == k_vsync_watch_operations[i])
+                    vsync_watch_operation_value = i;
+            }
+            if (vsync_watch_operation_value < 0)
+            {
+                result["error"] = "Invalid vsync watch operation";
+                return result;
+            }
+        }
+
         bool configuration_changed = output_value != config_debug.trace_output;
         if (output_value == gui_TraceOutput_Memory)
             configuration_changed = configuration_changed || memory_size_value != config_debug.trace_capacity;
@@ -3832,6 +3862,8 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& outpu
         }
 
         gui_debug_trace_logger_set_event_filters(event_filters);
+        config_debug.trace_vsync_watch_address = vsync_watch_address_value;
+        config_debug.trace_vsync_watch_operation = vsync_watch_operation_value;
 
         if (!gui_debug_trace_logger_start(flags))
         {
@@ -3864,6 +3896,7 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& outpu
         if ((vdc & TRACE_VDC_FILTER_DMA) == TRACE_VDC_FILTER_DMA) event_filter_list.push_back("vdc.dma");
         if ((vdc & TRACE_VDC_FILTER_SPRITE_BUDGET) != 0) event_filter_list.push_back("vdc.sprite_budget");
         if ((vdc & TRACE_VDC_FILTER_SPRITE_LIMIT) != 0) event_filter_list.push_back("vdc.sprite_limit");
+        if ((vdc & TRACE_VDC_FILTER_VSYNC_MISS) != 0) event_filter_list.push_back("vdc.vsync_miss");
         if ((vce & TRACE_VCE_FILTER_REGISTERS) == TRACE_VCE_FILTER_REGISTERS) event_filter_list.push_back("vce.registers");
         if ((vce & TRACE_VCE_FILTER_TIMING) == TRACE_VCE_FILTER_TIMING) event_filter_list.push_back("vce.timing");
         if ((input & TRACE_INPUT_FILTER_READS) != 0) event_filter_list.push_back("input.reads");
@@ -3908,6 +3941,14 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& outpu
         if ((system & TRACE_SYSTEM_FILTER_MAPPER) != 0) event_filter_list.push_back("system.mapper");
         if ((system & TRACE_SYSTEM_FILTER_INTERRUPTS) == TRACE_SYSTEM_FILTER_INTERRUPTS) event_filter_list.push_back("system.interrupts");
         result["filters"] = event_filter_list;
+
+        if ((vdc & TRACE_VDC_FILTER_VSYNC_MISS) != 0)
+        {
+            char address[8];
+            snprintf(address, sizeof(address), "%04X", config_debug.trace_vsync_watch_address);
+            result["vsync_watch_address"] = address;
+            result["vsync_watch_operation"] = k_vsync_watch_operations[config_debug.trace_vsync_watch_operation];
+        }
     }
     else
     {

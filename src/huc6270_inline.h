@@ -38,6 +38,12 @@ INLINE void HuC6270::TraceSpriteBudget()
         LogSpriteBudget();
 }
 
+INLINE void HuC6270::TraceVSyncMiss()
+{
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_VDC, TRACE_VDC_VSYNC_MISS))
+        LogVSyncMiss();
+}
+
 INLINE u16 HuC6270::Clock()
 {
     if (m_sat_transfer_pending > 0)

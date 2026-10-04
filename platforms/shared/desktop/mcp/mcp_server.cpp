@@ -49,6 +49,8 @@ static bool parse_trace_filter(const std::string& filter, u32* flags, u32* event
         add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_SPRITE_BUDGET);
     else if (filter == "vdc.sprite_limit")
         add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_SPRITE_LIMIT);
+    else if (filter == "vdc.vsync_miss")
+        add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_VSYNC_MISS);
     else if (filter == "vce.registers")
         add_trace_event_filter(flags, event_filters, TRACE_VCE, TRACE_VCE_FILTER_REGISTERS);
     else if (filter == "vce.timing")
@@ -1974,6 +1976,15 @@ json McpServer::BuildToolList()
                     {"type", "string"},
                     {"description", "Directory for the automatically named disk trace file."}
                 }},
+                {"vsync_watch_address", {
+                    {"type", "string"},
+                    {"description", "CPU logical address hex watched by vdc.vsync_miss: '2000', '0x2000', or '$2000'. Omit to keep current."}
+                }},
+                {"vsync_watch_operation", {
+                    {"type", "string"},
+                    {"description", "Access that marks a frame as on time for vdc.vsync_miss. Omit to keep current."},
+                    {"enum", json::array({"read", "write", "read_write"})}
+                }},
                 {"filters", {
                     {"type", "array"},
                     {"description", "Exact event streams to record. Defaults to CPU instructions and IRQs."},
@@ -1981,7 +1992,7 @@ json McpServer::BuildToolList()
                         {"type", "string"},
                         {"enum", json::array({
                             "cpu.instructions", "cpu.irqs",
-                            "vdc.registers", "vdc.irqs", "vdc.dma", "vdc.sprite_budget", "vdc.sprite_limit",
+                            "vdc.registers", "vdc.irqs", "vdc.dma", "vdc.sprite_budget", "vdc.sprite_limit", "vdc.vsync_miss",
                             "vce.registers", "vce.timing",
                             "input.reads", "input.writes", "input.turbolink",
                             "input.turbolink.writes", "input.turbolink.drive",
@@ -3322,8 +3333,11 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         std::string memory_size = arguments.value("memory_size", "");
         std::string disk_size = arguments.value("disk_size", "");
         std::string output_path = arguments.value("output_path", "");
+        std::string vsync_watch_address = arguments.value("vsync_watch_address", "");
+        std::string vsync_watch_operation = arguments.value("vsync_watch_operation", "");
         return m_debugAdapter.SetTraceLog(enabled, flags, output, memory_size,
-                                          disk_size, output_path, event_filters);
+                                          disk_size, output_path, event_filters,
+                                          vsync_watch_address, vsync_watch_operation);
     }
     else
     {

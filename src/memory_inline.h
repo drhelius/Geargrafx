@@ -49,15 +49,13 @@ INLINE u8 Memory::Read(u16 address, bool block_transfer)
     return m_test_memory[address];
 #endif
 
-    GG_CHECK_MEMORY_BREAKPOINT(m_huc6280, HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS, address, true);
-
     u8 mpr_index = address >> 13;
     u8 bank = m_mpr[mpr_index];
     u16 offset = address & 0x1FFF;
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_huc6280->HasPhysicalMemoryBreakpoints(true))
-        CheckPhysicalMemoryBreakpoints(bank, offset, true);
+    if (m_huc6280->HasMemoryHooks(true))
+        CheckMemoryHooks(address, bank, offset, true);
 #endif
 
     if (bank != 0xFF)
@@ -271,15 +269,13 @@ INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
     return;
 #endif
 
-    GG_CHECK_MEMORY_BREAKPOINT(m_huc6280, HuC6280::HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS, address, false);
-
     u8 mpr_index = address >> 13;
     u8 bank = m_mpr[mpr_index];
     u16 offset = address & 0x1FFF;
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    if (m_huc6280->HasPhysicalMemoryBreakpoints(false))
-        CheckPhysicalMemoryBreakpoints(bank, offset, false);
+    if (m_huc6280->HasMemoryHooks(false))
+        CheckMemoryHooks(address, bank, offset, false);
 #endif
 
     if (IsValidPointer(m_current_mapper) && bank < 0x80)
@@ -575,6 +571,14 @@ INLINE void Memory::UpdateBackupRam(bool enable)
 }
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
+INLINE void Memory::CheckMemoryHooks(u16 address, u8 bank, u16 offset, bool read)
+{
+    m_huc6280->CheckCpuAddressHooks(address, read);
+
+    if (m_huc6280->HasPhysicalMemoryBreakpoints(read))
+        CheckPhysicalMemoryBreakpoints(bank, offset, read);
+}
+
 INLINE void Memory::CheckPhysicalMemoryBreakpoints(u8 bank, u32 offset, bool read)
 {
     switch (GetBankType(bank))

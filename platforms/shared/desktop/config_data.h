@@ -318,6 +318,8 @@ struct config_Debug
     int trace_vce_events;
     int trace_scsi_events;
     int trace_system_events;
+    int trace_vsync_watch_address;
+    int trace_vsync_watch_operation;
     int trace_output;
     int trace_capacity;
     int trace_disk_dir_option;

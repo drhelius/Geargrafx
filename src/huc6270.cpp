@@ -147,6 +147,29 @@ void HuC6270::LogSpriteBudget()
 #endif
 }
 
+void HuC6270::LogVSyncMiss()
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    if (m_chip_id != 0)
+        return;
+
+    u32 misses = m_huc6280->UpdateVSyncWatch();
+
+    if (misses == 0)
+        return;
+
+    GG_Trace_Entry e = {};
+    e.type = TRACE_VDC;
+    e.vdc.event = TRACE_VDC_VSYNC_MISS;
+    e.vdc.chip = m_chip_id;
+    e.vdc.value = m_huc6280->GetVSyncWatchAddress();
+    e.vdc.raw = (m_huc6280->GetVSyncWatchAccess(true) ? 0x01 : 0x00) |
+        (m_huc6280->GetVSyncWatchAccess(false) ? 0x02 : 0x00);
+    e.vdc.param = misses;
+    m_trace_logger->TraceLog(e);
+#endif
+}
+
 void HuC6270::Reset()
 {
     memset(m_register, 0, sizeof(m_register));
@@ -475,6 +498,7 @@ void HuC6270::LineEvents()
                 if ((m_v_state != HuC6270_VERTICAL_STATE_VDW) && !m_vblank_triggered)
                 {
                     m_vblank_triggered = true;
+                    TraceVSyncMiss();
                     VBlankIRQ();
                 }
 

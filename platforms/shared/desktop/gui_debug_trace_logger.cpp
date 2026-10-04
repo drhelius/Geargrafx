@@ -74,6 +74,7 @@ static const u64 k_trace_logger_disk_sizes[] = {
 
 static void trace_logger_menu(void);
 static void trace_logger_sync_flags(void);
+static void trace_logger_sync_vsync_watch(bool enabled);
 static u32 trace_logger_get_config_flags(void);
 static void trace_logger_set_config_flags(u32 flags);
 static u32 trace_logger_get_config_event_filter(GG_Trace_Type type);
@@ -450,6 +451,7 @@ static bool trace_logger_stop(bool show_status)
     {
         trace_logger_enabled = false;
         emu_get_core()->GetTraceLogger()->SetEnabledFlags(0);
+        trace_logger_sync_vsync_watch(false);
     }
 
     return true;
@@ -579,6 +581,32 @@ static void trace_logger_menu(void)
             {
                 trace_logger_menu_event_filter("Every Line", &config_debug.trace_vdc_events, TRACE_VDC_FILTER_SPRITE_BUDGET);
                 trace_logger_menu_event_filter("Limit Hits", &config_debug.trace_vdc_events, TRACE_VDC_FILTER_SPRITE_LIMIT);
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("VSync Miss"))
+            {
+                trace_logger_menu_event_filter("Enabled", &config_debug.trace_vdc_events, TRACE_VDC_FILTER_VSYNC_MISS);
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("Logs a miss on VDC1 VBlank if the watched access did not happen during the last frame");
+
+                float input_x = ImGui::GetCursorPosX() + ImGui::CalcTextSize("Operation").x + ImGui::GetStyle().ItemSpacing.x;
+
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Address");
+                ImGui::SameLine(input_x);
+                u16 address = (u16)config_debug.trace_vsync_watch_address;
+                ImGui::PushItemWidth(45.0f);
+                if (ImGui::InputScalar("##vsync_watch_address", ImGuiDataType_U16, &address, NULL, NULL, "%04X", ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase))
+                    config_debug.trace_vsync_watch_address = address;
+                ImGui::PopItemWidth();
+
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Operation");
+                ImGui::SameLine(input_x);
+                ImGui::PushItemWidth(60.0f);
+                ImGui::Combo("##vsync_watch_operation", &config_debug.trace_vsync_watch_operation, "R\0W\0R/W\0\0");
+                ImGui::PopItemWidth();
+
                 ImGui::EndMenu();
             }
             ImGui::EndDisabled();
@@ -811,6 +839,7 @@ static bool trace_logger_stop_disk(bool show_status, bool flush_entries)
 
     trace_logger_enabled = false;
     emu_get_core()->GetTraceLogger()->SetEnabledFlags(0);
+    trace_logger_sync_vsync_watch(false);
     if (!success)
     {
         const char* message = trace_logger_disk_overflow ?
@@ -928,6 +957,17 @@ static void trace_logger_sync_flags(void)
     tl->SetEnabledFlags(trace_logger_get_config_flags());
     for (int i = 0; i < TRACE_TYPE_COUNT; i++)
         tl->SetEventFilter((GG_Trace_Type)i, trace_logger_get_config_event_filter((GG_Trace_Type)i));
+    trace_logger_sync_vsync_watch(true);
+}
+
+static void trace_logger_sync_vsync_watch(bool enabled)
+{
+    bool active = enabled && config_debug.trace_vdc &&
+        (((u32)config_debug.trace_vdc_events & TRACE_VDC_FILTER_VSYNC_MISS) != 0);
+    int operation = config_debug.trace_vsync_watch_operation;
+    bool read = active && ((operation == 0) || (operation == 2));
+    bool write = active && ((operation == 1) || (operation == 2));
+    emu_get_core()->GetHuC6280()->SetVSyncWatch(read, write, (u16)config_debug.trace_vsync_watch_address);
 }
 
 static u32 trace_logger_get_config_flags(void)

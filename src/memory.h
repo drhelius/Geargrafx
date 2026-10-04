@@ -113,6 +113,7 @@ private:
     void TraceMprEvent(u8 bits, u8 index, u8 new_value);
     void LogMprEvent(u8 bits, u8 index, u8 new_value);
 #if !defined(GG_DISABLE_DISASSEMBLER)
+    void CheckMemoryHooks(u16 address, u8 bank, u16 offset, bool read);
     void CheckPhysicalMemoryBreakpoints(u8 bank, u32 offset, bool read);
 #endif
 

@@ -175,6 +175,8 @@ private:
     void LogVdcEvent(u8 event, u8 raw, bool msb);
     void TraceSpriteBudget();
     void LogSpriteBudget();
+    void TraceVSyncMiss();
+    void LogVSyncMiss();
     void EndOfLine();
     void LineEvents();
     void HSyncStart();

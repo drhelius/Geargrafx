@@ -163,6 +163,8 @@ static inline void process(config_Operation operation)
     CONFIG_INT_RANGE("Debug", "TraceVceEvents", config_debug.trace_vce_events, TRACE_VCE_FILTER_ALL, 0, TRACE_VCE_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceScsiEvents", config_debug.trace_scsi_events, TRACE_SCSI_FILTER_ALL, 0, TRACE_SCSI_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceSystemEvents", config_debug.trace_system_events, TRACE_SYSTEM_FILTER_ALL, 0, TRACE_SYSTEM_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceVSyncWatchAddress", config_debug.trace_vsync_watch_address, 0, 0, 0xFFFF);
+    CONFIG_INT_RANGE("Debug", "TraceVSyncWatchOperation", config_debug.trace_vsync_watch_operation, 1, 0, 2);
     CONFIG_INT_RANGE("Debug", "TraceOutput", config_debug.trace_output, 0, 0, 1);
     CONFIG_INT_RANGE("Debug", "TraceCapacity", config_debug.trace_capacity, 0, 0, 4);
     CONFIG_INT_RANGE("Debug", "TraceDiskDirOption", config_debug.trace_disk_dir_option, 0, 0, 2);
