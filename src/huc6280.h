@@ -164,10 +164,10 @@ public:
     bool HasPhysicalExecuteBreakpoints() const;
     bool HasMemoryHooks(bool read) const;
     void CheckCpuAddressHooks(u16 address, bool read);
-    void SetVSyncWatch(bool read, bool write, u16 address);
-    u32 UpdateVSyncWatch();
-    u16 GetVSyncWatchAddress() const;
-    bool GetVSyncWatchAccess(bool read) const;
+    void SetVBlankWatch(bool read, bool write, u16 address);
+    u32 UpdateVBlankWatch();
+    u16 GetVBlankWatchAddress() const;
+    bool GetVBlankWatchAccess(bool read) const;
     const std::vector<GG_Breakpoint>* GetBreakpoints() const;
     void SetDisassemblerSyntax(GG_Disassembler_Syntax syntax);
     GG_Disassembler_Syntax GetDisassemblerSyntax() const;
@@ -226,11 +226,11 @@ private:
     bool m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_COUNT][HuC6280_BREAKPOINT_ACCESS_COUNT];
     bool m_physical_breakpoint_cache[HuC6280_BREAKPOINT_ACCESS_COUNT];
     bool m_memory_hook_cache[HuC6280_BREAKPOINT_ACCESS_COUNT];
-    bool m_vsync_watch[HuC6280_BREAKPOINT_ACCESS_COUNT];
-    u16 m_vsync_watch_address;
-    bool m_vsync_watch_hit;
-    bool m_vsync_watch_armed;
-    u32 m_vsync_watch_misses;
+    bool m_vblank_watch[HuC6280_BREAKPOINT_ACCESS_COUNT];
+    u16 m_vblank_watch_address;
+    bool m_vblank_watch_hit;
+    bool m_vblank_watch_armed;
+    u32 m_vblank_watch_misses;
     bool m_breakpoints_irq_enabled;
     bool m_cpu_breakpoint_hit;
     bool m_memory_breakpoint_hit;
@@ -266,7 +266,7 @@ private:
     void SetBreakpointAccess(GG_Breakpoint& brk, GG_Breakpoint_Access access, bool enabled);
     void RefreshBreakpointFlags();
     void RefreshMemoryHooks();
-    void ResetVSyncWatch();
+    void ResetVBlankWatch();
     void PushCallStack(u16 src, u16 dest, u16 back, u8 bank);
     void PopCallStack();
 

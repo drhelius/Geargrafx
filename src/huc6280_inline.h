@@ -553,21 +553,21 @@ INLINE bool HuC6280::HasMemoryHooks(bool read) const
 
 INLINE void HuC6280::CheckCpuAddressHooks(u16 address, bool read)
 {
-    if (m_vsync_watch[read ? HuC6280_BREAKPOINT_ACCESS_READ : HuC6280_BREAKPOINT_ACCESS_WRITE] &&
-        (address == m_vsync_watch_address))
-        m_vsync_watch_hit = true;
+    if (m_vblank_watch[read ? HuC6280_BREAKPOINT_ACCESS_READ : HuC6280_BREAKPOINT_ACCESS_WRITE] &&
+        (address == m_vblank_watch_address))
+        m_vblank_watch_hit = true;
 
     GG_CHECK_MEMORY_BREAKPOINT(this, HuC6280_BREAKPOINT_TYPE_CPU_ADDRESS, address, read);
 }
 
-INLINE u16 HuC6280::GetVSyncWatchAddress() const
+INLINE u16 HuC6280::GetVBlankWatchAddress() const
 {
-    return m_vsync_watch_address;
+    return m_vblank_watch_address;
 }
 
-INLINE bool HuC6280::GetVSyncWatchAccess(bool read) const
+INLINE bool HuC6280::GetVBlankWatchAccess(bool read) const
 {
-    return m_vsync_watch[read ? HuC6280_BREAKPOINT_ACCESS_READ : HuC6280_BREAKPOINT_ACCESS_WRITE];
+    return m_vblank_watch[read ? HuC6280_BREAKPOINT_ACCESS_READ : HuC6280_BREAKPOINT_ACCESS_WRITE];
 }
 
 INLINE std::stack<HuC6280::GG_CallStackEntry>* HuC6280::GetDisassemblerCallStack()

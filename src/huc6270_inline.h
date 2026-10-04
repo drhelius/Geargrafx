@@ -38,10 +38,10 @@ INLINE void HuC6270::TraceSpriteBudget()
         LogSpriteBudget();
 }
 
-INLINE void HuC6270::TraceVSyncMiss()
+INLINE void HuC6270::TraceMissedVBlank()
 {
-    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_VDC, TRACE_VDC_VSYNC_MISS))
-        LogVSyncMiss();
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEventEnabled(TRACE_VDC, TRACE_VDC_MISSED_VBLANK))
+        LogMissedVBlank();
 }
 
 INLINE u16 HuC6270::Clock()

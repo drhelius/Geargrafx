@@ -413,7 +413,7 @@ vdc.irqs
 vdc.dma
 vdc.sprite_budget
 vdc.sprite_limit
-vdc.vsync_miss
+vdc.missed_vblank
 vce.registers
 vce.timing
 input.reads
@@ -453,7 +453,7 @@ system.interrupts
 
 `vdc.sprite_budget` records one entry per active line with the number of sprites on that line against the 16-sprite limit (32-pixel-wide sprites count as two), flagging lines that hit the limit and how many sprites were dropped. `vdc.sprite_limit` records only the lines that hit the limit. Both are evaluated when the VDC fetches sprites at the end of each line and report the raster line those sprites belong to.
 
-`vdc.vsync_miss` detects frames where the game missed VSync. It watches one CPU logical address, set with `vsync_watch_address` (hex, e.g. `2000`, `0x2000`, or `$2000`), for the access set with `vsync_watch_operation` (`read`, `write`, or `read_write`). Every CPU bus access counts, including opcode fetches and block transfers. At each VDC1 VBlank the frame that just ended is checked, and if the watched access did not happen during it, a `VSYNC MISSED` entry is logged with the watched address, operation, and the number of consecutive missed frames. The first VBlank after starting the logger, changing the watch, resetting, or loading a state only arms the check. Both parameters persist in the configuration and keep their current values when omitted; the response echoes them when `vdc.vsync_miss` is active. The watch costs nothing while this filter is not active.
+`vdc.missed_vblank` detects frames where the game missed VBlank. It watches one CPU logical address, set with `vblank_watch_address` (hex, e.g. `2000`, `0x2000`, or `$2000`), for the access set with `vblank_watch_operation` (`read`, `write`, or `read_write`). Every CPU bus access counts, including opcode fetches and block transfers. At each VDC1 VBlank the frame that just ended is checked, and if the watched access did not happen during it, a `VBLANK MISSED` entry is logged with the watched address, operation, and the number of consecutive missed frames. The first VBlank after starting the logger, changing the watch, resetting, or loading a state only arms the check. Both parameters persist in the configuration and keep their current values when omitted; the response echoes them when `vdc.missed_vblank` is active. The watch costs nothing while this filter is not active.
 
 The `system` streams cover TAM/MPR mappings, Street Fighter II mapper latch updates, and HuC6280 interrupt-controller mask/acknowledgement writes. ADPCM lines include playing, pending, half-IRQ, and end-IRQ state bits.
 
