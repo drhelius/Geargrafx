@@ -32,6 +32,7 @@
 #include "huc6270.h"
 #include "huc6280.h"
 #include "trace_logger.h"
+#include "profiler.h"
 #include "scsi_controller.h"
 #include "random.h"
 #include "cdrom.h"
@@ -61,6 +62,7 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_input);
     InitPointer(m_media);
     InitPointer(m_trace_logger);
+    InitPointer(m_profiler);
     InitPointer(m_laseractive);
     m_paused = true;
     m_master_clock_cycles = 0;
@@ -76,6 +78,7 @@ GeargrafxCore::GeargrafxCore()
 GeargrafxCore::~GeargrafxCore()
 {
     SafeDelete(m_trace_logger);
+    SafeDelete(m_profiler);
     SafeDelete(m_laseractive);
     SafeDelete(m_media);
     SafeDelete(m_input);
@@ -149,6 +152,8 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_cdrom_audio->SetTraceLogger(m_trace_logger);
     m_adpcm->SetTraceLogger(m_trace_logger);
     m_scsi_controller->SetTraceLogger(m_trace_logger);
+    m_profiler = new Profiler(&m_master_clock_cycles);
+    m_huc6280->SetProfiler(m_profiler);
 #endif
 }
 
@@ -322,6 +327,11 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
 TraceLogger* GeargrafxCore::GetTraceLogger()
 {
     return m_trace_logger;
+}
+
+Profiler* GeargrafxCore::GetProfiler()
+{
+    return m_profiler;
 }
 
 void GeargrafxCore::SetTurboLinkCallbacks(
@@ -1204,6 +1214,10 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
 void GeargrafxCore::Reset()
 {
     m_master_clock_cycles = 0;
+
+    if (IsValidPointer(m_profiler))
+        m_profiler->Reset();
+
     m_paused = false;
 
     m_media->GatherMediaInfo();

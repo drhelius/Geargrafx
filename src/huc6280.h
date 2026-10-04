@@ -48,6 +48,7 @@ class Memory;
 class HuC6202;
 class Random;
 class TraceLogger;
+class Profiler;
 enum GG_Trace_Type : u8;
 
 typedef void (*GG_Clock_Hardware_Fn)(void* context, u32 master_cycles);
@@ -176,6 +177,7 @@ public:
     std::stack<GG_CallStackEntry>* GetDisassemblerCallStack();
     void CheckMemoryBreakpoints(int type, u32 address, bool read);
     void SetTraceLogger(TraceLogger* trace_logger);
+    void SetProfiler(Profiler* profiler);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -209,6 +211,7 @@ private:
     HuC6202* m_huc6202;
     Random* m_random;
     TraceLogger* m_trace_logger;
+    Profiler* m_profiler;
     HuC6280_State m_processor_state;
     bool m_timer_enabled;
     s32 m_timer_cycles;
@@ -267,8 +270,10 @@ private:
     void RefreshBreakpointFlags();
     void RefreshMemoryHooks();
     void ResetVBlankWatch();
-    void PushCallStack(u16 src, u16 dest, u16 back, u8 bank);
-    void PopCallStack();
+    void PushCallStack(u16 src, u16 dest, u16 back, u8 bank, bool irq);
+    void PopCallStack(u8 stack_bytes);
+    u32 GetPendingMasterCycles();
+    NO_INLINE void ProfilerEnter(u16 address, bool irq);
 
     u8 Fetch8();
     u16 Fetch16();

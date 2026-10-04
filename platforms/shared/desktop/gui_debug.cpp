@@ -38,6 +38,7 @@
 #include "gui_debug_laseractive.h"
 #include "gui_debug_adpcm.h"
 #include "gui_debug_trace_logger.h"
+#include "gui_debug_profiler.h"
 #include "gui_debug_turbolink.h"
 #include "gui_debug_rewind.h"
 #include "emu.h"
@@ -78,6 +79,7 @@ void gui_debug_reset(void)
 {
     gui_debug_disassembler_reset();
     gui_debug_memory_reset();
+    gui_debug_profiler_reset();
     gui_debug_reset_breakpoints();
     gui_debug_reset_symbols();
 }
@@ -90,6 +92,7 @@ void gui_debug_update(void)
 void gui_debug_windows(void)
 {
     gui_debug_update();
+    gui_debug_profiler_update();
 
     if (config_debug.debug)
     {
@@ -105,6 +108,8 @@ void gui_debug_windows(void)
             gui_debug_window_breakpoints();
         if (config_debug.show_symbols)
             gui_debug_window_symbols();
+        if (config_debug.show_profiler)
+            gui_debug_window_profiler();
         if (config_debug.show_huc6260_info)
             gui_debug_window_huc6260_info();
         if (config_debug.show_huc6260_palettes)

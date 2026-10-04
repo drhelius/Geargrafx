@@ -26,12 +26,14 @@
 #include "memory.h"
 #include "random.h"
 #include "trace_logger.h"
+#include "profiler.h"
 
 HuC6280::HuC6280(Random* random)
 {
     m_random = random;
     InitOPCodeTable();
     InitPointer(m_trace_logger);
+    InitPointer(m_profiler);
     InitPointer(m_clock_hardware_fn);
     InitPointer(m_clock_hardware_context);
     m_breakpoints_enabled = false;
@@ -82,6 +84,21 @@ void HuC6280::Init(Memory* memory, HuC6202* huc6202)
 void HuC6280::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
+}
+
+void HuC6280::SetProfiler(Profiler* profiler)
+{
+    m_profiler = profiler;
+}
+
+void HuC6280::ProfilerEnter(u16 address, bool irq)
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    m_profiler->Enter(m_memory->GetPhysicalAddress(address), address, m_memory->GetBank(address), m_S.GetValue(), irq, GetPendingMasterCycles());
+#else
+    UNUSED(address);
+    UNUSED(irq);
+#endif
 }
 
 void HuC6280::LogCpuEvent()
@@ -862,6 +879,9 @@ void HuC6280::ResetDebuggerExecutionState()
     m_breakpoint_hit_address_valid = false;
     m_breakpoint_hit_address = 0xFFFF;
     m_prev_opcode_address = 0xFFFF;
+
+    if (IsValidPointer(m_profiler))
+        m_profiler->ResetStack();
 }
 
 void HuC6280::CheckMemoryBreakpoints(int type, u32 address, bool read)

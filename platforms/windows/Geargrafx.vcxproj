@@ -57,6 +57,7 @@
     <ClCompile Include="..\..\src\sf2_mapper.cpp" />
     <ClCompile Include="..\..\src\vgm_recorder.cpp" />
     <ClCompile Include="..\..\src\trace_logger.cpp" />
+    <ClCompile Include="..\..\src\profiler.cpp" />
     <ClCompile Include="..\shared\dependencies\libchdr\src\libchdr_bitstream.c">
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
     </ClCompile>
@@ -123,6 +124,7 @@
     <ClCompile Include="..\shared\desktop\gui_debug_laseractive.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_adpcm.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_trace_logger.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_debug_profiler.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_turbolink.cpp" />
     <ClCompile Include="..\shared\desktop\gui_debug_rewind.cpp" />
     <ClCompile Include="..\shared\desktop\trace_logger_formatter.cpp" />
@@ -239,6 +241,7 @@
     <ClInclude Include="..\..\src\sf2_mapper.h" />
     <ClInclude Include="..\..\src\vgm_recorder.h" />
     <ClInclude Include="..\..\src\trace_logger.h" />
+    <ClInclude Include="..\..\src\profiler.h" />
     <ClInclude Include="..\..\src\laseractive.h" />
     <ClInclude Include="..\..\src\types.h" />
     <ClInclude Include="..\shared\dependencies\glad\glad.h" />
@@ -299,6 +302,7 @@
     <ClInclude Include="..\shared\desktop\gui_debug_adpcm.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_text.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_trace_logger.h" />
+    <ClInclude Include="..\shared\desktop\gui_debug_profiler.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_turbolink.h" />
     <ClInclude Include="..\shared\desktop\trace_logger_formatter.h" />
     <ClInclude Include="..\shared\desktop\gui_debug_rewind.h" />

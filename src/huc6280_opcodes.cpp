@@ -225,7 +225,7 @@ void HuC6280::OPCode0x20()
     m_PC.SetValue(dest);
 
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    PushCallStack(pc - 3, dest, pc, m_memory->GetBank(dest));
+    PushCallStack(pc - 3, dest, pc, m_memory->GetBank(dest), false);
 #endif
 }
 
@@ -421,7 +421,7 @@ void HuC6280::OPCode0x40()
     SetP(StackPop8());
     m_PC.SetValue(StackPop16());
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    PopCallStack();
+    PopCallStack(3);
 #endif
 }
 
@@ -613,7 +613,7 @@ void HuC6280::OPCode0x60()
     // RTS
     m_PC.SetValue(StackPop16() + 1);
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    PopCallStack();
+    PopCallStack(2);
 #endif
 }
 

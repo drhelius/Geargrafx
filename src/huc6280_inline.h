@@ -27,6 +27,7 @@
 #include "huc6270.h"
 #include "memory.h"
 #include "trace_logger.h"
+#include "profiler.h"
 
 INLINE void HuC6280::TraceCpuEvent()
 {
@@ -126,7 +127,7 @@ inline void HuC6280::HandleIRQ()
 #if !defined(GG_DISABLE_DISASSEMBLER)
     m_debug_next_irq =((0xFFFA - vector) >> 1) + 3;
     u16 dest = m_PC.GetValue();
-    PushCallStack(pc, dest, pc, m_memory->GetBank(dest));
+    PushCallStack(pc, dest, pc, m_memory->GetBank(dest), true);
 #endif
 }
 
@@ -575,7 +576,7 @@ INLINE std::stack<HuC6280::GG_CallStackEntry>* HuC6280::GetDisassemblerCallStack
     return &m_disassembler_call_stack;
 }
 
-INLINE void HuC6280::PushCallStack(u16 src, u16 dest, u16 back, u8 bank)
+INLINE void HuC6280::PushCallStack(u16 src, u16 dest, u16 back, u8 bank, bool irq)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
     GG_CallStackEntry entry;
@@ -585,20 +586,35 @@ INLINE void HuC6280::PushCallStack(u16 src, u16 dest, u16 back, u8 bank)
     entry.bank = bank;
     if (m_disassembler_call_stack.size() < 256)
         m_disassembler_call_stack.push(entry);
+
+    if (unlikely(m_profiler->IsEnabled()))
+        ProfilerEnter(dest, irq);
 #else
     UNUSED(src);
     UNUSED(dest);
     UNUSED(back);
     UNUSED(bank);
+    UNUSED(irq);
 #endif
 }
 
-INLINE void HuC6280::PopCallStack()
+INLINE void HuC6280::PopCallStack(u8 stack_bytes)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
     if (!m_disassembler_call_stack.empty())
         m_disassembler_call_stack.pop();
+
+    if (unlikely(m_profiler->IsEnabled()))
+        m_profiler->Return((u8)(m_S.GetValue() - stack_bytes), GetPendingMasterCycles());
+#else
+    UNUSED(stack_bytes);
 #endif
+}
+
+INLINE u32 HuC6280::GetPendingMasterCycles()
+{
+    u32 target = (m_cycles * k_huc6280_speed_divisor[m_speed]) + m_extra_master_cycles;
+    return (target > m_clocked_master_cycles) ? target - m_clocked_master_cycles : 0;
 }
 
 INLINE void HuC6280::CheckBreakpoints()

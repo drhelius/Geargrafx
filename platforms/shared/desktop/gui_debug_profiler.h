@@ -17,30 +17,19 @@
  *
  */
 
-#ifndef GEARGRAFX_H
-#define GEARGRAFX_H
+#ifndef GUI_DEBUG_PROFILER_H
+#define GUI_DEBUG_PROFILER_H
 
-#include "common.h"
-#include "geargrafx_core.h"
-#include "input.h"
-#include "audio.h"
-#include "media.h"
-#include "memory.h"
-#include "huc6202.h"
-#include "huc6260.h"
-#include "huc6270.h"
-#include "huc6280.h"
-#include "huc6280_psg.h"
-#include "scsi_controller.h"
-#include "cdrom.h"
-#include "cdrom_media.h"
-#include "cdrom_audio.h"
-#include "adpcm.h"
-#include "trace_logger.h"
-#include "profiler.h"
-#include "laseractive.h"
-#include "mapper.h"
-#include "sf2_mapper.h"
-#include "arcade_card_mapper.h"
+#ifdef GUI_DEBUG_PROFILER_IMPORT
+    #define EXTERN
+#else
+    #define EXTERN extern
+#endif
 
-#endif /* GEARGRAFX_H */
+EXTERN void gui_debug_window_profiler(void);
+EXTERN void gui_debug_profiler_update(void);
+EXTERN void gui_debug_profiler_reset(void);
+
+#undef GUI_DEBUG_PROFILER_IMPORT
+#undef EXTERN
+#endif /* GUI_DEBUG_PROFILER_H */

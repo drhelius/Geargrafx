@@ -2149,6 +2149,7 @@ static void menu_debug(void)
             ImGui::MenuItem("Show Call Stack", "", &config_debug.show_call_stack);
             ImGui::MenuItem("Show Breakpoints", "", &config_debug.show_breakpoints);
             ImGui::MenuItem("Show Symbols", "", &config_debug.show_symbols);
+            ImGui::MenuItem("Show Profiler", "", &config_debug.show_profiler);
             ImGui::EndMenu();
         }
 

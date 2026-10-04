@@ -47,5 +47,6 @@ SOURCES_CXX :=  $(DEPS_DIR)/qon/qon.cpp \
                 $(SOURCE_DIR)/scsi_controller.cpp \
                 $(SOURCE_DIR)/sf2_mapper.cpp \
                 $(SOURCE_DIR)/trace_logger.cpp \
+                $(SOURCE_DIR)/profiler.cpp \
                 $(SOURCE_DIR)/turbolink.cpp \
                 $(SOURCE_DIR)/vgm_recorder.cpp

@@ -107,6 +107,7 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Debug", "CallStack", config_debug.show_call_stack, false);
     CONFIG_BOOL("Debug", "Breakpoints", config_debug.show_breakpoints, false);
     CONFIG_BOOL("Debug", "Symbols", config_debug.show_symbols, false);
+    CONFIG_BOOL("Debug", "Profiler", config_debug.show_profiler, false);
     CONFIG_BOOL("Debug", "HuC6202Info", config_debug.show_huc6202_info, false);
     CONFIG_BOOL("Debug", "HuC6260Info", config_debug.show_huc6260_info, false);
     CONFIG_BOOL("Debug", "HuC6260Palettes", config_debug.show_huc6260_palettes, false);

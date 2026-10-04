@@ -54,6 +54,7 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_debug_memory.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_psg.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_trace_logger.cpp \
+    $(DESKTOP_SRC_DIR)/gui_debug_profiler.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_turbolink.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_rewind.cpp \
     $(DESKTOP_SRC_DIR)/trace_logger_formatter.cpp \
@@ -106,5 +107,6 @@ SOURCES_CXX := \
     $(SRC_DIR)/scsi_controller.cpp \
     $(SRC_DIR)/sf2_mapper.cpp \
     $(SRC_DIR)/trace_logger.cpp \
+    $(SRC_DIR)/profiler.cpp \
     $(SRC_DIR)/turbolink.cpp \
     $(SRC_DIR)/vgm_recorder.cpp

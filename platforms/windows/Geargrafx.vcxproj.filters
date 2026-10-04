@@ -79,6 +79,9 @@
     <ClCompile Include="..\shared\desktop\gui_debug_trace_logger.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_debug_profiler.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
     <ClCompile Include="..\shared\desktop\gui_debug_turbolink.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
@@ -215,6 +218,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\trace_logger.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\profiler.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\huc6202.cpp">
@@ -441,6 +447,9 @@
     <ClInclude Include="..\shared\desktop\gui_debug_trace_logger.h">
       <Filter>desktop</Filter>
     </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_debug_profiler.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
     <ClInclude Include="..\shared\desktop\gui_debug_turbolink.h">
       <Filter>desktop</Filter>
     </ClInclude>
@@ -646,6 +655,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\trace_logger.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\profiler.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\types.h">

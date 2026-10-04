@@ -40,6 +40,7 @@ class Adpcm;
 class ScsiController;
 class Random;
 class TraceLogger;
+class Profiler;
 class LaserActive;
 
 class GeargrafxCore
@@ -123,6 +124,7 @@ public:
     u64 GetTurboLinkCycle() const;
     GG_TurboLink_Drive GetTurboLinkDrive() const;
     TraceLogger* GetTraceLogger();
+    Profiler* GetProfiler();
     LaserActive* GetLaserActive();
 
 private:
@@ -158,6 +160,7 @@ private:
     LaserActive* m_laseractive;
     bool m_paused;
     TraceLogger* m_trace_logger;
+    Profiler* m_profiler;
     u64 m_master_clock_cycles;
     u64 m_turbolink_cycles;
     u64 m_turbolink_next_sync_cycle;
