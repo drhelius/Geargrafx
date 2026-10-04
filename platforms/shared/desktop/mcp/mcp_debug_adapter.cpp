@@ -1969,7 +1969,7 @@ json DebugAdapter::StartVideoRecording(const std::string& file_path, int scale, 
     int ratio = aspect_ratio.empty() ? config_video.recording_ratio : find_video_recording_option(aspect_ratio, k_video_recording_ratios, 6);
     int quality_index = quality.empty() ? config_video.recording_quality : find_video_recording_option(quality, k_video_recording_qualities, 4);
 
-    if ((scale != 0) && ((scale < 1) || (scale > 4)))
+    if ((scale != 0) && ((scale < 1) || (scale > 20)))
     {
         result["error"] = "Invalid scale";
         return result;
@@ -1982,7 +1982,7 @@ json DebugAdapter::StartVideoRecording(const std::string& file_path, int scale, 
     }
 
     if (scale != 0)
-        config_video.recording_scale = scale - 1;
+        config_video.recording_scale = scale;
     config_video.recording_ratio = ratio;
     config_video.recording_quality = quality_index;
 
@@ -1995,7 +1995,7 @@ json DebugAdapter::StartVideoRecording(const std::string& file_path, int scale, 
 
     result["success"] = true;
     result["file_path"] = video_recorder_get_file_path();
-    result["scale"] = config_video.recording_scale + 1;
+    result["scale"] = config_video.recording_scale;
     result["aspect_ratio"] = k_video_recording_ratios[config_video.recording_ratio];
     result["quality"] = k_video_recording_qualities[config_video.recording_quality];
 

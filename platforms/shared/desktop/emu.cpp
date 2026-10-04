@@ -1611,7 +1611,7 @@ static void get_video_recording_size(const GG_Runtime_Info& runtime, int* width,
             ratio = ((float)runtime.screen_width / (float)runtime.width_scale) / (float)runtime.screen_height;
     }
 
-    *height = runtime.screen_height * (config_video.recording_scale + 1);
+    *height = runtime.screen_height * config_video.recording_scale;
     *width = (int)roundf((float)*height * ratio);
     *width += *width & 1;
     *height += *height & 1;

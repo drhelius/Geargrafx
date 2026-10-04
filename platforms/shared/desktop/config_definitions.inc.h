@@ -316,7 +316,7 @@ static inline void process(config_Operation operation)
     }
 
     CONFIG_INT_RANGE("Video", "SyncMode", config_video.sync_mode, config_VideoSync_Fixed, config_VideoSync_Disabled, config_VideoSync_VRR);
-    CONFIG_INT_RANGE("Video", "RecordingScale", config_video.recording_scale, 1, 0, 3);
+    CONFIG_INT_RANGE("Video", "RecordingScale", config_video.recording_scale, 2, 1, 20);
     CONFIG_INT_RANGE("Video", "RecordingAspectRatio", config_video.recording_ratio, 0, 0, 5);
     CONFIG_INT_RANGE("Video", "RecordingQuality", config_video.recording_quality, 2, 0, 3);
 

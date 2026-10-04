@@ -428,8 +428,8 @@ static void menu_geargrafx(void)
 
             if (ImGui::BeginMenu("Scale", !is_recording))
             {
-                ImGui::PushItemWidth(60.0f);
-                ImGui::Combo("##video_recording_scale", &config_video.recording_scale, "1x\0" "2x\0" "3x\0" "4x\0\0");
+                ImGui::PushItemWidth(100.0f);
+                ImGui::SliderInt("##video_recording_scale", &config_video.recording_scale, 1, 20, "%dx");
                 ImGui::PopItemWidth();
                 ImGui::EndMenu();
             }

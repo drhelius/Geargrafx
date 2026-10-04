@@ -1039,9 +1039,9 @@ json McpServer::BuildToolList()
                 }},
                 {"scale", {
                     {"type", "integer"},
-                    {"description", "Output height multiplier (1-4)."},
+                    {"description", "Output height multiplier (1-20)."},
                     {"minimum", 1},
-                    {"maximum", 4}
+                    {"maximum", 20}
                 }},
                 {"aspect_ratio", {
                     {"type", "string"},
