@@ -198,12 +198,15 @@ void gui_debug_window_psg(void)
 
                     ImPlotAxisFlags flags = ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
 
+                    ImPlotSpec spec;
+                    spec.LineColor = white;
+                    spec.LineWeight = 1.0f;
+
                     if (ImPlot::BeginPlot("Left wave", ImVec2(80, 50), ImPlotFlags_CanvasOnly))
                     {
                         ImPlot::SetupAxes("x", "y", flags, flags);
                         ImPlot::SetupAxesLimits(x_min_left, x_max_left, -1.0f, 1.0f, ImPlotCond_Always);
-                        ImPlot::SetNextLineStyle(white, 1.0f);
-                        ImPlot::PlotLine("Wave", wave_buffer_left, data_size);
+                        ImPlot::PlotLine("Wave", wave_buffer_left, data_size, 1.0, 0.0, spec);
                         ImPlot::EndPlot();
                     }
 
@@ -216,8 +219,7 @@ void gui_debug_window_psg(void)
                     {
                         ImPlot::SetupAxes("x", "y", flags, flags);
                         ImPlot::SetupAxesLimits(x_min_right, x_max_right, -1.0f, 1.0f, ImPlotCond_Always);
-                        ImPlot::SetNextLineStyle(white, 1.0f);
-                        ImPlot::PlotLine("Wave", wave_buffer_right, data_size);
+                        ImPlot::PlotLine("Wave", wave_buffer_right, data_size, 1.0, 0.0, spec);
                         ImPlot::EndPlot();
                     }
 
@@ -275,8 +277,10 @@ void gui_debug_window_psg(void)
                     ImPlot::SetupAxesLimits(-1,32, -1,32);
                     ImPlot::SetupAxisTicks(ImAxis_X1, 0, 32, 33, NULL, false);
                     ImPlot::SetupAxisTicks(ImAxis_Y1, 0, 32, 33, NULL, false);
-                    ImPlot::SetNextLineStyle(orange, 3.0f);
-                    ImPlot::PlotLine("waveform", plot_x, plot_y, 32);
+                    ImPlotSpec spec;
+                    spec.LineColor = orange;
+                    spec.LineWeight = 3.0f;
+                    ImPlot::PlotLine("waveform", plot_x, plot_y, 32, spec);
                     ImPlot::EndPlot();
                 }
 

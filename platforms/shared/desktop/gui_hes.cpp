@@ -161,12 +161,15 @@ void gui_draw_hes_visualization(void)
         int x_min_right = MAX(0, trigger_right - half_window_size);
         int x_max_right = MIN(data_size, trigger_right + half_window_size);
 
+        ImPlotSpec spec;
+        spec.LineColor = channel_colors[ch];
+        spec.LineWeight = line_thickness;
+
         if (ImPlot::BeginPlot((std::string("L") + std::to_string(ch)).c_str(), plot_size, plot_flags))
         {
             ImPlot::SetupAxes("x", "y", axes_flags, axes_flags);
             ImPlot::SetupAxesLimits(x_min_left, x_max_left, -1.0f, 1.0f, ImPlotCond_Always);
-            ImPlot::SetNextLineStyle(channel_colors[ch], line_thickness);
-            ImPlot::PlotLine("WaveL", wave_buffer_left[ch], data_size);
+            ImPlot::PlotLine("WaveL", wave_buffer_left[ch], data_size, 1.0, 0.0, spec);
             ImPlot::EndPlot();
         }
 
@@ -176,8 +179,7 @@ void gui_draw_hes_visualization(void)
         {
             ImPlot::SetupAxes("x", "y", axes_flags, axes_flags);
             ImPlot::SetupAxesLimits(x_min_right, x_max_right, -1.0f, 1.0f, ImPlotCond_Always);
-            ImPlot::SetNextLineStyle(channel_colors[ch], line_thickness);
-            ImPlot::PlotLine("WaveR", wave_buffer_right[ch], data_size);
+            ImPlot::PlotLine("WaveR", wave_buffer_right[ch], data_size, 1.0, 0.0, spec);
             ImPlot::EndPlot();
         }
     }

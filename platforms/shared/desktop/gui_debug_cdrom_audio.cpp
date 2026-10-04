@@ -109,12 +109,15 @@ void gui_debug_cdrom_audio_output(CdRomAudio* cdrom_audio, const char* mute_tool
 
         ImPlotAxisFlags flags = ImPlotAxisFlags_NoGridLines | ImPlotAxisFlags_NoTickLabels | ImPlotAxisFlags_NoLabel | ImPlotAxisFlags_NoHighlight | ImPlotAxisFlags_Lock | ImPlotAxisFlags_NoTickMarks;
 
+        ImPlotSpec spec;
+        spec.LineColor = white;
+        spec.LineWeight = 1.0f;
+
         if (ImPlot::BeginPlot("Left Channel", ImVec2(100, 50), ImPlotFlags_CanvasOnly))
         {
             ImPlot::SetupAxes("x", "y", flags, flags);
             ImPlot::SetupAxesLimits(x_min_left, x_max_left, -1.0f, 1.0f, ImPlotCond_Always);
-            ImPlot::SetNextLineStyle(white, 1.0f);
-            ImPlot::PlotLine("L", wave_buffer_left, data_size);
+            ImPlot::PlotLine("L", wave_buffer_left, data_size, 1.0, 0.0, spec);
             ImPlot::EndPlot();
         }
 
@@ -127,8 +130,7 @@ void gui_debug_cdrom_audio_output(CdRomAudio* cdrom_audio, const char* mute_tool
         {
             ImPlot::SetupAxes("x", "y", flags, flags);
             ImPlot::SetupAxesLimits(x_min_right, x_max_right, -1.0f, 1.0f, ImPlotCond_Always);
-            ImPlot::SetNextLineStyle(white, 1.0f);
-            ImPlot::PlotLine("R", wave_buffer_right, data_size);
+            ImPlot::PlotLine("R", wave_buffer_right, data_size, 1.0, 0.0, spec);
             ImPlot::EndPlot();
         }
 
