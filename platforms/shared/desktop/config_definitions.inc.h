@@ -154,7 +154,7 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Debug", "TraceVce", config_debug.trace_vce, false);
     CONFIG_BOOL("Debug", "TraceScsi", config_debug.trace_scsi, false);
     CONFIG_BOOL("Debug", "TraceSystem", config_debug.trace_system, false);
-    CONFIG_INT_RANGE("Debug", "TraceVdcEvents", config_debug.trace_vdc_events, TRACE_VDC_FILTER_ALL, 0, TRACE_VDC_FILTER_ALL);
+    CONFIG_INT_RANGE("Debug", "TraceVdcEvents", config_debug.trace_vdc_events, TRACE_VDC_FILTER_DEFAULT, 0, TRACE_VDC_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceInputEvents", config_debug.trace_input_events, TRACE_INPUT_FILTER_ALL, 0, TRACE_INPUT_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceTimerEvents", config_debug.trace_timer_events, TRACE_TIMER_FILTER_ALL, 0, TRACE_TIMER_FILTER_ALL);
     CONFIG_INT_RANGE("Debug", "TraceCdromEvents", config_debug.trace_cdrom_events, TRACE_CDROM_FILTER_ALL, 0, TRACE_CDROM_FILTER_ALL);
@@ -686,7 +686,7 @@ static void migrate(int file_version)
             write_bool("Debug", "TraceScsi", false);
         }
 
-        write_int("Debug", "TraceVdcEvents", TRACE_VDC_FILTER_ALL);
+        write_int("Debug", "TraceVdcEvents", TRACE_VDC_FILTER_DEFAULT);
         write_int("Debug", "TraceInputEvents", TRACE_INPUT_FILTER_ALL);
         write_int("Debug", "TraceTimerEvents", TRACE_TIMER_FILTER_ALL);
         write_int("Debug", "TraceCdromEvents", TRACE_CDROM_FILTER_ALL);

@@ -224,6 +224,21 @@ void trace_logger_format_entry(const GG_Trace_Entry& entry,
                              reg_name, entry.vdc.reg, entry.vdc.raw, entry.vdc.value);
                     break;
                 }
+                case TRACE_VDC_SPRITE_BUDGET:
+                case TRACE_VDC_SPRITE_LIMIT:
+                {
+                    int dropped = MAX(0, (int)entry.vdc.value3 - (int)entry.vdc.value2);
+                    if (entry.vdc.event == TRACE_VDC_SPRITE_LIMIT)
+                        snprintf(buf, buf_size, "  [%s]  SPRITES   LIMIT HIT  Line:%03u  Count:%u/16  Dropped:%d",
+                                 chip_name, entry.vdc.value, entry.vdc.value3, dropped);
+                    else if (entry.vdc.value3 > 16)
+                        snprintf(buf, buf_size, "  [%s]  SPRITES   Line:%03u  Count:%u/16  LIMIT HIT  Dropped:%d",
+                                 chip_name, entry.vdc.value, entry.vdc.value3, dropped);
+                    else
+                        snprintf(buf, buf_size, "  [%s]  SPRITES   Line:%03u  Count:%u/16",
+                                 chip_name, entry.vdc.value, entry.vdc.value3);
+                    break;
+                }
                 default:
                     snprintf(buf, buf_size, "  [%s]  EVENT     UNKNOWN($%02X)", chip_name, entry.vdc.event);
                     break;

@@ -411,6 +411,8 @@ cpu.irqs
 vdc.registers
 vdc.irqs
 vdc.dma
+vdc.sprite_budget
+vdc.sprite_limit
 vce.registers
 vce.timing
 input.reads
@@ -447,6 +449,8 @@ system.interrupts
 ```
 
 `input.turbolink` enables all four TurboLink streams. `writes` records every `$1000` O-port access, `drive` records only changes to the BU5782K pull-low outputs, `samples` records physical LINK1/LINK2 levels and the actual K result with D0-D3, and `cable` records activation/deactivation of the local emulated hardware endpoint. Shared-memory heartbeats and barriers are intentionally not emulation trace events.
+
+`vdc.sprite_budget` records one entry per active line with the number of sprites on that line against the 16-sprite limit (32-pixel-wide sprites count as two), flagging lines that hit the limit and how many sprites were dropped. `vdc.sprite_limit` records only the lines that hit the limit. Both are evaluated when the VDC fetches sprites at the end of each line and report the raster line those sprites belong to.
 
 The `system` streams cover TAM/MPR mappings, Street Fighter II mapper latch updates, and HuC6280 interrupt-controller mask/acknowledgement writes. ADPCM lines include playing, pending, half-IRQ, and end-IRQ state bits.
 

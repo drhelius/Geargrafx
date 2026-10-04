@@ -3862,6 +3862,8 @@ json DebugAdapter::SetTraceLog(bool enabled, u32 flags, const std::string& outpu
         if ((vdc & TRACE_VDC_FILTER_REGISTERS) == TRACE_VDC_FILTER_REGISTERS) event_filter_list.push_back("vdc.registers");
         if ((vdc & TRACE_VDC_FILTER_IRQS) == TRACE_VDC_FILTER_IRQS) event_filter_list.push_back("vdc.irqs");
         if ((vdc & TRACE_VDC_FILTER_DMA) == TRACE_VDC_FILTER_DMA) event_filter_list.push_back("vdc.dma");
+        if ((vdc & TRACE_VDC_FILTER_SPRITE_BUDGET) != 0) event_filter_list.push_back("vdc.sprite_budget");
+        if ((vdc & TRACE_VDC_FILTER_SPRITE_LIMIT) != 0) event_filter_list.push_back("vdc.sprite_limit");
         if ((vce & TRACE_VCE_FILTER_REGISTERS) == TRACE_VCE_FILTER_REGISTERS) event_filter_list.push_back("vce.registers");
         if ((vce & TRACE_VCE_FILTER_TIMING) == TRACE_VCE_FILTER_TIMING) event_filter_list.push_back("vce.timing");
         if ((input & TRACE_INPUT_FILTER_READS) != 0) event_filter_list.push_back("input.reads");

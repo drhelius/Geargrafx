@@ -45,6 +45,10 @@ static bool parse_trace_filter(const std::string& filter, u32* flags, u32* event
         add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_IRQS);
     else if (filter == "vdc.dma")
         add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_DMA);
+    else if (filter == "vdc.sprite_budget")
+        add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_SPRITE_BUDGET);
+    else if (filter == "vdc.sprite_limit")
+        add_trace_event_filter(flags, event_filters, TRACE_VDC, TRACE_VDC_FILTER_SPRITE_LIMIT);
     else if (filter == "vce.registers")
         add_trace_event_filter(flags, event_filters, TRACE_VCE, TRACE_VCE_FILTER_REGISTERS);
     else if (filter == "vce.timing")
@@ -1977,7 +1981,7 @@ json McpServer::BuildToolList()
                         {"type", "string"},
                         {"enum", json::array({
                             "cpu.instructions", "cpu.irqs",
-                            "vdc.registers", "vdc.irqs", "vdc.dma",
+                            "vdc.registers", "vdc.irqs", "vdc.dma", "vdc.sprite_budget", "vdc.sprite_limit",
                             "vce.registers", "vce.timing",
                             "input.reads", "input.writes", "input.turbolink",
                             "input.turbolink.writes", "input.turbolink.drive",
@@ -3286,7 +3290,7 @@ json McpServer::ExecuteCommand(const std::string& toolName, const json& argument
         bool enabled = arguments["enabled"];
         u32 flags = TRACE_FLAG_CPU | TRACE_FLAG_CPU_IRQ;
         u32 event_filters[TRACE_TYPE_COUNT] = {};
-        event_filters[TRACE_VDC] = TRACE_VDC_FILTER_ALL;
+        event_filters[TRACE_VDC] = TRACE_VDC_FILTER_DEFAULT;
         event_filters[TRACE_INPUT] = TRACE_INPUT_FILTER_ALL;
         event_filters[TRACE_TIMER] = TRACE_TIMER_FILTER_ALL;
         event_filters[TRACE_CDROM] = TRACE_CDROM_FILTER_ALL;

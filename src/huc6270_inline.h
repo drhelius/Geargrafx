@@ -32,6 +32,12 @@ INLINE void HuC6270::TraceVdcEvent(u8 event, u8 raw, bool msb)
         LogVdcEvent(event, raw, msb);
 }
 
+INLINE void HuC6270::TraceSpriteBudget()
+{
+    if (IsValidPointer(m_trace_logger) && m_trace_logger->IsEnabled(TRACE_VDC))
+        LogSpriteBudget();
+}
+
 INLINE u16 HuC6270::Clock()
 {
     if (m_sat_transfer_pending > 0)

@@ -99,6 +99,54 @@ void HuC6270::LogVdcEvent(u8 event, u8 raw, bool msb)
 #endif
 }
 
+void HuC6270::LogSpriteBudget()
+{
+#if !defined(GG_DISABLE_DISASSEMBLER)
+    bool trace_budget = m_trace_logger->IsEventEnabled(TRACE_VDC, TRACE_VDC_SPRITE_BUDGET);
+    bool trace_limit = m_trace_logger->IsEventEnabled(TRACE_VDC, TRACE_VDC_SPRITE_LIMIT);
+
+    if (!trace_budget && !trace_limit)
+        return;
+
+    int requested = 0;
+
+    for (int i = 0; i < HUC6270_SPRITES; i++)
+    {
+        int sprite_offset = i << 2;
+        int sprite_y = (m_sat[sprite_offset + 0] & 0x3FF) - 64;
+        u16 flags = m_sat[sprite_offset + 3];
+        int height = k_huc6270_sprite_height[(flags >> 12) & 0x03];
+
+        if ((sprite_y <= m_raster_line) && ((sprite_y + height) > m_raster_line))
+            requested += ((flags >> 8) & 0x01) + 1;
+    }
+
+    bool limit = requested > 16;
+
+    if (!trace_budget && !limit)
+        return;
+
+    GG_Trace_Entry e = {};
+    e.type = TRACE_VDC;
+    e.vdc.chip = m_chip_id;
+    e.vdc.value = (u16)m_raster_line;
+    e.vdc.value2 = (u16)m_sprite_count;
+    e.vdc.value3 = (u16)requested;
+
+    if (trace_budget)
+    {
+        e.vdc.event = TRACE_VDC_SPRITE_BUDGET;
+        m_trace_logger->TraceLog(e);
+    }
+
+    if (trace_limit && limit)
+    {
+        e.vdc.event = TRACE_VDC_SPRITE_LIMIT;
+        m_trace_logger->TraceLog(e);
+    }
+#endif
+}
+
 void HuC6270::Reset()
 {
     memset(m_register, 0, sizeof(m_register));
@@ -446,7 +494,10 @@ void HuC6270::LineEvents()
                 IncrementRasterLine();
 
                 if ((m_v_state == HuC6270_VERTICAL_STATE_VDW) && !m_burst_mode)
+                {
                     FetchSprites();
+                    TraceSpriteBudget();
+                }
 
                 break;
             default:
