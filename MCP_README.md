@@ -57,6 +57,7 @@ This server provides tools for game development, rom hacking, reverse engineerin
 - **Bookmarks**: Memory and disassembler bookmarks for navigation
 - **Call Stack**: View function call hierarchy
 - **Trace Logger**: CPU instruction trace with interleaved hardware events (VDC, VCE, PSG, timer, CD-ROM, SCSI, ADPCM, input)
+- **Profiler**: Per-function call counts, calls per frame, and inclusive/exclusive cycle statistics
 - **Screenshot Capture**: Get current frame as PNG image
 - **Rewind**: Time-travel debugging with snapshot status and seek tools
 - **Documentation Resources**: Built-in hardware and programming documentation for AI context
@@ -331,6 +332,7 @@ Once configured, you can ask your AI assistant:
 - "There's a data decompression routine around address 0xC000. Step through it instruction by instruction, reverse engineer the compression algorithm, and explain how it works with examples"
 - "Find where the game stores its level data in ROM. Analyze the data structure format, create a memory map showing each section, and add symbols for the data tables"
 - "The game is rendering corrupted graphics. Examine the VDC registers, check the VRAM contents, inspect the sprite attribute table, and diagnose what's causing the corruption. Set up watches on relevant memory addresses"
+- "Profile the game for a few seconds, then tell me which functions use the most CPU time per frame and what they do"
 
 ## Available MCP Tools
 
@@ -464,6 +466,10 @@ Starting a stopped logger without `output` selects `memory`. Memory capacities a
 Storage changes while tracing is active cleanly stop and restart the logger. Repeating the active storage configuration is idempotent and only updates filters. Stopping preserves retained memory entries; changing memory capacity or starting disk output resets the ring used by that recording. Disk output is flushed before stop, reset, media changes, physical CD-ROM eject/error, save-state loads, and shutdown. Failures are reported in the UI and application log but do not cancel unrelated emulator operations.
 
 `output_path` is a directory only, not a filename. Geargrafx creates a unique timestamped UTF-compatible trace filename in that directory. When omitted, the configured default, media, or custom directory policy remains in effect.
+
+### Profiler
+- `set_profiler` - Start, stop, or reset the function profiler with `action` (`start`, `stop`, `reset`). `start` opens the Profiler debugger window and `stop` closes it. Statistics are only collected while the window is visible (in headless mode, while started), starting on the next frame
+- `get_profiler_data` - Read profiler results: `collecting`, `window_open`, `total_cycles`, `frame_cycles`, `frames`, `function_count`, and per-function `name`, `symbol`, `bank`, `address`, `type`, `calls`, `calls_per_frame`, `inclusive_cycles`, `inclusive_percent`, `exclusive_cycles`, `exclusive_percent`, `average_cycles`, `min_cycles`, and `max_cycles`. Optional `sort` (`inclusive`, `exclusive`, `calls`, `average`, `max`; highest first), `count` (default 50, max 1000), and `filter` (name or hex address substring)
 
 ### Breakpoints
 - `set_breakpoint` - Set execution, read, or write breakpoint (supports 5 memory areas: rom_ram, vram, palette, huc6270_reg, huc6260_reg)
