@@ -254,6 +254,8 @@ static inline void process(config_Operation operation)
     CONFIG_STRING_NOT_EMPTY("Emulator", "SaveStatesPath", config_emulator.savestates_path, config_root_path);
     CONFIG_INT("Emulator", "ScreenshotDirOption", config_emulator.screenshots_dir_option, 0);
     CONFIG_STRING_NOT_EMPTY("Emulator", "ScreenshotPath", config_emulator.screenshots_path, config_root_path);
+    CONFIG_INT("Emulator", "VideoRecordingDirOption", config_emulator.video_recordings_dir_option, 0);
+    CONFIG_STRING_NOT_EMPTY("Emulator", "VideoRecordingPath", config_emulator.video_recordings_path, config_root_path);
     CONFIG_INT("Emulator", "BackupRAMDirOption", config_emulator.backup_ram_dir_option, 0);
     CONFIG_STRING_NOT_EMPTY("Emulator", "BackupRAMPath", config_emulator.backup_ram_path, config_root_path);
     CONFIG_INT("Emulator", "MB128DirOption", config_emulator.mb128_dir_option, 0);
@@ -314,6 +316,9 @@ static inline void process(config_Operation operation)
     }
 
     CONFIG_INT_RANGE("Video", "SyncMode", config_video.sync_mode, config_VideoSync_Fixed, config_VideoSync_Disabled, config_VideoSync_VRR);
+    CONFIG_INT_RANGE("Video", "RecordingScale", config_video.recording_scale, 1, 0, 3);
+    CONFIG_INT_RANGE("Video", "RecordingAspectRatio", config_video.recording_ratio, 0, 0, 5);
+    CONFIG_INT_RANGE("Video", "RecordingQuality", config_video.recording_quality, 2, 0, 3);
 
     // Background colors
     CONFIG_FLOAT("Video", "BackgroundColorR", config_video.background_color[config_Theme_Dark][0], 0.1f);
@@ -485,6 +490,7 @@ static inline void process(config_Operation operation)
     CONFIG_HOTKEY("SelectSlot4", config_hotkeys[config_HotkeyIndex_SelectSlot4], SDL_SCANCODE_4, SDL_KMOD_CTRL);
     CONFIG_HOTKEY("SelectSlot5", config_hotkeys[config_HotkeyIndex_SelectSlot5], SDL_SCANCODE_5, SDL_KMOD_CTRL);
     CONFIG_HOTKEY("Mute", config_hotkeys[config_HotkeyIndex_Mute], SDL_SCANCODE_U, SDL_KMOD_CTRL);
+    CONFIG_HOTKEY("VideoRecording", config_hotkeys[config_HotkeyIndex_VideoRecording], SDL_SCANCODE_R, (SDL_Keymod)(SDL_KMOD_CTRL | SDL_KMOD_SHIFT));
 }
 
 //**************************************

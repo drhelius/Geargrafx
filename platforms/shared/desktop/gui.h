@@ -47,6 +47,7 @@ enum gui_ShortCutEvent
     gui_ShortcutSelectSlot4,
     gui_ShortcutSelectSlot5,
     gui_ShortcutScreenshot,
+    gui_ShortcutVideoRecording,
     gui_ShortcutFullscreen,
     gui_ShortcutCaptureMouse,
     gui_ShortcutDebugStepOver,
@@ -71,7 +72,7 @@ struct gui_HotkeyMapping
     bool allow_repeat;
 };
 
-#define GUI_HOTKEY_MAP_COUNT 26
+#define GUI_HOTKEY_MAP_COUNT 27
 
 const gui_HotkeyMapping gui_hotkey_map[GUI_HOTKEY_MAP_COUNT] = {
     {gui_ShortcutOpenROM, config_HotkeyIndex_OpenROM, false},
@@ -88,6 +89,7 @@ const gui_HotkeyMapping gui_hotkey_map[GUI_HOTKEY_MAP_COUNT] = {
     {gui_ShortcutSelectSlot4, config_HotkeyIndex_SelectSlot4, false},
     {gui_ShortcutSelectSlot5, config_HotkeyIndex_SelectSlot5, false},
     {gui_ShortcutScreenshot, config_HotkeyIndex_Screenshot, false},
+    {gui_ShortcutVideoRecording, config_HotkeyIndex_VideoRecording, false},
     {gui_ShortcutFullscreen, config_HotkeyIndex_Fullscreen, false},
     {gui_ShortcutCaptureMouse, config_HotkeyIndex_CaptureMouse, false},
     {gui_ShortcutShowMainMenu, config_HotkeyIndex_ShowMainMenu, false},

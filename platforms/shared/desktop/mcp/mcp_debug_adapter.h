@@ -135,6 +135,8 @@ public:
     json GetCDROMAudioStatus();
     json GetADPCMStatus();
     json GetScreenshot();
+    json StartVideoRecording(const std::string& file_path, int scale, const std::string& aspect_ratio, const std::string& quality);
+    json StopVideoRecording();
     json ListSprites(int vdc);
     json GetSpriteImage(int sprite_index, int vdc);
 

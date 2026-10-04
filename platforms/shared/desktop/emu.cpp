@@ -22,11 +22,13 @@
 #include <thread>
 #include <atomic>
 #include <string.h>
+#include <math.h>
 #include "geargrafx.h"
 #include "sound_queue.h"
 #include "config.h"
 #include "rewind.h"
 #include "runahead.h"
+#include "video_recorder.h"
 #include "events.h"
 #include "gui_debug_trace_logger.h"
 #include "mcp/mcp_manager.h"
@@ -86,6 +88,7 @@ static void update_debug(void);
 static void update_debug_background(void);
 static void update_debug_sprites(void);
 static void update_debug_tiles(void);
+static void get_video_recording_size(const GG_Runtime_Info& runtime, int* width, int* height);
 static void reset_rewind_timing(void);
 static int get_rewind_pop_budget(void);
 static void turbolink_publish_callback(u64 tick, u8 drive_mask, u8 value_mask, void* user_data);
@@ -153,6 +156,7 @@ void emu_destroy(void)
     }
     loading_state.store(Loading_State_None);
 
+    emu_stop_video_recording();
     save_ram();
     save_mb128();
     rewind_destroy();
@@ -412,6 +416,16 @@ void emu_update(void)
             emu_frame_counter++;
         if (!emu_turbolink_is_active())
             rewind_push();
+        if (video_recorder_is_recording())
+        {
+            video_recorder_add_audio(audio_buffer, sampleCount);
+            if (frame_completed)
+            {
+                GG_Runtime_Info runtime;
+                emu_get_runtime(runtime);
+                video_recorder_add_video(emu_frame_buffer, runtime.screen_width, runtime.screen_height);
+            }
+        }
     }
 
     if ((sampleCount > 0) && !geargrafx->IsPaused())
@@ -1532,6 +1546,75 @@ void emu_stop_vgm_recording(void)
 bool emu_is_vgm_recording(void)
 {
     return geargrafx->GetAudio()->IsVgmRecording();
+}
+
+bool emu_start_video_recording(const char* file_path)
+{
+    if (!geargrafx->GetMedia()->IsReady())
+        return false;
+
+    if (video_recorder_is_recording())
+        emu_stop_video_recording();
+
+    GG_Runtime_Info runtime;
+    emu_get_runtime(runtime);
+
+    int width = 0;
+    int height = 0;
+    get_video_recording_size(runtime, &width, &height);
+
+    if (!video_recorder_start(file_path, width, height, runtime.fps, (Video_Recorder_Quality)config_video.recording_quality))
+        return false;
+
+    Log("Video recording started: %s (%dx%d)", file_path, width, height);
+    return true;
+}
+
+void emu_stop_video_recording(void)
+{
+    if (video_recorder_is_recording())
+    {
+        video_recorder_stop();
+        Log("Video recording stopped");
+    }
+}
+
+bool emu_is_video_recording(void)
+{
+    return video_recorder_is_recording();
+}
+
+static void get_video_recording_size(const GG_Runtime_Info& runtime, int* width, int* height)
+{
+    bool laseractive = runtime.aspect_ratio > 0.0f;
+    int selected_ratio = laseractive ? config_video.laseractive_ratio : (config_debug.debug ? 0 : config_video.ratio);
+    float ratio = 0.0f;
+
+    if (config_video.recording_ratio > 0)
+        selected_ratio = config_video.recording_ratio - 1;
+
+    switch (selected_ratio)
+    {
+        case 1:
+            ratio = 4.0f / 3.0f;
+            break;
+        case 2:
+            ratio = 16.0f / 9.0f;
+            break;
+        case 3:
+            ratio = 16.0f / 10.0f;
+            break;
+        case 4:
+            ratio = 6.0f / 5.0f;
+            break;
+        default:
+            ratio = ((float)runtime.screen_width / (float)runtime.width_scale) / (float)runtime.screen_height;
+    }
+
+    *height = runtime.screen_height * (config_video.recording_scale + 1);
+    *width = (int)roundf((float)*height * ratio);
+    *width += *width & 1;
+    *height += *height & 1;
 }
 
 void emu_mcp_set_transport(int mode, int tcp_port, const char* tcp_address)

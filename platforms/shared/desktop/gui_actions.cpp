@@ -27,11 +27,14 @@
 #include "emu.h"
 #include "ogl_renderer.h"
 #include "rewind.h"
+#include "video_recorder.h"
 #include "events.h"
 #include "geargrafx.h"
 #include "application.h"
 #include "display.h"
 #include "utils.h"
+
+static std::string get_auto_file_path(int dir_option, const std::string& custom_path, const char* extension);
 
 void gui_action_load_defaults(void)
 {
@@ -42,6 +45,7 @@ void gui_action_load_defaults(void)
         return;
 
     emu_stop_vgm_recording();
+    emu_stop_video_recording();
     emu_turbolink_stop();
     emu_save_persistent_data();
 
@@ -219,14 +223,6 @@ void gui_action_save_screenshot(const char* path)
     if (!emu_get_core()->GetMedia()->IsReady())
         return;
 
-    time_t now = time(0);
-    tm ltm;
-
-    char date_time_buffer[32] = {};
-    if (get_local_time(now, &ltm))
-        strftime(date_time_buffer, sizeof(date_time_buffer), "%Y-%m-%d %H%M%S", &ltm);
-    string date_time = date_time_buffer;
-
     string file_path;
 
     if (path != NULL)
@@ -236,37 +232,57 @@ void gui_action_save_screenshot(const char* path)
             file_path += ".png";
     }
     else
-    {
-        switch ((Directory_Location)config_emulator.screenshots_dir_option)
-        {
-            default:
-            case Directory_Location_Default:
-            {
-                file_path = file_path.assign(config_root_path)+ "/" + string(emu_get_core()->GetMedia()->GetFileName()) + " - " + date_time + ".png";
-                break;
-            }
-            case Directory_Location_ROM:
-            {
-#if defined(GG_ENABLE_PHYSICAL_CDROM)
-                if (emu_get_core()->GetMedia()->IsPhysicalCdRom())
-                    file_path = file_path.assign(config_root_path) + "/" + string(emu_get_core()->GetMedia()->GetFileName()) + " - " + date_time + ".png";
-                else
-#endif
-                file_path = file_path.assign(emu_get_core()->GetMedia()->GetFilePath()) + " - " + date_time + ".png";
-                break;
-            }
-            case Directory_Location_Custom:
-            {
-                file_path = file_path.assign(config_emulator.screenshots_path)+ "/" + string(emu_get_core()->GetMedia()->GetFileName()) + " - " + date_time + ".png";
-                break;
-            }
-        }
-    }
+        file_path = get_auto_file_path(config_emulator.screenshots_dir_option, config_emulator.screenshots_path, ".png");
 
     emu_save_screenshot(file_path.c_str());
 
     string message = "Screenshot saved to " + file_path;
     gui_set_status_message(message.c_str(), 3000);
+}
+
+bool gui_action_start_video_recording(const char* path)
+{
+    using namespace std;
+
+    if (!emu_get_core()->GetMedia()->IsReady())
+        return false;
+
+    string file_path;
+
+    if (path != NULL)
+        file_path = path;
+    else
+        file_path = get_auto_file_path(config_emulator.video_recordings_dir_option, config_emulator.video_recordings_path, ".avi");
+
+    if (!emu_start_video_recording(file_path.c_str()))
+    {
+        gui_set_error_message("Unable to start video recording");
+        return false;
+    }
+
+    string message = "Recording video to " + file_path;
+    gui_set_status_message(message.c_str(), 3000);
+    return true;
+}
+
+void gui_action_stop_video_recording(void)
+{
+    using namespace std;
+
+    if (!emu_is_video_recording())
+        return;
+
+    string message = "Video saved to " + string(video_recorder_get_file_path());
+    emu_stop_video_recording();
+    gui_set_status_message(message.c_str(), 3000);
+}
+
+void gui_action_toggle_video_recording(void)
+{
+    if (emu_is_video_recording())
+        gui_action_stop_video_recording();
+    else
+        gui_action_start_video_recording(NULL);
 }
 
 void gui_action_save_sprite(const char* path, int vdc, int index)
@@ -311,4 +327,34 @@ void gui_action_save_background(const char* path, int vdc)
 
     string message = "Background saved to " + string(path);
     gui_set_status_message(message.c_str(), 3000);
+}
+
+static std::string get_auto_file_path(int dir_option, const std::string& custom_path, const char* extension)
+{
+    using namespace std;
+
+    time_t now = time(0);
+    tm ltm;
+
+    char date_time_buffer[32] = {};
+    if (get_local_time(now, &ltm))
+        strftime(date_time_buffer, sizeof(date_time_buffer), "%Y-%m-%d %H%M%S", &ltm);
+
+    string suffix = " - " + string(date_time_buffer) + extension;
+    string file_name = emu_get_core()->GetMedia()->GetFileName();
+
+    switch ((Directory_Location)dir_option)
+    {
+        default:
+        case Directory_Location_Default:
+            return string(config_root_path) + "/" + file_name + suffix;
+        case Directory_Location_ROM:
+#if defined(GG_ENABLE_PHYSICAL_CDROM)
+            if (emu_get_core()->GetMedia()->IsPhysicalCdRom())
+                return string(config_root_path) + "/" + file_name + suffix;
+#endif
+            return string(emu_get_core()->GetMedia()->GetFilePath()) + suffix;
+        case Directory_Location_Custom:
+            return custom_path + "/" + file_name + suffix;
+    }
 }
