@@ -423,7 +423,7 @@ void emu_update(void)
             {
                 GG_Runtime_Info runtime;
                 emu_get_runtime(runtime);
-                video_recorder_add_video(emu_frame_buffer, runtime.screen_width, runtime.screen_height);
+                video_recorder_add_video(emu_frame_buffer, runtime.screen_width, runtime.screen_height, 4);
             }
         }
     }
@@ -1563,7 +1563,7 @@ bool emu_start_video_recording(const char* file_path)
     int height = 0;
     get_video_recording_size(runtime, &width, &height);
 
-    if (!video_recorder_start(file_path, width, height, runtime.fps, (Video_Recorder_Quality)config_video.recording_quality))
+    if (!video_recorder_start(file_path, width, height, emu_get_frame_rate(), GG_AUDIO_SAMPLE_RATE, (Video_Recorder_Quality)config_video.recording_quality))
         return false;
 
     Log("Video recording started: %s (%dx%d)", file_path, width, height);

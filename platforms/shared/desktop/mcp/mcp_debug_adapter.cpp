@@ -1938,6 +1938,8 @@ json DebugAdapter::GetScreenshot()
 
 static const char* const k_video_recording_ratios[] = { "screen", "square", "4:3", "16:9", "16:10", "6:5" };
 static const char* const k_video_recording_qualities[] = { "low", "medium", "high", "lossless" };
+static const int k_video_recording_ratio_count = sizeof(k_video_recording_ratios) / sizeof(k_video_recording_ratios[0]);
+static const int k_video_recording_quality_count = sizeof(k_video_recording_qualities) / sizeof(k_video_recording_qualities[0]);
 
 static int find_video_recording_option(const std::string& value, const char* const* options, int count)
 {
@@ -1966,8 +1968,8 @@ json DebugAdapter::StartVideoRecording(const std::string& file_path, int scale, 
         return result;
     }
 
-    int ratio = aspect_ratio.empty() ? config_video.recording_ratio : find_video_recording_option(aspect_ratio, k_video_recording_ratios, 6);
-    int quality_index = quality.empty() ? config_video.recording_quality : find_video_recording_option(quality, k_video_recording_qualities, 4);
+    int ratio = aspect_ratio.empty() ? config_video.recording_ratio : find_video_recording_option(aspect_ratio, k_video_recording_ratios, k_video_recording_ratio_count);
+    int quality_index = quality.empty() ? config_video.recording_quality : find_video_recording_option(quality, k_video_recording_qualities, k_video_recording_quality_count);
 
     if ((scale != 0) && ((scale < 1) || (scale > 20)))
     {

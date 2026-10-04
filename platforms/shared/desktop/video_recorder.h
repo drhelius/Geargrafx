@@ -36,13 +36,13 @@ enum Video_Recorder_Quality
     Video_Recorder_Quality_Lossless
 };
 
-EXTERN bool video_recorder_start(const char* file_path, int width, int height, double fps, Video_Recorder_Quality quality);
+EXTERN bool video_recorder_start(const char* file_path, int width, int height, double fps, int sample_rate, Video_Recorder_Quality quality);
 EXTERN void video_recorder_stop(void);
 EXTERN bool video_recorder_is_recording(void);
 EXTERN const char* video_recorder_get_file_path(void);
 EXTERN u32 video_recorder_get_frame_count(void);
 EXTERN void video_recorder_add_audio(const s16* samples, int count);
-EXTERN void video_recorder_add_video(const u8* frame_buffer, int width, int height);
+EXTERN void video_recorder_add_video(const u8* frame_buffer, int width, int height, int bytes_per_pixel);
 
 #undef VIDEO_RECORDER_IMPORT
 #undef EXTERN

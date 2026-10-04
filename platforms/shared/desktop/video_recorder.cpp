@@ -70,6 +70,7 @@ static int width = 0;
 static int height = 0;
 static Video_Recorder_Quality quality = Video_Recorder_Quality_High;
 static u32 rate = 0;
+static u32 sample_rate = 0;
 static u64 position = 0;
 static u64 riff_start = 0;
 static u64 movi_size_position = 0;
@@ -105,17 +106,17 @@ static void write_chunk(int stream, const void* data, u32 size);
 static void begin_segment(void);
 static void end_segment(void);
 static bool check_segment(void);
-static void scale_frame(const u32* frame_buffer, int frame_width, int frame_height);
+static void scale_frame(const u8* frame_buffer, int frame_width, int frame_height, int bytes_per_pixel);
 static void encode_lossless(void);
 static int get_lossless_stride(void);
 static void jpeg_write(void* context, void* data, int size);
 
-bool video_recorder_start(const char* path, int video_width, int video_height, double fps, Video_Recorder_Quality video_quality)
+bool video_recorder_start(const char* path, int video_width, int video_height, double fps, int audio_sample_rate, Video_Recorder_Quality video_quality)
 {
     if (recording)
         video_recorder_stop();
 
-    if ((video_width <= 0) || (video_height <= 0) || (fps <= 0.0))
+    if ((video_width <= 0) || (video_height <= 0) || (fps <= 0.0) || (audio_sample_rate <= 0))
         return false;
 
     open_ofstream_utf8(file, path, std::ios::out | std::ios::binary | std::ios::trunc);
@@ -131,6 +132,7 @@ bool video_recorder_start(const char* path, int video_width, int video_height, d
     height = video_height;
     quality = video_quality;
     rate = (u32)((fps * VIDEO_RECORDER_RATE_SCALE) + 0.5);
+    sample_rate = (u32)audio_sample_rate;
     position = 0;
     riff_start = 0;
     first_riff_size = 0;
@@ -200,12 +202,12 @@ void video_recorder_add_audio(const s16* samples, int count)
     audio_bytes += size;
 }
 
-void video_recorder_add_video(const u8* frame_buffer, int frame_width, int frame_height)
+void video_recorder_add_video(const u8* frame_buffer, int frame_width, int frame_height, int bytes_per_pixel)
 {
     if (!recording || (frame_width <= 0) || (frame_height <= 0) || !check_segment())
         return;
 
-    scale_frame((const u32*)frame_buffer, frame_width, frame_height);
+    scale_frame(frame_buffer, frame_width, frame_height, bytes_per_pixel);
 
     if (quality == Video_Recorder_Quality_Lossless)
         encode_lossless();
@@ -371,7 +373,7 @@ static void write_header(void)
     write_u16(0);
     write_u32(0);
     write_u32(1);
-    write_u32(GG_AUDIO_SAMPLE_RATE);
+    write_u32(sample_rate);
     write_u32(0);
     write_u32((u32)(audio_bytes / VIDEO_RECORDER_BLOCK_ALIGN));
     write_u32(max_chunk_size[Video_Recorder_Stream_Audio]);
@@ -383,8 +385,8 @@ static void write_header(void)
     write_u32(16);
     write_u16(1);
     write_u16(VIDEO_RECORDER_CHANNELS);
-    write_u32(GG_AUDIO_SAMPLE_RATE);
-    write_u32(GG_AUDIO_SAMPLE_RATE * VIDEO_RECORDER_BLOCK_ALIGN);
+    write_u32(sample_rate);
+    write_u32(sample_rate * VIDEO_RECORDER_BLOCK_ALIGN);
     write_u16(VIDEO_RECORDER_BLOCK_ALIGN);
     write_u16(16);
 
@@ -547,7 +549,7 @@ static bool check_segment(void)
     return true;
 }
 
-static void scale_frame(const u32* frame_buffer, int frame_width, int frame_height)
+static void scale_frame(const u8* frame_buffer, int frame_width, int frame_height, int bytes_per_pixel)
 {
     if (frame_width != scaled_source_width)
     {
@@ -569,10 +571,28 @@ static void scale_frame(const u32* frame_buffer, int frame_width, int frame_heig
             continue;
         }
 
-        const u32* src_line = frame_buffer + (src_y * frame_width);
+        const u8* src_line = frame_buffer + (src_y * frame_width * bytes_per_pixel);
 
-        for (int x = 0; x < width; x++)
-            dst_line[x] = src_line[scaled_x[x]];
+        if (bytes_per_pixel == 4)
+        {
+            const u32* src_pixels = (const u32*)src_line;
+
+            for (int x = 0; x < width; x++)
+                dst_line[x] = src_pixels[scaled_x[x]];
+        }
+        else
+        {
+            u8* dst_bytes = (u8*)dst_line;
+
+            for (int x = 0; x < width; x++)
+            {
+                const u8* src_pixel = src_line + (scaled_x[x] * 3);
+                dst_bytes[(x * 4) + 0] = src_pixel[0];
+                dst_bytes[(x * 4) + 1] = src_pixel[1];
+                dst_bytes[(x * 4) + 2] = src_pixel[2];
+                dst_bytes[(x * 4) + 3] = 0xFF;
+            }
+        }
 
         last_y = src_y;
     }

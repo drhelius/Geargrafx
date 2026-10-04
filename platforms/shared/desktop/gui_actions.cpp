@@ -339,22 +339,34 @@ static std::string get_auto_file_path(int dir_option, const std::string& custom_
     char date_time_buffer[32] = {};
     if (get_local_time(now, &ltm))
         strftime(date_time_buffer, sizeof(date_time_buffer), "%Y-%m-%d %H%M%S", &ltm);
+    string date_time = date_time_buffer;
 
-    string suffix = " - " + string(date_time_buffer) + extension;
-    string file_name = emu_get_core()->GetMedia()->GetFileName();
+    string file_path;
 
     switch ((Directory_Location)dir_option)
     {
         default:
         case Directory_Location_Default:
-            return string(config_root_path) + "/" + file_name + suffix;
+        {
+            file_path = file_path.assign(config_root_path)+ "/" + string(emu_get_core()->GetMedia()->GetFileName()) + " - " + date_time + extension;
+            break;
+        }
         case Directory_Location_ROM:
+        {
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
             if (emu_get_core()->GetMedia()->IsPhysicalCdRom())
-                return string(config_root_path) + "/" + file_name + suffix;
+                file_path = file_path.assign(config_root_path) + "/" + string(emu_get_core()->GetMedia()->GetFileName()) + " - " + date_time + extension;
+            else
 #endif
-            return string(emu_get_core()->GetMedia()->GetFilePath()) + suffix;
+            file_path = file_path.assign(emu_get_core()->GetMedia()->GetFilePath()) + " - " + date_time + extension;
+            break;
+        }
         case Directory_Location_Custom:
-            return custom_path + "/" + file_name + suffix;
+        {
+            file_path = file_path.assign(custom_path)+ "/" + string(emu_get_core()->GetMedia()->GetFileName()) + " - " + date_time + extension;
+            break;
+        }
     }
+
+    return file_path;
 }
