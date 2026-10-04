@@ -790,6 +790,7 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     }
 
 #if defined(__LIBRETRO__)
+    UNUSED(screenshot);
     GG_SaveState_Header_Libretro header;
     header.magic = GG_SAVESTATE_MAGIC;
     header.version = GG_SAVESTATE_VERSION;
