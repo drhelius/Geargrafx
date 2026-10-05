@@ -36,6 +36,7 @@
 #include "gui_menus.h"
 #include "gui_popups.h"
 #include "gui_actions.h"
+#include "gui_colors.h"
 #include "gui_hes.h"
 #include "gui_debug.h"
 #include "gui_debug_memory.h"
@@ -871,7 +872,7 @@ static void show_status_message(void)
         if (ImGui::BeginPopup("Status", flags))
         {
             ImGui::PushFont(gui_default_font);
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.1f,0.9f,0.1f,1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Text, green);
             ImGui::TextWrapped("%s", status_message);
             ImGui::PopStyleColor();
             ImGui::PopFont();

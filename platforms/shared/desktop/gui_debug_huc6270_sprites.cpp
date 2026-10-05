@@ -52,7 +52,6 @@ void gui_debug_window_huc6270_sprites(int vdc)
     else
         strncpy_fit(title, "HuC6270 Sprites", sizeof(title));
 
-    ImVec4 cyan = ImVec4(0.0f, 1.0f, 1.0f, 1.0f);
     float scale = 4.0f;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
@@ -113,7 +112,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
         if (selected_sprite[vdc - 1] == s)
         {
             float t = (float)(0.5 + 0.5 * sin(ImGui::GetTime() * 4.0));
-            ImVec4 pulse_color = gui_debug_lerp_color(red, white, t);
+            ImVec4 pulse_color = gui_lerp_color(red, white, t);
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             draw_list->AddRect(ImVec2(p[s].x, p[s].y), ImVec2(p[s].x + fwidth, p[s].y + fheight), ImColor(pulse_color), 2.0f, ImDrawFlags_RoundCornersAll, 3.0f);
         }
@@ -180,7 +179,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
         recty_max = fminf(fmaxf(recty_max, p_screen.y), p_screen.y + (runtime.screen_height * screen_scale));
 
         float t = (float)(0.5 + 0.5 * sin(ImGui::GetTime() * 4.0));
-        ImVec4 pulse_color = gui_debug_lerp_color(red, white, t);
+        ImVec4 pulse_color = gui_lerp_color(red, white, t);
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         draw_list->AddRect(ImVec2(rectx_min, recty_min), ImVec2(rectx_max, recty_max), ImColor(pulse_color), 2.0f, ImDrawFlags_RoundCornersAll, 2.0f);
 

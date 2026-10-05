@@ -23,6 +23,7 @@
 #include "gui_filedialogs.h"
 #include "gui_popups.h"
 #include "gui_actions.h"
+#include "gui_colors.h"
 #include "gui_debug_disassembler.h"
 #include "gui_debug_widgets.h"
 #include "config.h"
@@ -60,9 +61,9 @@ static bool open_pac_japan_bios = false;
 static bool open_pac_us_bios = false;
 static bool save_debug_settings = false;
 static bool load_debug_settings = false;
-static const ImVec4 service_turbolink_color(0.39f, 0.58f, 0.93f, 1.0f);
-static const ImVec4 service_mcp_http_color(0.10f, 0.90f, 0.10f, 1.0f);
-static const ImVec4 service_mcp_stdio_color(0.90f, 0.70f, 0.10f, 1.0f);
+static const GuiColor& service_turbolink_color = cornflower;
+static const GuiColor& service_mcp_http_color = green;
+static const GuiColor& service_mcp_stdio_color = amber;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 static bool open_physical_cdrom = false;
 #endif
@@ -926,7 +927,7 @@ static void menu_emulator(void)
             ImGui::EndMenu();
         }
 
-        ImGui::TextColored(ImVec4(0.50f, 0.50f, 0.50f, 1.0f), "Status: %s", emu_get_core()->GetInput()->GetMB128()->IsConnected() ? "CONNECTED" : "DISCONNECTED");
+        ImGui::TextColored(gray, "Status: %s", emu_get_core()->GetInput()->GetMB128()->IsConnected() ? "CONNECTED" : "DISCONNECTED");
 
         ImGui::Separator();
 
@@ -1224,11 +1225,11 @@ static void menu_video(void)
 
             if (gui_custom_palette_loaded)
             {
-                ImGui::TextColored(ImVec4(0.10f, 0.90f, 0.10f, 1.0f), "Custom palette loaded");
+                ImGui::TextColored(green, "Custom palette loaded");
             }
             else
             {
-                ImGui::TextColored(ImVec4(0.50f, 0.50f, 0.50f, 1.0f), "No custom palette loaded");
+                ImGui::TextColored(gray, "No custom palette loaded");
             }
             ImGui::EndMenu();
         }
@@ -1487,7 +1488,7 @@ static void menu_shader(void)
     else if (ogl_shader_chain_get_last_error()[0] != '\0')
     {
         ImGui::Separator();
-        ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "%s", ogl_shader_chain_get_last_error());
+        ImGui::TextColored(red, "%s", ogl_shader_chain_get_last_error());
     }
 
     ImGui::EndMenu();
@@ -2124,7 +2125,7 @@ static void menu_debug(void)
                 ImGui::TextColored(service_mcp_http_color, "Listening on %s:%d",
                     emu_mcp_get_http_address(), emu_mcp_get_http_port());
             else
-                ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "Stopped");
+                ImGui::TextColored(red, "Stopped");
 
             ImGui::Separator();
 
@@ -2414,7 +2415,6 @@ static void menu_turbolink(void)
     gui_in_use = true;
     TurboLinkStatus status = emu_turbolink_get_status();
     bool active = emu_turbolink_is_active();
-    const ImVec4 error_red(0.98f, 0.15f, 0.45f, 1.0f);
 
 #if defined(__APPLE__)
     if (ImGui::MenuItem("New " GG_TITLE " Window", "", false, application_can_launch_new_instance()))
@@ -2450,10 +2450,10 @@ static void menu_turbolink(void)
             }
             break;
         case TurboLinkModeFault:
-            ImGui::TextColored(error_red, "%s", status.last_error);
+            ImGui::TextColored(red, "%s", status.last_error);
             break;
         default:
-            ImGui::TextColored(error_red, "Disconnected");
+            ImGui::TextColored(red, "Disconnected");
             break;
     }
 
@@ -2998,9 +2998,9 @@ static void draw_savestate_slot_info(int slot)
     {
         if (emu_savestates[slot].version < GG_SAVESTATE_MIN_VERSION || emu_savestates[slot].version > GG_SAVESTATE_VERSION)
         {
-            ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "This savestate is from an older version and will not work" );
+            ImGui::TextColored(red, "This savestate is from an older version and will not work" );
             if (emu_savestates[slot].emu_build[0] != 0)
-                ImGui::TextColored(ImVec4(0.98f, 0.15f, 0.45f, 1.0f), "Use %s - %s", GG_TITLE, emu_savestates[slot].emu_build);
+                ImGui::TextColored(red, "Use %s - %s", GG_TITLE, emu_savestates[slot].emu_build);
             ImGui::Separator();
         }
 
@@ -3018,6 +3018,6 @@ static void draw_savestate_slot_info(int slot)
     }
     else
     {
-        ImGui::TextColored(ImVec4(0.50f, 0.50f, 0.50f, 1.0f), "Slot %d is empty", slot + 1);
+        ImGui::TextColored(gray, "Slot %d is empty", slot + 1);
     }
 }

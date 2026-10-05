@@ -168,7 +168,7 @@ void gui_debug_window_cdrom_audio(void)
     bool audio_sector = IsValidPointer(track) && (track->type == GG_CDROM_AUDIO_TRACK) &&
         (current_lba >= track->start_lba);
     const char* output_state = "SILENT";
-    const GuiDebugColor* output_color = &gray;
+    const GuiColor* output_color = &gray;
 
     if (*cdrom_audio_state->CURRENT_STATE == CdRomAudio::CD_AUDIO_STATE_PLAYING)
     {

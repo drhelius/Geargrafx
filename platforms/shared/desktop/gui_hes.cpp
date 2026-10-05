@@ -25,7 +25,7 @@
 #include "implot.h"
 #include "geargrafx.h"
 #include "gui.h"
-#include "gui_debug_constants.h"
+#include "gui_colors.h"
 #include "config.h"
 #include "emu.h"
 #include "utils.h"

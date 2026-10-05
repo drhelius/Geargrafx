@@ -53,7 +53,7 @@ static const char* const output_register_names[32] =
     "Stop sec / low", "Stop min / mid", "Stop hr / high", "Stop status"
 };
 
-static void draw_laseractive_value(const char* label, const char* value, const GuiDebugColor& color, bool active)
+static void draw_laseractive_value(const char* label, const char* value, const GuiColor& color, bool active)
 {
     ImGui::TextColored(violet, "%s", label); ImGui::SameLine();
     ImGui::TextColored(active ? color : gray, "%s", value);
