@@ -33,6 +33,8 @@ static bool input_updated = false;
 static Uint16 input_last_state[GG_MAX_GAMEPADS] = { };
 static Uint16 input_current_state[GG_MAX_GAMEPADS] = { };
 static Uint16 input_mouse_button_state[GG_MAX_GAMEPADS] = { };
+static float input_mouse_remainder_x = 0.0f;
+static float input_mouse_remainder_y = 0.0f;
 static bool input_turbo_toggle_prev[GG_MAX_GAMEPADS][2] = { };
 
 static bool events_check_hotkey(const SDL_Event* event, const config_Hotkey& hotkey, bool allow_repeat);
@@ -129,19 +131,24 @@ void events_handle_emu_event(const SDL_Event* event)
     {
         case SDL_EVENT_MOUSE_MOTION:
         {
-            if (event->motion.xrel != 0.0f || event->motion.yrel != 0.0f)
-            {
-                int sen = MAX(config_emulator.mouse_sensitivity, 1);
+            if (!config_emulator.capture_mouse && !gui_main_window_hovered)
+                break;
 
-                int relx = (int)(event->motion.xrel * ((float)sen / 6.0f));
-                int rely = (int)(event->motion.yrel * ((float)sen / 6.0f));
+            float scale = (float)MAX(config_emulator.mouse_sensitivity, 1) / 6.0f;
+            input_mouse_remainder_x += event->motion.xrel * scale;
+            input_mouse_remainder_y += event->motion.yrel * scale;
+            int relx = (int)input_mouse_remainder_x;
+            int rely = (int)input_mouse_remainder_y;
+            input_mouse_remainder_x -= (float)relx;
+            input_mouse_remainder_y -= (float)rely;
+
+            if (relx != 0 || rely != 0)
                 emu_set_mouse_delta(relx, rely);
-            }
             break;
         }
         case SDL_EVENT_MOUSE_BUTTON_DOWN:
         {
-            if (gui_main_window_hovered)
+            if (config_emulator.capture_mouse || gui_main_window_hovered)
             {
                 if (event->button.button == SDL_BUTTON_RIGHT)
                 {

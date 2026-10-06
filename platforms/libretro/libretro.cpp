@@ -97,6 +97,8 @@ struct MouseState
 {
     int delta_x;
     int delta_y;
+    float remainder_x;
+    float remainder_y;
     int button_i;
     int button_ii;
     int button_select;
@@ -955,6 +957,8 @@ static void clear_input_state(void)
 
         mouse_current[i].delta_x = 0;
         mouse_current[i].delta_y = 0;
+        mouse_current[i].remainder_x = 0.0f;
+        mouse_current[i].remainder_y = 0.0f;
         mouse_current[i].button_i = 0;
         mouse_current[i].button_ii = 0;
         mouse_current[i].button_select = 0;
@@ -1026,6 +1030,8 @@ static void release_controller_input(unsigned port)
 
     mouse_current[port].delta_x = 0;
     mouse_current[port].delta_y = 0;
+    mouse_current[port].remainder_x = 0.0f;
+    mouse_current[port].remainder_y = 0.0f;
     mouse_current[port].button_i = 0;
     mouse_current[port].button_ii = 0;
     mouse_current[port].button_select = 0;
@@ -1081,8 +1087,12 @@ static void poll_input(void)
             int mouse_y = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
             int sen = MAX(mouse_sensitivity, 1);
 
-            mouse_current[j].delta_x = (int)((float)mouse_x * ((float)sen / 6.0f));
-            mouse_current[j].delta_y = (int)((float)mouse_y * ((float)sen / 6.0f));
+            mouse_current[j].remainder_x += (float)mouse_x * ((float)sen / 6.0f);
+            mouse_current[j].remainder_y += (float)mouse_y * ((float)sen / 6.0f);
+            mouse_current[j].delta_x = (int)mouse_current[j].remainder_x;
+            mouse_current[j].delta_y = (int)mouse_current[j].remainder_y;
+            mouse_current[j].remainder_x -= (float)mouse_current[j].delta_x;
+            mouse_current[j].remainder_y -= (float)mouse_current[j].delta_y;
             mouse_current[j].button_i = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT) ? 1 : 0;
             mouse_current[j].button_ii = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT) ? 1 : 0;
             mouse_current[j].button_select = input_state_cb(j, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_BUTTON_4) ? 1 : 0;
