@@ -48,8 +48,6 @@ class MediaFile;
 class LaserActive
 {
 public:
-    static const u32 VIDEO_LINE_STATE_SIZE = 8;
-
     enum DriveMode
     {
         DRIVE_INACTIVE = 0,
@@ -112,11 +110,9 @@ public:
     void Sample(s16& left, s16& right);
     void GetStatus(Status& status);
     void SaveState(std::ostream& stream) const;
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
     u8 GetVideoMixingMode() const;
-    u8 GetVideoControl() const;
-    u8 GetGraphicsFader(u8 source) const;
     s32 GetHeadLba() const;
 
     DriveMode GetDriveMode() const
@@ -124,21 +120,14 @@ public:
         return m_drive_mode;
     }
 
-    u32 GetCurrentSample() const
-    {
-        return m_current_sample;
-    }
-
     u32 GetSeekLatency() const
     {
         return m_seek_latency;
     }
 
-    s32 GetCurrentVideoFrame() const;
     const u8* GetVideoFrameBuffer() const;
     u32 GetVideoWidth() const;
     u32 GetVideoHeight() const;
-    bool HasVideoFrame() const;
     bool IsActive() const;
     void BeginVideoFrame();
     void CaptureVideoLineState(u8* state) const;
@@ -178,7 +167,6 @@ private:
     u8 GetCurrentTrack() const;
     bool IsAudioTrack(u8 track) const;
     s32 GetTrackStartLBA(u8 track) const;
-    s32 GetTrackEndLBA(u8 track) const;
     s32 GetMinimumLBA() const;
     u8 GetTrackFromLBA(s32 lba) const;
     void GetTrackTOC(u8 track, u8& flags, u8& minute, u8& second, u8& frame) const;
@@ -194,7 +182,7 @@ private:
     bool HasLiveSeekTarget() const;
     bool LatchSeekTarget();
     void PerformLatchedSeek();
-    void HandleStopPoint(s32 aba);
+    void HandleStopPoint();
 
     double GetNormalizedPosition(s32 lba) const;
     u32 CalculateSeekLatency(s32 target_lba) const;
@@ -253,7 +241,6 @@ private:
     bool m_seek_enabled;
     u8 m_current_seek_mode;
     bool m_current_seek_time_format;
-    bool m_current_seek_repeat;
     u8 m_analog_attenuation_left;
     u8 m_analog_attenuation_right;
     bool m_analog_fade_muted_left;
@@ -264,7 +251,6 @@ private:
     u8 m_seek_point_regs[SEEK_POINT_REGISTER_COUNT];
     u8 m_stop_point_regs[SEEK_POINT_REGISTER_COUNT];
     bool m_reached_stop_point;
-    bool m_reached_stop_point_previously;
     u8 m_playback_mode;
     u8 m_playback_speed;
     bool m_playback_reverse;
@@ -318,7 +304,6 @@ private:
     std::vector<u8> m_video_prefetch_compressed_data;
     std::vector<VideoResampleInfo> m_video_resampling;
     u32 m_video_frame_index;
-    u32 m_video_generation;
     bool m_video_frame_valid;
     bool m_video_decode_error_reported;
     bool m_video_even_field;

@@ -232,11 +232,6 @@ u64 CdRomMedia::GetMmiAnalogAudioSize() const
     return IsMmi() ? m_mmi_image->GetAnalogAudioSize() : 0;
 }
 
-bool CdRomMedia::ReadMmiVideoData(u64 offset, void* buffer, u32 size)
-{
-    return IsMmi() && m_mmi_image->ReadVideoData(offset, buffer, size);
-}
-
 MediaFile* CdRomMedia::OpenMmiVideoStream() const
 {
     return IsMmi() ? m_mmi_image->OpenVideoStream() : NULL;
@@ -318,19 +313,6 @@ u32 CdRomMedia::GetFirstSectorOfTrack(u8 track)
     else
     {
         Error("GetFirstSectorOfTrack failed - Current image is NULL");
-        return 0;
-    }
-}
-
-u32 CdRomMedia::GetLastSectorOfTrack(u8 track)
-{
-    if (IsValidPointer(m_current_image))
-    {
-        return m_current_image->GetLastSectorOfTrack(track);
-    }
-    else
-    {
-        Error("GetLastSectorOfTrack failed - Current image is NULL");
         return 0;
     }
 }

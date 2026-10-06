@@ -75,17 +75,6 @@ u32 CdRomImage::GetFirstSectorOfTrack(u8 track)
     return 0;
 }
 
-u32 CdRomImage::GetLastSectorOfTrack(u8 track)
-{
-    if (track < m_toc.tracks.size())
-    {
-        return m_toc.tracks[track].end_lba;
-    }
-
-    Error("GetLastSectorOfTrack failed - Track number %d out of bounds (max: %d)", track, m_toc.tracks.size());
-    return 0;
-}
-
 s32 CdRomImage::GetTrackFromLBA(u32 lba)
 {
     if (lba >= m_toc.sector_count)
@@ -110,16 +99,6 @@ bool CdRomImage::IsAudioSector(u32 lba, bool include_lead_in)
 
     s32 track = FindTrackFromLBA(lba, include_lead_in);
     return (track >= 0) && (m_toc.tracks[(size_t)track].type == GG_CDROM_AUDIO_TRACK);
-}
-
-const char* CdRomImage::GetFilePath()
-{
-    return m_file_path;
-}
-
-const char* CdRomImage::GetFileDirectory()
-{
-    return m_file_directory;
 }
 
 const char* CdRomImage::GetFileName()

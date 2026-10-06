@@ -45,7 +45,6 @@
 
 static GeargrafxCore* geargrafx;
 static s16* audio_buffer;
-static bool audio_enabled;
 static McpManager* mcp_manager;
 static TurboLinkManager* turbolink_manager;
 static bool turbolink_hardware_applied;
@@ -129,7 +128,6 @@ bool emu_init(GG_Input_Pump_Fn input_pump_fn)
     for (int i = 0; i < 5; i++)
         InitPointer(emu_savestates_screenshots[i].data);
 
-    audio_enabled = true;
     emu_audio_sync = true;
     emu_debug_disable_breakpoints = false;
     emu_debug_irq_breakpoints = false;
@@ -631,7 +629,6 @@ void emu_audio_psg_revision(int revision)
 
 void emu_audio_mute(bool mute)
 {
-    audio_enabled = !mute;
     geargrafx->GetAudio()->Mute(mute);
 }
 
@@ -659,11 +656,6 @@ void emu_audio_reset(void)
 {
     sound_queue_stop();
     sound_queue_start(GG_AUDIO_SAMPLE_RATE, 2, GG_AUDIO_QUEUE_SIZE, config_audio.buffer_count);
-}
-
-bool emu_is_audio_enabled(void)
-{
-    return audio_enabled;
 }
 
 bool emu_is_audio_open(void)
@@ -1786,16 +1778,6 @@ bool emu_turbolink_is_core_suspended(void)
 bool emu_turbolink_is_cable_connected(void)
 {
     return turbolink_manager && turbolink_manager->IsCableConnected();
-}
-
-bool emu_turbolink_has_remote_peer(void)
-{
-    return turbolink_manager && turbolink_manager->HasRemotePeer();
-}
-
-bool emu_turbolink_is_pacing_peer(void)
-{
-    return turbolink_manager && turbolink_manager->IsPacingPeer();
 }
 
 TurboLinkStatus emu_turbolink_get_status(void)

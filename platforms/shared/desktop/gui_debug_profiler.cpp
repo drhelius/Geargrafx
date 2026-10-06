@@ -373,9 +373,6 @@ static void build_rows(const GG_Profiler_Function* functions, u32 count)
     {
         const GG_Profiler_Function& function = functions[i];
 
-        if (function.type == PROFILER_FUNCTION_HALT)
-            continue;
-
         ProfilerRow row;
         row.index = (u16)i;
         row.has_symbol = false;
@@ -384,8 +381,6 @@ static void build_rows(const GG_Profiler_Function* functions, u32 count)
 
         if (function.type == PROFILER_FUNCTION_ROOT)
             snprintf(row.name, sizeof(row.name), "[Root]");
-        else if (function.type == PROFILER_FUNCTION_HALT)
-            snprintf(row.name, sizeof(row.name), "[HALT]");
         else
         {
             const char* name = gui_debug_get_symbol_name(function.bank, function.address, &row.is_manual);
@@ -428,7 +423,7 @@ static bool row_matches_filter(const ProfilerRow& row, const GG_Profiler_Functio
 
 static bool is_pseudo_function(const GG_Profiler_Function& function)
 {
-    return (function.type == PROFILER_FUNCTION_ROOT) || (function.type == PROFILER_FUNCTION_HALT);
+    return function.type == PROFILER_FUNCTION_ROOT;
 }
 
 static u64 get_sort_value(const GG_Profiler_Function& function, int column)

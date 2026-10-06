@@ -58,8 +58,6 @@ EXTERN const char* gui_debug_get_symbol_name(u16 bank, u16 address, bool* is_man
 EXTERN void gui_debug_find_symbols(const char* name, std::vector<DebugSymbol*>& symbols);
 EXTERN bool gui_debug_get_auto_symbol(u8 bank, u16 address, bool subroutine,
     char* output, int output_size);
-EXTERN bool gui_debug_resolve_symbol(GG_Disassembler_Record* record, std::string& instr, const char* color, const char* original_color, const char** out_name = NULL, u16* out_address = NULL);
-EXTERN bool gui_debug_resolve_label(GG_Disassembler_Record* record, std::string& instr, const char* color, const char* original_color, const char** out_name = NULL, u16* out_address = NULL);
 EXTERN void gui_debug_runtocursor(void);
 EXTERN void gui_debug_runto_address(u16 address);
 EXTERN void gui_debug_goto_address(u16 address, u8 bank);

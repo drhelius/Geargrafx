@@ -97,7 +97,6 @@ private:
     void ResetQueue();
     bool ShouldLogReadDiagnostic();
     u32 CacheIndex(u32 block_lba) const;
-    u32 BlockStartLBA(u32 lba) const;
     u32 BlockStartLBAForTrack(u32 lba, const Track& track) const;
     u32 ReadAheadBlocksForTrack(const Track& track) const;
     bool IsBlockWithinTrack(u32 block_lba, const Track& track) const;

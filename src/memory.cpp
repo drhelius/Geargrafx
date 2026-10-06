@@ -386,7 +386,6 @@ GG_Disassembler_Record* Memory::GetOrCreateDisassemblerRecord(u16 address)
     if (!IsValidPointer(record))
     {
         record = new GG_Disassembler_Record();
-        record->address = physical_address;
         record->bank = GetBank(address);
         record->segment[0] = 0;
         record->name[0] = 0;

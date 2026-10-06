@@ -116,14 +116,14 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_cdrom_audio = new CdRomAudio(m_cdrom_media, m_laseractive);
     m_audio = new Audio(m_adpcm, m_cdrom_audio);
     m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio, m_random, m_laseractive);
-    m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, m_audio, this, m_laseractive);
+    m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, this, m_laseractive);
     m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom, m_random, m_laseractive);
 
     m_audio->Init();
     m_input->Init();
     m_cdrom_media->Init(m_laseractive);
     m_cdrom->Init(m_huc6280, m_memory, m_adpcm);
-    m_scsi_controller->Init(m_huc6280, m_cdrom);
+    m_scsi_controller->Init(m_cdrom);
     m_media->Init();
     m_memory->Init();
     m_huc6260->Init(pixel_format);
@@ -188,11 +188,6 @@ void GeargrafxCore::SetPSGRevision(GG_PSG_Revision revision)
         if (IsValidPointer(m_audio) && IsValidPointer(m_media))
             SelectPSGRevision();
     }
-}
-
-GG_PSG_Revision GeargrafxCore::GetPSGRevision() const
-{
-    return m_psg_revision;
 }
 
 void GeargrafxCore::SelectPSGRevision()
@@ -351,11 +346,6 @@ void GeargrafxCore::SetTurboLinkCableConnected(bool connected)
 void GeargrafxCore::InvalidateTurboLinkSample()
 {
     m_input->InvalidateTurboLinkSample();
-}
-
-bool GeargrafxCore::IsTurboLinkCableConnected() const
-{
-    return m_input->IsTurboLinkCableConnected();
 }
 
 GG_TurboLink_Drive GeargrafxCore::GetTurboLinkDrive() const
@@ -1041,7 +1031,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     m_memory->LoadState(stream);
     m_huc6202->LoadState(stream);
-    m_huc6260->LoadState(stream);
+    m_huc6260->LoadState(stream, header.version);
     m_huc6270_1->LoadState(stream, header.version);
     m_huc6270_2->LoadState(stream, header.version);
     m_huc6280->LoadState(stream);
@@ -1076,7 +1066,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
         if (m_media->IsLaserActive())
         {
-            m_laseractive->LoadState(stream);
+            m_laseractive->LoadState(stream, header.version);
             m_huc6260->LoadLaserActiveState(stream);
         }
     }

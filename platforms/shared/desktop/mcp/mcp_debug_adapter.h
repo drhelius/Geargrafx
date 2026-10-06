@@ -37,22 +37,6 @@ struct MemoryAreaInfo
     u8* data;
 };
 
-struct RegistersSnapshot
-{
-    u16 PC;
-    u8 A;
-    u8 X;
-    u8 Y;
-    u8 S;
-    u8 P;
-    s32 SPEED;
-    bool TIMER;
-    u8 TIMER_COUNTER;
-    u8 TIMER_RELOAD;
-    u8 IDR;
-    u8 IRR;
-};
-
 struct BreakpointInfo
 {
     bool enabled;
@@ -110,7 +94,6 @@ public:
     std::vector<BreakpointInfo> ListBreakpoints();
 
     // Registers
-    RegistersSnapshot GetRegisters();
     void SetRegister(const std::string& name, u32 value);
 
     // Memory areas (matching debugger memory editor)
@@ -208,9 +191,6 @@ public:
     // Rewind
     json GetRewindStatus();
     json RewindSeek(int snapshot);
-
-    // Core access
-    GeargrafxCore* GetCore() { return m_core; }
 
 private:
     GeargrafxCore* m_core;

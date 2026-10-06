@@ -33,7 +33,6 @@ public:
         u16 frequency;
         u8 control;
         u8 amplitude;
-        u8 vol;
         u8 vol_left;
         u8 vol_right;
         u16 gain_left;
@@ -62,7 +61,6 @@ public:
         u8* MAIN_AMPLITUDE;
         u16* LFO_FREQUENCY;
         u8* LFO_CONTROL;
-        s32* BUFFER_INDEX;
         s32* FRAME_SAMPLES;
     };
 

@@ -316,41 +316,6 @@ std::vector<BreakpointInfo> DebugAdapter::ListBreakpoints()
     return result;
 }
 
-RegistersSnapshot DebugAdapter::GetRegisters()
-{
-    Debug("[MCP] GetRegisters: start");
-
-    Debug("[MCP] GetRegisters: m_core = %p", (void*)m_core);
-
-    HuC6280* cpu = m_core->GetHuC6280();
-    Debug("[MCP] GetRegisters: cpu = %p", (void*)cpu);
-
-    HuC6280::HuC6280_State* state = cpu->GetState();
-    Debug("[MCP] GetRegisters: state = %p", (void*)state);
-
-    Debug("[MCP] GetRegisters: creating snapshot");
-    RegistersSnapshot snapshot;
-
-    Debug("[MCP] GetRegisters: reading PC (ptr=%p)", (void*)state->PC);
-    snapshot.PC = state->PC->GetValue();
-
-    Debug("[MCP] GetRegisters: reading A (ptr=%p)", (void*)state->A);
-    snapshot.A = state->A->GetValue();
-    snapshot.X = state->X->GetValue();
-    snapshot.Y = state->Y->GetValue();
-    snapshot.S = state->S->GetValue();
-    snapshot.P = state->P->GetValue();
-    snapshot.SPEED = *state->SPEED;
-    snapshot.TIMER = *state->TIMER;
-    snapshot.TIMER_COUNTER = *state->TIMER_COUNTER;
-    snapshot.TIMER_RELOAD = *state->TIMER_RELOAD;
-    snapshot.IDR = *state->IDR;
-    snapshot.IRR = *state->IRR;
-
-    Debug("[MCP] GetRegisters: done (PC=%04X)", snapshot.PC);
-    return snapshot;
-}
-
 void DebugAdapter::SetRegister(const std::string& name, u32 value)
 {
     HuC6280* cpu = m_core->GetHuC6280();
@@ -4122,7 +4087,7 @@ struct ProfilerEntry
     const char* symbol;
 };
 
-static const char* const k_profiler_type_names[] = { "root", "halt", "call", "irq" };
+static const char* const k_profiler_type_names[] = { "root", "call", "irq" };
 
 static bool profiler_entry_compare(const ProfilerEntry& a, const ProfilerEntry& b)
 {
@@ -4207,10 +4172,7 @@ json DebugAdapter::GetProfilerData(const std::string& sort, int count, const std
     for (u32 i = 0; i < function_count; i++)
     {
         const GG_Profiler_Function& function = functions[i];
-        bool pseudo = (function.type == PROFILER_FUNCTION_ROOT) || (function.type == PROFILER_FUNCTION_HALT);
-
-        if (function.type == PROFILER_FUNCTION_HALT)
-            continue;
+        bool pseudo = (function.type == PROFILER_FUNCTION_ROOT);
 
         ProfilerEntry entry;
         entry.index = i;
@@ -4219,8 +4181,6 @@ json DebugAdapter::GetProfilerData(const std::string& sort, int count, const std
 
         if (function.type == PROFILER_FUNCTION_ROOT)
             entry.name = "[Root]";
-        else if (function.type == PROFILER_FUNCTION_HALT)
-            entry.name = "[HALT]";
         else
         {
             bool is_manual = false;
@@ -4269,14 +4229,13 @@ json DebugAdapter::GetProfilerData(const std::string& sort, int count, const std
     {
         const GG_Profiler_Function& function = functions[entries[i].index];
         bool root = (function.type == PROFILER_FUNCTION_ROOT);
-        bool pseudo = root || (function.type == PROFILER_FUNCTION_HALT);
         json item;
         char text[16];
 
         item["name"] = entries[i].name;
         item["type"] = k_profiler_type_names[function.type];
 
-        if (!pseudo)
+        if (!root)
         {
             item["symbol"] = entries[i].symbol;
             snprintf(text, sizeof(text), "%02X", function.bank);

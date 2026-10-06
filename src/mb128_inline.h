@@ -37,11 +37,6 @@ INLINE u8* MB128::GetRAM()
     return m_ram;
 }
 
-INLINE const u8* MB128::GetRAM() const
-{
-    return m_ram;
-}
-
 INLINE u32 MB128::GetRAMSize() const
 {
     return kMB128Size;

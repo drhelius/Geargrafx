@@ -454,30 +454,6 @@ bool TurboLinkManager::IsHardwareReady() const
     return IsActive() && m_hardware_ready;
 }
 
-bool TurboLinkManager::HasRemotePeer() const
-{
-    if (!IsActive())
-        return false;
-
-    u64 now = GetClockMicroseconds();
-    for (int i = 0; i < TURBOLINK_MAX_PEERS; i++)
-    {
-        if (i == m_slot)
-            continue;
-
-        const Shared::Peer& peer = m_shared->peers[i];
-        u32 state = peer.state.load(std::memory_order_acquire);
-        u64 heartbeat = peer.heartbeat_us.load(std::memory_order_acquire);
-
-        if (IsPeerActive(state) && turbolink_heartbeat_age(now, heartbeat) <= TURBOLINK_DETACH_US)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 bool TurboLinkManager::IsPacingPeer() const
 {
     if (!IsCableConnected())

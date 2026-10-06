@@ -21,18 +21,16 @@
 #include "scsi_controller.h"
 #include "huc6280.h"
 #include "memory.h"
-#include "audio.h"
 #include "trace_logger.h"
 #include "geargrafx_core.h"
 #include "media.h"
 #include "laseractive.h"
 
-CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, Audio* audio, GeargrafxCore* core, LaserActive* laseractive)
+CdRom::CdRom(CdRomAudio* cdrom_audio, ScsiController* scsi_controller, GeargrafxCore* core, LaserActive* laseractive)
 {
     m_core = core;
     m_cdrom_audio = cdrom_audio;
     m_scsi_controller = scsi_controller;
-    m_audio = audio;
     m_laseractive = laseractive;
     InitPointer(m_trace_logger);
     InitPointer(m_adpcm);

@@ -51,7 +51,6 @@ enum GG_Trace_Type : u8
 #define TRACE_FLAG_VCE          (1 << TRACE_VCE)
 #define TRACE_FLAG_SCSI         (1 << TRACE_SCSI)
 #define TRACE_FLAG_SYSTEM       (1 << TRACE_SYSTEM)
-#define TRACE_FLAG_ALL          ((1U << TRACE_TYPE_COUNT) - 1)
 
 static_assert(TRACE_TYPE_COUNT < 32, "Trace category flags exceed u32 width");
 
@@ -430,10 +429,8 @@ public:
     void SetEventFilter(GG_Trace_Type type, u32 filter);
     u32 GetEnabledFlags() const;
     u32 GetEventFilter(GG_Trace_Type type) const;
-    const GG_Trace_Entry* GetBuffer() const;
     u32 GetCount() const;
     u32 GetCapacity() const;
-    u32 GetPosition() const;
     u64 GetTotalLogged() const;
     u64 GetSequence() const;
     const GG_Trace_Entry& GetEntry(u32 index) const;

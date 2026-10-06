@@ -262,16 +262,6 @@ u64 TurboLink::GetLastDriveTick() const
     return m_last_drive_tick;
 }
 
-bool TurboLink::GetSel() const
-{
-    return m_sel;
-}
-
-bool TurboLink::GetClr() const
-{
-    return m_clr;
-}
-
 void TurboLink::SaveState(std::ostream& stream) const
 {
     stream.write(reinterpret_cast<const char*>(&m_sel), sizeof(m_sel));

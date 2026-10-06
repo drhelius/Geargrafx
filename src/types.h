@@ -65,13 +65,6 @@ enum GG_LaserActive_Region
     GG_LASERACTIVE_REGION_US
 };
 
-struct GG_Color
-{
-    u8 red;
-    u8 green;
-    u8 blue;
-};
-
 enum GG_Pixel_Format
 {
     GG_PIXEL_RGB565,
@@ -166,7 +159,6 @@ enum GG_Disassembler_Syntax
 
 struct GG_Disassembler_Record
 {
-    u32 address;
     u8 bank;
     char name[64];
     char bytes[25];

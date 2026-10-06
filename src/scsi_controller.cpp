@@ -70,19 +70,14 @@ ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio,
     m_state.NEXT_LOAD_CYCLES = &m_next_load_cycles;
     m_state.LOAD_SECTOR = &m_load_sector;
     m_state.LOAD_SECTOR_COUNT = &m_load_sector_count;
-    m_state.AUTO_ACK_CYCLES = &m_auto_ack_cycles;
-    m_state.COMMAND_BUFFER = &m_command_buffer;
-    m_state.DATA_BUFFER = &m_data_buffer;
-    m_state.DATA_BUFFER_OFFSET = &m_data_buffer_offset;
 }
 
 ScsiController::~ScsiController()
 {
 }
 
-void ScsiController::Init(HuC6280* huc6280, CdRom* cdrom)
+void ScsiController::Init(CdRom* cdrom)
 {
-    m_huc6280 = huc6280;
     m_cdrom = cdrom;
     Reset();
 }

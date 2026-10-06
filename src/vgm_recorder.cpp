@@ -28,7 +28,6 @@ VgmRecorder::VgmRecorder()
     m_pending_wait = 0;
     m_total_samples = 0;
     m_clock_rate = 0;
-    m_huc6280_used = false;
 }
 
 VgmRecorder::~VgmRecorder()
@@ -50,7 +49,6 @@ void VgmRecorder::Start(const char* file_path, int clock_rate, const VgmMetadata
     m_recording = true;
     m_pending_wait = 0;
     m_total_samples = 0;
-    m_huc6280_used = false;
     m_command_buffer.clear();
     
     Log("VGM: Start recording, clock_rate=%d (0x%08X)", clock_rate, clock_rate);
@@ -173,8 +171,6 @@ void VgmRecorder::WriteHuC6280(u16 address, u8 data)
 
     FlushPendingWait();
 
-    m_huc6280_used = true;
-
     // 0xB9 aa dd - HuC6280, write value dd to register aa
     // Register 00 equals HuC6280 address 0x0800
     // Valid range: 0x0800-0x0809 (HuC6280 PSG registers)
@@ -192,12 +188,6 @@ void VgmRecorder::WriteHuC6280(u16 address, u8 data)
 void VgmRecorder::WriteCommand(u8 command)
 {
     m_command_buffer.push_back(command);
-}
-
-void VgmRecorder::WriteCommand(u8 command, u8 data)
-{
-    m_command_buffer.push_back(command);
-    m_command_buffer.push_back(data);
 }
 
 void VgmRecorder::WriteCommand(u8 command, u8 data1, u8 data2)

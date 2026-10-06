@@ -47,32 +47,6 @@ INLINE u32 CdRomMedia::GetCRC()
     }
 }
 
-INLINE const char* CdRomMedia::GetFilePath()
-{
-    if (IsValidPointer(m_current_image))
-    {
-        return m_current_image->GetFilePath();
-    }
-    else
-    {
-        Error("CdRomMedia::GetFilePath failed - Current image is NULL");
-        return "";
-    }
-}
-
-INLINE const char* CdRomMedia::GetFileDirectory()
-{
-    if (IsValidPointer(m_current_image))
-    {
-        return m_current_image->GetFileDirectory();
-    }
-    else
-    {
-        Error("CdRomMedia::GetFileDirectory failed - Current image is NULL");
-        return "";
-    }
-}
-
 INLINE const char* CdRomMedia::GetFileName()
 {
     if (IsValidPointer(m_current_image))

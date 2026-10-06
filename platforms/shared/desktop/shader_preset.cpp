@@ -237,7 +237,6 @@ bool shader_preset_config_path_matches(const char* config_path, const char* pres
 static void clear_preset(ShaderPreset* preset)
 {
     memset(preset, 0, sizeof(*preset));
-    preset->filter_linear = false;
 }
 
 static bool load_ini(const char* path, mINI::INIStructure& ini, char* error, size_t error_size)
@@ -323,7 +322,6 @@ static bool load_passes(const mINI::INIStructure& ini, ShaderPreset* preset, cha
     }
 
     preset->pass_count = pass_count;
-    preset->filter_linear = preset->passes[0].filter_linear;
     strncpy_fit(preset->shader_path, preset->passes[0].shader_path, sizeof(preset->shader_path));
     return true;
 }

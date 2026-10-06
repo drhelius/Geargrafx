@@ -47,8 +47,6 @@ public:
     void Reset();
     bool IsReady();
     u32 GetCRC();
-    const char* GetFilePath();
-    const char* GetFileDirectory();
     const char* GetFileName();
     const char* GetFileExtension();
     const std::vector<CdRomImage::Track>& GetTracks();
@@ -73,7 +71,6 @@ public:
     u32 SeekTime(u32 start_lba, u32 end_lba);
     u32 SectorTransferCycles();
     u32 GetFirstSectorOfTrack(u8 track);
-    u32 GetLastSectorOfTrack(u8 track);
     s32 GetTrackFromLBA(u32 lba);
     s32 FindTrackFromLBA(u32 lba, bool include_lead_in = false);
     bool PreloadTrack(u32 track_number);
@@ -89,7 +86,6 @@ public:
     const GG_QonInfo* GetQonInfo() const;
     bool ReadMmiAnalogAudio(u64 offset, void* buffer, u32 size);
     u64 GetMmiAnalogAudioSize() const;
-    bool ReadMmiVideoData(u64 offset, void* buffer, u32 size);
     MediaFile* OpenMmiVideoStream() const;
 
 private:

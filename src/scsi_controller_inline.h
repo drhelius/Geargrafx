@@ -107,7 +107,6 @@ INLINE void ScsiController::UpdateIRQs()
 
 INLINE u8 ScsiController::ReadData()
 {
-    //Debug("SCSI Read data: %02X %04X %04X", m_bus.db, m_bus.signals, m_huc6280->GetState()->PC->GetValue());
     if (m_phase == SCSI_PHASE_DATA_IN || m_phase == SCSI_PHASE_STATUS || m_phase == SCSI_PHASE_MESSAGE_IN)
         return m_bus.db;
     else

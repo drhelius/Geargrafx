@@ -104,7 +104,6 @@ public:
     bool IsActive() const;
     bool IsCableConnected() const;
     bool IsHardwareReady() const;
-    bool HasRemotePeer() const;
     bool IsPacingPeer() const;
     bool ConsumeLocalAttachmentChanged();
     bool ConsumeRemoteIdentityChanged();

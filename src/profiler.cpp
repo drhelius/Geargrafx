@@ -33,8 +33,6 @@ Profiler::Profiler(const u64* master_clock_cycles)
     m_function_count = 0;
     m_depth = 0;
     m_enabled = false;
-    m_halted = false;
-    m_halt_cycle = 0;
     m_last_cycle = 0;
     m_total_cycles = 0;
     m_irq_cycles = 0;
@@ -61,7 +59,6 @@ void Profiler::Reset()
     if (IsValidPointer(m_functions))
     {
         InitFunction(PROFILER_ROOT, 0, 0, 0, PROFILER_FUNCTION_ROOT);
-        InitFunction(PROFILER_HALT, 0, 0, 0, PROFILER_FUNCTION_HALT);
     }
 
     ResetStack();
@@ -70,8 +67,6 @@ void Profiler::Reset()
 void Profiler::ResetStack()
 {
     m_depth = 0;
-    m_halted = false;
-    m_halt_cycle = 0;
     m_irq_cycles = 0;
     m_last_cycle = IsValidPointer(m_master_clock_cycles) ? *m_master_clock_cycles : 0;
 }
@@ -133,32 +128,6 @@ void Profiler::Return(u16 sp, u32 pending_cycles)
 
     if ((m_depth > 0) && (m_stack[m_depth - 1].return_sp == sp))
         Leave(cycle);
-}
-
-void Profiler::Halt(bool halted, u32 pending_cycles)
-{
-    if (halted == m_halted)
-        return;
-
-    u64 cycle = *m_master_clock_cycles + pending_cycles;
-    Charge(cycle);
-
-    GG_Profiler_Function* function = &m_functions[PROFILER_HALT];
-
-    if (halted)
-    {
-        function->calls++;
-        m_halt_cycle = cycle;
-    }
-    else
-    {
-        u64 cycles = (cycle > m_halt_cycle) ? cycle - m_halt_cycle : 0;
-        function->inclusive_cycles += cycles;
-        function->completed++;
-        AddSample(function, cycles);
-    }
-
-    m_halted = halted;
 }
 
 const GG_Profiler_Function* Profiler::GetFunctions() const
@@ -281,8 +250,6 @@ bool Profiler::IsOutermost(u16 function, bool irq) const
 
 u16 Profiler::GetCurrentFunction() const
 {
-    if (m_halted)
-        return PROFILER_HALT;
     if (m_depth > 0)
         return m_stack[m_depth - 1].function;
     return PROFILER_ROOT;

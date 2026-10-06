@@ -27,7 +27,6 @@ struct GG_QonFrameInfo
 {
     u64 record_offset;
     u32 max_compressed_size;
-    u16 flags;
 };
 
 struct GG_QonInfo
@@ -38,7 +37,6 @@ struct GG_QonInfo
     u8 colorspace;
     u16 flags;
     u32 frame_count;
-    u32 frame_duration_us;
     u64 decoded_rgb_size;
     std::vector<GG_QonFrameInfo> frames;
 };
@@ -56,7 +54,6 @@ public:
     virtual bool ReadSubchannelQ(s32 lba, u8* buffer) override;
 
     bool SelectMediaByIndex(u32 index);
-    bool SelectMediaBySequence(s64 sequence_number);
     u32 GetSelectedMediaIndex() const;
     const GG_MmiInfo* GetMmiInfo() const;
     const GG_MmiMediaInfo* GetSelectedMedia() const;
@@ -66,9 +63,7 @@ public:
     void SetEjected(bool ejected);
     bool ReadAnalogAudio(u64 offset, void* buffer, u32 size);
     u64 GetAnalogAudioSize() const;
-    bool ReadVideoData(u64 offset, void* buffer, u32 size);
     MediaFile* OpenVideoStream() const;
-    bool DecodeQonFrame(u32 frame_index, std::vector<u8>& output);
     static bool ReadQonFrame(MediaFile* file, const GG_QonInfo& qon_info, u32 frame_index, std::vector<u8>& data);
 
 private:

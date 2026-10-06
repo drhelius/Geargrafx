@@ -514,7 +514,7 @@ bool MmiArchive::ReadEntries()
             return false;
         }
 
-        if (!ReadLocalHeader(entry, file_stat))
+        if (!ReadLocalHeader(entry))
             return false;
 
         m_entries.push_back(entry);
@@ -546,7 +546,7 @@ bool MmiArchive::ReadEntries()
     return ValidateEntryRanges();
 }
 
-bool MmiArchive::ReadLocalHeader(GG_MmiEntry& entry, const mz_zip_archive_file_stat& file_stat)
+bool MmiArchive::ReadLocalHeader(GG_MmiEntry& entry)
 {
     u8 header[30];
 
@@ -614,7 +614,6 @@ bool MmiArchive::ReadLocalHeader(GG_MmiEntry& entry, const mz_zip_archive_file_s
     }
 
     entry.data_offset = data_offset;
-    UNUSED(file_stat);
 
     return true;
 }

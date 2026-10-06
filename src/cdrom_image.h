@@ -62,10 +62,7 @@ public:
     virtual bool PreloadTrack(u32 track_number) = 0;
     bool IsReady();
     u32 GetFirstSectorOfTrack(u8 track);
-    u32 GetLastSectorOfTrack(u8 track);
     s32 GetTrackFromLBA(u32 lba);
-    const char* GetFilePath();
-    const char* GetFileDirectory();
     const char* GetFileName();
     const char* GetFileExtension();
     TableOfContents* GetTOC();

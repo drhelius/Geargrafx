@@ -57,7 +57,6 @@ public:
     bool ReadRawSectors2352(u32 lba, u32 sector_count, u8* buffer, bool audio, bool report_errors = true);
     bool ReadRawSector2352(u32 lba, u8* buffer, bool audio = false, bool report_errors = true);
     bool SetSpeed(u16 speed);
-    const char* GetDeviceId() const;
 
 private:
 #if defined(_WIN32)

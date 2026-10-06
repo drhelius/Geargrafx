@@ -381,14 +381,6 @@ INLINE u32 Memory::GetPhysicalAddress(u16 address)
     return (GetBank(address) << 13) | (address & 0x1FFF);
 }
 
-INLINE bool Memory::GetROMPhysicalAddress(u16 cpu_address, u32& rom_address)
-{
-    u8 bank = GetBank(cpu_address);
-    u16 bank_offset = cpu_address & 0x1FFF;
-
-    return GetROMPhysicalAddress(bank, bank_offset, rom_address);
-}
-
 INLINE bool Memory::GetROMPhysicalAddress(u8 bank, u16 bank_offset, u32& rom_address)
 {
     if (GetBankType(bank) != MEMORY_BANK_TYPE_ROM)
@@ -485,11 +477,6 @@ INLINE int Memory::GetCardRAMSize()
 INLINE int Memory::GetCardRAMStart()
 {
     return m_card_ram_start;
-}
-
-INLINE int Memory::GetCardRAMEnd()
-{
-    return m_card_ram_end;
 }
 
 INLINE int Memory::GetBackupRAMSize()

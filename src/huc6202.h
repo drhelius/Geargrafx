@@ -90,7 +90,6 @@ public:
     void SetTraceLogger(TraceLogger* trace_logger);
     u16 GetWindow1Width();
     u16 GetWindow2Width();
-    HuC6202_Window_Priority* GetWindowPriorities();
     const u8* GetSourceSelection();
     HuC6202_State* GetState();
     void SaveState(std::ostream& stream);

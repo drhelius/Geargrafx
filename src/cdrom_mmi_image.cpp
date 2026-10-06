@@ -20,7 +20,6 @@
 #include <algorithm>
 #include "cdrom_mmi_image.h"
 #include "media_file.h"
-#include "../platforms/shared/dependencies/qon/qoi2.h"
 
 static const u64 k_mmi_max_cue_size = 16ULL * 1024ULL * 1024ULL;
 static const u32 k_qon_max_dimension = 4096;
@@ -194,22 +193,6 @@ bool CdRomMmiImage::SelectMediaByIndex(u32 index)
     return false;
 }
 
-bool CdRomMmiImage::SelectMediaBySequence(s64 sequence_number)
-{
-    const GG_MmiInfo* mmi_info = m_archive.GetInfo();
-
-    if (!mmi_info)
-        return false;
-
-    for (size_t i = 0; i < mmi_info->media.size(); i++)
-    {
-        if (mmi_info->media[i].sequence_number == sequence_number)
-            return SelectMediaByIndex((u32)i);
-    }
-
-    return false;
-}
-
 u32 CdRomMmiImage::GetSelectedMediaIndex() const
 {
     return m_selected_media_index;
@@ -265,11 +248,6 @@ u64 CdRomMmiImage::GetAnalogAudioSize() const
     return size > 0 ? (u64)size : 0;
 }
 
-bool CdRomMmiImage::ReadVideoData(u64 offset, void* buffer, u32 size)
-{
-    return !m_ejected && IsValidPointer(m_video_file) && m_video_file->ReadAt(offset, buffer, size);
-}
-
 MediaFile* CdRomMmiImage::OpenVideoStream() const
 {
     const GG_MmiMediaInfo* media = GetSelectedMedia();
@@ -281,38 +259,6 @@ MediaFile* CdRomMmiImage::OpenVideoStream() const
     const GG_MmiEntry* entry = stream ? m_archive.GetEntry(stream->entry_index) : NULL;
 
     return entry ? m_archive.OpenStoredEntry(entry) : NULL;
-}
-
-bool CdRomMmiImage::DecodeQonFrame(u32 frame_index, std::vector<u8>& output)
-{
-    output.clear();
-
-    if (!m_video_file || (frame_index >= m_qon_info.frames.size()) || (m_qon_info.decoded_rgb_size > (u64)SIZE_MAX))
-    {
-        return false;
-    }
-
-    std::vector<u8> compressed_data;
-
-    if (!ReadQonFrame(m_video_file, m_qon_info, frame_index, compressed_data))
-        return false;
-
-    output.resize((size_t)m_qon_info.decoded_rgb_size);
-
-    qoi2_desc image_desc;
-
-    image_desc.width = m_qon_info.width;
-    image_desc.height = m_qon_info.height;
-    image_desc.channels = m_qon_info.channels;
-    image_desc.colorspace = m_qon_info.colorspace;
-
-    if (!qoi2_decode_data(&compressed_data[0], compressed_data.size(), &image_desc, NULL, &output[0], 3))
-    {
-        output.clear();
-        return false;
-    }
-
-    return true;
 }
 
 bool CdRomMmiImage::ReadQonFrame(MediaFile* file, const GG_QonInfo& qon_info, u32 frame_index, std::vector<u8>& data)
@@ -687,7 +633,6 @@ bool CdRomMmiImage::ReadQonIndex(MediaFile* video_file, const GG_MmiStreamInfo& 
     qon_info.colorspace = header[13];
     qon_info.flags = read_u16_le(header + 14);
     qon_info.frame_count = read_u32_le(header + 16);
-    qon_info.frame_duration_us = read_u32_le(header + 20);
 
     u64 pixel_count;
 
@@ -769,7 +714,6 @@ bool CdRomMmiImage::ReadQonIndex(MediaFile* video_file, const GG_MmiStreamInfo& 
         }
 
         qon_info.frames[i].record_offset = record_offset;
-        qon_info.frames[i].flags = flags;
         sorted_frames[i] = i;
     }
 

@@ -74,7 +74,6 @@ struct ShaderPreset
     char preset_path[SHADER_PRESET_MAX_PATH];
     char preset_dir[SHADER_PRESET_MAX_PATH];
     char shader_path[SHADER_PRESET_MAX_PATH];
-    bool filter_linear;
     int pass_count;
     ShaderPresetPass passes[SHADER_PRESET_MAX_PASSES];
     int parameter_count;

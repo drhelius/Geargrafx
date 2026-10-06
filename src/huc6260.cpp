@@ -166,7 +166,6 @@ void HuC6260::Reset()
     m_hsync = true;
     m_vsync = true;
     m_blur = 0;
-    m_black_and_white = 0;
     m_active_line = false;
 
     memset(m_laseractive_line_state, 0, sizeof(m_laseractive_line_state));
@@ -241,7 +240,6 @@ void HuC6260::WriteRegister(u16 address, u8 value)
             m_control_register = value;
 
             m_blur = (m_control_register >> 2) & 0x01;
-            m_black_and_white = (m_control_register >> 7) & 0x01;
 
             s32 old_speed = m_speed;
             m_speed = m_control_register & 0x03;
@@ -507,12 +505,11 @@ void HuC6260::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_hsync), sizeof(m_hsync));
     stream.write(reinterpret_cast<const char*> (&m_vsync), sizeof(m_vsync));
     stream.write(reinterpret_cast<const char*> (&m_blur), sizeof(m_blur));
-    stream.write(reinterpret_cast<const char*> (&m_black_and_white), sizeof(m_black_and_white));
     stream.write(reinterpret_cast<const char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
     stream.write(reinterpret_cast<const char*> (&m_active_line), sizeof(m_active_line));
 }
 
-void HuC6260::LoadState(std::istream& stream)
+void HuC6260::LoadState(std::istream& stream, int version)
 {
     using namespace std;
     stream.read(reinterpret_cast<char*> (&m_control_register), sizeof(m_control_register));
@@ -527,7 +524,13 @@ void HuC6260::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_hsync), sizeof(m_hsync));
     stream.read(reinterpret_cast<char*> (&m_vsync), sizeof(m_vsync));
     stream.read(reinterpret_cast<char*> (&m_blur), sizeof(m_blur));
-    stream.read(reinterpret_cast<char*> (&m_black_and_white), sizeof(m_black_and_white));
+
+    if (version < 42)
+    {
+        u32 black_and_white = 0;
+        stream.read(reinterpret_cast<char*> (&black_and_white), sizeof(black_and_white));
+    }
+
     stream.read(reinterpret_cast<char*> (&m_multiple_speeds), sizeof(m_multiple_speeds));
     stream.read(reinterpret_cast<char*> (&m_active_line), sizeof(m_active_line));
 

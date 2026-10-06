@@ -29,7 +29,6 @@
 #define HUC6260_HSYNC_LENGTH 237
 #define HUC6260_HSYNC_START_HPOS (HUC6260_LINE_LENGTH - HUC6260_HSYNC_LENGTH)
 #define HUC6260_HSYNC_END_HPOS 0
-#define HUC6260_VSYNC_HPOS (HUC6260_HSYNC_START_HPOS + 30)
 #define HUC6260_LASERACTIVE_WIDTH 1176
 #define HUC6260_LASERACTIVE_WIDTH_SCALE 3
 #define HUC6260_LASERACTIVE_PIXEL_WIDTH (HUC6260_LASERACTIVE_WIDTH / HUC6260_LASERACTIVE_WIDTH_SCALE)
@@ -105,7 +104,7 @@ public:
     void SetCustomPalette(const u8* data);
     void SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8);
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
     void SaveLaserActiveState(std::ostream& stream);
     void LoadLaserActiveState(std::istream& stream);
 
@@ -157,7 +156,6 @@ private:
     bool m_hsync;
     bool m_vsync;
     s32 m_blur;
-    u32 m_black_and_white;
     int m_overscan;
     int m_scanline_start;
     int m_scanline_end;

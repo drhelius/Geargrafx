@@ -29,9 +29,7 @@ public:
     u8 GetValue() const;
     void SetValue(u8 value);
     void Increment();
-    void Increment(u8 value);
     void Decrement();
-    void Decrement(u8 value);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -54,19 +52,9 @@ INLINE void EightBitRegister::Increment()
     m_value++;
 }
 
-INLINE void EightBitRegister::Increment(u8 value)
-{
-    m_value += value;
-}
-
 INLINE void EightBitRegister::Decrement()
 {
     m_value--;
-}
-
-INLINE void EightBitRegister::Decrement(u8 value)
-{
-    m_value -= value;
 }
 
 INLINE void EightBitRegister::SaveState(std::ostream& stream)
@@ -89,14 +77,10 @@ public:
     u8 GetLow() const;
     void SetHigh(u8 high);
     u8 GetHigh() const;
-    u8* GetHighRegister();
-    u8* GetLowRegister();
     void SetValue(u16 value);
     u16 GetValue() const;
     void Increment();
-    void Increment(u16 value);
     void Decrement();
-    void Decrement(u16 value);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream);
 
@@ -138,16 +122,6 @@ INLINE u8 SixteenBitRegister::GetHigh() const
     return m_value.high;
 }
 
-INLINE u8* SixteenBitRegister::GetHighRegister()
-{
-    return &m_value.high;
-}
-
-INLINE u8* SixteenBitRegister::GetLowRegister()
-{
-    return &m_value.low;
-}
-
 INLINE void SixteenBitRegister::SetValue(u16 value)
 {
     m_value.v = value;
@@ -163,19 +137,9 @@ INLINE void SixteenBitRegister::Increment()
     m_value.v++;
 }
 
-INLINE void SixteenBitRegister::Increment(u16 value)
-{
-    m_value.v += value;
-}
-
 INLINE void SixteenBitRegister::Decrement()
 {
     m_value.v--;
-}
-
-INLINE void SixteenBitRegister::Decrement(u16 value)
-{
-    m_value.v -= value;
 }
 
 INLINE void SixteenBitRegister::SaveState(std::ostream& stream)

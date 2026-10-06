@@ -323,11 +323,6 @@ INLINE u16 HuC6280::Address16(u8 high, u8 low)
     return static_cast<u16>(high << 8 ) | low;
 }
 
-INLINE bool HuC6280::PageCrossed(u16 old_address, u16 new_address)
-{
-    return (old_address ^ new_address) > 0x00FF;
-}
-
 INLINE u16 HuC6280::ZeroPageX()
 {
     return ZERO_PAGE_ADDR | m_X.GetValue();
@@ -342,11 +337,6 @@ INLINE void HuC6280::SetOrClearZNFlags(u8 result)
 INLINE void HuC6280::SetZNFlags(u8 result)
 {
     m_P.SetValue(m_P.GetValue() | m_zn_flags_lut[result]);
-}
-
-INLINE void HuC6280::SetOverflowFlag(u8 result)
-{
-    m_P.SetValue((m_P.GetValue() & 0xBF) | (result & 0x40));
 }
 
 INLINE void HuC6280::SetFlag(u8 flag)
@@ -420,13 +410,6 @@ INLINE u16 HuC6280::ZeroPageAddressing()
 INLINE u16 HuC6280::ZeroPageAddressing(EightBitRegister* reg)
 {
     return ZERO_PAGE_ADDR | ((Fetch8() + reg->GetValue()) & 0xFF);
-}
-
-INLINE u16 HuC6280::ZeroPageRelativeAddressing()
-{
-    u16 address = ZeroPageAddressing();
-    s8 offset = static_cast<s8>(Fetch8());
-    return address + offset;
 }
 
 INLINE u16 HuC6280::ZeroPageIndirectAddressing()
@@ -896,7 +879,6 @@ INLINE void HuC6280::SetDisassemblerOperand(GG_Disassembler_Record* record, u16 
 INLINE void HuC6280::PopulateUnavailableDisassemblerRecord(GG_Disassembler_Record* record, u16 address)
 {
 #if !defined(GG_DISABLE_DISASSEMBLER)
-    record->address = m_memory->GetPhysicalAddress(address);
     record->bank = m_memory->GetBank(address);
     strncpy_fit(record->name, "????", sizeof(record->name));
     strncpy_fit(record->bytes, "?? ", sizeof(record->bytes));
@@ -943,7 +925,6 @@ INLINE void HuC6280::PopulateDisassemblerRecord(GG_Disassembler_Record* record, 
 #if !defined(GG_DISABLE_DISASSEMBLER)
     u8 opcode_size = k_huc6280_opcode_sizes[opcode];
 
-    record->address = m_memory->GetPhysicalAddress(address);
     record->bank = m_memory->GetBank(address);
     record->name[0] = 0;
     record->bytes[0] = 0;

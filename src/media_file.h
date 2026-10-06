@@ -31,7 +31,6 @@ public:
 
     static MediaFile* OpenFile(const char* path);
     static void SetVfsInterface(const retro_vfs_interface* iface);
-    static bool HasVfsInterface();
 
     virtual bool Open(const char* path) = 0;
     virtual void Close() = 0;

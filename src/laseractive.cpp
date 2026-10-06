@@ -101,7 +101,6 @@ void LaserActive::Reset()
     m_seek_enabled = false;
     m_current_seek_mode = 0;
     m_current_seek_time_format = false;
-    m_current_seek_repeat = false;
     m_analog_attenuation_left = 0;
     m_analog_attenuation_right = 0;
     m_analog_fade_muted_left = false;
@@ -112,7 +111,6 @@ void LaserActive::Reset()
     memset(m_seek_point_regs, 0, sizeof(m_seek_point_regs));
     memset(m_stop_point_regs, 0, sizeof(m_stop_point_regs));
     m_reached_stop_point = false;
-    m_reached_stop_point_previously = false;
     m_playback_mode = 0;
     m_playback_speed = 0;
     m_playback_reverse = false;
@@ -163,7 +161,6 @@ void LaserActive::Reset()
     m_video_compressed_data.clear();
     m_video_prefetch_compressed_data.clear();
     m_video_frame_index = 0;
-    m_video_generation = 0;
     m_video_frame_valid = false;
     m_video_decode_error_reported = false;
     m_video_even_field = false;
@@ -427,14 +424,6 @@ s32 LaserActive::GetTrackStartLBA(u8 track) const
         return -1;
 
     return (s32)m_cdrom_media->GetFirstSectorOfTrack(track - 1);
-}
-
-s32 LaserActive::GetTrackEndLBA(u8 track) const
-{
-    if ((track < 1) || (track > GetTrackCount()))
-        return -1;
-
-    return (s32)m_cdrom_media->GetLastSectorOfTrack(track - 1);
 }
 
 s32 LaserActive::GetMinimumLBA() const
@@ -751,7 +740,7 @@ void LaserActive::ClockSector()
     UpdateVideoFrame(m_head_lba + 150);
 
     if (m_stop_point_enabled && ((m_head_lba + 150) == m_stop_point_aba))
-        HandleStopPoint(m_head_lba + 150);
+        HandleStopPoint();
 
     if ((m_audio_end_lba != 0x00FFFFFF) && (m_head_lba == m_audio_end_lba))
         m_drive_mode = DRIVE_INACTIVE;
@@ -899,7 +888,6 @@ void LaserActive::UpdateVideoFrame(s32 aba)
 
         if ((even_code == 0x82CFFF) || (odd_code == 0x82CFFF))
         {
-            m_reached_stop_point_previously = true;
             m_operation_error_1 = false;
             m_operation_error_2 = false;
             m_operation_error_3 = true;
@@ -1789,8 +1777,6 @@ void LaserActive::ProcessInputRegisterWrite(u8 reg, u8 data, u8 previous_data, b
                 updated = true;
             }
 
-            m_current_seek_repeat = GetBit(data, 7);
-
             if (target_mode == 3)
             {
                 if (GetBits(previous_data, 0, 2) != GetBits(data, 0, 2))
@@ -1948,10 +1934,9 @@ void LaserActive::UpdateStopPoint()
     }
 
     m_stop_point_enabled = true;
-    m_reached_stop_point_previously = false;
 
     if (m_reached_stop_point)
-        HandleStopPoint(m_head_lba + 150);
+        HandleStopPoint();
 }
 
 void LaserActive::ResetSeekTarget()
@@ -2114,10 +2099,8 @@ void LaserActive::PerformLatchedSeek()
     m_seek_frame_pending = true;
 }
 
-void LaserActive::HandleStopPoint(s32 aba)
+void LaserActive::HandleStopPoint()
 {
-    UNUSED(aba);
-
     if ((m_playback_mode == 2) && (m_playback_speed <= 1))
         return;
 
@@ -2133,7 +2116,6 @@ void LaserActive::HandleStopPoint(s32 aba)
             m_output_regs[i] = 0xFF;
 
         m_output_regs[0x1F] = 0;
-        m_reached_stop_point_previously = true;
         m_operation_error_1 = false;
         m_operation_error_2 = true;
         m_operation_error_3 = true;
@@ -2210,7 +2192,6 @@ bool LaserActive::StartVideoDecoder()
         }
     }
 
-    m_video_generation = m_cdrom_media->GetMediaGeneration();
     m_video_frame_valid = false;
 
 #if !defined(GG_DISABLE_MMI_THREADS)
@@ -2335,7 +2316,6 @@ bool LaserActive::LoadCurrentVideoFrame()
             m_video_frame.swap(m_video_prefetch_frame);
             m_video_result_ready = false;
             m_video_frame_index = frame;
-            m_video_generation = m_cdrom_media->GetMediaGeneration();
             m_video_frame_valid = true;
             m_video_new_frame = true;
             return true;
@@ -2350,7 +2330,6 @@ bool LaserActive::LoadCurrentVideoFrame()
     if (m_video_frame_valid)
     {
         m_video_frame_index = frame;
-        m_video_generation = m_cdrom_media->GetMediaGeneration();
         m_video_new_frame = true;
     }
     else if (!m_video_decode_error_reported)
@@ -2550,11 +2529,6 @@ u32 LaserActive::GetVideoHeight() const
     const GG_QonInfo* qon_info = m_cdrom_media->GetQonInfo();
 
     return qon_info ? qon_info->height : 0;
-}
-
-bool LaserActive::HasVideoFrame() const
-{
-    return GetVideoFrameBuffer() != NULL;
 }
 
 bool LaserActive::IsActive() const
@@ -2757,27 +2731,9 @@ u8 LaserActive::GetVideoMixingMode() const
     return GetBits(m_input_regs[0x01], 6, 7);
 }
 
-u8 LaserActive::GetVideoControl() const
-{
-    return m_input_regs[0x0C];
-}
-
-u8 LaserActive::GetGraphicsFader(u8 source) const
-{
-    if (source > 3)
-        source = 3;
-
-    return GetBits(m_input_regs[0x1A + source], 2, 7);
-}
-
 s32 LaserActive::GetHeadLba() const
 {
     return m_head_lba;
-}
-
-s32 LaserActive::GetCurrentVideoFrame() const
-{
-    return m_current_video_frame;
 }
 
 void LaserActive::SaveState(std::ostream& stream) const
@@ -2804,7 +2760,6 @@ void LaserActive::SaveState(std::ostream& stream) const
     stream.write(reinterpret_cast<const char*> (&m_seek_enabled), sizeof(m_seek_enabled));
     stream.write(reinterpret_cast<const char*> (&m_current_seek_mode), sizeof(m_current_seek_mode));
     stream.write(reinterpret_cast<const char*> (&m_current_seek_time_format), sizeof(m_current_seek_time_format));
-    stream.write(reinterpret_cast<const char*> (&m_current_seek_repeat), sizeof(m_current_seek_repeat));
     stream.write(reinterpret_cast<const char*> (&m_analog_attenuation_left), sizeof(m_analog_attenuation_left));
     stream.write(reinterpret_cast<const char*> (&m_analog_attenuation_right), sizeof(m_analog_attenuation_right));
     stream.write(reinterpret_cast<const char*> (&m_analog_fade_muted_left), sizeof(m_analog_fade_muted_left));
@@ -2813,7 +2768,6 @@ void LaserActive::SaveState(std::ostream& stream) const
     stream.write(reinterpret_cast<const char*> (m_seek_point_regs), sizeof(m_seek_point_regs));
     stream.write(reinterpret_cast<const char*> (m_stop_point_regs), sizeof(m_stop_point_regs));
     stream.write(reinterpret_cast<const char*> (&m_reached_stop_point), sizeof(m_reached_stop_point));
-    stream.write(reinterpret_cast<const char*> (&m_reached_stop_point_previously), sizeof(m_reached_stop_point_previously));
     stream.write(reinterpret_cast<const char*> (&m_playback_mode), sizeof(m_playback_mode));
     stream.write(reinterpret_cast<const char*> (&m_playback_speed), sizeof(m_playback_speed));
     stream.write(reinterpret_cast<const char*> (&m_playback_reverse), sizeof(m_playback_reverse));
@@ -2859,7 +2813,7 @@ void LaserActive::SaveState(std::ostream& stream) const
     stream.write(reinterpret_cast<const char*> (&m_audio_end_pending), sizeof(m_audio_end_pending));
 }
 
-void LaserActive::LoadState(std::istream& stream)
+void LaserActive::LoadState(std::istream& stream, int version)
 {
     StopVideoDecoder();
 
@@ -2933,7 +2887,13 @@ void LaserActive::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_seek_enabled), sizeof(m_seek_enabled));
     stream.read(reinterpret_cast<char*> (&m_current_seek_mode), sizeof(m_current_seek_mode));
     stream.read(reinterpret_cast<char*> (&m_current_seek_time_format), sizeof(m_current_seek_time_format));
-    stream.read(reinterpret_cast<char*> (&m_current_seek_repeat), sizeof(m_current_seek_repeat));
+
+    if (version < 42)
+    {
+        bool current_seek_repeat = false;
+        stream.read(reinterpret_cast<char*> (&current_seek_repeat), sizeof(current_seek_repeat));
+    }
+
     stream.read(reinterpret_cast<char*> (&m_analog_attenuation_left), sizeof(m_analog_attenuation_left));
     stream.read(reinterpret_cast<char*> (&m_analog_attenuation_right), sizeof(m_analog_attenuation_right));
     stream.read(reinterpret_cast<char*> (&m_analog_fade_muted_left), sizeof(m_analog_fade_muted_left));
@@ -2942,7 +2902,13 @@ void LaserActive::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (m_seek_point_regs), sizeof(m_seek_point_regs));
     stream.read(reinterpret_cast<char*> (m_stop_point_regs), sizeof(m_stop_point_regs));
     stream.read(reinterpret_cast<char*> (&m_reached_stop_point), sizeof(m_reached_stop_point));
-    stream.read(reinterpret_cast<char*> (&m_reached_stop_point_previously), sizeof(m_reached_stop_point_previously));
+
+    if (version < 42)
+    {
+        bool reached_stop_point_previously = false;
+        stream.read(reinterpret_cast<char*> (&reached_stop_point_previously), sizeof(reached_stop_point_previously));
+    }
+
     stream.read(reinterpret_cast<char*> (&m_playback_mode), sizeof(m_playback_mode));
     stream.read(reinterpret_cast<char*> (&m_playback_speed), sizeof(m_playback_speed));
     stream.read(reinterpret_cast<char*> (&m_playback_reverse), sizeof(m_playback_reverse));

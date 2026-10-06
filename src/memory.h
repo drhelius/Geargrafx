@@ -72,7 +72,6 @@ public:
     u8 GetMprTMA(u8 bits);
     void SetTraceLogger(TraceLogger* trace_logger);
     u32 GetPhysicalAddress(u16 address);
-    bool GetROMPhysicalAddress(u16 cpu_address, u32& address);
     bool GetROMPhysicalAddress(u8 bank, u16 offset, u32& address);
     u8 GetBank(u16 address);
     void SetResetValues(int mpr, int wram, int card_ram, int arcade_card);
@@ -89,7 +88,6 @@ public:
     int GetROMSize();
     int GetCardRAMSize();
     int GetCardRAMStart();
-    int GetCardRAMEnd();
     int GetBackupRAMSize();
     int GetCDROMRAMSize();
     int GetArcadeCardRAMSize();

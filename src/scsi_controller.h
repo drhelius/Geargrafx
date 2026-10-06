@@ -29,7 +29,6 @@
 class CdRom;
 class CdRomMedia;
 class CdRomAudio;
-class HuC6280;
 class Random;
 class TraceLogger;
 class LaserActive;
@@ -117,16 +116,12 @@ public:
         s32* NEXT_LOAD_CYCLES;
         u32* LOAD_SECTOR;
         u32* LOAD_SECTOR_COUNT;
-        s32* AUTO_ACK_CYCLES;
-        std::vector<u8>* COMMAND_BUFFER;
-        std::vector<u8>* DATA_BUFFER;
-        u32* DATA_BUFFER_OFFSET;
     };
 
 public:
     ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio, Random* random, LaserActive* laseractive);
     ~ScsiController();
-    void Init(HuC6280* huc6280, CdRom* cdrom);
+    void Init(CdRom* cdrom);
     void Reset(bool keep_rst_signal = false);
     void Clock(u32 cycles);
     u8 ReadData();
@@ -180,7 +175,6 @@ private:
 
 private:
     Scsi_State m_state;
-    HuC6280* m_huc6280;
     CdRom* m_cdrom;
     CdRomMedia* m_cdrom_media;
     CdRomAudio* m_cdrom_audio;

@@ -102,7 +102,6 @@ private:
     u16 m_read_address;
     u16 m_write_address;
     u16 m_address;
-    u32 m_samples_left;
     float m_clock_speed;
     u8 m_sample_rate;
     s32 m_cycles_per_sample;

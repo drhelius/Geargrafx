@@ -397,7 +397,6 @@ INLINE void HuC6260::SanitizeState()
     m_color_table_address &= 0x01FF;
     m_speed = m_control_register & 0x03;
     m_blur = (m_control_register >> 2) & 0x01;
-    m_black_and_white = (m_control_register >> 7) & 0x01;
 
     switch (m_speed)
     {

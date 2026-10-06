@@ -171,7 +171,6 @@ public:
     bool GetVBlankWatchAccess(bool read) const;
     const std::vector<GG_Breakpoint>* GetBreakpoints() const;
     void SetDisassemblerSyntax(GG_Disassembler_Syntax syntax);
-    GG_Disassembler_Syntax GetDisassemblerSyntax() const;
     void ClearDisassemblerCallStack();
     void ResetDebuggerExecutionState();
     std::stack<GG_CallStackEntry>* GetDisassemblerCallStack();
@@ -278,13 +277,11 @@ private:
     u8 Fetch8();
     u16 Fetch16();
     u16 Address16(u8 high, u8 low);
-    bool PageCrossed(u16 old_address, u16 new_address);
     u16 ZeroPageX();
 
     void CreateZNFlagsTable();
     void SetOrClearZNFlags(u8 result);
     void SetZNFlags(u8 result);
-    void SetOverflowFlag(u8 result);
     void SetFlag(u8 flag);
     void ClearFlag(u8 flag);
     bool IsSetFlag(u8 flag);
@@ -300,7 +297,6 @@ private:
     u16 ZeroPageAddressing();
     u16 ZeroPageAddressing(EightBitRegister* reg);
     u16 ZeroPageIndirectAddressing();
-    u16 ZeroPageRelativeAddressing();
     u16 ZeroPageIndexedIndirectAddressing();
     u16 ZeroPageIndirectIndexedAddressing();
     s8 RelativeAddressing();

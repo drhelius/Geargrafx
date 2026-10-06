@@ -2202,22 +2202,6 @@ static bool resolve_symbol_with_context(GG_Disassembler_Record* record, std::str
     return false;
 }
 
-bool gui_debug_resolve_symbol(GG_Disassembler_Record* record, std::string& instr,
-    const char* color, const char* original_color, const char** out_name, u16* out_address)
-{
-    u16 lookup_address = 0;
-    bool is_zp = false;
-
-    if (!get_record_operand(record, &lookup_address, &is_zp))
-        return false;
-
-    u16 bank_address = is_zp ? (0x2000 | lookup_address) : lookup_address;
-    u8 bank = record->jump ? record->jump_bank : emu_get_core()->GetMemory()->GetBank(bank_address);
-
-    return resolve_symbol_with_context(record, instr, color, original_color,
-        lookup_address, is_zp, bank, out_name, out_address);
-}
-
 static bool resolve_line_symbol(DisassemblerLine* line, std::string& instr,
     const char* color, const char* original_color, const char** out_name, u16* out_address)
 {
@@ -2281,22 +2265,6 @@ static bool resolve_label_with_context(GG_Disassembler_Record* record, std::stri
     }
 
     return false;
-}
-
-bool gui_debug_resolve_label(GG_Disassembler_Record* record, std::string& instr,
-    const char* color, const char* original_color, const char** out_name, u16* out_address)
-{
-    u16 lookup_address = 0;
-    bool is_zp = false;
-
-    if (!get_record_operand(record, &lookup_address, &is_zp))
-        return false;
-
-    u16 bank_address = is_zp ? (0x2000 | lookup_address) : lookup_address;
-    u8 operand_bank = record->jump ? record->jump_bank : emu_get_core()->GetMemory()->GetBank(bank_address);
-
-    return resolve_label_with_context(record, instr, color, original_color,
-        lookup_address, is_zp, operand_bank, out_name, out_address);
 }
 
 static bool resolve_line_label(DisassemblerLine* line, std::string& instr,

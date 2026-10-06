@@ -94,7 +94,6 @@ public:
     void OpenFindBytes();
     void OpenFindText();
     void AddWatch();
-    void PrepareAddWatch(int address, const char* notes);
     bool AddWatchDirect(int address, const char* notes, int size);
     void RemoveWatches();
     std::vector<Watch>* GetWatches();
@@ -103,7 +102,6 @@ public:
     void WatchPopup();
     void DrawFindBytesWindow();
     void SaveSettings(std::ostream& stream);
-    void LoadSettings(std::istream& stream);
     Options GetOptions() const;
     void SetOptions(const Options& options);
     void StepFrame();
@@ -197,8 +195,6 @@ private:
     std::vector<Bookmark> m_bookmarks;
     bool m_watch_window;
     bool m_add_watch;
-    int m_pending_watch_address;
-    char m_pending_watch_notes[128];
     std::vector<Watch> m_watches;
     ImFont* m_gui_font;
     ImDrawList* m_draw_list;

@@ -148,7 +148,6 @@ void Adpcm::Reset()
     m_read_address = 0;
     m_write_address = 0;
     m_address = 0;
-    m_samples_left = 0;
     m_sample_rate = 0xF;
     m_cycles_per_sample = CalculateCyclesPerSample(m_sample_rate);
     m_control = 0;
@@ -246,7 +245,6 @@ void Adpcm::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_read_address), sizeof(m_read_address));
     stream.write(reinterpret_cast<const char*> (&m_write_address), sizeof(m_write_address));
     stream.write(reinterpret_cast<const char*> (&m_address), sizeof(m_address));
-    stream.write(reinterpret_cast<const char*> (&m_samples_left), sizeof(m_samples_left));
     stream.write(reinterpret_cast<const char*> (&m_sample_rate), sizeof(m_sample_rate));
     stream.write(reinterpret_cast<const char*> (&m_cycles_per_sample), sizeof(m_cycles_per_sample));
     stream.write(reinterpret_cast<const char*> (&m_control), sizeof(m_control));
@@ -280,7 +278,13 @@ void Adpcm::LoadState(std::istream& stream, int version)
     stream.read(reinterpret_cast<char*> (&m_read_address), sizeof(m_read_address));
     stream.read(reinterpret_cast<char*> (&m_write_address), sizeof(m_write_address));
     stream.read(reinterpret_cast<char*> (&m_address), sizeof(m_address));
-    stream.read(reinterpret_cast<char*> (&m_samples_left), sizeof(m_samples_left));
+
+    if (version < 42)
+    {
+        u32 samples_left = 0;
+        stream.read(reinterpret_cast<char*> (&samples_left), sizeof(samples_left));
+    }
+
     stream.read(reinterpret_cast<char*> (&m_sample_rate), sizeof(m_sample_rate));
     stream.read(reinterpret_cast<char*> (&m_cycles_per_sample), sizeof(m_cycles_per_sample));
     stream.read(reinterpret_cast<char*> (&m_control), sizeof(m_control));

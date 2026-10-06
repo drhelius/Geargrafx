@@ -27,7 +27,6 @@
 #define PROFILER_HASH_SIZE (1 << PROFILER_HASH_BITS)
 #define PROFILER_MAX_DEPTH 256
 #define PROFILER_ROOT 0
-#define PROFILER_HALT 1
 #define PROFILER_INVALID 0xFFFF
 
 static_assert(PROFILER_MAX_FUNCTIONS < PROFILER_HASH_SIZE, "Profiler hash table too small");
@@ -35,7 +34,6 @@ static_assert(PROFILER_MAX_FUNCTIONS < PROFILER_HASH_SIZE, "Profiler hash table 
 enum GG_Profiler_Function_Type : u8
 {
     PROFILER_FUNCTION_ROOT = 0,
-    PROFILER_FUNCTION_HALT,
     PROFILER_FUNCTION_CALL,
     PROFILER_FUNCTION_IRQ,
 };
@@ -76,7 +74,6 @@ public:
     void Sync();
     void Enter(u32 key, u16 address, u16 bank, u16 return_sp, bool irq, u32 pending_cycles);
     void Return(u16 sp, u32 pending_cycles);
-    void Halt(bool halted, u32 pending_cycles);
     const GG_Profiler_Function* GetFunctions() const;
     u32 GetFunctionCount() const;
     u64 GetTotalCycles() const;
@@ -97,8 +94,6 @@ private:
     GG_Profiler_Frame m_stack[PROFILER_MAX_DEPTH];
     int m_depth;
     bool m_enabled;
-    bool m_halted;
-    u64 m_halt_cycle;
     u64 m_last_cycle;
     u64 m_total_cycles;
     u64 m_irq_cycles;

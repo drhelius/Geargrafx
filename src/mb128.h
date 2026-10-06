@@ -33,8 +33,7 @@ public:
     bool IsActive() const;
     void Write(u8 value);
     u8 Read();
-    u8*       GetRAM();
-    const u8* GetRAM() const;
+    u8* GetRAM();
     u32 GetRAMSize() const;
     bool IsDirty() const { return m_dirty; }
     void ClearDirty() { m_dirty = false; }

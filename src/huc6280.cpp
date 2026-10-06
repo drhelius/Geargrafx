@@ -287,11 +287,6 @@ void HuC6280::SetDisassemblerSyntax(GG_Disassembler_Syntax syntax)
     m_disassembler_syntax = syntax;
 }
 
-GG_Disassembler_Syntax HuC6280::GetDisassemblerSyntax() const
-{
-    return m_disassembler_syntax;
-}
-
 void HuC6280::EnableBreakpoints(bool enable, bool irqs)
 {
     m_breakpoints_enabled = enable;

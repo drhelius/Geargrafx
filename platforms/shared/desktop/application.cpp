@@ -64,7 +64,6 @@ static void apply_window_settings(void);
 static void save_window_size(void);
 
 #if defined(__APPLE__)
-static void* macos_fullscreen_observer = NULL;
 static void* macos_nswindow = NULL;
 static bool macos_new_instance_enabled = false;
 extern "C" void* macos_install_fullscreen_observer(void* nswindow, void(*enter_cb)(), void(*exit_cb)());
@@ -443,7 +442,7 @@ static bool sdl_init(void)
     if (nswindow)
     {
         macos_nswindow = nswindow;
-        macos_fullscreen_observer = macos_install_fullscreen_observer(nswindow, on_enter_fullscreen, on_exit_fullscreen);
+        macos_install_fullscreen_observer(nswindow, on_enter_fullscreen, on_exit_fullscreen);
     }
 
     if (macos_new_instance_enabled)
@@ -606,10 +605,7 @@ static void sdl_events_app(const SDL_Event* event)
                 if (config_video.sync_mode != config_VideoSync_Disabled && !display_is_vsync_forced_off())
                     display_recreate_gl_context();
                 else
-                {
-                    display_request_gl_context_recreate();
                     display_update_frame_pacing();
-                }
             }
             break;
         }

@@ -71,9 +71,4 @@ bool CdRomDrive::ReadDataSector2048(u32 lba, u8* buffer, bool report_errors)
 }
 #endif
 
-const char* CdRomDrive::GetDeviceId() const
-{
-    return m_device_id;
-}
-
 #endif /* GG_ENABLE_PHYSICAL_CDROM */

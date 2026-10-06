@@ -116,7 +116,7 @@ private:
     static std::string ToLowerAscii(const std::string& value);
     static bool NormalizeEntryPath(const char* path, std::string& normalized_path);
     bool ReadEntries();
-    bool ReadLocalHeader(GG_MmiEntry& entry, const mz_zip_archive_file_stat& file_stat);
+    bool ReadLocalHeader(GG_MmiEntry& entry);
     bool ValidateEntryRanges();
     bool ParseMediaInfo();
     bool IsSupportedSystem(const std::string& system) const;

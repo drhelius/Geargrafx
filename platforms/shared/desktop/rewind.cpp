@@ -40,7 +40,6 @@ static bool active = false;
 static bool storage_dirty = true;
 static int seek_age = -1;
 static size_t slot_size = 0;
-static size_t allocated_size = 0;
 
 static int slot_at(int age);
 static int get_target_capacity(void);
@@ -218,11 +217,6 @@ int rewind_get_frames_per_snapshot(void)
     return config_rewind.frames_per_snapshot;
 }
 
-size_t rewind_get_memory_usage(void)
-{
-    return allocated_size;
-}
-
 static int slot_at(int age)
 {
     int idx = head - 1 - age;
@@ -295,7 +289,6 @@ static bool ensure_storage(void)
 
     SafeDeleteArray(buffer);
     buffer = new_buffer;
-    allocated_size = target_size;
     slot_size = target_slot_size;
     capacity = target_capacity;
     head = 0;
@@ -316,7 +309,6 @@ static bool ensure_storage(void)
 static void release_storage(void)
 {
     SafeDeleteArray(buffer);
-    allocated_size = 0;
     slot_size = 0;
     capacity = 0;
 

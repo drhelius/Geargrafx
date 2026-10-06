@@ -49,7 +49,6 @@ void HuC6280PSG::Init()
     m_state.MAIN_AMPLITUDE = &m_main_vol;
     m_state.LFO_FREQUENCY = &m_lfo_frequency;
     m_state.LFO_CONTROL = &m_lfo_control;
-    m_state.BUFFER_INDEX = &m_buffer_index;
     m_state.FRAME_SAMPLES = &m_frame_samples;
 
     for (int i = 0; i < 6; i++)
@@ -88,7 +87,6 @@ void HuC6280PSG::Reset()
         m_channels[i].frequency = 0;
         m_channels[i].control = 0;
         m_channels[i].amplitude = 0;
-        m_channels[i].vol = 0;
         m_channels[i].vol_left = 0;
         m_channels[i].vol_right = 0;
         m_channels[i].wave = 0;
@@ -188,7 +186,6 @@ void HuC6280PSG::Write(u16 address, u8 value)
             m_ch->control = value;
             m_ch->enabled = enabled;
             m_ch->dda_enabled = dda_enabled;
-            m_ch->vol = (value >> 1) & 0x0F;
 
             UpdateChannelVolume(m_channel_select);
 
@@ -515,7 +512,6 @@ void HuC6280PSG::SaveState(std::ostream& stream)
         stream.write(reinterpret_cast<const char*> (&m_channels[i].frequency), sizeof(m_channels[i].frequency));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].control), sizeof(m_channels[i].control));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].amplitude), sizeof(m_channels[i].amplitude));
-        stream.write(reinterpret_cast<const char*> (&m_channels[i].vol), sizeof(m_channels[i].vol));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].vol_left), sizeof(m_channels[i].vol_left));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].vol_right), sizeof(m_channels[i].vol_right));
         stream.write(reinterpret_cast<const char*> (&m_channels[i].wave), sizeof(m_channels[i].wave));
@@ -580,7 +576,13 @@ void HuC6280PSG::LoadState(std::istream& stream, int version)
         stream.read(reinterpret_cast<char*> (&m_channels[i].frequency), sizeof(m_channels[i].frequency));
         stream.read(reinterpret_cast<char*> (&m_channels[i].control), sizeof(m_channels[i].control));
         stream.read(reinterpret_cast<char*> (&m_channels[i].amplitude), sizeof(m_channels[i].amplitude));
-        stream.read(reinterpret_cast<char*> (&m_channels[i].vol), sizeof(m_channels[i].vol));
+
+        if (version < 42)
+        {
+            u8 vol = 0;
+            stream.read(reinterpret_cast<char*> (&vol), sizeof(vol));
+        }
+
         stream.read(reinterpret_cast<char*> (&m_channels[i].vol_left), sizeof(m_channels[i].vol_left));
         stream.read(reinterpret_cast<char*> (&m_channels[i].vol_right), sizeof(m_channels[i].vol_right));
         stream.read(reinterpret_cast<char*> (&m_channels[i].wave), sizeof(m_channels[i].wave));

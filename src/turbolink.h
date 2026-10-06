@@ -92,8 +92,6 @@ public:
     u64 GetLastSampleTick() const;
     u64 GetLastControlTick() const;
     u64 GetLastDriveTick() const;
-    bool GetSel() const;
-    bool GetClr() const;
     void SaveState(std::ostream& stream) const;
     void LoadState(std::istream& stream);
     void RestoreControl(bool sel, bool clr);

@@ -48,7 +48,6 @@ public:
 
 private:
     void WriteCommand(u8 command);
-    void WriteCommand(u8 command, u8 data);
     void WriteCommand(u8 command, u8 data1, u8 data2);
     void WriteWait(int samples);
     void FlushPendingWait();
@@ -65,7 +64,6 @@ private:
     int m_pending_wait;
     int m_total_samples;
     int m_clock_rate;
-    bool m_huc6280_used;
 };
 
 inline void VgmRecorder::UpdateTiming()

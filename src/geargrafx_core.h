@@ -91,7 +91,6 @@ public:
     void LoadMB128(const char* path, bool full_path = false);
     void EnableMB128(GG_MB128_Mode mode);
     void SetPSGRevision(GG_PSG_Revision revision);
-    GG_PSG_Revision GetPSGRevision() const;
     void SetADPCMClockSpeed(float clock_speed);
     bool SaveState(const char* path = NULL, int index = -1, bool screenshot = false);
     bool SaveState(u8* buffer, size_t& size, bool screenshot = false);
@@ -120,7 +119,6 @@ public:
         GG_TurboLink_Sync_Callback sync_callback, void* user_data);
     void SetTurboLinkCableConnected(bool connected);
     void InvalidateTurboLinkSample();
-    bool IsTurboLinkCableConnected() const;
     u64 GetTurboLinkCycle() const;
     GG_TurboLink_Drive GetTurboLinkDrive() const;
     TraceLogger* GetTraceLogger();

@@ -996,11 +996,6 @@ u32 CdRomPhysicalImage::CacheIndex(u32 block_lba) const
     return block & (CDROM_PHYSICAL_CACHE_BLOCKS - 1);
 }
 
-u32 CdRomPhysicalImage::BlockStartLBA(u32 lba) const
-{
-    return lba & ~(CDROM_PHYSICAL_SECTORS_PER_BLOCK - 1);
-}
-
 u32 CdRomPhysicalImage::BlockStartLBAForTrack(u32 lba, const Track& track) const
 {
     u32 track_sector_count = track.end_lba - track.start_lba + 1;
