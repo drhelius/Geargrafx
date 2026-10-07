@@ -378,7 +378,6 @@ static inline void process(config_Operation operation)
 
     CONFIG_BOOL("Input", "TurboTap", config_input.turbo_tap, false);
     CONFIG_BOOL("Input", "AllowUpDown", config_input.allow_up_down, false);
-    CONFIG_BOOL("Input", "CaptureMouse", config_emulator.capture_mouse, false);
     CONFIG_INT_RANGE("Input", "MouseSensitivity", config_emulator.mouse_sensitivity, 5, 1, 15);
 
     // Players
@@ -522,6 +521,7 @@ static void after_read(int file_version)
 static void before_write(void)
 {
     config_ini_data["Audio"].remove("HuC6280A");
+    config_ini_data["Input"].remove("CaptureMouse");
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {
@@ -563,6 +563,7 @@ static void after_defaults(void)
     config_emulator.paused = false;
     config_emulator.ffwd = false;
     config_emulator.show_info = false;
+    config_emulator.capture_mouse = false;
 }
 
 static void normalize(void)
