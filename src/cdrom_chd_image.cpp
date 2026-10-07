@@ -396,7 +396,9 @@ bool CdRomChdImage::ReadTOC()
         Track new_track;
         InitTrack(new_track);
 
-        new_track.type = GetTrackType(type);
+        if (!GetTrackType(type, new_track.type))
+            return false;
+
         new_track.sector_size = TrackTypeSectorSize(new_track.type);
 
         new_track.start_lba = current_lba;
@@ -615,17 +617,19 @@ bool CdRomChdImage::LoadHunk(u32 hunk_index)
     return true;
 }
 
-GG_CdRomTrackType CdRomChdImage::GetTrackType(const char* type_str)
+bool CdRomChdImage::GetTrackType(const char* type_str, GG_CdRomTrackType& type)
 {
     if (strcmp(type_str, "AUDIO") == 0)
-        return GG_CDROM_AUDIO_TRACK;
+        type = GG_CDROM_AUDIO_TRACK;
     else if (strcmp(type_str, "MODE1") == 0)
-        return GG_CDROM_DATA_TRACK_MODE1_2048;
+        type = GG_CDROM_DATA_TRACK_MODE1_2048;
     else if (strcmp(type_str, "MODE1_RAW") == 0)
-        return GG_CDROM_DATA_TRACK_MODE1_2352;
+        type = GG_CDROM_DATA_TRACK_MODE1_2352;
     else
     {
-        Debug("WARNING: Unknown track type '%s', defaulting to AUDIO", type_str);
-        return GG_CDROM_AUDIO_TRACK;
+        Error("Unsupported CHD track type: %s", type_str);
+        return false;
     }
+
+    return true;
 }
