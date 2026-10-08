@@ -32,6 +32,7 @@
 static bool input_updated = false;
 static Uint16 input_last_state[GG_MAX_GAMEPADS] = { };
 static Uint16 input_current_state[GG_MAX_GAMEPADS] = { };
+static Uint16 input_applied_state[GG_MAX_GAMEPADS] = { };
 static Uint16 input_mouse_button_state[GG_MAX_GAMEPADS] = { };
 static float input_mouse_remainder_x = 0.0f;
 static float input_mouse_remainder_y = 0.0f;
@@ -47,7 +48,7 @@ static bool input_keyboard_pressed(const bool* keyboard_state, SDL_Scancode prim
 static bool input_gamepad_pressed(SDL_Gamepad* gamepad, int primary, int secondary);
 static Uint16 input_build_state(int controller, bool update_turbo = true);
 static Uint16 input_filter_opposing_directions(int controller, Uint16 state);
-static void input_apply_state(int controller, Uint16 state);
+static void input_apply_state(int controller, Uint16 before, Uint16 now);
 
 void events_shortcuts(const SDL_Event* event)
 {
@@ -241,7 +242,8 @@ void events_apply_input(void)
 
     for (int controller = 0; controller < GG_MAX_GAMEPADS; controller++)
     {
-        input_apply_state(controller, input_current_state[controller]);
+        input_apply_state(controller, input_applied_state[controller], input_current_state[controller]);
+        input_applied_state[controller] = input_current_state[controller];
     }
 }
 
@@ -250,6 +252,8 @@ void events_sync_input(void)
     SDL_PumpEvents();
 
     int max_controller = config_input.turbo_tap ? GG_MAX_GAMEPADS : 1;
+    static const Uint16 all_keys = GG_KEY_LEFT | GG_KEY_RIGHT | GG_KEY_UP | GG_KEY_DOWN |
+        GG_KEY_I | GG_KEY_II | GG_KEY_III | GG_KEY_IV | GG_KEY_V | GG_KEY_VI | GG_KEY_RUN | GG_KEY_SELECT;
 
     for (int controller = 0; controller < GG_MAX_GAMEPADS; controller++)
     {
@@ -269,7 +273,9 @@ void events_sync_input(void)
 
         input_current_state[controller] = state;
         input_last_state[controller] = state;
-        input_apply_state(controller, state);
+        input_applied_state[controller] = state;
+        input_apply_state(controller, all_keys, 0);
+        input_apply_state(controller, 0, state);
     }
 }
 
@@ -511,8 +517,14 @@ static Uint16 input_filter_opposing_directions(int controller, Uint16 state)
     return state;
 }
 
-static void input_apply_state(int controller, Uint16 state)
+static void input_apply_state(int controller, Uint16 before, Uint16 now)
 {
+    Uint16 pressed = now & (Uint16)(~before);
+    Uint16 released = before & (Uint16)(~now);
+
+    if ((pressed | released) == 0)
+        return;
+
     static const Uint16 keys[12] = {
         GG_KEY_LEFT, GG_KEY_RIGHT, GG_KEY_UP, GG_KEY_DOWN,
         GG_KEY_I, GG_KEY_II, GG_KEY_III, GG_KEY_IV,
@@ -522,9 +534,9 @@ static void input_apply_state(int controller, Uint16 state)
     for (unsigned i = 0; i < 12; i++)
     {
         Uint16 key = keys[i];
-        if (state & key)
+        if (pressed & key)
             emu_key_pressed((GG_Controllers)controller, (GG_Keys)key);
-        else
+        if (released & key)
             emu_key_released((GG_Controllers)controller, (GG_Keys)key);
     }
 }
