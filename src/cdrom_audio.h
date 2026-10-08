@@ -74,6 +74,7 @@ public:
     CdAudioState GetSubcodeState();
     u32 GetSubcodeLBA();
     CdRomAudio_State* GetState();
+    bool IsSeeking();
     void StartAudio(u32 lba, bool pause);
     void StopAudio();
     void PauseAudio();

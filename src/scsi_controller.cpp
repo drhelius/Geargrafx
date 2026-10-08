@@ -563,7 +563,7 @@ void ScsiController::CommandAudioStartPosition()
 
     m_cdrom_audio->StartAudio(start_lba, mode == 0);
 
-    if (mode == 0)
+    if ((mode == 0) && !m_cdrom_audio->IsSeeking())
         StartStatus(SCSI_STATUS_GOOD);
     else
         SetPhase(SCSI_PHASE_BUSY);
