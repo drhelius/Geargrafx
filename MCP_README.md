@@ -525,7 +525,7 @@ Storage changes while tracing is active cleanly stop and restart the logger. Rep
 - `rewind_seek` - Seek to a specific rewind snapshot while paused
 
 ### Controller Input
-- `controller_button` - Control a button on a controller (player 1-5). Use action 'press' to hold the button, 'release' to let it go, or 'press_and_release' to simulate a quick tap. Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI
+- `controller_button` - Control a button on a controller (player 1-5). Use action 'press' to hold the button, 'release' to let it go, or 'press_and_release' to simulate a quick tap. Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI. Loading a state or rewinding resyncs input to the host controllers, releasing held buttons; press them again afterwards
 - `controller_macro` - Run an ordered input macro. Top-level `player` defaults to 1, and each command may override it. Supported commands are `tap`, `press`, `release`, and `wait`; timing is explicit through `wait` frame counts
 - `get_input_state` - Get effective pressed buttons and current controller input state
 - `controller_set_type` - Set controller type for a player: standard (2 buttons), avenue_pad_3 (3 buttons), avenue_pad_6 (6 buttons)
