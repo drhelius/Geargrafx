@@ -53,6 +53,7 @@ ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio,
     m_load_sector_count = 0;
     m_auto_ack_cycles = 0;
     m_initial_read_phase_cycles = 0;
+    m_reset_value = -1;
     m_command_buffer.clear();
     m_command_buffer.reserve(k_scsi_command_buffer_capacity);
     m_data_buffer.clear();
@@ -85,6 +86,11 @@ void ScsiController::Init(CdRom* cdrom)
 void ScsiController::SetTraceLogger(TraceLogger* trace_logger)
 {
     m_trace_logger = trace_logger;
+}
+
+void ScsiController::SetResetValue(int value)
+{
+    m_reset_value = value;
 }
 
 void ScsiController::LogScsiEvent(u8 event, u8 command, u8 phase, u8 status,
@@ -189,7 +195,10 @@ void ScsiController::Reset(bool keep_rst_signal)
     m_auto_ack_cycles = 0;
     if (!keep_rst_signal)
     {
-        m_initial_read_phase_cycles = m_random->Next(k_scsi_initial_read_phase_max_cycles + 1);
+        if (m_reset_value < 0)
+            m_initial_read_phase_cycles = m_random->Next(k_scsi_initial_read_phase_max_cycles + 1);
+        else
+            m_initial_read_phase_cycles = MIN((u32)m_reset_value, k_scsi_initial_read_phase_max_cycles);
     }
     m_command_buffer.clear();
     m_data_buffer.clear();

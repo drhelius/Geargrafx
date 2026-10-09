@@ -1524,12 +1524,14 @@ static void check_variables(void)
             core->GetMemory()->SetResetValues(0, 0, 0, 0);
             core->GetHuC6260()->SetResetValue(0);
             core->GetHuC6280()->SetResetValue(0);
+            core->GetScsiController()->SetResetValue(0);
         }
         else
         {
             core->GetMemory()->SetResetValues(-1, 0, 0, 0);
             core->GetHuC6260()->SetResetValue(-1);
             core->GetHuC6280()->SetResetValue(-1);
+            core->GetScsiController()->SetResetValue(-1);
         }
     }
 

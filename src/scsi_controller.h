@@ -137,6 +137,7 @@ public:
     bool IsDataReady();
     Scsi_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);
+    void SetResetValue(int value);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
@@ -189,6 +190,7 @@ private:
     u32 m_load_sector_count;
     s32 m_auto_ack_cycles;
     u32 m_initial_read_phase_cycles;
+    int m_reset_value;
     std::vector<u8> m_command_buffer;
     std::vector<u8> m_data_buffer;
     u32 m_data_buffer_offset;
