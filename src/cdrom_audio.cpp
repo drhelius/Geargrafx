@@ -247,6 +247,6 @@ void CdRomAudio::SyncMediaCurrentSector()
 
         s32 track = m_cdrom_media->GetTrackFromLBA(current_sector);
         if (track >= 0)
-            m_cdrom_media->PreloadTrack((u32)track);
+            m_cdrom_media->PreloadTrack((u32)track, current_sector);
     }
 }

@@ -285,7 +285,7 @@ bool CdRomChdImage::PreloadDisc()
     return true;
 }
 
-bool CdRomChdImage::PreloadTrack(u32 track_number)
+bool CdRomChdImage::PreloadTrack(u32 track_number, u32 lba)
 {
     if (track_number >= m_toc.tracks.size())
     {
@@ -295,30 +295,28 @@ bool CdRomChdImage::PreloadTrack(u32 track_number)
 
     const Track& track = m_toc.tracks[track_number];
 
-    if (track.sector_count == 0)
-        return true;
+    if ((lba < track.start_lba) || (lba > track.end_lba))
+    {
+        Error("PreloadTrack failed - LBA %u out of track %u bounds", lba, track_number + 1);
+        return false;
+    }
 
-    u32 first_sector = (u32)track.file_offset;
-    u32 last_sector = 0;
+    u32 sector_index = 0;
 
-    if (!checked_add_u32(first_sector, track.sector_count - 1, &last_sector))
+    if (!checked_add_u32((u32)track.file_offset, lba - track.start_lba, &sector_index))
     {
         Error("PreloadTrack failed - Track sector range overflow");
         return false;
     }
 
-    u32 first_hunk = first_sector / m_sectors_per_hunk;
-    u32 last_hunk  = last_sector  / m_sectors_per_hunk;
+    u32 hunk = sector_index / m_sectors_per_hunk;
 
-    Debug("Preloading track %u: hunks %u to %u", track_number + 1, first_hunk, last_hunk);
+    Debug("Preloading track %u from LBA %u: hunk %u", track_number + 1, lba, hunk);
 
-    for (u32 hunk = first_hunk; hunk <= last_hunk; hunk++)
+    if (!LoadHunk(hunk))
     {
-        if (!LoadHunk(hunk))
-        {
-            Error("PreloadTrack failed - Unable to load hunk %u", hunk);
-            return false;
-        }
+        Error("PreloadTrack failed - Unable to load hunk %u", hunk);
+        return false;
     }
 
     return true;

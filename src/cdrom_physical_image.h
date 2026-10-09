@@ -58,7 +58,7 @@ public:
     virtual bool ReadSector(u32 lba, u8* buffer) override;
     virtual bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count) override;
     virtual bool PreloadDisc() override;
-    virtual bool PreloadTrack(u32 track_number) override;
+    virtual bool PreloadTrack(u32 track_number, u32 lba) override;
     bool HasDiscError() const;
 
 private:

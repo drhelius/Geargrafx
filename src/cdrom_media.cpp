@@ -291,11 +291,11 @@ bool CdRomMedia::ReadSubchannelQ(s32 lba, u8* buffer)
     return IsValidPointer(m_current_image) && m_current_image->ReadSubchannelQ(lba, buffer);
 }
 
-bool CdRomMedia::PreloadTrack(u32 track_number)
+bool CdRomMedia::PreloadTrack(u32 track_number, u32 lba)
 {
     if (IsValidPointer(m_current_image))
     {
-        return m_current_image->PreloadTrack(track_number);
+        return m_current_image->PreloadTrack(track_number, lba);
     }
     else
     {

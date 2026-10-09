@@ -212,7 +212,7 @@ bool CdRomPhysicalImage::PreloadDisc()
     return true;
 }
 
-bool CdRomPhysicalImage::PreloadTrack(u32 track_number)
+bool CdRomPhysicalImage::PreloadTrack(u32 track_number, u32 lba)
 {
     if (!m_ready || m_disc_error.load())
         return false;
@@ -227,8 +227,8 @@ bool CdRomPhysicalImage::PreloadTrack(u32 track_number)
     u32 preload_blocks = (track.type == GG_CDROM_AUDIO_TRACK) ? CDROM_PHYSICAL_AUDIO_PRELOAD_BLOCKS : CDROM_PHYSICAL_PREFETCH_BLOCKS;
 
     ResetQueue();
-    QueueReadAhead(track.start_lba, (s32)track_number, preload_blocks);
-    Debug("Physical CD-ROM queueing preload for track %u at LBA %u (%u blocks)", track_number, track.start_lba, preload_blocks);
+    QueueReadAhead(lba, (s32)track_number, preload_blocks);
+    Debug("Physical CD-ROM queueing preload for track %u at LBA %u (%u blocks)", track_number, lba, preload_blocks);
     return true;
 }
 

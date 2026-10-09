@@ -59,7 +59,7 @@ public:
     virtual bool ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count) = 0;
     virtual bool ReadSubchannelQ(s32 lba, u8* buffer);
     virtual bool PreloadDisc() = 0;
-    virtual bool PreloadTrack(u32 track_number) = 0;
+    virtual bool PreloadTrack(u32 track_number, u32 lba) = 0;
     bool IsReady();
     u32 GetFirstSectorOfTrack(u8 track);
     s32 GetTrackFromLBA(u32 lba);

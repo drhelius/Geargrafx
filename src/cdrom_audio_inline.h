@@ -179,7 +179,7 @@ INLINE void CdRomAudio::StartAudio(u32 lba, bool pause)
     Debug("CD AUDIO: Start audio at LBA %d, track %d, current lba %d, seek cycles %d, playback delay cycles %d",
           lba, track, current_lba, m_seek_cycles, m_playback_delay_cycles);
 
-    m_cdrom_media->PreloadTrack((u32)track);
+    m_cdrom_media->PreloadTrack((u32)track, lba);
 
     if (m_laseractive->IsActive())
     {

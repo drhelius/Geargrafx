@@ -400,7 +400,7 @@ bool CdRomCueBinImage::PreloadDisc()
     return true;
 }
 
-bool CdRomCueBinImage::PreloadTrack(u32 track_number)
+bool CdRomCueBinImage::PreloadTrack(u32 track_number, u32 lba)
 {
     if (track_number >= m_toc.tracks.size())
     {
@@ -411,10 +411,19 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     const Track& track = m_toc.tracks[track_number];
     const TrackFile& track_file = m_track_files[track_number];
 
+    if ((lba < track.start_lba) || (lba > track.end_lba))
+    {
+        Error("PreloadTrackChunks failed - LBA %u out of track %u bounds", lba, track_number);
+        return false;
+    }
+
     u32 sector_size = track.sector_size;
-    u64 start_offset = track.file_offset;
+    u64 sector_byte_offset;
+    u64 start_offset;
     u64 total_bytes;
-    if (!checked_multiply_u64(track.sector_count, sector_size, &total_bytes))
+    if (!checked_multiply_u64(lba - track.start_lba, sector_size, &sector_byte_offset) ||
+        !checked_add_u64(track.file_offset, sector_byte_offset, &start_offset) ||
+        !checked_multiply_u64(track.end_lba - lba + 1, sector_size, &total_bytes))
         return false;
 
     if (total_bytes == 0)
@@ -443,7 +452,7 @@ bool CdRomCueBinImage::PreloadTrack(u32 track_number)
     }
     else
     {
-        Debug("Preloading all sectors for track %u (sectors: %u, bytes: %llu)", track_number, track.sector_count, (unsigned long long)total_bytes);
+        Debug("Preloading all sectors for track %u from LBA %u (bytes: %llu)", track_number, lba, (unsigned long long)total_bytes);
     }
 
     return PreloadChunks(track_file.img_file, start_chunk, chunks_needed);
@@ -764,6 +773,9 @@ bool CdRomCueBinImage::SetupFileChunks(ImgFile* img_file)
     }
 
     img_file->chunk_size = m_load_options.chunk_size;
+
+    if (img_file->is_ogg)
+        img_file->chunk_size = MIN(img_file->chunk_size, GG_CDROM_CUEBIN_OGG_CHUNK_SIZE);
 
     if (img_file->chunk_size == 0)
     {
