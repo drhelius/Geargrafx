@@ -167,9 +167,7 @@ INLINE bool HuC6260::Clock(u32 cycles)
             // End of vertical sync
             else if (m_vpos == (k_huc6260_total_lines[m_blur] - 1))
             {
-                if (!is_laseractive)
-                    RenderFrame<is_sgx>();
-                else if (!m_blur && IsValidPointer(m_frame_buffer) && m_laseractive_scanline_start <= 2)
+                if (is_laseractive && !m_blur && IsValidPointer(m_frame_buffer) && m_laseractive_scanline_start <= 2)
                 {
                     for (int x = 0; x < 683; x++)
                     {
@@ -184,7 +182,8 @@ INLINE bool HuC6260::Clock(u32 cycles)
                 }
                 m_vsync = true;
                 m_pixel_index = 0;
-                frame_ready = true;
+                if (is_laseractive)
+                    frame_ready = true;
 
                 TraceVceEvent(TRACE_VCE_VSYNC_END);
             }
@@ -194,6 +193,14 @@ INLINE bool HuC6260::Clock(u32 cycles)
             m_vpos++;
             if (m_vpos == k_huc6260_total_lines[m_blur])
                 m_vpos = 0;
+
+            // End of active display
+            if (!is_laseractive && (m_vpos == 256))
+            {
+                RenderFrame<is_sgx>();
+                m_pixel_index = 0;
+                frame_ready = true;
+            }
 
             m_active_line = (m_vpos >= m_screen_start_y) && (m_vpos < m_screen_end_y);
         }
