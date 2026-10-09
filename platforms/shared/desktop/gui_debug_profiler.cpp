@@ -180,7 +180,7 @@ static void draw_profiler(Profiler* profiler)
     u64 total = profiler->GetTotalCycles();
 
     ImGui::SameLine();
-    ImGui::Text("Functions: %u  Frames: %llu  Cycles: %llu", count - 2,
+    ImGui::Text("Functions: %u  Frames: %llu  Cycles: %llu", count - 1,
         (unsigned long long)(total / gui_debug_profiler_get_frame_cycles()), (unsigned long long)total);
 
     ImGui::SameLine();

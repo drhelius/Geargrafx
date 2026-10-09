@@ -4270,7 +4270,7 @@ json DebugAdapter::GetProfilerData(const std::string& sort, int count, const std
     result["total_cycles"] = total;
     result["frame_cycles"] = frame_cycles;
     result["frames"] = profiler_round(frames);
-    result["function_count"] = function_count - 2;
+    result["function_count"] = function_count - 1;
     result["sort"] = sort;
     result["count"] = functions_array.size();
     result["functions"] = functions_array;
