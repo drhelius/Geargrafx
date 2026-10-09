@@ -681,47 +681,53 @@ void emu_load_ram(const char* file_path)
     }
 }
 
-void emu_save_state_slot(int index)
+bool emu_save_state_slot(int index)
 {
-    if (!emu_is_empty())
-    {
-        const char* dir = get_configurated_dir(config_emulator.savestates_dir_option, config_emulator.savestates_path.c_str());
-        geargrafx->SaveState(dir, index, true);
-        update_savestates_data();
-    }
+    if (emu_is_empty())
+        return false;
+
+    const char* dir = get_configurated_dir(config_emulator.savestates_dir_option, config_emulator.savestates_path.c_str());
+    bool saved = geargrafx->SaveState(dir, index, true);
+    update_savestates_data();
+    return saved;
 }
 
-void emu_load_state_slot(int index)
+bool emu_load_state_slot(int index)
 {
-    if (!emu_is_empty() && !emu_turbolink_is_active())
-    {
-        const char* dir = get_configurated_dir(config_emulator.savestates_dir_option, config_emulator.savestates_path.c_str());
-        if (geargrafx->LoadState(dir, index))
-        {
-            emu_debug_state_restored();
-            events_sync_input();
-            rewind_reset();
-        }
-    }
+    if (emu_is_empty() || emu_turbolink_is_active())
+        return false;
+
+    const char* dir = get_configurated_dir(config_emulator.savestates_dir_option, config_emulator.savestates_path.c_str());
+
+    if (!geargrafx->LoadState(dir, index))
+        return false;
+
+    emu_debug_state_restored();
+    events_sync_input();
+    rewind_reset();
+    return true;
 }
 
-void emu_save_state_file(const char* file_path)
+bool emu_save_state_file(const char* file_path)
 {
-    if (!emu_is_empty())
-        geargrafx->SaveState(file_path, -1, true);
+    if (emu_is_empty())
+        return false;
+
+    return geargrafx->SaveState(file_path, -1, true);
 }
 
-void emu_load_state_file(const char* file_path)
+bool emu_load_state_file(const char* file_path)
 {
-    if (!emu_is_empty() && !emu_turbolink_is_active())
-    {
-        if (geargrafx->LoadState(file_path))
-        {
-            emu_debug_state_restored();
-            events_sync_input();
-            rewind_reset();
-        }
-    }
+    if (emu_is_empty() || emu_turbolink_is_active())
+        return false;
+
+    if (!geargrafx->LoadState(file_path))
+        return false;
+
+    emu_debug_state_restored();
+    events_sync_input();
+    rewind_reset();
+    return true;
 }
 
 void update_savestates_data(void)
@@ -1052,17 +1058,20 @@ void emu_set_turbo_speed(GG_Controllers controller, GG_Keys button, u8 speed)
     geargrafx->GetInput()->SetTurboSpeed(controller, button, speed);
 }
 
-void emu_save_screenshot(const char* file_path)
+bool emu_save_screenshot(const char* file_path)
 {
     if (!geargrafx->GetMedia()->IsReady())
-        return;
+        return false;
 
     GG_Runtime_Info runtime;
     emu_get_runtime(runtime);
 
-    stbi_write_png(file_path, runtime.screen_width, runtime.screen_height, 4, emu_frame_buffer, runtime.screen_width * 4);
+    if (!stbi_write_png(file_path, runtime.screen_width, runtime.screen_height, 4, emu_frame_buffer,
+        runtime.screen_width * 4))
+        return false;
 
     Log("Screenshot saved to %s", file_path);
+    return true;
 }
 
 int emu_get_screenshot_png(unsigned char** out_buffer)
@@ -1106,10 +1115,10 @@ int emu_get_sprite_png(int vdc, int sprite_index, unsigned char** out_buffer)
     return len;
 }
 
-void emu_save_sprite(const char* file_path, int vdc, int index)
+bool emu_save_sprite(const char* file_path, int vdc, int index)
 {
     if (!geargrafx->GetMedia()->IsReady())
-        return;
+        return false;
 
     update_debug_sprites();
 
@@ -1117,15 +1126,17 @@ void emu_save_sprite(const char* file_path, int vdc, int index)
     int height = emu_debug_sprite_heights[vdc][index];
     u8* buffer = emu_debug_sprite_buffers[vdc][index];
 
-    stbi_write_png(file_path, width, height, 4, buffer, width * 4);
+    if (!stbi_write_png(file_path, width, height, 4, buffer, width * 4))
+        return false;
 
     Log("Sprite saved to %s", file_path);
+    return true;
 }
 
-void emu_save_background(const char* file_path, int vdc)
+bool emu_save_background(const char* file_path, int vdc)
 {
     if (!geargrafx->GetMedia()->IsReady())
-        return;
+        return false;
 
     update_debug_background();
 
@@ -1133,9 +1144,11 @@ void emu_save_background(const char* file_path, int vdc)
     int height = emu_debug_background_buffer_height[vdc];
     u8* buffer = emu_debug_background_buffer[vdc];
 
-    stbi_write_png(file_path, width, height, 4, buffer, width * 4);
+    if (!stbi_write_png(file_path, width, height, 4, buffer, width * 4))
+        return false;
 
     Log("Background saved to %s", file_path);
+    return true;
 }
 
 bool emu_load_bios(const char* file_path, bool syscard)
@@ -1497,10 +1510,10 @@ static void update_debug_tiles(void)
     }
 }
 
-void emu_start_vgm_recording(const char* file_path)
+bool emu_start_vgm_recording(const char* file_path)
 {
     if (!geargrafx->GetMedia()->IsReady())
-        return;
+        return false;
 
     if (geargrafx->GetAudio()->IsVgmRecording())
     {
@@ -1520,10 +1533,11 @@ void emu_start_vgm_recording(const char* file_path)
     metadata.game_name = media->IsInGameDatabase() ? media->GetGameDatabaseName() : media->GetFileName();
     metadata.comment = "Created with " GG_TITLE " " GG_VERSION;
 
-    if (geargrafx->GetAudio()->StartVgmRecording(file_path, clock_rate, metadata))
-    {
-        Log("VGM recording started: %s", file_path);
-    }
+    if (!geargrafx->GetAudio()->StartVgmRecording(file_path, clock_rate, metadata))
+        return false;
+
+    Log("VGM recording started: %s", file_path);
+    return true;
 }
 
 void emu_stop_vgm_recording(void)

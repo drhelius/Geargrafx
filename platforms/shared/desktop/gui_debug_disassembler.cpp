@@ -29,6 +29,7 @@
 #include "gui_debug_text.h"
 #include "gui_debug_memory.h"
 #include "gui.h"
+#include "gui_notifications.h"
 #include "gui_filedialogs.h"
 #include "config.h"
 #include "emu.h"
@@ -444,7 +445,7 @@ void gui_debug_window_disassembler(void)
     ImGui::PopStyleVar();
 }
 
-void gui_debug_save_disassembler(const char* file_path, bool full)
+bool gui_debug_save_disassembler(const char* file_path, bool full)
 {
     FILE* file = fopen_utf8(file_path, "w");
 
@@ -456,7 +457,10 @@ void gui_debug_save_disassembler(const char* file_path, bool full)
             save_current_disassembler(file);
 
         fclose(file);
+        return true;
     }
+
+    return false;
 }
 
 static void draw_controls(void)
@@ -1938,7 +1942,7 @@ static void request_goto_physical_address(u16 address, u8 bank)
         char message[96];
         snprintf(message, sizeof(message),
             "No decoded code at bank %02X, address $%04X", bank, address);
-        gui_set_status_message(message, 3000);
+        gui_notify(gui_NotificationWarning, NULL, message);
     }
 }
 

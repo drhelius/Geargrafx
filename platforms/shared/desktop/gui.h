@@ -136,7 +136,6 @@ EXTERN void gui_load_bios(const char* path, bool syscard);
 EXTERN void gui_load_pac_bios(const char* path, GG_LaserActive_Region region);
 EXTERN void gui_load_palette(const char* path);
 EXTERN void gui_set_style(void);
-EXTERN void gui_set_status_message(const char* message, Uint64 milliseconds);
 EXTERN void gui_set_error_message(const char* message);
 
 #undef GUI_IMPORT

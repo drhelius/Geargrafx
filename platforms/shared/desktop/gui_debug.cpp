@@ -176,13 +176,13 @@ void gui_debug_windows(void)
     }
 }
 
-void gui_debug_save_settings(const char* file_path)
+bool gui_debug_save_settings(const char* file_path)
 {
     std::ofstream file(file_path, std::ios::binary);
     if (!file.is_open())
     {
         Log("Failed to open debug settings file for writing: %s", file_path);
-        return;
+        return false;
     }
 
     file.write(GGDEBUG_MAGIC, GGDEBUG_MAGIC_LEN);
@@ -227,29 +227,30 @@ void gui_debug_save_settings(const char* file_path)
     file.close();
 
     Log("Debug settings saved to: %s", file_path);
+    return true;
 }
 
-void gui_debug_load_settings(const char* file_path)
+bool gui_debug_load_settings(const char* file_path)
 {
     std::ifstream file(file_path, std::ios::binary);
     if (!file.is_open())
     {
         Log("Failed to open debug settings file for reading: %s", file_path);
-        return;
+        return false;
     }
 
     char magic[8] = {};
     if (!read_settings_data(file, magic, GGDEBUG_MAGIC_LEN))
     {
         Log("Invalid debug settings file: %s", file_path);
-        return;
+        return false;
     }
 
     bool legacy_settings = memcmp(magic, GGDEBUG_LEGACY_MAGIC, GGDEBUG_MAGIC_LEN) == 0;
     if (!legacy_settings && memcmp(magic, GGDEBUG_MAGIC, GGDEBUG_MAGIC_LEN) != 0)
     {
         Log("Invalid debug settings file: %s", file_path);
-        return;
+        return false;
     }
 
     GeargrafxCore* core = emu_get_core();
@@ -263,7 +264,7 @@ void gui_debug_load_settings(const char* file_path)
     if (!read_settings_count(file, bp_count, breakpoint_size))
     {
         Log("Invalid debug settings file: %s", file_path);
-        return;
+        return false;
     }
 
     std::vector<HuC6280::GG_Breakpoint> breakpoints;
@@ -281,7 +282,7 @@ void gui_debug_load_settings(const char* file_path)
             !read_settings_bool(file, bp.range))
         {
             Log("Invalid debug settings file: %s", file_path);
-            return;
+            return false;
         }
         breakpoints.push_back(bp);
     }
@@ -290,7 +291,7 @@ void gui_debug_load_settings(const char* file_path)
     if (!read_settings_bool(file, irq_breakpoints))
     {
         Log("Invalid debug settings file: %s", file_path);
-        return;
+        return false;
     }
 
     struct DasmBookmark { u16 address; char name[32]; };
@@ -300,7 +301,7 @@ void gui_debug_load_settings(const char* file_path)
     if (!read_settings_count(file, bookmark_count, bookmark_size))
     {
         Log("Invalid debug settings file: %s", file_path);
-        return;
+        return false;
     }
 
     std::vector<DasmBookmark> bookmarks;
@@ -312,7 +313,7 @@ void gui_debug_load_settings(const char* file_path)
             !read_settings_data(file, item.name, sizeof(item.name)))
         {
             Log("Invalid debug settings file: %s", file_path);
-            return;
+            return false;
         }
         item.name[sizeof(item.name) - 1] = 0;
         bookmarks.push_back(item);
@@ -322,7 +323,7 @@ void gui_debug_load_settings(const char* file_path)
     if (!gui_debug_memory_load_settings(file, memory_editor_count))
     {
         Log("Invalid debug settings file: %s", file_path);
-        return;
+        return false;
     }
 
     processor->SetBreakpoints(breakpoints);
@@ -335,6 +336,7 @@ void gui_debug_load_settings(const char* file_path)
     file.close();
 
     Log("Debug settings loaded from: %s", file_path);
+    return true;
 }
 
 static std::string get_auto_debug_settings_path(void)
