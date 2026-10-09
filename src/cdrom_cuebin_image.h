@@ -33,7 +33,7 @@
 #define GG_CDROM_CUEBIN_KEEPALIVE_SECONDS 5
 #define GG_CDROM_CUEBIN_KEEPALIVE_SIZE 2352
 #define GG_CDROM_CUEBIN_PRELOAD_FULL_TRACK 0
-#define GG_CDROM_CUEBIN_OGG_CHUNK_SIZE (2352 * 16)
+#define GG_CDROM_CUEBIN_OGG_CHUNK_SIZE (2352 * 4)
 #define GG_CDROM_CUEBIN_READAHEAD_QUEUE_SIZE 32
 
 struct GG_CdRomCueBinLoadOptions
@@ -183,7 +183,7 @@ INLINE GG_CdRomCueBinLoadOptions GG_CdRomCueBinDefaultLoadOptions()
 {
     GG_CdRomCueBinLoadOptions options;
 
-    options.chunk_size = (2352 * 128);
+    options.chunk_size = (2352 * 32);
     options.max_preload_chunks = 1;
     options.read_ahead_chunks = 0;
     options.max_cached_chunks = 0;
