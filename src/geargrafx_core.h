@@ -137,6 +137,7 @@ private:
     bool RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, int* sample_count, GG_Debug_Run* debug, bool render);
     bool SaveState(std::ostream& stream, size_t& size, bool screenshot);
     bool LoadState(std::istream& stream);
+    bool LoadStateTail(std::istream& stream, u32 version, bool has_mb128_flag, size_t end);
     std::string GetSaveStatePath(const char* path, int index);
 
 private:

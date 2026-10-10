@@ -925,6 +925,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
 
     stream.seekg(0, ios::end);
     size_t size = static_cast<size_t>(stream.tellg());
+    size_t body_size = 0;
 
     // Try desktop header first (larger, contains all info)
     GG_SaveState_Header desktop_header;
@@ -937,6 +938,8 @@ bool GeargrafxCore::LoadState(std::istream& stream)
         {
             header.magic = desktop_header.magic;
             header.version = desktop_header.version;
+            if (desktop_header.screenshot_size <= size - sizeof(desktop_header))
+                body_size = size - sizeof(desktop_header) - desktop_header.screenshot_size;
 #if !defined(__LIBRETRO__)
             is_desktop_savestate = true;
 #endif
@@ -949,6 +952,7 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     {
         stream.seekg(size - sizeof(header), ios::beg);
         stream.read(reinterpret_cast<char*> (&header), sizeof(header));
+        body_size = size - sizeof(header);
     }
 
     stream.seekg(0, ios::beg);
@@ -965,6 +969,12 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     if (header.version < GG_SAVESTATE_MIN_VERSION || header.version > GG_SAVESTATE_VERSION)
     {
         Error("Invalid save state version: %d", header.version);
+        return false;
+    }
+
+    if (body_size == 0)
+    {
+        Error("Invalid save state size: %d", (int)size);
         return false;
     }
 
@@ -1029,14 +1039,38 @@ bool GeargrafxCore::LoadState(std::istream& stream)
     else
         m_master_clock_cycles = 0;
 
-    m_memory->LoadState(stream);
+    m_memory->LoadState(stream, header.version, body_size);
     m_huc6202->LoadState(stream);
     m_huc6260->LoadState(stream, header.version);
     m_huc6270_1->LoadState(stream, header.version);
     m_huc6270_2->LoadState(stream, header.version);
     m_huc6280->LoadState(stream);
     m_audio->LoadState(stream, header.version);
-    m_input->LoadState(stream, header.version);
+
+    // Some v23 states lack the MB128 flag, try without it first so MB128 RAM is never loaded from misaligned data
+    streampos tail_position = stream.tellg();
+    bool loaded = LoadStateTail(stream, header.version, header.version > 23, body_size);
+
+    if (!loaded && (header.version == 23) && (tail_position != streampos(-1)))
+    {
+        stream.clear();
+        stream.seekg(tail_position);
+        loaded = LoadStateTail(stream, header.version, true, body_size);
+    }
+
+    if (!loaded)
+    {
+        Error("Failed to unserialize save state");
+        ResetMedia(true);
+        return false;
+    }
+
+    return true;
+}
+
+bool GeargrafxCore::LoadStateTail(std::istream& stream, u32 version, bool has_mb128_flag, size_t end)
+{
+    m_input->LoadState(stream, version, has_mb128_flag);
 
     if (m_media->IsCDROMHardwareEnabled())
     {
@@ -1057,30 +1091,24 @@ bool GeargrafxCore::LoadState(std::istream& stream)
                 m_cdrom_media->InsertMmi();
         }
 
-        m_cdrom->LoadState(stream, header.version);
-        m_scsi_controller->LoadState(stream, header.version);
+        m_cdrom->LoadState(stream, version);
+        m_scsi_controller->LoadState(stream, version);
         if (stream.fail())
             return false;
-        m_cdrom_audio->LoadState(stream, header.version);
-        m_adpcm->LoadState(stream, header.version);
+        m_cdrom_audio->LoadState(stream, version);
+        m_adpcm->LoadState(stream, version);
 
         if (m_media->IsLaserActive())
         {
-            m_laseractive->LoadState(stream, header.version);
+            m_laseractive->LoadState(stream, version);
             m_huc6260->LoadLaserActiveState(stream);
         }
     }
 
-    if (header.version >= 33)
+    if (version >= 33)
         m_random->LoadState(stream);
 
-    if (stream.fail())
-    {
-        Error("Failed to unserialize save state");
-        return false;
-    }
-
-    return true;
+    return !stream.fail() && (static_cast<size_t>(stream.tellg()) == end);
 }
 
 bool GeargrafxCore::GetSaveStateHeader(int index, const char* path, GG_SaveState_Header* header)

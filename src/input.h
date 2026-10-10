@@ -77,7 +77,7 @@ public:
     void SetTraceLogger(TraceLogger* trace_logger);
     MB128* GetMB128();
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream, int version);
+    void LoadState(std::istream& stream, int version, bool has_mb128_flag);
 
 private:
     u64 GetMasterClockCycles();

@@ -487,11 +487,19 @@ void Memory::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_backup_ram_enabled), sizeof(m_backup_ram_enabled));
     stream.write(reinterpret_cast<const char*> (&m_io_buffer), sizeof(m_io_buffer));
     stream.write(reinterpret_cast<const char*> (&m_mpr_buffer), sizeof(m_mpr_buffer));
+
+    u8 mapper_type = Media::STANDARD_MAPPER;
+    if (m_current_mapper == m_sf2_mapper)
+        mapper_type = Media::SF2_MAPPER;
+    else if (m_current_mapper == m_arcade_card_mapper)
+        mapper_type = Media::ARCADE_CARD_MAPPER;
+    stream.write(reinterpret_cast<const char*> (&mapper_type), sizeof(mapper_type));
+
     if (IsValidPointer(m_current_mapper))
         m_current_mapper->SaveState(stream);
 }
 
-void Memory::LoadState(std::istream& stream)
+void Memory::LoadState(std::istream& stream, int version, size_t end)
 {
     using namespace std;
     stream.read(reinterpret_cast<char*> (m_mpr), sizeof(m_mpr));
@@ -523,7 +531,41 @@ void Memory::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_backup_ram_enabled), sizeof(m_backup_ram_enabled));
     stream.read(reinterpret_cast<char*> (&m_io_buffer), sizeof(m_io_buffer));
     stream.read(reinterpret_cast<char*> (&m_mpr_buffer), sizeof(m_mpr_buffer));
-    if (IsValidPointer(m_current_mapper))
-        m_current_mapper->LoadState(stream);
+
+    Mapper* saved_mapper = m_current_mapper;
+
+    if (version >= 43)
+    {
+        u8 mapper_type = Media::STANDARD_MAPPER;
+        stream.read(reinterpret_cast<char*> (&mapper_type), sizeof(mapper_type));
+
+        if (mapper_type == Media::SF2_MAPPER)
+            saved_mapper = m_sf2_mapper;
+        else if (mapper_type == Media::ARCADE_CARD_MAPPER)
+            saved_mapper = m_arcade_card_mapper;
+        else
+        {
+            saved_mapper = NULL;
+            if (mapper_type != Media::STANDARD_MAPPER)
+                stream.setstate(ios::failbit);
+        }
+    }
+    else if (m_current_mapper != m_sf2_mapper)
+    {
+        // Older states don't store the mapper, but the Arcade Card RAM is larger than the rest of any state
+        u64 position = static_cast<u64>(stream.tellg());
+        saved_mapper = ((end > position) && ((end - position) >= 0x200000)) ? m_arcade_card_mapper : NULL;
+    }
+
+    if (IsValidPointer(saved_mapper))
+        saved_mapper->LoadState(stream);
+
+    if (saved_mapper != m_current_mapper)
+    {
+        Log("Save state mapper does not match current mapper");
+        if (IsValidPointer(m_current_mapper))
+            m_current_mapper->Reset();
+    }
+
     ReloadMemoryMap();
 }

@@ -104,7 +104,7 @@ public:
     void SaveRam(std::ostream &file);
     bool LoadRam(std::istream &file, s32 file_size);
     void SaveState(std::ostream& stream);
-    void LoadState(std::istream& stream);
+    void LoadState(std::istream& stream, int version, size_t end);
 
 private:
     void ReloadMemoryMap();

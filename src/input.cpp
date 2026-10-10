@@ -224,7 +224,7 @@ void Input::SaveState(std::ostream& stream)
     }
 }
 
-void Input::LoadState(std::istream& stream, int version)
+void Input::LoadState(std::istream& stream, int version, bool has_mb128_flag)
 {
     using namespace std;
     stream.read(reinterpret_cast<char*> (&m_clr), sizeof(m_clr));
@@ -265,7 +265,8 @@ void Input::LoadState(std::istream& stream, int version)
     }
 
     bool mb128_included = false;
-    stream.read(reinterpret_cast<char*> (&mb128_included), sizeof(mb128_included));
+    if (has_mb128_flag)
+        stream.read(reinterpret_cast<char*> (&mb128_included), sizeof(mb128_included));
 
     if (mb128_included)
         m_mb128.LoadState(stream);
