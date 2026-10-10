@@ -287,11 +287,9 @@ INLINE void HuC6280::WriteTimerRegister(u16 address, u8 value)
         if (m_timer_enabled != enabled)
         {
             m_timer_enabled = enabled;
+            m_timer_cycles = k_huc6280_timer_divisor;
             if (enabled)
-            {
                 m_timer_counter = m_timer_reload;
-                m_timer_cycles = k_huc6280_timer_divisor;
-            }
         }
         TraceTimerEvent(TRACE_TIMER_CONTROL_WRITE, value);
     }
