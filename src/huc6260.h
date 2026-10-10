@@ -37,6 +37,7 @@
 #define HUC6260_LASERACTIVE_PIXEL_END (HUC6260_LASERACTIVE_PIXEL_START + HUC6260_LASERACTIVE_DEFAULT_WIDTH - 1)
 #define HUC6260_LASERACTIVE_SCANLINE_START 22
 #define HUC6260_LASERACTIVE_SCANLINE_END 261
+#define HUC6260_SQUARE_PIXEL_CLOCKS 3.5f
 
 class HuC6202;
 class HuC6280;
@@ -92,11 +93,12 @@ public:
     int GetCurrentWidth();
     int GetCurrentHeight();
     int GetWidthScale();
+    float GetPixelAspectRatio();
     void SetScanlineStart(int scanline_start);
     void SetScanlineEnd(int scanline_end);
     void SetLaserActiveScanlines(int start, int end);
     void SetLaserActivePixels(int start, int end);
-    void SetOverscan(bool overscan);
+    void SetOverscan(int overscan);
     GG_Pixel_Format GetPixelFormat();
     void SetResetValue(int value);
     void SetTraceLogger(TraceLogger* trace_logger);
@@ -118,6 +120,9 @@ private:
     template <bool SGX, int BPP>
     void RenderFrameTemplate();
     void CalculateScreenBounds();
+    void ResetCrop();
+    void UpdateCropBounds();
+    void CropFrame(bool multiple_speeds);
     void SanitizeState();
     template <int BPP>
     void ApplyLowPassFilter(u8* buffer = NULL, int width = 0, int height = 0, int speed = -1);
@@ -157,6 +162,12 @@ private:
     bool m_vsync;
     s32 m_blur;
     int m_overscan;
+    bool m_auto_crop;
+    s32 m_crop_min;
+    s32 m_crop_max;
+    s32 m_crop_start;
+    s32 m_crop_end;
+    int m_crop_width;
     int m_scanline_start;
     int m_scanline_end;
     int m_laseractive_scanline_start;
@@ -199,6 +210,7 @@ static const int k_huc6260_line_end[2][4] = {
     { 256 + 24 + 24, 341 + 24 + 48, 512 + 24 + 96, 512 + 24 + 96 },
     { 256 + 24 + 24 + 24 - 12, 341 + 32 + 24 + 48 - 16, 512 + 48 + 24 + 96 - 24, 512 + 48 + 24 + 96 - 24 } };
 static const int k_huc6260_scaling_width[2] = { 1024, 1120 };
+static const int k_huc6260_crop_min_clocks[4] = { 256 * 4, 320 * 3, 512 * 2, 512 * 2 };
 
 static const uint8_t k_rgb888_palette_turboxray[512 * 3] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x02,

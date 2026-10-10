@@ -79,6 +79,16 @@ INLINE u16 HuC6270::Clock()
     return pixel;
 }
 
+INLINE bool HuC6270::GetDisplayRange(s32* start, s32* end)
+{
+    if (!m_active_line || m_burst_mode)
+        return false;
+
+    *start = (m_huc6260->GetClockDivider() == 3 ? 32 : 24) + ((m_latched_hds + 1) << 3);
+    *end = *start + ((m_latched_hdw + 1) << 3);
+    return true;
+}
+
 INLINE HuC6270::HuC6270_State* HuC6270::GetState()
 {
     return &m_state;

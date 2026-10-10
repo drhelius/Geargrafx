@@ -144,7 +144,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         "geargrafx_aspect_ratio",
         "Aspect Ratio",
         NULL,
-        "Select which aspect ratio will be presented by the core. '1:1 PAR' selects an aspect ratio that produces square pixels.",
+        "Select which aspect ratio will be presented by the core. '1:1 PAR' produces square pixels. 'Dot Clock PAR' shapes pixels like a CRT, best with 'Auto' overscan.",
         NULL,
         "video",
         {
@@ -153,6 +153,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
             { "6:5 DAR",  NULL },
             { "16:9 DAR", NULL },
             { "16:10 DAR", NULL },
+            { "Dot Clock PAR", NULL },
             { NULL, NULL },
         },
         "1:1 PAR"
@@ -161,12 +162,13 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         "geargrafx_overscan",
         "Overscan",
         NULL,
-        "Enable or disable overscan (borders). Overscan width is dependent on the content.",
+        "Show horizontal borders. 'Auto' crops them to the area used by the game, best with 'Dot Clock PAR' aspect ratio.",
         NULL,
         "video",
         {
             { "Disabled", NULL },
             { "Enabled",  NULL },
+            { "Auto",     NULL },
             { NULL, NULL },
         },
         "Disabled"

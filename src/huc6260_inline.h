@@ -203,6 +203,9 @@ INLINE bool HuC6260::Clock(u32 cycles)
             }
 
             m_active_line = (m_vpos >= m_screen_start_y) && (m_vpos < m_screen_end_y);
+
+            if (!is_laseractive && m_auto_crop && m_active_line)
+                UpdateCropBounds();
         }
         else if (m_hpos == HUC6260_HSYNC_START_HPOS)
         {
@@ -238,6 +241,9 @@ INLINE void HuC6260::RenderFrame()
         if (multiple_speeds)
             AdjustForMultipleDividers();
 
+        if (m_auto_crop)
+            CropFrame(multiple_speeds);
+
         if (m_lowpass_enabled)
         {
             if (m_pixel_format == GG_PIXEL_RGB565)
@@ -249,6 +255,17 @@ INLINE void HuC6260::RenderFrame()
 
     m_scaled_width = multiple_speeds;
     m_multiple_speeds = false;
+}
+
+INLINE void HuC6260::UpdateCropBounds()
+{
+    s32 start, end;
+
+    if (!m_huc6202->GetDisplayRange(&start, &end))
+        return;
+
+    m_crop_min = MIN(m_crop_min, (start - m_screen_start_x) * m_clock_divider);
+    m_crop_max = MAX(m_crop_max, (end - m_screen_start_x) * m_clock_divider);
 }
 
 INLINE void HuC6260::RenderLaserActiveLine(int source_y)
@@ -471,7 +488,11 @@ INLINE u8* HuC6260::GetBuffer()
 INLINE int HuC6260::GetCurrentWidth()
 {
     if (!m_laseractive->IsActive())
+    {
+        if (m_auto_crop)
+            return m_crop_width;
         return m_scaled_width ? k_huc6260_scaling_width[m_overscan] : k_huc6260_line_width[m_overscan][m_speed];
+    }
     return m_laseractive_width;
 }
 
@@ -487,6 +508,11 @@ INLINE int HuC6260::GetWidthScale()
     if (!m_laseractive->IsActive())
         return m_scaled_width ? 3 : 1;
     return 1;
+}
+
+INLINE float HuC6260::GetPixelAspectRatio()
+{
+    return (float)(m_scaled_width ? 3 : m_clock_divider) / HUC6260_SQUARE_PIXEL_CLOCKS;
 }
 
 INLINE void HuC6260::SetScanlineStart(int scanline_start)
@@ -514,11 +540,13 @@ INLINE void HuC6260::SetLaserActivePixels(int start, int end)
     m_laseractive_width = (end - m_laseractive_pixel_start + 1) * HUC6260_LASERACTIVE_WIDTH_SCALE;
 }
 
-INLINE void HuC6260::SetOverscan(bool overscan)
+INLINE void HuC6260::SetOverscan(int overscan)
 {
     m_overscan = overscan ? 1 : 0;
+    m_auto_crop = (overscan == 2);
     m_screen_start_x = k_huc6260_line_start[m_overscan][m_speed];
     m_screen_end_x = k_huc6260_line_end[m_overscan][m_speed];
+    ResetCrop();
 }
 
 INLINE GG_Pixel_Format HuC6260::GetPixelFormat()

@@ -1369,6 +1369,8 @@ static void check_variables(void)
             aspect_ratio = 16.0f / 9.0f;
         else if (strcmp(var.value, "16:10 DAR") == 0)
             aspect_ratio = 16.0f / 10.0f;
+        else if (strcmp(var.value, "Dot Clock PAR") == 0)
+            aspect_ratio = -1.0f;
         else
             aspect_ratio = 0.0f;
     }
@@ -1377,7 +1379,12 @@ static void check_variables(void)
     var.value = NULL;
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-        core->GetHuC6260()->SetOverscan(strcmp(var.value, "Enabled") == 0);
+        int overscan = 0;
+        if (strcmp(var.value, "Enabled") == 0)
+            overscan = 1;
+        else if (strcmp(var.value, "Auto") == 0)
+            overscan = 2;
+        core->GetHuC6260()->SetOverscan(overscan);
     }
 
     int scanline_start = 0;
@@ -1895,7 +1902,12 @@ static float get_aspect_ratio(void)
     if (ratio > 0.0f)
         return ratio;
 
-    return (float)runtime_info.screen_width / (float)runtime_info.width_scale / (float)runtime_info.screen_height;
+    float width = (float)runtime_info.screen_width / (float)runtime_info.width_scale;
+
+    if (ratio < 0.0f)
+        width *= runtime_info.pixel_aspect_ratio;
+
+    return width / (float)runtime_info.screen_height;
 }
 
 static bool path_has_extension(const char* path, const char* extension)

@@ -39,6 +39,7 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random, LaserActive
     m_state.HSYNC = &m_hsync;
     m_state.VSYNC = &m_vsync;
     m_overscan = 0;
+    m_auto_crop = false;
     m_scanline_start = 0;
     m_scanline_end = 241;
     m_laseractive_scanline_start = HUC6260_LASERACTIVE_SCANLINE_START;
@@ -57,6 +58,7 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random, LaserActive
     m_lowpass_speed[2] = true;
 
     CalculateScreenBounds();
+    ResetCrop();
 }
 
 HuC6260::~HuC6260()
@@ -194,6 +196,7 @@ void HuC6260::Reset()
     memcpy(m_color_table + 256, m_color_table, 256 * sizeof(u16));
 
     CalculateScreenBounds();
+    ResetCrop();
 }
 
 u8 HuC6260::ReadRegister(u16 address)
@@ -306,6 +309,61 @@ void HuC6260::CalculateScreenBounds()
     m_screen_end_x = k_huc6260_line_end[m_overscan][m_speed];
     m_screen_start_y = m_scanline_start + HUC6270_LINES_TOP_BLANKING;
     m_screen_end_y = m_scanline_end + HUC6270_LINES_TOP_BLANKING + 1;
+}
+
+void HuC6260::ResetCrop()
+{
+    m_crop_min = 0x7FFFFFFF;
+    m_crop_max = -0x7FFFFFFF;
+    m_crop_start = 0;
+    m_crop_end = HUC6260_LINE_LENGTH;
+    m_crop_width = k_huc6260_line_width[1][m_speed];
+}
+
+void HuC6260::CropFrame(bool multiple_speeds)
+{
+    int scale = multiple_speeds ? 1 : m_clock_divider;
+    int width = multiple_speeds ? k_huc6260_scaling_width[1] : k_huc6260_line_width[1][m_speed];
+    int clocks = width * scale;
+    int min_clocks = MIN(k_huc6260_crop_min_clocks[m_speed], clocks);
+
+    if (m_crop_max > m_crop_min)
+    {
+        m_crop_start = m_crop_min;
+        m_crop_end = m_crop_max;
+    }
+
+    m_crop_min = 0x7FFFFFFF;
+    m_crop_max = -0x7FFFFFFF;
+
+    int start = CLAMP(m_crop_start, 0, clocks);
+    int end = CLAMP(m_crop_end, start, clocks);
+
+    if ((end - start) < min_clocks)
+    {
+        start = CLAMP(((start + end) - min_clocks) / 2, 0, clocks - min_clocks);
+        end = start + min_clocks;
+    }
+
+    int x = start / scale;
+    m_crop_width = (end - start) / scale;
+
+    if (m_crop_width == width)
+        return;
+
+    int bytes_per_pixel = (m_pixel_format == GG_PIXEL_RGBA8888) ? 4 : 2;
+    int src_pitch = width * bytes_per_pixel;
+    int dst_pitch = m_crop_width * bytes_per_pixel;
+    u8* src = m_frame_buffer + (x * bytes_per_pixel);
+    u8* dst = m_frame_buffer;
+    int height = GetCurrentHeight();
+
+    for (int line = 0; line < height; line++)
+    {
+        memmove(dst, src, dst_pitch);
+        src += src_pitch;
+        dst += dst_pitch;
+    }
 }
 
 void HuC6260::AdjustForMultipleDividers()
@@ -421,7 +479,7 @@ void HuC6260::ApplyLowPassFilter(u8* buffer, int width, int height, int speed)
         return;
 
     if (width == 0)
-        width = m_scaled_width ? k_huc6260_scaling_width[m_overscan] : k_huc6260_line_width[m_overscan][m_speed];
+        width = m_auto_crop ? m_crop_width : (m_scaled_width ? k_huc6260_scaling_width[m_overscan] : k_huc6260_line_width[m_overscan][m_speed]);
     if (height == 0)
         height = GetCurrentHeight();
 

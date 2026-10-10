@@ -311,6 +311,7 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
     runtime_info.screen_width = m_huc6260->GetCurrentWidth();
     runtime_info.screen_height = m_huc6260->GetCurrentHeight();
     runtime_info.width_scale = m_huc6260->GetWidthScale();
+    runtime_info.pixel_aspect_ratio = m_huc6260->GetPixelAspectRatio();
     runtime_info.aspect_ratio = 0.0f;
     if (m_media->IsCDROM() && m_media->IsLaserActive())
         runtime_info.aspect_ratio = 4.0f / 3.0f;

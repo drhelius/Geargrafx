@@ -80,6 +80,7 @@ public:
     u16 Clock();
     void SetHSyncHigh();
     void SetVSyncLow();
+    bool GetDisplayRange(s32* start, s32* end);
     u8 ReadRegister(u16 address);
     void WriteRegister(u16 address, u8 value);
     HuC6270_State* GetState();

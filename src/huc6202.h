@@ -81,6 +81,7 @@ public:
     void ClockSGX(u16* pixel_1, u16* pixel_2);
     void SetHSyncHigh();
     void SetVSyncLow();
+    bool GetDisplayRange(s32* start, s32* end);
     u8 ReadRegister(u16 address);
     void WriteRegister(u16 address, u8 value);
     void WriteFromCPU(u16 address, u8 value);

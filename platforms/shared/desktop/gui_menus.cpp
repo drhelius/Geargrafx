@@ -86,7 +86,8 @@ static void menu_audio(void);
 static void menu_turbolink(void);
 static void menu_debug(void);
 static void menu_about(void);
-static void draw_overscan_menu(const char* label, int* overscan, bool enabled, bool apply);
+static void draw_overscan_menu(const char* label, int* overscan, bool auto_crop, bool enabled, bool apply);
+static void draw_aspect_ratio_tooltip(void);
 static void draw_scanline_count_menu(const char* label, int* mode, int* start, int* end, bool enabled, bool apply);
 static void draw_background_color_menu(const char* label, int theme);
 static void draw_mcp_status(void);
@@ -432,8 +433,9 @@ static void menu_geargrafx(void)
             if (ImGui::BeginMenu("Aspect Ratio", !is_recording))
             {
                 ImGui::PushItemWidth(190.0f);
-                ImGui::Combo("##video_recording_ratio", &config_video.recording_ratio, "Follow Screen\0Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0PCE (6:5 DAR)\0\0");
+                ImGui::Combo("##video_recording_ratio", &config_video.recording_ratio, "Follow Screen\0Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0PCE (6:5 DAR)\0CRT (Dot Clock PAR)\0\0");
                 ImGui::PopItemWidth();
+                draw_aspect_ratio_tooltip();
                 ImGui::EndMenu();
             }
 
@@ -1062,12 +1064,13 @@ static void menu_video(void)
         if (ImGui::BeginMenu("Aspect Ratio", !laseractive))
         {
             ImGui::PushItemWidth(190.0f);
-            ImGui::Combo("##ratio", &config_video.ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0PCE (6:5 DAR)\0\0");
+            ImGui::Combo("##ratio", &config_video.ratio, "Square Pixels (1:1 PAR)\0Standard (4:3 DAR)\0Wide (16:9 DAR)\0Wide (16:10 DAR)\0PCE (6:5 DAR)\0CRT (Dot Clock PAR)\0\0");
             ImGui::PopItemWidth();
+            draw_aspect_ratio_tooltip();
             ImGui::EndMenu();
         }
 
-        draw_overscan_menu("Overscan", &config_video.overscan, !laseractive, !config_debug.debug);
+        draw_overscan_menu("Overscan", &config_video.overscan, true, !laseractive, !config_debug.debug);
         draw_scanline_count_menu("Scanline Count", &config_video.scanline_mode,
                 &config_video.scanline_start, &config_video.scanline_end, !laseractive, !config_debug.debug);
 
@@ -1318,17 +1321,37 @@ static void menu_video(void)
     }
 }
 
-static void draw_overscan_menu(const char* label, int* overscan, bool enabled, bool apply)
+static void draw_overscan_menu(const char* label, int* overscan, bool auto_crop, bool enabled, bool apply)
 {
     if (ImGui::BeginMenu(label, enabled))
     {
         ImGui::PushItemWidth(100.0f);
-        if (ImGui::Combo("##overscan", overscan, "Disabled\0Enabled\0\0") && apply)
+        if (ImGui::Combo("##overscan", overscan, auto_crop ? "Disabled\0Enabled\0Auto\0\0" : "Disabled\0Enabled\0\0") && apply)
         {
             emu_set_overscan(*overscan);
         }
         ImGui::PopItemWidth();
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("Disabled: hide borders, fixed width.");
+            ImGui::Text("Enabled: show borders.");
+            if (auto_crop)
+                ImGui::Text("Auto: crop to the area used by the game. Best with CRT aspect ratio.");
+            ImGui::EndTooltip();
+        }
         ImGui::EndMenu();
+    }
+}
+
+static void draw_aspect_ratio_tooltip(void)
+{
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::Text("PAR: pixel shape. DAR: stretch to a fixed screen shape.");
+        ImGui::Text("CRT: pixel shape from the dot clock, like a real TV. Best with Overscan Auto.");
+        ImGui::EndTooltip();
     }
 }
 
@@ -2258,7 +2281,7 @@ static void menu_debug(void)
                 ImGui::EndMenu();
             }
 
-            draw_overscan_menu("Overscan", &config_debug.overscan, config_debug.debug && !laseractive, config_debug.debug);
+            draw_overscan_menu("Overscan", &config_debug.overscan, false, config_debug.debug && !laseractive, config_debug.debug);
             draw_scanline_count_menu("Scanline Count", &config_debug.scanline_mode,
                     &config_debug.scanline_start, &config_debug.scanline_end, config_debug.debug && !laseractive, config_debug.debug);
 

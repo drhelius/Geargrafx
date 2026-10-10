@@ -921,7 +921,7 @@ void emu_set_safe_vdc_defaults(bool enabled)
 
 void emu_set_overscan(int overscan)
 {
-    geargrafx->GetHuC6260()->SetOverscan(overscan == 0 ? false : true);
+    geargrafx->GetHuC6260()->SetOverscan(overscan);
 }
 
 void emu_set_scanline_start_end(int start, int end)
@@ -1612,6 +1612,9 @@ static void get_video_recording_size(const GG_Runtime_Info& runtime, int* width,
             break;
         case 4:
             ratio = 6.0f / 5.0f;
+            break;
+        case 5:
+            ratio = ((float)runtime.screen_width / (float)runtime.width_scale) * runtime.pixel_aspect_ratio / (float)runtime.screen_height;
             break;
         default:
             ratio = ((float)runtime.screen_width / (float)runtime.width_scale) / (float)runtime.screen_height;

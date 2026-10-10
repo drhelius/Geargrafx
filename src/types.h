@@ -39,6 +39,7 @@ struct GG_Runtime_Info
     int screen_height;
     int width_scale;
     float aspect_ratio;
+    float pixel_aspect_ratio;
     double fps;
 };
 
