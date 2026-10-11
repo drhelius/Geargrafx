@@ -529,7 +529,17 @@ bool retro_load_game(const struct retro_game_info *info)
 
         if (!core->LoadMedia(retro_game_path))
         {
-            log_cb(RETRO_LOG_ERROR, "Invalid or corrupted CD-ROM media.\n");
+            if (info_ext && info_ext->file_in_archive && path_has_extension(retro_game_path, "cue"))
+            {
+                struct retro_message msg = {};
+                msg.msg = "Zipped CD-ROM images are not supported, use CHD instead";
+                msg.frames = 360;
+                environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+                log_cb(RETRO_LOG_ERROR, "%s\n", msg.msg);
+            }
+            else
+                log_cb(RETRO_LOG_ERROR, "Invalid or corrupted CD-ROM media.\n");
+
             return false;
         }
 
