@@ -564,6 +564,12 @@ void gui_set_error_message(const char* message)
     error_window_active = true;
 }
 
+void gui_center_next_window(void)
+{
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+}
+
 void gui_set_style(void)
 {
     set_style();
@@ -953,8 +959,7 @@ static void show_error_window(void)
         ImGui::OpenPopup("Error");
     }
 
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    gui_center_next_window();
     if (ImGui::BeginPopupModal("Error", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::Text("%s\n\n", error_message);

@@ -75,6 +75,8 @@ void gui_popup_modal_physical_cdrom(void)
         physical_cdrom_refresh = false;
     }
 
+    gui_center_next_window();
+
     if (ImGui::BeginPopupModal(physical_cdrom_popup_title, NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         gui_dialog_in_use = true;
@@ -208,6 +210,8 @@ static void refresh_physical_cdrom_drives(void)
 
 void gui_popup_modal_keyboard()
 {
+    gui_center_next_window();
+
     if (ImGui::BeginPopupModal("Keyboard Configuration", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         gui_dialog_in_use = true;
@@ -233,6 +237,8 @@ void gui_popup_modal_keyboard()
 
 void gui_popup_modal_gamepad(int pad)
 {
+    gui_center_next_window();
+
     if (ImGui::BeginPopupModal("Gamepad Configuration", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         gui_dialog_in_use = true;
@@ -286,6 +292,8 @@ void gui_popup_modal_gamepad(int pad)
 
 void gui_popup_modal_hotkey()
 {
+    gui_center_next_window();
+
     if (ImGui::BeginPopupModal("Hotkey Configuration", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         gui_dialog_in_use = true;
@@ -316,6 +324,8 @@ void gui_popup_modal_hotkey()
 
 void gui_popup_modal_about(void)
 {
+    gui_center_next_window();
+
     if (ImGui::BeginPopupModal("About " GG_TITLE, NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::PushFont(gui_default_font);
@@ -480,6 +490,8 @@ void gui_popup_modal_about(void)
 
 void gui_popup_modal_load_defaults(void)
 {
+    gui_center_next_window();
+
     if (ImGui::BeginPopupModal("Load Default Settings", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::Text("Are you sure you want to load default settings?\n\n");

@@ -137,6 +137,7 @@ EXTERN void gui_load_pac_bios(const char* path, GG_LaserActive_Region region);
 EXTERN void gui_load_palette(const char* path);
 EXTERN void gui_set_style(void);
 EXTERN void gui_set_error_message(const char* message);
+EXTERN void gui_center_next_window(void);
 
 #undef GUI_IMPORT
 #undef EXTERN
