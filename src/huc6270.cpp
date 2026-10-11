@@ -803,19 +803,24 @@ void HuC6270::RenderBackground(int width)
         u8 byte4 = word_b >> 8;
 
         u16 color_table = (bat_entry >> 12) << 4;
-        int count = MIN(8 - (bg_x & 7), width - i);
-        int tile_x = 7 - (bg_x & 7);
-        int end = i + count;
+        u16 pixels[8];
 
-        for (; i < end; i++)
+        for (int x = 0; x < 8; x++)
         {
-            u16 color = ((byte1 >> tile_x) & 0x01) |
-                    (((byte2 >> tile_x) & 0x01) << 1) |
-                    (((byte3 >> tile_x) & 0x01) << 2) |
-                    (((byte4 >> tile_x) & 0x01) << 3);
-            m_line_buffer[i] = color_table | color;
-            tile_x--;
+            u16 color = ((byte1 >> (7 - x)) & 0x01) |
+                    (((byte2 >> (7 - x)) & 0x01) << 1) |
+                    (((byte3 >> (7 - x)) & 0x01) << 2) |
+                    (((byte4 >> (7 - x)) & 0x01) << 3);
+            pixels[x] = color_table | color;
         }
+
+        int offset = bg_x & 7;
+        int count = MIN(8 - offset, width - i);
+        if (count == 8)
+            memcpy(m_line_buffer + i, pixels, sizeof(pixels));
+        else
+            memcpy(m_line_buffer + i, pixels + offset, count * sizeof(u16));
+        i += count;
 
         bg_x = (bg_x + count) & screen_size_x_mask;
     }
@@ -865,7 +870,10 @@ void HuC6270::RenderSprites(int width)
         u16 plane2 = m_sprites[i].data[1];
         u16 plane3 = m_sprites[i].data[2];
         u16 plane4 = m_sprites[i].data[3];
+        u16 opaque = plane1 | plane2 | plane3 | plane4;
 
+        if (opaque == 0)
+            continue;
 
         int start_x = (pos < 0) ? -pos : 0;
         int end_x = (pos + 15 >= width) ? (width - pos - 1) : 15;
@@ -878,10 +886,10 @@ void HuC6270::RenderSprites(int width)
             else
                 pixel_x = 15 - (x & 0xF);
 
-            u16 pixel = ((plane1 >> pixel_x) & 0x01) | (((plane2 >> pixel_x) & 0x01) << 1) | (((plane3 >> pixel_x) & 0x01) << 2) | (((plane4 >> pixel_x) & 0x01) << 3);
-
-            if(pixel & 0x0F)
+            if ((opaque >> pixel_x) & 0x01)
             {
+                u16 pixel = ((plane1 >> pixel_x) & 0x01) | (((plane2 >> pixel_x) & 0x01) << 1) |
+                    (((plane3 >> pixel_x) & 0x01) << 2) | (((plane4 >> pixel_x) & 0x01) << 3);
                 int x_in_screen = pos + x;
 
                 if ((m_sprites[i].index == 0) && (m_line_buffer_sprites[x_in_screen] & 0x0F) &&

@@ -366,12 +366,7 @@ void HuC6260::RenderFrameTemplate()
             }
             else
             {
-                u8* src = palette888 + ((final_pixel & 0x1FF) * 4);
-                u8* dst = m_frame_buffer + frame_buffer_index;
-                dst[0] = src[0];
-                dst[1] = src[1];
-                dst[2] = src[2];
-                dst[3] = src[3];
+                memcpy(m_frame_buffer + frame_buffer_index, palette888 + ((final_pixel & 0x1FF) * 4), 4);
             }
             frame_buffer_index += bytes_per_pixel;
         }
@@ -404,12 +399,7 @@ void HuC6260::RenderFrameTemplate()
             }
             else
             {
-                u8* src = palette888 + (final_pixel * 4);
-                u8* dst = m_frame_buffer + frame_buffer_index;
-                dst[0] = src[0];
-                dst[1] = src[1];
-                dst[2] = src[2];
-                dst[3] = src[3];
+                memcpy(m_frame_buffer + frame_buffer_index, palette888 + (final_pixel * 4), 4);
             }
             frame_buffer_index += bytes_per_pixel;
         }
