@@ -62,8 +62,21 @@ size_t CdRomChdFileAdapter::Read(void* buffer, size_t size, size_t count)
     if (!m_file || (size == 0) || (count == 0) || (count > ((size_t)-1 / size)))
         return 0;
 
-    s64 read = m_file->Read(buffer, size * count);
-    return read > 0 ? (size_t)read / size : 0;
+    u8* destination = reinterpret_cast<u8*>(buffer);
+    size_t length = size * count;
+    size_t total = 0;
+
+    while (total < length)
+    {
+        s64 read = m_file->Read(destination + total, length - total);
+
+        if ((read <= 0) || ((u64)read > (length - total)))
+            break;
+
+        total += (size_t)read;
+    }
+
+    return total / size;
 }
 
 int CdRomChdFileAdapter::Close()

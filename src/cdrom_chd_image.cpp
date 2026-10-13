@@ -611,6 +611,7 @@ bool CdRomChdImage::LoadHunk(u32 hunk_index)
         if (err != CHDERR_NONE)
         {
             Error("CHD read hunk %u failed: %d, %s", hunk_index, err, chd_error_string(err));
+            SafeDeleteArray(m_hunk_cache[hunk_index]);
             return false;
         }
     }
