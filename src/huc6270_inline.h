@@ -106,6 +106,8 @@ INLINE u16* HuC6270::GetSAT()
 
 INLINE void HuC6270::ProcessCpuVramAccesses(u32 cycles)
 {
+    cycles += m_cpu_vram_cycles;
+
     while (HasPendingCpuVramAccess() && (cycles >= 3))
     {
         if (m_transfer_delay > 0)
@@ -133,6 +135,8 @@ INLINE void HuC6270::ProcessCpuVramAccesses(u32 cycles)
 
         cycles -= 3;
     }
+
+    m_cpu_vram_cycles = HasPendingCpuVramAccess() ? cycles : 0;
 }
 
 INLINE bool HuC6270::HasPendingCpuVramAccess()

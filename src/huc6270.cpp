@@ -194,6 +194,7 @@ void HuC6270::Reset()
     m_pending_memory_read = false;
     m_pending_memory_write = false;
     m_transfer_delay = 0;
+    m_cpu_vram_cycles = 0;
     m_load_bg_start_clock = HUC6260_LINE_LENGTH;
     m_load_bg_end_clock = 0;
     m_hsync_start_clock = 0;
@@ -1083,6 +1084,7 @@ void HuC6270::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_latch_clock_x), sizeof(m_latch_clock_x));
     stream.write(reinterpret_cast<const char*> (&m_bxr_written_before_latch), sizeof(m_bxr_written_before_latch));
     stream.write(reinterpret_cast<const char*> (&m_byr_lsb_write_clock), sizeof(m_byr_lsb_write_clock));
+    stream.write(reinterpret_cast<const char*> (&m_cpu_vram_cycles), sizeof(m_cpu_vram_cycles));
 }
 
 void HuC6270::LoadState(std::istream& stream, int version)
@@ -1194,4 +1196,9 @@ void HuC6270::LoadState(std::istream& stream, int version)
         m_bxr_written_before_latch = false;
         m_byr_lsb_write_clock = -1;
     }
+
+    if (version >= 44)
+        stream.read(reinterpret_cast<char*> (&m_cpu_vram_cycles), sizeof(m_cpu_vram_cycles));
+    else
+        m_cpu_vram_cycles = 0;
 }

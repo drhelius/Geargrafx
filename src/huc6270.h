@@ -119,6 +119,7 @@ private:
     bool m_pending_memory_read;
     bool m_pending_memory_write;
     s32 m_transfer_delay;
+    u32 m_cpu_vram_cycles;
     s32 m_load_bg_start_clock;
     s32 m_load_bg_end_clock;
     s32 m_hsync_start_clock;
