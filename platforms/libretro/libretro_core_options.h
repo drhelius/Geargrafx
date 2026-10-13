@@ -1063,6 +1063,23 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         "System Card 3"
     },
     {
+        "geargrafx_cdrom_speed",
+        "CD-ROM Speed (Not Recommended)",
+        NULL,
+        "It is not recommended to change the default value (1x). Faster CD-ROM reads are not accurate and can break games, cutscenes and audio sync. Only use it to reduce loading times in games that need it.",
+        NULL,
+        "cdrom",
+        {
+            { "1x", "1x (Default)" },
+            { "2x", NULL },
+            { "3x", NULL },
+            { "4x", NULL },
+            { "6x", NULL },
+            { NULL, NULL },
+        },
+        "1x"
+    },
+    {
         "geargrafx_cdrom_preload",
         "Preload CD-ROM (restart)",
         NULL,

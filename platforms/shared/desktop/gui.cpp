@@ -164,6 +164,7 @@ void gui_apply_settings(void)
     emu_set_console_type((GG_Console_Type)config_emulator.console_type);
     emu_set_cpu_overclock(config_emulator.cpu_overclock);
     emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
+    emu_set_cdrom_speed(config_emulator.cdrom_speed);
     emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
     emu_set_preload_cdrom(config_emulator.preload_cdrom);
     emu_set_backup_ram(config_emulator.backup_ram);

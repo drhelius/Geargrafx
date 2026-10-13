@@ -244,6 +244,7 @@ static inline void process(config_Operation operation)
     CONFIG_INT("Emulator", "ConsoleType", config_emulator.console_type, 0);
     CONFIG_INT_RANGE("Emulator", "CPUOverclock", config_emulator.cpu_overclock, 100, 100, 300);
     CONFIG_INT("Emulator", "CDROMType", config_emulator.cdrom_type, 0);
+    CONFIG_INT_RANGE("Emulator", "CDROMSpeed", config_emulator.cdrom_speed, 0, 0, 4);
     CONFIG_INT_RANGE("Emulator", "LaserActiveRegion", config_emulator.laseractive_region,
         GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_US);
     CONFIG_BOOL("Emulator", "PreloadCDROM", config_emulator.preload_cdrom, false);

@@ -138,6 +138,7 @@ public:
     Scsi_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);
     void SetResetValue(int value);
+    void SetReadSpeed(int speed);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
 
@@ -164,6 +165,7 @@ private:
     void CommandReadSubcodeQ();
     void CommandReadTOC();
     u8 CommandLength(ScsiCommand command);
+    u32 ReadCycles(u32 cycles);
     void LoadSector();
     u32 AudioLBA();
     void TraceScsiEvent(u8 event, u8 command = 0, u8 phase = 0, u8 status = 0,
@@ -191,6 +193,7 @@ private:
     s32 m_auto_ack_cycles;
     u32 m_initial_read_phase_cycles;
     int m_reset_value;
+    u32 m_read_speed;
     std::vector<u8> m_command_buffer;
     std::vector<u8> m_data_buffer;
     u32 m_data_buffer_offset;

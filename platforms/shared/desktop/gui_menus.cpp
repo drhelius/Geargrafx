@@ -861,7 +861,6 @@ static void menu_emulator(void)
                 ImGui::Text("Only use it to reduce slowdown in games that need it.");
                 ImGui::EndTooltip();
             }
-            ImGui::TextColored(red, "Not recommended, default is 100%%");
             ImGui::PopItemWidth();
             ImGui::EndMenu();
         }
@@ -885,6 +884,25 @@ static void menu_emulator(void)
                 ImGui::EndTooltip();
             }
 
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("CD-ROM Speed"))
+        {
+            ImGui::PushItemWidth(150.0f);
+            if (ImGui::Combo("##cdromspeed", &config_emulator.cdrom_speed, "1x (Default)\0" "2x\0" "3x\0" "4x\0" "6x\0\0"))
+            {
+                emu_set_cdrom_speed(config_emulator.cdrom_speed);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("It is not recommended to change the default value (1x).");
+                ImGui::Text("Faster CD-ROM reads are not accurate and can break games, cutscenes and audio sync.");
+                ImGui::Text("Only use it to reduce loading times in games that need it.");
+                ImGui::EndTooltip();
+            }
+            ImGui::PopItemWidth();
             ImGui::EndMenu();
         }
 

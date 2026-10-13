@@ -1594,6 +1594,14 @@ static void check_variables(void)
         core->GetMedia()->SetCDROMType(cdrom_type);
     }
 
+    var.key = "geargrafx_cdrom_speed";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetScsiController()->SetReadSpeed(atoi(var.value));
+    }
+
     var.key = "geargrafx_cdrom_bios";
     var.value = NULL;
 

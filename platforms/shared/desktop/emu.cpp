@@ -996,6 +996,12 @@ void emu_set_cdrom_type(GG_CDROM_Type cdrom_type)
     geargrafx->GetMedia()->SetCDROMType(cdrom_type);
 }
 
+void emu_set_cdrom_speed(int speed_index)
+{
+    static const int speeds[] = { 1, 2, 3, 4, 6 };
+    geargrafx->GetScsiController()->SetReadSpeed(speeds[CLAMP(speed_index, 0, 4)]);
+}
+
 void emu_set_preload_cdrom(bool enabled)
 {
     geargrafx->GetMedia()->PreloadCdRom(enabled);

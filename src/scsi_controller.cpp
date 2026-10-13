@@ -54,6 +54,7 @@ ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio,
     m_auto_ack_cycles = 0;
     m_initial_read_phase_cycles = 0;
     m_reset_value = -1;
+    m_read_speed = 1;
     m_command_buffer.clear();
     m_command_buffer.reserve(k_scsi_command_buffer_capacity);
     m_data_buffer.clear();
@@ -91,6 +92,11 @@ void ScsiController::SetTraceLogger(TraceLogger* trace_logger)
 void ScsiController::SetResetValue(int value)
 {
     m_reset_value = value;
+}
+
+void ScsiController::SetReadSpeed(int speed)
+{
+    m_read_speed = (u32)CLAMP(speed, 1, 6);
 }
 
 void ScsiController::LogScsiEvent(u8 event, u8 command, u8 phase, u8 status,
@@ -523,8 +529,8 @@ void ScsiController::CommandRead()
 
     u32 current_lba = m_cdrom_media->GetCurrentSector();
     u32 seek_time = m_cdrom_media->SeekTime(current_lba, lba);
-    u32 seek_cycles = TimeToCycles(seek_time * 1000);
-    u32 transfer_cycles = m_cdrom_media->SectorTransferCycles();
+    u32 seek_cycles = ReadCycles(TimeToCycles(seek_time * 1000));
+    u32 transfer_cycles = ReadCycles(m_cdrom_media->SectorTransferCycles());
     if (m_laseractive->IsActive())
         seek_cycles = m_laseractive->NotifyScsiReadStart(lba);
 
@@ -805,6 +811,11 @@ void ScsiController::CommandReadTOC()
     }
 }
 
+u32 ScsiController::ReadCycles(u32 cycles)
+{
+    return m_laseractive->IsActive() ? cycles : cycles / m_read_speed;
+}
+
 void ScsiController::LoadSector()
 {
     if (m_data_buffer.empty())
@@ -845,7 +856,7 @@ void ScsiController::LoadSector()
         if (m_load_sector_count == 0)
             m_next_load_cycles = 0;
         else
-            m_next_load_cycles = m_cdrom_media->SectorTransferCycles();
+            m_next_load_cycles = ReadCycles(m_cdrom_media->SectorTransferCycles());
 
         SCSI_DEBUG("SCSI Sectors left: %d, next:%d, cycles: %d", m_load_sector_count, m_load_sector, m_next_load_cycles);
 
@@ -858,7 +869,7 @@ void ScsiController::LoadSector()
         TraceScsiEvent(TRACE_SCSI_SECTOR_RETRY, SCSI_CMD_READ, (u8)m_phase,
             (u8)m_load_sector_count, (m_load_sector << 11) | m_data_buffer_offset);
 
-        m_next_load_cycles = TimeToCycles(290000);
+        m_next_load_cycles = ReadCycles(TimeToCycles(290000));
     }
 }
 

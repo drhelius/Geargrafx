@@ -126,6 +126,7 @@ EXTERN void emu_set_huc6280_registers_reset_value(int value);
 EXTERN void emu_set_console_type(GG_Console_Type console_type);
 EXTERN void emu_set_cpu_overclock(int percent);
 EXTERN void emu_set_cdrom_type(GG_CDROM_Type cdrom_type);
+EXTERN void emu_set_cdrom_speed(int speed_index);
 EXTERN void emu_set_preload_cdrom(bool enabled);
 EXTERN void emu_set_backup_ram(bool enabled);
 EXTERN void emu_set_turbo_tap(bool enabled);

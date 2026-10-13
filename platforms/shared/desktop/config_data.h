@@ -92,6 +92,7 @@ struct config_Emulator
     int console_type;
     int cpu_overclock;
     int cdrom_type;
+    int cdrom_speed;
     int laseractive_region;
     bool preload_cdrom;
     int mcp_tcp_port;
