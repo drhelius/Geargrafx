@@ -763,9 +763,18 @@ bool Media::LoadMediaFromZipFile(const char* path, bool softpatching)
             mz_zip_reader_end(&zip_archive);
 
             m_is_cdrom = true;
-            const char* temp_path = m_temp_path[0] ? m_temp_path : m_file_directory;
 
-            string temppath(temp_path);
+#if defined(__LIBRETRO__)
+            Error("CD-ROM images in ZIP files are not supported: %s", path);
+            return false;
+#else
+            if (m_temp_path[0] == 0)
+            {
+                Error("No temp path to extract ZIP file %s", path);
+                return false;
+            }
+
+            string temppath(m_temp_path);
             string fullpath(path);
             string filename;
 
@@ -780,6 +789,12 @@ bool Media::LoadMediaFromZipFile(const char* path, bool softpatching)
             Debug("Loading CD-ROM Media from ZIP file: %s", path);
             Debug("Temporary path: %s", temppath.c_str());
 
+            if (!remove_directory_and_contents(temppath.c_str()))
+            {
+                Error("Unable to clear the extraction folder %s", temppath.c_str());
+                return false;
+            }
+
             if (extract_zip_to_folder(path, temppath.c_str()))
             {
                 string cue_path = temppath + "/" + fn;
@@ -790,6 +805,7 @@ bool Media::LoadMediaFromZipFile(const char* path, bool softpatching)
                 Error("Failed to extract ZIP file %s to %s", path, temppath.c_str());
                 return false;
             }
+#endif
         }
     }
 
