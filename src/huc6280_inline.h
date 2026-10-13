@@ -166,6 +166,17 @@ INLINE void HuC6280::SetHardwareClock(GG_Clock_Hardware_Fn clock_fn, void* conte
     m_clock_hardware_context = context;
 }
 
+INLINE u32 HuC6280::OverclockCycles(u32 master_cycles)
+{
+    if (likely(m_overclock_ratio == 0))
+        return master_cycles;
+
+    m_overclock_fraction += master_cycles * m_overclock_ratio;
+    u32 cycles = m_overclock_fraction >> 16;
+    m_overclock_fraction &= 0xFFFF;
+    return cycles;
+}
+
 INLINE u32 HuC6280::GetClockedMasterCycles() const
 {
     return m_clocked_master_cycles;
@@ -178,7 +189,7 @@ INLINE void HuC6280::ClockHardwareCycles(u32 master_cycles)
 
     assert(IsValidPointer(m_clock_hardware_fn));
 
-    m_clock_hardware_fn(m_clock_hardware_context, master_cycles);
+    m_clock_hardware_fn(m_clock_hardware_context, OverclockCycles(master_cycles));
     m_clocked_master_cycles += master_cycles;
 
     CheckIRQs();

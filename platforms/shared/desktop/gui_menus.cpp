@@ -846,6 +846,26 @@ static void menu_emulator(void)
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("CPU Overclock"))
+        {
+            ImGui::PushItemWidth(150.0f);
+            if (ImGui::SliderInt("##cpu_overclock", &config_emulator.cpu_overclock, 100, 300, "%d%%", ImGuiSliderFlags_AlwaysClamp))
+            {
+                emu_set_cpu_overclock(config_emulator.cpu_overclock);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("It is not recommended to change the default value (100%%).");
+                ImGui::Text("Overclocking is not accurate and can break game logic, timing and music.");
+                ImGui::Text("Only use it to reduce slowdown in games that need it.");
+                ImGui::EndTooltip();
+            }
+            ImGui::TextColored(red, "Not recommended, default is 100%%");
+            ImGui::PopItemWidth();
+            ImGui::EndMenu();
+        }
+
         ImGui::Separator();
 
         if (ImGui::BeginMenu("CD-ROM Model"))

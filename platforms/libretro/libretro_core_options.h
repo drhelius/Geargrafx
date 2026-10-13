@@ -137,6 +137,43 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         },
         "Disabled"
     },
+    {
+        "geargrafx_cpu_overclock",
+        "CPU Overclock (Not Recommended)",
+        NULL,
+        "It is not recommended to change the default value (100%). Overclocking is not accurate and can break game logic, timing and music. Only use it to reduce slowdown in games that need it.",
+        NULL,
+        "system",
+        {
+            { "100%", "100% (Default)" },
+            { "105%", NULL },
+            { "110%", NULL },
+            { "115%", NULL },
+            { "120%", NULL },
+            { "125%", NULL },
+            { "130%", NULL },
+            { "135%", NULL },
+            { "140%", NULL },
+            { "145%", NULL },
+            { "150%", NULL },
+            { "155%", NULL },
+            { "160%", NULL },
+            { "165%", NULL },
+            { "170%", NULL },
+            { "175%", NULL },
+            { "180%", NULL },
+            { "185%", NULL },
+            { "190%", NULL },
+            { "195%", NULL },
+            { "200%", NULL },
+            { "225%", NULL },
+            { "250%", NULL },
+            { "275%", NULL },
+            { "300%", NULL },
+            { NULL, NULL },
+        },
+        "100%"
+    },
 
     /* Video */
 

@@ -162,6 +162,7 @@ void gui_apply_settings(void)
     emu_set_huc6260_color_table_reset_value(get_reset_value(config_debug.reset_color_table));
     emu_set_huc6280_registers_reset_value(get_reset_value(config_debug.reset_registers));
     emu_set_console_type((GG_Console_Type)config_emulator.console_type);
+    emu_set_cpu_overclock(config_emulator.cpu_overclock);
     emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
     emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
     emu_set_preload_cdrom(config_emulator.preload_cdrom);

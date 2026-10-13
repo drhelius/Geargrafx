@@ -985,6 +985,12 @@ void emu_set_console_type(GG_Console_Type console_type)
 {
     geargrafx->GetMedia()->SetConsoleType(console_type);
 }
+
+void emu_set_cpu_overclock(int percent)
+{
+    geargrafx->GetHuC6280()->SetOverclock(percent);
+}
+
 void emu_set_cdrom_type(GG_CDROM_Type cdrom_type)
 {
     geargrafx->GetMedia()->SetCDROMType(cdrom_type);

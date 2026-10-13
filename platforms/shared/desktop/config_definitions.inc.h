@@ -242,6 +242,7 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Emulator", "SoftPatching", config_emulator.softpatching, true);
     CONFIG_BOOL("Emulator", "BackupRAM", config_emulator.backup_ram, true);
     CONFIG_INT("Emulator", "ConsoleType", config_emulator.console_type, 0);
+    CONFIG_INT_RANGE("Emulator", "CPUOverclock", config_emulator.cpu_overclock, 100, 100, 300);
     CONFIG_INT("Emulator", "CDROMType", config_emulator.cdrom_type, 0);
     CONFIG_INT_RANGE("Emulator", "LaserActiveRegion", config_emulator.laseractive_region,
         GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_AUTO, GG_LASERACTIVE_REGION_US);

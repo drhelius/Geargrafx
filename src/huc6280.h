@@ -123,6 +123,7 @@ public:
     void Reset();
     u32 RunInstruction(bool* completed = NULL);
     void SetHardwareClock(GG_Clock_Hardware_Fn clock_fn, void* context);
+    u32 OverclockCycles(u32 master_cycles);
     u32 GetClockedMasterCycles() const;
     void ClockCountedCycles(unsigned int cycles);
     void ClockPendingCycles();
@@ -140,6 +141,7 @@ public:
     void DisassembleAhead(int count);
     void DisassembleAhead(u16 start_address, int count, int depth);
     void SetResetValue(int value);
+    void SetOverclock(int percent);
     void EnableBreakpoints(bool enable, bool irqs);
     void SetDebugBRK(bool enable, u8 value, bool trigger_irq);
     bool BreakpointHit();
@@ -223,6 +225,8 @@ private:
     void* m_clock_hardware_context;
     u32 m_clocked_master_cycles;
     u32 m_extra_master_cycles;
+    u32 m_overclock_ratio;
+    u32 m_overclock_fraction;
     s32 m_debug_next_irq;
     bool m_breakpoints_enabled;
     bool m_breakpoint_cache[HuC6280_BREAKPOINT_TYPE_COUNT][HuC6280_BREAKPOINT_ACCESS_COUNT];

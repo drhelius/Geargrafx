@@ -36,6 +36,8 @@ HuC6280::HuC6280(Random* random)
     InitPointer(m_profiler);
     InitPointer(m_clock_hardware_fn);
     InitPointer(m_clock_hardware_context);
+    m_overclock_ratio = 0;
+    m_overclock_fraction = 0;
     m_breakpoints_enabled = false;
     m_breakpoints_irq_enabled = false;
     m_cpu_breakpoint_hit = false;
@@ -254,6 +256,7 @@ void HuC6280::Reset()
     m_transfer_flag = false;
     m_clocked_master_cycles = 0;
     m_extra_master_cycles = 0;
+    m_overclock_fraction = 0;
     m_cpu_breakpoint_hit = false;
     m_memory_breakpoint_hit = false;
     m_debug_brk_breakpoint_hit = false;
@@ -277,6 +280,12 @@ HuC6280::HuC6280_State* HuC6280::GetState()
 void HuC6280::SetResetValue(int value)
 {
     m_reset_value = value;
+}
+
+void HuC6280::SetOverclock(int percent)
+{
+    percent = CLAMP(percent, 100, 300);
+    m_overclock_ratio = (percent > 100) ? (u32)((100 << 16) / percent) : 0;
 }
 
 void HuC6280::SetDisassemblerSyntax(GG_Disassembler_Syntax syntax)
@@ -965,6 +974,8 @@ void HuC6280::SaveState(std::ostream& stream)
     stream.write(reinterpret_cast<const char*> (&m_interrupt_request_register), sizeof(m_interrupt_request_register));
     stream.write(reinterpret_cast<const char*> (&m_transfer_flag), sizeof(m_transfer_flag));
     stream.write(reinterpret_cast<const char*> (&m_debug_next_irq), sizeof(m_debug_next_irq));
+
+    m_overclock_fraction = 0;
 }
 
 void HuC6280::LoadState(std::istream& stream)
@@ -994,5 +1005,6 @@ void HuC6280::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_transfer_flag), sizeof(m_transfer_flag));
     stream.read(reinterpret_cast<char*> (&m_debug_next_irq), sizeof(m_debug_next_irq));
 
+    m_overclock_fraction = 0;
     ResetVBlankWatch();
 }

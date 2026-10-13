@@ -90,7 +90,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             u32 remaining_cycles = (cycles > clocked_cycles) ? cycles - clocked_cycles : 0;
 
             stop = m_frame_ready;
-            if (ClockHardware<is_cdrom, is_sgx, is_laseractive>(remaining_cycles))
+            if (ClockHardware<is_cdrom, is_sgx, is_laseractive>(m_huc6280->OverclockCycles(remaining_cycles)))
                 stop = true;
 
             if (debug_enable)
@@ -132,7 +132,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             u32 remaining_cycles = (cycles > clocked_cycles) ? cycles - clocked_cycles : 0;
 
             stop = m_frame_ready;
-            if (ClockHardware<is_cdrom, is_sgx, is_laseractive>(remaining_cycles))
+            if (ClockHardware<is_cdrom, is_sgx, is_laseractive>(m_huc6280->OverclockCycles(remaining_cycles)))
                 stop = true;
         }
         while (!stop);

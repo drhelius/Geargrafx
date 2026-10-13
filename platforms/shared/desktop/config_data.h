@@ -90,6 +90,7 @@ struct config_Emulator
     bool allow_screensaver;
     bool backup_ram;
     int console_type;
+    int cpu_overclock;
     int cdrom_type;
     int laseractive_region;
     bool preload_cdrom;

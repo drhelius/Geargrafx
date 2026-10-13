@@ -1778,6 +1778,14 @@ static void check_variables(void)
         core->GetHuC6270_2()->SetSafeDefaults(strcmp(var.value, "Enabled") == 0);
     }
 
+    var.key = "geargrafx_cpu_overclock";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetHuC6280()->SetOverclock(atoi(var.value));
+    }
+
     var.key = "geargrafx_avenue_pad_3_switch";
     var.value = NULL;
 
