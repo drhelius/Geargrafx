@@ -336,12 +336,14 @@ bool CdRomChdImage::ReadTOC()
         int track = 0, frames = 0, pregap = 0, postgap = 0;
         char type[64], subtype[32], pgtype[32], pgsub[32];
         type[0] = subtype[0] = pgtype[0] = pgsub[0] = 0;
+        memset(metadata, 0, sizeof(metadata));
 
-        err = chd_get_metadata(m_chd_file, CDROM_TRACK_METADATA2_TAG, i, metadata, sizeof(metadata), NULL, NULL, NULL);
+        err = chd_get_metadata(m_chd_file, CDROM_TRACK_METADATA2_TAG, i, metadata, sizeof(metadata) - 1, NULL, NULL, NULL);
 
         if (err == CHDERR_NONE)
         {
-            if (sscanf(metadata, CDROM_TRACK_METADATA2_FORMAT, &track, type, subtype, &frames, &pregap, pgtype, pgsub, &postgap) != 8)
+            if (sscanf(metadata, "TRACK:%d TYPE:%63s SUBTYPE:%31s FRAMES:%d PREGAP:%d PGTYPE:%31s PGSUB:%31s POSTGAP:%d",
+                &track, type, subtype, &frames, &pregap, pgtype, pgsub, &postgap) != 8)
             {
                 Error("Failed to parse CDROM_TRACK_METADATA2_FORMAT for track %d", i + 1);
                 return false;
@@ -350,10 +352,10 @@ bool CdRomChdImage::ReadTOC()
         }
         else
         {
-            err = chd_get_metadata(m_chd_file, CDROM_TRACK_METADATA_TAG, i, metadata, sizeof(metadata), NULL, NULL, NULL);
+            err = chd_get_metadata(m_chd_file, CDROM_TRACK_METADATA_TAG, i, metadata, sizeof(metadata) - 1, NULL, NULL, NULL);
             if (err == CHDERR_NONE)
             {
-                if (sscanf(metadata, CDROM_TRACK_METADATA_FORMAT, &track, type, subtype, &frames) != 4)
+                if (sscanf(metadata, "TRACK:%d TYPE:%63s SUBTYPE:%31s FRAMES:%d", &track, type, subtype, &frames) != 4)
                 {
                     Error("Failed to parse CDROM_TRACK_METADATA_FORMAT for track %d", i + 1);
                     return false;
