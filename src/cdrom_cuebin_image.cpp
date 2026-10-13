@@ -307,7 +307,7 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
         return false;
     }
 
-    s32 track_index = FindTrackFromLBA(lba, false);
+    s32 track_index = FindTrackFromLBA(lba, true);
     if (track_index < 0)
     {
         Error("ReadBytes failed - LBA %d not found in any track", lba);
@@ -318,7 +318,20 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
     const TrackFile& track_file = m_track_files[(size_t)track_index];
     u32 sector_size = track.sector_size;
     u32 sector_offset = lba - track.start_lba;
+    u64 track_offset = track.file_offset;
     ImgFile* img_file = track_file.img_file;
+
+    if (lba < track.start_lba)
+    {
+        if (!track.lead_in_stored)
+        {
+            Error("ReadBytes failed - LBA %d is in a pregap the image does not store", lba);
+            return false;
+        }
+
+        sector_offset = lba - track.lead_in_lba;
+        track_offset -= (u64)(track.start_lba - track.lead_in_lba) * sector_size;
+    }
 
     if (img_file == NULL || img_file->file_size == 0)
     {
@@ -330,7 +343,7 @@ bool CdRomCueBinImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
     u64 byte_offset;
     u64 sample_size;
     if (!checked_multiply_u64(sector_offset, sector_size, &sector_byte_offset) ||
-        !checked_add_u64(track.file_offset, sector_byte_offset, &byte_offset) ||
+        !checked_add_u64(track_offset, sector_byte_offset, &byte_offset) ||
         !checked_add_u64(byte_offset, offset, &byte_offset) ||
         !checked_multiply_u64(count, 2, &sample_size) || (sample_size > UINT32_MAX))
     {
@@ -1160,6 +1173,8 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
                     Error("CUE lead-in offset overflow in %s", f.img_file->file_path);
                     return false;
                 }
+
+                track.lead_in_stored = true;
             }
 
             m_toc.tracks.push_back(track);

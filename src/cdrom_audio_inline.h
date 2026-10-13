@@ -263,7 +263,7 @@ INLINE void CdRomAudio::GenerateSamples()
     {
         m_sector_cache_lba = m_current_lba;
 
-        if (m_cdrom_media->IsAudioSector(m_current_lba))
+        if (m_cdrom_media->IsPlayableAudioSector(m_current_lba))
         {
             m_sector_cache_valid = m_cdrom_media->ReadSamples(m_current_lba, 0,
                 m_sector_cache, 2352 / sizeof(s16));

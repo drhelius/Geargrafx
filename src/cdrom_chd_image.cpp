@@ -219,7 +219,7 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
         return false;
     }
 
-    s32 track_index = FindTrackFromLBA(lba, false);
+    s32 track_index = FindTrackFromLBA(lba, true);
     if (track_index < 0)
     {
         Error("ReadBytes failed - LBA %d not found in any track", lba);
@@ -227,7 +227,14 @@ bool CdRomChdImage::ReadSamples(u32 lba, u32 offset, s16* buffer, u32 count)
     }
 
     const Track& track = m_toc.tracks[(size_t)track_index];
-    u32 sector_index = (lba - track.start_lba) + (u32)track.file_offset;
+
+    if ((lba < track.start_lba) && !track.lead_in_stored)
+    {
+        Error("ReadBytes failed - LBA %d is in a pregap the image does not store", lba);
+        return false;
+    }
+
+    u32 sector_index = (u32)track.file_offset + lba - track.start_lba;
     u32 hunk_index  = sector_index / m_sectors_per_hunk;
     u32 hunk_offset = sector_index % m_sectors_per_hunk;
     u32 byte_offset_in_hunk = hunk_offset * (2352 + 96);
@@ -408,6 +415,7 @@ bool CdRomChdImage::ReadTOC()
         {
             new_track.has_lead_in = true;
             new_track.lead_in_lba = current_lba - pregap_real - pregap_dv;
+            new_track.lead_in_stored = pregap_dv > 0;
         }
 
         u32 data_frames = (u32)frames - pregap_dv;

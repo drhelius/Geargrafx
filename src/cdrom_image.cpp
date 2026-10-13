@@ -101,6 +101,23 @@ bool CdRomImage::IsAudioSector(u32 lba, bool include_lead_in)
     return (track >= 0) && (m_toc.tracks[(size_t)track].type == GG_CDROM_AUDIO_TRACK);
 }
 
+bool CdRomImage::IsPlayableAudioSector(u32 lba)
+{
+    if (lba >= m_toc.sector_count)
+        return false;
+
+    s32 track = FindTrackFromLBA(lba, true);
+
+    if ((track < 0) || (m_toc.tracks[(size_t)track].type != GG_CDROM_AUDIO_TRACK))
+        return false;
+
+    if (lba >= m_toc.tracks[(size_t)track].start_lba)
+        return true;
+
+    return m_toc.tracks[(size_t)track].lead_in_stored && (track > 0) &&
+        (m_toc.tracks[(size_t)track - 1].type == GG_CDROM_AUDIO_TRACK);
+}
+
 const char* CdRomImage::GetFileName()
 {
     return m_file_name;
@@ -175,6 +192,7 @@ void CdRomImage::InitTrack(Track& track)
     track.end_msf = {0, 0, 0};
     track.has_lead_in = false;
     track.lead_in_lba = 0;
+    track.lead_in_stored = false;
     track.file_offset = 0;
 }
 
