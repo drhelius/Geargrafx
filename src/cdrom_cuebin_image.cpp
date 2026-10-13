@@ -1140,7 +1140,7 @@ bool CdRomCueBinImage::ParseCueFile(const char* cue_content)
             else if (p.has_index0)
             {
                 track.has_lead_in = true;
-                track.lead_in_lba = p.index0_lba + start_sector;
+                track.lead_in_lba = p.index0_lba + total_pregap_length + start_sector;
             }
 
             u64 current_file_offset = 0;
