@@ -437,7 +437,7 @@ bool CdRomChdImage::ReadTOC()
             return false;
         }
 
-        // Update file_offset: pregap_dv + data + postgap + alignment to 4 sectors
+        // Update file_offset: pregap_dv + data + alignment to 4 sectors, postgaps are not stored
         if (!checked_add_u32(file_offset, pregap_dv, &file_offset))
         {
             Error("Invalid CHD metadata for track %d - File offset overflow", i + 1);
@@ -449,7 +449,6 @@ bool CdRomChdImage::ReadTOC()
         u32 frame_padding = (4 - ((u32)frames & 3)) & 3;
 
         if (!checked_add_u32(file_offset, data_frames, &file_offset) ||
-            !checked_add_u32(file_offset, (u32)postgap, &file_offset) ||
             !checked_add_u32(file_offset, frame_padding, &file_offset))
         {
             Error("Invalid CHD metadata for track %d - File offset overflow", i + 1);
