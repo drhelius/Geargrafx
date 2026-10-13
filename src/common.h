@@ -32,6 +32,7 @@
 #include <errno.h>
 #if !defined(__LIBRETRO__)
 #include <dirent.h>
+#include <fcntl.h>
 #include <unistd.h>
 #endif
 #endif
@@ -388,6 +389,38 @@ inline bool create_directory_if_not_exists(const char* path)
 }
 
 #if !defined(__LIBRETRO__)
+#if !defined(_WIN32)
+inline bool remove_directory_and_contents_at(int parent_fd, const char* name)
+{
+    int fd = openat(parent_fd, name, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+
+    if (fd < 0)
+        return errno == ENOENT || unlinkat(parent_fd, name, 0) == 0;
+
+    DIR* dir = fdopendir(fd);
+
+    if (!dir)
+    {
+        close(fd);
+        return false;
+    }
+
+    bool ok = true;
+    struct dirent* entry;
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        const char* entry_name = entry->d_name;
+
+        if (strcmp(entry_name, ".") && strcmp(entry_name, ".."))
+            ok = remove_directory_and_contents_at(dirfd(dir), entry_name) && ok;
+    }
+
+    closedir(dir);
+    return ok && (unlinkat(parent_fd, name, AT_REMOVEDIR) == 0);
+}
+#endif
+
 inline bool remove_directory_and_contents(const char* path)
 {
 #if defined(_WIN32)
@@ -428,35 +461,7 @@ inline bool remove_directory_and_contents(const char* path)
 
     return ok && (RemoveDirectoryW(wpath.c_str()) != 0);
 #else
-    struct stat st;
-
-    if (lstat(path, &st) != 0)
-        return errno == ENOENT;
-
-    if (!S_ISDIR(st.st_mode))
-        return unlink(path) == 0;
-
-    DIR* dir = opendir(path);
-
-    if (!dir)
-        return false;
-
-    bool ok = true;
-    struct dirent* entry;
-
-    while ((entry = readdir(dir)) != NULL)
-    {
-        const char* name = entry->d_name;
-
-        if (strcmp(name, ".") && strcmp(name, ".."))
-        {
-            std::string item = std::string(path) + "/" + name;
-            ok = remove_directory_and_contents(item.c_str()) && ok;
-        }
-    }
-
-    closedir(dir);
-    return ok && (rmdir(path) == 0);
+    return remove_directory_and_contents_at(AT_FDCWD, path);
 #endif
 }
 #endif
