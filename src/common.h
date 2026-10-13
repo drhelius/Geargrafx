@@ -313,19 +313,6 @@ inline void append_path_component(std::string& path, const char* component)
     path += component;
 }
 
-inline bool create_directory_if_not_exists(const char* path)
-{
-#if defined(_WIN32)
-    int res = _mkdir(path);
-#else
-    int res = mkdir(path, 0755);
-#endif
-    if (res == 0 || errno == EEXIST)
-        return true;
-    else
-        return false;
-}
-
 #if defined(_WIN32)
 inline std::wstring utf8_to_wstring(const char* utf8_str)
 {
@@ -386,6 +373,19 @@ inline FILE* fopen_utf8(const char* path, const char* mode)
     return fopen(path, mode);
 }
 #endif
+
+inline bool create_directory_if_not_exists(const char* path)
+{
+#if defined(_WIN32)
+    int res = _wmkdir(utf8_to_wstring(path).c_str());
+#else
+    int res = mkdir(path, 0755);
+#endif
+    if (res == 0 || errno == EEXIST)
+        return true;
+    else
+        return false;
+}
 
 #if !defined(__LIBRETRO__)
 inline bool remove_directory_and_contents(const char* path)
