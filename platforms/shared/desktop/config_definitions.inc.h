@@ -291,9 +291,9 @@ static inline void process(config_Operation operation)
     CONFIG_INT_RANGE("Video", "ScaleManual", config_video.scale_manual, 1, 1, 20);
     CONFIG_INT("Video", "AspectRatio", config_video.ratio, 1);
     CONFIG_INT("Video", "Overscan", config_video.overscan, 0);
-    CONFIG_INT("Video", "ScanlineMode", config_video.scanline_mode, 0);
-    CONFIG_INT("Video", "ScanlineStart", config_video.scanline_start, 11);
-    CONFIG_INT("Video", "ScanlineEnd", config_video.scanline_end, 234);
+    CONFIG_INT("Video", "ScanlineMode", config_video.scanline_mode, 1);
+    CONFIG_INT("Video", "ScanlineStart", config_video.scanline_start, 2);
+    CONFIG_INT("Video", "ScanlineEnd", config_video.scanline_end, 241);
     CONFIG_INT_RANGE("Video", "LaserActiveAspectRatio", config_video.laseractive_ratio, 1, 0, 3);
     CONFIG_INT_RANGE("Video", "LaserActiveScanlineMode", config_video.laseractive_scanline_mode, 0, 0, 2);
     CONFIG_INT_RANGE("Video", "LaserActiveScanlineStart", config_video.laseractive_scanline_start, HUC6260_LASERACTIVE_SCANLINE_START, 0, HUC6260_LINES - 1);

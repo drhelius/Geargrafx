@@ -223,7 +223,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
             { "Manual", NULL },
             { NULL, NULL },
         },
-        "224p"
+        "240p"
     },
     {
         "geargrafx_scanline_start",
