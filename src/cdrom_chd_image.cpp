@@ -45,6 +45,8 @@ void CdRomChdImage::Reset()
 {
     CdRomImage::Reset();
 
+    DestroyHunkCache();
+
     m_hunk_bytes = 0;
     m_hunk_count = 0;
     m_sectors_per_hunk = 0;
@@ -52,8 +54,6 @@ void CdRomChdImage::Reset()
     chd_close(m_chd_file);
     InitPointer(m_chd_file);
     SafeDelete(m_file_adapter);
-
-    DestroyHunkCache();
 }
 
 bool CdRomChdImage::LoadFromFile(const char* path, bool preload)
