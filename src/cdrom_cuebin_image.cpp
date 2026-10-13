@@ -685,7 +685,7 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
     if (!IsValidPointer(img_file->file))
         return false;
 
-    char header[44];
+    char header[12];
 
     if (!img_file->file->Seek(0))
     {
@@ -693,7 +693,7 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
         return false;
     }
 
-    if (img_file->file->Read(header, 44) != 44)
+    if (img_file->file->Read(header, 12) != 12)
     {
         Error("Failed to read WAV header from %s", img_file->file_path);
         return false;
@@ -705,9 +705,20 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
         return false;
     }
 
-    u16 channels = read_u16_le((u8*)(header + 22));
-    u32 sample_rate = read_u32_le((u8*)(header + 24));
-    u16 bits_per_sample = read_u16_le((u8*)(header + 34));
+    u64 format_offset = 0;
+    u32 format_size = 0;
+    u8 format[16];
+
+    if (!FindWavChunk(*img_file->file, "fmt ", &format_offset, &format_size) || (format_size < 16) ||
+        (img_file->file->Read(format, 16) != 16))
+    {
+        Error("Failed to find 'fmt ' chunk in WAV file %s", img_file->file_path);
+        return false;
+    }
+
+    u16 channels = read_u16_le(format + 2);
+    u32 sample_rate = read_u32_le(format + 4);
+    u16 bits_per_sample = read_u16_le(format + 14);
 
     if (sample_rate != 44100 || bits_per_sample != 16 || channels != 2)
     {
@@ -722,53 +733,15 @@ bool CdRomCueBinImage::ProcessWavFormat(ImgFile* img_file)
 
 bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
 {
-    if (!file.Seek(12))
-    {
-        Error("Failed to seek to WAV chunks in %s", img_file->file_path);
-        return false;
-    }
-
-    uint32_t data_size = 0;
+    u32 data_size = 0;
     u64 data_offset = 0;
-    bool found_data = false;
-    s64 file_size = file.GetSize();
 
-    while (!found_data)
-    {
-        char chunk_id[4];
-        u8 chunk_size_bytes[4];
-
-        if ((file.Read(chunk_id, 4) != 4) || (file.Read(chunk_size_bytes, 4) != 4))
-            break;
-
-        u32 chunk_size = read_u32_le(chunk_size_bytes);
-
-        if (strncmp(chunk_id, "data", 4) == 0)
-        {
-            data_size = chunk_size;
-            s64 position = file.Tell();
-            if (position < 0)
-                return false;
-            data_offset = (u64)position;
-            found_data = true;
-            break;
-        }
-
-        s64 position = file.Tell();
-        s64 padded_size = (s64)chunk_size + (chunk_size & 1);
-        if ((position < 0) || (position > file_size) || (padded_size > file_size - position))
-            break;
-
-        if (!file.Seek(position + padded_size))
-            break;
-    }
-    
-    if (!found_data)
+    if (!FindWavChunk(file, "data", &data_offset, &data_size))
     {
         Error("Failed to find 'data' chunk in WAV file %s", img_file->file_path);
         return false;
     }
-    
+
     Debug("WAV data chunk found at offset %llu with size %u", (unsigned long long)data_offset, data_size);
 
     img_file->is_wav = true;
@@ -776,6 +749,41 @@ bool CdRomCueBinImage::FindWavDataChunk(ImgFile* img_file, MediaFile& file)
     img_file->file_size = data_size;
 
     return true;
+}
+
+bool CdRomCueBinImage::FindWavChunk(MediaFile& file, const char* id, u64* offset, u32* size)
+{
+    if (!file.Seek(12))
+        return false;
+
+    s64 file_size = file.GetSize();
+
+    while (true)
+    {
+        char chunk_id[4];
+        u8 chunk_size_bytes[4];
+
+        if ((file.Read(chunk_id, 4) != 4) || (file.Read(chunk_size_bytes, 4) != 4))
+            return false;
+
+        u32 chunk_size = read_u32_le(chunk_size_bytes);
+        s64 position = file.Tell();
+
+        if (position < 0)
+            return false;
+
+        if (strncmp(chunk_id, id, 4) == 0)
+        {
+            *offset = (u64)position;
+            *size = chunk_size;
+            return true;
+        }
+
+        s64 padded_size = (s64)chunk_size + (chunk_size & 1);
+
+        if ((position > file_size) || (padded_size > file_size - position) || !file.Seek(position + padded_size))
+            return false;
+    }
 }
 
 bool CdRomCueBinImage::SetupFileChunks(ImgFile* img_file)

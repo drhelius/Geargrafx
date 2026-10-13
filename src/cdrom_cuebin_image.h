@@ -136,6 +136,7 @@ private:
     bool ProcessOggFormat(ImgFile* img_file);
     bool ProcessWavFormat(ImgFile* img_file);
     bool FindWavDataChunk(ImgFile* img_file, MediaFile& file);
+    bool FindWavChunk(MediaFile& file, const char* id, u64* offset, u32* size);
     bool SetupFileChunks(ImgFile* img_file);
     u64 CalculateFileOffset(ImgFile* img_file, u64 chunk_index);
     u32 CalculateReadSize(ImgFile* img_file, u64 file_offset);
