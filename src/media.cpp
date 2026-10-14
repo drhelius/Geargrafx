@@ -178,6 +178,15 @@ bool Media::LoadMedia(const char* path, bool softpatching)
     Reset();
     GatherDataFromPath(path);
 
+    const char* dot = strrchr(m_file_name, '.');
+
+    if (!IsValidPointer(dot) || (dot[1] == 0))
+    {
+        Error("Media file has no extension: %s", path);
+        Reset();
+        return false;
+    }
+
     if (strcmp(m_file_extension, "zip") == 0)
     {
         m_ready = LoadMediaFromZipFile(path, softpatching);
