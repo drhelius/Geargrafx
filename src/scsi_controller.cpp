@@ -862,6 +862,8 @@ void ScsiController::LoadSector()
 
         m_bus_changed = true;
     }
+    else if (m_read_speed > 1 && !m_laseractive->IsActive())
+        m_next_load_cycles = 1;
     else
     {
         Debug("**** SCSI Load sector: buffer not empty *******************");
@@ -869,7 +871,7 @@ void ScsiController::LoadSector()
         TraceScsiEvent(TRACE_SCSI_SECTOR_RETRY, SCSI_CMD_READ, (u8)m_phase,
             (u8)m_load_sector_count, (m_load_sector << 11) | m_data_buffer_offset);
 
-        m_next_load_cycles = ReadCycles(TimeToCycles(290000));
+        m_next_load_cycles = TimeToCycles(290000);
     }
 }
 
