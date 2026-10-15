@@ -66,6 +66,7 @@ static const GuiColor& service_turbolink_color = cornflower;
 static const GuiColor& service_mcp_http_color = green;
 static const GuiColor& service_mcp_stdio_color = amber;
 static const GuiColor& video_recording_color = red;
+static const GuiColor& vgm_recording_color = red;
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 static bool open_physical_cdrom = false;
 #endif
@@ -91,6 +92,7 @@ static void draw_aspect_ratio_tooltip(void);
 static void draw_scanline_count_menu(const char* label, int* mode, int* start, int* end, bool enabled, bool apply);
 static void draw_background_color_menu(const char* label, int theme);
 static void draw_mcp_status(void);
+static void draw_recording_status(const char* status, ImVec4 color, float dot_radius, float dot_width);
 static void file_dialogs(void);
 static bool media_menu_actions_enabled(void);
 static const char* get_current_media_directory_text(void);
@@ -2588,14 +2590,16 @@ static void menu_turbolink(void)
 static void draw_mcp_status(void)
 {
     bool video_recording = emu_is_video_recording();
+    bool vgm_recording = emu_is_vgm_recording();
     bool mcp_running = emu_mcp_is_running();
     TurboLinkStatus turbolink = emu_turbolink_get_status();
     bool turbolink_active = turbolink.mode == TurboLinkModeConnected;
 
-    if (!video_recording && !mcp_running && !turbolink_active)
+    if (!video_recording && !vgm_recording && !mcp_running && !turbolink_active)
         return;
 
-    const char* video_recording_status = "RECORDING";
+    const char* video_recording_status = "REC VIDEO";
+    const char* vgm_recording_status = "REC VGM";
     char turbolink_status[64];
     char mcp_status[128];
     bool show_turbolink = false;
@@ -2636,6 +2640,12 @@ static void draw_mcp_status(void)
 
     if (video_recording)
         text_width += dot_width + ImGui::CalcTextSize(video_recording_status).x;
+    if (vgm_recording)
+    {
+        if (text_width > 0.0f)
+            text_width += spacing;
+        text_width += dot_width + ImGui::CalcTextSize(vgm_recording_status).x;
+    }
     if (show_turbolink)
     {
         if (text_width > 0.0f)
@@ -2659,19 +2669,19 @@ static void draw_mcp_status(void)
     ImGui::AlignTextToFramePadding();
 
     if (video_recording)
-    {
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + dot_width);
-        ImGui::TextColored(video_recording_color, "%s", video_recording_status);
+        draw_recording_status(video_recording_status, video_recording_color, dot_radius, dot_width);
 
-        ImVec2 text_min = ImGui::GetItemRectMin();
-        ImVec2 text_max = ImGui::GetItemRectMax();
-        ImVec2 dot_center = ImVec2(text_min.x - dot_width + dot_radius, (text_min.y + text_max.y) * 0.5f);
-        ImGui::GetWindowDrawList()->AddCircleFilled(dot_center, dot_radius, ImGui::GetColorU32(video_recording_color));
+    if (vgm_recording)
+    {
+        if (video_recording)
+            ImGui::SameLine(0.0f, spacing);
+
+        draw_recording_status(vgm_recording_status, vgm_recording_color, dot_radius, dot_width);
     }
 
     if (show_turbolink)
     {
-        if (video_recording)
+        if (video_recording || vgm_recording)
             ImGui::SameLine(0.0f, spacing);
 
         ImGui::TextColored(service_turbolink_color, "%s", turbolink_status);
@@ -2679,11 +2689,22 @@ static void draw_mcp_status(void)
 
     if (show_mcp)
     {
-        if (video_recording || show_turbolink)
+        if (video_recording || vgm_recording || show_turbolink)
             ImGui::SameLine(0.0f, spacing);
 
         ImGui::TextColored(mcp_color, "%s", mcp_status);
     }
+}
+
+static void draw_recording_status(const char* status, ImVec4 color, float dot_radius, float dot_width)
+{
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + dot_width);
+    ImGui::TextColored(color, "%s", status);
+
+    ImVec2 text_min = ImGui::GetItemRectMin();
+    ImVec2 text_max = ImGui::GetItemRectMax();
+    ImVec2 dot_center = ImVec2(text_min.x - dot_width + dot_radius, (text_min.y + text_max.y) * 0.5f);
+    ImGui::GetWindowDrawList()->AddCircleFilled(dot_center, dot_radius, ImGui::GetColorU32(color));
 }
 
 static void file_dialogs(void)
