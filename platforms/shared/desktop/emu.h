@@ -92,6 +92,7 @@ EXTERN void emu_audio_psg_volume(float volume);
 EXTERN void emu_audio_adpcm_volume(float volume);
 EXTERN void emu_audio_cdrom_volume(float volume);
 EXTERN void emu_audio_reset(void);
+EXTERN void emu_audio_restart(void);
 EXTERN bool emu_is_audio_open(void);
 EXTERN void emu_save_ram(const char* file_path);
 EXTERN void emu_load_ram(const char* file_path);
