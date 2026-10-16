@@ -29,6 +29,9 @@
     #define EXTERN extern
 #endif
 
+#define EMU_DEBUG_SPRITE_LAYER_WIDTH 1024
+#define EMU_DEBUG_SPRITE_LAYER_HEIGHT 512
+
 enum Debug_Command
 {
     Debug_Command_Continue,
@@ -55,6 +58,8 @@ EXTERN int emu_debug_background_buffer_width[2];
 EXTERN int emu_debug_background_buffer_height[2];
 EXTERN int emu_debug_sprite_widths[2][64];
 EXTERN int emu_debug_sprite_heights[2][64];
+EXTERN u8* emu_debug_sprite_layer_buffer[2];
+EXTERN bool emu_debug_sprite_layer_enabled[2];
 EXTERN int emu_debug_tiles_palette[2];
 EXTERN Debug_Command emu_debug_command;
 EXTERN bool emu_debug_pc_changed;

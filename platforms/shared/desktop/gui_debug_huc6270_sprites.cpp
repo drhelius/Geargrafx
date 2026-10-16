@@ -60,6 +60,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
     ImGui::Begin(title, show);
 
     static int selected_sprite[2] = {-1, -1};
+    static bool sprites_only[2] = { false, false };
 
     if (ImGui::IsWindowAppearing())
         selected_sprite[vdc - 1] = -1;
@@ -122,13 +123,54 @@ void gui_debug_window_huc6270_sprites(int vdc)
 
     ImGui::NextColumn();
 
+    ImGui::PopFont();
+    ImGui::Checkbox("Sprites Only##sprites_only", &sprites_only[vdc - 1]);
+    ImGui::PushFont(gui_default_font);
+
+    emu_debug_sprite_layer_enabled[vdc - 1] = sprites_only[vdc - 1];
+
     ImVec2 p_screen = ImGui::GetCursorScreenPos();
 
     float screen_scale = 1.0f;
     float tex_h = (float)runtime.screen_width / (float)(SYSTEM_TEXTURE_WIDTH);
     float tex_v = (float)runtime.screen_height / (float)(SYSTEM_TEXTURE_HEIGHT);
 
-    ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, ImVec2(runtime.screen_width * screen_scale, runtime.screen_height * screen_scale), ImVec2(0, 0), ImVec2(tex_h, tex_v));
+    int overscan_x_offset = 0;
+    if (config_debug.overscan)
+        overscan_x_offset = (runtime.screen_width == 560) ? 24 : ((runtime.screen_width == 373) ? 16 : 12);
+    int screen_width = runtime.screen_width - (overscan_x_offset * 2);
+
+    const float hds_scale = (screen_width == 512) ? 2.0f : 8.0f;
+    const int base_x_offset = (screen_width == 512) ? 64 : 32;
+    int per_res_x_offset = 0;
+    int hds = (int)((huc6270_state->R[HUC6270_REG_HSR] >> 8) & 0x7F);
+    int base_hds = 4;
+    int hds_delta = hds - base_hds;
+    if (screen_width != 256)
+        per_res_x_offset = (int)roundf(hds_delta * hds_scale);
+
+    int screen_offset_x = per_res_x_offset + overscan_x_offset - base_x_offset;
+    int screen_offset_y = -64 - config_debug.scanline_start;
+
+    ImVec2 screen_size = ImVec2(runtime.screen_width * screen_scale, runtime.screen_height * screen_scale);
+
+    if (sprites_only[vdc - 1])
+    {
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        ImVec2 screen_max = ImVec2(p_screen.x + screen_size.x, p_screen.y + screen_size.y);
+        float layer_x = p_screen.x + (screen_offset_x * screen_scale);
+        float layer_y = p_screen.y + ((screen_offset_y + 3) * screen_scale);
+        ImVec2 layer_max = ImVec2(layer_x + (EMU_DEBUG_SPRITE_LAYER_WIDTH * screen_scale), layer_y + (EMU_DEBUG_SPRITE_LAYER_HEIGHT * screen_scale));
+
+        draw_list->AddRectFilled(p_screen, screen_max, ImColor(black));
+        draw_list->PushClipRect(p_screen, screen_max, true);
+        draw_list->AddImage((ImTextureID)(intptr_t)ogl_renderer_emu_debug_huc6270_sprite_layer[vdc - 1], ImVec2(layer_x, layer_y), layer_max);
+        draw_list->PopClipRect();
+
+        ImGui::Dummy(screen_size);
+    }
+    else
+        ImGui::Image((ImTextureID)(intptr_t)ogl_renderer_emu_texture, screen_size, ImVec2(0, 0), ImVec2(tex_h, tex_v));
 
     int display_sprite = (hovered_sprite >= 0) ? hovered_sprite : selected_sprite[vdc - 1];
 
@@ -149,22 +191,8 @@ void gui_debug_window_huc6270_sprites(int vdc)
         int palette = sprite_flags & 0x0F;
         bool priority = (sprite_flags & 0x0080) != 0;
 
-        int overscan_x_offset = 0;
-        if (config_debug.overscan)
-            overscan_x_offset = (runtime.screen_width == 560) ? 24 : ((runtime.screen_width == 373) ? 16 : 12);
-        int screen_width = runtime.screen_width - (overscan_x_offset * 2);
-
-        const float hds_scale = (screen_width == 512) ? 2.0f : 8.0f;
-        const int base_x_offset = (screen_width == 512) ? 64 : 32;
-        int per_res_x_offset = 0;
-        int hds = (int)((huc6270_state->R[HUC6270_REG_HSR] >> 8) & 0x7F);
-        int base_hds = 4;
-        int hds_delta = hds - base_hds;
-        if (screen_width != 256)
-            per_res_x_offset = (int)roundf(hds_delta * hds_scale);
-
-        float real_x = (float)(sprite_x - base_x_offset + per_res_x_offset + overscan_x_offset);
-        float real_y = (float)(sprite_y - 64 - config_debug.scanline_start);
+        float real_x = (float)(sprite_x + screen_offset_x);
+        float real_y = (float)(sprite_y + screen_offset_y);
         float width_f = (float)width;
         float height_f = (float)height;
 

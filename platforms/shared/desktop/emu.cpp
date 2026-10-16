@@ -1254,6 +1254,10 @@ static void reset_buffers(void)
             emu_debug_sprite_heights[i][s] = 16;
         }
 
+    for (int i = 0; i < 2; i++)
+        for (int j = 0; j < EMU_DEBUG_SPRITE_LAYER_WIDTH * EMU_DEBUG_SPRITE_LAYER_HEIGHT * 4; j++)
+            emu_debug_sprite_layer_buffer[i][j] = 0;
+
     int tile_buf_size = 32 * 8 * 64 * 8 * 4;
     for (int i = 0; i < tile_buf_size; i++)
         emu_debug_tiles_buffer[0][i] = 0;
@@ -1297,6 +1301,14 @@ static void init_debug(void)
                 emu_debug_sprite_buffers[i][s][j] = 0;
         }
 
+    for (int i = 0; i < 2; i++)
+    {
+        emu_debug_sprite_layer_buffer[i] = new u8[EMU_DEBUG_SPRITE_LAYER_WIDTH * EMU_DEBUG_SPRITE_LAYER_HEIGHT * 4];
+        for (int j = 0; j < EMU_DEBUG_SPRITE_LAYER_WIDTH * EMU_DEBUG_SPRITE_LAYER_HEIGHT * 4; j++)
+            emu_debug_sprite_layer_buffer[i][j] = 0;
+        emu_debug_sprite_layer_enabled[i] = false;
+    }
+
     int tile_buf_size = 32 * 8 * 64 * 8 * 4;
     emu_debug_tiles_buffer[0] = new u8[tile_buf_size];
     for (int i = 0; i < tile_buf_size; i++)
@@ -1318,6 +1330,9 @@ static void destroy_debug(void)
     for (int i = 0; i < 2; i++)
         for (int s = 0; s < 64; s++)
             SafeDeleteArray(emu_debug_sprite_buffers[i][s]);
+
+    SafeDeleteArray(emu_debug_sprite_layer_buffer[0]);
+    SafeDeleteArray(emu_debug_sprite_layer_buffer[1]);
 
     SafeDeleteArray(emu_debug_tiles_buffer[0]);
     SafeDeleteArray(emu_debug_tiles_buffer[1]);
@@ -1409,10 +1424,17 @@ static void update_debug_sprites(void)
         u16* vram = huc6270->GetVRAM();
         u16* sat = huc6270->GetSAT();
         u16* color_table = huc6260->GetColorTable();
+        bool layer = emu_debug_sprite_layer_enabled[vdc];
+        u8* layer_buffer = emu_debug_sprite_layer_buffer[vdc];
 
-        for (int i = 0; i < 64; i++)
+        if (layer)
+            memset(layer_buffer, 0, EMU_DEBUG_SPRITE_LAYER_WIDTH * EMU_DEBUG_SPRITE_LAYER_HEIGHT * 4);
+
+        for (int i = 63; i >= 0; i--)
         {
             int sprite_offset = i << 2;
+            int sprite_x = sat[sprite_offset + 1] & 0x3FF;
+            int sprite_y = sat[sprite_offset] & 0x3FF;
             u16 flags = sat[sprite_offset + 3] & 0xB98F;
             bool x_flip = (flags & 0x0800);
             bool y_flip = (flags & 0x8000);
@@ -1466,6 +1488,20 @@ static void update_debug_sprites(void)
                         red = 255;
                         green = 0;
                         blue = 255;
+                    }
+                    else if (layer)
+                    {
+                        int layer_x = sprite_x + x;
+                        int layer_y = sprite_y + y;
+
+                        if ((layer_x < EMU_DEBUG_SPRITE_LAYER_WIDTH) && (layer_y < EMU_DEBUG_SPRITE_LAYER_HEIGHT))
+                        {
+                            int layer_index = ((layer_y * EMU_DEBUG_SPRITE_LAYER_WIDTH) + layer_x) << 2;
+                            layer_buffer[layer_index + 0] = red;
+                            layer_buffer[layer_index + 1] = green;
+                            layer_buffer[layer_index + 2] = blue;
+                            layer_buffer[layer_index + 3] = 255;
+                        }
                     }
 
                     int pixel_index = ((y * width) + x) << 2;
