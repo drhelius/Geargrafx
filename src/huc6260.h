@@ -92,6 +92,7 @@ public:
     u8* GetBuffer();
     int GetCurrentWidth();
     int GetCurrentHeight();
+    void GetScreenBounds(int* start_x, int* end_x, int* start_y, int* end_y);
     int GetWidthScale();
     float GetPixelAspectRatio();
     void SetScanlineStart(int scanline_start);

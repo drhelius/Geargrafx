@@ -239,11 +239,13 @@ void HuC6270::Reset()
     m_line_buffer_index = 0;
     m_sprite_count = 0;
     m_sprite_overflow = false;
+    m_line_scroll_frame = 0;
 
     memset(m_vram, 0, sizeof(m_vram));
     memset(m_sat, 0, sizeof(m_sat));
     memset(m_line_buffer, 0, sizeof(m_line_buffer));
     memset(m_line_buffer_sprites, 0, sizeof(m_line_buffer_sprites));
+    memset(m_line_scroll, 0, sizeof(m_line_scroll));
     memset(m_sprites, 0, sizeof(m_sprites));
 }
 
@@ -456,6 +458,7 @@ void HuC6270::EndOfLine()
     if (m_vpos == m_huc6260->GetTotalLines())
     {
         m_vpos = 0;
+        m_line_scroll_frame++;
         m_latched_cr = (m_latched_cr & ~0x00C0) | (HUC6270_VAR_CR & 0x00C0);
         m_burst_mode = ((HUC6270_VAR_CR & 0x00C0) == 0);
     }
@@ -782,6 +785,13 @@ void HuC6270::RenderBackground(int width)
     int bat_offset = (bg_y >> 3) * screen_size_x;
     int bg_x = m_latched_bxr & screen_size_x_mask;
     int i = 0;
+
+    HuC6270_Line_Scroll* line_scroll = &m_line_scroll[m_vpos - HUC6270_ACTIVE_DISPLAY_START];
+    line_scroll->frame = m_line_scroll_frame;
+    line_scroll->x = (u16)bg_x;
+    line_scroll->y = (u16)bg_y;
+    line_scroll->start = (u16)m_hpos;
+    line_scroll->width = (u16)width;
 
     while (i < width)
     {

@@ -104,6 +104,12 @@ INLINE u16* HuC6270::GetSAT()
     return m_sat;
 }
 
+INLINE HuC6270::HuC6270_Line_Scroll* HuC6270::GetLineScroll(u32* frame)
+{
+    *frame = m_line_scroll_frame;
+    return m_line_scroll;
+}
+
 INLINE void HuC6270::ProcessCpuVramAccesses(u32 cycles)
 {
     cycles += m_cpu_vram_cycles;

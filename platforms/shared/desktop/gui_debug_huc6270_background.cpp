@@ -32,6 +32,10 @@
 #include "utils.h"
 
 static void draw_context_menu_background(int vdc);
+static void draw_screen(HuC6270* huc6270, ImDrawList* draw_list, ImVec2 p, float scale, int width, int height);
+static void draw_screen_h_line(ImDrawList* draw_list, ImVec2 p, float scale, int x, int y, int length, int width, ImU32 color);
+static void draw_screen_v_line(ImDrawList* draw_list, ImVec2 p, float scale, int x, int y, int length, int height, ImU32 color);
+static int wrap_delta(int delta, int size);
 
 static const float k_scale_levels[3] = { 1.0f, 1.5f, 2.0f };
 
@@ -62,6 +66,7 @@ void gui_debug_window_huc6270_background(int vdc)
     int bat_size = screen_size_x * screen_size_y;
 
     static bool show_grid[2] = { true, true };
+    static bool show_screen[2] = { true, true };
     static int zoom[2] = { 1, 1 };
     ImVec4 grid_color = dark_gray;
     grid_color.w = 0.3f;
@@ -82,7 +87,11 @@ void gui_debug_window_huc6270_background(int vdc)
 
         ImGui::PushItemWidth(60.0f);
         ImGui::Combo("Zoom##zoom_bg", &zoom[vdc - 1], "1x\0""1.5x\0""2x\0\0");
-        ImGui::Checkbox("Show Grid##grid_bg", &show_grid[vdc - 1]);
+        ImGui::Checkbox("Grid##grid_bg", &show_grid[vdc - 1]);
+        ImGui::SameLine(0.0f, 20.0f);
+        ImGui::TextColored(gray, "|");
+        ImGui::SameLine(0.0f, 20.0f);
+        ImGui::Checkbox("Scroll##screen_bg", &show_screen[vdc - 1]);
 
         ImGui::TableNextColumn();
         ImGui::PushFont(gui_default_font);
@@ -141,6 +150,9 @@ void gui_debug_window_huc6270_background(int vdc)
                 y += spacing_v;
             }
         }
+
+        if (show_screen[vdc - 1])
+            draw_screen(huc6270, draw_list, p, scale, screen_size_x * 8, screen_size_y * 8);
 
         if (ImGui::IsItemHovered())
         {
@@ -220,4 +232,143 @@ static void draw_context_menu_background(int vdc)
 
         ImGui::EndPopup();
     }
+}
+
+static void draw_screen(HuC6270* huc6270, ImDrawList* draw_list, ImVec2 p, float scale, int width, int height)
+{
+    int screen_start_x, screen_end_x, screen_start_y, screen_end_y;
+    emu_get_core()->GetHuC6260()->GetScreenBounds(&screen_start_x, &screen_end_x, &screen_start_y, &screen_end_y);
+
+    u32 frame;
+    HuC6270::HuC6270_Line_Scroll* line_scroll = huc6270->GetLineScroll(&frame);
+    int vpos = *huc6270->GetState()->VPOS;
+    ImU32 color = ImColor(green);
+
+    bool in_run = false;
+    int run_x = 0;
+    int run_y = 0;
+    int run_w = 0;
+    int run_h = 0;
+
+    for (int i = 0; i <= HUC6270_LINES_ACTIVE; i++)
+    {
+        int line = i + HUC6270_ACTIVE_DISPLAY_START;
+        bool visible = false;
+        int x = 0;
+        int y = 0;
+        int w = 0;
+
+        if ((i < HUC6270_LINES_ACTIVE) && (line >= screen_start_y) && (line < screen_end_y))
+        {
+            HuC6270::HuC6270_Line_Scroll* ls = &line_scroll[i];
+
+            if ((ls->frame == frame) || (((ls->frame + 1) == frame) && (line >= vpos)))
+            {
+                int left = MAX(ls->start, screen_start_x);
+                int right = MIN(ls->start + ls->width, screen_end_x);
+
+                if (right > left)
+                {
+                    visible = true;
+                    x = (ls->x + left - ls->start) & (width - 1);
+                    y = ls->y & (height - 1);
+                    w = MIN(right - left, width);
+                }
+            }
+        }
+
+        if (in_run)
+        {
+            int bottom = run_y + run_h;
+            if (bottom > height)
+                bottom -= height;
+
+            bool adjacent = visible && (y == (bottom & (height - 1)));
+
+            if (adjacent && (x == run_x) && (w == run_w))
+            {
+                run_h++;
+                continue;
+            }
+
+            draw_screen_v_line(draw_list, p, scale, run_x, run_y, run_h, height, color);
+
+            if (run_w < width)
+            {
+                int right = run_x + run_w;
+                if (right > width)
+                    right -= width;
+                draw_screen_v_line(draw_list, p, scale, right, run_y, run_h, height, color);
+            }
+
+            int left_delta = wrap_delta(x - run_x, width);
+            int right_delta = wrap_delta((x + w) - (run_x + run_w), width);
+            int min_w = MIN(w, run_w);
+
+            if (adjacent && (abs(left_delta) < min_w) && (abs(right_delta) < min_w))
+            {
+                draw_screen_h_line(draw_list, p, scale, MIN(run_x, run_x + left_delta), (left_delta > 0) ? bottom : y, abs(left_delta), width, color);
+
+                if ((run_w < width) || (w < width))
+                    draw_screen_h_line(draw_list, p, scale, MIN(run_x + run_w, run_x + run_w + right_delta), (right_delta > 0) ? y : bottom, abs(right_delta), width, color);
+            }
+            else
+            {
+                draw_screen_h_line(draw_list, p, scale, run_x, bottom, run_w, width, color);
+
+                if (visible)
+                    draw_screen_h_line(draw_list, p, scale, x, y, w, width, color);
+            }
+        }
+        else if (visible)
+            draw_screen_h_line(draw_list, p, scale, x, y, w, width, color);
+
+        in_run = visible;
+        run_x = x;
+        run_y = y;
+        run_w = w;
+        run_h = 1;
+    }
+}
+
+static void draw_screen_h_line(ImDrawList* draw_list, ImVec2 p, float scale, int x, int y, int length, int width, ImU32 color)
+{
+    if (length <= 0)
+        return;
+
+    if (x < 0)
+        x += width;
+    else if (x >= width)
+        x -= width;
+
+    int end = x + length;
+    float line_y = p.y + (y * scale);
+
+    draw_list->AddLine(ImVec2(p.x + (x * scale), line_y), ImVec2(p.x + (MIN(end, width) * scale), line_y), color, 2.0f);
+
+    if (end > width)
+        draw_list->AddLine(ImVec2(p.x, line_y), ImVec2(p.x + ((end - width) * scale), line_y), color, 2.0f);
+}
+
+static void draw_screen_v_line(ImDrawList* draw_list, ImVec2 p, float scale, int x, int y, int length, int height, ImU32 color)
+{
+    int end = y + length;
+    float line_x = p.x + (x * scale);
+
+    draw_list->AddLine(ImVec2(line_x, p.y + (y * scale)), ImVec2(line_x, p.y + (MIN(end, height) * scale)), color, 2.0f);
+
+    if (end > height)
+        draw_list->AddLine(ImVec2(line_x, p.y), ImVec2(line_x, p.y + ((end - height) * scale)), color, 2.0f);
+}
+
+static int wrap_delta(int delta, int size)
+{
+    delta %= size;
+
+    if (delta < -(size / 2))
+        delta += size;
+    else if (delta >= (size / 2))
+        delta -= size;
+
+    return delta;
 }

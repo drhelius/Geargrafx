@@ -72,6 +72,15 @@ public:
         s32* H_STATE;
     };
 
+    struct HuC6270_Line_Scroll
+    {
+        u32 frame;
+        u16 x;
+        u16 y;
+        u16 start;
+        u16 width;
+    };
+
 public:
     HuC6270(HuC6280* huC6280);
     ~HuC6270();
@@ -86,6 +95,7 @@ public:
     HuC6270_State* GetState();
     u16* GetVRAM();
     u16* GetSAT();
+    HuC6270_Line_Scroll* GetLineScroll(u32* frame);
     void SetNoSpriteLimit(bool no_sprite_limit);
     void SetSafeDefaults(bool safe_defaults);
     void SetTraceLogger(TraceLogger* trace_logger);
@@ -164,6 +174,8 @@ private:
     u16 m_line_buffer[HUC6270_MAX_BACKGROUND_WIDTH] = {};
     u16 m_line_buffer_sprites[HUC6270_MAX_BACKGROUND_WIDTH] = {};
     s32 m_line_buffer_index;
+    HuC6270_Line_Scroll m_line_scroll[HUC6270_LINES_ACTIVE] = {};
+    u32 m_line_scroll_frame;
     bool m_no_sprite_limit;
     bool m_safe_defaults;
     s32 m_sprite_count;

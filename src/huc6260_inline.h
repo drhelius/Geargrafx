@@ -493,6 +493,14 @@ INLINE int HuC6260::GetCurrentHeight()
     return m_laseractive_scanline_end - m_laseractive_scanline_start + 1;
 }
 
+INLINE void HuC6260::GetScreenBounds(int* start_x, int* end_x, int* start_y, int* end_y)
+{
+    *start_x = m_screen_start_x;
+    *end_x = m_screen_end_x;
+    *start_y = m_screen_start_y;
+    *end_y = m_screen_end_y;
+}
+
 INLINE int HuC6260::GetWidthScale()
 {
     if (!m_laseractive->IsActive())
