@@ -2033,8 +2033,9 @@ static bool disk_get_image_path(unsigned index, char* path, size_t length)
         return false;
 
     const GG_MmiInfo* info = core->GetCDROMMedia()->GetMmiInfo();
+    size_t count = info ? info->media.size() : 1;
 
-    if (!info || (index >= info->media.size()) || strlen(retro_game_path) >= length)
+    if ((index >= count) || strlen(retro_game_path) >= length)
         return false;
 
     strncpy_fit(path, retro_game_path, length);
