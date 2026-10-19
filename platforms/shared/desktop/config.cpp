@@ -22,6 +22,10 @@
 #include <cmath>
 #include <iomanip>
 #include <string>
+#include <vector>
+#if !defined(_WIN32)
+#include <signal.h>
+#endif
 
 #define CONFIG_IMPORT
 #include "config.h"
@@ -64,6 +68,10 @@ static void on_config_read(int file_version);
 static void on_config_write(void);
 static char* get_portable_path(bool force_portable);
 static bool check_portable(const char* base_path);
+static void remove_stale_temp_folders(const char* temp_root_path);
+static SDL_EnumerationResult SDLCALL collect_directory_entry(void* userdata, const char* dirname, const char* fname);
+static bool is_process_running(unsigned long pid);
+static unsigned long get_process_id(void);
 static bool get_setting(const char* group, const char* key, std::string* value);
 static bool parse_int_string(const std::string& value, int* result);
 static bool parse_float_string(const std::string& value, float* result);
@@ -98,8 +106,16 @@ void config_init(bool force_portable)
 
     config_root_path = root_path;
 
-    strncpy_fit(config_temp_path, config_root_path, sizeof(config_temp_path));
-    strncat_fit(config_temp_path, "tmp/", sizeof(config_temp_path));
+    char temp_root_path[512];
+    strncpy_fit(temp_root_path, config_root_path, sizeof(temp_root_path));
+    strncat_fit(temp_root_path, "tmp/", sizeof(temp_root_path));
+    create_directory_if_not_exists(temp_root_path);
+    remove_stale_temp_folders(temp_root_path);
+
+    char process_folder[32];
+    snprintf(process_folder, sizeof(process_folder), "%lu/", get_process_id());
+    strncpy_fit(config_temp_path, temp_root_path, sizeof(config_temp_path));
+    strncat_fit(config_temp_path, process_folder, sizeof(config_temp_path));
     create_directory_if_not_exists(config_temp_path);
 
     strncpy_fit(config_emu_file_path, config_root_path, sizeof(config_emu_file_path));
@@ -115,6 +131,7 @@ void config_init(bool force_portable)
 
 void config_destroy(void)
 {
+    remove_directory_and_contents(config_temp_path);
     SafeDelete(config_ini_file);
     SDL_free((void*)config_root_path);
 }
@@ -467,6 +484,57 @@ static bool check_portable(const char* base_path)
     }
 
     return false;
+}
+
+static void remove_stale_temp_folders(const char* temp_root_path)
+{
+    std::vector<std::string> entries;
+    SDL_EnumerateDirectory(temp_root_path, collect_directory_entry, &entries);
+
+    for (size_t i = 0; i < entries.size(); i++)
+    {
+        const char* name = entries[i].c_str();
+        char* end = NULL;
+        unsigned long pid = strtoul(name, &end, 10);
+
+        if ((end != name) && (*end == '\0') && is_process_running(pid))
+            continue;
+
+        std::string path = std::string(temp_root_path) + entries[i];
+        remove_directory_and_contents(path.c_str());
+    }
+}
+
+static SDL_EnumerationResult SDLCALL collect_directory_entry(void* userdata, const char* dirname, const char* fname)
+{
+    UNUSED(dirname);
+    ((std::vector<std::string>*)userdata)->push_back(fname);
+    return SDL_ENUM_CONTINUE;
+}
+
+static bool is_process_running(unsigned long pid)
+{
+#if defined(_WIN32)
+    HANDLE process = OpenProcess(SYNCHRONIZE, FALSE, (DWORD)pid);
+
+    if (process == NULL)
+        return GetLastError() == ERROR_ACCESS_DENIED;
+
+    bool running = WaitForSingleObject(process, 0) == WAIT_TIMEOUT;
+    CloseHandle(process);
+    return running;
+#else
+    return (kill((pid_t)pid, 0) == 0) || (errno == EPERM);
+#endif
+}
+
+static unsigned long get_process_id(void)
+{
+#if defined(_WIN32)
+    return (unsigned long)GetCurrentProcessId();
+#else
+    return (unsigned long)getpid();
+#endif
 }
 
 static bool get_setting(const char* group, const char* key, std::string* value)

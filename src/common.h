@@ -411,6 +411,19 @@ inline bool create_directory_if_not_exists(const char* path)
         return false;
 }
 
+inline bool create_directory_tree_if_not_exists(const char* path)
+{
+    std::string directory(path);
+
+    for (size_t i = 1; i < directory.length(); i++)
+    {
+        if (directory[i] == '/' || directory[i] == '\\')
+            create_directory_if_not_exists(directory.substr(0, i).c_str());
+    }
+
+    return create_directory_if_not_exists(path);
+}
+
 #if !defined(__LIBRETRO__)
 #if !defined(_WIN32)
 inline bool remove_directory_and_contents_at(int parent_fd, const char* name)
@@ -529,7 +542,7 @@ inline bool extract_zip_to_folder(const char* zip_path, const char* out_folder)
 
     string out_dir(out_folder);
 
-    if (!create_directory_if_not_exists(out_dir.c_str()))
+    if (!create_directory_tree_if_not_exists(out_dir.c_str()))
     {
         Error("Failed to create directory %s", out_dir.c_str());
         mz_zip_reader_end(&zip_archive);
