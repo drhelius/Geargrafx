@@ -90,20 +90,31 @@ If the issue already has the correct labels and needs no comment or duplicate cl
 1. HuCard, SuperGrafx, CD-ROM², Super CD-ROM², Arcade CD-ROM², and LaserActive games are supported. A game on them that fails is `bug` or a setup problem, never `feature request`.
 2. Peripherals, mappers, or hardware not listed in `README.md`, such as modems or homebrew mappers, are `feature request`.
 3. A supported game that regressed, crashes, corrupts graphics/audio/input, fails backup RAM behavior, or diverges from hardware/reference emulator behavior is `bug`.
-4. Most CD-ROM problems come from the System Card. When the report does not name it, ask for the System Card file and its MD5 (System Card 3.0 is recommended), and for the CD-ROM type setting only if it may not be Auto. Prefer this question over asking for the version or frontend.
+4. Most CD-ROM problems come from the System Card. When the report does not name it, ask for the System Card file and its MD5 (System Card 3.0 is recommended), and for the CD-ROM type setting only if it may not be Auto. Ask it before the version or frontend.
 5. Input that misbehaves only in some games usually comes from the pad type. Avenue Pad 6 is not compatible with every game; with that pad selected, it is `not a bug`. If the report does not mention the pad type, ask for it.
 6. Antivirus warnings about the executable are `not a bug`.
 7. Bad dumps, patched ROM issues without clean-ROM evidence, invalid save files, or expected TurboGrafx-16 / PC Engine hardware behavior are `not a bug` when the evidence is clear.
 
 ### Phase 4: Missing Information
 
-Most reports can be investigated as written. Add `needs info` and post a clarification comment only when the issue cannot be investigated without the answer.
+Ask only for facts the maintainer would otherwise request in the first reply. Add `needs info` and post a clarification comment only when one of them is missing.
 
-1. Ask only when the report is empty or unclear, does not name the affected game when one is needed, or does not describe the symptom.
-2. Do not ask for the Geargrafx version, desktop vs RetroArch/libretro, host platform, ROM hash, or dump status by default. Ask for one of them only when the report suggests it changes the outcome, such as behavior that differs between frontends or platforms, or a likely bad dump.
-3. Never ask for a fact the report already provides in any wording. An operating system counts as the platform, an app or core name counts as the frontend, and imprecise values such as `latest` count as provided.
-4. Ask at most two questions, each for exactly one missing fact. Never request ROM/media uploads, complete logs or configurations, secrets, or sensitive paths.
-5. Add `needs info` alongside the primary label when the issue type is clear. Use it without a primary label only when the type cannot be determined.
+1. Ask only on `bug` reports or when the issue type cannot be determined. Never ask on `feature request`, `question`, `not a bug`, `wontfix`, or duplicate issues.
+2. If the report is empty or unclear, does not name the affected game when one is needed, or does not describe the symptom, ask for that first.
+3. For a bug in emulation or in a specific game, such as a crash, hang, black screen, failure to boot or load, or wrong graphics, audio, or input, ask for whichever of these facts the report does not provide, in this order:
+   - The Geargrafx version and whether it is the desktop app or the RetroArch/libretro core, as one bullet. Ask only for the part that is missing.
+   - The log, only for crashes, hangs, black screens, and failures to start, boot, or load: the output printed when the desktop app is started from a terminal, or the RetroArch log for the core. Mention only the one that matches the frontend when the report names it.
+4. When a Phase 3 check names a fact that matters more for this report, ask for it first.
+5. For bugs outside emulation, such as builds, packages, the GUI, the debugger, or MCP, ask only for the version and the host platform, and only when the report suggests they matter, such as a crash on launch that does not name the operating system.
+6. Ask only for the facts listed in this phase or named in Phase 3. Never ask for:
+   - A fact the report already provides in any wording. An operating system counts as the platform, an app or core name counts as the frontend, a RetroArch mention counts as libretro, and imprecise values such as `latest` count as the version.
+   - The host platform for emulation bugs, unless the report suggests the behavior differs between platforms.
+   - The ROM hash, dump status, region, or revision, unless the symptoms point at a bad dump.
+   - Reproduction steps when the report says where the problem happens, expected behavior, how a difference was measured, or settings that Phase 3 does not name.
+   - Screenshots, videos, ROM or media uploads, configuration files, secrets, or sensitive paths.
+   - Anything the maintainer can check alone, such as whether a game is supported or how it behaves on real hardware.
+7. Ask at most two bullets. If nothing from this phase or Phase 3 is missing, post no comment.
+8. Add `needs info` alongside the primary label when asking. Use it without a primary label only when the type cannot be determined.
 
 ### Phase 5: Duplicate Detection
 
