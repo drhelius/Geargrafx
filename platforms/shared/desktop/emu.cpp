@@ -197,7 +197,7 @@ void emu_load_media_async(const char* file_path)
     if (loading_state.load() != Loading_State_None)
         return;
 
-    gui_debug_trace_logger_reset();
+    gui_debug_trace_logger_reset("media_change");
     emu_debug_command = Debug_Command_None;
     reset_buffers();
 
@@ -226,7 +226,7 @@ void emu_load_physical_cdrom_async(const char* device_id)
         return;
     }
 
-    gui_debug_trace_logger_reset();
+    gui_debug_trace_logger_reset("media_change");
     Log("Queueing physical CD-ROM async load: %s", device_id);
     emu_debug_command = Debug_Command_None;
     reset_buffers();
@@ -498,7 +498,7 @@ static bool unload_physical_cdrom(char* device_id, size_t device_id_size)
     if (IsValidPointer(device_id) && (device_id_size > 0))
         strncpy_fit(device_id, geargrafx->GetMedia()->GetPhysicalCdRomDeviceId(), device_id_size);
 
-    gui_debug_trace_logger_reset();
+    gui_debug_trace_logger_reset("media_change");
 
     emu_debug_command = Debug_Command_None;
     reset_buffers();
@@ -574,7 +574,7 @@ void emu_save_persistent_data(void)
 
 void emu_reset(bool save_persistent_data)
 {
-    gui_debug_trace_logger_reset();
+    gui_debug_trace_logger_reset("reset");
     emu_debug_command = Debug_Command_None;
     emu_debug_step_frames_pending = 0;
     emu_debug_pc_changed = true;
@@ -690,7 +690,7 @@ void emu_load_ram(const char* file_path)
     if (!emu_is_empty())
     {
         save_ram();
-        gui_debug_trace_logger_reset();
+        gui_debug_trace_logger_reset("media_change");
         geargrafx->ResetMedia(false);
         geargrafx->LoadRam(file_path, true);
         rewind_reset();
