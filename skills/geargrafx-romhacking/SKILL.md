@@ -47,16 +47,13 @@ Alternatively, download from [GitHub Releases](https://github.com/drhelius/Gearg
 
 ### Connecting as MCP Server
 
-Configure your AI client to run Geargrafx as an MCP server via STDIO transport. Example for Claude Desktop (`~/Library/Application Support/Claude/claude_desktop_config.json`):
-```json
-{
-  "mcpServers": {
-    "geargrafx": {
-      "command": "/path/to/geargrafx",
-      "args": ["--mcp-stdio"]
-    }
-  }
-}
+Configure your AI client to run Geargrafx as an MCP server via STDIO transport. For Claude Code:
+```bash
+claude mcp add --transport stdio --scope user geargrafx -- /path/to/geargrafx --mcp-stdio
+```
+For Codex:
+```bash
+codex mcp add geargrafx -- /path/to/geargrafx --mcp-stdio
 ```
 Replace `/path/to/geargrafx` with the actual binary path from the install script. Add `--headless` before `--mcp-stdio` on headless machines.
 
