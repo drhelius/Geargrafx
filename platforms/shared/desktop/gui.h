@@ -131,6 +131,7 @@ EXTERN void gui_shortcut(gui_ShortCutEvent event);
 EXTERN bool gui_load_rom(const char* path, const char* symbol_path = NULL);
 EXTERN bool gui_is_rom_loading(void);
 EXTERN bool gui_finish_loading_rom(void);
+EXTERN void gui_load_state_after_media(int slot, const char* path);
 EXTERN void gui_load_physical_cdrom(const char* device_id);
 EXTERN void gui_load_bios(const char* path, bool syscard);
 EXTERN void gui_load_pac_bios(const char* path, GG_LaserActive_Region region);
