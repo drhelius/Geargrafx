@@ -180,4 +180,11 @@ struct GG_Disassembler_Record
     char auto_symbol[64];
 };
 
+struct GG_Cheat
+{
+    u32 address;
+    s16 compare;
+    u8 value;
+};
+
 #endif /* TYPES_H */

@@ -58,6 +58,7 @@ Memory::Memory(HuC6260* huc6260, HuC6202* huc6202, HuC6280* huc6280, Media* medi
     m_card_ram_size = 0;
     m_card_ram_start = 0;
     m_card_ram_end = 0;
+    m_ram_cheat_count = 0;
 }
 
 Memory::~Memory()
@@ -275,6 +276,25 @@ void Memory::UpdateLaserActiveSram()
         m_memory_map_write[i] = enabled;
         m_memory_map[i] = enabled ? &m_card_ram[(i - 0x68) * 0x2000] : m_unused_memory;
     }
+}
+
+bool Memory::CanAddRamCheats(int count)
+{
+    return (m_ram_cheat_count + count) <= GG_MAX_CHEATS;
+}
+
+void Memory::AddRamCheat(const GG_Cheat& cheat)
+{
+    if (m_ram_cheat_count >= GG_MAX_CHEATS)
+        return;
+
+    m_ram_cheats[m_ram_cheat_count] = cheat;
+    m_ram_cheat_count++;
+}
+
+void Memory::ClearRamCheats()
+{
+    m_ram_cheat_count = 0;
 }
 
 void Memory::SetResetValues(int mpr, int wram, int card_ram, int arcade_card)

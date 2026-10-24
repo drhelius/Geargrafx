@@ -83,6 +83,8 @@ Media::Media(CdRomMedia* cdrom_media)
     m_preload_cdrom = false;
     m_softpatch_applied = false;
     m_softpatch_path[0] = 0;
+    m_rom_cheat_count = 0;
+    m_rom_cheat_undo_count = 0;
 
     m_rom_map = new u8*[128];
     m_rom_bank_offset = new u32[128];
@@ -134,6 +136,8 @@ void Media::Reset()
     m_avenue_pad_3_button = GG_KEY_RUN;
     m_softpatch_applied = false;
     m_softpatch_path[0] = 0;
+    m_rom_cheat_count = 0;
+    m_rom_cheat_undo_count = 0;
 
     for (int i = 0; i < 128; i++)
     {
@@ -142,6 +146,71 @@ void Media::Reset()
     }
 
     m_cdrom_media->Reset();
+}
+
+bool Media::CanAddRomCheats(int count)
+{
+    return (m_rom_cheat_count + count) <= GG_MAX_CHEATS;
+}
+
+void Media::AddRomCheat(const GG_Cheat& cheat)
+{
+    if (m_rom_cheat_count >= GG_MAX_CHEATS)
+        return;
+
+    m_rom_cheats[m_rom_cheat_count] = cheat;
+    m_rom_cheat_count++;
+}
+
+void Media::ClearRomCheats()
+{
+    RestoreRomCheats();
+    m_rom_cheat_count = 0;
+}
+
+void Media::ApplyRomCheats()
+{
+    RestoreRomCheats();
+
+    if (!IsValidPointer(m_rom) || m_is_cdrom)
+        return;
+
+    for (int i = 0; i < m_rom_cheat_count; i++)
+    {
+        GG_Cheat* cheat = &m_rom_cheats[i];
+        u32 bank = cheat->address >> 13;
+
+        if (bank >= 128)
+            continue;
+
+        u32 offset = m_rom_bank_offset[bank] + (cheat->address & 0x1FFF);
+
+        if (offset >= (u32)m_rom_size)
+            continue;
+
+        if ((cheat->compare >= 0) && (m_rom[offset] != cheat->compare))
+            continue;
+
+        if (m_rom_cheat_undo_count >= GG_MAX_CHEATS)
+            break;
+
+        m_rom_cheat_undo[m_rom_cheat_undo_count].offset = offset;
+        m_rom_cheat_undo[m_rom_cheat_undo_count].value = m_rom[offset];
+        m_rom_cheat_undo_count++;
+
+        m_rom[offset] = cheat->value;
+    }
+}
+
+void Media::RestoreRomCheats()
+{
+    if (IsValidPointer(m_rom))
+    {
+        for (int i = m_rom_cheat_undo_count - 1; i >= 0; i--)
+            m_rom[m_rom_cheat_undo[i].offset] = m_rom_cheat_undo[i].value;
+    }
+
+    m_rom_cheat_undo_count = 0;
 }
 
 void Media::SetTempPath(const char* path)

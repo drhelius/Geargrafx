@@ -530,6 +530,11 @@ Storage changes while tracing is active cleanly stop and restart the logger. Rep
 - `get_rewind_status` - Get rewind buffer status (enabled, snapshots, capacity, buffered seconds)
 - `rewind_seek` - Seek to a specific rewind snapshot while paused
 
+### Cheats
+- `list_cheats` - List cheats with index, code, description, enabled, valid and active state
+- `add_cheat` - Add an enabled cheat: `AAAAAA:VV` or `AAAAAA?CC:VV` at a 21-bit physical address (e.g. `1F0DB1:09`), join codes with `+`
+- `remove_cheat` - Remove a cheat by index
+
 ### Controller Input
 - `controller_button` - Control a button on a controller (player 1-5). Use action 'press' to hold the button, 'release' to let it go, or 'press_and_release' to simulate a quick tap. Buttons: up, down, left, right, select, run, I, II, III, IV, V, VI. Loading a state or rewinding resyncs input to the host controllers, releasing held buttons; press them again afterwards
 - `controller_macro` - Run an ordered input macro. Top-level `player` defaults to 1, and each command may override it. Supported commands are `tap`, `press`, `release`, and `wait`; timing is explicit through `wait` frame counts

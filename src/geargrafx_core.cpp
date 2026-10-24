@@ -207,6 +207,8 @@ void GeargrafxCore::SelectPSGRevision()
 
 bool GeargrafxCore::LoadMedia(const char* file_path, bool softpatching)
 {
+    ClearCheats();
+
     if (m_media->LoadMedia(file_path, softpatching))
     {
         m_memory->ResetDisassemblerRecords();
@@ -220,6 +222,8 @@ bool GeargrafxCore::LoadMedia(const char* file_path, bool softpatching)
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
 bool GeargrafxCore::LoadPhysicalCdRom(const char* device_id)
 {
+    ClearCheats();
+
     if (m_media->LoadPhysicalCdRom(device_id))
     {
         m_memory->ResetDisassemblerRecords();
@@ -233,6 +237,8 @@ bool GeargrafxCore::LoadPhysicalCdRom(const char* device_id)
 
 bool GeargrafxCore::LoadHuCardFromBuffer(const u8* buffer, int size, const char* path)
 {
+    ClearCheats();
+
     if (m_media->LoadHuCardFromBuffer(buffer, size, path))
     {
         m_memory->ResetDisassemblerRecords();
@@ -318,6 +324,174 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
     runtime_info.fps = huc6260_get_frame_rate(m_huc6260->GetTotalLines());
 
     return m_media->IsReady();
+}
+
+bool GeargrafxCore::SetCheat(const char* cheat)
+{
+    if (!m_media->IsReady())
+        return false;
+
+    GG_Cheat cheats[GG_MAX_CHEATS];
+    int count = ParseCheat(cheat, cheats, GG_MAX_CHEATS);
+
+    if (count <= 0)
+        return false;
+
+    int ram_count = 0;
+    int rom_count = 0;
+
+    for (int i = 0; i < count; i++)
+    {
+        switch (m_memory->GetBankType((u8)(cheats[i].address >> 13)))
+        {
+            case Memory::MEMORY_BANK_TYPE_ROM:
+                rom_count++;
+                break;
+            case Memory::MEMORY_BANK_TYPE_CARD_RAM:
+            case Memory::MEMORY_BANK_TYPE_BACKUP_RAM:
+            case Memory::MEMORY_BANK_TYPE_WRAM:
+            case Memory::MEMORY_BANK_TYPE_CDROM_RAM:
+                ram_count++;
+                break;
+            default:
+                return false;
+        }
+    }
+
+    if (!m_memory->CanAddRamCheats(ram_count) || !m_media->CanAddRomCheats(rom_count))
+        return false;
+
+    for (int i = 0; i < count; i++)
+    {
+        if (m_memory->GetBankType((u8)(cheats[i].address >> 13)) == Memory::MEMORY_BANK_TYPE_ROM)
+            m_media->AddRomCheat(cheats[i]);
+        else
+            m_memory->AddRamCheat(cheats[i]);
+    }
+
+    if (rom_count > 0)
+        m_media->ApplyRomCheats();
+
+    return true;
+}
+
+void GeargrafxCore::ClearCheats()
+{
+    m_media->ClearRomCheats();
+    m_memory->ClearRamCheats();
+}
+
+bool GeargrafxCore::IsValidCheat(const char* cheat)
+{
+    GG_Cheat cheats[GG_MAX_CHEATS];
+    return ParseCheat(cheat, cheats, GG_MAX_CHEATS) > 0;
+}
+
+int GeargrafxCore::ParseCheat(const char* cheat, GG_Cheat* cheats, int max_cheats)
+{
+    if (!IsValidPointer(cheat))
+        return 0;
+
+    int count = 0;
+    const char* p = cheat;
+
+    while (*p != 0)
+    {
+        while (IsCheatSeparator(*p))
+            p++;
+
+        if (*p == 0)
+            break;
+
+        const char* code = p;
+
+        while ((*p != 0) && !IsCheatSeparator(*p))
+            p++;
+
+        int parsed = ParseCheatCode(code, (int)(p - code), cheats + count, max_cheats - count);
+
+        if (parsed <= 0)
+            return 0;
+
+        count += parsed;
+    }
+
+    return count;
+}
+
+int GeargrafxCore::ParseCheatCode(const char* code, int length, GG_Cheat* cheats, int max_cheats)
+{
+    u32 address = 0;
+    u8 compare = 0;
+    bool has_compare = false;
+    int pos = 6;
+
+    if ((length < 8) || !parse_hex_string(code, 6, &address))
+        return 0;
+
+    if (code[pos] == '?')
+    {
+        if ((length < 11) || !parse_hex_string(code + 7, 2, &compare))
+            return 0;
+
+        has_compare = true;
+        pos = 9;
+    }
+
+    if (code[pos] != ':')
+        return 0;
+
+    pos++;
+
+    const char* value_str = code + pos;
+    int digits = length - pos;
+    u16 value = 0;
+
+    if (digits == 3)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            if ((value_str[i] < '0') || (value_str[i] > '9'))
+                return 0;
+
+            value = (value * 10) + (value_str[i] - '0');
+        }
+
+        if (value > 0xFF)
+            return 0;
+    }
+    else if (((digits < 1) || (digits > 4)) || !parse_hex_string(value_str, digits, &value))
+        return 0;
+
+    if (address > 0x1FFFFF)
+        address = ((address >> 16) << 13) | (address & 0x1FFF);
+
+    if (digits == 4)
+    {
+        if (has_compare || (max_cheats < 2))
+            return 0;
+
+        cheats[0].address = address;
+        cheats[0].compare = -1;
+        cheats[0].value = value & 0xFF;
+        cheats[1].address = (address + 1) & 0x1FFFFF;
+        cheats[1].compare = -1;
+        cheats[1].value = value >> 8;
+        return 2;
+    }
+
+    if (max_cheats < 1)
+        return 0;
+
+    cheats[0].address = address;
+    cheats[0].compare = has_compare ? compare : -1;
+    cheats[0].value = value & 0xFF;
+    return 1;
+}
+
+bool GeargrafxCore::IsCheatSeparator(char c)
+{
+    return (c == '+') || (c == ',') || (c == ';') || (c == ' ') || (c == '\t') || (c == '\r') || (c == '\n');
 }
 
 TraceLogger* GeargrafxCore::GetTraceLogger()
@@ -807,7 +981,9 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
     Debug("Save state header rom crc: 0x%08x", header.rom_crc);
     Debug("Save state header emu build: %s", header.emu_build);
 
-    if (screenshot)
+    u8* frame_buffer = m_huc6260->GetBuffer();
+
+    if (screenshot && IsValidPointer(frame_buffer))
     {
         header.screenshot_width = m_huc6260->GetCurrentWidth();
         header.screenshot_height = m_huc6260->GetCurrentHeight();
@@ -816,8 +992,6 @@ bool GeargrafxCore::SaveState(std::ostream& stream, size_t& size, bool screensho
         int bytes_per_pixel = 2;
         if (m_huc6260->GetPixelFormat() == GG_PIXEL_RGBA8888)
             bytes_per_pixel = 4;
-
-        u8* frame_buffer = m_huc6260->GetBuffer();
 
         header.screenshot_size = header.screenshot_width * header.screenshot_height * bytes_per_pixel;
         stream.write(reinterpret_cast<const char*>(frame_buffer), header.screenshot_size);
@@ -1236,6 +1410,8 @@ bool GeargrafxCore::GetSaveStateScreenshot(int index, const char* path, GG_SaveS
 
 void GeargrafxCore::Reset()
 {
+    m_media->RestoreRomCheats();
+
     m_master_clock_cycles = 0;
 
     if (IsValidPointer(m_profiler))
@@ -1275,6 +1451,8 @@ void GeargrafxCore::Reset()
     m_input->Reset();
 
     EnableMB128(m_mb128_mode);
+
+    m_media->ApplyRomCheats();
 }
 
 void GeargrafxCore::EnableMB128(GG_MB128_Mode mode)

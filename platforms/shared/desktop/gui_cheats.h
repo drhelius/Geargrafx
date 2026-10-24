@@ -1,0 +1,52 @@
+/*
+ * Geargrafx - PC Engine / TurboGrafx Emulator
+ * Copyright (C) 2024  Ignacio Sanchez
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses/
+ *
+ */
+
+#ifndef GUI_CHEATS_H
+#define GUI_CHEATS_H
+
+#ifdef GUI_CHEATS_IMPORT
+    #define EXTERN
+#else
+    #define EXTERN extern
+#endif
+
+#define GUI_CHEATS_MAX 50
+
+struct gui_CheatEntry
+{
+    bool enabled;
+    bool valid;
+    bool active;
+    char code[128];
+    char description[128];
+};
+
+EXTERN void gui_cheats_init(void);
+EXTERN void gui_cheats_show(void);
+EXTERN void gui_cheats_window(void);
+EXTERN void gui_cheats_clear(void);
+EXTERN int gui_cheats_add(const char* code, const char* description);
+EXTERN bool gui_cheats_remove(int index);
+EXTERN int gui_cheats_get_count(void);
+EXTERN const gui_CheatEntry* gui_cheats_get(int index);
+EXTERN bool gui_cheats_import(const char* path, int* imported, int* skipped);
+
+#undef GUI_CHEATS_IMPORT
+#undef EXTERN
+#endif /* GUI_CHEATS_H */

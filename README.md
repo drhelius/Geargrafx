@@ -105,6 +105,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 - Save states with preview and rewind support.
 - Run-ahead support to reduce input latency.
 - Backup RAM and Memory Base 128 support.
+- Cheat support for `AAAAAA:VV` codes, with RetroArch `.cht` import.
 - TurboLink multiplayer for two emulator instances on the same machine.
 - Multi Tap (up to 5 players).
 - Standard Gamepad (2 buttons), Avenue Pad 3 (3 buttons, auto-configured based on game), Avenue Pad 6 (6 buttons) and Mouse.
@@ -133,6 +134,7 @@ Don't hesitate to report bugs or ask for new features by [opening an issue](http
 - **LaserActive Images**: Geargrafx supports NEC LD-ROM² `.mmi` images. A Japanese PAC-N1/PCE-LP1 or US PAC-N10 BIOS is required. Change disc sides through **Geargrafx → MMI Media** or libretro disk controls. Desktop rewind and run-ahead are disabled for LaserActive.
 - **Mouse Cursor**: Automatically hides when hovering over the main output window or when Main Menu is disabled.
 - **Portable Mode**: Run with `--portable`, or create an empty file named `portable.ini` in the same directory as the application binary. On macOS, place the file next to the `.app` bundle.
+- **Cheats**: Open **Emulator → Cheats...** to enter codes or import a RetroArch `.cht` file. Codes use the `AAAAAA:VV` format with a physical address, for example `1F0DB1:09` writes `$09` to work RAM `$0DB1`. Join several codes with `+`.
 
 ### Debugging Features
 - **Docking Windows**: In debug mode, you can dock windows together by pressing SHIFT and dragging a window onto another.

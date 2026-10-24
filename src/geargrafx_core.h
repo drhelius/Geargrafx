@@ -99,6 +99,9 @@ public:
     bool GetSaveStateHeader(int index, const char* path, GG_SaveState_Header* header);
     bool GetSaveStateScreenshot(int index, const char* path, GG_SaveState_Screenshot* screenshot);
     bool GetRuntimeInfo(GG_Runtime_Info& runtime_info);
+    bool SetCheat(const char* cheat);
+    void ClearCheats();
+    static bool IsValidCheat(const char* cheat);
     Memory* GetMemory();
     Media* GetMedia();
     HuC6202* GetHuC6202();
@@ -139,6 +142,9 @@ private:
     bool LoadState(std::istream& stream);
     bool LoadStateTail(std::istream& stream, u32 version, bool has_mb128_flag, size_t end);
     std::string GetSaveStatePath(const char* path, int index);
+    static int ParseCheat(const char* cheat, GG_Cheat* cheats, int max_cheats);
+    static int ParseCheatCode(const char* code, int length, GG_Cheat* cheats, int max_cheats);
+    static bool IsCheatSeparator(char c);
 
 private:
     Memory* m_memory;

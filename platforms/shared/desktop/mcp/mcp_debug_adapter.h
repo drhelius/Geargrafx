@@ -192,6 +192,11 @@ public:
     json GetRewindStatus();
     json RewindSeek(int snapshot);
 
+    // Cheats
+    json ListCheats();
+    json AddCheat(const std::string& code, const std::string& description);
+    json RemoveCheat(int index);
+
 private:
     GeargrafxCore* m_core;
 

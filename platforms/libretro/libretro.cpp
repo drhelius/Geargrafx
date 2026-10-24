@@ -24,6 +24,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <string>
+#include <vector>
 #include "libretro.h"
 #include "geargrafx.h"
 #include "media_file.h"
@@ -134,6 +136,7 @@ static GeargrafxCore* core;
 static GG_Runtime_Info runtime_info;
 static u8* frame_buffer;
 static const retro_vfs_interface* vfs_interface = NULL;
+static std::vector<std::string> libretro_cheats;
 
 static void load_bios(void);
 static bool load_pac_bios_file(const char* path, GG_LaserActive_Region region);
@@ -148,6 +151,8 @@ static void apply_controller_device(unsigned port, unsigned device, bool log_dev
 static void release_controller_input(unsigned port);
 static void poll_input(void);
 static void apply_input(void);
+static void apply_cheats(void);
+static void clear_cheats(void);
 static bool categories_supported = false;
 static bool adpcm_clock_speed_visible = true;
 static bool update_core_options_display(void);
@@ -606,6 +611,7 @@ void retro_unload_game(void)
     save_mb128();
     initial_mmi_image_index = 0;
     initial_mmi_image_path[0] = 0;
+    clear_cheats();
     if (core && core->GetCDROMMedia()->IsMmi())
         core->GetMedia()->Reset();
     audio_sample_count = 0;
@@ -671,14 +677,48 @@ size_t retro_get_memory_size(unsigned id)
     return 0;
 }
 
+static void apply_cheats(void)
+{
+    if (!core)
+        return;
+
+    core->ClearCheats();
+
+    for (size_t i = 0; i < libretro_cheats.size(); i++)
+    {
+        if (!libretro_cheats[i].empty() && !core->SetCheat(libretro_cheats[i].c_str()))
+            log_cb(RETRO_LOG_WARN, "Invalid cheat code: %s\n", libretro_cheats[i].c_str());
+    }
+}
+
+static void clear_cheats(void)
+{
+    libretro_cheats.clear();
+
+    if (core)
+        core->ClearCheats();
+}
+
 void retro_cheat_reset(void)
 {
-    // TODO [libretro] Implement cheats
+    clear_cheats();
 }
 
 void retro_cheat_set(unsigned index, bool enabled, const char *code)
 {
-    // TODO [libretro] Implement cheats
+    if (enabled)
+    {
+        if (index >= libretro_cheats.size())
+            libretro_cheats.resize(index + 1);
+
+        libretro_cheats[index] = code ? code : "";
+    }
+    else if (index < libretro_cheats.size())
+    {
+        libretro_cheats[index].clear();
+    }
+
+    apply_cheats();
 }
 
 static bool load_bios_file(const char* path, bool syscard)

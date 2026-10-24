@@ -39,6 +39,7 @@
 #include "gui_notifications.h"
 #include "gui_colors.h"
 #include "gui_hes.h"
+#include "gui_cheats.h"
 #include "gui_debug.h"
 #include "gui_debug_memory.h"
 #include "gui_debug_disassembler.h"
@@ -121,6 +122,7 @@ bool gui_init(void)
     load_custom_palette_from_settings();
 
     gui_hes_init();
+    gui_cheats_init();
     gui_debug_init();
     gui_init_menus();
 
@@ -232,6 +234,8 @@ void gui_render(void)
         main_window();
 
     gui_debug_windows();
+
+    gui_cheats_window();
 
     if (config_emulator.show_info)
         gui_show_info();
@@ -926,6 +930,8 @@ static bool finish_loading_rom(void)
         gui_action_reset();
         return false;
     }
+
+    gui_cheats_clear();
 
     gui_debug_reset();
 

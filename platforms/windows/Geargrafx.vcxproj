@@ -133,6 +133,7 @@
     <ClCompile Include="..\shared\desktop\gui_debug.cpp" />
     <ClCompile Include="..\shared\desktop\gui_filedialogs.cpp" />
     <ClCompile Include="..\shared\desktop\gui_hes.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_cheats.cpp" />
     <ClCompile Include="..\shared\desktop\gui_menus.cpp" />
     <ClCompile Include="..\shared\desktop\gui_popups.cpp" />
     <ClCompile Include="..\shared\desktop\gui.cpp" />
@@ -315,6 +316,7 @@
     <ClInclude Include="..\shared\desktop\gui_debug.h" />
     <ClInclude Include="..\shared\desktop\gui_filedialogs.h" />
     <ClInclude Include="..\shared\desktop\gui_hes.h" />
+    <ClInclude Include="..\shared\desktop\gui_cheats.h" />
     <ClInclude Include="..\shared\desktop\gui_menus.h" />
     <ClInclude Include="..\shared\desktop\gui_popups.h" />
     <ClInclude Include="..\..\src\ips_patch.h" />

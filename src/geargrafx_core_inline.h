@@ -81,6 +81,7 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
 
         m_huc6260->SetBuffer(render ? frame_buffer : NULL);
         bool stop = false;
+        bool frame_ready = false;
 
         do
         {
@@ -92,6 +93,9 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             stop = m_frame_ready;
             if (ClockHardware<is_cdrom, is_sgx, is_laseractive>(m_huc6280->OverclockCycles(remaining_cycles)))
                 stop = true;
+
+            if (stop)
+                frame_ready = true;
 
             if (debug_enable)
             {
@@ -112,6 +116,9 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
             }
         }
         while (!stop);
+
+        if (frame_ready)
+            m_memory->ApplyRamCheats();
 
         m_audio->EndFrame(sample_buffer, sample_count);
         m_input->EndFrame();
@@ -136,6 +143,8 @@ bool GeargrafxCore::RunToVBlankTemplate(u8* frame_buffer, s16* sample_buffer, in
                 stop = true;
         }
         while (!stop);
+
+        m_memory->ApplyRamCheats();
 
         m_audio->EndFrame(sample_buffer, sample_count);
         m_input->EndFrame();

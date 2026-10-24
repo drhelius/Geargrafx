@@ -21,6 +21,7 @@
 #include "gui_menus.h"
 #include "gui.h"
 #include "gui_filedialogs.h"
+#include "gui_cheats.h"
 #include "gui_popups.h"
 #include "gui_actions.h"
 #include "gui_notifications.h"
@@ -965,6 +966,11 @@ static void menu_emulator(void)
         }
 
         ImGui::TextColored(gray, "Status: %s", emu_get_core()->GetInput()->GetMB128()->IsConnected() ? "CONNECTED" : "DISCONNECTED");
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Cheats...", "", false, !emu_is_empty()))
+            gui_cheats_show();
 
         ImGui::Separator();
 

@@ -262,6 +262,25 @@ INLINE bool Memory::TryPoke(u16 address, u8 bank, u8 value)
     return true;
 }
 
+INLINE void Memory::ApplyRamCheats()
+{
+    for (int i = 0; i < m_ram_cheat_count; i++)
+    {
+        GG_Cheat* cheat = &m_ram_cheats[i];
+        u8 bank = (u8)(cheat->address >> 13);
+        u16 offset = cheat->address & 0x1FFF;
+
+        if (cheat->compare >= 0)
+        {
+            u8 current = 0;
+            if (!TryPeek(offset, bank, &current) || (current != cheat->compare))
+                continue;
+        }
+
+        TryPoke(offset, bank, cheat->value);
+    }
+}
+
 INLINE void Memory::Write(u16 address, u8 value, bool block_transfer)
 {
 #if defined(GG_TESTING)

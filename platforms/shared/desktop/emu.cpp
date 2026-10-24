@@ -781,6 +781,22 @@ void update_savestates_data(void)
 }
 
 
+bool emu_add_cheat(const char* cheat)
+{
+    if (emu_is_media_loading())
+        return false;
+
+    return geargrafx->SetCheat(cheat);
+}
+
+void emu_clear_cheats(void)
+{
+    if (emu_is_media_loading())
+        return;
+
+    geargrafx->ClearCheats();
+}
+
 void emu_get_runtime(GG_Runtime_Info& runtime)
 {
     geargrafx->GetRuntimeInfo(runtime);

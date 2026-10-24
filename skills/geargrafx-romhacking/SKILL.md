@@ -213,9 +213,23 @@ Reference the VDC hardware docs ([references/huc6270_vdc.md](references/huc6270_
 2. Set a write breakpoint: set_breakpoint (type: write) on the address
 3. debug_continue → when it hits, get_disassembly to see the decrement code
 4. Note the instruction (e.g., DEC $0042 or STA $0042)
-5. Option A: Periodically write_memory to reset the value (simple poke cheat)
-6. Option B: Identify the decrement routine for a NOP patch
+5. Option A: add_cheat with a RAM code, rewritten every frame (e.g. 1F0042:09)
+6. Option B: Identify the decrement routine and add_cheat with a ROM code that NOPs it (HuCard only)
 ```
+
+### Cheat Codes
+
+Cheats use the de facto PC Engine format `AAAAAA:VV`:
+
+- `AAAAAA` is a 21-bit physical address: `bank << 13 | (address & 0x1FFF)`. The offset in the `PHYSICAL` memory area is the cheat address.
+- Work RAM (bank `$F8`): `1F` + 4-digit offset, e.g. WRAM `$0042` (zero page) → `1F0042`. On SuperGrafx, work RAM extends to `1F7FFF`.
+- CD RAM (banks `$80-$87`): `100000-10FFFF`. Super CD RAM (banks `$68-$7F`): `0D0000-0FFFFF`. Backup RAM (bank `$F7`): `1EE000-1EE7FF`.
+- HuCard ROM (banks `$00-$7F`): bank from the MPR mapping the CPU address (`get_huc6280_status`) or the disassembly bank. ROM codes patch the ROM; System Card BIOS banks on CD games are rejected.
+- Codes with a bank byte + CPU address (e.g. `F82042`) are also accepted.
+- `VV`: 1-2 hex digits, 3 decimal digits (`231`), or 4 hex digits for a 16-bit little-endian value (`03E7` writes `E7` then `03`).
+- `AAAAAA?CC:VV` writes only when the current byte is `CC`. Join several codes with `+`.
+
+Use `add_cheat`, `remove_cheat` and `list_cheats` to apply and test cheats; they appear in the emulator's Cheats window. Check `active` in the result: a valid code that targets unmapped or BIOS memory is not applied.
 
 ### Watching Values in Real-Time
 
@@ -306,3 +320,5 @@ Use `list_memory_bookmarks`, `list_memory_watches`, `list_symbols`, `list_disass
 ## Persisting Changes
 
 Changes made via `write_memory` to ROM areas are applied to the emulator's in-memory copy only — they are **not** persisted to the ROM file on disk. To create a permanent patch, use command-line tools (e.g., a binary patch script) to apply the discovered modifications to the actual ROM file.
+
+Cheats added with `add_cheat` are not saved either: they are cleared when another ROM is loaded. Give the user the final `AAAAAA:VV` codes so they can enter them in the Cheats window or a RetroArch `.cht` file.

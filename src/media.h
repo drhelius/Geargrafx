@@ -90,6 +90,11 @@ public:
     u8* GetROM();
     u8** GetROMMap();
     u32* GetROMBankOffset();
+    bool CanAddRomCheats(int count);
+    void AddRomCheat(const GG_Cheat& cheat);
+    void ClearRomCheats();
+    void ApplyRomCheats();
+    void RestoreRomCheats();
     bool LoadMedia(const char* path, bool softpatching = false);
     bool LoadHuCardFromBuffer(const u8* buffer, int size, const char* path);
     bool LoadCueFromFile(const char* path);
@@ -123,6 +128,13 @@ private:
     void GatherDataFromPath(const char* path);
     void InitRomMAP();
     bool IsValidFile(const char* path);
+
+private:
+    struct RomCheatUndo
+    {
+        u32 offset;
+        u8 value;
+    };
 
 private:
     CdRomMedia* m_cdrom_media;
@@ -183,6 +195,10 @@ private:
     u8 m_gameexpress_bios[GG_BIOS_GAME_EXPRESS_SIZE] = {};
     u8 m_pac_bios_japan[GG_BIOS_LASERACTIVE_SIZE] = {};
     u8 m_pac_bios_us[GG_BIOS_LASERACTIVE_SIZE] = {};
+    GG_Cheat m_rom_cheats[GG_MAX_CHEATS];
+    int m_rom_cheat_count;
+    RomCheatUndo m_rom_cheat_undo[GG_MAX_CHEATS];
+    int m_rom_cheat_undo_count;
 };
 
 #include "media_inline.h"
