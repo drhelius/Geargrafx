@@ -263,12 +263,22 @@ static inline void process(config_Operation operation)
     CONFIG_INT("Emulator", "MB128DirOption", config_emulator.mb128_dir_option, 0);
     CONFIG_STRING_NOT_EMPTY("Emulator", "MB128Path", config_emulator.mb128_path, config_root_path);
     CONFIG_INT("Emulator", "MB128Mode", config_emulator.mb128_mode, 0);
-    CONFIG_STRING("Emulator", "LastOpenPath", config_emulator.last_open_path, "");
     CONFIG_STRING("Emulator", "SysCardBiosPath", config_emulator.syscard_bios_path, "");
     CONFIG_STRING("Emulator", "GameExpressBiosPath", config_emulator.gameexpress_bios_path, "");
     CONFIG_STRING("Emulator", "PacJapanBiosPath", config_emulator.pac_japan_bios_path, "");
     CONFIG_STRING("Emulator", "PacUsBiosPath", config_emulator.pac_us_bios_path, "");
     CONFIG_STRING_ARRAY("Emulator", "RecentROM%d", config_emulator.recent_roms, config_max_recent_roms, "");
+
+    // File dialogs
+    CONFIG_STRING("FileDialogs", "ROM", config_file_dialogs.rom, "");
+    CONFIG_STRING("FileDialogs", "RAM", config_file_dialogs.ram, "");
+    CONFIG_STRING("FileDialogs", "States", config_file_dialogs.states, "");
+    CONFIG_STRING("FileDialogs", "Screenshots", config_file_dialogs.screenshots, "");
+    CONFIG_STRING("FileDialogs", "Recordings", config_file_dialogs.recordings, "");
+    CONFIG_STRING("FileDialogs", "Debug", config_file_dialogs.debug, "");
+    CONFIG_STRING("FileDialogs", "BIOS", config_file_dialogs.bios, "");
+    CONFIG_STRING("FileDialogs", "Palettes", config_file_dialogs.palettes, "");
+    CONFIG_STRING("FileDialogs", "Cheats", config_file_dialogs.cheats, "");
 
     // Services
     CONFIG_INT("Emulator", "MCPTCPPort", config_emulator.mcp_tcp_port, 7777);
@@ -740,6 +750,14 @@ static void migrate(int file_version)
             write_int("Video", "Palette", 2);
         else if (palette == 2)
             write_int("Video", "Palette", 3);
+    }
+
+    if (file_version < 10)
+    {
+        if (get_setting("Emulator", "LastOpenPath", &stored))
+            write_string("FileDialogs", "ROM", stored);
+
+        config_ini_data["Emulator"].remove("LastOpenPath");
     }
 }
 

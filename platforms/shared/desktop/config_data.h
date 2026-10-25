@@ -24,7 +24,7 @@
 #include <string>
 #include "geargrafx.h"
 
-static const int config_version = 9;
+static const int config_version = 10;
 static const int config_minimum_version = 2;
 static const int config_max_recent_roms = 15;
 static const int config_memory_editor_count = 16;
@@ -83,7 +83,6 @@ struct config_Emulator
     std::string pac_us_bios_path;
     std::string screenshots_path;
     std::string video_recordings_path;
-    std::string last_open_path;
     int window_width;
     int window_height;
     bool show_notifications;
@@ -101,6 +100,19 @@ struct config_Emulator
     int turbolink_stall_us;
     bool capture_mouse;
     int mouse_sensitivity;
+};
+
+struct config_FileDialogs
+{
+    std::string rom;
+    std::string ram;
+    std::string states;
+    std::string screenshots;
+    std::string recordings;
+    std::string debug;
+    std::string bios;
+    std::string palettes;
+    std::string cheats;
 };
 
 struct config_Video
@@ -370,6 +382,7 @@ struct config_Debug
 };
 
 EXTERN config_Emulator config_emulator;
+EXTERN config_FileDialogs config_file_dialogs;
 EXTERN config_Video config_video;
 EXTERN config_Audio config_audio;
 EXTERN config_Rewind config_rewind;
