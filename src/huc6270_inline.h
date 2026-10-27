@@ -57,7 +57,9 @@ INLINE u16 HuC6270::Clock()
     while (m_clocks_to_next_h_state == 0)
         NextHorizontalState();
 
-    if (m_clocks_to_next_event > 0)
+    if (m_clocks_to_next_event > 1)
+        m_clocks_to_next_event--;
+    else if (m_clocks_to_next_event == 1)
         LineEvents();
 
     u16 pixel = m_burst_mode ? HUC6270_PIXEL_BLACK : 0x100;

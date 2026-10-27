@@ -116,6 +116,8 @@ private:
     void LogVceEvent(u8 event);
     void InitPalettes();
     void AdjustForMultipleDividers();
+    template <bool is_sgx, bool is_laseractive, int divider>
+    bool ClockTemplate(u32 cycles);
     template <bool is_sgx>
     void RenderFrame();
     template <bool SGX, int BPP>
