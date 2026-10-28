@@ -1009,7 +1009,7 @@ static void menu_emulator(void)
             hotkey_configuration_item("Save State Slot 5:", &config_hotkeys[config_HotkeyIndex_SelectSlot5]);
             hotkey_configuration_item("Screenshot:", &config_hotkeys[config_HotkeyIndex_Screenshot]);
             hotkey_configuration_item("Video Recording:", &config_hotkeys[config_HotkeyIndex_VideoRecording]);
-            hotkey_configuration_item("Mute Audio:", &config_hotkeys[config_HotkeyIndex_Mute]);
+            hotkey_configuration_item("Mute All Audio:", &config_hotkeys[config_HotkeyIndex_Mute]);
             hotkey_configuration_item("Fullscreen:", &config_hotkeys[config_HotkeyIndex_Fullscreen]);
             hotkey_configuration_item("Show Main Menu:", &config_hotkeys[config_HotkeyIndex_ShowMainMenu]);
             hotkey_configuration_item("Capture Mouse:", &config_hotkeys[config_HotkeyIndex_CaptureMouse]);
@@ -1877,7 +1877,7 @@ static void menu_input(void)
                         gamepad_configuration_item("Rewind:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_Rewind], i);
                         gamepad_configuration_item("Screenshot:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_Screenshot], i);
                         gamepad_configuration_item("Video Recording:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_VideoRecording], i);
-                        gamepad_configuration_item("Mute Audio:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_Mute], i);
+                        gamepad_configuration_item("Mute All Audio:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_Mute], i);
                         gamepad_configuration_item("Fullscreen:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_Fullscreen], i);
                         gamepad_configuration_item("Capture Mouse:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_CaptureMouse], i);
                         gamepad_configuration_item("Show Main Menu:", &config_input_gamepad_shortcuts[i].gamepad_shortcuts[config_HotkeyIndex_ShowMainMenu], i);
@@ -1929,9 +1929,12 @@ static void menu_audio(void)
     {
         gui_in_use = true;
 
-        if (ImGui::MenuItem("Enable Audio", config_hotkeys[config_HotkeyIndex_Mute].str, &config_audio.enable))
+        bool mute = !config_audio.enable;
+
+        if (ImGui::MenuItem("Mute All Audio", config_hotkeys[config_HotkeyIndex_Mute].str, &mute))
         {
-            emu_audio_mute(!config_audio.enable);
+            config_audio.enable = !mute;
+            emu_audio_mute(mute);
         }
 
         ImGui::Separator();
