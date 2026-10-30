@@ -264,7 +264,6 @@
     <ClInclude Include="..\shared\dependencies\qon\qon.h" />
     <ClInclude Include="..\shared\dependencies\qon\qoi2.h" />
     <ClInclude Include="..\shared\dependencies\zstd\zstddeclib.c" />
-    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl3.h" />
     <ClInclude Include="..\shared\desktop\keyboard.h" />
     <ClInclude Include="..\shared\desktop\sound_queue.h" />
     <ClInclude Include="..\shared\desktop\single_instance.h" />

@@ -430,7 +430,7 @@
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ips_patch.h">
-      <Filter>core</Filter>
+      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\gui_menus.h">
       <Filter>desktop</Filter>
@@ -841,7 +841,6 @@
     <ClInclude Include="..\shared\dependencies\stb\stb_image_write.h">
       <Filter>dependencies\stb</Filter>
     </ClInclude>
-    <ClInclude Include="..\shared\dependencies\imgui\imgui_impl_sdl3.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
