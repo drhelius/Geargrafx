@@ -50,6 +50,8 @@ static const char slash = '/';
 #define MAX_SCREEN_WIDTH 1176
 #define MAX_SCREEN_HEIGHT 263
 
+#define MAX_MEMORY_DESCRIPTORS 8
+
 static retro_environment_t environ_cb;
 static retro_video_refresh_t video_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
@@ -151,6 +153,7 @@ static void apply_controller_device(unsigned port, unsigned device, bool log_dev
 static void release_controller_input(unsigned port);
 static void poll_input(void);
 static void apply_input(void);
+static void set_memory_maps(void);
 static void apply_cheats(void);
 static void clear_cheats(void);
 static bool categories_supported = false;
@@ -362,6 +365,7 @@ void retro_reset(void)
     if (core->GetMedia()->IsCDROM())
         load_bios();
     core->ResetMedia(true);
+    set_memory_maps();
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
@@ -596,6 +600,8 @@ bool retro_load_game(const struct retro_game_info *info)
         return false;
     }
 
+    set_memory_maps();
+
     bool achievements = true;
     environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &achievements);
 
@@ -675,6 +681,48 @@ size_t retro_get_memory_size(unsigned id)
     }
 
     return 0;
+}
+
+static void add_memory_descriptor(struct retro_memory_descriptor* descriptors, unsigned* count, u8* ptr, size_t start,
+    size_t length, uint64_t flags)
+{
+    size_t offset = 0;
+
+    while ((offset < length) && (*count < MAX_MEMORY_DESCRIPTORS))
+    {
+        size_t address = start + offset;
+        size_t size = 1;
+
+        while (((address & ((size << 1) - 1)) == 0) && ((size << 1) <= length - offset))
+            size <<= 1;
+
+        struct retro_memory_descriptor* descriptor = &descriptors[(*count)++];
+        memset(descriptor, 0, sizeof(*descriptor));
+        descriptor->flags = flags;
+        descriptor->ptr = ptr + offset;
+        descriptor->start = address;
+        descriptor->len = size;
+        offset += size;
+    }
+}
+
+static void set_memory_maps(void)
+{
+    struct retro_memory_descriptor descriptors[MAX_MEMORY_DESCRIPTORS];
+    unsigned count = 0;
+    Memory* memory = core->GetMemory();
+
+    add_memory_descriptor(descriptors, &count, memory->GetWorkingRAM(), 0x1F0000, memory->GetWorkingRAMSize(),
+        RETRO_MEMDESC_SYSTEM_RAM);
+    add_memory_descriptor(descriptors, &count, memory->GetCDROMRAM(), 0x100000, memory->GetCDROMRAMSize(),
+        RETRO_MEMDESC_SYSTEM_RAM);
+    add_memory_descriptor(descriptors, &count, memory->GetCardRAM(), memory->GetCardRAMStart() * 0x2000,
+        memory->GetCardRAMSize(), RETRO_MEMDESC_SYSTEM_RAM);
+    add_memory_descriptor(descriptors, &count, memory->GetBackupRAM(), 0x1EE000, memory->GetBackupRAMSize(),
+        RETRO_MEMDESC_SAVE_RAM);
+
+    struct retro_memory_map memory_map = { descriptors, count };
+    environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &memory_map);
 }
 
 static void apply_cheats(void)
