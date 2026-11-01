@@ -24,6 +24,7 @@
 #include "common.h"
 
 const retro_vfs_interface* MediaFileLibretro::s_vfs_interface = NULL;
+unsigned MediaFileLibretro::s_vfs_version = 0;
 
 MediaFileLibretro::MediaFileLibretro()
 {
@@ -36,9 +37,10 @@ MediaFileLibretro::~MediaFileLibretro()
     Close();
 }
 
-void MediaFileLibretro::SetVfsInterface(const retro_vfs_interface* iface)
+void MediaFileLibretro::SetVfsInterface(const retro_vfs_interface* iface, unsigned version)
 {
     s_vfs_interface = iface;
+    s_vfs_version = IsValidPointer(iface) ? version : 0;
 }
 
 bool MediaFileLibretro::HasVfsInterface()
@@ -64,8 +66,8 @@ bool MediaFileLibretro::IsCdRomUriPath(const char* path)
 
 unsigned MediaFileLibretro::GetOpenHints(const char* path)
 {
-    return IsCdRomUriPath(path) ?
-        RETRO_VFS_FILE_ACCESS_HINT_NONE : RETRO_VFS_FILE_ACCESS_HINT_FREQUENT_ACCESS;
+    return ((s_vfs_version >= 4) && !IsCdRomUriPath(path)) ?
+        RETRO_VFS_FILE_ACCESS_HINT_FREQUENT_ACCESS : RETRO_VFS_FILE_ACCESS_HINT_NONE;
 }
 
 bool MediaFileLibretro::Open(const char* path)

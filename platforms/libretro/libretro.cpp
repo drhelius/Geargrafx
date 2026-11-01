@@ -297,7 +297,7 @@ void retro_init(void)
     else
         vfs_interface = NULL;
 
-    MediaFile::SetVfsInterface(vfs_interface);
+    MediaFile::SetVfsInterface(vfs_interface, vfs_interface_info.required_interface_version);
 
     if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logging))
         log_cb = logging.log;

@@ -55,12 +55,13 @@ MediaFile* MediaFile::OpenFile(const char* path)
     return NULL;
 }
 
-void MediaFile::SetVfsInterface(const retro_vfs_interface* iface)
+void MediaFile::SetVfsInterface(const retro_vfs_interface* iface, unsigned version)
 {
 #if defined(__LIBRETRO__)
-    MediaFileLibretro::SetVfsInterface(iface);
+    MediaFileLibretro::SetVfsInterface(iface, version);
 #else
     (void)iface;
+    (void)version;
 #endif
 }
 
