@@ -34,6 +34,7 @@
 #define GUI_IMPORT
 #include "gui.h"
 #include "gui_menus.h"
+#include "gui_shader.h"
 #include "gui_popups.h"
 #include "gui_actions.h"
 #include "gui_notifications.h"
@@ -234,6 +235,7 @@ void gui_render(void)
         main_window();
 
     gui_debug_windows();
+    gui_shader_parameters_window();
 
     gui_cheats_window();
 
