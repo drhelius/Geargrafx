@@ -206,6 +206,16 @@ INLINE bool ScsiController::IsDataReady()
     return ((m_data_buffer.size() > 0) && (m_data_buffer_offset < m_data_buffer.size()));
 }
 
+INLINE bool ScsiController::IsBusy()
+{
+    return m_load_sector_count > 0;
+}
+
+INLINE u32 ScsiController::GetAccessCount()
+{
+    return m_access_count;
+}
+
 INLINE u8 ScsiController::CommandLength(ScsiCommand command)
 {
     switch (command)

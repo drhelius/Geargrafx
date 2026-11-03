@@ -55,6 +55,8 @@ static u64 turbolink_last_safe_tick;
 static Uint64 rewind_last_counter = 0;
 static double rewind_pop_accumulator = 0.0;
 static bool video_recording_output = false;
+static bool ffwd_loads = false;
+static bool load_ffwd = false;
 
 enum Loading_State
 {
@@ -200,6 +202,7 @@ void emu_load_media_async(const char* file_path)
 
     gui_debug_trace_logger_reset("media_change");
     emu_debug_command = Debug_Command_None;
+    emu_reset_load_ffwd();
     reset_buffers();
 
     save_ram();
@@ -230,6 +233,7 @@ void emu_load_physical_cdrom_async(const char* device_id)
     gui_debug_trace_logger_reset("media_change");
     Log("Queueing physical CD-ROM async load: %s", device_id);
     emu_debug_command = Debug_Command_None;
+    emu_reset_load_ffwd();
     reset_buffers();
 
     save_ram();
@@ -397,7 +401,10 @@ void emu_update(void)
             if (runahead > 0)
                 runahead_run(runahead, emu_frame_buffer, audio_buffer, &sampleCount);
             else
+            {
                 geargrafx->RunToVBlank(emu_frame_buffer, audio_buffer, &sampleCount);
+                emu_update_load_ffwd();
+            }
 
             frame_executed = true;
             frame_completed = true;
@@ -580,6 +587,7 @@ void emu_reset(bool save_persistent_data)
     emu_debug_step_frames_pending = 0;
     emu_debug_pc_changed = true;
     emu_frame_counter = 0;
+    emu_reset_load_ffwd();
     reset_buffers();
     reset_rewind_timing();
     emu_audio_reset();
@@ -721,6 +729,7 @@ bool emu_load_state_slot(int index)
 
     emu_debug_state_restored();
     events_sync_input();
+    emu_reset_load_ffwd();
     rewind_reset();
     return true;
 }
@@ -743,6 +752,7 @@ bool emu_load_state_file(const char* file_path)
 
     emu_debug_state_restored();
     events_sync_input();
+    emu_reset_load_ffwd();
     rewind_reset();
     return true;
 }
@@ -1042,6 +1052,39 @@ void emu_set_cdrom_speed(int speed_index)
 void emu_set_preload_cdrom(bool enabled)
 {
     geargrafx->GetMedia()->PreloadCdRom(enabled);
+}
+
+void emu_set_ffwd_loads(bool enabled)
+{
+    ffwd_loads = enabled;
+    emu_reset_load_ffwd();
+}
+
+void emu_reset_load_ffwd(void)
+{
+    load_ffwd = false;
+
+    if (IsValidPointer(geargrafx))
+        geargrafx->ResetLoadDetection();
+}
+
+void emu_update_load_ffwd(void)
+{
+    bool active = emu_is_load_ffwd();
+    load_ffwd = ffwd_loads && geargrafx->UpdateLoadDetection();
+
+    if (active && !load_ffwd && !config_emulator.ffwd)
+        emu_audio_reset();
+}
+
+bool emu_is_load_ffwd(void)
+{
+    return load_ffwd && !config_debug.debug && !rewind_is_active() && !emu_is_paused() && !emu_turbolink_is_active();
+}
+
+bool emu_is_ffwd(void)
+{
+    return config_emulator.ffwd || emu_is_load_ffwd();
 }
 
 void emu_set_backup_ram(bool enabled)

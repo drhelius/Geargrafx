@@ -36,6 +36,7 @@ Audio::Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio)
     m_is_cdrom = false;
     m_cycle_counter = 0;
     m_sample_clock_counter = 0;
+    m_frame_samples = 0;
     m_master_volume = 1.0f;
     m_psg_volume = 1.0f;
     m_adpcm_volume = 1.0f;
@@ -88,6 +89,8 @@ void Audio::Reset(bool cdrom)
 
 void Audio::EndFrame(s16* sample_buffer, int* sample_count)
 {
+    m_frame_samples = 0;
+
     if (!IsValidPointer(sample_buffer) || !IsValidPointer(sample_count))
     {
         m_psg->EndFrame(NULL);
@@ -135,6 +138,7 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         int samples = count_psg;
 
         *sample_count = samples;
+        m_frame_samples = samples;
 
         if (m_mute)
             memset(sample_buffer, 0, sizeof(s16) * samples);
@@ -174,6 +178,7 @@ void Audio::EndFrame(s16* sample_buffer, int* sample_count)
         }
 
         *sample_count = samples;
+        m_frame_samples = samples;
 
         if (m_mute || (m_master_volume <= 0.0f) || (m_psg_volume <= 0.0f))
             memset(sample_buffer, 0, sizeof(s16) * samples);

@@ -51,6 +51,7 @@ static const char slash = '/';
 #define MAX_SCREEN_HEIGHT 263
 
 #define MAX_MEMORY_DESCRIPTORS 8
+#define FFWD_MESSAGE_FRAMES 120
 
 static retro_environment_t environ_cb;
 static retro_video_refresh_t video_cb;
@@ -91,6 +92,11 @@ static bool lowpass_speed_716 = true;
 static bool lowpass_speed_108 = true;
 
 static bool turbo_toggle_hotkey = false;
+static bool ffwd_loads = false;
+static bool ffwd_notification = true;
+static bool ffwd_override_supported = false;
+static bool ffwd_override_active = false;
+static int ffwd_message_frames = FFWD_MESSAGE_FRAMES;
 static int mouse_sensitivity = 5;
 static bool libretro_supports_bitmasks = false;
 static GG_Keys avenue_pad_3_button = GG_KEY_NONE;
@@ -160,6 +166,9 @@ static bool categories_supported = false;
 static bool adpcm_clock_speed_visible = true;
 static bool update_core_options_display(void);
 static void check_variables(void);
+static void update_load_ffwd(bool visible);
+static void set_ffwd_override(bool enabled);
+static bool is_normal_state_load(void);
 static float get_aspect_ratio(void);
 static bool path_has_extension(const char* path, const char* extension);
 static bool path_is_cdrom_uri(const char* path);
@@ -285,6 +294,16 @@ void retro_set_environment(retro_environment_t cb)
     struct retro_core_options_update_display_callback display_callback = { update_core_options_display };
     environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK, &display_callback);
     update_core_options_display();
+
+    ffwd_override_supported = environ_cb(RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE, NULL);
+
+    if (!ffwd_override_supported)
+    {
+        struct retro_core_option_display display = { "geargrafx_cdrom_fast_forward", false };
+        environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &display);
+        display.key = "geargrafx_cdrom_fast_forward_notification";
+        environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &display);
+    }
 }
 
 void retro_init(void)
@@ -352,6 +371,10 @@ void retro_deinit(void)
     current_fps = 0.0;
     libretro_supports_bitmasks = false;
     avenue_pad_3_button = GG_KEY_NONE;
+    ffwd_loads = false;
+    ffwd_notification = true;
+    ffwd_override_active = false;
+    ffwd_message_frames = FFWD_MESSAGE_FRAMES;
 
     reset_controller_devices();
     clear_input_state();
@@ -424,8 +447,15 @@ void retro_run(void)
     poll_input();
     apply_input();
 
+    bool visible = true;
+    int av_enable = 0;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &av_enable))
+        visible = (av_enable & 1) != 0;
+
     audio_sample_count = 0;
     core->RunToVBlank(frame_buffer, audio_buf, &audio_sample_count);
+    update_load_ffwd(visible);
 
     core->GetRuntimeInfo(runtime_info);
 
@@ -618,6 +648,7 @@ void retro_unload_game(void)
     initial_mmi_image_index = 0;
     initial_mmi_image_path[0] = 0;
     clear_cheats();
+    set_ffwd_override(false);
     if (core && core->GetCDROMMedia()->IsMmi())
         core->GetMedia()->Reset();
     audio_sample_count = 0;
@@ -650,7 +681,16 @@ bool retro_serialize(void *data, size_t size)
 
 bool retro_unserialize(const void *data, size_t size)
 {
-    return core->LoadState(reinterpret_cast<const u8*>(data), size);
+    if (!core->LoadState(reinterpret_cast<const u8*>(data), size))
+        return false;
+
+    if (is_normal_state_load())
+    {
+        core->ResetLoadDetection();
+        set_ffwd_override(false);
+    }
+
+    return true;
 }
 
 void *retro_get_memory_data(unsigned id)
@@ -1410,6 +1450,62 @@ static bool update_core_options_display(void)
     return true;
 }
 
+static void update_load_ffwd(bool visible)
+{
+    if (!ffwd_loads || !visible)
+        return;
+
+    bool loading = core->UpdateLoadDetection();
+
+    if (!ffwd_override_active && (ffwd_message_frames < FFWD_MESSAGE_FRAMES))
+        ffwd_message_frames++;
+
+    if (loading == ffwd_override_active)
+        return;
+
+    bool fastforwarding = false;
+
+    if (loading && environ_cb(RETRO_ENVIRONMENT_GET_FASTFORWARDING, &fastforwarding) && fastforwarding)
+        return;
+
+    set_ffwd_override(loading);
+
+    if (loading && ffwd_notification && (ffwd_message_frames >= FFWD_MESSAGE_FRAMES))
+    {
+        struct retro_message msg = {};
+        msg.msg = "Fast forwarding CD-ROM load";
+        msg.frames = 120;
+        environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+    }
+
+    ffwd_message_frames = 0;
+}
+
+static void set_ffwd_override(bool enabled)
+{
+    if (enabled == ffwd_override_active)
+        return;
+
+    struct retro_fastforwarding_override ffwd = { 0.0f, enabled, false, false };
+    environ_cb(RETRO_ENVIRONMENT_SET_FASTFORWARDING_OVERRIDE, &ffwd);
+    ffwd_override_active = enabled;
+}
+
+static bool is_normal_state_load(void)
+{
+    enum retro_savestate_context context = RETRO_SAVESTATE_CONTEXT_UNKNOWN;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_SAVESTATE_CONTEXT, &context))
+        return context == RETRO_SAVESTATE_CONTEXT_NORMAL;
+
+    int av_enable = 0;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &av_enable))
+        return (av_enable & RETRO_AV_ENABLE_FAST_SAVESTATES) == 0;
+
+    return true;
+}
+
 static void check_variables(void)
 {
     struct retro_variable var = { };
@@ -1723,6 +1819,32 @@ static void check_variables(void)
     {
         bool preload_cdrom = (strcmp(var.value, "Enabled") == 0);
         core->GetMedia()->PreloadCdRom(preload_cdrom);
+    }
+
+    var.key = "geargrafx_cdrom_fast_forward";
+    var.value = NULL;
+
+    bool loads = false;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        loads = ffwd_override_supported && (strcmp(var.value, "Enabled") == 0);
+    }
+
+    if (loads != ffwd_loads)
+    {
+        ffwd_loads = loads;
+        ffwd_message_frames = FFWD_MESSAGE_FRAMES;
+        core->ResetLoadDetection();
+        set_ffwd_override(false);
+    }
+
+    var.key = "geargrafx_cdrom_fast_forward_notification";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        ffwd_notification = (strcmp(var.value, "Enabled") == 0);
     }
 
     var.key = "geargrafx_laseractive_region";

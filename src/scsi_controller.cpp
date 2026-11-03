@@ -55,6 +55,7 @@ ScsiController::ScsiController(CdRomMedia* cdrom_media, CdRomAudio* cdrom_audio,
     m_initial_read_phase_cycles = 0;
     m_reset_value = -1;
     m_read_speed = 1;
+    m_access_count = 0;
     m_command_buffer.clear();
     m_command_buffer.reserve(k_scsi_command_buffer_capacity);
     m_data_buffer.clear();
@@ -543,6 +544,7 @@ void ScsiController::CommandRead()
     m_next_load_cycles = seek_cycles + transfer_cycles;
     m_load_sector = lba;
     m_load_sector_count = count;
+    m_access_count++;
 
     SCSI_DEBUG("SCSI CMD Read: current lba %d, target lba %d, count %d, seek cycles %d, transfer cycles %d", current_lba, lba, count, seek_cycles, transfer_cycles);
 
@@ -849,6 +851,7 @@ void ScsiController::LoadSector()
         m_load_sector++;
         m_load_sector &= 0x1FFFFF;
         m_load_sector_count--;
+        m_access_count++;
 
         if (m_laseractive->IsActive())
             m_laseractive->NotifyScsiSectorRead(m_load_sector - 1, m_load_sector_count == 0);

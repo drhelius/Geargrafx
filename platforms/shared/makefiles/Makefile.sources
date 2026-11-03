@@ -40,6 +40,7 @@ SOURCES_CXX := \
     $(DESKTOP_SRC_DIR)/gui_shader.cpp \
     $(DESKTOP_SRC_DIR)/gui_actions.cpp \
     $(DESKTOP_SRC_DIR)/gui_notifications.cpp \
+    $(DESKTOP_SRC_DIR)/gui_drive_activity.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_cdrom.cpp \
     $(DESKTOP_SRC_DIR)/gui_debug_cdrom_audio.cpp \
@@ -104,6 +105,7 @@ SOURCES_CXX := \
     $(SRC_DIR)/huc6280_psg.cpp \
     $(SRC_DIR)/input.cpp \
     $(SRC_DIR)/laseractive.cpp \
+    $(SRC_DIR)/load_detector.cpp \
     $(SRC_DIR)/mapper.cpp \
     $(SRC_DIR)/mb128.cpp \
     $(SRC_DIR)/media.cpp \

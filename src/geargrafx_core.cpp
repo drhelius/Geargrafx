@@ -43,6 +43,7 @@
 #include "input.h"
 #include "memory_stream.h"
 #include "laseractive.h"
+#include "load_detector.h"
 
 GeargrafxCore::GeargrafxCore()
 {
@@ -64,6 +65,9 @@ GeargrafxCore::GeargrafxCore()
     InitPointer(m_trace_logger);
     InitPointer(m_profiler);
     InitPointer(m_laseractive);
+    InitPointer(m_load_detector);
+    InitPointer(m_frame_buffer);
+    m_frame_rendered = false;
     m_paused = true;
     m_master_clock_cycles = 0;
     m_turbolink_cycles = 0;
@@ -80,6 +84,7 @@ GeargrafxCore::~GeargrafxCore()
     SafeDelete(m_trace_logger);
     SafeDelete(m_profiler);
     SafeDelete(m_laseractive);
+    SafeDelete(m_load_detector);
     SafeDelete(m_media);
     SafeDelete(m_input);
     SafeDelete(m_audio);
@@ -118,6 +123,7 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_scsi_controller = new ScsiController(m_cdrom_media, m_cdrom_audio, m_random, m_laseractive);
     m_cdrom = new CdRom(m_cdrom_audio, m_scsi_controller, this, m_laseractive);
     m_memory = new Memory(m_huc6260, m_huc6202, m_huc6280, m_media, m_input, m_audio, m_cdrom, m_random, m_laseractive);
+    m_load_detector = new LoadDetector();
 
     m_audio->Init();
     m_input->Init();
@@ -134,6 +140,7 @@ void GeargrafxCore::Init(GG_Input_Pump_Fn input_pump_fn, GG_Pixel_Format pixel_f
     m_adpcm->Init(this, m_cdrom, m_scsi_controller);
     m_cdrom_audio->Init(m_cdrom, m_scsi_controller);
     m_laseractive->Init(m_cdrom, m_memory, m_cdrom_audio);
+    m_load_detector->Init(m_scsi_controller, m_cdrom_audio, m_audio, m_input, pixel_format);
 
     SelectPSGRevision();
     SelectADPCMClockSpeed();
@@ -324,6 +331,20 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
     runtime_info.fps = huc6260_get_frame_rate(m_huc6260->GetTotalLines());
 
     return m_media->IsReady();
+}
+
+bool GeargrafxCore::UpdateLoadDetection()
+{
+    if (m_paused || !m_media->IsReady() || !m_media->IsCDROMHardwareEnabled())
+        return false;
+
+    return m_load_detector->Update(m_frame_buffer, m_huc6260->GetCurrentWidth(), m_huc6260->GetCurrentHeight(),
+        m_frame_rendered);
+}
+
+void GeargrafxCore::ResetLoadDetection()
+{
+    m_load_detector->Reset();
 }
 
 bool GeargrafxCore::SetCheat(const char* cheat)
@@ -1449,6 +1470,7 @@ void GeargrafxCore::Reset()
     m_laseractive->Reset();
     m_audio->Reset(is_cdrom);
     m_input->Reset();
+    m_load_detector->Reset();
 
     EnableMB128(m_mb128_mode);
 

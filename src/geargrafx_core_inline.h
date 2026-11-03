@@ -37,6 +37,9 @@ INLINE bool GeargrafxCore::RunToVBlank(u8* frame_buffer, s16* sample_buffer, int
     if (m_paused || !m_media->IsReady())
         return false;
 
+    m_frame_buffer = frame_buffer;
+    m_frame_rendered = render;
+
     const bool is_cdrom = m_media->IsCDROMHardwareEnabled();
     const bool is_sgx = m_media->IsSGX();
 

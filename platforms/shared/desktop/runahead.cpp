@@ -48,7 +48,7 @@ int runahead_get_frames(void)
 {
     int frames = config_emulator.runahead;
 
-    if ((frames <= 0) || config_emulator.ffwd || config_debug.debug)
+    if ((frames <= 0) || emu_is_ffwd() || config_debug.debug)
         return 0;
 
     if (emu_get_core()->GetMedia()->IsLaserActive())
@@ -69,6 +69,7 @@ void runahead_run(int frames, u8* frame_buffer, s16* sample_buffer, int* sample_
 
     // Run the authoritative frame, keeping its audio while the real state advances.
     core->RunToVBlank(frame_buffer, sample_buffer, sample_count);
+    emu_update_load_ffwd();
 
     // Allocate the reusable snapshot buffer on first use.
     if (!IsValidPointer(runahead_buffer) && !ensure_buffer())

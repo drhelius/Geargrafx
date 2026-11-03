@@ -231,10 +231,13 @@ static inline void process(config_Operation operation)
     CONFIG_INT("Emulator", "WindowWidth", config_emulator.window_width, 770);
     CONFIG_INT("Emulator", "WindowHeight", config_emulator.window_height, 600);
     CONFIG_BOOL("Emulator", "ShowNotifications", config_emulator.show_notifications, true);
+    CONFIG_BOOL("Emulator", "ShowCDROMActivity", config_emulator.show_cdrom_activity, true);
     CONFIG_BOOL("Emulator", "AllowScreenSaver", config_emulator.allow_screensaver, false);
 
     // Emulation
     CONFIG_INT("Emulator", "FFWD", config_emulator.ffwd_speed, 1);
+    CONFIG_BOOL("Emulator", "FFWDLoads", config_emulator.ffwd_loads, false);
+    CONFIG_BOOL("Emulator", "FFWDLoadsNotification", config_emulator.ffwd_loads_notification, true);
     CONFIG_INT_RANGE("Emulator", "RunAhead", config_emulator.runahead, 0, 0, 3);
     CONFIG_INT_RANGE("Emulator", "SaveSlot", config_emulator.save_slot, 0, 0, 4);
     CONFIG_BOOL("Emulator", "StartPaused", config_emulator.start_paused, false);

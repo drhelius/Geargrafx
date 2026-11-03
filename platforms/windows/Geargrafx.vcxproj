@@ -50,6 +50,7 @@
     <ClCompile Include="..\..\src\huc6280.cpp" />
     <ClCompile Include="..\..\src\input.cpp" />
     <ClCompile Include="..\..\src\laseractive.cpp" />
+    <ClCompile Include="..\..\src\load_detector.cpp" />
     <ClCompile Include="..\..\src\turbolink.cpp" />
     <ClCompile Include="..\..\src\mapper.cpp" />
     <ClCompile Include="..\..\src\mb128.cpp" />
@@ -107,6 +108,7 @@
     <ClCompile Include="..\shared\desktop\single_instance.cpp" />
     <ClCompile Include="..\shared\desktop\gui_actions.cpp" />
     <ClCompile Include="..\shared\desktop\gui_notifications.cpp" />
+    <ClCompile Include="..\shared\desktop\gui_drive_activity.cpp" />
     <ClCompile Include="..\shared\desktop\rewind.cpp" />
     <ClCompile Include="..\shared\desktop\runahead.cpp" />
     <ClCompile Include="..\shared\desktop\video_recorder.cpp" />
@@ -247,6 +249,7 @@
     <ClInclude Include="..\..\src\trace_logger.h" />
     <ClInclude Include="..\..\src\profiler.h" />
     <ClInclude Include="..\..\src\laseractive.h" />
+    <ClInclude Include="..\..\src\load_detector.h" />
     <ClInclude Include="..\..\src\types.h" />
     <ClInclude Include="..\shared\dependencies\glad\glad.h" />
     <ClInclude Include="..\shared\dependencies\minivorbis\minivorbis.h" />
@@ -286,6 +289,7 @@
     <ClInclude Include="..\shared\desktop\mcp\mcp_transport.h" />
     <ClInclude Include="..\shared\desktop\gui_actions.h" />
     <ClInclude Include="..\shared\desktop\gui_notifications.h" />
+    <ClInclude Include="..\shared\desktop\gui_drive_activity.h" />
     <ClInclude Include="..\shared\desktop\rewind.h" />
     <ClInclude Include="..\shared\desktop\runahead.h" />
     <ClInclude Include="..\shared\desktop\video_recorder.h" />

@@ -44,6 +44,7 @@ SOURCES_CXX := \
     $(SRC_DIR)/huc6280_psg.cpp \
     $(SRC_DIR)/input.cpp \
     $(SRC_DIR)/laseractive.cpp \
+    $(SRC_DIR)/load_detector.cpp \
     $(SRC_DIR)/mapper.cpp \
     $(SRC_DIR)/mb128.cpp \
     $(SRC_DIR)/media.cpp \

@@ -93,7 +93,7 @@ void display_frame_throttle(void)
 {
     frame_time_end = SDL_GetPerformanceCounter();
 
-    if (emu_is_empty() || emu_is_paused() || emu_is_debug_idle() || !emu_is_audio_open() || config_emulator.ffwd)
+    if (emu_is_empty() || emu_is_paused() || emu_is_debug_idle() || !emu_is_audio_open() || emu_is_ffwd())
     {
         Uint64 count_per_sec = SDL_GetPerformanceFrequency();
         float elapsed = (float)(frame_time_end - frame_time_start) / (float)count_per_sec;
@@ -121,6 +121,8 @@ void display_frame_throttle(void)
                     min = 0.0f;
             }
         }
+        else if (emu_is_load_ffwd())
+            min = 0.0f;
 
         if (elapsed < min)
             SDL_Delay((Uint32)(min - elapsed));
@@ -139,7 +141,7 @@ bool display_should_run_emu_frame(void)
 
     if (config_video.sync_mode == config_VideoSync_Fixed && last_vsync_state >= 1
         && !emu_is_empty() && !emu_is_paused()
-        && !emu_is_debug_idle() && emu_is_audio_open() && !config_emulator.ffwd
+        && !emu_is_debug_idle() && emu_is_audio_open() && !emu_is_ffwd()
         && !emu_turbolink_is_active())
     {
         if (last_vsync_state > 1)
@@ -170,7 +172,7 @@ bool display_should_run_emu_frame(void)
 
 void display_use_vsync_if_enabled(void)
 {
-    if (config_emulator.ffwd && !rewind_is_active())
+    if (emu_is_ffwd() && !rewind_is_active())
     {
         display_disable_vsync();
         return;
@@ -299,7 +301,7 @@ bool display_is_vsync_forced_off(void)
 
 bool display_is_vsync_pacing(void)
 {
-    return config_video.sync_mode == config_VideoSync_Fixed && last_vsync_state >= 1 && !config_emulator.ffwd;
+    return config_video.sync_mode == config_VideoSync_Fixed && last_vsync_state >= 1 && !emu_is_ffwd();
 }
 
 float display_get_audio_ratio(void)

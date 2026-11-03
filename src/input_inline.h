@@ -26,6 +26,9 @@
 
 INLINE void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
 {
+    if ((m_gamepads[controller] & key) != 0)
+        m_activity_count++;
+
     m_gamepads[controller] &= ~key;
 
     if (m_controller_type[controller] == GG_CONTROLLER_AVENUE_PAD_3)
@@ -42,6 +45,9 @@ INLINE void Input::KeyPressed(GG_Controllers controller, GG_Keys key)
 
 INLINE void Input::KeyReleased(GG_Controllers controller, GG_Keys key)
 {
+    if ((m_gamepads[controller] & key) != key)
+        m_activity_count++;
+
     m_gamepads[controller] |= key;
 
     if (m_controller_type[controller] == GG_CONTROLLER_AVENUE_PAD_3)
@@ -409,8 +415,16 @@ INLINE GG_Keys Input::GetAvenuePad3Button(GG_Controllers controller)
 
 INLINE void Input::SetMouseDelta(s32 x, s32 y)
 {
+    if ((x != 0) || (y != 0))
+        m_activity_count++;
+
     m_mouse_x += x;
     m_mouse_y += y;
+}
+
+INLINE u32 Input::GetActivityCount() const
+{
+    return m_activity_count;
 }
 
 INLINE void Input::EnableMB128(bool enable)

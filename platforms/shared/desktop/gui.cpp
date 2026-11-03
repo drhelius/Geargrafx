@@ -38,6 +38,7 @@
 #include "gui_popups.h"
 #include "gui_actions.h"
 #include "gui_notifications.h"
+#include "gui_drive_activity.h"
 #include "gui_colors.h"
 #include "gui_hes.h"
 #include "gui_cheats.h"
@@ -173,6 +174,7 @@ void gui_apply_settings(void)
     emu_set_cdrom_speed(config_emulator.cdrom_speed);
     emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
     emu_set_preload_cdrom(config_emulator.preload_cdrom);
+    emu_set_ffwd_loads(config_emulator.ffwd_loads);
     emu_set_backup_ram(config_emulator.backup_ram);
     emu_set_mb128_mode((GG_MB128_Mode)config_emulator.mb128_mode);
     emu_set_disassembler_syntax(config_debug.dis_syntax);
@@ -823,6 +825,7 @@ static void main_window(void)
         draw_list->AddImage((ImTextureID)(intptr_t)ogl_renderer_get_screen_texture(), image_min, image_max, ImVec2(0, 0), ImVec2(tex_h, tex_v));
         draw_list->PopClipRect();
         gui_notifications_render_output(image_min, image_max);
+        gui_drive_activity_render_output(image_min, image_max);
 
         if (config_video.fps)
             gui_show_fps(image_min, image_max);

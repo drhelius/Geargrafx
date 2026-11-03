@@ -63,6 +63,8 @@ struct config_Emulator
     bool softpatching;
     bool ffwd;
     int ffwd_speed;
+    bool ffwd_loads;
+    bool ffwd_loads_notification;
     int runahead;
     bool show_info;
     std::string recent_roms[config_max_recent_roms];
@@ -86,6 +88,7 @@ struct config_Emulator
     int window_width;
     int window_height;
     bool show_notifications;
+    bool show_cdrom_activity;
     bool allow_screensaver;
     bool backup_ram;
     int console_type;

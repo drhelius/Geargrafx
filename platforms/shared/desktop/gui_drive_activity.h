@@ -1,0 +1,35 @@
+/*
+ * Geargrafx - PC Engine / TurboGrafx Emulator
+ * Copyright (C) 2024  Ignacio Sanchez
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses/
+ *
+ */
+
+#ifndef GUI_DRIVE_ACTIVITY_H
+#define GUI_DRIVE_ACTIVITY_H
+
+#include "imgui.h"
+
+#ifdef GUI_DRIVE_ACTIVITY_IMPORT
+    #define EXTERN
+#else
+    #define EXTERN extern
+#endif
+
+EXTERN void gui_drive_activity_render_output(const ImVec2& min, const ImVec2& max);
+
+#undef GUI_DRIVE_ACTIVITY_IMPORT
+#undef EXTERN
+#endif /* GUI_DRIVE_ACTIVITY_H */

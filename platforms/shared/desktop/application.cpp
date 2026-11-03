@@ -46,6 +46,7 @@ static bool running = true;
 static bool paused_when_focus_lost = false;
 static bool window_settings_pending = false;
 static bool window_resizable = true;
+static bool load_ffwd_active = false;
 static Uint64 mouse_last_motion_time = 0;
 static const Uint64 mouse_hide_timeout_ms = 1500;
 static SDL_DisplayID current_display_id = 0;
@@ -62,6 +63,7 @@ static void handle_menu(void);
 static void handle_window_resizable(void);
 static void handle_single_instance(void);
 static void run_emulator(void);
+static void update_load_ffwd(void);
 static void apply_window_settings(void);
 static void save_window_size(void);
 
@@ -659,7 +661,7 @@ static void run_emulator(void)
     events_apply_input();
 
     config_emulator.paused = emu_is_paused();
-    emu_audio_sync = config_audio.sync;
+    emu_audio_sync = config_audio.sync && !emu_is_load_ffwd();
     emu_audio_rate_control = display_is_vsync_pacing();
     emu_audio_ratio = display_get_audio_ratio();
     emu_update();
@@ -668,8 +670,27 @@ static void run_emulator(void)
         emu_update();
 
     events_reset_input();
+    update_load_ffwd();
 
     display_update_vsync_state();
+}
+
+static void update_load_ffwd(void)
+{
+    bool active = emu_is_load_ffwd();
+
+    if (active == load_ffwd_active)
+        return;
+
+    load_ffwd_active = active;
+
+    if (config_emulator.ffwd)
+        return;
+
+    if (active)
+        display_disable_vsync();
+    else
+        display_use_vsync_if_enabled();
 }
 
 static void apply_window_settings(void)

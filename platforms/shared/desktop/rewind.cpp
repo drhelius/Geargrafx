@@ -152,6 +152,7 @@ bool rewind_pop(void)
         *emu_get_core()->GetHuC6280()->GetDisassemblerCallStack() = call_stacks[idx];
         restore_screenshot(slot, size);
         events_sync_input();
+        emu_reset_load_ffwd();
     }
 
     head = idx;
@@ -179,6 +180,7 @@ bool rewind_seek(int age)
         *emu_get_core()->GetHuC6280()->GetDisassemblerCallStack() = call_stacks[idx];
         restore_screenshot(slot, size);
         events_sync_input();
+        emu_reset_load_ffwd();
         seek_age = age;
     }
 

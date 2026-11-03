@@ -861,73 +861,81 @@ static void menu_emulator(void)
             ImGui::EndMenu();
         }
 
-        ImGui::Separator();
-
-        if (ImGui::BeginMenu("CD-ROM Model"))
+        if (ImGui::BeginMenu("CD-ROM"))
         {
-            ImGui::PushItemWidth(150.0f);
-            if (ImGui::Combo("##cdromtype", &config_emulator.cdrom_type, "Auto\0Standard\0Super CD-ROM\0Arcade CD-ROM\0\0"))
+            if (ImGui::BeginMenu("Model"))
             {
-                emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
+                ImGui::PushItemWidth(150.0f);
+                if (ImGui::Combo("##cdromtype", &config_emulator.cdrom_type, "Auto\0Standard\0Super CD-ROM\0Arcade CD-ROM\0\0"))
+                {
+                    emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
+                }
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::BeginTooltip();
+                    ImGui::Text("Auto enables CD-ROM hardware only for CD media.");
+                    ImGui::Text("Selecting a model also enables CD-ROM hardware for HuCards.");
+                    ImGui::Text("HuCards keep their own ROM and cartridge RAM mapping.");
+                    ImGui::Text("Reset the emulator to apply changes.");
+                    ImGui::EndTooltip();
+                }
+
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Speed"))
+            {
+                ImGui::PushItemWidth(150.0f);
+                if (ImGui::Combo("##cdromspeed", &config_emulator.cdrom_speed, "1x (Default)\0" "2x\0" "3x\0" "4x\0" "6x\0\0"))
+                {
+                    emu_set_cdrom_speed(config_emulator.cdrom_speed);
+                }
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::BeginTooltip();
+                    ImGui::Text("It is not recommended to change the default value (1x).");
+                    ImGui::Text("Faster CD-ROM reads are not accurate and can break games, cutscenes and audio sync.");
+                    ImGui::Text("Only use it to reduce loading times in games that need it.");
+                    ImGui::EndTooltip();
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::MenuItem("Preload CD-ROM in RAM", "", &config_emulator.preload_cdrom))
+            {
+                emu_set_preload_cdrom(config_emulator.preload_cdrom);
             }
             if (ImGui::IsItemHovered())
             {
                 ImGui::BeginTooltip();
-                ImGui::Text("Auto enables CD-ROM hardware only for CD media.");
-                ImGui::Text("Selecting a model also enables CD-ROM hardware for HuCards.");
-                ImGui::Text("HuCards keep their own ROM and cartridge RAM mapping.");
-                ImGui::Text("Reset the emulator to apply changes.");
+                ImGui::Text("This option will preload all CD-ROM tracks in RAM.");
+                ImGui::Text("Load a new CD-ROM image to apply changes.");
+                ImGui::EndTooltip();
+            }
+
+            if (ImGui::MenuItem("Fast Forward Loads", "", &config_emulator.ffwd_loads))
+            {
+                emu_set_ffwd_loads(config_emulator.ffwd_loads);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Run at maximum speed while the drive reads data and");
+                ImGui::Text("the game shows a still, silent screen.");
+                ImGui::EndTooltip();
+            }
+
+            ImGui::MenuItem("Show Fast Forward Notification", "", &config_emulator.ffwd_loads_notification, config_emulator.ffwd_loads);
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Show an icon while a CD-ROM load runs at maximum speed.");
                 ImGui::EndTooltip();
             }
 
             ImGui::EndMenu();
         }
-
-        if (ImGui::BeginMenu("CD-ROM Speed"))
-        {
-            ImGui::PushItemWidth(150.0f);
-            if (ImGui::Combo("##cdromspeed", &config_emulator.cdrom_speed, "1x (Default)\0" "2x\0" "3x\0" "4x\0" "6x\0\0"))
-            {
-                emu_set_cdrom_speed(config_emulator.cdrom_speed);
-            }
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text("It is not recommended to change the default value (1x).");
-                ImGui::Text("Faster CD-ROM reads are not accurate and can break games, cutscenes and audio sync.");
-                ImGui::Text("Only use it to reduce loading times in games that need it.");
-                ImGui::EndTooltip();
-            }
-            ImGui::PopItemWidth();
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::MenuItem("Preload CD-ROM in RAM", "", &config_emulator.preload_cdrom))
-        {
-            emu_set_preload_cdrom(config_emulator.preload_cdrom);
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("This option will preload all CD-ROM tracks in RAM.");
-            ImGui::Text("Load a new CD-ROM image to apply changes.");
-            ImGui::EndTooltip();
-        }
-
-        if (ImGui::MenuItem("Force Backup RAM", "", &config_emulator.backup_ram))
-        {
-            emu_set_backup_ram(config_emulator.backup_ram);
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("This option will add backup RAM support to HuCard games.");
-            ImGui::Text("It is recommended to leave this option enabled.");
-            ImGui::Text("Reset the emulator to apply changes.");
-            ImGui::EndTooltip();
-        }
-
-        ImGui::Separator();
 
         if (ImGui::BeginMenu("LaserActive Region"))
         {
@@ -943,6 +951,21 @@ static void menu_emulator(void)
 
             ImGui::PopItemWidth();
             ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Force Backup RAM", "", &config_emulator.backup_ram))
+        {
+            emu_set_backup_ram(config_emulator.backup_ram);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("This option will add backup RAM support to HuCard games.");
+            ImGui::Text("It is recommended to leave this option enabled.");
+            ImGui::Text("Reset the emulator to apply changes.");
+            ImGui::EndTooltip();
         }
 
         ImGui::Separator();
@@ -968,6 +991,7 @@ static void menu_emulator(void)
 
         ImGui::MenuItem("Show ROM info", "", &config_emulator.show_info);
         ImGui::MenuItem("Show Notifications", "", &config_emulator.show_notifications);
+        ImGui::MenuItem("Show CD-ROM Activity", "", &config_emulator.show_cdrom_activity);
 
         ImGui::Separator();
 

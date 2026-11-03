@@ -137,4 +137,23 @@ INLINE void Audio::SetCDROMVolume(float volume)
     m_cdrom_volume = CLAMP(volume, 0.0f, 2.0f);
 }
 
+// Stereo values in the last completed frame
+INLINE int Audio::GetFrameSamples() const
+{
+    return m_frame_samples;
+}
+
+INLINE const s16* Audio::GetSourceBuffer(int source) const
+{
+    switch (source)
+    {
+        case AUDIO_SOURCE_PSG:
+            return m_psg_buffer;
+        case AUDIO_SOURCE_ADPCM:
+            return m_adpcm_buffer;
+        default:
+            return m_cdrom_buffer;
+    }
+}
+
 #endif /* AUDIO_INLINE_H */

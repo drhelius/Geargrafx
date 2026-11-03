@@ -33,6 +33,15 @@ class TraceLogger;
 class Audio
 {
 public:
+    enum Audio_Source
+    {
+        AUDIO_SOURCE_PSG = 0,
+        AUDIO_SOURCE_ADPCM,
+        AUDIO_SOURCE_CDROM,
+        AUDIO_SOURCE_COUNT
+    };
+
+public:
     Audio(Adpcm* adpcm, CdRomAudio* cdrom_audio);
     ~Audio();
     void Init();
@@ -45,6 +54,8 @@ public:
     void Clock(u32 cycles);
     void WritePSG(u32 address, u8 value);
     void EndFrame(s16* sample_buffer, int* sample_count);
+    int GetFrameSamples() const;
+    const s16* GetSourceBuffer(int source) const;
     HuC6280PSG* GetPSG();
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
@@ -70,6 +81,7 @@ private:
     s16 m_psg_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     s16 m_adpcm_buffer[GG_AUDIO_BUFFER_SIZE] = {};
     s16 m_cdrom_buffer[GG_AUDIO_BUFFER_SIZE] = {};
+    int m_frame_samples;
     u32 m_cycle_counter;
     u64 m_sample_clock_counter;
     float m_master_volume;

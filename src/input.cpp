@@ -41,6 +41,7 @@ Input::Input(Media* media, GeargrafxCore* core)
     m_mouse_shifter = 0;
     m_mouse_latched = false;
     m_mouse_last_latch_cycles = 0;
+    m_activity_count = 0;
 
     for (int i = 0; i < GG_MAX_GAMEPADS; i++)
     {

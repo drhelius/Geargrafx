@@ -40,6 +40,7 @@ SOURCES_CXX :=  $(DEPS_DIR)/qon/qon.cpp \
                 $(SOURCE_DIR)/huc6280_psg.cpp \
                 $(SOURCE_DIR)/input.cpp \
                 $(SOURCE_DIR)/laseractive.cpp \
+                $(SOURCE_DIR)/load_detector.cpp \
                 $(SOURCE_DIR)/mapper.cpp \
                 $(SOURCE_DIR)/mb128.cpp \
                 $(SOURCE_DIR)/media.cpp \

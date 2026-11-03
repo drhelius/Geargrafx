@@ -135,6 +135,8 @@ public:
     void StartStatus(ScsiStatus status, u8 length = 1);
     void AudioSeekCompleted();
     bool IsDataReady();
+    bool IsBusy();
+    u32 GetAccessCount();
     Scsi_State* GetState();
     void SetTraceLogger(TraceLogger* trace_logger);
     void SetResetValue(int value);
@@ -194,6 +196,7 @@ private:
     u32 m_initial_read_phase_cycles;
     int m_reset_value;
     u32 m_read_speed;
+    u32 m_access_count;
     std::vector<u8> m_command_buffer;
     std::vector<u8> m_data_buffer;
     u32 m_data_buffer_offset;

@@ -25,6 +25,9 @@
     <ClCompile Include="..\shared\desktop\gui_notifications.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
+    <ClCompile Include="..\shared\desktop\gui_drive_activity.cpp">
+      <Filter>desktop</Filter>
+    </ClCompile>
     <ClCompile Include="..\shared\desktop\rewind.cpp">
       <Filter>desktop</Filter>
     </ClCompile>
@@ -262,6 +265,9 @@
     <ClCompile Include="..\..\src\laseractive.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\load_detector.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
     <ClCompile Include="..\shared\dependencies\qon\qon.cpp">
       <Filter>dependencies\qon</Filter>
     </ClCompile>
@@ -382,6 +388,9 @@
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\gui_notifications.h">
+      <Filter>desktop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\desktop\gui_drive_activity.h">
       <Filter>desktop</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\desktop\rewind.h">
@@ -724,6 +733,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\laseractive.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\load_detector.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\dependencies\qon\qon.h">

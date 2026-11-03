@@ -212,7 +212,7 @@ void gui_action_rewind_released(void)
     rewind_set_active(false);
     events_sync_input();
     emu_reset_rewind_timing();
-    if (config_emulator.ffwd)
+    if (emu_is_ffwd())
         display_disable_vsync();
     else
         display_use_vsync_if_enabled();

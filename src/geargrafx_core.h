@@ -42,6 +42,7 @@ class Random;
 class TraceLogger;
 class Profiler;
 class LaserActive;
+class LoadDetector;
 
 class GeargrafxCore
 {
@@ -99,6 +100,8 @@ public:
     bool GetSaveStateHeader(int index, const char* path, GG_SaveState_Header* header);
     bool GetSaveStateScreenshot(int index, const char* path, GG_SaveState_Screenshot* screenshot);
     bool GetRuntimeInfo(GG_Runtime_Info& runtime_info);
+    bool UpdateLoadDetection();
+    void ResetLoadDetection();
     bool SetCheat(const char* cheat);
     void ClearCheats();
     static bool IsValidCheat(const char* cheat);
@@ -163,6 +166,7 @@ private:
     ScsiController* m_scsi_controller;
     Random* m_random;
     LaserActive* m_laseractive;
+    LoadDetector* m_load_detector;
     bool m_paused;
     TraceLogger* m_trace_logger;
     Profiler* m_profiler;
@@ -174,6 +178,8 @@ private:
     GG_PSG_Revision m_requested_psg_revision;
     GG_PSG_Revision m_psg_revision;
     float m_requested_adpcm_clock_speed;
+    u8* m_frame_buffer;
+    bool m_frame_rendered;
 };
 
 #include "geargrafx_core_inline.h"
