@@ -2307,16 +2307,12 @@ json DebugAdapter::LoadStateFile(const std::string& file_path)
         return result;
     }
 
-    if (!m_core->LoadState(file_path.c_str()))
+    if (!emu_load_state_file(file_path.c_str()))
     {
         result["error"] = "Failed to load state file";
         Log("[MCP] LoadStateFile failed: %s", file_path.c_str());
         return result;
     }
-
-    emu_debug_state_restored();
-    events_sync_input();
-    rewind_reset();
 
     result["success"] = true;
     result["file_path"] = file_path;

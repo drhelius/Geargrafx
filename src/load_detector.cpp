@@ -85,6 +85,9 @@ bool LoadDetector::Update(const u8* frame_buffer, int width, int height, bool re
         m_input_count = input_count;
         m_session = false;
         m_veto = false;
+        memset(m_history, 0, sizeof(m_history));
+        m_history_index = 0;
+        m_history_count = 0;
     }
 
     if (data && !m_session)
