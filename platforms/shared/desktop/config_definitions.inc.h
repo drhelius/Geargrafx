@@ -393,6 +393,7 @@ static inline void process(config_Operation operation)
 
     CONFIG_BOOL("Input", "TurboTap", config_input.turbo_tap, false);
     CONFIG_BOOL("Input", "AllowUpDown", config_input.allow_up_down, false);
+    CONFIG_BOOL("Input", "AllowSharedGamepads", config_input.allow_shared_gamepads, false);
     CONFIG_INT_RANGE("Input", "MouseSensitivity", config_emulator.mouse_sensitivity, 5, 1, 15);
 
     // Players

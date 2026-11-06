@@ -1766,6 +1766,20 @@ static void menu_input(void)
             ImGui::EndTooltip();
         }
 
+        if (ImGui::MenuItem("Allow Shared Gamepads", "", &config_input.allow_shared_gamepads))
+        {
+            if (!config_input.allow_shared_gamepads)
+                gamepad_remove_duplicates();
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("Let one gamepad control several players at the same time.");
+            ImGui::Text("Choose it in the Device menu of each player.");
+            ImGui::Text("Players 2 to 5 also need Turbo Tap enabled.");
+            ImGui::EndTooltip();
+        }
+
         ImGui::EndMenu();
     }
 }

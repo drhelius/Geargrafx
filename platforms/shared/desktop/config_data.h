@@ -178,6 +178,7 @@ struct config_Input
 {
     bool turbo_tap;
     bool allow_up_down;
+    bool allow_shared_gamepads;
     int controller_type[GG_MAX_GAMEPADS];
     int avenue_pad_3_button[GG_MAX_GAMEPADS];
     bool turbo_enabled[GG_MAX_GAMEPADS][2];
