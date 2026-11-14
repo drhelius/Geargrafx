@@ -78,6 +78,7 @@ MemEditor::MemEditor()
     m_find_bytes_pattern_len = 0;
     m_breakpoint_callback = NULL;
     m_breakpoint_editor = -1;
+    m_show_request = false;
 }
 
 MemEditor::~MemEditor()
@@ -2344,6 +2345,7 @@ void MemEditor::FindBytesNext(int start_offset)
             m_selection_end = end_addr;
             m_find_bytes_last_address = offset;
             ScrollToAddress(addr + m_mem_base_addr);
+            m_show_request = true;
             return;
         }
     }
@@ -2353,6 +2355,13 @@ void MemEditor::DrawFindBytesWindow()
 {
     if (m_find_bytes_window)
         FindBytesWindow();
+}
+
+bool MemEditor::ConsumeShowRequest()
+{
+    bool ret = m_show_request;
+    m_show_request = false;
+    return ret;
 }
 
 void MemEditor::FindBytesWindow()
@@ -2443,6 +2452,7 @@ void MemEditor::FindBytesWindow()
                     m_selection_start = address;
                     m_selection_end = end_addr;
                     ScrollToAddress(address + m_mem_base_addr);
+                    m_show_request = true;
                 }
             }
         }
