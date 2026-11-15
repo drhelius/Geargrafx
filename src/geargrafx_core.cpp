@@ -330,7 +330,48 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
         runtime_info.aspect_ratio = 4.0f / 3.0f;
     runtime_info.fps = huc6260_get_frame_rate(m_huc6260->GetTotalLines());
 
+    bool laseractive = m_media->IsCDROM() && m_media->IsLaserActive();
+    int texel_clocks = m_huc6260->GetTexelClocks();
+    int total_lines = m_huc6260->GetTotalLines();
+
+    runtime_info.pixel_clock = (float)((double)GG_MASTER_CLOCK_RATE / (double)texel_clocks / 1000000.0);
+    runtime_info.line_rate = (float)((double)GG_MASTER_CLOCK_RATE / (double)HUC6260_LINE_LENGTH / 1000.0);
+    runtime_info.source_lines = runtime_info.screen_height;
+    m_huc6260->GetActiveRegion(&runtime_info.active_region[0], &runtime_info.active_region[1],
+        &runtime_info.active_region[2], &runtime_info.active_region[3]);
+
+    if (laseractive)
+    {
+        runtime_info.chroma_origin = 0.0f;
+        runtime_info.chroma_texel_cycles = 0.0f;
+        runtime_info.chroma_line_cycles = 0.0f;
+        runtime_info.chroma_frame_cycles = 0.0f;
+    }
+    else
+    {
+        runtime_info.chroma_origin = m_huc6260->GetChromaOrigin();
+        runtime_info.chroma_texel_cycles = (float)texel_clocks / 6.0f;
+        runtime_info.chroma_line_cycles = (float)HUC6260_LINE_LENGTH / 6.0f;
+        runtime_info.chroma_frame_cycles = (float)((total_lines * HUC6260_LINE_LENGTH) % 6) / 6.0f;
+    }
+
+    m_huc6260->GetBorderColor(runtime_info.border_color);
+    runtime_info.border_valid = !laseractive;
+    runtime_info.system_type = laseractive ? 2 : (m_media->IsSGX() ? 1 : 0);
+    runtime_info.video_mode = m_huc6260->IsScaledWidth() ? 3 : (int)m_huc6260->GetSpeed();
+    runtime_info.low_pass = m_huc6260->IsLowPassActive();
+
     return m_media->IsReady();
+}
+
+int GeargrafxCore::GetLineClocks(float* clocks, int max_count)
+{
+    int count = MIN(m_huc6260->GetCurrentHeight(), max_count);
+
+    for (int i = 0; i < count; i++)
+        clocks[i] = (float)((double)GG_MASTER_CLOCK_RATE / (double)m_huc6260->GetLineClockDivider(i) / 1000000.0);
+
+    return count;
 }
 
 bool GeargrafxCore::UpdateLoadDetection()

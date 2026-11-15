@@ -318,6 +318,7 @@ void HuC6260::ResetCrop()
     m_crop_start = 0;
     m_crop_end = HUC6260_LINE_LENGTH;
     m_crop_width = k_huc6260_line_width[1][m_speed];
+    m_crop_offset_clocks = 0;
 }
 
 void HuC6260::CropFrame(bool multiple_speeds)
@@ -347,6 +348,7 @@ void HuC6260::CropFrame(bool multiple_speeds)
 
     int x = start / scale;
     m_crop_width = (end - start) / scale;
+    m_crop_offset_clocks = x * scale;
 
     if (m_crop_width == width)
         return;
@@ -457,23 +459,30 @@ void HuC6260::SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, 
     m_lowpass_speed[2] = speed_10_8;
 }
 
-template <int bytes_per_pixel>
-void HuC6260::ApplyLowPassFilter(u8* buffer, int width, int height, int speed)
+float HuC6260::GetLowPassAlpha(int speed)
 {
     static const float k_speed_mhz[4] = { 5.36f, 7.16f, 10.8f, 10.8f };
 
-    if (!buffer)
-        buffer = m_frame_buffer;
-    if (speed < 0)
-        speed = m_speed;
+    speed = CLAMP(speed, 0, 3);
     int speed_index = MIN(speed, 2);
     if (!m_lowpass_speed[speed_index])
-        return;
+        return 1.0f;
 
     float dot_clock = k_speed_mhz[speed];
     float base_alpha = m_lowpass_cutoff_mhz / dot_clock;
     base_alpha = CLAMP(base_alpha, 0.3f, 1.0f);
-    float alpha = base_alpha + (1.0f - base_alpha) * (1.0f - m_lowpass_intensity);
+    return base_alpha + (1.0f - base_alpha) * (1.0f - m_lowpass_intensity);
+}
+
+template <int bytes_per_pixel>
+void HuC6260::ApplyLowPassFilter(u8* buffer, int width, int height, int speed)
+{
+    if (!buffer)
+        buffer = m_frame_buffer;
+    if (speed < 0)
+        speed = m_speed;
+
+    float alpha = GetLowPassAlpha(speed);
 
     if (alpha >= 1.0f)
         return;

@@ -100,6 +100,7 @@ public:
     bool GetSaveStateHeader(int index, const char* path, GG_SaveState_Header* header);
     bool GetSaveStateScreenshot(int index, const char* path, GG_SaveState_Screenshot* screenshot);
     bool GetRuntimeInfo(GG_Runtime_Info& runtime_info);
+    int GetLineClocks(float* clocks, int max_count);
     bool UpdateLoadDetection();
     void ResetLoadDetection();
     bool SetCheat(const char* cheat);

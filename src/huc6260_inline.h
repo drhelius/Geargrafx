@@ -517,6 +517,70 @@ INLINE float HuC6260::GetPixelAspectRatio()
     return (float)(m_scaled_width ? 3 : m_clock_divider) / HUC6260_SQUARE_PIXEL_CLOCKS;
 }
 
+INLINE bool HuC6260::IsScaledWidth()
+{
+    return m_scaled_width;
+}
+
+INLINE int HuC6260::GetTexelClocks()
+{
+    if (m_laseractive->IsActive() || m_scaled_width)
+        return 1;
+    return m_clock_divider;
+}
+
+INLINE int HuC6260::GetLineClockDivider(int row)
+{
+    int line;
+
+    if (!m_laseractive->IsActive())
+        line = CLAMP(row + m_scanline_start, 0, HUC6260_LINES - 1);
+    else
+        line = (row + m_laseractive_scanline_start + HUC6260_LINES - 3) % HUC6260_LINES;
+
+    int speed = CLAMP(m_line_speed[line], 0, 3);
+    return (speed == 0) ? 4 : ((speed == 1) ? 3 : 2);
+}
+
+INLINE float HuC6260::GetChromaOrigin()
+{
+    int clocks = (m_screen_start_y * HUC6260_LINE_LENGTH) + (k_huc6260_line_start[m_overscan][m_speed] * m_clock_divider);
+
+    if (m_auto_crop)
+        clocks += m_crop_offset_clocks;
+
+    return (float)(clocks % 6) / 6.0f;
+}
+
+INLINE void HuC6260::GetActiveRegion(int* x, int* y, int* width, int* height)
+{
+    *x = 0;
+    *y = 0;
+    *width = GetCurrentWidth();
+    *height = GetCurrentHeight();
+
+    if (m_laseractive->IsActive() || m_auto_crop || !m_overscan)
+        return;
+
+    int full_width = m_scaled_width ? k_huc6260_scaling_width[1] : k_huc6260_line_width[1][m_speed];
+    int active_width = m_scaled_width ? k_huc6260_scaling_width[0] : k_huc6260_line_width[0][m_speed];
+    *x = (full_width - active_width) / 2;
+    *width = active_width;
+}
+
+INLINE void HuC6260::GetBorderColor(u8* rgb)
+{
+    const u8* color = m_rgba888_palette[m_palette][m_color_table[0x100] & 0x1FF];
+    rgb[0] = color[0];
+    rgb[1] = color[1];
+    rgb[2] = color[2];
+}
+
+INLINE bool HuC6260::IsLowPassActive()
+{
+    return m_lowpass_enabled && (GetLowPassAlpha(m_speed) < 1.0f);
+}
+
 INLINE void HuC6260::SetScanlineStart(int scanline_start)
 {
     m_scanline_start = CLAMP(scanline_start, 0, HUC6270_LINES_ACTIVE - 1);

@@ -41,6 +41,19 @@ struct GG_Runtime_Info
     float aspect_ratio;
     float pixel_aspect_ratio;
     double fps;
+    float pixel_clock;
+    float line_rate;
+    int source_lines;
+    int active_region[4];
+    float chroma_origin;
+    float chroma_texel_cycles;
+    float chroma_line_cycles;
+    float chroma_frame_cycles;
+    u8 border_color[3];
+    bool border_valid;
+    int system_type;
+    int video_mode;
+    bool low_pass;
 };
 
 enum GG_Console_Type

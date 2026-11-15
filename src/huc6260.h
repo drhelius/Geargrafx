@@ -95,6 +95,13 @@ public:
     void GetScreenBounds(int* start_x, int* end_x, int* start_y, int* end_y);
     int GetWidthScale();
     float GetPixelAspectRatio();
+    bool IsScaledWidth();
+    int GetTexelClocks();
+    int GetLineClockDivider(int row);
+    float GetChromaOrigin();
+    void GetActiveRegion(int* x, int* y, int* width, int* height);
+    void GetBorderColor(u8* rgb);
+    bool IsLowPassActive();
     void SetScanlineStart(int scanline_start);
     void SetScanlineEnd(int scanline_end);
     void SetLaserActiveScanlines(int start, int end);
@@ -129,6 +136,7 @@ private:
     void SanitizeState();
     template <int BPP>
     void ApplyLowPassFilter(u8* buffer = NULL, int width = 0, int height = 0, int speed = -1);
+    float GetLowPassAlpha(int speed);
     void RenderLaserActiveLine(int source_y);
     u8 RGB565Component(u8 value, u16 max);
     u16 PackRGB565(u8 red, u8 green, u8 blue);
@@ -171,6 +179,7 @@ private:
     s32 m_crop_start;
     s32 m_crop_end;
     int m_crop_width;
+    int m_crop_offset_clocks;
     int m_scanline_start;
     int m_scanline_end;
     int m_laseractive_scanline_start;
