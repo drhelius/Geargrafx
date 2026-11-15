@@ -139,14 +139,14 @@ void gui_debug_window_huc6270_background(int vdc)
             float x = p.x;
             for (int n = 0; n <= screen_size_x; n++)
             {
-                draw_list->AddLine(ImVec2(x, p.y), ImVec2(x, p.y + size_v), ImColor(grid_color), 1.0f);
+                draw_list->AddLineV(x, p.y, p.y + size_v, ImColor(grid_color), 1.0f);
                 x += spacing_h;
             }
 
             float y = p.y;
             for (int n = 0; n <= screen_size_y; n++)
             {
-                draw_list->AddLine(ImVec2(p.x, y), ImVec2(p.x + size_h, y), ImColor(grid_color), 1.0f);
+                draw_list->AddLineH(p.x, p.x + size_h, y, ImColor(grid_color), 1.0f);
                 y += spacing_v;
             }
         }
@@ -165,7 +165,7 @@ void gui_debug_window_huc6270_background(int vdc)
             {
                 ImVec2 tile_pos = ImVec2(p.x + (x * 8.0f * scale), p.y + (y * 8.0f * scale));
                 ImVec2 tile_size = ImVec2(8.0f * scale, 8.0f * scale);
-                draw_list->AddRect(tile_pos, ImVec2(tile_pos.x + tile_size.x, tile_pos.y + tile_size.y), ImColor(cyan), 2.0f, ImDrawFlags_RoundCornersAll, 2.0f);
+                draw_list->AddRect(tile_pos, ImVec2(tile_pos.x + tile_size.x, tile_pos.y + tile_size.y), ImColor(cyan), 2.0f, 2.0f, ImDrawFlags_StrokeCenterBiased);
 
                 u16 bat_entry = vram[i];
                 int tile_index = bat_entry & 0x07FF;
@@ -344,10 +344,10 @@ static void draw_screen_h_line(ImDrawList* draw_list, ImVec2 p, float scale, int
     int end = x + length;
     float line_y = p.y + (y * scale);
 
-    draw_list->AddLine(ImVec2(p.x + (x * scale), line_y), ImVec2(p.x + (MIN(end, width) * scale), line_y), color, 2.0f);
+    draw_list->AddLineH(p.x + (x * scale), p.x + (MIN(end, width) * scale), line_y, color, 2.0f, ImDrawFlags_StrokeCenterBiased);
 
     if (end > width)
-        draw_list->AddLine(ImVec2(p.x, line_y), ImVec2(p.x + ((end - width) * scale), line_y), color, 2.0f);
+        draw_list->AddLineH(p.x, p.x + ((end - width) * scale), line_y, color, 2.0f, ImDrawFlags_StrokeCenterBiased);
 }
 
 static void draw_screen_v_line(ImDrawList* draw_list, ImVec2 p, float scale, int x, int y, int length, int height, ImU32 color)
@@ -355,10 +355,10 @@ static void draw_screen_v_line(ImDrawList* draw_list, ImVec2 p, float scale, int
     int end = y + length;
     float line_x = p.x + (x * scale);
 
-    draw_list->AddLine(ImVec2(line_x, p.y + (y * scale)), ImVec2(line_x, p.y + (MIN(end, height) * scale)), color, 2.0f);
+    draw_list->AddLineV(line_x, p.y + (y * scale), p.y + (MIN(end, height) * scale), color, 2.0f, ImDrawFlags_StrokeCenterBiased);
 
     if (end > height)
-        draw_list->AddLine(ImVec2(line_x, p.y), ImVec2(line_x, p.y + ((end - height) * scale)), color, 2.0f);
+        draw_list->AddLineV(line_x, p.y, p.y + ((end - height) * scale), color, 2.0f, ImDrawFlags_StrokeCenterBiased);
 }
 
 static int wrap_delta(int delta, int size)

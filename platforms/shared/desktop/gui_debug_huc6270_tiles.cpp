@@ -118,14 +118,14 @@ void gui_debug_window_huc6270_tiles(int vdc)
             float x = p.x;
             for (int n = 0; n <= TILES_ACROSS; n++)
             {
-                draw_list->AddLine(ImVec2(x, p.y), ImVec2(x, p.y + size_v), ImColor(grid_color), 1.0f);
+                draw_list->AddLineV(x, p.y, p.y + size_v, ImColor(grid_color), 1.0f);
                 x += spacing;
             }
 
             float y = p.y;
             for (int n = 0; n <= TILES_DOWN; n++)
             {
-                draw_list->AddLine(ImVec2(p.x, y), ImVec2(p.x + size_h, y), ImColor(grid_color), 1.0f);
+                draw_list->AddLineH(p.x, p.x + size_h, y, ImColor(grid_color), 1.0f);
                 y += spacing;
             }
         }
@@ -143,7 +143,7 @@ void gui_debug_window_huc6270_tiles(int vdc)
 
                 ImVec2 tile_pos = ImVec2(p.x + (tile_x * 8.0f * scale), p.y + (tile_y * 8.0f * scale));
                 ImVec2 tile_end = ImVec2(tile_pos.x + 8.0f * scale, tile_pos.y + 8.0f * scale);
-                draw_list->AddRect(tile_pos, tile_end, ImColor(cyan), 2.0f, ImDrawFlags_RoundCornersAll, 2.0f);
+                draw_list->AddRect(tile_pos, tile_end, ImColor(cyan), 2.0f, 2.0f, ImDrawFlags_StrokeCenterBiased);
 
                 ImGui::BeginTooltip();
 

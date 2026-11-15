@@ -107,7 +107,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
         if (is_hovered && selected_sprite[vdc - 1] != s)
         {
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
-            draw_list->AddRect(ImVec2(p[s].x, p[s].y), ImVec2(p[s].x + fwidth, p[s].y + fheight), ImColor(cyan), 2.0f, ImDrawFlags_RoundCornersAll, 3.0f);
+            draw_list->AddRect(ImVec2(p[s].x, p[s].y), ImVec2(p[s].x + fwidth, p[s].y + fheight), ImColor(cyan), 2.0f, 3.0f, ImDrawFlags_StrokeCenterBiased);
         }
 
         if (selected_sprite[vdc - 1] == s)
@@ -115,7 +115,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
             float t = (float)(0.5 + 0.5 * sin(ImGui::GetTime() * 4.0));
             ImVec4 pulse_color = gui_lerp_color(red, white, t);
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
-            draw_list->AddRect(ImVec2(p[s].x, p[s].y), ImVec2(p[s].x + fwidth, p[s].y + fheight), ImColor(pulse_color), 2.0f, ImDrawFlags_RoundCornersAll, 3.0f);
+            draw_list->AddRect(ImVec2(p[s].x, p[s].y), ImVec2(p[s].x + fwidth, p[s].y + fheight), ImColor(pulse_color), 2.0f, 3.0f, ImDrawFlags_StrokeCenterBiased);
         }
     }
 
@@ -209,7 +209,7 @@ void gui_debug_window_huc6270_sprites(int vdc)
         float t = (float)(0.5 + 0.5 * sin(ImGui::GetTime() * 4.0));
         ImVec4 pulse_color = gui_lerp_color(red, white, t);
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        draw_list->AddRect(ImVec2(rectx_min, recty_min), ImVec2(rectx_max, recty_max), ImColor(pulse_color), 2.0f, ImDrawFlags_RoundCornersAll, 2.0f);
+        draw_list->AddRect(ImVec2(rectx_min, recty_min), ImVec2(rectx_max, recty_max), ImColor(pulse_color), 2.0f, 2.0f, ImDrawFlags_StrokeCenterBiased);
 
         ImGui::NewLine();
 
