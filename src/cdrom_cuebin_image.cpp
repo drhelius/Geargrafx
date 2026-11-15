@@ -208,7 +208,12 @@ MediaFile* CdRomCueBinImage::ResolveNormalFile(const char* reference, char* reso
     }
 
     std::string path = reference;
-    if (!path.empty() && !image->IsUriPath(path.c_str()) && (path[0] != '/') && (path[0] != '\\') && ((path.size() < 2) || (path[1] != ':')) &&
+    bool uri = image->IsUriPath(path.c_str());
+
+    if (!uri)
+        std::replace(path.begin(), path.end(), '\\', '/');
+
+    if (!path.empty() && !uri && (path[0] != '/') && ((path.size() < 2) || (path[1] != ':')) &&
         (strpbrk(image->m_file_path, "/\\") != NULL))
     {
         path = std::string(image->m_file_directory) + "/" + path;
