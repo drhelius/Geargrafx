@@ -188,6 +188,7 @@ static inline void process(config_Operation operation)
     CONFIG_BOOL("Debug", "PauseOnBRKTriggerIRQ", config_debug.pause_on_brk_trigger_irq, false);
 
     // Interface
+    CONFIG_INT_RANGE("Debug", "FontType", config_debug.font_type, 0, 0, 1);
     CONFIG_INT_RANGE("Debug", "FontSize", config_debug.font_size, 0, 0, 3);
     CONFIG_INT("Debug", "Scale", config_debug.scale, 2);
     CONFIG_INT("Debug", "Overscan", config_debug.overscan, 0);
