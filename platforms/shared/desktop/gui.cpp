@@ -63,7 +63,6 @@ static void select_save_slot(int slot);
 static bool finish_loading_rom(void);
 static void load_pending_state(void);
 static void update_window_visibility_padding(void);
-static ImVec2 snap_to_physical_pixel(const ImVec2& pos);
 static void set_style(void);
 static void set_style_light(ImGuiStyle& style);
 static void set_style_dark(ImGuiStyle& style);
@@ -819,7 +818,7 @@ static void main_window(void)
 
     ImVec2 image_size(image_w, image_h);
     ImVec2 layout_max = ImGui::GetCursorScreenPos() + image_size;
-    ImVec2 image_min = snap_to_physical_pixel(ImGui::GetCursorScreenPos());
+    ImVec2 image_min = gui_snap_to_physical_pixel(ImGui::GetCursorScreenPos());
     ImVec2 image_max = image_min + image_size;
 
     ImGui::Dummy(image_size);
@@ -855,7 +854,7 @@ static void main_window(void)
     ImGui::PopStyleVar();
 }
 
-static ImVec2 snap_to_physical_pixel(const ImVec2& pos)
+ImVec2 gui_snap_to_physical_pixel(const ImVec2& pos)
 {
     ImGuiViewport* viewport = ImGui::GetWindowViewport();
     ImVec2 scale = viewport->FramebufferScale;
