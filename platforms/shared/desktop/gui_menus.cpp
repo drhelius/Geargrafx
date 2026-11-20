@@ -169,6 +169,25 @@ static void menu_geargrafx(void)
             open_rom = true;
         }
 
+        if (ImGui::BeginMenu("Open Recent"))
+        {
+            for (int i = 0; i < config_max_recent_roms; i++)
+            {
+                if (config_emulator.recent_roms[i].length() > 0)
+                {
+                    const char* shortcut = (i == 0) ? config_hotkeys[config_HotkeyIndex_ReloadROM].str : NULL;
+                    if (ImGui::MenuItem(config_emulator.recent_roms[i].c_str(), shortcut))
+                    {
+                        char rom_path[4096];
+                        strncpy_fit(rom_path, config_emulator.recent_roms[i].c_str(), sizeof(rom_path));
+                        gui_load_rom(rom_path);
+                    }
+                }
+            }
+
+            ImGui::EndMenu();
+        }
+
 #if defined(GG_ENABLE_PHYSICAL_CDROM)
         if (ImGui::BeginMenu("Physical CD-ROM"))
         {
@@ -230,25 +249,6 @@ static void menu_geargrafx(void)
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Open Recent"))
-        {
-            for (int i = 0; i < config_max_recent_roms; i++)
-            {
-                if (config_emulator.recent_roms[i].length() > 0)
-                {
-                    const char* shortcut = (i == 0) ? config_hotkeys[config_HotkeyIndex_ReloadROM].str : NULL;
-                    if (ImGui::MenuItem(config_emulator.recent_roms[i].c_str(), shortcut))
-                    {
-                        char rom_path[4096];
-                        strncpy_fit(rom_path, config_emulator.recent_roms[i].c_str(), sizeof(rom_path));
-                        gui_load_rom(rom_path);
-                    }
-                }
-            }
-
-            ImGui::EndMenu();
-        }
-
         ImGui::Separator();
         ImGui::MenuItem("Enable Softpatching", "", &config_emulator.softpatching);
         if (ImGui::IsItemHovered())
@@ -268,16 +268,21 @@ static void menu_geargrafx(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Fast Forward", config_hotkeys[config_HotkeyIndex_FFWD].str, &config_emulator.ffwd, media_actions_enabled && !turbolink_active))
+        if (ImGui::BeginMenu("Fast Forward", !turbolink_active))
         {
-            gui_action_ffwd();
-        }
+            if (ImGui::MenuItem("Enabled", config_hotkeys[config_HotkeyIndex_FFWD].str, &config_emulator.ffwd, media_actions_enabled))
+            {
+                gui_action_ffwd();
+            }
 
-        if (ImGui::BeginMenu("Fast Forward Speed", !turbolink_active))
-        {
-            ImGui::PushItemWidth(100.0f);
-            ImGui::Combo("##fwd", &config_emulator.ffwd_speed, "X 1.5\0X 2\0X 2.5\0X 3\0Unlimited\0\0");
-            ImGui::PopItemWidth();
+            if (ImGui::BeginMenu("Speed"))
+            {
+                ImGui::PushItemWidth(100.0f);
+                ImGui::Combo("##fwd", &config_emulator.ffwd_speed, "X 1.5\0X 2\0X 2.5\0X 3\0Unlimited\0\0");
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
             ImGui::EndMenu();
         }
 
@@ -687,6 +692,164 @@ static void menu_emulator(void)
 
         ImGui::Separator();
 
+        if (ImGui::BeginMenu("Console Model"))
+        {
+            ImGui::PushItemWidth(170.0f);
+            if (ImGui::Combo("##consoletype", &config_emulator.console_type, "Auto\0PC Engine (JAP)\0SuperGrafx (JAP)\0TurboGrafx-16 (USA)\0\0"))
+            {
+                emu_set_console_type((GG_Console_Type)config_emulator.console_type);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("It is recommended to leave this option on Auto.");
+                ImGui::Text("Many USA games will fail to start on Japanese systems.");
+                ImGui::Text("Reset the emulator to apply changes.");
+                ImGui::EndTooltip();
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("CPU Overclock"))
+        {
+            ImGui::PushItemWidth(150.0f);
+            if (ImGui::SliderInt("##cpu_overclock", &config_emulator.cpu_overclock, 100, 300, "%d%%", ImGuiSliderFlags_AlwaysClamp))
+            {
+                emu_set_cpu_overclock(config_emulator.cpu_overclock);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("It is not recommended to change the default value (100%%).");
+                ImGui::Text("Overclocking is not accurate and can break game logic, timing and music.");
+                ImGui::Text("Only use it to reduce slowdown in games that need it.");
+                ImGui::EndTooltip();
+            }
+            ImGui::PopItemWidth();
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("CD-ROM"))
+        {
+            if (ImGui::BeginMenu("Model"))
+            {
+                ImGui::PushItemWidth(150.0f);
+                if (ImGui::Combo("##cdromtype", &config_emulator.cdrom_type, "Auto\0Standard\0Super CD-ROM\0Arcade CD-ROM\0\0"))
+                {
+                    emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
+                }
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::BeginTooltip();
+                    ImGui::Text("Auto enables CD-ROM hardware only for CD media.");
+                    ImGui::Text("Selecting a model also enables CD-ROM hardware for HuCards.");
+                    ImGui::Text("HuCards keep their own ROM and cartridge RAM mapping.");
+                    ImGui::Text("Reset the emulator to apply changes.");
+                    ImGui::EndTooltip();
+                }
+
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Speed"))
+            {
+                ImGui::PushItemWidth(150.0f);
+                if (ImGui::Combo("##cdromspeed", &config_emulator.cdrom_speed, "1x (Default)\0" "2x\0" "3x\0" "4x\0" "6x\0\0"))
+                {
+                    emu_set_cdrom_speed(config_emulator.cdrom_speed);
+                }
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::BeginTooltip();
+                    ImGui::Text("It is not recommended to change the default value (1x).");
+                    ImGui::Text("Faster CD-ROM reads are not accurate and can break games, cutscenes and audio sync.");
+                    ImGui::Text("Only use it to reduce loading times in games that need it.");
+                    ImGui::EndTooltip();
+                }
+                ImGui::PopItemWidth();
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::MenuItem("Preload CD-ROM in RAM", "", &config_emulator.preload_cdrom))
+            {
+                emu_set_preload_cdrom(config_emulator.preload_cdrom);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("This option will preload all CD-ROM tracks in RAM.");
+                ImGui::Text("Load a new CD-ROM image to apply changes.");
+                ImGui::EndTooltip();
+            }
+
+            if (ImGui::MenuItem("Fast Forward Loads", "", &config_emulator.ffwd_loads))
+            {
+                emu_set_ffwd_loads(config_emulator.ffwd_loads);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Run at maximum speed while the drive reads data and");
+                ImGui::Text("the game shows a still, silent screen.");
+                ImGui::EndTooltip();
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("LaserActive Region"))
+        {
+            ImGui::PushItemWidth(100.0f);
+
+            if (ImGui::Combo("##laseractiveregion", &config_emulator.laseractive_region, "Auto\0Japan\0US\0\0"))
+            {
+                emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
+
+                if (!emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive())
+                    gui_action_reset();
+            }
+
+            ImGui::PopItemWidth();
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::MenuItem("Force Backup RAM", "", &config_emulator.backup_ram))
+        {
+            emu_set_backup_ram(config_emulator.backup_ram);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("This option will add backup RAM support to HuCard games.");
+            ImGui::Text("It is recommended to leave this option enabled.");
+            ImGui::Text("Reset the emulator to apply changes.");
+            ImGui::EndTooltip();
+        }
+
+        if (ImGui::BeginMenu("Memory Base 128", !emu_turbolink_is_active()))
+        {
+            ImGui::PushItemWidth(100.0f);
+            if (ImGui::Combo("##mb128_backup", &config_emulator.mb128_mode, "Auto\0Enabled\0Disabled\0\0"))
+            {
+                emu_set_mb128_mode((GG_MB128_Mode)config_emulator.mb128_mode);
+            }
+            ImGui::PopItemWidth();
+
+            ImGui::Separator();
+
+            if (emu_get_core()->GetInput()->GetMB128()->IsConnected())
+                ImGui::TextColored(service_mcp_http_color, "Connected");
+            else
+                ImGui::TextColored(gray, "Disconnected");
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
         if (ImGui::BeginMenu("BIOS"))
         {
             Media* media = emu_get_core()->GetMedia();
@@ -823,169 +986,20 @@ static void menu_emulator(void)
 
         ImGui::Separator();
 
-        if (ImGui::BeginMenu("Console Model"))
-        {
-            ImGui::PushItemWidth(170.0f);
-            if (ImGui::Combo("##consoletype", &config_emulator.console_type, "Auto\0PC Engine (JAP)\0SuperGrafx (JAP)\0TurboGrafx-16 (USA)\0\0"))
-            {
-                emu_set_console_type((GG_Console_Type)config_emulator.console_type);
-            }
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text("It is recommended to leave this option on Auto.");
-                ImGui::Text("Many USA games will fail to start on Japanese systems.");
-                ImGui::Text("Reset the emulator to apply changes.");
-                ImGui::EndTooltip();
-            }
-
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("CPU Overclock"))
-        {
-            ImGui::PushItemWidth(150.0f);
-            if (ImGui::SliderInt("##cpu_overclock", &config_emulator.cpu_overclock, 100, 300, "%d%%", ImGuiSliderFlags_AlwaysClamp))
-            {
-                emu_set_cpu_overclock(config_emulator.cpu_overclock);
-            }
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text("It is not recommended to change the default value (100%%).");
-                ImGui::Text("Overclocking is not accurate and can break game logic, timing and music.");
-                ImGui::Text("Only use it to reduce slowdown in games that need it.");
-                ImGui::EndTooltip();
-            }
-            ImGui::PopItemWidth();
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("CD-ROM"))
-        {
-            if (ImGui::BeginMenu("Model"))
-            {
-                ImGui::PushItemWidth(150.0f);
-                if (ImGui::Combo("##cdromtype", &config_emulator.cdrom_type, "Auto\0Standard\0Super CD-ROM\0Arcade CD-ROM\0\0"))
-                {
-                    emu_set_cdrom_type((GG_CDROM_Type)config_emulator.cdrom_type);
-                }
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::BeginTooltip();
-                    ImGui::Text("Auto enables CD-ROM hardware only for CD media.");
-                    ImGui::Text("Selecting a model also enables CD-ROM hardware for HuCards.");
-                    ImGui::Text("HuCards keep their own ROM and cartridge RAM mapping.");
-                    ImGui::Text("Reset the emulator to apply changes.");
-                    ImGui::EndTooltip();
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Speed"))
-            {
-                ImGui::PushItemWidth(150.0f);
-                if (ImGui::Combo("##cdromspeed", &config_emulator.cdrom_speed, "1x (Default)\0" "2x\0" "3x\0" "4x\0" "6x\0\0"))
-                {
-                    emu_set_cdrom_speed(config_emulator.cdrom_speed);
-                }
-                if (ImGui::IsItemHovered())
-                {
-                    ImGui::BeginTooltip();
-                    ImGui::Text("It is not recommended to change the default value (1x).");
-                    ImGui::Text("Faster CD-ROM reads are not accurate and can break games, cutscenes and audio sync.");
-                    ImGui::Text("Only use it to reduce loading times in games that need it.");
-                    ImGui::EndTooltip();
-                }
-                ImGui::PopItemWidth();
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::MenuItem("Preload CD-ROM in RAM", "", &config_emulator.preload_cdrom))
-            {
-                emu_set_preload_cdrom(config_emulator.preload_cdrom);
-            }
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text("This option will preload all CD-ROM tracks in RAM.");
-                ImGui::Text("Load a new CD-ROM image to apply changes.");
-                ImGui::EndTooltip();
-            }
-
-            if (ImGui::MenuItem("Fast Forward Loads", "", &config_emulator.ffwd_loads))
-            {
-                emu_set_ffwd_loads(config_emulator.ffwd_loads);
-            }
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text("Run at maximum speed while the drive reads data and");
-                ImGui::Text("the game shows a still, silent screen.");
-                ImGui::EndTooltip();
-            }
-
-            ImGui::MenuItem("Show Fast Forward Notification", "", &config_emulator.ffwd_loads_notification, config_emulator.ffwd_loads);
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                ImGui::Text("Show an icon while a CD-ROM load runs at maximum speed.");
-                ImGui::EndTooltip();
-            }
-
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("LaserActive Region"))
-        {
-            ImGui::PushItemWidth(100.0f);
-
-            if (ImGui::Combo("##laseractiveregion", &config_emulator.laseractive_region, "Auto\0Japan\0US\0\0"))
-            {
-                emu_set_laseractive_region((GG_LaserActive_Region)config_emulator.laseractive_region);
-
-                if (!emu_is_empty() && emu_get_core()->GetMedia()->IsLaserActive())
-                    gui_action_reset();
-            }
-
-            ImGui::PopItemWidth();
-            ImGui::EndMenu();
-        }
-
-        ImGui::Separator();
-
-        if (ImGui::MenuItem("Force Backup RAM", "", &config_emulator.backup_ram))
-        {
-            emu_set_backup_ram(config_emulator.backup_ram);
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("This option will add backup RAM support to HuCard games.");
-            ImGui::Text("It is recommended to leave this option enabled.");
-            ImGui::Text("Reset the emulator to apply changes.");
-            ImGui::EndTooltip();
-        }
-
-        ImGui::Separator();
-
-        if (ImGui::BeginMenu("Memory Base 128", !emu_turbolink_is_active()))
-        {
-            ImGui::PushItemWidth(100.0f);
-            if (ImGui::Combo("##mb128_backup", &config_emulator.mb128_mode, "Auto\0Enabled\0Disabled\0\0"))
-            {
-                emu_set_mb128_mode((GG_MB128_Mode)config_emulator.mb128_mode);
-            }
-            ImGui::EndMenu();
-        }
-
-        ImGui::TextColored(gray, "Status: %s", emu_get_core()->GetInput()->GetMB128()->IsConnected() ? "CONNECTED" : "DISCONNECTED");
-
-        ImGui::Separator();
-
         if (ImGui::MenuItem("Cheats...", "", false, !emu_is_empty()))
             gui_cheats_show();
+
+        ImGui::Separator();
+
+        ImGui::MenuItem("Start Paused", "", &config_emulator.start_paused);
+        ImGui::MenuItem("Pause When Inactive", "", &config_emulator.pause_when_inactive);
+        if (ImGui::MenuItem("Allow Screen Saver", "", &config_emulator.allow_screensaver))
+        {
+            if (config_emulator.allow_screensaver)
+                SDL_EnableScreenSaver();
+            else
+                SDL_DisableScreenSaver();
+        }
 
         ImGui::Separator();
 
@@ -1004,20 +1018,16 @@ static void menu_emulator(void)
 
             ImGui::Separator();
             ImGui::MenuItem("CD-ROM Activity", "", &config_emulator.show_cdrom_activity);
+            ImGui::MenuItem("Fast Forward Loads", "", &config_emulator.ffwd_loads_notification, config_emulator.ffwd_loads);
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("Show an icon while a CD-ROM load runs at maximum speed.");
+                ImGui::Text("Needs Emulator > CD-ROM > Fast Forward Loads.");
+                ImGui::EndTooltip();
+            }
 
             ImGui::EndMenu();
-        }
-
-        ImGui::Separator();
-
-        ImGui::MenuItem("Start Paused", "", &config_emulator.start_paused);
-        ImGui::MenuItem("Pause When Inactive", "", &config_emulator.pause_when_inactive);
-        if (ImGui::MenuItem("Allow Screen Saver", "", &config_emulator.allow_screensaver))
-        {
-            if (config_emulator.allow_screensaver)
-                SDL_EnableScreenSaver();
-            else
-                SDL_DisableScreenSaver();
         }
 
         ImGui::Separator();
@@ -1280,6 +1290,52 @@ static void menu_video(void)
 
         ImGui::Separator();
 
+        gui_shader_menu();
+
+        if (ImGui::BeginMenu("Low Pass Filter"))
+        {
+            if (ImGui::MenuItem("Enable Low Pass Filter", "", &config_video.lowpass_filter))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+            ImGui::Separator();
+            ImGui::PushItemWidth(180.0f);
+            if (ImGui::SliderFloat("##lpf_intensity", &config_video.lowpass_intensity, 0.0f, 1.0f, "Intensity = %.2f"))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+            ImGui::PushItemWidth(180.0f);
+            if (ImGui::SliderFloat("##lpf_cutoff", &config_video.lowpass_cutoff_mhz, 3.0f, 7.0f, "Cutoff = %.1f MHz"))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Apply to speeds:");
+            if (ImGui::Checkbox("5.36 MHz (256px)", &config_video.lowpass_speed[0]))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+            if (ImGui::Checkbox("7.16 MHz (341px)", &config_video.lowpass_speed[1]))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+            if (ImGui::Checkbox("10.8 MHz (512px)", &config_video.lowpass_speed[2]))
+            {
+                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
+                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
         if (ImGui::BeginMenu("Color Palette"))
         {
             ImGui::PushItemWidth(180.0f);
@@ -1346,51 +1402,6 @@ static void menu_video(void)
             ImGui::Text("Useful for homebrew games that don't initialize");
             ImGui::Text("their own display timing registers.");
             ImGui::EndTooltip();
-        }
-
-        ImGui::Separator();
-        gui_shader_menu();
-
-        if (ImGui::BeginMenu("Low Pass Filter"))
-        {
-            if (ImGui::MenuItem("Enable Low Pass Filter", "", &config_video.lowpass_filter))
-            {
-                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
-                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
-            }
-            ImGui::Separator();
-            ImGui::PushItemWidth(180.0f);
-            if (ImGui::SliderFloat("##lpf_intensity", &config_video.lowpass_intensity, 0.0f, 1.0f, "Intensity = %.2f"))
-            {
-                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
-                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
-            }
-            ImGui::PushItemWidth(180.0f);
-            if (ImGui::SliderFloat("##lpf_cutoff", &config_video.lowpass_cutoff_mhz, 3.0f, 7.0f, "Cutoff = %.1f MHz"))
-            {
-                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
-                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
-            }
-
-            ImGui::Separator();
-            ImGui::Text("Apply to speeds:");
-            if (ImGui::Checkbox("5.36 MHz (256px)", &config_video.lowpass_speed[0]))
-            {
-                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
-                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
-            }
-            if (ImGui::Checkbox("7.16 MHz (341px)", &config_video.lowpass_speed[1]))
-            {
-                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
-                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
-            }
-            if (ImGui::Checkbox("10.8 MHz (512px)", &config_video.lowpass_speed[2]))
-            {
-                emu_set_lowpass_filter(config_video.lowpass_filter, config_video.lowpass_intensity, config_video.lowpass_cutoff_mhz,
-                    config_video.lowpass_speed[0], config_video.lowpass_speed[1], config_video.lowpass_speed[2]);
-            }
-
-            ImGui::EndMenu();
         }
 
         ImGui::Separator();
@@ -1632,6 +1643,19 @@ static void menu_input(void)
             ImGui::EndMenu();
         }
 
+        if (ImGui::MenuItem("Enable Turbo Tap", "", &config_input.turbo_tap, !emu_turbolink_is_active()))
+        {
+            emu_set_turbo_tap(config_input.turbo_tap);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::BeginTooltip();
+            ImGui::Text("Some games may not work properly with Turbo Tap enabled.");
+            ImGui::Text("It is recommended to keep this option disabled if");
+            ImGui::Text("you are using the emulator in single player only.");
+            ImGui::EndTooltip();
+        }
+
         if (ImGui::BeginMenu("Mouse"))
         {
             ImGui::MenuItem("Capture Mouse", config_hotkeys[config_HotkeyIndex_CaptureMouse].str, &config_emulator.capture_mouse);
@@ -1771,19 +1795,6 @@ static void menu_input(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Enable Turbo Tap", "", &config_input.turbo_tap, !emu_turbolink_is_active()))
-        {
-            emu_set_turbo_tap(config_input.turbo_tap);
-        }
-        if (ImGui::IsItemHovered())
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("Some games may not work properly with Turbo Tap enabled.");
-            ImGui::Text("It is recommended to keep this option disabled if");
-            ImGui::Text("you are using the emulator in single player only.");
-            ImGui::EndTooltip();
-        }
-
         ImGui::MenuItem("Allow Up+Down / Left+Right", "", &config_input.allow_up_down);
         if (ImGui::IsItemHovered())
         {
@@ -1898,29 +1909,18 @@ static void menu_audio(void)
 
         ImGui::Separator();
 
-        if (ImGui::MenuItem("Mute PSG", "", &gui_audio_mute_psg, config_audio.enable))
-        {
-            emu_audio_psg_volume(gui_audio_mute_psg ? 0 : config_audio.psg_volume);
-        }
-
-        if (ImGui::MenuItem("Mute CD-ROM", "", &gui_audio_mute_cdrom, config_audio.enable))
-        {
-            emu_audio_cdrom_volume(gui_audio_mute_cdrom ? 0 : config_audio.cdrom_volume);
-        }
-
-        if (ImGui::MenuItem("Mute ADPCM", "", &gui_audio_mute_adpcm, config_audio.enable))
-        {
-            emu_audio_adpcm_volume(gui_audio_mute_adpcm ? 0 : config_audio.adpcm_volume);
-        }
-
-        ImGui::Separator();
-
         if (ImGui::BeginMenu("PSG Volume", config_audio.enable))
         {
+            if (ImGui::MenuItem("Mute", "", &gui_audio_mute_psg))
+            {
+                emu_audio_psg_volume(gui_audio_mute_psg ? 0 : config_audio.psg_volume);
+            }
+
+            ImGui::Separator();
             ImGui::PushItemWidth(200.0f);
             if (ImGui::SliderFloat("##psg_volume", &config_audio.psg_volume, 0.0f, 2.0f, "Volume = %.2f"))
             {
-                emu_audio_psg_volume(config_audio.psg_volume);
+                emu_audio_psg_volume(gui_audio_mute_psg ? 0 : config_audio.psg_volume);
             }
             ImGui::PopItemWidth();
             if (ImGui::IsItemHovered())
@@ -1934,10 +1934,16 @@ static void menu_audio(void)
 
         if (ImGui::BeginMenu("CD-ROM Volume", config_audio.enable))
         {
+            if (ImGui::MenuItem("Mute", "", &gui_audio_mute_cdrom))
+            {
+                emu_audio_cdrom_volume(gui_audio_mute_cdrom ? 0 : config_audio.cdrom_volume);
+            }
+
+            ImGui::Separator();
             ImGui::PushItemWidth(200.0f);
             if (ImGui::SliderFloat("##cdrom_volume", &config_audio.cdrom_volume, 0.0f, 2.0f, "Volume = %.2f"))
             {
-                emu_audio_cdrom_volume(config_audio.cdrom_volume);
+                emu_audio_cdrom_volume(gui_audio_mute_cdrom ? 0 : config_audio.cdrom_volume);
             }
             ImGui::PopItemWidth();
             if (ImGui::IsItemHovered())
@@ -1951,10 +1957,16 @@ static void menu_audio(void)
 
         if (ImGui::BeginMenu("ADPCM Volume", config_audio.enable))
         {
+            if (ImGui::MenuItem("Mute", "", &gui_audio_mute_adpcm))
+            {
+                emu_audio_adpcm_volume(gui_audio_mute_adpcm ? 0 : config_audio.adpcm_volume);
+            }
+
+            ImGui::Separator();
             ImGui::PushItemWidth(200.0f);
             if (ImGui::SliderFloat("##adpcm_volume", &config_audio.adpcm_volume, 0.0f, 2.0f, "Volume = %.2f"))
             {
-                emu_audio_adpcm_volume(config_audio.adpcm_volume);
+                emu_audio_adpcm_volume(gui_audio_mute_adpcm ? 0 : config_audio.adpcm_volume);
             }
             ImGui::PopItemWidth();
             if (ImGui::IsItemHovered())
