@@ -1274,6 +1274,19 @@ static void menu_video(void)
             }
             ImGui::PopItemWidth();
 
+            if (ImGui::MenuItem("Black & White Mode", "", &config_video.black_and_white))
+            {
+                emu_set_black_and_white(config_video.black_and_white);
+            }
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::BeginTooltip();
+                ImGui::Text("When a game turns on the VCE black and white mode:");
+                ImGui::BulletText("Enabled: the picture turns grayscale, like on a composite TV.");
+                ImGui::BulletText("Disabled: colors stay, like on an RGB modded console.");
+                ImGui::EndTooltip();
+            }
+
             if (ImGui::MenuItem("Load Custom Palette..."))
             {
                 gui_file_dialog_load_palette();

@@ -175,8 +175,9 @@ PC Engine video uniforms, updated every frame:
 - `int CoreFlags`: bit flags, `0` when none is set.
   - `2`: `Video > Low Pass Filter` is enabled for the current dot clock, so a composite shader can skip its own luma
     filter.
-  - `8`: the game enabled the VCE black and white mode (colorburst off), so a composite shader can drop all chroma
-    like a TV color killer. The frame already uses the B&W palette colors.
+  - `8`: the game turned on the VCE black and white mode (colorburst off) and
+    `Video > Color Palette > Black & White Mode` is enabled, so a composite shader can drop all chroma like a TV color
+    killer. The frame already uses the B&W palette colors.
 
 `FrameCount`, `SourceHistory`, `PassFeedback0`, `<Alias>Feedback` and the frame part of `ChromaPhase` only advance
 when the emulator produces a new frame, or when rewinding steps back one. Redraws while paused, after a window resize

@@ -760,6 +760,20 @@ struct retro_core_option_v2_definition option_defs_us[] = {
         "Standard RGB"
     },
     {
+        "geargrafx_black_and_white",
+        "Black & White Mode",
+        NULL,
+        "Show games that turn on the VCE black and white mode in grayscale, like on a composite TV. Disable it to keep the colors, like on an RGB modded console.",
+        NULL,
+        "video",
+        {
+            { "Enabled",  NULL },
+            { "Disabled", NULL },
+            { NULL, NULL },
+        },
+        "Enabled"
+    },
+    {
         "geargrafx_no_sprite_limit",
         "No Sprite Limit",
         NULL,

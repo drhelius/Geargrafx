@@ -153,7 +153,7 @@ INLINE bool HuC6260::ClockTemplate(u32 cycles)
 
             m_hpos = 0;
             m_pixel_x = 0;
-            m_bw = (m_control_register & 0x80) ? HUC6260_PIXEL_BW : 0;
+            LatchBlackAndWhite();
         }
 
         if (m_hpos == HUC6260_HSYNC_END_HPOS)
@@ -416,7 +416,7 @@ INLINE void HuC6260::SanitizeState()
     m_color_table_address &= 0x01FF;
     m_speed = m_control_register & 0x03;
     m_blur = (m_control_register >> 2) & 0x01;
-    m_bw = (m_control_register & 0x80) ? HUC6260_PIXEL_BW : 0;
+    LatchBlackAndWhite();
 
     switch (m_speed)
     {
@@ -586,6 +586,17 @@ INLINE bool HuC6260::IsLowPassActive()
 INLINE bool HuC6260::IsBlackAndWhite()
 {
     return m_bw != 0;
+}
+
+INLINE void HuC6260::SetBlackAndWhiteEnabled(bool enabled)
+{
+    m_bw_enabled = enabled;
+    LatchBlackAndWhite();
+}
+
+INLINE void HuC6260::LatchBlackAndWhite()
+{
+    m_bw = (m_bw_enabled && (m_control_register & 0x80)) ? HUC6260_PIXEL_BW : 0;
 }
 
 INLINE void HuC6260::SetScanlineStart(int scanline_start)

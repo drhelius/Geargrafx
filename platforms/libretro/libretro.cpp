@@ -1648,6 +1648,14 @@ static void check_variables(void)
         }
     }
 
+    var.key = "geargrafx_black_and_white";
+    var.value = NULL;
+
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+        core->GetHuC6260()->SetBlackAndWhiteEnabled(strcmp(var.value, "Disabled") != 0);
+    }
+
     var.key = "geargrafx_lowpass_filter";
     var.value = NULL;
 

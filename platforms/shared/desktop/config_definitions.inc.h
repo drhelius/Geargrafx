@@ -316,6 +316,7 @@ static inline void process(config_Operation operation)
     CONFIG_INT_RANGE("Video", "LaserActivePixelStart", config_video.laseractive_pixel_start, HUC6260_LASERACTIVE_PIXEL_START, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1);
     CONFIG_INT_RANGE("Video", "LaserActivePixelEnd", config_video.laseractive_pixel_end, HUC6260_LASERACTIVE_PIXEL_END, 0, HUC6260_LASERACTIVE_PIXEL_WIDTH - 1);
     CONFIG_INT_RANGE("Video", "Palette", config_video.palette, 0, 0, 3);
+    CONFIG_BOOL("Video", "BlackAndWhite", config_video.black_and_white, true);
     CONFIG_BOOL("Video", "FPS", config_video.fps, false);
     CONFIG_BOOL("Video", "SpriteLimit", config_video.sprite_limit, false);
     CONFIG_BOOL("Video", "SafeVdcDefaults", config_video.safe_vdc_defaults, false);

@@ -143,6 +143,7 @@ struct config_Video
     int laseractive_pixel_start;
     int laseractive_pixel_end;
     int palette;
+    bool black_and_white;
     bool fps;
     bool sprite_limit;
     bool safe_vdc_defaults;

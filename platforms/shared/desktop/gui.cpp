@@ -152,6 +152,7 @@ void gui_apply_settings(void)
     emu_audio_cdrom_volume(config_audio.cdrom_volume);
     emu_audio_adpcm_volume(config_audio.adpcm_volume);
     emu_set_palette(config_video.palette);
+    emu_set_black_and_white(config_video.black_and_white);
     emu_video_no_sprite_limit(config_video.sprite_limit);
     emu_set_safe_vdc_defaults(config_video.safe_vdc_defaults);
     emu_set_overscan(config_debug.debug ? config_debug.overscan : config_video.overscan);

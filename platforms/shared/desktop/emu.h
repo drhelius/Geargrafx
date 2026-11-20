@@ -125,6 +125,7 @@ EXTERN void emu_debug_continue(void);
 EXTERN void emu_set_disassembler_syntax(int syntax);
 EXTERN void emu_set_palette(int palette);
 EXTERN void emu_set_custom_palette(const u8* data, int count);
+EXTERN void emu_set_black_and_white(bool enabled);
 EXTERN void emu_video_no_sprite_limit(bool enabled);
 EXTERN void emu_set_safe_vdc_defaults(bool enabled);
 EXTERN void emu_set_overscan(int overscan);

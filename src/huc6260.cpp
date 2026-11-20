@@ -50,6 +50,7 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random, LaserActive
     m_palette = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
     m_bw = 0;
+    m_bw_enabled = true;
     InitPointer(m_frame_buffer);
     m_lowpass_enabled = false;
     m_lowpass_intensity = 1.0f;
