@@ -96,6 +96,7 @@ struct config_Emulator
     int window_width;
     int window_height;
     bool show_notifications;
+    int notification_duration;
     bool show_cdrom_activity;
     bool allow_screensaver;
     bool backup_ram;
