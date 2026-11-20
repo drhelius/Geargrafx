@@ -172,8 +172,11 @@ PC Engine video uniforms, updated every frame:
   `vec4(0.0)` on LaserActive frames.
 - `int SystemType`: `0` PC Engine or TurboGrafx-16, `1` SuperGrafx, `2` LaserActive.
 - `int VideoMode`: `0` 5.37 MHz, `1` 7.16 MHz, `2` 10.74 MHz, `3` several dot clocks in the same frame.
-- `int CoreFlags`: `2` when `Video > Low Pass Filter` is enabled for the current dot clock, so a composite shader can
-  skip its own luma filter. `0` otherwise.
+- `int CoreFlags`: bit flags, `0` when none is set.
+  - `2`: `Video > Low Pass Filter` is enabled for the current dot clock, so a composite shader can skip its own luma
+    filter.
+  - `8`: the game enabled the VCE black and white mode (colorburst off), so a composite shader can drop all chroma
+    like a TV color killer. The frame already uses the B&W palette colors.
 
 `FrameCount`, `SourceHistory`, `PassFeedback0`, `<Alias>Feedback` and the frame part of `ChromaPhase` only advance
 when the emulator produces a new frame, or when rewinding steps back one. Redraws while paused, after a window resize

@@ -38,6 +38,8 @@
 #define HUC6260_LASERACTIVE_SCANLINE_START 22
 #define HUC6260_LASERACTIVE_SCANLINE_END 261
 #define HUC6260_SQUARE_PIXEL_CLOCKS 3.5f
+#define HUC6260_PIXEL_BW 0x0200
+#define HUC6260_PALETTE_SIZE 1024
 
 class HuC6202;
 class HuC6280;
@@ -102,6 +104,7 @@ public:
     void GetActiveRegion(int* x, int* y, int* width, int* height);
     void GetBorderColor(u8* rgb);
     bool IsLowPassActive();
+    bool IsBlackAndWhite();
     void SetScanlineStart(int scanline_start);
     void SetScanlineEnd(int scanline_end);
     void SetLaserActiveScanlines(int start, int end);
@@ -111,7 +114,7 @@ public:
     void SetResetValue(int value);
     void SetTraceLogger(TraceLogger* trace_logger);
     void SetPalette(int palette);
-    void SetCustomPalette(const u8* data);
+    void SetCustomPalette(const u8* data, int count = 512);
     void SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8);
     void SaveState(std::ostream& stream);
     void LoadState(std::istream& stream, int version = GG_SAVESTATE_VERSION);
@@ -122,6 +125,7 @@ private:
     void TraceVceEvent(u8 event);
     void LogVceEvent(u8 event);
     void InitPalettes();
+    void InitGrayscalePalette(int palette);
     void AdjustForMultipleDividers();
     template <bool is_sgx, bool is_laseractive, int divider>
     bool ClockTemplate(u32 cycles);
@@ -172,6 +176,7 @@ private:
     bool m_hsync;
     bool m_vsync;
     s32 m_blur;
+    u16 m_bw;
     int m_overscan;
     bool m_auto_crop;
     s32 m_crop_min;
@@ -187,8 +192,8 @@ private:
     int m_laseractive_pixel_start;
     int m_laseractive_width;
     GG_Pixel_Format m_pixel_format;
-    u8 m_rgba888_palette[HuC6260_PALETTE_COUNT][512][4] = {};
-    u16 m_rgb565_palette[HuC6260_PALETTE_COUNT][512] = {};
+    u8 m_rgba888_palette[HuC6260_PALETTE_COUNT][HUC6260_PALETTE_SIZE][4] = {};
+    u16 m_rgb565_palette[HuC6260_PALETTE_COUNT][HUC6260_PALETTE_SIZE] = {};
     int m_reset_value;
     int m_palette;
     int m_screen_start_x;

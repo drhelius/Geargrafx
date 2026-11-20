@@ -98,8 +98,8 @@ INLINE bool HuC6260::ClockTemplate(u32 cycles)
                     u16 is_vdc_1_sprite = (pixel_1 & 0x100) << 4;
                     u16 is_vdc_2_sprite = (pixel_2 & 0x100) << 4;
 
-                    m_vce_buffer_1[m_pixel_index] = (pixel_1_black ? HUC6270_PIXEL_BLACK : m_color_table[pixel_1]) | is_pixel_1_transparent | is_vdc_1_sprite | win_mode;
-                    m_vce_buffer_2[m_pixel_index] = (pixel_2_black ? HUC6270_PIXEL_BLACK : m_color_table[pixel_2]) | is_pixel_2_transparent | is_vdc_2_sprite;
+                    m_vce_buffer_1[m_pixel_index] = (pixel_1_black ? HUC6270_PIXEL_BLACK : (m_color_table[pixel_1] | m_bw)) | is_pixel_1_transparent | is_vdc_1_sprite | win_mode;
+                    m_vce_buffer_2[m_pixel_index] = (pixel_2_black ? HUC6270_PIXEL_BLACK : (m_color_table[pixel_2] | m_bw)) | is_pixel_2_transparent | is_vdc_2_sprite;
 
                     m_pixel_index++;
                 }
@@ -115,7 +115,7 @@ INLINE bool HuC6260::ClockTemplate(u32 cycles)
                         if (pixel & HUC6270_PIXEL_BLACK)
                             m_vce_buffer_1[m_pixel_index] = HUC6270_PIXEL_BLACK;
                         else
-                            m_vce_buffer_1[m_pixel_index] = m_color_table[pixel];
+                            m_vce_buffer_1[m_pixel_index] = m_color_table[pixel] | m_bw;
                         m_pixel_index++;
                     }
                 }
@@ -131,7 +131,7 @@ INLINE bool HuC6260::ClockTemplate(u32 cycles)
 
                     int index = (m_vpos * 683) + m_pixel_x;
                     bool black = (pixel & HUC6270_PIXEL_BLACK) != 0;
-                    m_vce_buffer_1[index] = black ? HUC6270_PIXEL_BLACK : m_color_table[pixel & 0x1FF];
+                    m_vce_buffer_1[index] = black ? HUC6270_PIXEL_BLACK : (m_color_table[pixel & 0x1FF] | m_bw);
 
                     if (black || pixel == 0x100)
                         m_laseractive_classification[index] = 3;
@@ -153,6 +153,7 @@ INLINE bool HuC6260::ClockTemplate(u32 cycles)
 
             m_hpos = 0;
             m_pixel_x = 0;
+            m_bw = (m_control_register & 0x80) ? HUC6260_PIXEL_BW : 0;
         }
 
         if (m_hpos == HUC6260_HSYNC_END_HPOS)
@@ -303,7 +304,7 @@ INLINE void HuC6260::RenderLaserActiveLine(int source_y)
             destination[3] = 0xFF;
         }
         else
-            memcpy(destination, palette888 + ((color & 0x1FF) * 4), 4);
+            memcpy(destination, palette888 + ((color & 0x3FF) * 4), 4);
     }
 
     if (m_lowpass_enabled)
@@ -366,11 +367,11 @@ void HuC6260::RenderFrameTemplate()
             else if (bytes_per_pixel == 2)
             {
                 u16* dst = reinterpret_cast<u16*>(m_frame_buffer + frame_buffer_index);
-                *dst = palette565[final_pixel & 0x1FF];
+                *dst = palette565[final_pixel & 0x3FF];
             }
             else
             {
-                memcpy(m_frame_buffer + frame_buffer_index, palette888 + ((final_pixel & 0x1FF) * 4), 4);
+                memcpy(m_frame_buffer + frame_buffer_index, palette888 + ((final_pixel & 0x3FF) * 4), 4);
             }
             frame_buffer_index += bytes_per_pixel;
         }
@@ -415,6 +416,7 @@ INLINE void HuC6260::SanitizeState()
     m_color_table_address &= 0x01FF;
     m_speed = m_control_register & 0x03;
     m_blur = (m_control_register >> 2) & 0x01;
+    m_bw = (m_control_register & 0x80) ? HUC6260_PIXEL_BW : 0;
 
     switch (m_speed)
     {
@@ -570,7 +572,7 @@ INLINE void HuC6260::GetActiveRegion(int* x, int* y, int* width, int* height)
 
 INLINE void HuC6260::GetBorderColor(u8* rgb)
 {
-    const u8* color = m_rgba888_palette[m_palette][m_color_table[0x100] & 0x1FF];
+    const u8* color = m_rgba888_palette[m_palette][(m_color_table[0x100] & 0x1FF) | m_bw];
     rgb[0] = color[0];
     rgb[1] = color[1];
     rgb[2] = color[2];
@@ -579,6 +581,11 @@ INLINE void HuC6260::GetBorderColor(u8* rgb)
 INLINE bool HuC6260::IsLowPassActive()
 {
     return m_lowpass_enabled && (GetLowPassAlpha(m_speed) < 1.0f);
+}
+
+INLINE bool HuC6260::IsBlackAndWhite()
+{
+    return m_bw != 0;
 }
 
 INLINE void HuC6260::SetScanlineStart(int scanline_start)

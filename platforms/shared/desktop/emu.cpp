@@ -954,9 +954,9 @@ void emu_set_palette(int palette)
     geargrafx->GetHuC6260()->SetPalette(palette);
 }
 
-void emu_set_custom_palette(const u8* data)
+void emu_set_custom_palette(const u8* data, int count)
 {
-    geargrafx->GetHuC6260()->SetCustomPalette(data);
+    geargrafx->GetHuC6260()->SetCustomPalette(data, count);
 }
 
 void emu_video_no_sprite_limit(bool enabled)

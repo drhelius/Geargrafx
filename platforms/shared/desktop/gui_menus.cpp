@@ -1281,9 +1281,9 @@ static void menu_video(void)
             if (ImGui::IsItemHovered())
             {
                 ImGui::BeginTooltip();
-                ImGui::Text("Format: 512 RGB entries (R, G, B)");
-                ImGui::Text("Size: 1536 bytes (0x600)");
-                ImGui::Text("Extensions: .pal, .bin");
+                ImGui::Text("Raw RGB file (.pal or .bin), 3 bytes per color:");
+                ImGui::BulletText("1536 bytes: 512 colors. B&W mode uses grayscale computed from them.");
+                ImGui::BulletText("3072 bytes: 512 colors, then 512 colors for B&W mode.");
                 ImGui::EndTooltip();
             }
 

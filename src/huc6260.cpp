@@ -49,6 +49,7 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random, LaserActive
     m_reset_value = -1;
     m_palette = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
+    m_bw = 0;
     InitPointer(m_frame_buffer);
     m_lowpass_enabled = false;
     m_lowpass_intensity = 1.0f;
@@ -151,6 +152,26 @@ void HuC6260::InitPalettes()
                             k_rgb888_palette_composite[i][2]);
         m_rgb565_palette[HuC6260_PALETTE_KITRINX][i] = rgb565;
     }
+
+    for (int palette = 0; palette < HuC6260_PALETTE_COUNT; palette++)
+        InitGrayscalePalette(palette);
+}
+
+void HuC6260::InitGrayscalePalette(int palette)
+{
+    for (int i = 0; i < 512; i++)
+    {
+        const u8* color = m_rgba888_palette[palette][i];
+        u8 luma = (u8)(((299 * color[0]) + (587 * color[1]) + (114 * color[2]) + 500) / 1000);
+        u8* gray = m_rgba888_palette[palette][512 + i];
+
+        gray[0] = luma;
+        gray[1] = luma;
+        gray[2] = luma;
+        gray[3] = 255;
+
+        m_rgb565_palette[palette][512 + i] = PackRGB565(luma, luma, luma);
+    }
 }
 
 void HuC6260::Reset()
@@ -168,6 +189,7 @@ void HuC6260::Reset()
     m_hsync = true;
     m_vsync = true;
     m_blur = 0;
+    m_bw = 0;
     m_active_line = false;
 
     memset(m_laseractive_line_state, 0, sizeof(m_laseractive_line_state));
@@ -431,9 +453,11 @@ void HuC6260::AdjustForMultipleDividers()
     memcpy(m_frame_buffer, m_scale_buffer, dominant_width * 242 * bytes_per_pixel);
 }
 
-void HuC6260::SetCustomPalette(const u8* data)
+void HuC6260::SetCustomPalette(const u8* data, int count)
 {
-    for (int i = 0; i < 512; i++)
+    count = (count >= HUC6260_PALETTE_SIZE) ? HUC6260_PALETTE_SIZE : 512;
+
+    for (int i = 0; i < count; i++)
     {
         u8 red = data[i * 3];
         u8 green = data[i * 3 + 1];
@@ -447,6 +471,9 @@ void HuC6260::SetCustomPalette(const u8* data)
         u16 rgb565 = PackRGB565(red, green, blue);
         m_rgb565_palette[HuC6260_PALETTE_CUSTOM][i] = rgb565;
     }
+
+    if (count < HUC6260_PALETTE_SIZE)
+        InitGrayscalePalette(HuC6260_PALETTE_CUSTOM);
 }
 
 void HuC6260::SetLowPassFilter(bool enabled, float intensity, float cutoff_mhz, bool speed_5_36, bool speed_7_16, bool speed_10_8)

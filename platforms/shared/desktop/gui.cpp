@@ -448,19 +448,19 @@ void gui_load_palette(const char* path)
     }
 
     streamsize size = file.tellg();
-    if (size != 0x600)
+    if (size != 0x600 && size != 0xC00)
     {
         file.close();
         std::string message("Invalid palette file size:\n");
         message += filename;
-        message += "\n\nPalette files must be exactly 1536 bytes (0x600).";
+        message += "\n\nPalette files must be exactly 1536 bytes (0x600) or 3072 bytes (0xC00).";
         gui_set_error_message(message.c_str());
         return;
     }
 
     file.seekg(0, ios::beg);
-    u8 palette_data[0x600];
-    if (!file.read(reinterpret_cast<char*>(palette_data), 0x600))
+    u8 palette_data[0xC00];
+    if (!file.read(reinterpret_cast<char*>(palette_data), size))
     {
         file.close();
         std::string message("Error reading palette file:\n");
@@ -470,7 +470,7 @@ void gui_load_palette(const char* path)
     }
     file.close();
 
-    emu_set_custom_palette(palette_data);
+    emu_set_custom_palette(palette_data, (int)(size / 3));
 
     std::string dest_path = config_root_path;
     dest_path += "custom_palette.pal";
@@ -478,7 +478,7 @@ void gui_load_palette(const char* path)
     ofstream dest_file(dest_path, ios::binary);
     if (dest_file.is_open())
     {
-        dest_file.write(reinterpret_cast<const char*>(palette_data), 0x600);
+        dest_file.write(reinterpret_cast<const char*>(palette_data), size);
         dest_file.close();
     }
     else
@@ -1252,7 +1252,7 @@ static void load_custom_palette_from_settings(void)
     }
 
     streamsize size = file.tellg();
-    if (size != 0x600)
+    if (size != 0x600 && size != 0xC00)
     {
         file.close();
         Log("Invalid custom palette file size: %s", palette_path.c_str());
@@ -1260,8 +1260,8 @@ static void load_custom_palette_from_settings(void)
     }
 
     file.seekg(0, ios::beg);
-    u8 palette_data[0x600];
-    if (!file.read(reinterpret_cast<char*>(palette_data), 0x600))
+    u8 palette_data[0xC00];
+    if (!file.read(reinterpret_cast<char*>(palette_data), size))
     {
         file.close();
         Log("Error reading custom palette file: %s", palette_path.c_str());
@@ -1269,7 +1269,7 @@ static void load_custom_palette_from_settings(void)
     }
     file.close();
 
-    emu_set_custom_palette(palette_data);
+    emu_set_custom_palette(palette_data, (int)(size / 3));
     gui_custom_palette_loaded = true;
     Log("Custom palette loaded from: %s", palette_path.c_str());
 }

@@ -54,6 +54,7 @@ struct GG_Runtime_Info
     int system_type;
     int video_mode;
     bool low_pass;
+    bool black_and_white;
 };
 
 enum GG_Console_Type

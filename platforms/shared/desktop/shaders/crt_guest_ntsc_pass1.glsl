@@ -171,6 +171,8 @@ if (MERGE > 0.5)
 
    if (MERGE > 0.5) { if (ntsc_rainbow1 < 0.5 || phase > 2.5) yiq = 0.5*(yiq + yiq2); else yiq.x = 0.5*(yiq.x + yiq2.x); }
    
+   if ((CoreFlags & 8) != 0) yiq.yz = vec2(0.0);
+
    FragColor = vec4(yiq, lum);
 }
 

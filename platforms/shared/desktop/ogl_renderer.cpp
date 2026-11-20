@@ -464,6 +464,9 @@ static void fill_shader_frame_info(OglShaderChainFrameInfo* info)
 
     if (current_runtime.low_pass)
         info->core_flags |= OglShaderChainCoreFlag_LowPass;
+
+    if (current_runtime.black_and_white)
+        info->core_flags |= OglShaderChainCoreFlag_BlackAndWhite;
 }
 
 static bool render_external_shader_chain(void)

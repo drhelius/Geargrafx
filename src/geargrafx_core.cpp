@@ -360,6 +360,7 @@ bool GeargrafxCore::GetRuntimeInfo(GG_Runtime_Info& runtime_info)
     runtime_info.system_type = laseractive ? 2 : (m_media->IsSGX() ? 1 : 0);
     runtime_info.video_mode = m_huc6260->IsScaledWidth() ? 3 : (int)m_huc6260->GetSpeed();
     runtime_info.low_pass = m_huc6260->IsLowPassActive();
+    runtime_info.black_and_white = m_huc6260->IsBlackAndWhite();
 
     return m_media->IsReady();
 }

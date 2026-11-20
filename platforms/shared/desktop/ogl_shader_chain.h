@@ -80,7 +80,8 @@ enum OglShaderChainCoreFlags
 {
     OglShaderChainCoreFlag_ColorCorrection = 1,
     OglShaderChainCoreFlag_LowPass = 2,
-    OglShaderChainCoreFlag_Composite = 4
+    OglShaderChainCoreFlag_Composite = 4,
+    OglShaderChainCoreFlag_BlackAndWhite = 8
 };
 
 struct OglShaderChainSourceTexture

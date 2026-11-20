@@ -81,6 +81,9 @@ void main()
     yiq.yz += artifact_chroma * NtscArtifacts;
     yiq.yz += shimmer_yiq.yz * shimmer * intensity * 0.12;
 
+    if ((CoreFlags & 8) != 0)
+        yiq.yz = vec2(0.0);
+
     vec3 corrected = clamp(yiq_to_rgb(yiq), vec3(0.0), vec3(1.0));
 
     FragColor = vec4(mix(source.rgb, corrected, intensity), source.a);

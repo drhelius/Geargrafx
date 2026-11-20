@@ -8,6 +8,7 @@ uniform sampler2D Source;
 uniform vec4 SourceSize;
 uniform vec4 OriginalSize;
 uniform vec4 ChromaPhase;
+uniform int CoreFlags;
 
 vec3 yiq_to_rgb(vec3 yiq)
 {
@@ -62,6 +63,9 @@ void main()
         signal.x /= luma_weight_sum;
     if (chroma_weight_sum > 0.0)
         signal.yz /= chroma_weight_sum;
+
+    if ((CoreFlags & 8) != 0)
+        signal.yz = vec2(0.0);
 
     FragColor = vec4(clamp(yiq_to_rgb(signal), vec3(0.0), vec3(1.0)), 1.0);
 }
