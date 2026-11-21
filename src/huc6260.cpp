@@ -50,6 +50,7 @@ HuC6260::HuC6260(HuC6202* huc6202, HuC6280* huc6280, Random* random, LaserActive
     m_palette = 0;
     m_speed = HuC6260_SPEED_5_36_MHZ;
     m_bw = 0;
+    m_bw_line = false;
     m_bw_enabled = true;
     InitPointer(m_frame_buffer);
     m_lowpass_enabled = false;
@@ -191,6 +192,7 @@ void HuC6260::Reset()
     m_vsync = true;
     m_blur = 0;
     m_bw = 0;
+    m_bw_line = false;
     m_active_line = false;
 
     memset(m_laseractive_line_state, 0, sizeof(m_laseractive_line_state));

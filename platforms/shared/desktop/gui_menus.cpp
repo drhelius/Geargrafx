@@ -1355,6 +1355,7 @@ static void menu_video(void)
                 ImGui::Text("When a game turns on the VCE black and white mode:");
                 ImGui::BulletText("Enabled: the picture turns grayscale, like on a composite TV.");
                 ImGui::BulletText("Disabled: colors stay, like on an RGB modded console.");
+                ImGui::Text("Shaders are notified in both cases, so composite shaders still remove the color.");
                 ImGui::EndTooltip();
             }
 

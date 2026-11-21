@@ -585,7 +585,7 @@ INLINE bool HuC6260::IsLowPassActive()
 
 INLINE bool HuC6260::IsBlackAndWhite()
 {
-    return m_bw != 0;
+    return m_bw_line;
 }
 
 INLINE void HuC6260::SetBlackAndWhiteEnabled(bool enabled)
@@ -596,7 +596,8 @@ INLINE void HuC6260::SetBlackAndWhiteEnabled(bool enabled)
 
 INLINE void HuC6260::LatchBlackAndWhite()
 {
-    m_bw = (m_bw_enabled && (m_control_register & 0x80)) ? HUC6260_PIXEL_BW : 0;
+    m_bw_line = (m_control_register & 0x80) != 0;
+    m_bw = (m_bw_enabled && m_bw_line) ? HUC6260_PIXEL_BW : 0;
 }
 
 INLINE void HuC6260::SetScanlineStart(int scanline_start)

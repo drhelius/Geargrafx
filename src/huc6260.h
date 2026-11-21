@@ -179,6 +179,7 @@ private:
     bool m_vsync;
     s32 m_blur;
     u16 m_bw;
+    bool m_bw_line;
     bool m_bw_enabled;
     int m_overscan;
     bool m_auto_crop;
