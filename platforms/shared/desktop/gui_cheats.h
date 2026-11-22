@@ -33,7 +33,7 @@ struct gui_CheatEntry
     bool enabled;
     bool valid;
     bool active;
-    char code[128];
+    char code[512];
     char description[128];
 };
 
@@ -45,7 +45,7 @@ EXTERN int gui_cheats_add(const char* code, const char* description);
 EXTERN bool gui_cheats_remove(int index);
 EXTERN int gui_cheats_get_count(void);
 EXTERN const gui_CheatEntry* gui_cheats_get(int index);
-EXTERN bool gui_cheats_import(const char* path, int* imported, int* skipped);
+EXTERN bool gui_cheats_import(const char* path, int* imported, int* skipped, int* oversized);
 
 #undef GUI_CHEATS_IMPORT
 #undef EXTERN

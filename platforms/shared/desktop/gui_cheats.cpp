@@ -115,7 +115,7 @@ const gui_CheatEntry* gui_cheats_get(int index)
     return &cheat_list[index];
 }
 
-bool gui_cheats_import(const char* path, int* imported, int* skipped)
+bool gui_cheats_import(const char* path, int* imported, int* skipped, int* oversized)
 {
     std::ifstream file;
     open_ifstream_utf8(file, path, std::ios::in);
@@ -207,6 +207,7 @@ bool gui_cheats_import(const char* path, int* imported, int* skipped)
 
     int imported_count = 0;
     int skipped_count = 0;
+    int oversized_count = 0;
 
     for (size_t i = 0; i < entries.size(); i++)
     {
@@ -218,7 +219,12 @@ bool gui_cheats_import(const char* path, int* imported, int* skipped)
         if (code.empty() && !cheats_import_handler(entries[i], code))
             code.clear();
 
-        if (code.empty() || (code.length() >= sizeof(cheat_list[0].code)) ||
+        if (code.length() >= sizeof(cheat_list[0].code))
+        {
+            skipped_count++;
+            oversized_count++;
+        }
+        else if (code.empty() ||
             (cheats_add_entry(code.c_str(), entries[i].description.c_str(), entries[i].enabled) < 0))
         {
             skipped_count++;
@@ -234,6 +240,8 @@ bool gui_cheats_import(const char* path, int* imported, int* skipped)
         *imported = imported_count;
     if (IsValidPointer(skipped))
         *skipped = skipped_count;
+    if (IsValidPointer(oversized))
+        *oversized = oversized_count;
 
     return true;
 }
