@@ -133,11 +133,10 @@ else ifeq ($(platform), libounce)
 	include $(DEVKITPRO)/libounce/switch2_rules
 	TARGET := $(TARGET_NAME)_libretro_$(platform).elf
 	TARGET_NRO := $(TARGET:.elf=.nro)
-	PLATFORM_FLAGS += -D__SWITCH__ -DHAVE_LIBNX
+	PLATFORM_FLAGS += -D__SWITCH__ -DHAVE_LIBNX -DMINIZ_NO_TIME
 	fpic := -fPIC
 	SHARED := -shared -Wl,-version-script=$(CORE_DIR)/link.T
-	LDFLAGS += -Wl,-soname,$(TARGET:.elf=.nro)
-	LDFLAGS += $(LIBS)
+	LDFLAGS += -Wl,-soname,$(TARGET_NRO)
 # Nintendo Game Cube / Wii / WiiU
 else ifneq (,$(filter $(platform), ngc wii wiiu))
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
@@ -389,12 +388,8 @@ CXXFLAGS += -DGG_DISABLE_DISASSEMBLER -DGG_DISABLE_VGMRECORDER -Wall -fno-except
 
 $(DEPS_DIR)/%.o: CPPFLAGS += -w
 
-all: $(TARGET)
+all: $(TARGET) $(TARGET_NRO)
 	@echo Build complete: $(TARGET_NAME) $(BUILD_CONFIG) - $(GIT_VERSION) - $(platform)
-
-ifeq ($(platform), libounce)
-all: $(TARGET_NRO)
-endif
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
