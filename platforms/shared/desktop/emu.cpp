@@ -71,6 +71,9 @@ enum Loading_Request_Type
     Loading_Request_PhysicalCdRom
 };
 
+static bool debug_start_override = false;
+static bool debug_start_override_paused = false;
+
 static std::atomic<int> loading_state(Loading_State_None);
 static std::thread loading_thread;
 static bool loading_thread_active;
@@ -84,6 +87,7 @@ static void load_ram(void);
 static void save_mb128(void);
 static void load_mb128(void);
 static void reset_buffers(void);
+static void set_debug_start_state(void);
 static const char* get_configurated_dir(int option, const char* path); 
 static void init_debug(void);
 static void destroy_debug(void);
@@ -294,7 +298,7 @@ bool emu_finish_media_loading(void)
     update_savestates_data();
 
     rewind_reset();
-    emu_debug_start_paused(config_emulator.start_paused);
+    set_debug_start_state();
 
     return true;
 }
@@ -589,7 +593,7 @@ void emu_save_persistent_data(void)
 void emu_reset(bool save_persistent_data)
 {
     gui_debug_trace_logger_reset("reset");
-    emu_debug_start_paused(config_emulator.start_paused);
+    set_debug_start_state();
     emu_debug_step_frames_pending = 0;
     emu_debug_pc_changed = true;
     emu_frame_counter = 0;
@@ -940,9 +944,23 @@ void emu_debug_continue(void)
     emu_debug_command = Debug_Command_Continue;
 }
 
-void emu_debug_start_paused(bool paused)
+void emu_debug_override_start(bool paused)
 {
+    debug_start_override = true;
+    debug_start_override_paused = paused;
+}
+
+void emu_debug_clear_start_override(void)
+{
+    debug_start_override = false;
+}
+
+static void set_debug_start_state(void)
+{
+    bool paused = debug_start_override ? debug_start_override_paused : config_emulator.start_paused;
+
     emu_debug_command = (config_debug.debug && !paused) ? Debug_Command_Continue : Debug_Command_None;
+    emu_debug_step_frames_pending = 0;
 }
 
 void emu_set_disassembler_syntax(int syntax)
