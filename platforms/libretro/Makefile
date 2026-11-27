@@ -128,6 +128,16 @@ else ifeq ($(platform), libnx)
 	PLATFORM_FLAGS += -march=armv8-a -mtune=cortex-a57 -mtp=soft -mcpu=cortex-a57+crc+fp+simd -ffast-math
 	PLATFORM_FLAGS := $(ASFLAGS) $(PLATFORM_FLAGS) -DMINIZ_NO_TIME -Wall
 	STATIC_LINKING=1
+# Nintendo Switch 2 (libounce)
+else ifeq ($(platform), libounce)
+	include $(DEVKITPRO)/libounce/switch2_rules
+	TARGET := $(TARGET_NAME)_libretro_$(platform).elf
+	TARGET_NRO := $(TARGET:.elf=.nro)
+	PLATFORM_FLAGS += -D__SWITCH__ -DHAVE_LIBNX
+	fpic := -fPIC
+	SHARED := -shared -Wl,-version-script=$(CORE_DIR)/link.T
+	LDFLAGS += -Wl,-soname,$(TARGET:.elf=.nro)
+	LDFLAGS += $(LIBS)
 # Nintendo Game Cube / Wii / WiiU
 else ifneq (,$(filter $(platform), ngc wii wiiu))
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
@@ -382,6 +392,10 @@ $(DEPS_DIR)/%.o: CPPFLAGS += -w
 all: $(TARGET)
 	@echo Build complete: $(TARGET_NAME) $(BUILD_CONFIG) - $(GIT_VERSION) - $(platform)
 
+ifeq ($(platform), libounce)
+all: $(TARGET_NRO)
+endif
+
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
@@ -396,7 +410,7 @@ endif
 	$(CC) $(CPPFLAGS) $(CFLAGS) -std=gnu99 -c -o $@ $<
 
 clean:
-	rm -f $(OBJECTS) $(TARGET)
+	rm -f $(OBJECTS) $(TARGET) $(TARGET_NRO)
 
 install:
 	install -D -m 755 $(TARGET) $(DESTDIR)$(libdir)/$(LIBRETRO_INSTALL_DIR)/$(TARGET)
