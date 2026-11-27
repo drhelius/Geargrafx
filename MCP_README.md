@@ -90,6 +90,10 @@ Headless mode is debug mode without rendering, so the debug output settings appl
 
 While the MCP server is running, the emulator keeps running when its window loses focus, even with **Pause When Inactive** enabled in the **Emulator** menu. The setting keeps its value and applies again once the server stops.
 
+### Start Paused
+
+`--mcp-stdio` and `--mcp-http` turn the debugger on. Loads and resets then follow **Start Paused** in the **Emulator** menu, as outside the debugger: with it off (the default) the game runs, with it on the debugger stops before the first instruction. `load_media` and `debug_reset` take an optional `stop_at_start` to choose for one call, and their answers say whether emulation is `paused`.
+
 ### Concurrent Clients
 
 The HTTP server accepts repeated valid MCP initialization requests. All connected clients control the same Geargrafx instance. Individual HTTP requests are serialized, but multi-request debugging workflows are not atomic. Concurrent agents can interfere with each other through pauses, resets, breakpoints, memory writes, media loads, and save states.
@@ -341,7 +345,7 @@ The server exposes tools organized in the following categories:
 - `debug_step_out` - Step out of current subroutine
 - `debug_step_frame` - Step one or more frames. Optional `frames` is 1-1000 (default 1). Optional `mode` is `async` (default, returns after scheduling) or `sync` (returns after all requested frames complete at VBlank). Use `mode: "sync"` when issuing dependent tool calls.
 - `debug_run_to_cursor` - Continue execution until reaching specified address
-- `debug_reset` - Reset emulation
+- `debug_reset` - Reset emulation. Optional `stop_at_start` stops the debugger before the first instruction (default: the Start Paused setting); the answer has `paused`
 - `debug_get_status` - Get debug status (paused, at_breakpoint, pc address)
 
 ### CPU & Registers
@@ -497,7 +501,7 @@ Storage changes while tracing is active cleanly stop and restart the logger. Rep
 ### Media & State Management
 - `get_media_info` - Get loaded ROM/CD info, including native MMI catalog, selected side, format and eject state fields
 - `list_recent_media` - List the 10 most recent ROM files or CD-ROM images opened by Geargrafx
-- `load_media` - Load ROM or disc media (.pce, .sgx, .hes, .cue, .chd, .mmi, .zip). Automatically loads .sym symbol file if present
+- `load_media` - Load ROM or disc media (.pce, .sgx, .hes, .cue, .chd, .mmi, .zip). Automatically loads .sym symbol file if present. Optional `stop_at_start` as in `debug_reset`
 - `load_bios` - Load a CD-ROM or LaserActive BIOS. Types: `syscard`, `gameexpress`, `pac_japan`, and `pac_us`
 - `list_mmi_media` - List the media/sides in the loaded MMI in sequence order
 - `eject_mmi_media` - Eject the virtual LaserDisc without resetting the machine
